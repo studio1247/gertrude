@@ -1,0 +1,254 @@
+# -*- coding: cp1252 -*-
+import os.path, binascii, shutil, socket
+import wx
+from ftplib import FTP
+from threading import Thread
+from common import *
+import time, datetime
+from sqlinterface import *
+
+ID_SYNCHRO = 10001
+
+def Backup():
+	if os.path.isfile('gertrude.db'):
+		index = 0
+		if not os.path.isdir(backups_directory):
+			os.mkdir(backups_directory)
+		else:
+			f = file(backups_directory + "/lastbackup", 'r')
+			name = f.readline().split('.')[0]
+			index = int(name.split('_')[1])
+			f.close()
+			
+		backup_filename = "backup_%d.db" % (index+1)
+		shutil.copyfile('gertrude.db', backups_directory + '/' + backup_filename)
+		file(backups_directory + "/lastbackup", 'w').write(backup_filename)
+		
+class SynchroDialog(wx.Dialog):
+	def __init__(self, parent):
+		wx.Dialog.__init__(self, parent, -1, "Synchronisation", pos=wx.DefaultPosition, size=wx.DefaultSize, style=wx.DEFAULT_DIALOG_STYLE | wx.CAPTION | wx.SYSTEM_MENU | wx.THICK_FRAME)
+		
+		topsizer = wx.BoxSizer(wx.VERTICAL)
+		
+		self.listbox = wx.ListBox(self, -1, size=(302, 100))
+		topsizer.Add(self.listbox, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
+		self.gauge = wx.Gauge(self, -1, size=(302, 24))
+		self.gauge.SetRange(20)
+		topsizer.Add(self.gauge, 50, wx.ALIGN_CENTRE|wx.ALL, 10)
+		
+		sizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.synchrobutton = wx.Button(self, -1, " Synchroniser ")
+		self.synchrobutton.Disable()
+		self.Bind(wx.EVT_BUTTON, self.onSynchroButton, self.synchrobutton)
+		sizer.Add(self.synchrobutton, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
+		self.cancelbutton = wx.Button(self, wx.ID_CANCEL, " Annuler ")
+		self.cancelbutton.SetDefault()
+		self.Bind(wx.EVT_BUTTON, self.onCancelButton, self.cancelbutton)
+		sizer.Add(self.cancelbutton, 0, wx.ALIGN_CENTRE|wx.ALL, 10)
+		
+		topsizer.Add(sizer, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		self.SetSizer(topsizer)
+		topsizer.Fit(self)
+		
+		self.thread = Thread(target=self.GetInfos)
+		self.result = None
+		self.thread.start()
+		self.timer = wx.Timer(self)
+		self.Bind(wx.EVT_TIMER, self.OnGetInfosTimer)
+		self.timer.Start(1000)
+        
+	def GetInfos(self):
+		lines = []
+		
+		def callback(line):
+			lines.append(line)
+	
+		try:
+			self.ftp = FTP("ftpperso.free.fr")
+			self.ftp.login("gertude", "schlemel")	
+			self.ftp.retrlines('LIST', callback)
+			for line in lines:
+			    if 'last' in line:
+                                result = line
+			self.ftp.retrlines('RETR last', callback)
+			self.FTPFilename, self.lasttime = lines[-1].split()
+			localFile = file(backups_directory + "/" + self.FTPFilename, 'wb')
+			self.ftp.retrbinary('RETR %s' % self.FTPFilename, localFile.write)
+			localFile.close()
+			self.result = result
+		except:
+			self.result = "echec"
+		
+	def OnGetInfosTimer(self, event):
+		if self.result == None:
+			self.gauge.SetValue(self.gauge.GetValue() + 1)
+		else:
+			if self.result == "echec":
+				self.listbox.Append(u'La connexion a échoué', 1)
+			elif self.result == "rien":
+				self.listbox.Append("Fichier local", 1)
+				self.synchrobutton.Enable()
+			else:
+				self.listbox.Append(u'Sauvegarde réseau du %s' % unicode(datetime.datetime.fromtimestamp(float(self.lasttime)).strftime('%A %d %b %Y à %H:%M:%S'), 'iso8859-1'), 0)
+				self.listbox.Append('Sauvegarde locale', 1)
+				self.synchrobutton.Enable()
+			self.timer.Stop()
+
+	def onCancelButton(self, event):
+		self.timer.Stop()
+		event.Skip()
+					
+	def onSynchroButton(self, event):
+		sel = self.listbox.GetSelection()
+		if sel != -1:
+			self.cancelbutton.Disable()
+			value = self.listbox.GetClientData(sel)
+			if value == 1:
+				# Fichier local
+				connection.commit()
+				name = self.FTPFilename.split('.')[0]
+				index = int(name.split('_')[1])
+				distantFilename = 'ftpbackup_%d.db' % (index+1)
+				self.ftp.storbinary("STOR " + distantFilename, file('gertrude.db', 'rb'))
+				file('last', 'w').write('%s %s' % (distantFilename, time.time()))
+				self.ftp.storlines('STOR last', file('last', 'r'))
+				result = wx.ID_OK
+			elif value == 0:
+				# Fichier distant
+				connection.close()
+				Backup()
+				shutil.copyfile(backups_directory + "/" + self.FTPFilename, './gertrude.db')
+				result = ID_SYNCHRO
+				
+			self.ftp.quit()
+			self.EndModal(result)
+			
+def DoConversions(creche, inscrits):
+    if not hasattr(creche, 'lastnumcontrat'):
+        print 'ajout attribut lastnumcontrat'
+        creche.lastnumcontrat = 0
+        for inscrit in inscrits:
+            for inscription in inscrit.inscriptions:
+                inscription.numcontrat = creche.getNumContrat()
+
+    for inscrit in inscrits:
+        try:
+          if type(inscrit.adresse) != unicode:
+              print 'conversion unicode'
+              inscrit.adresse = unicode(inscrit.adresse, 'latin-1')
+        except:
+          pass
+         
+    for inscrit in inscrits:
+    	for inscription in inscrit.inscriptions:
+    		if not hasattr(inscription, 'fin_periode_essai'):
+    			print 'ajout fin_periode_essai'
+    			inscription.fin_periode_essai = None
+
+    return creche, inscrits
+
+def Load():
+        def getdate(str):
+            if str is None:
+                return None
+            annee, mois, jour = map(lambda x: int(x), str.split('-'))
+            return datetime.date(annee, mois, jour)
+    
+        cur = connection.cursor()
+        
+        cur.execute('SELECT nom, adresse, code_postal, ville, idx FROM CRECHE')
+        creche_entry = cur.fetchall()
+        if len(creche_entry) > 0:
+            creche = Creche(creation=False)
+            creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.idx = creche_entry[0]
+        else:
+            creche = Creche()
+            
+        cur.execute('SELECT debut, fin, plancher, plafond, idx FROM BAREMESCAF')
+        for bareme_entry in cur.fetchall():
+            bareme = BaremeCAF(creation=False)
+            bareme.debut, bareme.fin, bareme.plancher, bareme.plafond, bareme.idx = bareme_entry
+            creche.baremes_caf.append(bareme)
+            
+        inscrits = []
+        parents = {None: None}
+        cur.execute('SELECT idx, prenom, nom, naissance, adresse, code_postal, ville, marche, photo FROM INSCRITS')
+        for idx, prenom, nom, naissance, adresse, code_postal, ville, marche, photo in cur.fetchall():
+            if photo:
+                photo = binascii.a2b_base64(photo)
+            inscrit = Inscrit(creation=False)
+            inscrits.append(inscrit)
+            inscrit.prenom, inscrit.nom, inscrit.naissance, inscrit.adresse, inscrit.code_postal, inscrit.ville, inscrit.marche, inscrit.photo, inscrit.idx = prenom, nom, getdate(naissance), adresse, code_postal, ville, getdate(marche), photo, idx
+            cur.execute('SELECT prenom, naissance, entree, sortie, idx FROM FRATRIES WHERE inscrit=?', (inscrit.idx,))
+            for frere_entry in cur.fetchall():
+                frere = Frere_Soeur(inscrit, creation=False)
+                frere.prenom, frere.naissance, frere.entree, frere.sortie, idx = frere_entry
+                frere.naissance, frere.entree, frere.sortie, frere.idx = getdate(frere.naissance), getdate(frere.entree), getdate(frere.sortie), idx
+                inscrit.freres_soeurs.append(frere)
+            cur.execute('SELECT idx, debut, fin, mode, periode_reference, fin_periode_essai FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
+            for idx, debut, fin, mode, periode_reference, fin_periode_essai in cur.fetchall():
+                inscription = Inscription(inscrit, creation=False)
+                inscription.debut, inscription.fin, inscription.mode, inscription.periode_reference, inscription.fin_periode_essai, inscription.idx = getdate(debut), getdate(fin), mode, eval(periode_reference), getdate(fin_periode_essai), idx
+                inscrit.inscriptions.append(inscription)
+            cur.execute('SELECT prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email, idx FROM PARENTS WHERE inscrit=?', (inscrit.idx,))
+            for parent_entry in cur.fetchall():
+                parent = Parent(inscrit, creation=False)
+                parent.prenom, parent.nom, parent.telephone_domicile, parent.telephone_domicile_notes, parent.telephone_portable, parent.telephone_portable_notes, parent.telephone_travail, parent.telephone_travail_notes, parent.email, parent.idx = parent_entry
+                parents[parent.idx] = parent
+                if not inscrit.papa:
+                    inscrit.papa = parent
+                else:
+                    inscrit.maman = parent
+                cur.execute('SELECT debut, fin, revenu, chomage, regime, idx FROM REVENUS WHERE parent=?', (parent.idx,))
+                for revenu_entry in cur.fetchall():
+                    revenu = Revenu(parent, creation=False)
+                    revenu.debut, revenu.fin, revenu.revenu, revenu.chomage, revenu.regime, idx = revenu_entry
+                    revenu.debut, revenu.fin, revenu.idx = getdate(revenu.debut), getdate(revenu.fin), idx
+                    parent.revenus.append(revenu)
+            cur.execute('SELECT date, previsionnel, value, details, idx FROM PRESENCES WHERE inscrit=?', (inscrit.idx,))
+            for date, previsionnel, value, details, idx in cur.fetchall():
+                presence = Presence(inscrit, getdate(date), previsionnel, value, creation=False)
+                presence.details, presence.idx = eval(details), idx
+                inscrit.presences[getdate(date)] = presence
+                
+        cur.execute('SELECT idx, debut, fin, president, vice_president, tresorier, secretaire FROM BUREAUX')
+        for idx, debut, fin, president, vice_president, tresorier, secretaire in cur.fetchall():
+            bureau = Bureau(creation=False)
+            bureau.debut, bureau.fin, bureau.president, bureau.vice_president, bureau.tresorier, bureau.secretaire, bureau.idx = getdate(debut), getdate(fin), parents[president], parents[vice_president], parents[tresorier], parents[secretaire], idx
+            creche.bureaux.append(bureau)
+    
+        # for inscrit in inscrits:
+        	# print '%r' % inscrit.prenom
+        return creche, inscrits
+       
+if __name__ == '__main__':
+    creche, inscrits = connection.load()
+    print 'debut'
+    #cur = con.cursor()
+    #c = Creche()
+    #cur.execute("create table essai(c Creeche)")
+#    cur.execute("insert into essai(c) values (?)", (c,))
+#    cur.execute("select ?", (c,))
+#    print cur.execute("select * from essai")
+#    print cur.fetchone()
+    print creche.idx
+    print creche.nom
+    creche.nom = 'tioto'
+    print creche.nom
+    
+#    inscrit = Inscrit()
+#    print inscrit.idx
+    
+#    app = wxApp(0)
+#    bmp = file("./current/idBasileSongis.png").read()
+#    bitmap = wxBitmap(bmp)
+#    inscrit.photo = bmp
+#    
+#    creche.bureaux.append(Bureau())
+#    creche.bureaux[0].president = inscrit.idx
+    
+    
+    
+    #del creche.bureaux[0]
+    
+    con.commit()

@@ -1,0 +1,63 @@
+<html>
+<head>
+ <meta http-equiv=Content-Type content="text/html; charset=windows-1252">
+ <title>FRAIS DE GARDE MENSUELS</title>
+</head>
+
+<body lang=FR style='tab-interval:35.4pt'>
+ <p class=MsoNormal align=center>
+  <b><span style='font-size:14.0pt;mso-bidi-font-size:12.0pt;text-transform:uppercase'>Frais de garde mensuels de <var value="inscrit.prenom"/> <var value="inscrit.nom"/><o:p></o:p></span></b>
+ </p>
+
+ <br>
+ <br>
+ <br>
+ <br>
+ 
+ <table cellspacing="0" cellpadding="4" border="0">
+  <tr>
+   <td width=400>Revenu <var value="debut.year-1"/> de <var value="inscrit.papa.prenom"/> </td>
+   <td>= <var value="'%.02f' % revenus_papa.revenu"/> &euro;</td>
+  </tr>
+  <if value="revenus_papa.chomage">
+  <tr>
+   <td width=400>Abattement consenti pour ch&ocirc;mage (30 %)</td>
+   <td>= <var value="'%.02f' % abattement_chomage_papa"/> &euro;</td>
+  </tr>
+  </if>
+  <tr>
+   <td width=400>Revenu <var value="debut.year-1"/> de <var value="inscrit.maman.prenom"/> </td>
+   <td>= <var value="'%.02f' % revenus_maman.revenu"/> &euro;</td>
+  </tr>
+  <if value="revenus_maman.chomage">
+  <tr>
+   <td>Abattement consenti pour ch&ocirc;mage (30 %)</td>
+   <td>= <var value="'%.02f' % abattement_chomage_maman"/> &euro;</td>
+  </tr>
+  </if>
+  <tr>
+   <td></td>
+   <td><hr></td>
+  </tr>
+  <tr>
+   <td>Assiette annuelle de la cotisation</td>
+   <td>= <var value="'%.02f' % assiette_annuelle"/> &euro;</td>
+  </tr>
+  <tr>
+   <td>Assiette mensuelle de la cotisation</td>
+   <td>= <var value="'%.02f' % assiette_mensuelle"/> &euro; (A)</td>
+  </tr>
+  <tr>
+   <td>Taux d'effort horaire appliqu&eacute; (<var value="mode_taux_horaire"/>)</td>
+   <td>= <var value="'%.02f' % taux_horaire"/> % (B)</td>
+  </tr>
+  <tr>
+   <td>&nbsp</td>
+  </tr>
+  <tr>
+   <td><b>Montant par heure de garde (A * B)</b></td>
+   <td><b>= <var value="'%.02f' % montant_heure_garde"/> &euro;</b></td>
+  </tr>
+ </table>
+</body>
+</html>
