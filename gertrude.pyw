@@ -237,7 +237,6 @@ profil = 0
 logins = [('Bertrand', 'cromorne', PROFIL_ADMIN),
           (u'Béa', 'gertrux', PROFIL_ADMIN),
           ('Lore', 'tilli', PROFIL_INSCRIPTIONS),
-          (u'Grégoire', 'nenenie', PROFIL_BUREAU),
           ]
 Backup()
 app = MyApp(0)
