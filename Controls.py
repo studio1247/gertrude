@@ -573,6 +573,7 @@ class PeriodeChoice(wx.BoxSizer):
   
     def EvtPeriodeDelButton(self, evt):
         periode = self.periodechoice.GetSelection()
+        exec('self.instance.'+self.member+'[periode].delete()')
         exec('del self.instance.'+self.member+'[periode]')
         self.periodechoice.Delete(periode)
         last_periode = eval('len(self.instance.'+self.member+') - 1')
