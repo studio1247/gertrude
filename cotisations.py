@@ -31,7 +31,7 @@ class Cotisation:
         if not inscrit.papa.prenom or not inscrit.maman.prenom or not inscrit.papa.nom or not inscrit.maman.nom:
             errors.append(u" - L'état civil des parents est incomplet.")
         if self.debut is None:
-            errors.append(u" - La date de début de la période n'est pas remplie.")
+            errors.append(u" - La date de début de la période n'est pas renseignée.")
             raise CotisationException(errors)
         self.revenus_papa = Select(inscrit.papa.revenus, self.debut)
         if self.revenus_papa is None or self.revenus_papa.revenu == '':
@@ -41,10 +41,10 @@ class Cotisation:
             errors.append(u" - Les déclarations de revenus de la maman sont incomplètes.")
         self.bureau = Select(creche.bureaux, self.debut)     
         if self.bureau is None:
-            errors.append(u" - Il n'y a pas de bureau à cette date")
+            errors.append(u" - Il n'y a pas de bureau à cette date.")
         self.inscription = inscrit.getInscription(self.debut)
         if self.inscription is None:
-            errors.append(u" - Il n'y a pas d'inscription à cette date")
+            errors.append(u" - Il n'y a pas d'inscription à cette date.")
             raise CotisationException(errors)
 
         self.mode_garde = self.inscription.mode
@@ -114,7 +114,7 @@ class Cotisation:
             self.montant_jour_supplementaire = self.assiette_mensuelle * self.taux_horaire / 10
         else:
             self.montant_jour_supplementaire = 0
-            
+
         self.total_semaine = 0
         for j in range(5):
             if self.inscription.periode_reference[j][0] == 1: self.total_semaine += 4
@@ -123,10 +123,15 @@ class Cotisation:
 
         self.total_mois = 4 * self.total_semaine
         self.total_annee = 48 * self.total_semaine
-        self.cout_horaire = self.cotisation_mensuelle / self.total_mois
+        if self.inscription.mode == 0:
+            self.cout_horaire = self.cotisation_mensuelle / self.total_mois
             
     def __cmp__(self, context2):
-        return context2 == None or self.cout_horaire != context2.cout_horaire or self.bureau != context2.bureau or self.assiette_annuelle != context2.assiette_annuelle
+        return context2 == None or \
+               self.cotisation_mensuelle != context2.cotisation_mensuelle or \
+               self.total_mois != context2.total_mois or \
+               self.bureau != context2.bureau or \
+               self.assiette_annuelle != context2.assiette_annuelle
 
 def ReplaceFactureContent(data, creche, inscrit, periode):
     debut = datetime.date(periode.year, periode.month, 1)
