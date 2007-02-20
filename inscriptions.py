@@ -364,7 +364,7 @@ class IdentitePanel(InscriptionsTab):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, self.inscrit, 'freres_soeurs[%d].prenom' % index), 0, wx.ALIGN_CENTER_VERTICAL)])
         sizer.AddMany([(wx.StaticText(self, -1, 'Naissance :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].naissance' % index), 0, wx.ALIGN_CENTER_VERTICAL)])
-        sizer.AddMany([(wx.StaticText(self, -1, 'En crèche du'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].entree' % index), 0, wx.ALIGN_CENTER_VERTICAL)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'En crèche du'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].entree' % index), 0, wx.ALIGN_CENTER_VERTICAL)])
         sizer.AddMany([(wx.StaticText(self, -1, 'au'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].sortie' % index), 0, wx.ALIGN_CENTER_VERTICAL)])
         delbutton = wx.Button(self, -1, 'X')
         delbutton.index = index
@@ -517,7 +517,7 @@ class ModeAccueilPanel(InscriptionsTab):
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(PeriodeChoice(self, None, 'inscriptions', self.nouvelleInscription))
-        sizer.Add(AutoRadioBox(self, None, 'inscriptions[self.parent.periode].mode', "Mode d'accueil", ['Crèche', 'Halte-garderie']))
+        sizer.Add(AutoRadioBox(self, None, 'inscriptions[self.parent.periode].mode', "Mode d'accueil", [u'Crèche', 'Halte-garderie']))
         sizer.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'essai :"), 0, wx.ALIGN_CENTER_VERTICAL), AutoDateCtrl(self, None, 'inscriptions[self.parent.periode].fin_periode_essai')])
         sizer1 = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Semaine type'), wx.HORIZONTAL)
         sizer.Add(sizer1)
