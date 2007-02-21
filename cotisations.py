@@ -5,7 +5,6 @@ import sys
 import string
 import datetime
 import zipfile
-from wxPython.wx import *
 import wx
 import wx.lib.scrolledpanel
 import wx.html
@@ -274,8 +273,8 @@ class CotisationsPanel(GPanel):
         self.inscrits = inscrits
 
         wx.StaticBox(self, -1, u'Edition des appels de cotisation', pos=(5, 35), size=(600, 75))
-        self.choice = wxChoice(self, -1, pos=(20, 60), size=(200, 30))
-        self.monthchoice = wxChoice(self, -1, pos=(240, 60), size=(200, 30))
+        self.choice = wx.Choice(self, -1, pos=(20, 60), size=(200, 30))
+        self.monthchoice = wx.Choice(self, -1, pos=(240, 60), size=(200, 30))
         date = getfirstmonday()
         first_date = datetime.date(year=date.year, month=date.month, day=1) 
         while date < last_date:

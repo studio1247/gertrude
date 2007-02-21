@@ -2,7 +2,6 @@
 
 import os.path
 import datetime
-from wxPython.wx import *
 from common import *
 from planning import GPanel
 from Controls import *

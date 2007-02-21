@@ -11,13 +11,13 @@ from general import GeneralPanel
 from common import *
 from datafiles import *
 
-version = '0.30'
+version = '0.32'
 
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):
         wx.HtmlListBox.__init__(self, parent, id, size=size, style=style)
         self.items = []
-        
+
     def OnGetItem(self, n):
         return self.items[n]
 
@@ -32,18 +32,18 @@ class HtmlListBox(wx.HtmlListBox):
 class Listbook(wx.Panel):
     def __init__(self, parent, id, style, pos):
         wx.Panel.__init__(self, parent, id=id, pos=pos)
-	self.sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.list_box = HtmlListBox(self, -1, size=(155, 250), style=wx.BORDER_SUNKEN)
-	self.sizer.Add(self.list_box, 0, wx.EXPAND)
+        self.sizer.Add(self.list_box, 0, wx.EXPAND)
         self.list_box.Bind(wx.EVT_LISTBOX, self.OnPageChanged)
         self.panels = []
         self.active_panel = None
-	self.SetSizer(self.sizer)
-        
+        self.SetSizer(self.sizer)
+
     def AddPage(self, panel, bitmap):
         self.list_box.Append('<center><img src="%s"></center>' % bitmap)
-	self.panels.append(panel)
-	self.sizer.Add(panel, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 5)
+        self.panels.append(panel)
+        self.sizer.Add(panel, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 5)
         if len(self.panels) == 1:
             self.active_panel = panel
         else:
@@ -57,11 +57,11 @@ class Listbook(wx.Panel):
             self.sizer.Show(self.active_panel, False)
         self.active_panel = self.panels[event.GetSelection()]
         self.sizer.Show(self.active_panel, True)
-	self.sizer.Layout()
+        self.sizer.Layout()
 
     def GetPage(self, n):
         return self.panels[n]
- 
+
 class GertrudeListbook(Listbook):
     def __init__(self, parent, id=-1):
         Listbook.__init__(self, parent, id=-1, style=wx.LB_DEFAULT, pos=(10, 10))
@@ -74,45 +74,45 @@ class GertrudeListbook(Listbook):
             self.AddPage(GeneralPanel(self, creche, inscrits), './bitmaps/creche.png')
         #self.AddPage('./bitmaps/administration.png')
         self.Draw()
-        
+
     def OnPageChanged(self, event):
         Listbook.OnPageChanged(self, event)
         self.GetPage(event.GetSelection()).UpdateContents()
         event.Skip()
-        
+
     def Update(self):
         self.GetPage(self.list_box.GetSelection()).Update()
-        
-        
+
+
 class GertrudeFrame(wx.Frame):
     def __init__(self, parent, ID, title):
-        wx.Frame.__init__(self, parent, ID, title, wx.DefaultPosition, wx.Size(900, 700))      
+        wx.Frame.__init__(self, parent, ID, title, wx.DefaultPosition, wx.Size(900, 700))
 
         # Icone
         icon = wx.Icon('./bitmaps/gertrude.ico', wx.BITMAP_TYPE_ICO)
         self.SetIcon(icon)
-        
+
         # Statusbar
         self.CreateStatusBar()
         self.SetStatusText("This is the statusbar")
-        
+
         # Toolbar
         tb = self.CreateToolBar(wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT)
         tb.SetToolBitmapSize(wx.Size(24, 24))
         tb.AddSimpleTool(20, wx.BitmapFromImage(wx.Image("./bitmaps/Reload File.png", wx.BITMAP_TYPE_PNG)), "Synchroniser")
         self.Bind(wx.EVT_TOOL, self.onSynchroButton)
         tb.Realize()
-        
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-	panel = wx.Panel(self, -1)
-	sizer.Add(panel, 1, wx.EXPAND)
-	self.SetSizer(sizer)
 
-	sizer2 = wx.BoxSizer(wx.HORIZONTAL)
-	self.listbook = GertrudeListbook(panel)
-	sizer2.Add(self.listbook, 1, wx.EXPAND)
-	panel.SetSizer(sizer2)
-       
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        panel = wx.Panel(self, -1)
+        sizer.Add(panel, 1, wx.EXPAND)
+        self.SetSizer(sizer)
+
+        sizer2 = wx.BoxSizer(wx.HORIZONTAL)
+        self.listbook = GertrudeListbook(panel)
+        sizer2.Add(self.listbook, 1, wx.EXPAND)
+        panel.SetSizer(sizer2)
+
     def onSynchroButton(self, event):
         global creche
         global inscrits
@@ -139,7 +139,7 @@ class LoginDialog(wx.Dialog):
         # so we can set an extra style that must be set before
         # creation, and then we create the GUI dialog using the Create
         # method.
-        
+
         pre = wx.PreDialog()
         #pre.SetExtraStyle(DIALOG_EX_CONTEXTHELP)
         pre.Create(None, -1, "Identification", wx.DefaultPosition, wx.DefaultSize)
@@ -157,7 +157,7 @@ class LoginDialog(wx.Dialog):
         # contents
         sizer = wx.BoxSizer(wx.VERTICAL)
 
-        bmp = wx.Bitmap("./bitmaps/splash_gertrude.png", wx.BITMAP_TYPE_PNG)        
+        bmp = wx.Bitmap("./bitmaps/splash_gertrude.png", wx.BITMAP_TYPE_PNG)
         bmp32 = wx.StaticBitmap(self, -1, bmp, style=wx.SUNKEN_BORDER)
         #label = wx.StaticText(self, -1, "This is a wx.Dialog")
         #label.SetHelpText("This is the help text for the label")
@@ -189,11 +189,11 @@ class LoginDialog(wx.Dialog):
         sizer.Add(line, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.RIGHT|wx.TOP, 5)
 
         btnsizer = wx.StdDialogButtonSizer()
-        btn = wx.Button(self, wx.ID_OK)        
+        btn = wx.Button(self, wx.ID_OK)
         btn.SetDefault()
         btnsizer.AddButton(btn)
         self.Bind(wx.EVT_BUTTON, self.onOkButton, btn)
-                
+
         btn = wx.Button(self, wx.ID_CANCEL)
         btnsizer.AddButton(btn)
         self.Bind(wx.EVT_BUTTON, self.OnExit, btn)
@@ -210,14 +210,14 @@ class LoginDialog(wx.Dialog):
         global profil
         login_value = self.login_ctrl.GetValue()
         password_value = self.passwd_ctrl.GetValue()
-        
+
         for (login, password, profil) in logins:
             if (login == login_value and password == password_value):
                 self.Destroy()
                 frame = GertrudeFrame(None, -1, "Gertrude v%s" % version)
                 frame.Show()
                 return
-        
+
         self.login_ctrl.Clear()
         self.passwd_ctrl.Clear()
         self.login_ctrl.SetFocus()
@@ -242,4 +242,3 @@ Backup()
 app = MyApp(0)
 app.MainLoop()
 connection.close()
-

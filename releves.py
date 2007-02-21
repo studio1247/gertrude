@@ -5,7 +5,6 @@ import sys
 import string
 import datetime
 import zipfile
-from wxPython.wx import *
 import wx
 import wx.lib.scrolledpanel
 import wx.html
@@ -22,8 +21,8 @@ def getPleinTempsIndexes(inscrits, date_debut, date_fin):
         if len(inscriptions) > 0:
             inscription = inscriptions[0]
             if inscription.mode == 0:
-                semaine_type = inscription.semaine_type
-                for jour in semaine_type:
+                periode_reference = inscription.periode_reference
+                for jour in periode_reference:
                     if jour != [1, 1, 1]:
                         break
                 else:
@@ -38,12 +37,12 @@ def getMiTempsIndexes(inscrits, date_debut, date_fin):
         if len(inscriptions) > 0:
             inscription = inscriptions[0]
             if inscription.mode == 0:
-                semaine_type = inscription.semaine_type
+                periode_reference = inscription.periode_reference
                 nb_jours = 0
-                for jour in semaine_type:
+                for jour in periode_reference:
                     if jour == [1, 1, 1]:
                         nb_jours += 1
-                if (nb_jours != 5):
+                if nb_jours != 5:
                     result.append(i)
     return result
 
@@ -165,6 +164,7 @@ def ReplaceFields(cellules, values):
                 else:
                     text = ''
 
+                # print tag.firstChild.wholeText, '=>', text
                 tag.firstChild.replaceWholeText(text)
 
 def ReplaceEtatsTrimestrielsContent(document, inscrits, annee):
@@ -463,7 +463,7 @@ class RelevesPanel(GPanel):
 
         # Les releves trimestriels
         wx.StaticBox(self, -1, u'Relevés trimestriels', pos=(5, 35), size=(400, 75))
-        self.choice = wxChoice(self, -1, pos=(20, 60), size=(200, 30))
+        self.choice = wx.Choice(self, -1, pos=(20, 60), size=(200, 30))
         button = wx.Button(self, -1, u'Génération', pos=(240, 60))
         for year in range(first_date.year, last_date.year + 1):
             self.choice.Append(u'Année %d' % year, year)
@@ -472,7 +472,7 @@ class RelevesPanel(GPanel):
 
         # Les plannings de presence enfants
         wx.StaticBox(self, -1, u'Planning des présences', pos=(5, 130), size=(400, 75))
-        self.weekchoice = wxChoice(self, -1, pos=(20, 155), size=(200, 30))
+        self.weekchoice = wx.Choice(self, -1, pos=(20, 155), size=(200, 30))
         day = getfirstmonday()
         semaine = 1
         while day < last_date:
