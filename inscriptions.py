@@ -48,7 +48,7 @@ class ContextPanel(wx.Panel):
         self.parent = parent
         self.creche = creche
         wx.Panel.__init__(self, parent)
-        self.periodechoice = wx.Choice(self, -1, pos=(10, 10), size=(150, 30))
+        self.periodechoice = wx.Choice(self, -1, pos=(10, 10), size=(180, 30))
         self.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.periodechoice)
         self.html_window = wx.html.HtmlWindow(self, pos=(10, 50), style=wx.SUNKEN_BORDER)
         self.Bind(wx.EVT_SIZE, self.OnResize)

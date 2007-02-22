@@ -463,8 +463,8 @@ class RelevesPanel(GPanel):
 
         # Les releves trimestriels
         wx.StaticBox(self, -1, u'Relevés trimestriels', pos=(5, 35), size=(400, 75))
-        self.choice = wx.Choice(self, -1, pos=(20, 60), size=(200, 30))
-        button = wx.Button(self, -1, u'Génération', pos=(240, 60))
+        self.choice = wx.Choice(self, -1, pos=(20, 60), size=(270, 30))
+        button = wx.Button(self, -1, u'Génération', pos=(310, 60))
         for year in range(first_date.year, last_date.year + 1):
             self.choice.Append(u'Année %d' % year, year)
         self.choice.SetSelection(today.year - first_date.year)
@@ -472,7 +472,7 @@ class RelevesPanel(GPanel):
 
         # Les plannings de presence enfants
         wx.StaticBox(self, -1, u'Planning des présences', pos=(5, 130), size=(400, 75))
-        self.weekchoice = wx.Choice(self, -1, pos=(20, 155), size=(200, 30))
+        self.weekchoice = wx.Choice(self, -1, pos=(20, 155), size=(270, 30))
         day = getfirstmonday()
         semaine = 1
         while day < last_date:
@@ -484,7 +484,7 @@ class RelevesPanel(GPanel):
                 semaine = 1
             day += datetime.timedelta(14)
         self.weekchoice.SetSelection((today - getfirstmonday()).days / 14 + 1)
-        button = wx.Button(self, -1, u'Génération', pos=(240, 155))
+        button = wx.Button(self, -1, u'Génération', pos=(310, 155))
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationPlanningPresences, button)
 
     def EvtGenerationEtatsTrimestriels(self, evt):
