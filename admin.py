@@ -10,7 +10,7 @@ profiles = [("Administrateur", PROFIL_ALL),
             ("Bureau", PROFIL_BUREAU),
             (u"Trésorier", PROFIL_TRESORIER),
             ("Inscriptions", PROFIL_INSCRIPTIONS),
-            ("Saisie présences", PROFIL_SAISIE_PRESENCES),
+            (u"Saisie présences", PROFIL_SAISIE_PRESENCES),
             ]
             
 class UsersPanel(AutoTab):
