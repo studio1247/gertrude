@@ -7,7 +7,8 @@ PROFIL_INSCRIPTIONS = 1
 PROFIL_TRESORIER = 2
 PROFIL_BUREAU = 4
 PROFIL_SAISIE_PRESENCES = 8
-PROFIL_ADMIN = PROFIL_INSCRIPTIONS + PROFIL_TRESORIER + PROFIL_BUREAU + PROFIL_SAISIE_PRESENCES
+PROFIL_ADMIN = 16
+PROFIL_ALL = PROFIL_ADMIN + PROFIL_INSCRIPTIONS + PROFIL_TRESORIER + PROFIL_BUREAU + PROFIL_SAISIE_PRESENCES
 
 days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"]
 months = ["Janvier", u'Février', "Mars", "Avril", "Mai", "Juin", "Juillet", u'Août', "Septembre", "Octobre", "Novembre", u'Décembre']
@@ -183,6 +184,28 @@ class BaremeCAF(object):
             print 'update', name
             connection.execute('UPDATE BAREMESCAF SET %s=? WHERE idx=?' % name, (value, self.idx))
 
+class User(object):
+    def __init__(self, creation=True):
+        self.idx = None
+        self.login = "anonymous"
+        self.password = "anonymous"
+        self.profile = 0
+
+        if creation:
+            print 'nouveau user'
+            result = connection.execute('INSERT INTO USERS (idx, login, password, profile) VALUES (NULL,?,?,?)', (self.login, self.password, self.profile))
+            self.idx = result.lastrowid
+        
+    def delete(self):
+        print 'suppression user'
+        connection.execute('DELETE FROM USERS WHERE idx=?', (self.idx,))
+
+    def __setattr__(self, name, value):
+        self.__dict__[name] = value
+        if name in ['login', 'password', 'profile'] and self.idx:
+            print 'update', name
+            connection.execute('UPDATE USERS SET %s=? WHERE idx=?' % name, (value, self.idx))
+
 class Creche(object): 
     def __init__(self, creation=True):
         self.idx = None
@@ -190,8 +213,10 @@ class Creche(object):
         self.adresse = ''
         self.code_postal = ''
         self.ville = ''
+        self.users = []
         self.bureaux = []
         self.baremes_caf = []
+        self.inscrits = []
         
         if creation:
             print 'nouvelle creche'

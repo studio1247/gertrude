@@ -43,16 +43,14 @@ def ParseHtml(filename, context):
 
     return data
 
-class ContextPanel(wx.lib.scrolledpanel.ScrolledPanel):
+class ContextPanel(wx.Panel):
     def __init__(self, parent, creche):
         self.parent = parent
         self.creche = creche
-        wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent)
+        wx.Panel.__init__(self, parent)
         self.periodechoice = wx.Choice(self, -1, pos=(10, 10), size=(150, 30))
         self.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.periodechoice)
-        self.html_scroll = wx.ScrolledWindow(self, pos = (10, 50), style=wx.SUNKEN_BORDER)
-        self.html_scroll.SetScrollbars(20, 20, 600/20, 1320/20)
-        self.html_window = wx.html.HtmlWindow(self.html_scroll, pos=(30,30), size=(600, 1240), style=wx.html.HW_SCROLLBAR_NEVER)
+        self.html_window = wx.html.HtmlWindow(self, pos=(10, 50), style=wx.SUNKEN_BORDER)
         self.Bind(wx.EVT_SIZE, self.OnResize)
     
     def SetInscrit(self, inscrit):
@@ -84,7 +82,7 @@ class ContextPanel(wx.lib.scrolledpanel.ScrolledPanel):
             
     def OnResize(self, evt):
         w = evt.GetSize().GetWidth() ; h = evt.GetSize().GetHeight()
-        self.html_scroll.SetSize((w-20, h-60))
+        self.html_window.SetSize((w-20, h-60))
     
 class ContratPanel(ContextPanel):
     def __init__(self, parent, creche):

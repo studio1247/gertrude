@@ -8,6 +8,7 @@ from inscriptions import InscriptionsPanel
 from cotisations import CotisationsPanel
 from releves import RelevesPanel
 from general import GeneralPanel
+from admin import AdminPanel
 from common import *
 from datafiles import *
 
@@ -65,14 +66,15 @@ class Listbook(wx.Panel):
 class GertrudeListbook(Listbook):
     def __init__(self, parent, id=-1):
         Listbook.__init__(self, parent, id=-1, style=wx.LB_DEFAULT, pos=(10, 10))
-        self.AddPage(InscriptionsPanel(self, profil, creche, inscrits), './bitmaps/inscriptions.png')
-        self.AddPage(PlanningPanel(self, profil, inscrits), './bitmaps/presences.png')
+        self.AddPage(InscriptionsPanel(self, profil, creche, creche.inscrits), './bitmaps/inscriptions.png')
+        self.AddPage(PlanningPanel(self, profil, creche.inscrits), './bitmaps/presences.png')
         if profil & PROFIL_TRESORIER:
-            self.AddPage(CotisationsPanel(self, profil, creche, inscrits), './bitmaps/facturation.png')
-        self.AddPage(RelevesPanel(self, profil, creche, inscrits), './bitmaps/releves.png')
+            self.AddPage(CotisationsPanel(self, profil, creche, creche.inscrits), './bitmaps/facturation.png')
+        self.AddPage(RelevesPanel(self, profil, creche, creche.inscrits), './bitmaps/releves.png')
         if profil & PROFIL_BUREAU:
-            self.AddPage(GeneralPanel(self, creche, inscrits), './bitmaps/creche.png')
-        #self.AddPage('./bitmaps/administration.png')
+            self.AddPage(GeneralPanel(self, creche, creche.inscrits), './bitmaps/creche.png')
+        if profil & PROFIL_ADMIN:
+            self.AddPage(AdminPanel(self, creche), './bitmaps/administration.png')
         self.Draw()
 
     def OnPageChanged(self, event):
@@ -115,7 +117,6 @@ class GertrudeFrame(wx.Frame):
 
     def onSynchroButton(self, event):
         global creche
-        global inscrits
         dlg = SynchroDialog(self)
         dlg.CenterOnScreen()
 
@@ -124,13 +125,15 @@ class GertrudeFrame(wx.Frame):
         dlg.Destroy()
         if val == ID_SYNCHRO:
             # TODO crade ...
-            _creche, inscrits[:] = Load()
-            creche.bureaux[:] = _creche.bureaux
+            _creche = Load()
             creche.nom = _creche.nom
             creche.adresse = _creche.adresse
             creche.code_postal = _creche.code_postal
             creche.ville = _creche.ville
             creche.baremes_caf[:] = _creche.baremes_caf
+            creche.bureaux[:] = _creche.bureaux
+            creche.inscrits[:] = _creche.inscrits
+            creche.users[:] = _creche.users
             self.listbook.Update()
 
 class LoginDialog(wx.Dialog):
@@ -208,12 +211,13 @@ class LoginDialog(wx.Dialog):
 
     def onOkButton(self, evt):
         global profil
-        login_value = self.login_ctrl.GetValue()
-        password_value = self.passwd_ctrl.GetValue()
+        login = self.login_ctrl.GetValue()
+        password = self.passwd_ctrl.GetValue()
 
-        for (login, password, profil) in logins:
-            if (login == login_value and password == password_value):
+        for user in creche.users:
+            if login == user.login and password == user.password:
                 self.Destroy()
+                profil = user.profile
                 frame = GertrudeFrame(None, -1, "Gertrude v%s" % version)
                 frame.Show()
                 return
@@ -232,12 +236,8 @@ class MyApp(wx.App):
         login_dialog.Show(True)
         return True
 
-creche, inscrits = Load()
+creche = Load()
 profil = 0
-logins = [('Bertrand', 'cromorne', PROFIL_ADMIN),
-          (u'Béa', 'gertrux', PROFIL_ADMIN),
-          ('Lore', 'tilli', PROFIL_INSCRIPTIONS),
-          ]
 Backup()
 app = MyApp(0)
 app.MainLoop()
