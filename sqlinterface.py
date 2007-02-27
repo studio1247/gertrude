@@ -14,11 +14,14 @@
 ##    along with Gertrude; if not, write to the Free Software
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+from common import VERSION
+
 import os
 try:
     import sqlite3
 except:
-    from pysqlite2 import dbapi2 as sqlite3 
+    from pysqlite2 import dbapi2 as sqlite3
+
 
 class BDDConnection(object):
     def __init__(self):
@@ -147,7 +150,25 @@ class BDDConnection(object):
             value INTEGER,
             details VARCHAR
           );""")
+
+        cur.execute("""
+          CREATE TABLE DATA(
+            key VARCHAR,
+            value VARCHAR
+          );""")
         
+        cur.execute("""
+          CREATE TABLE USERS(
+            idx INTEGER PRIMARY KEY,
+            login VARCHAR,
+            password VARCHAR,
+            profile INTEGER
+          );""")
+        
+        cur.execute("INSERT INTO USERS (idx, login, password, profile) VALUES (NULL,?,?,?)", ("admin", "admin", PROFIL_ALL))
+
+
+        cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
         self.con.commit()
         
 connection = BDDConnection()

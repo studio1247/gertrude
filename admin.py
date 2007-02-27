@@ -33,31 +33,58 @@ class UsersPanel(AutoTab):
     def __init__(self, parent, creche):
         AutoTab.__init__(self, parent)
         self.creche = creche
-        sizer = wx.BoxSizer(wx.VERTICAL)
+        self.delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
         button_add = wx.Button(self, -1, 'Nouvel utilisateur')
-        sizer.Add(button_add, 0, wx.EXPAND)
+        self.sizer.Add(button_add, 0, wx.EXPAND)
         self.Bind(wx.EVT_BUTTON, self.user_add, button_add)
-        self.sizer = wx.FlexGridSizer(4, 6, 5, 5)
         for i, user in enumerate(self.creche.users):
             self.display_user(i)
-        sizer.Add(self.sizer)
-        sizer.Fit(self)
-        self.SetSizer(sizer)
+        self.sizer.Fit(self)
+        self.SetSizer(self.sizer)
 
     def display_user(self, index):
-        self.sizer.AddMany([wx.StaticText(self, -1, 'Login :'), AutoTextCtrl(self, self.creche, 'users[%d].login' % index)])
-        self.sizer.AddMany([wx.StaticText(self, -1, 'Mot de passe :'), AutoTextCtrl(self, self.creche, 'users[%d].password' % index)])
-        self.sizer.AddMany([wx.StaticText(self, -1, 'Profil :'), AutoChoiceCtrl(self, self.creche, 'users[%d].profile' % index, items=profiles)])
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.AddMany([(wx.StaticText(self, -1, 'Login :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, self.creche, 'users[%d].login' % index)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Mot de passe :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, self.creche, 'users[%d].password' % index)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Profil :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoChoiceCtrl(self, self.creche, 'users[%d].profile' % index, items=profiles)])
+        delbutton = wx.BitmapButton(self, -1, self.delbmp, size=(self.delbmp.GetWidth(), self.delbmp.GetHeight()))
+        delbutton.index = index
+        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
+        self.Bind(wx.EVT_BUTTON, self.user_del, delbutton)
+        self.sizer.Add(sizer)
 
     def user_add(self, event):
         self.creche.users.append(User())
         self.display_user(len(self.creche.users) - 1)
         self.sizer.Layout()
+
+    def user_del(self, event):
+        index = event.GetEventObject().index
+        sizer = self.sizer.GetItem(len(self.creche.users))
+        sizer.DeleteWindows()
+        self.sizer.Detach(len(self.creche.users))
+        self.creche.users[index].delete()
+        del self.creche.users[index]
+        self.sizer.Layout()
+        self.UpdateContents()
+
+class ConnectionPanel(AutoTab):
+    def __init__(self, parent, creche):
+        AutoTab.__init__(self, parent)
+        self.creche = creche
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.AddMany([(wx.StaticText(self, -1, 'Serveur HTTP :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, self.creche, 'server_url', size=(200, 21))])
+        self.sizer.Add(sizer)
+        self.sizer.Fit(self)
+        self.SetSizer(self.sizer)
         
 class AdminNotebook(wx.Notebook):
     def __init__(self, parent, creche):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
         self.AddPage(UsersPanel(self, creche), u'Utilisateurs')
+        self.AddPage(ConnectionPanel(self, creche), u'Connection')
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
     def OnPageChanged(self, event):

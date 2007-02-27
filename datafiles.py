@@ -43,8 +43,9 @@ def Backup():
         file(backups_directory + "/lastbackup", 'w').write(backup_filename)
 
 class SynchroDialog(wx.Dialog):
-    def __init__(self, parent):
+    def __init__(self, parent, server):
         wx.Dialog.__init__(self, parent, -1, "Synchronisation", pos=wx.DefaultPosition, size=wx.DefaultSize, style=wx.DEFAULT_DIALOG_STYLE | wx.CAPTION | wx.SYSTEM_MENU | wx.THICK_FRAME)
+        self.server = server
 
         topsizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -82,7 +83,7 @@ class SynchroDialog(wx.Dialog):
             lines.append(line)
 
         try:
-            self.ftp = FTP("ftpperso.free.fr")
+            self.ftp = FTP(self.server)
             self.ftp.login("gertude", "schlemel")
             self.ftp.retrlines('LIST', callback)
             for line in lines:
@@ -152,11 +153,11 @@ def Load():
 
     cur = connection.cursor()
 
-    cur.execute('SELECT nom, adresse, code_postal, ville, idx FROM CRECHE')
+    cur.execute('SELECT nom, adresse, code_postal, ville, server_url, idx FROM CRECHE')
     creche_entry = cur.fetchall()
     if len(creche_entry) > 0:
         creche = Creche(creation=False)
-        creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.idx = creche_entry[0]
+        creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.server_url, creche.idx = creche_entry[0]
     else:
         creche = Creche()
 

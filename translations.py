@@ -22,19 +22,17 @@ from common import *
 from sqlinterface import *
 
 def Translate():
+
     cur = connection.cursor()
     try:
         cur.execute('SELECT value FROM DATA WHERE key="VERSION"')
         version = int(cur.fetchall()[0][0])
     except:
-        version = None
+        version = 0
 
-    VERSION = 1
-    if version == VERSION:
-        print 'Pas de translations'
-        return        
-    
-    if version is None:
+    print version, '=>', VERSION
+
+    if version < 1:
         cur.execute("""
           CREATE TABLE DATA(
             key VARCHAR,
@@ -50,11 +48,16 @@ def Translate():
           );""")
 
         cur.execute("INSERT INTO USERS (idx, login, password, profile) VALUES (NULL,?,?,?)", ("admin", "admin", PROFIL_ALL))
-    
-    try:
-        cur.execute("DELETE FROM DATA WHERE key=VERSION")
-    except sqlite3.OperationalError:
-        pass
-    cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
 
-    connection.commit()
+    if version < 2:
+        cur.execute("ALTER TABLE CRECHE ADD server_url VARCHAR;")
+        
+    if version < VERSION:
+        try:
+            cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))
+        except sqlite3.OperationalError:
+            pass
+
+        cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
+
+        connection.commit()

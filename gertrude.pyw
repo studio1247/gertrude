@@ -134,7 +134,7 @@ class GertrudeFrame(wx.Frame):
 
     def onSynchroButton(self, event):
         global creche
-        dlg = SynchroDialog(self)
+        dlg = SynchroDialog(self, creche.server_url)
         dlg.CenterOnScreen()
 
         # this does not return until the dialog is closed.

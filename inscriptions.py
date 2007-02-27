@@ -341,7 +341,8 @@ class InscriptionsTab(AutoTab):
 class IdentitePanel(InscriptionsTab):
     def __init__(self, parent):
         InscriptionsTab.__init__(self, parent)
-        
+
+        self.delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         sizer1 = wx.BoxSizer(wx.HORIZONTAL)
         sizer2 = wx.FlexGridSizer(4, 2, 5, 5)
@@ -376,13 +377,13 @@ class IdentitePanel(InscriptionsTab):
         
     def __add_fratrie(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, self.inscrit, 'freres_soeurs[%d].prenom' % index), 0, wx.ALIGN_CENTER_VERTICAL)])
-        sizer.AddMany([(wx.StaticText(self, -1, 'Naissance :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].naissance' % index), 0, wx.ALIGN_CENTER_VERTICAL)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'En crèche du'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].entree' % index), 0, wx.ALIGN_CENTER_VERTICAL)])
-        sizer.AddMany([(wx.StaticText(self, -1, 'au'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].sortie' % index), 0, wx.ALIGN_CENTER_VERTICAL)])
-        delbutton = wx.Button(self, -1, 'X')
+        sizer.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, self.inscrit, 'freres_soeurs[%d].prenom' % index), 0, wx.ALIGN_CENTER_VERTICAL)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Naissance :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].naissance' % index), 0, wx.ALIGN_CENTER_VERTICAL)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'En crèche du'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].entree' % index), 0, wx.ALIGN_CENTER_VERTICAL)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'au'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].sortie' % index), 0, wx.ALIGN_CENTER_VERTICAL)])
+        delbutton = wx.BitmapButton(self, -1, self.delbmp, size=(self.delbmp.GetWidth(), self.delbmp.GetHeight()))
         delbutton.index = index
-        sizer.Add(delbutton)
+        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
         self.Bind(wx.EVT_BUTTON, self.EvtSuppressionFrere, delbutton)
         self.fratries_sizer.Add(sizer)
         self.sizer.Layout()
@@ -401,8 +402,10 @@ class IdentitePanel(InscriptionsTab):
         sizer = self.fratries_sizer.GetItem(len(self.inscrit.freres_soeurs))
         sizer.DeleteWindows()
         self.fratries_sizer.Detach(len(self.inscrit.freres_soeurs))
+        self.inscrit.freres_soeurs[index].delete()
         del self.inscrit.freres_soeurs[index]
         self.sizer.Layout()
+        self.UpdateContents()
         
     def SetInscrit(self, inscrit):
         old = new = 0

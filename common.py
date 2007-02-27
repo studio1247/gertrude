@@ -17,8 +17,9 @@
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import datetime, binascii
-from sqlinterface import connection
 from paques import getPaquesDate
+
+VERSION = 2
 
 PROFIL_INSCRIPTIONS = 1
 PROFIL_TRESORIER = 2
@@ -88,6 +89,8 @@ VACANCES = 1
 MALADE = 2
 NONINSCRIT = 3 # utilise dans getPresence
 SUPPLEMENT = 4 # utilise dans getPresence
+
+from sqlinterface import connection
 
 class Presence(object):
     def __init__(self, inscrit, date, previsionnel=0, value=PRESENT, creation=True):
@@ -234,18 +237,19 @@ class Creche(object):
         self.bureaux = []
         self.baremes_caf = []
         self.inscrits = []
+        self.server_url = ''
         
         if creation:
             print 'nouvelle creche'
-            result = connection.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville) VALUES (NULL,?,?,?,?)', (self.nom, self.adresse, self.code_postal, self.ville))
+            result = connection.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, server_url) VALUES (NULL,?,?,?,?)', (self.nom, self.adresse, self.code_postal, self.ville, self.server_url))
             self.idx = result.lastrowid
             self.bureaux.append(Bureau(self))
             self.baremes_caf.append(BaremeCAF())
        
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville'] and self.idx:
-            print 'update', name
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'server_url'] and self.idx:
+            print 'update', name, value
             connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
       
 class Revenu(object):
