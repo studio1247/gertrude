@@ -18,15 +18,7 @@
 
 import datetime, binascii
 from paques import getPaquesDate
-
-VERSION = 2
-
-PROFIL_INSCRIPTIONS = 1
-PROFIL_TRESORIER = 2
-PROFIL_BUREAU = 4
-PROFIL_SAISIE_PRESENCES = 8
-PROFIL_ADMIN = 16
-PROFIL_ALL = PROFIL_ADMIN + PROFIL_INSCRIPTIONS + PROFIL_TRESORIER + PROFIL_BUREAU + PROFIL_SAISIE_PRESENCES
+from constants import *
 
 days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"]
 months = ["Janvier", u'Février', "Mars", "Avril", "Mai", "Juin", "Juillet", u'Août', "Septembre", "Octobre", "Novembre", u'Décembre']
@@ -241,7 +233,7 @@ class Creche(object):
         
         if creation:
             print 'nouvelle creche'
-            result = connection.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, server_url) VALUES (NULL,?,?,?,?)', (self.nom, self.adresse, self.code_postal, self.ville, self.server_url))
+            result = connection.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, server_url) VALUES (NULL,?,?,?,?,?)', (self.nom, self.adresse, self.code_postal, self.ville, self.server_url))
             self.idx = result.lastrowid
             self.bureaux.append(Bureau(self))
             self.baremes_caf.append(BaremeCAF())

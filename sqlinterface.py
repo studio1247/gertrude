@@ -14,7 +14,7 @@
 ##    along with Gertrude; if not, write to the Free Software
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-from common import VERSION
+from constants import *
 
 import os
 try:
@@ -58,7 +58,8 @@ class BDDConnection(object):
             nom VARCHAR,
             adresse VARCHAR,
             code_postal INTEGER,
-            ville VARCHAR
+            ville VARCHAR,
+            server_url VARCHAR
           );""")
     
         cur.execute("""
