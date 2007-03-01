@@ -210,7 +210,8 @@ def Load():
         cur.execute('SELECT date, previsionnel, value, details, idx FROM PRESENCES WHERE inscrit=?', (inscrit.idx,))
         for date, previsionnel, value, details, idx in cur.fetchall():
             presence = Presence(inscrit, getdate(date), previsionnel, value, creation=False)
-            presence.details, presence.idx = eval(details), idx
+            presence.set_details(details)
+            presence.idx = idx
             inscrit.presences[getdate(date)] = presence
 
     cur.execute('SELECT idx, debut, fin, president, vice_president, tresorier, secretaire FROM BUREAUX')

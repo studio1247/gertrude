@@ -83,7 +83,7 @@ NONINSCRIT = 3 # utilise dans getPresence
 SUPPLEMENT = 4 # utilise dans getPresence
 
 from sqlinterface import connection
-
+    
 class Presence(object):
     def __init__(self, inscrit, date, previsionnel=0, value=PRESENT, creation=True):
         self.idx = None
@@ -97,10 +97,29 @@ class Presence(object):
             self.details = None
         if creation:
             self.create()
+
+    def encode_details(self, details):
+        if details is None:
+            return None
+        result = 0
+        for i, v in enumerate(details):
+            result += v << i
+        return result
+
+    def set_details(self, details):
+        if isinstance(details, basestring):
+            details = eval(details)
+        if details is None:
+            self.details = None
+            return
+        self.details = 64 * [0]
+        for i in range(64):
+            if details & (1 << i):
+                self.details[i] = 1
     
     def create(self):
         print 'nouvelle presence'
-        result = connection.execute('INSERT INTO PRESENCES (idx, inscrit, date, previsionnel, value, details) VALUES (NULL,?,?,?,?,?)', (self.inscrit_idx, self.date, self.previsionnel, self.value, str(self.details)))
+        result = connection.execute('INSERT INTO PRESENCES (idx, inscrit, date, previsionnel, value, details) VALUES (NULL,?,?,?,?,?)', (self.inscrit_idx, self.date, self.previsionnel, self.value, self.encode_details(self.details)))
         self.idx = result.lastrowid
         
     def delete(self):
@@ -110,14 +129,14 @@ class Presence(object):
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name == 'details':
-            value = str(value)
+            value = self.encode_details(value)
         if name in ['date', 'previsionnel', 'value', 'details'] and self.idx:
-            print 'update', name
+            print 'update', name, value
             connection.execute('UPDATE PRESENCES SET %s=? WHERE idx=?' % name, (value, self.idx))
         
     def Total(self): # TODO 10/0
         total = 0
-        if (self.value == 0):
+        if self.value == 0:
             # Total reel ...
             #for i in range(int((heureMaximum - heureOuverture) * 4)):
             #    if self.details[i]:
@@ -131,7 +150,7 @@ class Presence(object):
 #                  break
 
             # Total en 0 / 10
-            for (debut, fin, valeur) in tranches:
+            for debut, fin, valeur in tranches:
               for i in range(int((debut - heureOuverture) * 4), int((fin - heureOuverture) * 4)):
                 if self.details[i]:
                   total = 10
@@ -140,7 +159,7 @@ class Presence(object):
     
     def isPresentDuringTranche(self, tranche):
         if (self.value == 0):
-            (debut, fin, valeur) = tranches[tranche]
+            debut, fin, valeur = tranches[tranche]
             for i in range(int((debut - heureOuverture) * 4), int((fin - heureOuverture) * 4)):
                 if self.details[i]:
                   return True

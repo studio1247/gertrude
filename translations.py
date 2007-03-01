@@ -22,7 +22,6 @@ from common import *
 from sqlinterface import *
 
 def Translate():
-
     cur = connection.cursor()
     try:
         cur.execute('SELECT value FROM DATA WHERE key="VERSION"')
@@ -51,6 +50,31 @@ def Translate():
 
     if version < 2:
         cur.execute("ALTER TABLE CRECHE ADD server_url VARCHAR;")
+        cur.execute('UPDATE CRECHE SET server_url=?', ("",))
+
+    if version < 3:
+        cur.execute("ALTER TABLE PRESENCES RENAME TO OLD;")
+        cur.execute("""
+          CREATE TABLE PRESENCES(
+            idx INTEGER PRIMARY KEY,
+            inscrit INTEGER REFERENCES INSCRITS(idx),
+            date DATE,
+            previsionnel INTEGER,
+            value INTEGER,
+            details VARCHAR
+          );""")
+        def encode_details(details):
+            details = eval(details)
+            if details is None:
+                return None
+            result = 0
+            for i, v in enumerate(details):
+                result += v << i
+            return result
+        cur.execute('SELECT inscrit, date, previsionnel, value, details FROM OLD')
+        for inscrit, date, previsionnel, value, details in cur.fetchall():
+            cur.execute('INSERT INTO PRESENCES (idx, inscrit, date, previsionnel, value, details) VALUES (NULL,?,?,?,?,?)', (inscrit, date, previsionnel, value, encode_details(details)))
+        cur.execute('DROP TABLE OLD')
         
     if version < VERSION:
         try:
@@ -59,5 +83,7 @@ def Translate():
             pass
 
         cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
+        cur.execute("VACUUM")
 
         connection.commit()
+
