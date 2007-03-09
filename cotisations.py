@@ -27,7 +27,6 @@ import wx.html
 import xml.dom.minidom
 from common import *
 from planning import GPanel
-from Controls import *
 
 couleurs = ['C2', 'D2', 'B2', 'E2', 'A2']
 

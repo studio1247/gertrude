@@ -20,7 +20,7 @@ import os.path
 import datetime
 from common import *
 from planning import GPanel
-from Controls import *
+from controls import *
 
 profiles = [("Administrateur", PROFIL_ALL),
             ("Bureau", PROFIL_BUREAU),

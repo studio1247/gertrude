@@ -27,7 +27,7 @@ import wx.html
 import xml.dom.minidom
 from common import *
 from planning import GPanel
-from Controls import *
+from controls import *
 
 def getPleinTempsIndexes(inscrits, date_debut, date_fin):
     result = []

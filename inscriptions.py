@@ -20,7 +20,7 @@ import os, datetime, xml.dom.minidom, cStringIO
 import wx, wx.lib.scrolledpanel, wx.html
 from common import *
 from planning import GPanel
-from Controls import *
+from controls import *
 from cotisations import Cotisation, CotisationException
 
 def ParseHtml(filename, context):

@@ -20,7 +20,7 @@ import os.path
 import datetime
 from common import *
 from planning import GPanel
-from Controls import *
+from controls import *
 
 class CrechePanel(AutoTab):
     def __init__(self, parent, creche):
