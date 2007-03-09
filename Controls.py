@@ -30,7 +30,7 @@ class NumericCtrl(wx.TextCtrl):
     def __init__(self, parent, id=-1, value="", min=None, max=None,
 ##                 action=None,
                  precision=3, action_kw={}, *args, **kwargs):
-        
+
         self.__digits = '0123456789.-'
         self.__prec   = precision
         self.format   = '%.'+str(self.__prec)+'f'
@@ -38,91 +38,19 @@ class NumericCtrl(wx.TextCtrl):
         #if (value != None): self.__val = float(value)
         if (max != None): self.__max = float(max)
         if (min != None): self.__min = float(min)
-
-        # set up action
-##        self.__action = Closure.Closure()
-##        if callable(action):  self.__action.func = action
-##        if len(action_kw.keys())>0:  self.__action.kw = action_kw
-
-        this_sty = wx.TAB_TRAVERSAL| wx.TE_PROCESS_ENTER
-        kw = kwargs
-
-        if kw.has_key('style'): this_sty = this_sty | kw['style']
-        kw['style'] = this_sty
-            
-        wx.TextCtrl.__init__(self, parent, id, value=value, *args, **kw)
-        
-        #self.__CheckValid(self.__val)
-        #self.SetValue(self.__val)
-              
-        wx.EVT_CHAR(self, self.onChar)
-        #wx.EVT_TEXT(self, -1,self.onText)
-        #wx.EVT_SET_FOCUS(self, self.onSetFocus)
-        #wx.EVT_KILL_FOCUS(self, self.onKillFocus)
-        #wx.EVT_SIZE(self, self.onResize)
-        #self.__GetMark()
-
-##    def SetAction(self,action,action_kw={}):
-##        self.__action = Closure.Closure()
-##        if callable(action):         self.__action.func = action
-##        if len(action_kw.keys())>0:  self.__action.kw = action_kw
+      
+        wx.TextCtrl.__init__(self, parent, id, value=value, *args, **kwargs)
+                     
+        self.Bind(wx.EVT_CHAR, self.onChar)
         
     def SetPrecision(self,p):
         self.__prec = p
         self.format = '%.'+str(self.__prec)+'f'
         
-##    def __GetMark(self):
-##        " keep track of cursor position within text"
-##        try:
-##            self.__mark = min(wx.TextCtrl.GetSelection(self)[0],
-##                              len(wx.TextCtrl.GetValue(self).strip()))
-##        except:
-##            self.__mark = 0
-##
-##    def __SetMark(self,m=None):
-##        " "
-##        if m==None: m = self.__mark
-##        self.SetSelection(m,m)
-##
-##    def SetValue(self,value,act=True):
-##        " main method to set value "
-##        if value == None: value = wx.TextCtrl.GetValue(self).strip()
-##        self.__CheckValid(value)
-##        self.__GetMark()
-##        if self.__valid:
-##            self.__Text_SetValue(self.__val)
-##            self.SetForegroundColour(self.__fgcol_valid)
-##            self.SetBackgroundColour(self.__bgcol_valid)
-##            if  callable(self.__action) and act:  self.__action(value=self.__val)
-##        else:
-##            self.__val = self.__bound_val
-##            self.__Text_SetValue(self.__val)
-##            self.__CheckValid(self.__val)
-##            self.SetForegroundColour(self.__fgcol_invalid)
-##            self.SetBackgroundColour(self.__bgcol_invalid)
-##            wx.Bell()
-##        self.__SetMark()
-##
-##    def onKillFocus(self, event):
-##        self.__GetMark()
-##        event.Skip()
-##
-##    def onResize(self, event):
-##        event.Skip()
-##
-##    def onSetFocus(self, event):
-##        self.__SetMark()
-##        event.Skip()
-        
     def onChar(self, event):
         """ on Character event"""
-        key   = event.KeyCode()
+        key  = event.KeyCode
         entry = wx.TextCtrl.GetValue(self).strip()
-        # really, the order here is important:
-        # 1. return sends to ValidateEntry
-##        if (key == wx.WXK_RETURN):
-##            self.SetValue(entry)
-##            return
 
         # 2. other non-text characters are passed without change
         if (key < wx.WXK_SPACE or key == wx.WXK_DELETE or key > 255):
@@ -141,14 +69,6 @@ class NumericCtrl(wx.TextCtrl):
         if (chr(key) in self.__digits):
             event.Skip()
             return
-
-##    def onText(self, event=None):
-##        try:
-##            if event.GetString() != '':
-##                self.__CheckValid(event.GetString())
-##        except:
-##            pass
-##        event.Skip()
 
     def GetValue(self):
         if (wx.TextCtrl.GetValue(self) == ""):
