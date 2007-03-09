@@ -28,7 +28,7 @@ from admin import AdminPanel
 from common import *
 from datafiles import *
 
-VERSION = '0.33'
+VERSION = '0.34'
 
 ID_SYNCHRO = 200
 ID_UNDO = 300
