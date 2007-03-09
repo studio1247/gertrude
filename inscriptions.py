@@ -464,7 +464,7 @@ class IdentitePanel(InscriptionsTab):
                 dlg = wx.MessageDialog(self, 
                                        u"Il faut d'abord remplir le prénom et le nom de l'enfant",
                                        'Message',
-                                       wxICON_INFORMATION)
+                                       wx.ICON_INFORMATION)
                 dlg.ShowModal()
                 dlg.Destroy()
 

@@ -46,8 +46,6 @@ def Translate():
             profile INTEGER
           );""")
 
-        cur.execute("INSERT INTO USERS (idx, login, password, profile) VALUES (NULL,?,?,?)", ("admin", "admin", PROFIL_ALL))
-
     if version < 2:
         cur.execute("ALTER TABLE CRECHE ADD server_url VARCHAR;")
         cur.execute('UPDATE CRECHE SET server_url=?', ("",))

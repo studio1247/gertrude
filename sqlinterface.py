@@ -166,9 +166,6 @@ class BDDConnection(object):
             profile INTEGER
           );""")
         
-        cur.execute("INSERT INTO USERS (idx, login, password, profile) VALUES (NULL,?,?,?)", ("admin", "admin", PROFIL_ALL))
-
-
         cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
         self.con.commit()
         

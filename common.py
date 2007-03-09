@@ -220,7 +220,7 @@ class User(object):
         self.idx = None
         self.login = "anonymous"
         self.password = "anonymous"
-        self.profile = 0
+        self.profile = PROFIL_ALL
 
         if creation:
             print 'nouveau user'

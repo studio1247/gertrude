@@ -16,9 +16,9 @@
 ##    along with Gertrude; if not, write to the Free Software
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+import __builtin__
 import wx, wx.lib.scrolledpanel, wx.html
-import datetime
-import sys, shutil
+import datetime, sys, shutil
 from planning import GPanel, PlanningPanel
 from inscriptions import InscriptionsPanel
 from cotisations import CotisationsPanel
@@ -28,7 +28,12 @@ from admin import AdminPanel
 from common import *
 from datafiles import *
 
-version = '0.32'
+VERSION = '0.33'
+
+ID_SYNCHRO = 200
+ID_UNDO = 300
+
+__builtin__.history = []
 
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):
@@ -98,9 +103,8 @@ class GertrudeListbook(Listbook):
         self.GetPage(event.GetSelection()).UpdateContents()
         event.Skip()
 
-    def Update(self):
-        self.GetPage(self.list_box.GetSelection()).Update()
-
+    def UpdateContents(self):
+        self.GetPage(self.list_box.GetSelection()).UpdateContents()
 
 class GertrudeFrame(wx.Frame):
     def __init__(self, parent, ID, title):
@@ -117,8 +121,9 @@ class GertrudeFrame(wx.Frame):
         # Toolbar
         tb = self.CreateToolBar(wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT)
         tb.SetToolBitmapSize(wx.Size(24, 24))
-        tb.AddSimpleTool(20, wx.BitmapFromImage(wx.Image("./bitmaps/Reload File.png", wx.BITMAP_TYPE_PNG)), "Synchroniser")
-        self.Bind(wx.EVT_TOOL, self.onSynchroButton)
+        tb.AddSimpleTool(ID_SYNCHRO, wx.BitmapFromImage(wx.Image("./bitmaps/Reload File.png", wx.BITMAP_TYPE_PNG)), "Synchroniser")
+        # tb.AddSimpleTool(ID_UNDO, wx.BitmapFromImage(wx.Image("./bitmaps/Reload File.png", wx.BITMAP_TYPE_PNG)), "Undo")
+        self.Bind(wx.EVT_TOOL, self.onToolbarButton)
         tb.Realize()
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -131,26 +136,33 @@ class GertrudeFrame(wx.Frame):
         sizer2.Add(self.listbook, 1, wx.EXPAND)
         panel.SetSizer(sizer2)
 
-    def onSynchroButton(self, event):
-        global creche
-        dlg = SynchroDialog(self, creche.server_url)
-        dlg.CenterOnScreen()
+    def onToolbarButton(self, event):
+        evtId = event.GetId()
+        if evtId == ID_UNDO:
+            if len(history) > 0:
+                for obj, member, value in history.pop(-1):
+                    exec('obj.%s = value' % member)
+                self.listbook.UpdateContents()
+        elif evtId == ID_SYNCHRO:
+            global creche
+            dlg = SynchroDialog(self, creche.server_url)
+            dlg.CenterOnScreen()
 
-        # this does not return until the dialog is closed.
-        val = dlg.ShowModal()
-        dlg.Destroy()
-        if val == ID_SYNCHRO:
-            # TODO crade ...
-            _creche = Load()
-            creche.nom = _creche.nom
-            creche.adresse = _creche.adresse
-            creche.code_postal = _creche.code_postal
-            creche.ville = _creche.ville
-            creche.baremes_caf[:] = _creche.baremes_caf
-            creche.bureaux[:] = _creche.bureaux
-            creche.inscrits[:] = _creche.inscrits
-            creche.users[:] = _creche.users
-            self.listbook.Update()
+            # this does not return until the dialog is closed.
+            val = dlg.ShowModal()
+            dlg.Destroy()
+            if val == ID_SYNCHRO:
+                # TODO crade ...
+                _creche = Load()
+                creche.nom = _creche.nom
+                creche.adresse = _creche.adresse
+                creche.code_postal = _creche.code_postal
+                creche.ville = _creche.ville
+                creche.baremes_caf[:] = _creche.baremes_caf
+                creche.bureaux[:] = _creche.bureaux
+                creche.inscrits[:] = _creche.inscrits
+                creche.users[:] = _creche.users
+                self.listbook.UpdateContents()
 
 class LoginDialog(wx.Dialog):
     def __init__(self):
@@ -234,7 +246,7 @@ class LoginDialog(wx.Dialog):
             if login == user.login and password == user.password:
                 self.Destroy()
                 profil = user.profile
-                frame = GertrudeFrame(None, -1, "Gertrude v%s" % version)
+                frame = GertrudeFrame(None, -1, "Gertrude v%s" % VERSION)
                 frame.Show()
                 return
 
@@ -248,8 +260,14 @@ class LoginDialog(wx.Dialog):
 
 class MyApp(wx.App):
     def OnInit(self):
-        login_dialog = LoginDialog()
-        login_dialog.Show(True)
+        if len(creche.users) > 0:
+            login_dialog = LoginDialog()
+            login_dialog.Show(True)
+        else:
+            global profil
+            profil = PROFIL_ALL
+            frame = GertrudeFrame(None, -1, "Gertrude v%s" % VERSION)
+            frame.Show()
         return True
 
 creche = Load()

@@ -47,7 +47,10 @@ class UsersPanel(AutoTab):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, 'Login :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, self.creche, 'users[%d].login' % index)])
         sizer.AddMany([(wx.StaticText(self, -1, 'Mot de passe :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, self.creche, 'users[%d].password' % index)])
-        sizer.AddMany([(wx.StaticText(self, -1, 'Profil :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoChoiceCtrl(self, self.creche, 'users[%d].profile' % index, items=profiles)])
+        profile_choice = AutoChoiceCtrl(self, self.creche, 'users[%d].profile' % index, items=profiles)
+        profile_choice.index = index
+        self.Bind(wx.EVT_CHOICE, self.user_modify_profile, profile_choice)
+        sizer.AddMany([(wx.StaticText(self, -1, 'Profil :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), profile_choice])
         delbutton = wx.BitmapButton(self, -1, self.delbmp, size=(self.delbmp.GetWidth(), self.delbmp.GetHeight()))
         delbutton.index = index
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
@@ -61,13 +64,35 @@ class UsersPanel(AutoTab):
 
     def user_del(self, event):
         index = event.GetEventObject().index
-        sizer = self.sizer.GetItem(len(self.creche.users))
-        sizer.DeleteWindows()
-        self.sizer.Detach(len(self.creche.users))
-        self.creche.users[index].delete()
-        del self.creche.users[index]
-        self.sizer.Layout()
-        self.UpdateContents()
+        nb_admins = len([user for i, user in enumerate(self.creche.users) if (i != index and user.profile == PROFIL_ALL)])
+        if len(self.creche.users) == 1 or nb_admins > 0:
+            sizer = self.sizer.GetItem(len(self.creche.users))
+            sizer.DeleteWindows()
+            self.sizer.Detach(len(self.creche.users))
+            self.creche.users[index].delete()
+            del self.creche.users[index]
+            self.sizer.Layout()
+            self.UpdateContents()
+        else:
+            dlg = wx.MessageDialog(self, "Il faut au moins un administrateur", 'Message', wx.ICON_INFORMATION)
+            dlg.ShowModal()
+            dlg.Destroy()
+
+    def user_modify_profile(self, event):
+        obj = event.GetEventObject()
+        index = obj.index
+        if self.creche.users[index].profile == PROFIL_ALL and event.GetClientData() != PROFIL_ALL:
+            nb_admins = len([user for i, user in enumerate(self.creche.users) if (i != index and user.profile == PROFIL_ALL)])
+            if nb_admins == 0:
+                dlg = wx.MessageDialog(self, "Il faut au moins un administrateur", "Message", wx.ICON_INFORMATION)
+                dlg.ShowModal()
+                dlg.Destroy()
+                event.Skip(False)
+                obj.SetSelection(0) # PROFIL_ALL
+            else:
+                event.Skip(True)
+        else:
+            event.Skip(True)
 
 class ConnectionPanel(AutoTab):
     def __init__(self, parent, creche):

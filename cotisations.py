@@ -140,6 +140,8 @@ class Cotisation:
         self.total_annee = 48 * self.total_semaine
         if self.inscription.mode == 0:
             self.cout_horaire = self.cotisation_mensuelle / self.total_mois
+        else:
+            self.cout_horaire = 0
             
     def __cmp__(self, context2):
         return context2 == None or \
