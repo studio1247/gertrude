@@ -58,9 +58,9 @@ class DayTabWindow(wx.Window):
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         if (self.profil & PROFIL_SAISIE_PRESENCES) or date > datetime.date.today():
             self.SetCursor(wx.StockCursor(wx.CURSOR_PENCIL))        
-            self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftButtonEvent)
-            self.Bind(wx.EVT_LEFT_UP, self.OnLeftButtonEvent)
-            self.Bind(wx.EVT_MOTION, self.OnLeftButtonEvent)
+            self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftButtonDown)
+            self.Bind(wx.EVT_LEFT_UP, self.OnLeftButtonUp)
+            self.Bind(wx.EVT_MOTION, self.OnLeftButtonDragging)
         
     def OnPaint(self, event):
         dc = wx.PaintDC(self)
@@ -124,64 +124,89 @@ class DayTabWindow(wx.Window):
         posY = int(y / self.pxBebe)
         return posX, posY
 
-    def OnLeftButtonEvent(self, event):            
+    def OnLeftButtonDown(self, event):            
         x = event.GetX()
         y = event.GetY()
-# tests au cas ou ...            if self.curStartX < 4 * (heureMaximum-heureOuverture) and self.curStartY < len(self.inscrits):
+        
+        # tests au cas ou ...  if self.curStartX < 4 * (heureMaximum-heureOuverture) and self.curStartY < len(self.inscrits):
+        self.curStartX, self.curStartY = self.__get_pos(x, y)
+        inscrit = self.inscrits[self.curStartY]
+        if self.date not in inscrit.presences:
+            self.original_presence = None
+            presence = inscrit.getPresenceFromSemaineType(self.date)
+        else:
+            self.original_presence = inscrit.presences[self.date]
+            presence = Presence(inscrit, self.date, self.original_presence.previsionnel, self.original_presence.value, creation=False)
+            if presence.value == PRESENT:
+                presence.details = self.original_presence.details[:]
 
-        if event.LeftDown():
-            self.curStartX, self.curStartY = self.__get_pos(x, y)
-            inscrit = self.inscrits[self.curStartY]
-            if self.date not in inscrit.presences:
-                presence = inscrit.getPresenceFromSemaineType(self.date)
-                presence.create()
-                inscrit.presences[self.date] = presence
-            else:
-                presence = inscrit.presences[self.date]
+        inscrit.presences[self.date] = presence
+        if presence.value != PRESENT:
+            presence.value = PRESENT
+            presence.details = [0] * int((heureMaximum-heureOuverture) * 4)
+        if self.date <= datetime.date.today() and presence.previsionnel:
+            presence.previsionnel = 0
+            presence.details = [tmp * 2 for tmp in presence.details]
+        presence.original_details = presence.details[:]
+        if presence.details[self.curStartX] == 1:
+            self.valeur_selection = 0
+        else:
+            self.valeur_selection = 1
 
-            if presence.value != PRESENT:
-                presence.value = PRESENT
-                presence.details = [0] * int((heureMaximum-heureOuverture) * 4)
-            self.presence = Presence(inscrit, self.date, presence.previsionnel, presence.value, creation=False)
-            self.presence.original = presence
-            if self.date <= datetime.date.today() and presence.previsionnel:
-                presence.previsionnel = self.presence.previsionnel = 0
-                self.presence.sel_details = [tmp * 2 for tmp in presence.details]
-            else:
-                self.presence.sel_details = presence.details[:]
-            if self.presence.sel_details[self.curStartX] == 1:
-                self.valeur_selection = 0
-            else:
-                self.valeur_selection = 1
+        self.parent.UpdateButton(self.curStartY) # TODO pas toujours
 
-            self.parent.UpdateButton(self.curStartY) # TODO pas toujours
-
-        if (event.LeftDown() or event.Dragging()) and self.valeur_selection != -1:
-            self.curEndX, self.curEndY = self.__get_pos(x, y)
+    def OnLeftButtonDragging(self, event):            
+        if self.valeur_selection != -1:
+            self.curEndX, self.curEndY = self.__get_pos(event.GetX(), event.GetY())
             if self.curEndY == self.curStartY:
+                inscrit = self.inscrits[self.curStartY]
+                presence = inscrit.presences[self.date]
                 start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX)
-                self.presence.details = self.presence.sel_details[:]
-                self.presence.details[start:end+1] = [self.valeur_selection] * (end - start + 1)
-                self.DrawPresence(self.curStartY, self.presence)
+                presence.details = presence.original_details[:]
+                presence.details[start:end+1] = [self.valeur_selection] * (end - start + 1)
+                self.DrawPresence(self.curStartY, presence)
 
-        elif event.LeftUp() and self.valeur_selection != -1:
+    def OnLeftButtonUp(self, event):            
+        x = event.GetX()
+        y = event.GetY()
+
+        if self.valeur_selection != -1:
             if self.curStartY == self.curEndY:
+                inscrit = self.inscrits[self.curStartY]
+                presence = inscrit.presences[self.date]
                 start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX)
-                presence = self.presence.original
-                self.presence.details = self.presence.sel_details[:]
-                self.presence.details[start:end+1] = [self.valeur_selection] * (end - start + 1)
-                for i in range(len(self.presence.details)):
-                    if self.presence.details[i] == 2:
-                        self.presence.details[i] = 0
-                           
-                if self.presence.Total() == 0:
+                presence.details = presence.original_details[:]
+                presence.details[start:end+1] = [self.valeur_selection] * (end - start + 1)
+                for i in range(len(presence.details)):
+                    if presence.details[i] == 2:
+                        presence.details[i] = 0           
+                if presence.Total() == 0:
                     presence.value = VACANCES
                     presence.details = None
                     self.parent.UpdateButton(self.curStartY)
+                if self.original_presence:
+                    obj = self.original_presence
+                    original_presence = self.original_presence
                 else:
-                    presence.details = self.presence.details
+                    obj = inscrit.presences[self.date]
+                    original_presence = inscrit.getPresenceFromSemaineType(self.date)
+                if original_presence.value == PRESENT:
+                    history.append([(obj, 'value', original_presence.value),
+                                    (obj, 'previsionnel', original_presence.previsionnel),
+                                    (obj, 'details', original_presence.details[:])])
+                else:
+                    history.append([(obj, 'value', original_presence.value),
+                                    (obj, 'previsionnel', original_presence.previsionnel),
+                                    (obj, 'details', None)])
+                if self.original_presence:
+                    self.original_presence.value = presence.value
+                    self.original_presence.previsionnel = presence.previsionnel
+                    self.original_presence.details = presence.details
+                    inscrit.presences[self.date] = self.original_presence
+                else:
+                    presence.create()
             else:
-                presence = self.presence.original
+                self.inscrits[self.curStartY].presences[self.date] = self.original_presence
             self.valeur_selection = -1
             self.DrawPresence(self.curStartY, presence)
 

@@ -121,8 +121,8 @@ class GertrudeFrame(wx.Frame):
         # Toolbar
         tb = self.CreateToolBar(wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT)
         tb.SetToolBitmapSize(wx.Size(24, 24))
-        tb.AddSimpleTool(ID_SYNCHRO, wx.BitmapFromImage(wx.Image("./bitmaps/Reload File.png", wx.BITMAP_TYPE_PNG)), "Synchroniser")
-        # tb.AddSimpleTool(ID_UNDO, wx.BitmapFromImage(wx.Image("./bitmaps/Reload File.png", wx.BITMAP_TYPE_PNG)), "Undo")
+        tb.AddSimpleTool(ID_SYNCHRO, wx.BitmapFromImage(wx.Image("./bitmaps/reload.png", wx.BITMAP_TYPE_PNG)), "Synchroniser")
+        tb.AddSimpleTool(ID_UNDO, wx.BitmapFromImage(wx.Image("./bitmaps/undo.png", wx.BITMAP_TYPE_PNG)), "Undo")
         self.Bind(wx.EVT_TOOL, self.onToolbarButton)
         tb.Realize()
 
