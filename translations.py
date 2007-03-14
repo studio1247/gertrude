@@ -73,6 +73,13 @@ def Translate():
         for inscrit, date, previsionnel, value, details in cur.fetchall():
             cur.execute('INSERT INTO PRESENCES (idx, inscrit, date, previsionnel, value, details) VALUES (NULL,?,?,?,?,?)', (inscrit, date, previsionnel, value, encode_details(details)))
         cur.execute('DROP TABLE OLD')
+
+    if version < 4:
+        cur.execute('SELECT details, idx FROM PRESENCES')
+        for details, idx in cur.fetchall():
+            if details is not None:
+                details = eval(details) << 7
+                cur.execute('UPDATE PRESENCES SET details=? WHERE idx=?', (details, idx))
         
     if version < VERSION:
         try:

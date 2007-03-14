@@ -29,11 +29,6 @@ today = datetime.date.today()
 first_date = max(today - datetime.timedelta(12*30), datetime.date(2005, 1, 1))
 last_date = today + datetime.timedelta(6*30)
 
-heureOuverture = 7.75
-heureMaximum = 22
-heureFermeture = 18.5
-tranches = [(heureOuverture, 12, 4), (12, 14, 2), (14, heureMaximum, 4)]
-
 current_directory = "./current"
 backups_directory = "./backups"
 filename = current_directory + "/petits-potes_" + str(today.year) + ".gtu"
@@ -90,14 +85,17 @@ class Presence(object):
         self.inscrit_idx = inscrit.idx
         self.date = date
         self.previsionnel = previsionnel
-        self.value = value
-        if value == PRESENT:
-            self.details = [0] * int((heureMaximum - heureOuverture) * 4)
-        else:
-            self.details = None
+        self.set_value(value)
         if creation:
             self.create()
 
+    def set_value(self, value):
+        self.value = value
+        if value == PRESENT:
+            self.details = [0] * int((BASE_MAX_HOUR - BASE_MIN_HOUR) * BASE_GRANULARITY)
+        else:
+            self.details = None
+            
     def encode_details(self, details):
         if details is None:
             return None
@@ -464,27 +462,27 @@ class Inscrit(object):
     def getPresenceFromSemaineType(self, date):
         # retourne toujours du previsionnel
         weekday = date.weekday()
-        if (weekday > 4):
-          raise 'la date doit etre un jour de semaine'
+        if weekday > 4:
+          raise Exception('La date doit etre un jour de semaine')
     
         presence = Presence(self, date, 1, 1, creation=False)
         
         inscription = self.getInscription(date)
         
-        if inscription != None:
+        if inscription is not None:
             for i in range(3):
                 if inscription.periode_reference[weekday][i] == 1:
                     if presence.value != 0:
                         presence = Presence(self, date, 1, 0, creation=False)
                     if i == 0:
-                        debut = int((8-heureOuverture) * 4)
-                        fin = int((12-heureOuverture) * 4)
+                        debut = int((8-BASE_MIN_HOUR) * BASE_GRANULARITY)
+                        fin = int((12-BASE_MIN_HOUR) * BASE_GRANULARITY)
                     elif i == 1:
-                        debut = int((12-heureOuverture) * 4)
-                        fin = int((14-heureOuverture) * 4)
+                        debut = int((12-BASE_MIN_HOUR) * BASE_GRANULARITY)
+                        fin = int((14-BASE_MIN_HOUR) * BASE_GRANULARITY)
                     else:
-                        debut = int((14-heureOuverture) * 4)
-                        fin = int((18-heureOuverture) * 4)
+                        debut = int((14-BASE_MIN_HOUR) * BASE_GRANULARITY)
+                        fin = int((18-BASE_MIN_HOUR) * BASE_GRANULARITY)
                     for i in range(debut, fin):
                         presence.details[i] = 1
     

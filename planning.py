@@ -23,6 +23,8 @@ from common import *
 
 PRENOMS_WIDTH = 80 # px
 BUTTONS_WIDTH = 34 # px
+HEURE_WIDTH = 40 # px
+BEBE_HEIGHT = 30 # px
 
 class GPanel(wx.Panel):
     def __init__(self, parent, title):
@@ -44,10 +46,8 @@ class GPanel(wx.Panel):
         pass
 
 class DayTabWindow(wx.Window):
-    pxHeure = 40
-    pxBebe = 30
     def __init__(self, parent, profil, inscrits, date, *args, **kwargs):
-        wx.Window.__init__(self, parent, size=((heureMaximum-heureOuverture) * self.pxHeure + 1,self.pxBebe * len(inscrits) + 1), *args, **kwargs)
+        wx.Window.__init__(self, parent, size=((heureAffichageMax-heureAffichageMin) * HEURE_WIDTH + 1, BEBE_HEIGHT * len(inscrits) + 1), *args, **kwargs)
         self.parent = parent
         self.profil = profil
         self.inscrits = inscrits
@@ -67,7 +67,7 @@ class DayTabWindow(wx.Window):
         self.PrepareDC(dc)
         self.DoDrawing(dc)
 
-    def DrawPresence(self, ligne, presence, dc = None):
+    def DrawLine(self, ligne, presence, dc=None):
         if not dc:
             dc = wx.ClientDC(self)
             self.PrepareDC(dc)
@@ -75,21 +75,32 @@ class DayTabWindow(wx.Window):
         dc.SetPen(wx.TRANSPARENT_PEN)
         green_brush = [ wx.Brush(wx.Color(5, 203, 28)), wx.Brush(wx.Color(150, 229, 139)) ]
         red_brush = [ wx.Brush(wx.Color(203, 5, 28)), wx.Brush(wx.Color(229, 150, 139)) ]
-        for i in range(int((heureMaximum - heureOuverture) * 4)):
+        heure = heureAffichageMin
+        while heure < heureAffichageMax:
+            i = int((heure-BASE_MIN_HOUR) * BASE_GRANULARITY)
             if presence.value == PRESENT and presence.details[i]:
                 if presence.details[i] == 2:
                     previsionnel = 1
                 else:
                     previsionnel = presence.previsionnel
-                if i < (heureFermeture - heureOuverture) * 4:
+                if heure >= heureOuverture and heure <= heureFermeture:
                     brush = green_brush[previsionnel]
                 else:
                     brush = red_brush[previsionnel]
                 dc.SetBrush(brush)
             else:
                 dc.SetBrush(wx.WHITE_BRUSH)
-            dc.DrawRectangle(1 + i * self.pxHeure / 4, 1 + ligne * self.pxBebe, (self.pxHeure / 4) - 1, self.pxBebe - 1)
+            dc.DrawRectangle(1 + (heure - heureAffichageMin) * HEURE_WIDTH, 1 + ligne * BEBE_HEIGHT, (1.0/heureGranularite) * HEURE_WIDTH - 1, BEBE_HEIGHT - 1)
+            heure += 1.0 / heureGranularite
 
+    def DrawPresence(self, index, dc=None):
+        inscrit = self.inscrits[index]
+        if self.date in inscrit.presences:
+            presence = inscrit.presences[self.date]
+        else:
+            presence = inscrit.getPresenceFromSemaineType(self.date)
+        self.DrawLine(index, presence, dc)
+        
     def DoDrawing(self, dc, printing=False):
         dc.BeginDrawing()
        
@@ -97,39 +108,32 @@ class DayTabWindow(wx.Window):
         dc.SetPen(wx.GREY_PEN)
         dc.SetBrush(wx.WHITE_BRUSH)
         for i in range(len(self.inscrits)+1):
-            dc.DrawLine(0, i*self.pxBebe, (heureMaximum-heureOuverture) * self.pxHeure + 1, i*self.pxBebe)
+            dc.DrawLine(0, i*BEBE_HEIGHT, (heureAffichageMax-heureAffichageMin) * HEURE_WIDTH + 1, i*BEBE_HEIGHT)
 
-        heure = heureOuverture
-        while heure <= heureMaximum:
-            x = (heure - heureOuverture ) * self.pxHeure
+        heure = heureAffichageMin
+        while heure <= heureAffichageMax:
+            x = (heure - heureAffichageMin) * HEURE_WIDTH
             if heure == int(heure):
                 dc.SetPen(wx.GREY_PEN)
             else:
                 dc.SetPen(wx.LIGHT_GREY_PEN)
-            dc.DrawLine(x, 0,  x, self.pxBebe * len(self.inscrits))
-            heure += 0.25
+            dc.DrawLine(x, 0,  x, BEBE_HEIGHT * len(self.inscrits))
+            heure += 1.0 / heureGranularite
 
         # les presences
         for i, inscrit in enumerate(self.inscrits):
-            if self.date in inscrit.presences:
-                presence = inscrit.presences[self.date]
-            else:
-                presence = inscrit.getPresenceFromSemaineType(self.date)
-            self.DrawPresence(i, presence, dc)
+            self.DrawPresence(i, dc)
             
         dc.EndDrawing()
     
     def __get_pos(self, x, y):
-        posX = int(4 * x / self.pxHeure)
-        posY = int(y / self.pxBebe)
+        posX = int((heureAffichageMin - BASE_MIN_HOUR + float(x * heureGranularite / HEURE_WIDTH) / heureGranularite) * BASE_GRANULARITY)
+        posY = int(y / BEBE_HEIGHT)
         return posX, posY
 
     def OnLeftButtonDown(self, event):            
-        x = event.GetX()
-        y = event.GetY()
-        
-        # tests au cas ou ...  if self.curStartX < 4 * (heureMaximum-heureOuverture) and self.curStartY < len(self.inscrits):
-        self.curStartX, self.curStartY = self.__get_pos(x, y)
+        # tests au cas ou ...  if self.curStartX < 4 * (heureAffichageMax-heureOuverture) and self.curStartY < len(self.inscrits):
+        self.curStartX, self.curStartY = self.__get_pos(event.GetX(), event.GetY())
         inscrit = self.inscrits[self.curStartY]
         if self.date not in inscrit.presences:
             self.original_presence = None
@@ -142,8 +146,7 @@ class DayTabWindow(wx.Window):
 
         inscrit.presences[self.date] = presence
         if presence.value != PRESENT:
-            presence.value = PRESENT
-            presence.details = [0] * int((heureMaximum-heureOuverture) * 4)
+            presence.set_value(PRESENT)
         if self.date <= datetime.date.today() and presence.previsionnel:
             presence.previsionnel = 0
             presence.details = [tmp * 2 for tmp in presence.details]
@@ -154,61 +157,55 @@ class DayTabWindow(wx.Window):
             self.valeur_selection = 1
 
         self.parent.UpdateButton(self.curStartY) # TODO pas toujours
+        self.OnLeftButtonDragging(event)
 
     def OnLeftButtonDragging(self, event):            
         if self.valeur_selection != -1:
+            inscrit = self.inscrits[self.curStartY]
+            presence = inscrit.presences[self.date]
             self.curEndX, self.curEndY = self.__get_pos(event.GetX(), event.GetY())
-            if self.curEndY == self.curStartY:
-                inscrit = self.inscrits[self.curStartY]
-                presence = inscrit.presences[self.date]
-                start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX)
-                presence.details = presence.original_details[:]
-                presence.details[start:end+1] = [self.valeur_selection] * (end - start + 1)
-                self.DrawPresence(self.curStartY, presence)
+            start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX)
+            presence.details = presence.original_details[:]
+            presence.details[start:end+BASE_GRANULARITY/heureGranularite] = [self.valeur_selection] * (end - start + BASE_GRANULARITY/heureGranularite)
+            self.DrawLine(self.curStartY, presence)
 
     def OnLeftButtonUp(self, event):            
-        x = event.GetX()
-        y = event.GetY()
-
-        if self.valeur_selection != -1:
-            if self.curStartY == self.curEndY:
-                inscrit = self.inscrits[self.curStartY]
-                presence = inscrit.presences[self.date]
-                start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX)
-                presence.details = presence.original_details[:]
-                presence.details[start:end+1] = [self.valeur_selection] * (end - start + 1)
-                for i in range(len(presence.details)):
-                    if presence.details[i] == 2:
-                        presence.details[i] = 0           
-                if presence.Total() == 0:
-                    presence.value = VACANCES
-                    presence.details = None
-                    self.parent.UpdateButton(self.curStartY)
-                if self.original_presence:
-                    obj = self.original_presence
-                    original_presence = self.original_presence
-                else:
-                    obj = inscrit.presences[self.date]
-                    original_presence = inscrit.getPresenceFromSemaineType(self.date)
-                if original_presence.value == PRESENT:
-                    history.append([(obj, 'value', original_presence.value),
-                                    (obj, 'previsionnel', original_presence.previsionnel),
-                                    (obj, 'details', original_presence.details[:])])
-                else:
-                    history.append([(obj, 'value', original_presence.value),
-                                    (obj, 'previsionnel', original_presence.previsionnel),
-                                    (obj, 'details', None)])
-                if self.original_presence:
-                    self.original_presence.value = presence.value
-                    self.original_presence.previsionnel = presence.previsionnel
-                    self.original_presence.details = presence.details
-                    inscrit.presences[self.date] = self.original_presence
-                else:
-                    presence.create()
+         if self.valeur_selection != -1:
+            inscrit = self.inscrits[self.curStartY]            
+            presence = inscrit.presences[self.date]
+            start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX)
+            presence.details = presence.original_details[:]
+            presence.details[start:end+BASE_GRANULARITY/heureGranularite] = [self.valeur_selection] * (end - start + BASE_GRANULARITY/heureGranularite)
+            for i in range(len(presence.details)):
+                if presence.details[i] == 2:
+                    presence.details[i] = 0           
+            if presence.Total() == 0:
+                presence.value = VACANCES
+                presence.details = None
+            if self.original_presence:
+                obj = self.original_presence
+                original_presence = self.original_presence
             else:
-                self.inscrits[self.curStartY].presences[self.date] = self.original_presence
+                obj = inscrit.presences[self.date]
+                original_presence = inscrit.getPresenceFromSemaineType(self.date)
+            if original_presence.value == PRESENT:
+                history.append([(obj, 'value', original_presence.value),
+                                (obj, 'previsionnel', original_presence.previsionnel),
+                                (obj, 'details', original_presence.details[:])])
+            else:
+                history.append([(obj, 'value', original_presence.value),
+                                (obj, 'previsionnel', original_presence.previsionnel),
+                                (obj, 'details', None)])
+            if self.original_presence:
+                self.original_presence.value = presence.value
+                self.original_presence.previsionnel = presence.previsionnel
+                self.original_presence.details = presence.details
+                inscrit.presences[self.date] = self.original_presence
+            else:
+                presence.create()
             self.valeur_selection = -1
-            self.DrawPresence(self.curStartY, presence)
+            self.parent.UpdateButton(self.curStartY)
+            self.DrawPresence(self.curStartY)
 
 class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, profil, inscrits, date = datetime.date.today()):
@@ -239,17 +236,26 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
 
     def OnButtonPressed(self, event):
         button = event.GetEventObject()
-        inscrit = self.inscrits[button.inscrit]
+        inscrit = self.inscrits[button.inscrit]               
         if self.date not in inscrit.presences:
             inscrit.presences[self.date] = presence = inscrit.getPresenceFromSemaineType(self.date)
             presence.create()
         else:
             presence = inscrit.presences[self.date]
-        if presence.previsionnel and presence.value == 0 and self.date <= datetime.date.today():
+        if presence.previsionnel and presence.value == PRESENT and self.date <= datetime.date.today():
+            history.append([(presence, 'previsionnel', 1)])
             presence.previsionnel = 0
-        elif presence.value == PRESENT or presence.value == VACANCES:
-            presence.value += 1
+        elif presence.value == PRESENT:
+            history.append([(presence, 'value', PRESENT),
+                            (presence, 'details', presence.details[:])])
+            presence.value = VACANCES
+        elif presence.value == VACANCES:
+            history.append([(presence, 'value', VACANCES)])
+            presence.value = MALADE
         elif presence.value == MALADE:
+            history.append([(presence, 'value', MALADE),
+                            (presence, 'details', None),
+                            (presence, 'previsionnel', presence.previsionnel)])
             new_presence = inscrit.getPresenceFromSemaineType(self.date)
             presence.value, presence.details = new_presence.value, new_presence.details
             if self.date <= datetime.date.today():
@@ -258,7 +264,7 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
               presence.previsionnel = 1
 
         self.UpdateButton(button.inscrit)
-        self.tab_window.DrawPresence(button.inscrit, presence)
+        self.tab_window.DrawLine(button.inscrit, presence)
 
     def UpdateButton(self, index):
         inscrit = self.inscrits[index]
@@ -283,8 +289,8 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
             self.tab_window.SetMinSize((0, 0))
             self.buttons_sizer.ShowItems(0)
         else:
-            self.prenoms.SetMinSize((PRENOMS_WIDTH, self.tab_window.pxBebe * len(self.inscrits) + 1))
-            self.tab_window.SetMinSize((int((heureMaximum-heureOuverture) * self.tab_window.pxHeure + 1), self.tab_window.pxBebe * len(self.inscrits) + 1))
+            self.prenoms.SetMinSize((PRENOMS_WIDTH, BEBE_HEIGHT * len(self.inscrits) + 1))
+            self.tab_window.SetMinSize((int((heureAffichageMax-heureOuverture) * HEURE_WIDTH + 1), BEBE_HEIGHT * len(self.inscrits) + 1))
             self.buttons_sizer.ShowItems(1)
 
         for i in range(old, new, -1):
@@ -325,7 +331,7 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
 
         for i, inscrit in enumerate(self.inscrits):
             if inscrit.getInscription(self.date) is not None:
-                dc.DrawText(GetInscritId(inscrit, self.inscrits), 10, 5 + i * self.tab_window.pxBebe)
+                dc.DrawText(GetInscritId(inscrit, self.inscrits), 10, 5 + i * BEBE_HEIGHT)
         
         dc.EndDrawing()
 
@@ -363,15 +369,15 @@ class DayPanel(wx.Panel):
 	font = wx.Font(7, wx.SWISS, wx.NORMAL, wx.NORMAL)
         dc.SetFont(font)
         dc.SetTextForeground("WHITE")
-        heure = heureOuverture
-        while heure <= heureMaximum:
-            x = PRENOMS_WIDTH + BUTTONS_WIDTH + (heure - heureOuverture ) * self.presences_panel.tab_window.pxHeure
-            if heure == int(heure):
+        heure = heureAffichageMin
+        while heure <= heureAffichageMax:
+            x = PRENOMS_WIDTH + BUTTONS_WIDTH + (heure - heureAffichageMin) * HEURE_WIDTH
+            if abs(heure - round(heure)) < 0.01:
                 dc.DrawLine(x, 20, x, 12)
-                dc.DrawText(str(int(heure))+"h", x - 3, 0)
+                dc.DrawText(str(int(round(heure)))+"h", x - 3, 0)
             else:
                 dc.DrawLine(x, 20, x, 15)
-            heure += 0.25
+            heure += 1.0 / heureGranularite
             
         dc.EndDrawing()
 
