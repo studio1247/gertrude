@@ -178,7 +178,7 @@ class DayTabWindow(wx.Window):
             for i in range(len(presence.details)):
                 if presence.details[i] == 2:
                     presence.details[i] = 0           
-            if presence.Total() == 0:
+            if not 1 in presence.details:
                 presence.value = VACANCES
                 presence.details = None
             if self.original_presence:

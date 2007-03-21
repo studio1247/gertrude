@@ -1,5 +1,3 @@
-import datetime
-
 ##    This file is part of Gertrude.
 ##
 ##    Gertrude is free software; you can redistribute it and/or modify
@@ -15,6 +13,8 @@ import datetime
 ##    You should have received a copy of the GNU General Public License
 ##    along with Gertrude; if not, write to the Free Software
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+import datetime
 
 def getPaquesDate(year):
     if year < 1583:
