@@ -28,11 +28,12 @@ import xml.dom.minidom
 from common import *
 from planning import GPanel
 from controls import *
+from cotisation import CotisationException
+from facture import Facture
 
-def getPleinTempsIndexes(inscrits, date_debut, date_fin):
+def getPleinTempsIndexes(date_debut, date_fin):
     result = []
-    for i in range(len(inscrits)):
-        inscrit = inscrits[i]
+    for i, inscrit in enumerate(creche.inscrits):
         inscriptions = inscrit.getInscriptions(date_debut, date_fin)
         if len(inscriptions) > 0:
             inscription = inscriptions[0]
@@ -45,10 +46,9 @@ def getPleinTempsIndexes(inscrits, date_debut, date_fin):
                     result.append(i)
     return result
 
-def getMiTempsIndexes(inscrits, date_debut, date_fin):
+def getMiTempsIndexes(date_debut, date_fin):
     result = []
-    for i in range(len(inscrits)):
-        inscrit = inscrits[i]
+    for i, inscrit in enumerate(creche.inscrits):
         inscriptions = inscrit.getInscriptions(date_debut, date_fin)
         if len(inscriptions) > 0:
             inscription = inscriptions[0]
@@ -62,10 +62,9 @@ def getMiTempsIndexes(inscrits, date_debut, date_fin):
                     result.append(i)
     return result
 
-def getCrecheIndexes(inscrits, date_debut, date_fin):
+def getCrecheIndexes(date_debut, date_fin):
     result = []
-    for i in range(len(inscrits)):
-        inscrit = inscrits[i]
+    for i, inscrit in enumerate(creche.inscrits):
         inscriptions = inscrit.getInscriptions(date_debut, date_fin)
         if len(inscriptions) > 0:
             inscription = inscriptions[0]
@@ -73,26 +72,23 @@ def getCrecheIndexes(inscrits, date_debut, date_fin):
                 result.append(i)
     return result
 
-def getHalteGarderieIndexes(inscrits, date_debut, date_fin):
+def getHalteGarderieIndexes(date_debut, date_fin):
     result = []
-    for i in range(len(inscrits)):
-        inscrit = inscrits[i]
+    for i, inscrit in enumerate(creche.inscrits):
         inscriptions = inscrit.getInscriptions(date_debut, date_fin)
         if len(inscriptions) and inscriptions[0].mode == 1:
             result.append(i)
     return result
 
-def getAdaptationIndexes(inscrits, date_debut, date_fin):
+def getAdaptationIndexes(date_debut, date_fin):
     result = []
-    for i in range(len(inscrits)):
-        inscrit = inscrits[i]
     return result
 
 
-def getTriParCommuneEtNomIndexes(indexes, inscrits):
+def getTriParCommuneEtNomIndexes(indexes):
     # Tri par commune (Rennes en premier) + ordre alphabetique des noms
     def tri(one, two):
-        i1 = inscrits[one] ; i2 = inscrits[two]
+        i1 = creche.inscrits[one] ; i2 = creche.inscrits[two]
         if (i1.ville.lower() != 'rennes' and i2.ville.lower() == 'rennes'):
             return 1
         elif (i1.ville.lower() == 'rennes' and i2.ville.lower() != 'rennes'):
@@ -103,28 +99,28 @@ def getTriParCommuneEtNomIndexes(indexes, inscrits):
     indexes.sort(tri)
     return indexes
 
-def getTriParPrenomIndexes(indexes, inscrits):
+def getTriParPrenomIndexes(indexes):
     # Tri par ordre alphabetique des prenoms
     def tri(one, two):
-        i1 = inscrits[one] ; i2 = inscrits[two]
+        i1 = creche.inscrits[one] ; i2 = creche.inscrits[two]
         return cmp(i1.prenom, i2.prenom)
 
     indexes.sort(tri)
     return indexes
 
-def getTriParNomIndexes(indexes, inscrits):
+def getTriParNomIndexes(indexes):
     # Tri par ordre alphabetique des prenoms
     def tri(one, two):
-        i1 = inscrits[one] ; i2 = inscrits[two]
+        i1 = creche.inscrits[one] ; i2 = creche.inscrits[two]
         return cmp(i1.nom, i2.nom)
 
     indexes.sort(tri)
     return indexes
 
-def getPresentsIndexes(indexes, inscrits, (debut, fin)):
+def getPresentsIndexes(indexes, (debut, fin)):
     result = []
     for i in range(len(indexes)):
-        inscrit = inscrits[indexes[i]]
+        inscrit = creche.inscrits[indexes[i]]
         #print inscrit.prenom
         for inscription in inscrit.inscriptions:
             if ((inscription.fin == None or inscription.fin >= debut) and (inscription.debut != None and inscription.debut <= fin)):
@@ -183,13 +179,14 @@ def ReplaceFields(cellules, values):
                 # print tag.firstChild.wholeText, '=>', text
                 tag.firstChild.replaceWholeText(text)
 
-def ReplaceEtatsTrimestrielsContent(document, inscrits, annee):
+def ReplaceEtatsTrimestrielsContent(document, annee):
+    factures = {}
     nb_cellules = 13
     premiere_ligne = 4
     nb_lignes = 8
     nb_pages = 3
 
-    global_indexes = getTriParCommuneEtNomIndexes(range(len(inscrits)), inscrits)
+    global_indexes = getTriParCommuneEtNomIndexes(range(len(creche.inscrits)))
 
     dom = xml.dom.minidom.parseString(document)
     spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
@@ -205,7 +202,7 @@ def ReplaceEtatsTrimestrielsContent(document, inscrits, annee):
             fin = datetime.date(annee, 12, 31)
         else:
             fin = datetime.date(annee, trimestre * 3 + 4, 1) - datetime.timedelta(1)
-        indexes = getPresentsIndexes(global_indexes, inscrits, (debut, fin))
+        indexes = getPresentsIndexes(global_indexes, (debut, fin))
 
         table = template.cloneNode(1)
         spreadsheet.appendChild(table)
@@ -226,16 +223,24 @@ def ReplaceEtatsTrimestrielsContent(document, inscrits, annee):
                 cellules = ligne.getElementsByTagName("table:table-cell")
                 index = page * nb_lignes + i
                 heures = [[0] * 3, [0] * 3]
-                previsionnel = [[0] * 3, [0] * 3]
+                previsionnel = [0] * 3
 
                 if index < len(indexes):
-                    inscrit = inscrits[indexes[index]]
+                    inscrit = creche.inscrits[indexes[index]]
 
                     # Calcul du nombre d'heures pour chaque mois
                     for m in range(3):
                         mois = trimestre * 3 + m + 1
-                        heures[0][m], previsionnel[0][m] = inscrit.getTotalHeuresMois(annee, mois, 0)
-                        heures[1][m], previsionnel[1][m] = inscrit.getTotalHeuresMois(annee, mois, 1)
+                        if (inscrit.idx, mois) not in factures:
+                            try:
+                                factures[inscrit.idx, mois] = Facture(inscrit, annee, mois)
+                            except CotisationException, e:
+                                print e.errors
+                                continue
+                        facture = factures[inscrit.idx, mois]
+                        previsionnel[m] = facture.previsionnel
+                        heures[MODE_CRECHE][m] = facture.detail_heures_facturees[MODE_CRECHE]
+                        heures[MODE_HALTE_GARDERIE][m] = facture.detail_heures_facturees[MODE_HALTE_GARDERIE]
 
                         fields = {'nom': inscrit.nom,
                                   'prenom': inscrit.prenom,
@@ -250,7 +255,7 @@ def ReplaceEtatsTrimestrielsContent(document, inscrits, annee):
                             for j in range(3):
                                 if heures[m][j] == 0:
                                     fields['%s(%d)' % (mode, j+1)] = ''
-                                elif previsionnel[m][j]:
+                                elif previsionnel[m]:
                                     fields['%s(%d)' % (mode, j+1)] = '(%d)' % heures[m][j]
                                 else:
                                     fields['%s(%d)' % (mode, j+1)] = heures[m][j]
@@ -266,7 +271,7 @@ def ReplaceEtatsTrimestrielsContent(document, inscrits, annee):
     lignes = table.getElementsByTagName("table:table-row")
 
     def Synthese(indexes, mode, str_mode, premiere_ligne):
-        indexes = getTriParNomIndexes(indexes, inscrits)
+        indexes = getTriParNomIndexes(indexes)
 
         # Le titre
         ReplaceFields(lignes.item(premiere_ligne), {'annee': annee})
@@ -283,7 +288,7 @@ def ReplaceEtatsTrimestrielsContent(document, inscrits, annee):
         total = [0] * 12
         total_previsionnel = [0] * 12
         for i in range(len(indexes)):
-            inscrit = inscrits[indexes[i]]
+            inscrit = creche.inscrits[indexes[i]]
             ligne = template.cloneNode(1)
             table.insertBefore(ligne, template)
 
@@ -291,10 +296,17 @@ def ReplaceEtatsTrimestrielsContent(document, inscrits, annee):
             previsionnel = [0] * 12
 
             # Calcul du nombre d'heures pour chaque mois
-            for m in range(12):
-                heures[m], previsionnel[m] = inscrit.getTotalHeuresMois(annee, m+1, mode)
-                total[m] += heures[m]
-                total_previsionnel[m] += previsionnel[m]
+            for mois in range(12):
+                if (inscrit.idx, mois) not in factures:
+                    try:
+                        factures[inscrit.idx, mois] = Facture(inscrit, annee, mois+1)
+                    except CotisationException, e:
+                        print e.errors
+                        continue
+                facture = factures[inscrit.idx, mois]
+                heures[mois], previsionnel[mois] = facture.detail_heures_facturees[mode], facture.previsionnel
+                total[mois] += heures[mois]
+                total_previsionnel[mois] += previsionnel[mois]
 
             fields = {'nom': inscrit.nom,
                       'prenom': inscrit.prenom,
@@ -335,16 +347,16 @@ def ReplaceEtatsTrimestrielsContent(document, inscrits, annee):
         ReplaceFields(ligne, fields)
 
     # Les inscrits en creche
-    indexes = getCrecheIndexes(inscrits, debut, fin)
+    indexes = getCrecheIndexes(debut, fin)
     Synthese(indexes, MODE_CRECHE, 'creche', 0)
     # Les inscrits en halte-garderie
-    indexes = getHalteGarderieIndexes(inscrits, debut, fin)
+    indexes = getHalteGarderieIndexes(debut, fin)
     Synthese(indexes, MODE_HALTE_GARDERIE, 'halte', 6)
 
     #print dom.toprettyxml()
     return dom.toxml('UTF-8')
 
-def ReplacePlanningPresencesContent(document, inscrits, date_debut):
+def ReplacePlanningPresencesContent(document, date_debut):
     date_fin = date_debut + datetime.timedelta(11)
 
     dom = xml.dom.minidom.parseString(document)
@@ -381,7 +393,7 @@ def ReplacePlanningPresencesContent(document, inscrits, date_debut):
         lignes = template.getElementsByTagName("table:table-row")
         for i in range(nb_lignes):
             if (i < len(indexes)):
-                inscrit = inscrits[indexes[i]]
+                inscrit = creche.inscrits[indexes[i]]
             else:
                 inscrit = None
             ligne = lignes.item(ligne_depart + i)
@@ -411,26 +423,26 @@ def ReplacePlanningPresencesContent(document, inscrits, date_debut):
     ligne_total = lignes.item(19)
 
     # Les enfants en adaptation
-    indexes = getAdaptationIndexes(inscrits, date_debut, date_fin)
-    indexes = getTriParPrenomIndexes(indexes, inscrits)
+    indexes = getAdaptationIndexes(date_debut, date_fin)
+    indexes = getTriParPrenomIndexes(indexes)
     printPresences(indexes, 15)
     nb_ad = max(2, len(indexes))
 
     # Les halte-garderie
-    indexes = getHalteGarderieIndexes(inscrits, date_debut, date_fin)
-    indexes = getTriParPrenomIndexes(indexes, inscrits)
+    indexes = getHalteGarderieIndexes(date_debut, date_fin)
+    indexes = getTriParPrenomIndexes(indexes)
     printPresences(indexes, 11)
     nb_hg = max(2, len(indexes))
 
     # Les mi-temps
-    indexes = getMiTempsIndexes(inscrits, date_debut, date_fin)
-    indexes = getTriParPrenomIndexes(indexes, inscrits)
+    indexes = getMiTempsIndexes(date_debut, date_fin)
+    indexes = getTriParPrenomIndexes(indexes)
     printPresences(indexes, 7)
     nb_45 = max(2, len(indexes))
 
     # Les plein-temps
-    indexes = getPleinTempsIndexes(inscrits, date_debut, date_fin)
-    indexes = getTriParPrenomIndexes(indexes, inscrits)
+    indexes = getPleinTempsIndexes(date_debut, date_fin)
+    indexes = getTriParPrenomIndexes(indexes)
     printPresences(indexes, 3)
     nb_55 = max(2, len(indexes))
 
@@ -532,15 +544,15 @@ class RelevesPanel(GPanel):
 
 
 if __name__ == '__main__':
-    import sys, os
+    import sys, os, __builtin__
     from datafiles import *
-    creche, inscrits = LoadFile(filename)
+    __builtin__.creche = Load()
     #today = datetime.date.today()
 
     filename = 'etats_trimestriels_%d.ods' % (today.year - 1)
-    GenereEtatsTrimestriels(inscrits, today.year - 1, filename)
+    GenereEtatsTrimestriels(today.year - 1, filename)
     print u'Fichier %s généré' % filename
 
     filename = 'planning_presences_%s.ods' % first_date
-    GenerePlanningPresences(inscrits, getfirstmonday(), filename)
+    GenerePlanningPresences(getfirstmonday(), filename)
     print u'Fichier %s généré' % filename

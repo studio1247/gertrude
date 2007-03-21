@@ -68,7 +68,7 @@ def Select(object, date):
     return None
 
 from sqlinterface import connection
-    
+
 class Presence(object):
     def __init__(self, inscrit, date, previsionnel=0, value=PRESENT, creation=True):
         self.idx = None
@@ -85,7 +85,7 @@ class Presence(object):
             self.details = [0] * int((BASE_MAX_HOUR - BASE_MIN_HOUR) * BASE_GRANULARITY)
         else:
             self.details = None
-            
+
     def encode_details(self, details):
         if details is None:
             return None
@@ -104,12 +104,12 @@ class Presence(object):
         for i in range(64):
             if details & (1 << i):
                 self.details[i] = 1
-    
+
     def create(self):
         print 'nouvelle presence'
         result = connection.execute('INSERT INTO PRESENCES (idx, inscrit, date, previsionnel, value, details) VALUES (NULL,?,?,?,?,?)', (self.inscrit_idx, self.date, self.previsionnel, self.value, self.encode_details(self.details)))
         self.idx = result.lastrowid
-        
+
     def delete(self):
         print 'suppression presence'
         connection.execute('DELETE FROM PRESENCES WHERE idx=?', (self.idx,))
@@ -121,14 +121,14 @@ class Presence(object):
         if name in ['date', 'previsionnel', 'value', 'details'] and self.idx:
             print 'update', name, value
             connection.execute('UPDATE PRESENCES SET %s=? WHERE idx=?' % name, (value, self.idx))
-    
+
     def isPresentDuringTranche(self, tranche):
         if (self.value == 0):
             debut, fin, valeur = tranches[tranche]
             for i in range(int((debut - heureOuverture) * 4), int((fin - heureOuverture) * 4)):
                 if self.details[i]:
                   return True
-        return False            
+        return False
 
 class Bureau(object):
     def __init__(self, creation=True):
@@ -262,7 +262,7 @@ class Creche(object):
             while date <= fin:
                 self.jours_fermeture.append(date)
                 date += datetime.timedelta(1)
-                
+
         for conge in self.conges:
             try:
                 count = conge.debut.count('/')
@@ -280,7 +280,7 @@ class Creche(object):
                             fin = debut
                         else:
                             fin = str2date(conge.fin, year)
-                    add_periode(debut, fin)
+                        add_periode(debut, fin)
             except:
                 pass
 
@@ -522,27 +522,27 @@ class Inscrit(object):
     def getPresence(self, date):
         inscription = self.getInscription(date)
         if inscription is None or date.weekday() > 4:
-            return NONINSCRIT
-        presence_contrat = (inscription.periode_reference[date.weekday()] != [0, 0, 0])
+            return NONINSCRIT, False
+        presence_contrat = (1 in inscription.periode_reference[date.weekday()])
         if date in self.presences:
             presence = self.presences[date]
             if presence.value == MALADE:
-                return MALADE
+                return MALADE, False
             elif presence.value == VACANCES:
                 if presence_contrat:
-                    return VACANCES
+                    return VACANCES, False
                 else:
-                    return NONINSCRIT
+                    return NONINSCRIT, False
             else: # PRESENT
                 if presence_contrat:
-                    return PRESENT
+                    return PRESENT, presence.previsionnel
                 else:
-                    return SUPPLEMENT
+                    return SUPPLEMENT, presence.previsionnel
         else:
             if presence_contrat:
-                return PRESENT
+                return PRESENT, True
             else:
-                return NONINSCRIT
+                return NONINSCRIT, False
             
 #    def getTotalHeuresMois(self, annee, mois, mode_accueil): # heures facturees
 #        total = 0

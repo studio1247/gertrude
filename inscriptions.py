@@ -21,7 +21,7 @@ import wx, wx.lib.scrolledpanel, wx.html
 from common import *
 from planning import GPanel
 from controls import *
-from cotisations import Cotisation, CotisationException
+from cotisation import Cotisation, CotisationException
 
 def ParseHtml(filename, context):
     locals().update(context.__dict__)
