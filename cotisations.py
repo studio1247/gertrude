@@ -34,9 +34,8 @@ class CotisationException(Exception):
     def __init__(self, errors):
         self.errors = errors
         
-class Cotisation:
-    def __init__(self, creche, inscrit, periode):
-        self.creche = creche
+class Cotisation(object):
+    def __init__(self, inscrit, periode):
         self.inscrit = inscrit
         self.debut, self.fin = periode
         errors = []
@@ -150,6 +149,7 @@ class Cotisation:
                self.assiette_annuelle != context2.assiette_annuelle
 
 def ReplaceFactureContent(data, creche, inscrit, periode):
+    jours_fermeture = creche.get_jours_fermeture()
     debut = datetime.date(periode.year, periode.month, 1)
     if periode.month == 12:
         fin = datetime.date(periode.year, 12, 31)
@@ -186,7 +186,7 @@ def ReplaceFactureContent(data, creche, inscrit, periode):
             # ecriture de la date dans la cellule
             text_node = cell.getElementsByTagName('text:p')[0]
             text_node.firstChild.replaceWholeText('%d' % date.day)
-            if not date in jours_feries:
+            if not date in jours_fermeture:
                 jours += 1
                 if inscrit.getInscription(date):
                     cotisation = Cotisation(creche, inscrit, (date, date))
@@ -283,12 +283,8 @@ def GenereFacture(creche, inscrit, periode, oofilename):
   oofile.close()
 
 class CotisationsPanel(GPanel):
-    def __init__(self, parent, profil, creche, inscrits):
+    def __init__(self, parent):
         GPanel.__init__(self, parent, "Cotisations")
-        self.profil = profil
-        self.creche = creche
-        self.inscrits = inscrits
-
         wx.StaticBox(self, -1, u'Edition des appels de cotisation', pos=(5, 35), size=(600, 75))
         self.choice = wx.Choice(self, -1, pos=(20, 60), size=(200, 30))
         self.monthchoice = wx.Choice(self, -1, pos=(240, 60), size=(200, 30))
@@ -312,16 +308,16 @@ class CotisationsPanel(GPanel):
     def UpdateContents(self):
         self.choice.Clear()
         # D'abord l'ensemble des inscrits
-        self.choice.Append('Toutes les cotisations', self.inscrits)
+        self.choice.Append('Toutes les cotisations', creche.inscrits)
         # Ceux qui sont presents
-        for inscrit in self.inscrits:
+        for inscrit in creche.inscrits:
             if inscrit.getInscription(datetime.date.today()) != None:
-                self.choice.Append(GetInscritId(inscrit, self.inscrits), inscrit)
+                self.choice.Append(GetInscritId(inscrit, creche.inscrits), inscrit)
         self.choice.Append(50 * '-', None)
         # Les autres
-        for inscrit in self.inscrits:
+        for inscrit in creche.inscrits:
             if inscrit.getInscription(datetime.date.today()) == None:
-                self.choice.Append(GetInscritId(inscrit, self.inscrits), inscrit)
+                self.choice.Append(GetInscritId(inscrit, creche.inscrits), inscrit)
         self.choice.SetSelection(0)
             
     def EvtGenerationFacture(self, evt):
@@ -333,10 +329,10 @@ class CotisationsPanel(GPanel):
             if response == wx.ID_OK:
                 oopath = dlg.GetPath()
                 errors = []
-                for inscrit in self.inscrits:
+                for inscrit in creche.inscrits:
                     if inscrit.getInscription(periode) != None: # TODO cotisations ...
                         try:
-                            GenereFacture(self.creche, inscrit, periode, '%s/Cotisation %s %s %d.odt' % (oopath, inscrit.prenom, months[periode.month - 1], periode.year))
+                            GenereFacture(inscrit, periode, '%s/Cotisation %s %s %d.odt' % (oopath, inscrit.prenom, months[periode.month - 1], periode.year))
                         except CotisationException, e:
                             errors.append('%s %s' % (inscrit.prenom, inscrit.nom))
                             errors.extend(e.errors)
@@ -354,7 +350,7 @@ class CotisationsPanel(GPanel):
             if response == wx.ID_OK:
                 oofilename = dlg.GetPath()
                 try:
-                    GenereFacture(self.creche, inscrit, periode, oofilename)
+                    GenereFacture(inscrit, periode, oofilename)
                 except CotisationException, e:
                     error = '\n'.join(e.errors)
                     dlg = wx.MessageDialog(self, '%s\n%s' % (inscrit.prenom, error), 'Erreur', wx.OK | wx.ICON_INFORMATION)

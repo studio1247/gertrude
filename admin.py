@@ -28,18 +28,21 @@ profiles = [("Administrateur", PROFIL_ALL),
             ("Inscriptions", PROFIL_INSCRIPTIONS),
             (u"Saisie présences", PROFIL_SAISIE_PRESENCES),
             ]
-            
+
 class UsersPanel(AutoTab):
     def __init__(self, parent, creche):
+        global delbmp
+        delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
         AutoTab.__init__(self, parent)
         self.creche = creche
-        self.delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.users_sizer = wx.BoxSizer(wx.VERTICAL)
+        for i, user in enumerate(self.creche.users):
+            self.display_user(i)
+        self.sizer.Add(self.users_sizer)
         button_add = wx.Button(self, -1, 'Nouvel utilisateur')
         self.sizer.Add(button_add, 0, wx.EXPAND)
         self.Bind(wx.EVT_BUTTON, self.user_add, button_add)
-        for i, user in enumerate(self.creche.users):
-            self.display_user(i)
         self.sizer.Fit(self)
         self.SetSizer(self.sizer)
 
@@ -51,11 +54,11 @@ class UsersPanel(AutoTab):
         profile_choice.index = index
         self.Bind(wx.EVT_CHOICE, self.user_modify_profile, profile_choice)
         sizer.AddMany([(wx.StaticText(self, -1, 'Profil :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), profile_choice])
-        delbutton = wx.BitmapButton(self, -1, self.delbmp, size=(self.delbmp.GetWidth(), self.delbmp.GetHeight()))
+        delbutton = wx.BitmapButton(self, -1, delbmp, size=(delbmp.GetWidth(), delbmp.GetHeight()))
         delbutton.index = index
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
         self.Bind(wx.EVT_BUTTON, self.user_del, delbutton)
-        self.sizer.Add(sizer)
+        self.users_sizer.Add(sizer)
 
     def user_add(self, event):
         self.creche.users.append(User())
@@ -66,9 +69,9 @@ class UsersPanel(AutoTab):
         index = event.GetEventObject().index
         nb_admins = len([user for i, user in enumerate(self.creche.users) if (i != index and user.profile == PROFIL_ALL)])
         if len(self.creche.users) == 1 or nb_admins > 0:
-            sizer = self.sizer.GetItem(len(self.creche.users))
+            sizer = self.users_sizer.GetItem(len(self.creche.users)-1)
             sizer.DeleteWindows()
-            self.sizer.Detach(len(self.creche.users))
+            self.users_sizer.Detach(len(self.creche.users)-1)
             self.creche.users[index].delete()
             del self.creche.users[index]
             self.sizer.Layout()
@@ -104,12 +107,57 @@ class ConnectionPanel(AutoTab):
         self.sizer.Add(sizer)
         self.sizer.Fit(self)
         self.SetSizer(self.sizer)
+
+class CongesPanel(AutoTab):
+    def __init__(self, parent, creche):
+        AutoTab.__init__(self, parent)
+        self.creche = creche
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        for text in [j[0] for j in jours_feries]:
+            textctrl = wx.TextCtrl(self, -1, text, style=wx.TE_READONLY)
+            textctrl.Disable()
+            self.sizer.Add(textctrl, 0, wx.EXPAND)
+        self.conges_sizer = wx.BoxSizer(wx.VERTICAL)
+        for i, conge in enumerate(self.creche.conges):
+            self.display_conge(i)
+        self.sizer.Add(self.conges_sizer)
+        button_add = wx.Button(self, -1, u'Nouvelle période de congés')
+        self.sizer.Add(button_add, 0, wx.EXPAND)
+        self.Bind(wx.EVT_BUTTON, self.conges_add, button_add)
+        self.sizer.Fit(self)
+        self.SetSizer(self.sizer)
+
+    def display_conge(self, index):
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.AddMany([(wx.StaticText(self, -1, 'Debut :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, self.creche, 'conges[%d].debut' % index)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Fin :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, self.creche, 'conges[%d].fin' % index)])
+        delbutton = wx.BitmapButton(self, -1, delbmp, size=(delbmp.GetWidth(), delbmp.GetHeight()))
+        delbutton.index = index
+        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
+        self.Bind(wx.EVT_BUTTON, self.conges_del, delbutton)
+        self.conges_sizer.Add(sizer)
         
+    def conges_add(self, event):
+        self.creche.add_conge(Conge())
+        self.display_conge(len(self.creche.conges) - 1)
+        self.sizer.Layout()
+
+    def conges_del(self, event):
+        index = event.GetEventObject().index
+        sizer = self.conges_sizer.GetItem(len(self.creche.conges)-1)
+        sizer.DeleteWindows()
+        self.conges_sizer.Detach(len(self.creche.conges)-1)
+        self.creche.conges[index].delete()
+        del self.creche.conges[index]
+        self.sizer.Layout()
+        self.UpdateContents()
+
 class AdminNotebook(wx.Notebook):
     def __init__(self, parent, creche):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
-        self.AddPage(UsersPanel(self, creche), u'Utilisateurs')
-        self.AddPage(ConnectionPanel(self, creche), u'Connection')
+        self.AddPage(UsersPanel(self, creche), 'Utilisateurs')
+        self.AddPage(ConnectionPanel(self, creche), 'Connection')
+        self.AddPage(CongesPanel(self, creche), u'Congés')
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
     def OnPageChanged(self, event):
@@ -122,7 +170,7 @@ class AdminNotebook(wx.Notebook):
         page.UpdateContents()
      
 class AdminPanel(GPanel):
-    def __init__(self, parent, creche):
+    def __init__(self, parent):
         GPanel.__init__(self, parent, 'Administration')
         self.notebook = AdminNotebook(self, creche)
 	self.sizer.Add(self.notebook, 1, wx.EXPAND)

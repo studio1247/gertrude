@@ -445,35 +445,33 @@ def ReplacePlanningPresencesContent(document, inscrits, date_debut):
     #print dom.toprettyxml()
     return dom.toxml('UTF-8')
 
-def GenereEtatsTrimestriels(inscrits, annee, oofilename):
+def GenereEtatsTrimestriels(annee, oofilename):
     template = zipfile.ZipFile('./templates/Etats trimestriels.ods', 'r')
     oofile = zipfile.ZipFile(oofilename, 'w')
     for filename in template.namelist():
         data = template.read(filename)
         if (filename == 'content.xml'):
-            data = ReplaceEtatsTrimestrielsContent(data, inscrits, annee)
+            data = ReplaceEtatsTrimestrielsContent(data, annee)
         oofile.writestr(filename, data)
 
     template.close()
     oofile.close()
 
-def GenerePlanningPresences(inscrits, date, oofilename):
+def GenerePlanningPresences(date, oofilename):
     template = zipfile.ZipFile('./templates/Planning Presences.ods', 'r')
     oofile = zipfile.ZipFile(oofilename, 'w')
     for filename in template.namelist():
         data = template.read(filename)
         if (filename == 'content.xml'):
-            data = ReplacePlanningPresencesContent(data, inscrits, date)
+            data = ReplacePlanningPresencesContent(data, date)
         oofile.writestr(filename, data)
 
     template.close()
     oofile.close()
 
 class RelevesPanel(GPanel):
-    def __init__(self, parent, profil, creche, inscrits):
+    def __init__(self, parent):
         GPanel.__init__(self, parent, u'Relevés')
-        self.profil = profil
-        self.inscrits = inscrits
 
         today = datetime.date.today()
 
@@ -515,7 +513,7 @@ class RelevesPanel(GPanel):
 
         if response == wx.ID_OK:
             oofilename = dlg.GetPath()
-            GenereEtatsTrimestriels(self.inscrits, annee, oofilename)
+            GenereEtatsTrimestriels(annee, oofilename)
 
     def EvtGenerationPlanningPresences(self, evt):
         date = self.weekchoice.GetClientData(self.weekchoice.GetSelection())
@@ -529,7 +527,7 @@ class RelevesPanel(GPanel):
 
         if response == wx.ID_OK:
             oofilename = dlg.GetPath()
-            GenerePlanningPresences(self.inscrits, date, oofilename)
+            GenerePlanningPresences(date, oofilename)
 
 
 

@@ -272,22 +272,11 @@ class DateCtrl(wx.TextCtrl):
 ##            pass
 ##        event.Skip()
 
-    def getdate(self, str):
-        day = str.strip()
-        try:
-            (jour, mois, annee) = map(lambda x: int(x), day.split('/'))
-            if annee < 2000:
-                return None
-            else:
-                return datetime.date(annee, mois, jour)
-        except:
-            return None
-    
     def GetValue(self):
         if (wx.TextCtrl.GetValue(self) == ""):
             return None
         else:
-            return self.getdate(wx.TextCtrl.GetValue(self))
+            return str2date(wx.TextCtrl.GetValue(self))
 
     def SetValue(self, value):
         if value is None:

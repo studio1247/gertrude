@@ -23,24 +23,21 @@ from planning import GPanel
 from controls import *
 
 class CrechePanel(AutoTab):
-    def __init__(self, parent, creche):
+    def __init__(self, parent):
         AutoTab.__init__(self, parent)
-        self.creche = creche
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer2 = wx.FlexGridSizer(4, 2, 5, 5)
-        sizer2.AddMany([wx.StaticText(self, -1, u'Nom de la crèche :'), AutoTextCtrl(self, self.creche, 'nom', size=(200, 21))])
-        sizer2.AddMany([wx.StaticText(self, -1, 'Adresse :'), AutoTextCtrl(self, self.creche, 'adresse', size=(200, 21))])
-        sizer2.AddMany([wx.StaticText(self, -1, 'Code Postal :'), AutoNumericCtrl(self, self.creche, 'code_postal', precision=0, size=(200, 21))])
-        sizer2.AddMany([wx.StaticText(self, -1, 'Ville :'), AutoTextCtrl(self, self.creche, 'ville', size=(200, 21))])       
+        sizer2.AddMany([wx.StaticText(self, -1, u'Nom de la crèche :'), AutoTextCtrl(self, creche, 'nom', size=(200, 21))])
+        sizer2.AddMany([wx.StaticText(self, -1, 'Adresse :'), AutoTextCtrl(self, creche, 'adresse', size=(200, 21))])
+        sizer2.AddMany([wx.StaticText(self, -1, 'Code Postal :'), AutoNumericCtrl(self, creche, 'code_postal', precision=0, size=(200, 21))])
+        sizer2.AddMany([wx.StaticText(self, -1, 'Ville :'), AutoTextCtrl(self, creche, 'ville', size=(200, 21))])       
         sizer.Add(sizer2)
         sizer.Fit(self)
         self.SetSizer(sizer)
         
 class ResponsabilitesPanel(AutoTab):
-    def __init__(self, parent, creche, inscrits):
+    def __init__(self, parent):
         AutoTab.__init__(self, parent)
-        self.creche = creche
-        self.inscrits = inscrits
         parents = self.GetNomsParents()
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(PeriodeChoice(self, creche, 'bureaux', Bureau))
@@ -67,7 +64,7 @@ class ResponsabilitesPanel(AutoTab):
     def GetNomsParents(self):
         result = []
         parents = []
-        for inscrit in self.inscrits:
+        for inscrit in creche.inscrits:
             for parent in (inscrit.papa, inscrit.maman):
                 if parent.prenom and parent.nom:
                     tmp = parent.prenom + ' ' + parent.nom
@@ -78,7 +75,7 @@ class ResponsabilitesPanel(AutoTab):
         return result
 
 class CafPanel(AutoTab):
-    def __init__(self, parent, creche):
+    def __init__(self, parent):
         AutoTab.__init__(self, parent)
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(PeriodeChoice(self, creche, 'baremes_caf', BaremeCAF))
@@ -90,11 +87,11 @@ class CafPanel(AutoTab):
         self.SetSizer(sizer)
         
 class GeneralNotebook(wx.Notebook):
-    def __init__(self, parent, creche, inscrits):
+    def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
-        self.AddPage(CrechePanel(self, creche), u'Crèche')
-        self.AddPage(ResponsabilitesPanel(self, creche, inscrits), u'Responsabilités')
-        self.AddPage(CafPanel(self, creche), 'C.A.F.')        
+        self.AddPage(CrechePanel(self), u'Crèche')
+        self.AddPage(ResponsabilitesPanel(self), u'Responsabilités')
+        self.AddPage(CafPanel(self), 'C.A.F.')        
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
     def OnPageChanged(self, event):
@@ -107,9 +104,9 @@ class GeneralNotebook(wx.Notebook):
         page.UpdateContents()
      
 class GeneralPanel(GPanel):
-    def __init__(self, parent, creche, inscrits):
+    def __init__(self, parent):
         GPanel.__init__(self, parent, u'Crèche')
-        self.notebook = GeneralNotebook(self, creche, inscrits)
+        self.notebook = GeneralNotebook(self)
 	self.sizer.Add(self.notebook, 1, wx.EXPAND)
             
     def UpdateContents(self):

@@ -166,6 +166,13 @@ class BDDConnection(object):
             profile INTEGER
           );""")
         
+        cur.execute("""
+          CREATE TABLE CONGES(
+            idx INTEGER PRIMARY KEY,
+            debut VARCHAR,
+            fin VARCHAR,
+          );""")
+
         cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
         self.con.commit()
         

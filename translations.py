@@ -81,6 +81,14 @@ def Translate():
                 details = eval(details) << 7
                 cur.execute('UPDATE PRESENCES SET details=? WHERE idx=?', (details, idx))
         
+    if version < 5:
+        cur.execute("""
+          CREATE TABLE CONGES(
+            idx INTEGER PRIMARY KEY,
+            debut VARCHAR,
+            fin VARCHAR
+          );""")
+
     if version < VERSION:
         try:
             cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))

@@ -87,15 +87,15 @@ class Listbook(wx.Panel):
 class GertrudeListbook(Listbook):
     def __init__(self, parent, id=-1):
         Listbook.__init__(self, parent, id=-1, style=wx.LB_DEFAULT, pos=(10, 10))
-        self.AddPage(InscriptionsPanel(self, profil, creche, creche.inscrits), './bitmaps/inscriptions.png')
-        self.AddPage(PlanningPanel(self, profil, creche.inscrits), './bitmaps/presences.png')
+        self.AddPage(InscriptionsPanel(self), './bitmaps/inscriptions.png')
+        self.AddPage(PlanningPanel(self), './bitmaps/presences.png')
         if profil & PROFIL_TRESORIER:
-            self.AddPage(CotisationsPanel(self, profil, creche, creche.inscrits), './bitmaps/facturation.png')
-        self.AddPage(RelevesPanel(self, profil, creche, creche.inscrits), './bitmaps/releves.png')
+            self.AddPage(CotisationsPanel(self), './bitmaps/facturation.png')
+        self.AddPage(RelevesPanel(self), './bitmaps/releves.png')
         if profil & PROFIL_BUREAU:
-            self.AddPage(GeneralPanel(self, creche, creche.inscrits), './bitmaps/creche.png')
+            self.AddPage(GeneralPanel(self), './bitmaps/creche.png')
         if profil & PROFIL_ADMIN:
-            self.AddPage(AdminPanel(self, creche), './bitmaps/administration.png')
+            self.AddPage(AdminPanel(self), './bitmaps/administration.png')
         self.Draw()
 
     def OnPageChanged(self, event):
@@ -144,7 +144,6 @@ class GertrudeFrame(wx.Frame):
                     exec('obj.%s = value' % member)
                 self.listbook.UpdateContents()
         elif evtId == ID_SYNCHRO:
-            global creche
             dlg = SynchroDialog(self, creche.server_url)
             dlg.CenterOnScreen()
 
@@ -238,14 +237,13 @@ class LoginDialog(wx.Dialog):
         self.Bind(wx.EVT_CLOSE, self.OnExit)
 
     def onOkButton(self, evt):
-        global profil
         login = self.login_ctrl.GetValue()
         password = self.passwd_ctrl.GetValue()
 
         for user in creche.users:
             if login == user.login and password == user.password:
                 self.Destroy()
-                profil = user.profile
+                __builtin__.profil = user.profile
                 frame = GertrudeFrame(None, -1, "Gertrude v%s" % VERSION)
                 frame.Show()
                 return
@@ -264,14 +262,13 @@ class MyApp(wx.App):
             login_dialog = LoginDialog()
             login_dialog.Show(True)
         else:
-            global profil
-            profil = PROFIL_ALL
+            __builtin__.profil = PROFIL_ALL
             frame = GertrudeFrame(None, -1, "Gertrude v%s" % VERSION)
             frame.Show()
         return True
 
-creche = Load()
-profil = 0
+__builtin__.creche = Load()
+__builtin__.profil = 0
 Backup()
 app = MyApp(0)
 app.MainLoop()

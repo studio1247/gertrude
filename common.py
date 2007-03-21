@@ -17,35 +17,18 @@
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import datetime, binascii
-from paques import getPaquesDate
 from constants import *
+from parameters import *
 
 days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"]
 months = ["Janvier", u'Février', "Mars", "Avril", "Mai", "Juin", "Juillet", u'Août', "Septembre", "Octobre", "Novembre", u'Décembre']
 months_abbrev = ["Janv", u'Fév', "Mars", "Avril", "Mai", "Juin", "Juil", u'Août', "Sept", "Oct", "Nov", u'Déc']
 trimestres = ["1er", u'2ème', u'3ème', u'4ème']
 
-today = datetime.date.today()
-first_date = max(today - datetime.timedelta(12*30), datetime.date(2005, 1, 1))
-last_date = today + datetime.timedelta(6*30)
-
 current_directory = "./current"
 backups_directory = "./backups"
 filename = current_directory + "/petits-potes_" + str(today.year) + ".gtu"
 filename = current_directory + "/petits-potes_2005.gtu"
-
-jours_feries = []
-for year in range(first_date.year, last_date.year + 1):
-    jours_feries.append(datetime.date(year, 1, 1))
-    jours_feries.append(datetime.date(year, 5, 1))
-    jours_feries.append(datetime.date(year, 5, 8))
-    jours_feries.append(datetime.date(year, 7, 14))
-    jours_feries.append(datetime.date(year, 11, 1))
-    jours_feries.append(datetime.date(year, 11, 11))
-    jours_feries.append(datetime.date(year, 12, 25))
-    paques = getPaquesDate(year)
-    jours_feries.append(paques + datetime.timedelta(1))
-    jours_feries.append(paques + datetime.timedelta(39))
 
 def getfirstmonday():
     first_monday = first_date
@@ -56,26 +39,33 @@ def getfirstmonday():
 def getNumeroSemaine(date):
     return int((date - datetime.date(date.year, 1, 1)).days / 7) + 1
 
-def datestr(date):
+def str2date(str, year=None):
+    day = str.strip()
+    if year and str.count('/') == 1:
+        day += '/%d' % year
+    try:
+        (jour, mois, annee) = map(lambda x: int(x), day.split('/'))
+        if annee < 2000:
+            return None
+        else:
+            return datetime.date(annee, mois, jour)
+    except:
+        return None
+
+def date2str(date):
   if date == None:
     return ''
   else:
     return '%.02d/%.02d/%.04d' % (date.day, date.month, date.year)
 
 def periodestr(o):      
-    return datestr(o.debut) + ' - ' + datestr(o.fin)
+    return date2str(o.debut) + ' - ' + date2str(o.fin)
 
 def Select(object, date):
     for o in object:
         if o.debut and date >= o.debut and (not o.fin or date <= o.fin):
             return o
     return None
-
-PRESENT = 0
-VACANCES = 1
-MALADE = 2
-NONINSCRIT = 3 # utilise dans getPresence
-SUPPLEMENT = 4 # utilise dans getPresence
 
 from sqlinterface import connection
     
@@ -131,29 +121,6 @@ class Presence(object):
         if name in ['date', 'previsionnel', 'value', 'details'] and self.idx:
             print 'update', name, value
             connection.execute('UPDATE PRESENCES SET %s=? WHERE idx=?' % name, (value, self.idx))
-        
-    def Total(self): # TODO 10/0
-        total = 0
-        if self.value == 0:
-            # Total reel ...
-            #for i in range(int((heureMaximum - heureOuverture) * 4)):
-            #    if self.details[i]:
-            #        total += 0.25
-            
-            # Total en 4, 2, 4
-#            for (debut, fin, valeur) in tranches:
-#              for i in range(int((debut - heureOuverture) * 4), int((fin - heureOuverture) * 4)):
-#                if self.details[i]:
-#                  total += valeur
-#                  break
-
-            # Total en 0 / 10
-            for debut, fin, valeur in tranches:
-              for i in range(int((debut - heureOuverture) * 4), int((fin - heureOuverture) * 4)):
-                if self.details[i]:
-                  total = 10
-
-        return total
     
     def isPresentDuringTranche(self, tranche):
         if (self.value == 0):
@@ -235,6 +202,32 @@ class User(object):
             print 'update', name
             connection.execute('UPDATE USERS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
+class Conge(object):
+    def __init__(self, creation=True):
+        self.idx = None
+        self.debut = ""
+        self.fin = ""
+        self.creche = None
+
+        if creation:
+            print 'nouveau conge'
+            result = connection.execute('INSERT INTO CONGES (idx, debut, fin) VALUES (NULL,?,?)', (self.debut, self.fin))
+            self.idx = result.lastrowid
+        
+    def delete(self):
+        print 'suppression conge'
+        connection.execute('DELETE FROM CONGES WHERE idx=?', (self.idx,))
+        if self.creche:
+            self.creche.calcule_jours_fermeture()
+
+    def __setattr__(self, name, value):
+        self.__dict__[name] = value
+        if name in ['debut', 'fin'] and self.idx:
+            print 'update', name
+            connection.execute('UPDATE CONGES SET %s=? WHERE idx=?' % name, (value, self.idx))
+            if self.creche:
+                self.creche.calcule_jours_fermeture()
+
 class Creche(object): 
     def __init__(self, creation=True):
         self.idx = None
@@ -243,6 +236,7 @@ class Creche(object):
         self.code_postal = ''
         self.ville = ''
         self.users = []
+        self.conges = []
         self.bureaux = []
         self.baremes_caf = []
         self.inscrits = []
@@ -254,6 +248,46 @@ class Creche(object):
             self.idx = result.lastrowid
             self.bureaux.append(Bureau(self))
             self.baremes_caf.append(BaremeCAF())
+
+        self.calcule_jours_fermeture()
+
+    def calcule_jours_fermeture(self):
+        self.jours_fermeture = []
+        for year in range(first_date.year, last_date.year + 1):
+            for label, func in jours_feries:
+                self.jours_fermeture.append(func(year))
+
+        def add_periode(debut, fin):
+            date = debut
+            while date <= fin:
+                self.jours_fermeture.append(date)
+                date += datetime.timedelta(1)
+                
+        for conge in self.conges:
+            try:
+                count = conge.debut.count('/')
+                if count == 2:
+                    debut = str2date(conge.debut)
+                    if conge.fin.strip() == "":
+                        fin = debut
+                    else:
+                        fin = str2date(conge.fin)
+                    add_periode(debut, fin)
+                elif count == 1:
+                    for year in range(first_date.year, last_date.year + 1):
+                        debut = str2date(conge.debut, year)
+                        if conge.fin.strip() == "":
+                            fin = debut
+                        else:
+                            fin = str2date(conge.fin, year)
+                    add_periode(debut, fin)
+            except:
+                pass
+
+    def add_conge(self, conge):
+        conge.creche = self
+        self.conges.append(conge)
+        self.calcule_jours_fermeture()
        
     def __setattr__(self, name, value):
         self.__dict__[name] = value
@@ -318,9 +352,6 @@ class Parent(object):
         if name in ['prenom', 'nom', 'telephone_domicile', 'telephone_domicile_notes', 'telephone_portable', 'telephone_portable_notes', 'telephone_travail', 'telephone_travail_notes', 'email'] and self.idx:
             print 'update', name
             connection.execute('UPDATE PARENTS SET %s=? WHERE idx=?' % name, (value, self.idx))
-
-MODE_CRECHE = 0
-MODE_HALTE_GARDERIE = 1
 
 class Inscription(object):
     def __init__(self, inscrit, creation=True):
@@ -537,58 +568,7 @@ class Inscrit(object):
 #            
 #          date += datetime.timedelta(1)
 #        return total, previsionnel
-    
-    def getTotalHeuresMois(self, annee, mois, mode_accueil): # heures facturees
-        total = 0
-        previsionnel = 0
-        
-        if mode_accueil == 0: # Creche
-            total_semaine_type = 0
-            
-            date = datetime.date(annee, mois, 1)
-            while (date.month == mois):
-              if (date.weekday() < 5):
-                inscription = self.getInscription(date)
-                if (inscription != None and inscription.mode == mode_accueil):
-                  if total_semaine_type  < inscription.GetTotalSemaineType():
-                      total_semaine_type = inscription.GetTotalSemaineType()
-                  presence_st = self.getPresenceFromSemaineType(date)
-                  total_jour_st = presence_st.Total()
-                  if date in self.presences:
-                    presence = self.presences[date]
-                    if total_jour_st == 0 and presence.Total() > 0:                    
-                        total += presence.Total()
-                    if presence.previsionnel == 1 and presence.value == 0:
-                        previsionnel = 1
-                  else:
-                    if (presence_st.value == 0):
-                      previsionnel = 1              
-                
-              date += datetime.timedelta(1)
-            if mois == 8: # mois d'aout
-                total += 2 * total_semaine_type
-            elif mois == 12: # mois de decembre
-                total += 3 * total_semaine_type
-            else:
-                total += 4 * total_semaine_type
-        else: # Halte-garderie
-            date = datetime.date(annee, mois, 1)
-            while (date.month == mois):
-              if (date.weekday() < 5):
-                inscription = self.getInscription(date)
-                if (inscription != None and inscription.mode == mode_accueil):
-                  if date in self.presences:
-                    presence = self.presences[date]  
-                  else:
-                    presence = self.getPresenceFromSemaineType(date)
-                    
-                  total += presence.Total()
-                  
-                  if presence.previsionnel == 1 and presence.value == 0:
-                    previsionnel = 1
 
-              date += datetime.timedelta(1)
-        return total, previsionnel
 
 def GetInscritId(inscrit, inscrits):
     for i in inscrits:

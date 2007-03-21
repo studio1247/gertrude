@@ -167,6 +167,12 @@ def Load():
         user.login, user.password, user.profile, user.idx = users_entry
         creche.users.append(user)
 
+    cur.execute('SELECT debut, fin, idx FROM CONGES')
+    for conges_entry in cur.fetchall():
+        conge = Conge(creation=False)
+        conge.debut, conge.fin, conge.idx = conges_entry
+        creche.add_conge(conge)
+
     cur.execute('SELECT debut, fin, plancher, plafond, idx FROM BAREMESCAF')
     for bareme_entry in cur.fetchall():
         bareme = BaremeCAF(creation=False)

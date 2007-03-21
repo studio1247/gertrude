@@ -52,7 +52,7 @@ def ParseHtml(filename, context):
         dom = xml.dom.minidom.parseString(text)
         replacement = eval(dom.getElementsByTagName('var')[0].getAttribute('value'))
         if type(replacement) == datetime.date:
-            replacement = datestr(replacement)
+            replacement = date2str(replacement)
         elif type(replacement) != str and type(replacement) != unicode:
             replacement = str(replacement)
         data = data.replace(text, replacement)
@@ -60,9 +60,8 @@ def ParseHtml(filename, context):
     return data
 
 class ContextPanel(wx.Panel):
-    def __init__(self, parent, creche):
+    def __init__(self, parent):
         self.parent = parent
-        self.creche = creche
         wx.Panel.__init__(self, parent)
         self.periodechoice = wx.Choice(self, -1, pos=(10, 10), size=(180, 30))
         self.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.periodechoice)
@@ -78,7 +77,7 @@ class ContextPanel(wx.Panel):
             self.periodechoice.Clear()   
             self.periodes = self.GetPeriodes()
             for p in self.periodes:
-                self.periodechoice.Append(datestr(p[0]) + ' - ' + datestr(p[1]))
+                self.periodechoice.Append(date2str(p[0]) + ' - ' + date2str(p[1]))
             if len(self.periodes) > 1:
                 self.periodechoice.Enable()
             else:
@@ -101,8 +100,8 @@ class ContextPanel(wx.Panel):
         self.html_window.SetSize((w-20, h-60))
     
 class ContratPanel(ContextPanel):
-    def __init__(self, parent, creche):
-        ContextPanel.__init__(self, parent, creche)
+    def __init__(self, parent):
+        ContextPanel.__init__(self, parent)
 
     def GetPeriodes(self):
         return [(inscription.debut, inscription.fin) for inscription in self.inscrit.inscriptions]
@@ -113,7 +112,7 @@ class ContratPanel(ContextPanel):
             self.periodechoice.Disable()
         else:
             try:
-                context = Cotisation(self.creche, self.inscrit, self.periode)
+                context = Cotisation(self.inscrit, self.periode)
                 if context.mode_garde == 0:
                     self.html = ParseHtml("./templates/contrat_accueil_creche.html", context)
                 else:
@@ -125,8 +124,8 @@ class ContratPanel(ContextPanel):
         self.html_window.SetPage(self.html)
         
 class ForfaitPanel(ContextPanel):
-    def __init__(self, parent, creche):
-        ContextPanel.__init__(self, parent, creche)
+    def __init__(self, parent):
+        ContextPanel.__init__(self, parent)
         
     def GetPeriodes(self):
         periodes = []
@@ -138,7 +137,7 @@ class ForfaitPanel(ContextPanel):
             previous_periode = None
             for periode in all_periodes:
                 try:
-                    context = Cotisation(self.creche, self.inscrit, periode)                    
+                    context = Cotisation(self.inscrit, periode)                    
                     if not previous_periode or context != previous_context:
                         periodes.append(periode)           
                         previous_periode = periode
@@ -181,7 +180,7 @@ class ForfaitPanel(ContextPanel):
             addseparator(frere_soeur.naissance)
             addseparator(frere_soeur.entree)
             addseparator(frere_soeur.sortie, 1)
-        for bareme in self.creche.baremes_caf:
+        for bareme in creche.baremes_caf:
             addseparator(bareme.debut)
             addseparator(bareme.fin, 1)
         for year in range(debut.year, fin.year):
@@ -194,7 +193,7 @@ class ForfaitPanel(ContextPanel):
             self.html = '<html><body>Aucun inscrit s&eacute;lectionn&eacute; !</body></html>'
         else:
             try:
-                context = Cotisation(self.creche, self.inscrit, self.periode)
+                context = Cotisation(self.inscrit, self.periode)
                 if context.mode_garde == 0:
                     self.html = ParseHtml("./templates/frais_de_garde.html", context)
                 else:
@@ -363,14 +362,15 @@ class IdentitePanel(InscriptionsTab):
         self.Bind(wx.EVT_BUTTON, self.OnPhotoButton, self.photo)
         sizer1.Add(self.photo)
         
-        self.fratries_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Frères et soeurs'), wx.VERTICAL)
+        sizer3 = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Frères et soeurs'), wx.VERTICAL)
+        self.fratries_sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer3.Add(self.fratries_sizer)
         self.nouveau_frere = wx.Button(self, -1, u'Nouveau frère ou nouvelle soeur')
         self.nouveau_frere.Disable()
-        self.fratries_sizer.Add(self.nouveau_frere, 0, wx.EXPAND)
+        sizer3.Add(self.nouveau_frere, 0, wx.EXPAND)
         self.Bind(wx.EVT_BUTTON, self.EvtNouveauFrere, self.nouveau_frere)
-        
         self.sizer.Add(sizer1)
-        self.sizer.Add(self.fratries_sizer)
+        self.sizer.Add(sizer3)
         self.SetSizer(self.sizer)
         self.SetAutoLayout(1)
         self.SetupScrolling()
@@ -399,9 +399,9 @@ class IdentitePanel(InscriptionsTab):
         
     def EvtSuppressionFrere(self, event):
         index = event.GetEventObject().index
-        sizer = self.fratries_sizer.GetItem(len(self.inscrit.freres_soeurs))
+        sizer = self.fratries_sizer.GetItem(len(self.inscrit.freres_soeurs)-1)
         sizer.DeleteWindows()
-        self.fratries_sizer.Detach(len(self.inscrit.freres_soeurs))
+        self.fratries_sizer.Detach(len(self.inscrit.freres_soeurs)-1)
         self.inscrit.freres_soeurs[index].delete()
         del self.inscrit.freres_soeurs[index]
         self.sizer.Layout()
@@ -469,7 +469,7 @@ class IdentitePanel(InscriptionsTab):
                 dlg.Destroy()
 
 class ParentsPanel(InscriptionsTab):
-    def __init__(self, parent, profil):
+    def __init__(self, parent):
         InscriptionsTab.__init__(self, parent)
         self.regimes_choices = []
         
@@ -575,19 +575,18 @@ class ModeAccueilPanel(InscriptionsTab):
             self.week_ctrl.SetSemaine(None)
     
 class InscriptionsNotebook(wx.Notebook):
-    def __init__(self, parent, profil, creche, *args, **kwargs):
+    def __init__(self, parent, *args, **kwargs):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT, *args, **kwargs)      
         self.parent = parent
-        self.profil = profil
         self.inscrit = None
 
         self.AddPage(IdentitePanel(self), u'Identité')
-        self.AddPage(ParentsPanel(self, profil), 'Parents')
+        self.AddPage(ParentsPanel(self), 'Parents')
         self.AddPage(ModeAccueilPanel(self), "Mode d'accueil")
 
-        if self.profil & PROFIL_TRESORIER:
-            self.contrat_panel = ContratPanel(self, creche)
-            self.forfait_panel = ForfaitPanel(self, creche)
+        if profil & PROFIL_TRESORIER:
+            self.contrat_panel = ContratPanel(self)
+            self.forfait_panel = ForfaitPanel(self)
             self.AddPage(self.contrat_panel, 'Contrat PSU')
             self.AddPage(self.forfait_panel, 'Frais de garde mensuels')
         else:
@@ -622,12 +621,8 @@ class InscriptionsNotebook(wx.Notebook):
 #                self.photo.Refresh()
             
 class InscriptionsPanel(GPanel):
-    def __init__(self, parent, profil, creche, inscrits):
+    def __init__(self, parent):
         GPanel.__init__(self, parent, "Inscriptions")
-
-        self.profil = profil
-        self.creche = creche
-        self.inscrits = inscrits
 
         # Le control pour la selection du bebe
 	sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -638,7 +633,7 @@ class InscriptionsPanel(GPanel):
         sizer.AddMany([(self.choice, 1, wx.EXPAND), (self.delbutton, 0, wx.RIGHT)])
 	self.sizer.Add(sizer, 0, wx.EXPAND)
         # le notebook pour la fiche d'inscription
-        self.notebook = InscriptionsNotebook(self, profil, creche)
+        self.notebook = InscriptionsNotebook(self)
 	self.sizer.Add(self.notebook, 1, wx.EXPAND)
         self.InitInscrits()
 
@@ -648,20 +643,20 @@ class InscriptionsPanel(GPanel):
     def InitInscrits(self, selected=None):
         self.choice.Clear()
         # Ceux qui sont presents
-        for inscrit in self.inscrits:
+        for inscrit in creche.inscrits:
             if inscrit.getInscription(datetime.date.today()) != None:
-                self.choice.Append(GetInscritId(inscrit, self.inscrits), inscrit)
+                self.choice.Append(GetInscritId(inscrit, creche.inscrits), inscrit)
         self.choice.Append(150 * '-', None)
         self.choice.Append('Nouvelle inscription', None)
         self.choice.Append(150 * '-', None)
         # Les autres
-        for inscrit in self.inscrits:
+        for inscrit in creche.inscrits:
             if inscrit.getInscription(datetime.date.today()) == None:
-                self.choice.Append(GetInscritId(inscrit, self.inscrits), inscrit)
+                self.choice.Append(GetInscritId(inscrit, creche.inscrits), inscrit)
 
-        if len(self.inscrits) > 0 and selected != None and selected in self.inscrits:
+        if len(creche.inscrits) > 0 and selected != None and selected in creche.inscrits:
             self.SelectInscrit(selected)
-        elif (len(self.inscrits) > 0):
+        elif (len(creche.inscrits) > 0):
             self.SelectInscrit(self.choice.GetClientData(0))
         else:
             self.SelectInscrit(None)
@@ -675,9 +670,9 @@ class InscriptionsPanel(GPanel):
             self.SelectInscrit(inscrit)
         else:
             ctrl.SetStringSelection('Nouvelle inscription')
-            if self.notebook.inscrit is None or GetInscritId(self.notebook.inscrit, self.inscrits) != '':
+            if self.notebook.inscrit is None or GetInscritId(self.notebook.inscrit, creche.inscrits) != '':
                 inscrit = Inscrit()
-                self.inscrits.append(inscrit)
+                creche.inscrits.append(inscrit)
                 self.notebook.SetInscrit(inscrit)
                 self.notebook.SetSelection(0) # Selectionne la page identite
                 self.delbutton.Disable()
@@ -702,7 +697,7 @@ class InscriptionsPanel(GPanel):
                                    wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION )
             if dlg.ShowModal() == wx.ID_YES:
                 inscrit.delete()
-                self.inscrits.remove(inscrit)
+                creche.inscrits.remove(inscrit)
                 self.choice.Delete(selected)
                 self.choice.SetSelection(-1)
                 self.notebook.SetInscrit(None)
@@ -710,7 +705,7 @@ class InscriptionsPanel(GPanel):
             dlg.Destroy()
         
     def ChangePrenom(self, inscrit):
-        inscritId = GetInscritId(inscrit, self.inscrits)
+        inscritId = GetInscritId(inscrit, creche.inscrits)
         if self.choice.GetClientData(self.choice.GetSelection()) is None:
             if inscritId != '':
                 self.choice.Insert(inscritId, 0, inscrit)
