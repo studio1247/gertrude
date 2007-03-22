@@ -37,7 +37,7 @@ def ReplaceFactureContent(data, inscrit, periode):
     else:
         fin = datetime.date(periode.year, periode.month + 1, 1) - datetime.timedelta(1)
     inscriptions = inscrit.getInscriptions(debut, fin)
-    
+
     dom = xml.dom.minidom.parseString(data)
 
     # D'abord le tableau des presences du mois

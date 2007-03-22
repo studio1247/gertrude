@@ -414,7 +414,7 @@ class IdentitePanel(InscriptionsTab):
         if inscrit:
             new = len(inscrit.freres_soeurs)
         if old > new:
-            for i in range(old, new, -1):
+            for i in range(old-1, new-1, -1):
                 self.fratries_sizer.GetItem(i).DeleteWindows()
                 self.fratries_sizer.Detach(i)
 

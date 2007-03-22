@@ -181,6 +181,7 @@ def ReplaceFields(cellules, values):
 
 def ReplaceEtatsTrimestrielsContent(document, annee):
     factures = {}
+    errors = {}
     nb_cellules = 13
     premiere_ligne = 4
     nb_lignes = 8
@@ -235,30 +236,33 @@ def ReplaceEtatsTrimestrielsContent(document, annee):
                             try:
                                 factures[inscrit.idx, mois] = Facture(inscrit, annee, mois)
                             except CotisationException, e:
-                                print e.errors
+                                if not (inscrit.prenom, inscrit.nom) in errors:
+                                    errors[(inscrit.prenom, inscrit.nom)] = set(e.errors)
+                                else:
+                                    errors[(inscrit.prenom, inscrit.nom)].update(e.errors)
                                 continue
                         facture = factures[inscrit.idx, mois]
                         previsionnel[m] = facture.previsionnel
                         heures[MODE_CRECHE][m] = facture.detail_heures_facturees[MODE_CRECHE]
                         heures[MODE_HALTE_GARDERIE][m] = facture.detail_heures_facturees[MODE_HALTE_GARDERIE]
 
-                        fields = {'nom': inscrit.nom,
-                                  'prenom': inscrit.prenom,
-                                  'adresse': inscrit.adresse,
-                                  'ville': inscrit.ville,
-                                  'code_postal': str(inscrit.code_postal),
-                                  'naissance': inscrit.naissance,
-                                  'entree': inscrit.inscriptions[0].debut,
-                                  'sortie': inscrit.inscriptions[-1].fin}
+                    fields = {'nom': inscrit.nom,
+                              'prenom': inscrit.prenom,
+                              'adresse': inscrit.adresse,
+                              'ville': inscrit.ville,
+                              'code_postal': str(inscrit.code_postal),
+                              'naissance': inscrit.naissance,
+                              'entree': inscrit.inscriptions[0].debut,
+                              'sortie': inscrit.inscriptions[-1].fin}
 
-                        for m, mode in enumerate(["creche", "halte"]):
-                            for j in range(3):
-                                if heures[m][j] == 0:
-                                    fields['%s(%d)' % (mode, j+1)] = ''
-                                elif previsionnel[m]:
-                                    fields['%s(%d)' % (mode, j+1)] = '(%d)' % heures[m][j]
-                                else:
-                                    fields['%s(%d)' % (mode, j+1)] = heures[m][j]
+                    for m, mode in enumerate(["creche", "halte"]):
+                        for j in range(3):
+                            if heures[m][j] == 0:
+                                fields['%s(%d)' % (mode, j+1)] = ''
+                            elif previsionnel[m]:
+                                fields['%s(%d)' % (mode, j+1)] = '(%d)' % heures[m][j]
+                            else:
+                                fields['%s(%d)' % (mode, j+1)] = heures[m][j]
                 else:
                     fields = {}
 
@@ -301,7 +305,10 @@ def ReplaceEtatsTrimestrielsContent(document, annee):
                     try:
                         factures[inscrit.idx, mois] = Facture(inscrit, annee, mois+1)
                     except CotisationException, e:
-                        print e.errors
+                        if not (inscrit.prenom, inscrit.nom) in errors:
+                            errors[(inscrit.prenom, inscrit.nom)] = set(e.errors)
+                        else:
+                            errors[(inscrit.prenom, inscrit.nom)].update(e.errors)
                         continue
                 facture = factures[inscrit.idx, mois]
                 heures[mois], previsionnel[mois] = facture.detail_heures_facturees[mode], facture.previsionnel
@@ -353,6 +360,8 @@ def ReplaceEtatsTrimestrielsContent(document, annee):
     indexes = getHalteGarderieIndexes(debut, fin)
     Synthese(indexes, MODE_HALTE_GARDERIE, 'halte', 6)
 
+    if len(errors) > 0:
+        raise CotisationException(errors)
     #print dom.toprettyxml()
     return dom.toxml('UTF-8')
 
@@ -459,26 +468,30 @@ def ReplacePlanningPresencesContent(document, date_debut):
 
 def GenereEtatsTrimestriels(annee, oofilename):
     template = zipfile.ZipFile('./templates/Etats trimestriels.ods', 'r')
-    oofile = zipfile.ZipFile(oofilename, 'w')
+    files = []
     for filename in template.namelist():
         data = template.read(filename)
         if (filename == 'content.xml'):
             data = ReplaceEtatsTrimestrielsContent(data, annee)
-        oofile.writestr(filename, data)
-
+        files.append((filename, data))
     template.close()
+    oofile = zipfile.ZipFile(oofilename, 'w')
+    for filename, data in files:
+        oofile.writestr(filename, data)
     oofile.close()
 
 def GenerePlanningPresences(date, oofilename):
     template = zipfile.ZipFile('./templates/Planning Presences.ods', 'r')
-    oofile = zipfile.ZipFile(oofilename, 'w')
+    files = []
     for filename in template.namelist():
         data = template.read(filename)
-        if (filename == 'content.xml'):
+        if filename == 'content.xml':
             data = ReplacePlanningPresencesContent(data, date)
-        oofile.writestr(filename, data)
-
+        files.append((filename, data))
     template.close()
+    oofile = zipfile.ZipFile(oofilename, 'w')
+    for filename, data in files:
+        oofile.writestr(filename, data)
     oofile.close()
 
 class RelevesPanel(GPanel):
@@ -525,7 +538,14 @@ class RelevesPanel(GPanel):
 
         if response == wx.ID_OK:
             oofilename = dlg.GetPath()
-            GenereEtatsTrimestriels(annee, oofilename)
+            try:
+                GenereEtatsTrimestriels(annee, oofilename)
+                dlg = wx.MessageDialog(self, u"Document %s généré" % oofilename, 'Message', wx.OK)
+            except CotisationException, e:
+                message = '\n'.join(['%s %s :\n%s' % (tmp[0], tmp[1], '\n'.join(list(e.errors[tmp]))) for tmp in e.errors])
+                dlg = wx.MessageDialog(self, message, 'Erreur', wx.OK | wx.ICON_WARNING)
+            dlg.ShowModal()
+            dlg.Destroy()
 
     def EvtGenerationPlanningPresences(self, evt):
         date = self.weekchoice.GetClientData(self.weekchoice.GetSelection())
@@ -541,8 +561,6 @@ class RelevesPanel(GPanel):
             oofilename = dlg.GetPath()
             GenerePlanningPresences(date, oofilename)
 
-
-
 if __name__ == '__main__':
     import sys, os, __builtin__
     from datafiles import *
@@ -550,8 +568,11 @@ if __name__ == '__main__':
     #today = datetime.date.today()
 
     filename = 'etats_trimestriels_%d.ods' % (today.year - 1)
-    GenereEtatsTrimestriels(today.year - 1, filename)
-    print u'Fichier %s généré' % filename
+    try:
+        GenereEtatsTrimestriels(today.year - 1, filename)
+        print u'Fichier %s généré' % filename
+    except CotisationException, e:
+        print e.errors
 
     filename = 'planning_presences_%s.ods' % first_date
     GenerePlanningPresences(getfirstmonday(), filename)

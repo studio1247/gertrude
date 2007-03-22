@@ -78,7 +78,7 @@ class Facture(object):
                                 self.deduction += cotisation.montant_jour_supplementaire
             date += datetime.timedelta(1)
 
-        self.semaines_payantes = 4 - (jours_fermeture % 5)
+        self.semaines_payantes = 4 - int(jours_fermeture / 5)
 
         for mode_garde, cotisation in cotisations_mensuelles:
             pro_rata = cotisation * self.semaines_payantes * float(cotisations_mensuelles[mode_garde, cotisation]) / jours_ouvres / 4
