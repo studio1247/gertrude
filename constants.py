@@ -38,3 +38,6 @@ VACANCES = 1
 MALADE = 2
 NONINSCRIT = 3 # utilise dans getPresence
 SUPPLEMENT = 4 # utilise dans getPresence
+
+ID_SYNCHRO = 10001
+ID_UNDO = 10002

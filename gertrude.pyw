@@ -30,9 +30,6 @@ from datafiles import *
 
 VERSION = '0.35'
 
-ID_SYNCHRO = 200
-ID_UNDO = 300
-
 __builtin__.history = []
 
 class HtmlListBox(wx.HtmlListBox):

@@ -25,8 +25,6 @@ import time, datetime
 from sqlinterface import *
 from translations import Translate
 
-ID_SYNCHRO = 10001
-
 def Backup():
     if os.path.isfile('gertrude.db'):
         index = 0
@@ -141,7 +139,7 @@ class SynchroDialog(wx.Dialog):
 
             self.ftp.quit()
             self.EndModal(result)
-       
+
 def Load():
     def getdate(str):
         if str is None:
