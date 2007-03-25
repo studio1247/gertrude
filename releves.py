@@ -230,8 +230,8 @@ def ReplaceEtatsTrimestrielsContent(document, annee):
                     inscrit = creche.inscrits[indexes[index]]
 
                     # Calcul du nombre d'heures pour chaque mois
-                    for m in range(3):
-                        mois = trimestre * 3 + m + 1
+                    for i in range(3):
+                        mois = trimestre * 3 + i + 1
                         if (inscrit.idx, mois) not in factures:
                             try:
                                 factures[inscrit.idx, mois] = Facture(inscrit, annee, mois)
@@ -242,9 +242,9 @@ def ReplaceEtatsTrimestrielsContent(document, annee):
                                     errors[(inscrit.prenom, inscrit.nom)].update(e.errors)
                                 continue
                         facture = factures[inscrit.idx, mois]
-                        previsionnel[m] = facture.previsionnel
-                        heures[MODE_CRECHE][m] = facture.detail_heures_facturees[MODE_CRECHE]
-                        heures[MODE_HALTE_GARDERIE][m] = facture.detail_heures_facturees[MODE_HALTE_GARDERIE]
+                        previsionnel[i] = facture.previsionnel
+                        heures[MODE_CRECHE][i] = facture.detail_heures_facturees[MODE_CRECHE]
+                        heures[MODE_HALTE_GARDERIE][i] = facture.detail_heures_facturees[MODE_HALTE_GARDERIE]
 
                     fields = {'nom': inscrit.nom,
                               'prenom': inscrit.prenom,
@@ -256,13 +256,13 @@ def ReplaceEtatsTrimestrielsContent(document, annee):
                               'sortie': inscrit.inscriptions[-1].fin}
 
                     for m, mode in enumerate(["creche", "halte"]):
-                        for j in range(3):
-                            if heures[m][j] == 0:
-                                fields['%s(%d)' % (mode, j+1)] = ''
-                            elif previsionnel[m]:
-                                fields['%s(%d)' % (mode, j+1)] = '(%d)' % heures[m][j]
-                            else:
-                                fields['%s(%d)' % (mode, j+1)] = heures[m][j]
+                            for i in range(3):
+                                if heures[m][i] == 0:
+                                    fields['%s(%d)' % (mode, i+1)] = ''
+                                elif previsionnel[m]:
+                                    fields['%s(%d)' % (mode, i+1)] = '(%d)' % heures[m][i]
+                                else:
+                                    fields['%s(%d)' % (mode, i+1)] = heures[m][i]
                 else:
                     fields = {}
 
@@ -301,16 +301,16 @@ def ReplaceEtatsTrimestrielsContent(document, annee):
 
             # Calcul du nombre d'heures pour chaque mois
             for mois in range(12):
-                if (inscrit.idx, mois) not in factures:
+                if (inscrit.idx, mois+1) not in factures:
                     try:
-                        factures[inscrit.idx, mois] = Facture(inscrit, annee, mois+1)
+                        factures[inscrit.idx, mois+1] = Facture(inscrit, annee, mois+1)
                     except CotisationException, e:
                         if not (inscrit.prenom, inscrit.nom) in errors:
                             errors[(inscrit.prenom, inscrit.nom)] = set(e.errors)
                         else:
                             errors[(inscrit.prenom, inscrit.nom)].update(e.errors)
                         continue
-                facture = factures[inscrit.idx, mois]
+                facture = factures[inscrit.idx, mois+1]
                 heures[mois], previsionnel[mois] = facture.detail_heures_facturees[mode], facture.previsionnel
                 total[mois] += heures[mois]
                 total_previsionnel[mois] += previsionnel[mois]
@@ -471,7 +471,7 @@ def GenereEtatsTrimestriels(annee, oofilename):
     files = []
     for filename in template.namelist():
         data = template.read(filename)
-        if (filename == 'content.xml'):
+        if filename == 'content.xml':
             data = ReplaceEtatsTrimestrielsContent(data, annee)
         files.append((filename, data))
     template.close()
@@ -560,6 +560,9 @@ class RelevesPanel(GPanel):
         if response == wx.ID_OK:
             oofilename = dlg.GetPath()
             GenerePlanningPresences(date, oofilename)
+            dlg = wx.MessageDialog(self, u"Document %s généré" % oofilename, 'Message', wx.OK)
+            dlg.ShowModal()
+            dlg.Destroy()
 
 if __name__ == '__main__':
     import sys, os, __builtin__

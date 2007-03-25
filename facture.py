@@ -34,6 +34,7 @@ class Facture(object):
         self.jours_supplementaires = []
         self.jours_maladie = []
         self.jours_maladie_deduits = []
+        self.raison_deduction = ""
         self.previsionnel = False
 
         jours_ouvres = 0
@@ -76,6 +77,7 @@ class Facture(object):
                             else:
                                 self.jours_maladie_deduits.append(date)
                                 self.deduction += cotisation.montant_jour_supplementaire
+                                self.raison_deduction = u'(maladie > 15j consécutifs)'
             date += datetime.timedelta(1)
 
         self.semaines_payantes = 4 - int(jours_fermeture / 5)
@@ -93,3 +95,5 @@ class Facture(object):
             detail_heures_facturees[mode_garde] += pro_rata
         self.heures_facturees = int(heures_facturees)
         self.detail_heures_facturees = [int(h) for h in detail_heures_facturees]
+
+        self.total = self.cotisation_mensuelle + self.supplement - self.deduction

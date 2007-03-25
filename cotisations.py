@@ -26,11 +26,15 @@ import wx.lib.scrolledpanel
 import wx.html
 import xml.dom.minidom
 from common import *
+from facture import Facture
+from cotisation import Cotisation, CotisationException
 from planning import GPanel
 
 couleurs = ['C2', 'D2', 'B2', 'E2', 'A2']
 
 def ReplaceFactureContent(data, inscrit, periode):
+    facture = Facture(inscrit, periode.year, periode.month)
+
     debut = datetime.date(periode.year, periode.month, 1)
     if periode.month == 12:
         fin = datetime.date(periode.year, 12, 31)
@@ -57,8 +61,6 @@ def ReplaceFactureContent(data, inscrit, periode):
             break
 
     date = debut
-    jours = jours_supplementaires = jours_maladie = supplement = deduction = 0
-    cotisations_mensuelles = {}
     while date.month == debut.month:
         col = date.weekday()
         if col < 5:
@@ -68,43 +70,15 @@ def ReplaceFactureContent(data, inscrit, periode):
             text_node = cell.getElementsByTagName('text:p')[0]
             text_node.firstChild.replaceWholeText('%d' % date.day)
             if not date in creche.jours_fermeture:
-                jours += 1
-                if inscrit.getInscription(date):
-                    cotisation = Cotisation(inscrit, (date, date))
-                    if cotisation.cotisation_mensuelle in cotisations_mensuelles:
-                        cotisations_mensuelles[cotisation.cotisation_mensuelle] += 1
-                    else:
-                        cotisations_mensuelles[cotisation.cotisation_mensuelle] = 1
                     # changement de la couleur de la cellule
-                    presence = inscrit.getPresence(date)
+                    presence = inscrit.getPresence(date)[0]
                     cell.setAttribute('table:style-name', 'Tableau1.%s' % couleurs[presence])
-                    if presence == SUPPLEMENT:
-                        jours_supplementaires += 1
-                        supplement += cotisation.montant_jour_supplementaire
-                    elif presence == MALADE:
-                        tmp = date - datetime.timedelta(1)
-                        while date - tmp < datetime.timedelta(15):
-                            presence_tmp = inscrit.getPresence(tmp)
-                            if presence_tmp == PRESENT or presence_tmp == VACANCES:
-                                break
-                            tmp -= datetime.timedelta(1)
-                        else:
-                            jours_maladie += 1
-                            deduction += cotisation.montant_jour_supplementaire
         date += datetime.timedelta(1)
 
     for i in range(row + 1, len(rows)):
-        table.removeChild(rows[i])        
+        table.removeChild(rows[i])
 
-    # Les autres champs de la facture
-    if jours_maladie > 0:
-        raison_deduction = u'(maladie > 15j consécutifs)'
-    else:
-        raison_deduction = ''
-
-    cotisation_mensuelle = 0.00
-    for cotisation in cotisations_mensuelles:
-        cotisation_mensuelle += cotisation * cotisations_mensuelles[cotisation] / jours
+    # Les champs de la facture
     strings = [('nom-creche', creche.nom.upper()),
                ('adresse-creche', creche.adresse),
                ('code-postal-creche', str(creche.code_postal)),
@@ -116,11 +90,11 @@ def ReplaceFactureContent(data, inscrit, periode):
                ('prenom', inscrit.prenom),
                ('date', '%.2d/%.2d/%d' % (debut.day, debut.month, debut.year)),
                ('numfact', '%.2d%.4d%.2d%.4d' % (inscriptions[0].mode + 1, debut.year, debut.month, inscriptions[0].idx)),
-               ('cotisation-mensuelle', '%.2f' % cotisation_mensuelle),
-               ('supplement', '%.2f' % supplement),
-               ('deduction', '- %.2f' % deduction),
-               ('raison-deduction', raison_deduction),
-               ('total', '%.2f' % (cotisation_mensuelle + supplement - deduction))
+               ('cotisation-mensuelle', '%.2f' % facture.cotisation_mensuelle),
+               ('supplement', '%.2f' % facture.supplement),
+               ('deduction', '- %.2f' % facture.deduction),
+               ('raison-deduction', facture.raison_deduction),
+               ('total', '%.2f' % facture.total)
                ]
     if months[debut.month - 1][0] == 'A' or months[debut.month - 1][0] == 'O':
         strings.append(('de-mois', 'd\'%s %d' % (months[debut.month - 1].lower(), debut.year)))
@@ -130,7 +104,7 @@ def ReplaceFactureContent(data, inscrit, periode):
         strings.append(('parents', '%s et %s %s' % (inscrit.maman.prenom, inscrit.papa.prenom, inscrit.papa.nom)))
     else:
         strings.append(('parents', '%s %s et %s %s' % (inscrit.maman.prenom, inscrit.maman.nom, inscrit.papa.prenom, inscrit.papa.nom)))
-    
+
     text_nodes = dom.getElementsByTagName('text:p')
     for node in text_nodes:
         try:
@@ -147,7 +121,7 @@ def ReplaceFactureContent(data, inscrit, periode):
             pass
 
     return dom.toxml('UTF-8')
-        
+
 def GenereFacture(inscrit, periode, oofilename):
   template = zipfile.ZipFile('./templates/facture_mensuelle_creche.odt', 'r')
   files = []
@@ -185,7 +159,7 @@ class CotisationsPanel(GPanel):
             self.monthchoice.SetStringSelection('%s %d' % (months[today.month - 2], today.year))
         button = wx.Button(self, -1, u'Génération', pos=(480, 60))
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationFacture, button)
-    
+
     def UpdateContents(self):
         self.choice.Clear()
         # D'abord l'ensemble des inscrits
@@ -200,7 +174,7 @@ class CotisationsPanel(GPanel):
             if inscrit.getInscription(datetime.date.today()) == None:
                 self.choice.Append(GetInscritId(inscrit, creche.inscrits), inscrit)
         self.choice.SetSelection(0)
-            
+
     def EvtGenerationFacture(self, evt):
         inscrit = self.choice.GetClientData(self.choice.GetSelection())
         periode = self.monthchoice.GetClientData(self.monthchoice.GetSelection())
@@ -209,34 +183,45 @@ class CotisationsPanel(GPanel):
             response = dlg.ShowModal()
             if response == wx.ID_OK:
                 oopath = dlg.GetPath()
-                errors = []
-                for inscrit in creche.inscrits:
-                    if inscrit.getInscription(periode) != None: # TODO cotisations ...
-                        try:
-                            GenereFacture(inscrit, periode, '%s/Cotisation %s %s %d.odt' % (oopath, inscrit.prenom, months[periode.month - 1], periode.year))
-                        except CotisationException, e:
-                            errors.append('%s %s' % (inscrit.prenom, inscrit.nom))
-                            errors.extend(e.errors)
-
-                if errors:
-                    error = '\n'.join(errors)
-                    dlg = wx.MessageDialog(self, error, 'Erreur', wx.OK | wx.ICON_ERROR)
-                    dlg.ShowModal()
-                    dlg.Destroy()
+                inscrits = [inscrit for inscrit in creche.inscrits if inscrit.getInscription(periode) is not None]
+                self.GenereFactures(inscrits, periode, oopath=oopath)
         else:
             wildcard = "OpenDocument (*.odt)|*.odt"
-            oodefaultfilename = "Cotisation %s %s %d.odt" % (inscrit.prenom, months[periode.month - 1], periode.year)
+            oodefaultfilename = u"Cotisation %s %s %d.odt" % (inscrit.prenom, months[periode.month - 1], periode.year)
             dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
             response = dlg.ShowModal()
             if response == wx.ID_OK:
                 oofilename = dlg.GetPath()
-                try:
-                    GenereFacture(inscrit, periode, oofilename)
-                except CotisationException, e:
-                    error = '\n'.join(e.errors)
-                    dlg = wx.MessageDialog(self, '%s\n%s' % (inscrit.prenom, error), 'Erreur', wx.OK | wx.ICON_INFORMATION)
-                    dlg.ShowModal()
-                    dlg.Destroy()
+                self.GenereFactures([inscrit], periode, oofilename)
+
+    def GenereFactures(self, inscrits, periode, oofilename=None, oopath=None):
+        nbfactures = 0
+        errors = []
+        for inscrit in inscrits:
+            try:
+                if oofilename is None:
+                    filename = '%s/Cotisation %s %s %d.odt' % (oopath, inscrit.prenom, months[periode.month - 1], periode.year)
+                else:
+                    filename = oofilename
+                GenereFacture(inscrit, periode, filename)
+                nbfactures += 1
+            except CotisationException, e:
+                errors.append('%s %s' % (inscrit.prenom, inscrit.nom))
+                errors.extend(e.errors)
+
+        if nbfactures > 1:
+            message = u'%d factures générées' % nbfactures
+        elif nbfactures == 1:
+            message = u'1 facture générée'
+        else:
+            message = 'Aucune facture générée'
+        if errors:
+            message += '\n\n' + '\n'.join(errors)
+            dlg = wx.MessageDialog(self, message, 'Message', wx.OK | wx.ICON_WARNING)
+        else:
+            dlg = wx.MessageDialog(self, message, 'Message', wx.OK)
+        dlg.ShowModal()
+        dlg.Destroy()
 
 if __name__ == '__main__':
   import sys, os
