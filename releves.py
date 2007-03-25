@@ -20,16 +20,15 @@ import os.path
 import sys
 import string
 import datetime
-import zipfile
 import wx
 import wx.lib.scrolledpanel
 import wx.html
-import xml.dom.minidom
 from common import *
 from planning import GPanel
 from controls import *
 from cotisation import CotisationException
 from facture import Facture
+from ooffice import *
 
 def getPleinTempsIndexes(date_debut, date_fin):
     result = []
@@ -144,141 +143,125 @@ def getPresentsIndexes(indexes, (debut, fin)):
 #            previsionnel[inscrit.mode[periode]][j] = 1
 #    date += datetime.timedelta(1)
 
-def ReplaceFields(cellules, values):
-    # Si l'argument est une ligne ...
-    if cellules.__class__ == xml.dom.minidom.Element:
-        cellules = cellules.getElementsByTagName("table:table-cell")
-    # Fonction ...
-    for cellule in cellules:
-        for tag in cellule.getElementsByTagName("text:p"):
-            text = tag.firstChild.wholeText
-            if '[' in text and ']' in text:
-                for key in values.keys():
-                    if '[%s]' % key in text:
-                        if values[key] is None:
-                            text = text.replace('[%s]' % key, '')
-                        elif type(values[key]) == int:
-                            if text == '[%s]' % key:
-                                cellule.setAttribute("office:value-type", 'float')
-                                cellule.setAttribute("office:value", '%d' % values[key])
-                            text = text.replace('[%s]' % key, str(values[key]))
-                        elif type(values[key]) == datetime.date:
-                            date = values[key]
-                            if text == '[%s]' % key:
-                                cellule.setAttribute("office:value-type", 'date')
-                                cellule.setAttribute("office:date-value", '%d-%d-%d' % (date.year, date.month, date.day))
-                            text = text.replace('[%s]' % key, '%.2d/%.2d/%.4d' % (date.day, date.month, date.year))
-                        else:
-                            text = text.replace('[%s]' % key, values[key])
+class EtatsTrimestrielsModifications(object):
+    def __init__(self, annee):
+        self.annee = annee
+        self.factures = {}
+        self.errors = {}
 
-                    if '[' not in text or ']' not in text:
-                        break
-                else:
-                    text = ''
+    def execute(self, dom):
+        nb_cellules = 13
+        premiere_ligne = 4
+        nb_lignes = 8
+        nb_pages = 3
 
-                # print tag.firstChild.wholeText, '=>', text
-                tag.firstChild.replaceWholeText(text)
+        global_indexes = getTriParCommuneEtNomIndexes(range(len(creche.inscrits)))
 
-def ReplaceEtatsTrimestrielsContent(document, annee):
-    factures = {}
-    errors = {}
-    nb_cellules = 13
-    premiere_ligne = 4
-    nb_lignes = 8
-    nb_pages = 3
+        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
+        tables = spreadsheet.getElementsByTagName("table:table")
 
-    global_indexes = getTriParCommuneEtNomIndexes(range(len(creche.inscrits)))
+        # LES 4 TRIMESTRES
+        template = tables.item(1)
+        spreadsheet.removeChild(template)
+        for trimestre in range(4):
+        # On retire ceux qui ne sont pas inscrits pendant la periode qui nous interesse
+            debut = datetime.date(self.annee, trimestre * 3 + 1, 1)
+            if trimestre == 3:
+                fin = datetime.date(self.annee, 12, 31)
+            else:
+                fin = datetime.date(self.annee, trimestre * 3 + 4, 1) - datetime.timedelta(1)
+            indexes = getPresentsIndexes(global_indexes, (debut, fin))
 
-    dom = xml.dom.minidom.parseString(document)
-    spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
-    tables = spreadsheet.getElementsByTagName("table:table")
+            table = template.cloneNode(1)
+            spreadsheet.appendChild(table)
+            table.setAttribute("table:name", "%s tr %d" % (trimestres[trimestre], self.annee))
+            lignes = table.getElementsByTagName("table:table-row")
 
-    # LES 4 TRIMESTRES
-    template = tables.item(1)
-    spreadsheet.removeChild(template)
-    for trimestre in range(4):
-    # On retire ceux qui ne sont pas inscrits pendant la periode qui nous interesse
-        debut = datetime.date(annee, trimestre * 3 + 1, 1)
-        if trimestre == 3:
-            fin = datetime.date(annee, 12, 31)
-        else:
-            fin = datetime.date(annee, trimestre * 3 + 4, 1) - datetime.timedelta(1)
-        indexes = getPresentsIndexes(global_indexes, (debut, fin))
+            # Les titres des pages
+            ReplaceFields(lignes.item(0), {'annee': self.annee,
+                                        'trimestre': trimestres[trimestre].upper()})
+            # Les mois
+            ReplaceFields(lignes.item(2), {'mois(1)': months[trimestre * 3].upper(),
+                                        'mois(2)': months[(trimestre * 3) + 1].upper(),
+                                        'mois(3)': months[(trimestre * 3) + 2].upper()})
 
-        table = template.cloneNode(1)
-        spreadsheet.appendChild(table)
-        table.setAttribute("table:name", "%s tr %d" % (trimestres[trimestre], annee))
+            for page in range(nb_pages):
+                for i in range(nb_lignes):
+                    ligne = lignes.item(premiere_ligne + i)
+                    cellules = ligne.getElementsByTagName("table:table-cell")
+                    index = page * nb_lignes + i
+                    heures = [[0] * 3, [0] * 3]
+                    previsionnel = [0] * 3
+
+                    if index < len(indexes):
+                        inscrit = creche.inscrits[indexes[index]]
+
+                        # Calcul du nombre d'heures pour chaque mois
+                        for i in range(3):
+                            mois = trimestre * 3 + i + 1
+                            try:
+                                facture = self.get_facture(inscrit, mois)
+                            except:
+                                continue
+                            previsionnel[i] = facture.previsionnel
+                            heures[MODE_CRECHE][i] = facture.detail_heures_facturees[MODE_CRECHE]
+                            heures[MODE_HALTE_GARDERIE][i] = facture.detail_heures_facturees[MODE_HALTE_GARDERIE]
+
+                        fields = {'nom': inscrit.nom,
+                                'prenom': inscrit.prenom,
+                                'adresse': inscrit.adresse,
+                                'ville': inscrit.ville,
+                                'code_postal': str(inscrit.code_postal),
+                                'naissance': inscrit.naissance,
+                                'entree': inscrit.inscriptions[0].debut,
+                                'sortie': inscrit.inscriptions[-1].fin}
+
+                        for m, mode in enumerate(["creche", "halte"]):
+                                for i in range(3):
+                                    if heures[m][i] == 0:
+                                        fields['%s(%d)' % (mode, i+1)] = ''
+                                    elif previsionnel[m]:
+                                        fields['%s(%d)' % (mode, i+1)] = '(%d)' % heures[m][i]
+                                    else:
+                                        fields['%s(%d)' % (mode, i+1)] = heures[m][i]
+                    else:
+                        fields = {}
+
+                    ReplaceFields(cellules[page * nb_cellules : (page + 1) * nb_cellules], fields)
+
+        # LA SYNTHESE ANNUELLE
+        table = tables.item(0)
+        debut = datetime.date(self.annee, 1, 1)
+        fin = datetime.date(self.annee, 12, 31)
         lignes = table.getElementsByTagName("table:table-row")
 
-        # Les titres des pages
-        ReplaceFields(lignes.item(0), {'annee': annee,
-                                       'trimestre': trimestres[trimestre].upper()})
-        # Les mois
-        ReplaceFields(lignes.item(2), {'mois(1)': months[trimestre * 3].upper(),
-                                       'mois(2)': months[(trimestre * 3) + 1].upper(),
-                                       'mois(3)': months[(trimestre * 3) + 2].upper()})
+        # Les inscrits en creche
+        indexes = getCrecheIndexes(debut, fin)
+        self.Synthese(table, lignes, indexes, MODE_CRECHE, 'creche', 0)
+        # Les inscrits en halte-garderie
+        indexes = getHalteGarderieIndexes(debut, fin)
+        self.Synthese(table, lignes, indexes, MODE_HALTE_GARDERIE, 'halte', 6)
 
-        for page in range(nb_pages):
-            for i in range(nb_lignes):
-                ligne = lignes.item(premiere_ligne + i)
-                cellules = ligne.getElementsByTagName("table:table-cell")
-                index = page * nb_lignes + i
-                heures = [[0] * 3, [0] * 3]
-                previsionnel = [0] * 3
+        if len(self.errors) > 0:
+            raise CotisationException(self.errors)
 
-                if index < len(indexes):
-                    inscrit = creche.inscrits[indexes[index]]
-
-                    # Calcul du nombre d'heures pour chaque mois
-                    for i in range(3):
-                        mois = trimestre * 3 + i + 1
-                        if (inscrit.idx, mois) not in factures:
-                            try:
-                                factures[inscrit.idx, mois] = Facture(inscrit, annee, mois)
-                            except CotisationException, e:
-                                if not (inscrit.prenom, inscrit.nom) in errors:
-                                    errors[(inscrit.prenom, inscrit.nom)] = set(e.errors)
-                                else:
-                                    errors[(inscrit.prenom, inscrit.nom)].update(e.errors)
-                                continue
-                        facture = factures[inscrit.idx, mois]
-                        previsionnel[i] = facture.previsionnel
-                        heures[MODE_CRECHE][i] = facture.detail_heures_facturees[MODE_CRECHE]
-                        heures[MODE_HALTE_GARDERIE][i] = facture.detail_heures_facturees[MODE_HALTE_GARDERIE]
-
-                    fields = {'nom': inscrit.nom,
-                              'prenom': inscrit.prenom,
-                              'adresse': inscrit.adresse,
-                              'ville': inscrit.ville,
-                              'code_postal': str(inscrit.code_postal),
-                              'naissance': inscrit.naissance,
-                              'entree': inscrit.inscriptions[0].debut,
-                              'sortie': inscrit.inscriptions[-1].fin}
-
-                    for m, mode in enumerate(["creche", "halte"]):
-                            for i in range(3):
-                                if heures[m][i] == 0:
-                                    fields['%s(%d)' % (mode, i+1)] = ''
-                                elif previsionnel[m]:
-                                    fields['%s(%d)' % (mode, i+1)] = '(%d)' % heures[m][i]
-                                else:
-                                    fields['%s(%d)' % (mode, i+1)] = heures[m][i]
+    def get_facture(self, inscrit, annee, mois):
+        if (inscrit.idx, mois) not in self.factures:
+            try:
+                self.factures[inscrit.idx, mois] = Facture(inscrit, annee, mois)
+            except CotisationException, e:
+                if not (inscrit.prenom, inscrit.nom) in self.errors:
+                    self.errors[(inscrit.prenom, inscrit.nom)] = set(e.errors)
                 else:
-                    fields = {}
+                    self.errors[(inscrit.prenom, inscrit.nom)].update(e.errors)
+                raise
+        return self.factures[inscrit.idx, mois]
 
-                ReplaceFields(cellules[page * nb_cellules : (page + 1) * nb_cellules], fields)
-
-    # LA SYNTHESE ANNUELLE
-    table = tables.item(0)
-    debut = datetime.date(annee, 1, 1)
-    fin = datetime.date(annee, 12, 31)
-    lignes = table.getElementsByTagName("table:table-row")
-
-    def Synthese(indexes, mode, str_mode, premiere_ligne):
+    def Synthese(self, table, lignes, indexes, mode, str_mode, premiere_ligne):
         indexes = getTriParNomIndexes(indexes)
 
         # Le titre
-        ReplaceFields(lignes.item(premiere_ligne), {'annee': annee})
+        ReplaceFields(lignes.item(premiere_ligne), {'annee': self.annee})
 
         # Les mois
         fields = {}
@@ -301,28 +284,22 @@ def ReplaceEtatsTrimestrielsContent(document, annee):
 
             # Calcul du nombre d'heures pour chaque mois
             for mois in range(12):
-                if (inscrit.idx, mois+1) not in factures:
-                    try:
-                        factures[inscrit.idx, mois+1] = Facture(inscrit, annee, mois+1)
-                    except CotisationException, e:
-                        if not (inscrit.prenom, inscrit.nom) in errors:
-                            errors[(inscrit.prenom, inscrit.nom)] = set(e.errors)
-                        else:
-                            errors[(inscrit.prenom, inscrit.nom)].update(e.errors)
-                        continue
-                facture = factures[inscrit.idx, mois+1]
+                try:
+                    facture = self.get_facture(inscrit, mois+1)
+                except:
+                    continue
                 heures[mois], previsionnel[mois] = facture.detail_heures_facturees[mode], facture.previsionnel
                 total[mois] += heures[mois]
                 total_previsionnel[mois] += previsionnel[mois]
 
             fields = {'nom': inscrit.nom,
-                      'prenom': inscrit.prenom,
-                      'adresse': inscrit.adresse,
-                      'ville': inscrit.ville,
-                      'code_postal': str(inscrit.code_postal),
-                      'naissance': inscrit.naissance,
-                      'entree': inscrit.inscriptions[0].debut,
-                      'sortie': inscrit.inscriptions[-1].fin}
+                    'prenom': inscrit.prenom,
+                    'adresse': inscrit.adresse,
+                    'ville': inscrit.ville,
+                    'code_postal': str(inscrit.code_postal),
+                    'naissance': inscrit.naissance,
+                    'entree': inscrit.inscriptions[0].debut,
+                    'sortie': inscrit.inscriptions[-1].fin}
 
             for mois in range(12):
                 if heures[mois] == 0:
@@ -353,53 +330,80 @@ def ReplaceEtatsTrimestrielsContent(document, annee):
                 fields['total'] = sum(total)
         ReplaceFields(ligne, fields)
 
-    # Les inscrits en creche
-    indexes = getCrecheIndexes(debut, fin)
-    Synthese(indexes, MODE_CRECHE, 'creche', 0)
-    # Les inscrits en halte-garderie
-    indexes = getHalteGarderieIndexes(debut, fin)
-    Synthese(indexes, MODE_HALTE_GARDERIE, 'halte', 6)
 
-    if len(errors) > 0:
-        raise CotisationException(errors)
-    #print dom.toprettyxml()
-    return dom.toxml('UTF-8')
+class PlanningModifications(object):
+    def __init__(self, debut):
+        self.debut = debut
 
-def ReplacePlanningPresencesContent(document, date_debut):
-    date_fin = date_debut + datetime.timedelta(11)
+    def execute(self, dom):
+        date_fin = self.debut + datetime.timedelta(11)
+        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
+        tables = spreadsheet.getElementsByTagName("table:table")
+        template = tables.item(0)
+        template.setAttribute('table:name', '%d %s %d - %d %s %d' % (self.debut.day, months[self.debut.month - 1], date_fin.year, date_fin.day, months[date_fin.month - 1], date_fin.year))
 
-    dom = xml.dom.minidom.parseString(document)
-    spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
-    tables = spreadsheet.getElementsByTagName("table:table")
-    template = tables.item(0)
-    template.setAttribute('table:name', '%d %s %d - %d %s %d' % (date_debut.day, months[date_debut.month - 1], date_fin.year, date_fin.day, months[date_fin.month - 1], date_fin.year))
-
-    lignes = template.getElementsByTagName("table:table-row")
-
-    # Les titres des pages
-    ReplaceFields(lignes.item(0), {'date_debut': date_debut,
-                                   'date_fin': date_fin})
-
-    # Les jours
-    ligne = lignes.item(1)
-    cellules = ligne.getElementsByTagName("table:table-cell")
-    for semaine in range(2):
-        for jour in range(5):
-            date = date_debut + datetime.timedelta(semaine * 7 + jour)
-            cellule = cellules.item(1 + semaine * 6 + jour)
-            ReplaceFields([cellule], {'date': date})
-
-    def printPresences(indexes, ligne_depart):
         lignes = template.getElementsByTagName("table:table-row")
+
+        # Les titres des pages
+        ReplaceFields(lignes.item(0), {'date_debut': self.debut,
+                                    'date_fin': date_fin})
+
+        # Les jours
+        ligne = lignes.item(1)
+        cellules = ligne.getElementsByTagName("table:table-cell")
+        for semaine in range(2):
+            for jour in range(5):
+                date = self.debut + datetime.timedelta(semaine * 7 + jour)
+                cellule = cellules.item(1 + semaine * 6 + jour)
+                ReplaceFields([cellule], {'date': date})
+
+        ligne_total = lignes.item(19)
+
+        # Les enfants en adaptation
+        indexes = getAdaptationIndexes(self.debut, date_fin)
+        indexes = getTriParPrenomIndexes(indexes)
+        self.printPresences(template, indexes, 15)
+        nb_ad = max(2, len(indexes))
+
+        # Les halte-garderie
+        indexes = getHalteGarderieIndexes(self.debut, date_fin)
+        indexes = getTriParPrenomIndexes(indexes)
+        self.printPresences(template, indexes, 11)
+        nb_hg = max(2, len(indexes))
+
+        # Les mi-temps
+        indexes = getMiTempsIndexes(self.debut, date_fin)
+        indexes = getTriParPrenomIndexes(indexes)
+        self.printPresences(template, indexes, 7)
+        nb_45 = max(2, len(indexes))
+
+        # Les plein-temps
+        indexes = getPleinTempsIndexes(self.debut, date_fin)
+        indexes = getTriParPrenomIndexes(indexes)
+        self.printPresences(template, indexes, 3)
+        nb_55 = max(2, len(indexes))
+
+        cellules = ligne_total.getElementsByTagName("table:table-cell")
+        for i in range(cellules.length):
+            cellule = cellules.item(i)
+            if (cellule.hasAttribute('table:formula')):
+                formule = cellule.getAttribute('table:formula')
+                formule = formule.replace('18', '%d' % (3+nb_55+1+nb_45+1+nb_hg+1+nb_ad))
+                cellule.setAttribute('table:formula', formule)
+
+        #print dom.toprettyxml()
+
+    def printPresences(self, dom, indexes, ligne_depart):
+        lignes = dom.getElementsByTagName("table:table-row")
         nb_lignes = 3
         if len(indexes) > 3:
             for i in range(3, len(indexes)):
-                template.insertBefore(lignes.item(ligne_depart+1).cloneNode(1), lignes.item(ligne_depart+2))
+                dom.insertBefore(lignes.item(ligne_depart+1).cloneNode(1), lignes.item(ligne_depart+2))
             nb_lignes = len(indexes)
         elif len(indexes) < 3:
-            template.removeChild(lignes.item(ligne_depart+1))
+            dom.removeChild(lignes.item(ligne_depart+1))
             nb_lignes = 2
-        lignes = template.getElementsByTagName("table:table-row")
+        lignes = dom.getElementsByTagName("table:table-row")
         for i in range(nb_lignes):
             if (i < len(indexes)):
                 inscrit = creche.inscrits[indexes[i]]
@@ -416,7 +420,7 @@ def ReplacePlanningPresencesContent(document, date_debut):
                     ReplaceFields([cellule], {'prenom': ''})
                 # les presences
                 for jour in range(5):
-                    date = date_debut + datetime.timedelta(semaine * 7 + jour)
+                    date = self.debut + datetime.timedelta(semaine * 7 + jour)
                     if inscrit:
                         if date in inscrit.presences:
                             presence = inscrit.presences[date]
@@ -429,70 +433,11 @@ def ReplacePlanningPresencesContent(document, date_debut):
                         else:
                             ReplaceFields([cellule], {'p': ''})
 
-    ligne_total = lignes.item(19)
-
-    # Les enfants en adaptation
-    indexes = getAdaptationIndexes(date_debut, date_fin)
-    indexes = getTriParPrenomIndexes(indexes)
-    printPresences(indexes, 15)
-    nb_ad = max(2, len(indexes))
-
-    # Les halte-garderie
-    indexes = getHalteGarderieIndexes(date_debut, date_fin)
-    indexes = getTriParPrenomIndexes(indexes)
-    printPresences(indexes, 11)
-    nb_hg = max(2, len(indexes))
-
-    # Les mi-temps
-    indexes = getMiTempsIndexes(date_debut, date_fin)
-    indexes = getTriParPrenomIndexes(indexes)
-    printPresences(indexes, 7)
-    nb_45 = max(2, len(indexes))
-
-    # Les plein-temps
-    indexes = getPleinTempsIndexes(date_debut, date_fin)
-    indexes = getTriParPrenomIndexes(indexes)
-    printPresences(indexes, 3)
-    nb_55 = max(2, len(indexes))
-
-    cellules = ligne_total.getElementsByTagName("table:table-cell")
-    for i in range(cellules.length):
-        cellule = cellules.item(i)
-        if (cellule.hasAttribute('table:formula')):
-            formule = cellule.getAttribute('table:formula')
-            formule = formule.replace('18', '%d' % (3+nb_55+1+nb_45+1+nb_hg+1+nb_ad))
-            cellule.setAttribute('table:formula', formule)
-
-    #print dom.toprettyxml()
-    return dom.toxml('UTF-8')
-
 def GenereEtatsTrimestriels(annee, oofilename):
-    template = zipfile.ZipFile('./templates/Etats trimestriels.ods', 'r')
-    files = []
-    for filename in template.namelist():
-        data = template.read(filename)
-        if filename == 'content.xml':
-            data = ReplaceEtatsTrimestrielsContent(data, annee)
-        files.append((filename, data))
-    template.close()
-    oofile = zipfile.ZipFile(oofilename, 'w')
-    for filename, data in files:
-        oofile.writestr(filename, data)
-    oofile.close()
+    GenerateDocument('./templates/Etats trimestriels.ods', oofilename, EtatsTrimestrielsModifications(annee))
 
 def GenerePlanningPresences(date, oofilename):
-    template = zipfile.ZipFile('./templates/Planning Presences.ods', 'r')
-    files = []
-    for filename in template.namelist():
-        data = template.read(filename)
-        if filename == 'content.xml':
-            data = ReplacePlanningPresencesContent(data, date)
-        files.append((filename, data))
-    template.close()
-    oofile = zipfile.ZipFile(oofilename, 'w')
-    for filename, data in files:
-        oofile.writestr(filename, data)
-    oofile.close()
+    GenerateDocument('./templates/Planning Presences.ods', oofilename, PlanningModifications(date))
 
 class RelevesPanel(GPanel):
     def __init__(self, parent):

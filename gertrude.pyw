@@ -143,21 +143,10 @@ class GertrudeFrame(wx.Frame):
         elif evtId == ID_SYNCHRO:
             dlg = SynchroDialog(self, creche.server_url)
             dlg.CenterOnScreen()
-
-            # this does not return until the dialog is closed.
             val = dlg.ShowModal()
             dlg.Destroy()
             if val == ID_SYNCHRO:
-                # TODO crade ...
-                _creche = Load()
-                creche.nom = _creche.nom
-                creche.adresse = _creche.adresse
-                creche.code_postal = _creche.code_postal
-                creche.ville = _creche.ville
-                creche.baremes_caf[:] = _creche.baremes_caf
-                creche.bureaux[:] = _creche.bureaux
-                creche.inscrits[:] = _creche.inscrits
-                creche.users[:] = _creche.users
+                __builtin__.creche = Load()
                 self.listbook.UpdateContents()
 
 class LoginDialog(wx.Dialog):
