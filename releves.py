@@ -245,10 +245,10 @@ class EtatsTrimestrielsModifications(object):
         if len(self.errors) > 0:
             raise CotisationException(self.errors)
 
-    def get_facture(self, inscrit, annee, mois):
+    def get_facture(self, inscrit, mois):
         if (inscrit.idx, mois) not in self.factures:
             try:
-                self.factures[inscrit.idx, mois] = Facture(inscrit, annee, mois)
+                self.factures[inscrit.idx, mois] = Facture(inscrit, self.annee, mois)
             except CotisationException, e:
                 if not (inscrit.prenom, inscrit.nom) in self.errors:
                     self.errors[(inscrit.prenom, inscrit.nom)] = set(e.errors)
