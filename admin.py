@@ -156,7 +156,7 @@ class AdminNotebook(wx.Notebook):
     def __init__(self, parent, creche):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
         self.AddPage(UsersPanel(self, creche), 'Utilisateurs')
-        self.AddPage(ConnectionPanel(self, creche), 'Connection')
+        self.AddPage(ConnectionPanel(self, creche), 'Connexion')
         self.AddPage(CongesPanel(self, creche), u'Congés')
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 

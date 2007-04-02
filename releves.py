@@ -178,12 +178,12 @@ class EtatsTrimestrielsModifications(object):
             lignes = table.getElementsByTagName("table:table-row")
 
             # Les titres des pages
-            ReplaceFields(lignes.item(0), {'annee': self.annee,
-                                        'trimestre': trimestres[trimestre].upper()})
+            ReplaceFields(lignes.item(0), [('annee', self.annee),
+                                           ('trimestre', trimestres[trimestre].upper())])
             # Les mois
-            ReplaceFields(lignes.item(2), {'mois(1)': months[trimestre * 3].upper(),
-                                        'mois(2)': months[(trimestre * 3) + 1].upper(),
-                                        'mois(3)': months[(trimestre * 3) + 2].upper()})
+            ReplaceFields(lignes.item(2), [('mois(1)', months[trimestre * 3].upper()),
+                                           ('mois(2)', months[(trimestre * 3) + 1].upper()),
+                                           ('mois(3)', months[(trimestre * 3) + 2].upper())])
 
             for page in range(nb_pages):
                 for i in range(nb_lignes):
@@ -207,25 +207,25 @@ class EtatsTrimestrielsModifications(object):
                             heures[MODE_CRECHE][i] = facture.detail_heures_facturees[MODE_CRECHE]
                             heures[MODE_HALTE_GARDERIE][i] = facture.detail_heures_facturees[MODE_HALTE_GARDERIE]
 
-                        fields = {'nom': inscrit.nom,
-                                'prenom': inscrit.prenom,
-                                'adresse': inscrit.adresse,
-                                'ville': inscrit.ville,
-                                'code_postal': str(inscrit.code_postal),
-                                'naissance': inscrit.naissance,
-                                'entree': inscrit.inscriptions[0].debut,
-                                'sortie': inscrit.inscriptions[-1].fin}
+                        fields = [('nom', inscrit.nom),
+                                  ('prenom', inscrit.prenom),
+                                  ('adresse', inscrit.adresse),
+                                  ('ville', inscrit.ville),
+                                  ('code_postal', str(inscrit.code_postal)),
+                                  ('naissance', inscrit.naissance),
+                                  ('entree', inscrit.inscriptions[0].debut),
+                                  ('sortie', inscrit.inscriptions[-1].fin)]
 
                         for m, mode in enumerate(["creche", "halte"]):
                                 for i in range(3):
                                     if heures[m][i] == 0:
-                                        fields['%s(%d)' % (mode, i+1)] = ''
+                                        fields.append(('%s(%d)' % (mode, i+1), ''))
                                     elif previsionnel[m]:
-                                        fields['%s(%d)' % (mode, i+1)] = '(%d)' % heures[m][i]
+                                        fields.append(('%s(%d)' % (mode, i+1), '(%d)' % heures[m][i]))
                                     else:
-                                        fields['%s(%d)' % (mode, i+1)] = heures[m][i]
+                                        fields.append(('%s(%d)' % (mode, i+1), heures[m][i]))
                     else:
-                        fields = {}
+                        fields = []
 
                     ReplaceFields(cellules[page * nb_cellules : (page + 1) * nb_cellules], fields)
 
@@ -261,12 +261,10 @@ class EtatsTrimestrielsModifications(object):
         indexes = getTriParNomIndexes(indexes)
 
         # Le titre
-        ReplaceFields(lignes.item(premiere_ligne), {'annee': self.annee})
+        ReplaceFields(lignes.item(premiere_ligne), [('annee', self.annee)])
 
         # Les mois
-        fields = {}
-        for mois in range(12):
-            fields['mois(%d)' % (mois+1)] = months_abbrev[mois].upper()
+        fields = [('mois(%d)' % (mois+1), months_abbrev[mois].upper()) for mois in range(12)]
         ReplaceFields(lignes.item(premiere_ligne+2), fields)
 
         # Les valeurs
@@ -292,44 +290,43 @@ class EtatsTrimestrielsModifications(object):
                 total[mois] += heures[mois]
                 total_previsionnel[mois] += previsionnel[mois]
 
-            fields = {'nom': inscrit.nom,
-                    'prenom': inscrit.prenom,
-                    'adresse': inscrit.adresse,
-                    'ville': inscrit.ville,
-                    'code_postal': str(inscrit.code_postal),
-                    'naissance': inscrit.naissance,
-                    'entree': inscrit.inscriptions[0].debut,
-                    'sortie': inscrit.inscriptions[-1].fin}
+            fields = [('nom', inscrit.nom),
+                      ('prenom', inscrit.prenom),
+                      ('adresse', inscrit.adresse),
+                      ('ville', inscrit.ville),
+                      ('code_postal', str(inscrit.code_postal)),
+                      ('naissance', inscrit.naissance),
+                      ('entree', inscrit.inscriptions[0].debut),
+                      ('sortie', inscrit.inscriptions[-1].fin)]
 
             for mois in range(12):
                 if heures[mois] == 0:
-                    fields['%s(%d)' % (str_mode, mois+1)] = ''
+                    fields.append(('%s(%d)' % (str_mode, mois+1), ''))
                 elif previsionnel[mois]:
-                    fields['%s(%d)' % (str_mode, mois+1)] = '(%d)' % heures[mois]
+                    fields.append(('%s(%d)' % (str_mode, mois+1), '(%d)' % heures[mois]))
                 else:
-                    fields['%s(%d)' % (str_mode, mois+1)] = heures[mois]
+                    fields.append(('%s(%d)' % (str_mode, mois+1), heures[mois]))
 
             if sum(previsionnel):
-                fields['total_enfant'] = '(%d)' % sum(heures)
+                fields.append(('total_enfant', '(%d)' % sum(heures)))
             else:
-                fields['total_enfant'] = sum(heures)
+                fields.append(('total_enfant', sum(heures)))
             ReplaceFields(ligne, fields)
         table.removeChild(template)
 
         # Les totaux des mois
         ligne = lignes.item(premiere_ligne+4)
-        fields = {}
+        fields = []
         for mois in range(12):
             if total_previsionnel[mois]:
-                fields['total(%d)' % (mois+1)] = '(%s)' % total[mois]
+                fields.append(('total(%d)' % (mois+1), '(%s)' % total[mois]))
             else:
-                fields['total(%d)' % (mois+1)] = total[mois]
+                fields.append(('total(%d)' % (mois+1), total[mois]))
             if sum(total_previsionnel):
-                fields['total'] = '(%s)' % sum(total)
+                fields.append(('total', '(%s)' % sum(total)))
             else:
-                fields['total'] = sum(total)
+                fields.append(('total', sum(total)))
         ReplaceFields(ligne, fields)
-
 
 class PlanningModifications(object):
     def __init__(self, debut):
@@ -345,8 +342,8 @@ class PlanningModifications(object):
         lignes = template.getElementsByTagName("table:table-row")
 
         # Les titres des pages
-        ReplaceFields(lignes.item(0), {'date_debut': self.debut,
-                                    'date_fin': date_fin})
+        ReplaceFields(lignes.item(0), [('date-debut', self.debut),
+                                       ('date-fin', date_fin)])
 
         # Les jours
         ligne = lignes.item(1)
@@ -355,7 +352,7 @@ class PlanningModifications(object):
             for jour in range(5):
                 date = self.debut + datetime.timedelta(semaine * 7 + jour)
                 cellule = cellules.item(1 + semaine * 6 + jour)
-                ReplaceFields([cellule], {'date': date})
+                ReplaceFields([cellule], [('date', date)])
 
         ligne_total = lignes.item(19)
 
@@ -415,9 +412,9 @@ class PlanningModifications(object):
                 # le prenom
                 cellule = cellules.item(semaine * 17)
                 if inscrit:
-                    ReplaceFields([cellule], {'prenom': inscrit.prenom})
+                    ReplaceFields([cellule], [('prenom', inscrit.prenom)])
                 else:
-                    ReplaceFields([cellule], {'prenom': ''})
+                    ReplaceFields([cellule], [('prenom', '')])
                 # les presences
                 for jour in range(5):
                     date = self.debut + datetime.timedelta(semaine * 7 + jour)
@@ -429,9 +426,9 @@ class PlanningModifications(object):
                     for tranche in range(3):
                         cellule = cellules.item(1 + semaine * 17 + jour * 3 + tranche)
                         if inscrit:
-                            ReplaceFields([cellule], {'p': int(presence.isPresentDuringTranche(tranche))})
+                            ReplaceFields([cellule], [('p', int(presence.isPresentDuringTranche(tranche)))])
                         else:
-                            ReplaceFields([cellule], {'p': ''})
+                            ReplaceFields([cellule], [('p', '')])
 
 def GenereEtatsTrimestriels(annee, oofilename):
     GenerateDocument('./templates/Etats trimestriels.ods', oofilename, EtatsTrimestrielsModifications(annee))

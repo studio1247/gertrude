@@ -29,113 +29,89 @@ from common import *
 from facture import Facture
 from cotisation import Cotisation, CotisationException
 from planning import GPanel
+from ooffice import GenerateDocument, ReplaceTextFields
 
 couleurs = ['C2', 'D2', 'B2', 'E2', 'A2']
 
-def ReplaceFactureContent(data, inscrit, periode):
-    facture = Facture(inscrit, periode.year, periode.month)
+class FactureModifications(object):
+    def __init__(self, inscrit, periode):
+        self.inscrit = inscrit
+        self.periode = periode
 
-    debut = datetime.date(periode.year, periode.month, 1)
-    if periode.month == 12:
-        fin = datetime.date(periode.year, 12, 31)
-    else:
-        fin = datetime.date(periode.year, periode.month + 1, 1) - datetime.timedelta(1)
-    inscriptions = inscrit.getInscriptions(debut, fin)
+    def execute(self, dom):
+        facture = Facture(self.inscrit, self.periode.year, self.periode.month)
+        debut = datetime.date(self.periode.year, self.periode.month, 1)
+        if self.periode.month == 12:
+            fin = datetime.date(self.periode.year, 12, 31)
+        else:
+            fin = datetime.date(self.periode.year, self.periode.month + 1, 1) - datetime.timedelta(1)
+        inscriptions = self.inscrit.getInscriptions(debut, fin)
 
-    dom = xml.dom.minidom.parseString(data)
+        # D'abord le tableau des presences du mois
+        empty_cells = debut.weekday()
+        if empty_cells > 4:
+            empty_cells -= 7
+        for table in dom.getElementsByTagName('table:table'):
+            if table.getAttribute('table:name') == 'Tableau1':
+                rows = table.getElementsByTagName('table:table-row')[1:]
+                cells = []
+                for i in range(len(rows)):
+                    cells.append(rows[i].getElementsByTagName('table:table-cell'))
+                    for cell in cells[i]:
+                        cell.setAttribute('table:style-name', 'Tableau1.E2')
+                        text_node = cell.getElementsByTagName('text:p')[0]
+                        text_node.firstChild.replaceWholeText(' ')
+                break
 
-    # D'abord le tableau des presences du mois
-    empty_cells = debut.weekday()
-    if empty_cells > 4:
-        empty_cells -= 7
-    for table in dom.getElementsByTagName('table:table'):
-        if table.getAttribute('table:name') == 'Tableau1':
-            rows = table.getElementsByTagName('table:table-row')[1:]
-            cells = []
-            for i in range(len(rows)):
-                cells.append(rows[i].getElementsByTagName('table:table-cell'))
-                for cell in cells[i]:
-                    cell.setAttribute('table:style-name', 'Tableau1.E2')
-                    text_node = cell.getElementsByTagName('text:p')[0]
-                    text_node.firstChild.replaceWholeText(' ')
-            break
-
-    date = debut
-    while date.month == debut.month:
-        col = date.weekday()
-        if col < 5:
-            row = (date.day + empty_cells) / 7
-            cell = cells[row][col]
-            # ecriture de la date dans la cellule
-            text_node = cell.getElementsByTagName('text:p')[0]
-            text_node.firstChild.replaceWholeText('%d' % date.day)
-            if not date in creche.jours_fermeture:
+        date = debut
+        while date.month == debut.month:
+            col = date.weekday()
+            if col < 5:
+                row = (date.day + empty_cells) / 7
+                cell = cells[row][col]
+                # ecriture de la date dans la cellule
+                text_node = cell.getElementsByTagName('text:p')[0]
+                text_node.firstChild.replaceWholeText('%d' % date.day)
+                if not date in creche.jours_fermeture:
                     # changement de la couleur de la cellule
-                    presence = inscrit.getPresence(date)[0]
+                    presence = self.inscrit.getPresence(date)[0]
                     cell.setAttribute('table:style-name', 'Tableau1.%s' % couleurs[presence])
-        date += datetime.timedelta(1)
+            date += datetime.timedelta(1)
 
-    for i in range(row + 1, len(rows)):
-        table.removeChild(rows[i])
+        for i in range(row + 1, len(rows)):
+            table.removeChild(rows[i])
 
-    # Les champs de la facture
-    strings = [('nom-creche', creche.nom.upper()),
-               ('adresse-creche', creche.adresse),
-               ('code-postal-creche', str(creche.code_postal)),
-               ('ville-creche', creche.ville),
-               ('adresse', inscrit.adresse),
-               ('code-postal', str(inscrit.code_postal)),
-               ('ville', inscrit.ville),
-               ('mois', '%s %d' % (months[debut.month - 1], debut.year)),
-               ('prenom', inscrit.prenom),
-               ('date', '%.2d/%.2d/%d' % (debut.day, debut.month, debut.year)),
-               ('numfact', '%.2d%.4d%.2d%.4d' % (inscriptions[0].mode + 1, debut.year, debut.month, inscriptions[0].idx)),
-               ('cotisation-mensuelle', '%.2f' % facture.cotisation_mensuelle),
-               ('supplement', '%.2f' % facture.supplement),
-               ('deduction', '- %.2f' % facture.deduction),
-               ('raison-deduction', facture.raison_deduction),
-               ('total', '%.2f' % facture.total)
-               ]
-    if months[debut.month - 1][0] == 'A' or months[debut.month - 1][0] == 'O':
-        strings.append(('de-mois', 'd\'%s %d' % (months[debut.month - 1].lower(), debut.year)))
-    else:
-        strings.append(('de-mois', 'de %s %d' % (months[debut.month - 1].lower(), debut.year)))
-    if inscrit.papa.nom == inscrit.maman.nom:
-        strings.append(('parents', '%s et %s %s' % (inscrit.maman.prenom, inscrit.papa.prenom, inscrit.papa.nom)))
-    else:
-        strings.append(('parents', '%s %s et %s %s' % (inscrit.maman.prenom, inscrit.maman.nom, inscrit.papa.prenom, inscrit.papa.nom)))
+        # Les champs de la facture
+        fields = [('nom-creche', creche.nom.upper()),
+                ('adresse-creche', creche.adresse),
+                ('code-postal-creche', str(creche.code_postal)),
+                ('ville-creche', creche.ville),
+                ('adresse', self.inscrit.adresse),
+                ('code-postal', str(self.inscrit.code_postal)),
+                ('ville', self.inscrit.ville),
+                ('mois', '%s %d' % (months[debut.month - 1], debut.year)),
+                ('prenom', self.inscrit.prenom),
+                ('date', '%.2d/%.2d/%d' % (debut.day, debut.month, debut.year)),
+                ('numfact', '%.2d%.4d%.2d%.4d' % (inscriptions[0].mode + 1, debut.year, debut.month, inscriptions[0].idx)),
+                ('cotisation-mensuelle', '%.2f' % facture.cotisation_mensuelle),
+                ('supplement', '%.2f' % facture.supplement),
+                ('deduction', '- %.2f' % facture.deduction),
+                ('raison-deduction', facture.raison_deduction),
+                ('total', '%.2f' % facture.total)
+                ]
+        if months[debut.month - 1][0] == 'A' or months[debut.month - 1][0] == 'O':
+            fields.append(('de-mois', 'd\'%s %d' % (months[debut.month - 1].lower(), debut.year)))
+        else:
+            fields.append(('de-mois', 'de %s %d' % (months[debut.month - 1].lower(), debut.year)))
+        if self.inscrit.papa.nom == self.inscrit.maman.nom:
+            fields.append(('parents', '%s et %s %s' % (self.inscrit.maman.prenom, self.inscrit.papa.prenom, self.inscrit.papa.nom)))
+        else:
+            fields.append(('parents', '%s %s et %s %s' % (self.inscrit.maman.prenom, self.inscrit.maman.nom, self.inscrit.papa.prenom, self.inscrit.papa.nom)))
 
-    text_nodes = dom.getElementsByTagName('text:p')
-    for node in text_nodes:
-        try:
-            text = node.firstChild.wholeText
-            replace = 0
-            for tag, value in strings:
-                tag = '<%s>' % tag
-                if tag in text:
-                    replace = 1
-                    text = text.replace(tag, value)
-            if replace:
-                node.firstChild.replaceWholeText(text)
-        except:
-            pass
-
-    return dom.toxml('UTF-8')
+        ReplaceTextFields(dom, fields)
 
 def GenereFacture(inscrit, periode, oofilename):
-  template = zipfile.ZipFile('./templates/facture_mensuelle_creche.odt', 'r')
-  files = []
-  for filename in template.namelist():
-    data = template.read(filename)
-    if filename == 'content.xml':
-      data = ReplaceFactureContent(data, inscrit, periode)
-    files.append((filename, data))
-  template.close()
-
-  oofile = zipfile.ZipFile(oofilename, 'w')
-  for filename, data in files:
-    oofile.writestr(filename, data)
-  oofile.close()
+    GenerateDocument('./templates/facture_mensuelle_creche.odt', oofilename, FactureModifications(inscrit, periode))
 
 class CotisationsPanel(GPanel):
     def __init__(self, parent):

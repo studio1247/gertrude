@@ -20,40 +20,56 @@ import datetime
 import zipfile
 import xml.dom.minidom
 
-def ReplaceFields(cellules, values):
+def ReplaceTextFields(dom, fields):
+    for node in dom.getElementsByTagName("text:p"):
+        try:
+            text = node.firstChild.wholeText
+            replace = False
+            for field, value in fields:
+                field = '<%s>' % field
+                if field in text:
+                    replace = True
+                    text = text.replace(field, value)
+            if replace:
+                node.firstChild.replaceWholeText(text)
+        except:
+            pass
+
+def ReplaceFields(cellules, fields):
+    # print fields
     # Si l'argument est une ligne ...
     if cellules.__class__ == xml.dom.minidom.Element:
         cellules = cellules.getElementsByTagName("table:table-cell")
     # Fonction ...
     for cellule in cellules:
-        for tag in cellule.getElementsByTagName("text:p"):
-            text = tag.firstChild.wholeText
-            if '[' in text and ']' in text:
-                for key in values.keys():
-                    if '[%s]' % key in text:
-                        if values[key] is None:
-                            text = text.replace('[%s]' % key, '')
-                        elif type(values[key]) == int:
-                            if text == '[%s]' % key:
+        for node in cellule.getElementsByTagName("text:p"):
+            text = node.firstChild.wholeText
+            if '<' in text and '>' in text:
+                for field, value in fields:
+                    field = '<%s>' % field
+                    if field in text:
+                        if value is None:
+                            text = text.replace(field, '')
+                        elif type(value) == int:
+                            if text == field:
                                 cellule.setAttribute("office:value-type", 'float')
-                                cellule.setAttribute("office:value", '%d' % values[key])
-                            text = text.replace('[%s]' % key, str(values[key]))
-                        elif type(values[key]) == datetime.date:
-                            date = values[key]
-                            if text == '[%s]' % key:
+                                cellule.setAttribute("office:value", '%d' % value)
+                            text = text.replace(field, str(value))
+                        elif type(value) == datetime.date:
+                            if text == field:
                                 cellule.setAttribute("office:value-type", 'date')
-                                cellule.setAttribute("office:date-value", '%d-%d-%d' % (date.year, date.month, date.day))
-                            text = text.replace('[%s]' % key, '%.2d/%.2d/%.4d' % (date.day, date.month, date.year))
+                                cellule.setAttribute("office:date-value", '%d-%d-%d' % (value.year, value.month, value.day))
+                            text = text.replace(field, '%.2d/%.2d/%.4d' % (value.day, value.month, value.year))
                         else:
-                            text = text.replace('[%s]' % key, values[key])
+                            text = text.replace(field, value)
 
-                    if '[' not in text or ']' not in text:
+                    if '<' not in text or '>' not in text:
                         break
                 else:
                     text = ''
 
-                # print tag.firstChild.wholeText, '=>', text
-                tag.firstChild.replaceWholeText(text)
+                # print node.firstChild.wholeText, '=>', text
+                node.firstChild.replaceWholeText(text)
 
 def GenerateDocument(src, dest, modifications):
     template = zipfile.ZipFile(src, 'r')
