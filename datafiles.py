@@ -16,9 +16,11 @@
 ##    along with Gertrude; if not, write to the Free Software
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+import __builtin__
 import os.path, binascii, shutil, socket
 import wx
 from ftplib import FTP
+import urllib2
 from threading import Thread
 from common import *
 import time, datetime
@@ -27,18 +29,91 @@ from translations import Translate
 
 def Backup():
     if os.path.isfile('gertrude.db'):
-        index = 0
         if not os.path.isdir(backups_directory):
             os.mkdir(backups_directory)
-        else:
-            f = file(backups_directory + "/lastbackup", 'r')
-            name = f.readline().split('.')[0]
-            index = int(name.split('_')[1])
-            f.close()
 
-        backup_filename = "backup_%d.db" % (index+1)
+        backup_filename = 'backup_%d.db' % time.time()
         shutil.copyfile('gertrude.db', backups_directory + '/' + backup_filename)
-        file(backups_directory + "/lastbackup", 'w').write(backup_filename)
+
+def urlopen(action):
+    return urllib2.urlopen('%s?action=%s&login=%s&pass=%s' % (creche.server_url, action, login, password))
+
+def hasLock():
+    return os.path.isfile('.lock')
+
+def Lock():
+    print "Lock()"
+    try:
+        urlfile = urlopen('lock')
+    except urllib2.HTTPError, exc:
+        if exc.code == 404:
+            print "Page non trouvée !"
+            return 0
+        else:
+            print "La requête HTTP a échoué avec le code %d (%s)" % (exc.code, exc.msg)
+            return 0
+    except urllib2.URLError, exc:
+        print "Echec. Cause:", exc.reason
+        return 0
+    file('.lock', 'w')
+    return 1
+
+def Unlock():
+    print "Unlock()"
+    try:
+        urlfile = urlopen('unlock')
+    except urllib2.HTTPError, exc:
+        if exc.code == 404:
+            print "Page non trouvée !"
+            return 0
+        else:
+            print "La requête HTTP a échoué avec le code %d (%s)" % (exc.code, exc.msg)
+            return 0
+    except urllib2.URLError, exc:
+        print "Echec. Cause:", exc.reason
+        return 0
+    os.remove('.lock')
+    return 1
+
+def Download():
+    print "Download()"
+    try:
+        urlfile = urlopen('download')
+    except urllib2.HTTPError, exc:
+        if exc.code == 404:
+            print "Page non trouvée !"
+            return 0
+        else:
+            print "La requête HTTP a échoué avec le code %d (%s)" % (exc.code, exc.msg)
+            return 0
+    except urllib2.URLError, exc:
+        print "Echec. Cause:", exc.reason
+        return 0
+
+def Upload():
+    print "Upload()"
+    try:
+        urlfile = urlopen('upload')
+    except urllib2.HTTPError, exc:
+        if exc.code == 404:
+            print "Page non trouvée !"
+            return 0
+        else:
+            print "La requête HTTP a échoué avec le code %d (%s)" % (exc.code, exc.msg)
+            return 0
+    except urllib2.URLError, exc:
+        print "Echec. Cause:", exc.reason
+        return 0
+
+def LockAndDownload():
+    if hasLock():
+        Upload()
+    elif Lock():
+        Download()
+
+def UploadAndUnlock():
+    if Upload():
+        Unlock()
 
 class SynchroDialog(wx.Dialog):
     def __init__(self, parent, server):
@@ -225,3 +300,14 @@ def Load():
         creche.bureaux.append(bureau)
 
     return creche
+
+if __name__ == '__main__':
+    __builtin__.creche = Load()
+    __builtin__.profil = 0
+    __builtin__.login = "bertrand"
+    __builtin__.password = "songis"
+    creche.server_url = 'http://gertude.free.fr/gertrude'
+
+    LockAndDownload()
+    time.sleep(2)
+    UploadAndUnlock()

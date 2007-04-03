@@ -35,7 +35,7 @@ def getfirstmonday():
     while first_monday.weekday() != 0:
         first_monday += datetime.timedelta(1)
     return first_monday
-    
+
 def getNumeroSemaine(date):
     return int((date - datetime.date(date.year, 1, 1)).days / 7) + 1
 
@@ -139,16 +139,16 @@ class Bureau(object):
         self.vice_president = None
         self.tresorier = None
         self.secretaire = None
-        
+
         if creation:
             print 'nouveau bureau'
             result = connection.execute('INSERT INTO BUREAUX (idx, debut, fin, president, vice_president, tresorier, secretaire) VALUES (NULL,?,?,?,?,?,?)', (self.debut, self.fin, None, None, None, None))
             self.idx = result.lastrowid
-   
+
     def delete(self):
         print 'suppression bureau'
         connection.execute('DELETE FROM BUREAUX WHERE idx=?', (self.idx,))
-        
+
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['debut', 'fin', 'president', 'vice_president', 'tresorier', 'secretaire'] and self.idx:
@@ -169,7 +169,7 @@ class BaremeCAF(object):
             print 'nouveau bareme caf'
             result = connection.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (self.debut, self.fin, self.plancher, self.plafond))
             self.idx = result.lastrowid
-        
+
     def delete(self):
         print 'suppression bareme caf'
         connection.execute('DELETE FROM BAREMESCAF WHERE idx=?', (self.idx,))
@@ -191,7 +191,7 @@ class User(object):
             print 'nouveau user'
             result = connection.execute('INSERT INTO USERS (idx, login, password, profile) VALUES (NULL,?,?,?)', (self.login, self.password, self.profile))
             self.idx = result.lastrowid
-        
+
     def delete(self):
         print 'suppression user'
         connection.execute('DELETE FROM USERS WHERE idx=?', (self.idx,))
@@ -213,7 +213,7 @@ class Conge(object):
             print 'nouveau conge'
             result = connection.execute('INSERT INTO CONGES (idx, debut, fin) VALUES (NULL,?,?)', (self.debut, self.fin))
             self.idx = result.lastrowid
-        
+
     def delete(self):
         print 'suppression conge'
         connection.execute('DELETE FROM CONGES WHERE idx=?', (self.idx,))
@@ -241,7 +241,7 @@ class Creche(object):
         self.baremes_caf = []
         self.inscrits = []
         self.server_url = ''
-        
+
         if creation:
             print 'nouvelle creche'
             result = connection.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, server_url) VALUES (NULL,?,?,?,?,?)', (self.nom, self.adresse, self.code_postal, self.ville, self.server_url))
