@@ -164,12 +164,15 @@ class EtatsTrimestrielsModifications(object):
         template = tables.item(1)
         spreadsheet.removeChild(template)
         for trimestre in range(4):
-        # On retire ceux qui ne sont pas inscrits pendant la periode qui nous interesse
             debut = datetime.date(self.annee, trimestre * 3 + 1, 1)
             if trimestre == 3:
                 fin = datetime.date(self.annee, 12, 31)
             else:
                 fin = datetime.date(self.annee, trimestre * 3 + 4, 1) - datetime.timedelta(1)
+	    if fin > today:
+	        break
+
+	    # On retire ceux qui ne sont pas inscrits pendant la periode qui nous interesse
             indexes = getPresentsIndexes(global_indexes, (debut, fin))
 
             table = template.cloneNode(1)
@@ -233,14 +236,15 @@ class EtatsTrimestrielsModifications(object):
         table = tables.item(0)
         debut = datetime.date(self.annee, 1, 1)
         fin = datetime.date(self.annee, 12, 31)
-        lignes = table.getElementsByTagName("table:table-row")
+	if fin < today:
+            lignes = table.getElementsByTagName("table:table-row")
 
-        # Les inscrits en creche
-        indexes = getCrecheIndexes(debut, fin)
-        self.Synthese(table, lignes, indexes, MODE_CRECHE, 'creche', 0)
-        # Les inscrits en halte-garderie
-        indexes = getHalteGarderieIndexes(debut, fin)
-        self.Synthese(table, lignes, indexes, MODE_HALTE_GARDERIE, 'halte', 6)
+            # Les inscrits en creche
+            indexes = getCrecheIndexes(debut, fin)
+            self.Synthese(table, lignes, indexes, MODE_CRECHE, 'creche', 0)
+            # Les inscrits en halte-garderie
+            indexes = getHalteGarderieIndexes(debut, fin)
+            self.Synthese(table, lignes, indexes, MODE_HALTE_GARDERIE, 'halte', 6)
 
         if len(self.errors) > 0:
             raise CotisationException(self.errors)
