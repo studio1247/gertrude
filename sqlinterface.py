@@ -173,7 +173,7 @@ class BDDConnection(object):
           CREATE TABLE CONGES(
             idx INTEGER PRIMARY KEY,
             debut VARCHAR,
-            fin VARCHAR,
+            fin VARCHAR
           );""")
 
         cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))

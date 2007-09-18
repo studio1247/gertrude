@@ -249,7 +249,8 @@ def Load():
     cur.execute('SELECT debut, fin, plancher, plafond, idx FROM BAREMESCAF')
     for bareme_entry in cur.fetchall():
         bareme = BaremeCAF(creation=False)
-        bareme.debut, bareme.fin, bareme.plancher, bareme.plafond, bareme.idx = bareme_entry
+        bareme.debut, bareme.fin, bareme.plancher, bareme.plafond, idx = bareme_entry
+	bareme.debut, bareme.fin, bareme.idx = getdate(bareme.debut), getdate(bareme.fin), idx
         creche.baremes_caf.append(bareme)
 
     parents = {None: None}
