@@ -241,10 +241,13 @@ class Creche(object):
         self.baremes_caf = []
         self.inscrits = []
         self.server_url = ''
+        self.mois_payes = 12
+        self.presences_previsionnelles = True
+        self.modes_inscription = MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5
 
         if creation:
             print 'nouvelle creche'
-            result = connection.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, server_url) VALUES (NULL,?,?,?,?,?)', (self.nom, self.adresse, self.code_postal, self.ville, self.server_url))
+            result = connection.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, server_url, mois_payes, presences_previsionnelles, modes_inscription) VALUES (NULL,?,?,?,?,?)', (self.nom, self.adresse, self.code_postal, self.ville, self.server_url, 12, True, MODE_HALTE_GARDERIE+MODE_4_5+MODE_3_5))
             self.idx = result.lastrowid
             self.bureaux.append(Bureau(self))
             self.baremes_caf.append(BaremeCAF())
@@ -291,7 +294,7 @@ class Creche(object):
        
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'server_url'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'server_url', 'mois_payes', 'presences_previsionnelles', 'modes_inscription'] and self.idx:
             print 'update', name, value
             connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
       
@@ -364,6 +367,8 @@ class Inscription(object):
 
         if creation:
             print 'nouvelle inscription'
+            if creche.modes_inscription == MODE_CRECHE: # plein-temps uniquement
+                self.periode_reference = 5 * [[1, 1, 1]]
             result = connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, periode_reference, fin_periode_essai) VALUES(NULL,?,?,?,?,?,?)', (inscrit.idx, self.debut, self.fin, self.mode, str(self.periode_reference), self.fin_periode_essai))
             self.idx = result.lastrowid
         
@@ -495,8 +500,9 @@ class Inscrit(object):
         weekday = date.weekday()
         if weekday > 4:
           raise Exception('La date doit etre un jour de semaine')
-    
-        presence = Presence(self, date, 1, 1, creation=False)
+
+        previsionnel = int(creche.presences_previsionnelles)
+        presence = Presence(self, date, previsionnel, 1, creation=False)
         
         inscription = self.getInscription(date)
         
@@ -504,7 +510,7 @@ class Inscrit(object):
             for i in range(3):
                 if inscription.periode_reference[weekday][i] == 1:
                     if presence.value != 0:
-                        presence = Presence(self, date, 1, 0, creation=False)
+                        presence = Presence(self, date, previsionnel, 0, creation=False)
                     if i == 0:
                         debut = int((8-BASE_MIN_HOUR) * BASE_GRANULARITY)
                         fin = int((12-BASE_MIN_HOUR) * BASE_GRANULARITY)
@@ -569,6 +575,8 @@ class Inscrit(object):
 #          date += datetime.timedelta(1)
 #        return total, previsionnel
 
+    def __cmp__(self, other):
+        return cmp("%s %s" % (self.prenom, self.nom), "%s %s" % (other.prenom, other.nom))
 
 def GetInscritId(inscrit, inscrits):
     for i in inscrits:

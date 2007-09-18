@@ -97,17 +97,6 @@ class UsersPanel(AutoTab):
         else:
             event.Skip(True)
 
-class ConnectionPanel(AutoTab):
-    def __init__(self, parent, creche):
-        AutoTab.__init__(self, parent)
-        self.creche = creche
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddMany([(wx.StaticText(self, -1, 'Serveur HTTP :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, self.creche, 'server_url', size=(200, 21))])
-        self.sizer.Add(sizer)
-        self.sizer.Fit(self)
-        self.SetSizer(self.sizer)
-
 class CongesPanel(AutoTab):
     def __init__(self, parent, creche):
         AutoTab.__init__(self, parent)
@@ -152,12 +141,26 @@ class CongesPanel(AutoTab):
         self.sizer.Layout()
         self.UpdateContents()
 
+class ParametersPanel(AutoTab):
+    def __init__(self, parent, creche):
+        AutoTab.__init__(self, parent)
+        self.creche = creche
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer = wx.FlexGridSizer(4, 2, 5, 5)
+        sizer.AddMany([(wx.StaticText(self, -1, 'Serveur HTTP :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, self.creche, 'server_url', size=(200, 21))])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Nombre de mois payés :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoChoiceCtrl(self, self.creche, 'mois_payes', [('12 mois', 12), ('11 mois', 11)], size=(200, 21))])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Présences prévisionnelles :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoChoiceCtrl(self, self.creche, 'presences_previsionnelles', [(u'Géré', True), (u'Non géré', False)], size=(200, 21))])
+        sizer.AddMany([(wx.StaticText(self, -1, u"Modes d'inscription :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoChoiceCtrl(self, self.creche, 'modes_inscription', [(u'Crèche à plein-temps uniquement', 0), (u'Crèche (5/5 4/5 3/5) et halte-garderie', MODE_HALTE_GARDERIE+MODE_4_5+MODE_3_5)], size=(200, 21))])
+        self.sizer.Add(sizer)
+        self.sizer.Fit(self)
+        self.SetSizer(self.sizer)
+        
 class AdminNotebook(wx.Notebook):
     def __init__(self, parent, creche):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
         self.AddPage(UsersPanel(self, creche), 'Utilisateurs')
-        self.AddPage(ConnectionPanel(self, creche), 'Connexion')
         self.AddPage(CongesPanel(self, creche), u'Congés')
+        self.AddPage(ParametersPanel(self, creche), u'Paramètres')
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
     def OnPageChanged(self, event):

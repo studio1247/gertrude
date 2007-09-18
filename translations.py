@@ -89,6 +89,14 @@ def Translate():
             fin VARCHAR
           );""")
 
+    if version < 6:
+        cur.execute("ALTER TABLE CRECHE ADD mois_payes INTEGER;")
+        cur.execute("ALTER TABLE CRECHE ADD presences_previsionnelles BOOLEAN;")
+        cur.execute("ALTER TABLE CRECHE ADD modes_inscription INTEGER;")
+        cur.execute('UPDATE CRECHE SET mois_payes=?', (12,))
+        cur.execute('UPDATE CRECHE SET presences_previsionnelles=?', (True,))
+        cur.execute('UPDATE CRECHE SET modes_inscription=?', (MODE_HALTE_GARDERIE+MODE_4_5+MODE_3_5,))
+        
     if version < VERSION:
         try:
             cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))

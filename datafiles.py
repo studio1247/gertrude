@@ -226,11 +226,11 @@ def Load():
 
     cur = connection.cursor()
 
-    cur.execute('SELECT nom, adresse, code_postal, ville, server_url, idx FROM CRECHE')
+    cur.execute('SELECT nom, adresse, code_postal, ville, server_url, mois_payes, presences_previsionnelles, modes_inscription, idx FROM CRECHE')
     creche_entry = cur.fetchall()
     if len(creche_entry) > 0:
         creche = Creche(creation=False)
-        creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.server_url, creche.idx = creche_entry[0]
+        creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.server_url, creche.mois_payes, creche.presences_previsionnelles, creche.modes_inscription, creche.idx = creche_entry[0]
     else:
         creche = Creche()
 
@@ -299,6 +299,7 @@ def Load():
         bureau.debut, bureau.fin, bureau.president, bureau.vice_president, bureau.tresorier, bureau.secretaire, bureau.idx = getdate(debut), getdate(fin), parents[president], parents[vice_president], parents[tresorier], parents[secretaire], idx
         creche.bureaux.append(bureau)
 
+    creche.inscrits.sort()
     return creche
 
 if __name__ == '__main__':

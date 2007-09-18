@@ -78,7 +78,9 @@ class DayTabWindow(wx.Window):
         while heure < heureAffichageMax:
             i = int((heure-BASE_MIN_HOUR) * BASE_GRANULARITY)
             if presence.value == PRESENT and presence.details[i]:
-                if presence.details[i] == 2:
+                if not creche.presences_previsionnelles:
+                    previsionnel = 0
+                elif presence.details[i] == 2:
                     previsionnel = 1
                 else:
                     previsionnel = presence.previsionnel
@@ -256,10 +258,10 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
                             (presence, 'previsionnel', presence.previsionnel)])
             new_presence = inscrit.getPresenceFromSemaineType(self.date)
             presence.value, presence.details = new_presence.value, new_presence.details
-            if self.date <= datetime.date.today():
-              presence.previsionnel = 0
-            else:
+            if creche.presences_previsionnelles and self.date > datetime.date.today():
               presence.previsionnel = 1
+            else:
+              presence.previsionnel = 0
 
         self.UpdateButton(button.inscrit)
         self.tab_window.DrawLine(button.inscrit, presence)

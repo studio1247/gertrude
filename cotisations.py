@@ -190,7 +190,7 @@ class CotisationsPanel(GPanel):
         elif nbfactures == 1:
             message = u'1 facture générée'
         else:
-            message = 'Aucune facture générée'
+            message = u'Aucune facture générée'
         if errors:
             message += '\n\n' + '\n'.join(errors)
             dlg = wx.MessageDialog(self, message, 'Message', wx.OK | wx.ICON_WARNING)

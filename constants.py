@@ -16,7 +16,7 @@
 ##    along with Gertrude; if not, write to the Free Software
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-VERSION = 5
+VERSION = 6
 
 PROFIL_INSCRIPTIONS = 1
 PROFIL_TRESORIER = 2
@@ -32,6 +32,8 @@ BASE_GRANULARITY = 4 # au quart d'heure
 
 MODE_CRECHE = 0
 MODE_HALTE_GARDERIE = 1
+MODE_4_5 = 2
+MODE_3_5 = 4
 
 PRESENT = 0
 VACANCES = 1

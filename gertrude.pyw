@@ -30,7 +30,7 @@ from admin import AdminPanel
 from common import *
 from datafiles import *
 
-VERSION = '0.35'
+VERSION = '0.36'
 
 __builtin__.history = []
 

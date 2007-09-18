@@ -56,7 +56,7 @@ class Cotisation(object):
                     jours_garde += 1
                     break
         if self.inscription.mode == 0 and jours_garde < 3:
-            errors.append(u" - La semaine type de l'enfant est incompl&egrave;te pour le mode d'accueil choisi.")
+            errors.append(u" - La semaine type de l'enfant est incomplète pour le mode d'accueil choisi.")
 
         if len(errors) > 0:
             raise CotisationException(errors)
@@ -85,18 +85,18 @@ class Cotisation(object):
 
         if self.enfants_en_creche > 1:
             self.mode_taux_horaire = u'%d enfants en crèche' % self.enfants_en_creche
-            self.taux_horaire = 0.02
+            self.taux_horaire = 0.02 # !!
         else:
             self.mode_taux_horaire = u'%d enfants à charge' % self.enfants_a_charge
             if self.enfants_a_charge > 3:
-                self.taux_horaire = 0.02
+                self.taux_horaire = 5.55/200 # 0.02 !!
             elif self.enfants_a_charge == 3:
-                self.taux_horaire = 0.03
+                self.taux_horaire = 6.25/200 # 0.03 !!
             elif self.enfants_a_charge == 2:
-                self.taux_horaire = 0.04
+                self.taux_horaire = 8.33/200 # 0.04 !!
             else:
                 self.mode_taux_horaire = u'1 enfant à charge'
-                self.taux_horaire = 0.05
+                self.taux_horaire = 10.0/200 # 0.05 !!
 
 #        if (inscrit.handicape and self.taux_horaire > 0.02):
 #            self.mode_taux_horaire += u', handicapé'
@@ -109,7 +109,7 @@ class Cotisation(object):
             self.mode_heures_garde = u'%d/5èmes' % jours_garde
 
         self.montant_heure_garde = self.assiette_mensuelle * self.taux_horaire / 100
-        self.cotisation_mensuelle = self.assiette_mensuelle * self.taux_horaire * self.heures_garde / 100
+        self.cotisation_mensuelle = self.assiette_mensuelle * self.taux_horaire * self.heures_garde * creche.mois_payes / 12 / 100
 
         if self.heures_garde < 200:
             self.montant_jour_supplementaire = self.assiette_mensuelle * self.taux_horaire / 10

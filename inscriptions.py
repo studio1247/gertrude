@@ -82,13 +82,14 @@ class ContextPanel(wx.Panel):
                 self.periodechoice.Enable()
             else:
                 self.periodechoice.Disable()
-                
+
             self.periode = self.periodes[-1]
             self.periodechoice.SetSelection(self.periodechoice.GetCount() - 1)
-            self.UpdatePage()
         else:
+            self.periode = None
             self.periodechoice.Clear()
             self.periodechoice.Disable()
+        self.UpdatePage()
        
     def EvtPeriodeChoice(self, evt):
         ctrl = evt.GetEventObject()
@@ -109,6 +110,9 @@ class ContratPanel(ContextPanel):
     def UpdatePage(self):
         if self.inscrit is None:
             self.html = '<html><body>Aucun inscrit s&eacute;lectionn&eacute; !</body></html>'
+            self.periodechoice.Disable()
+        elif self.periode is None:
+            self.html = '<html><body>Aucune inscription !</body></html>'
             self.periodechoice.Disable()
         else:
             try:
@@ -191,6 +195,10 @@ class ForfaitPanel(ContextPanel):
     def UpdatePage(self):      
         if self.inscrit is None:
             self.html = '<html><body>Aucun inscrit s&eacute;lectionn&eacute; !</body></html>'
+            self.periodechoice.Disable()
+        elif self.periode is None:
+            self.html = '<html><body>Aucune inscription !</body></html>'
+            self.periodechoice.Disable()
         else:
             try:
                 context = Cotisation(self.inscrit, self.periode)
@@ -419,7 +427,7 @@ class IdentitePanel(InscriptionsTab):
                 self.fratries_sizer.Detach(i)
 
         InscriptionsTab.SetInscrit(self, inscrit)
-        self.nouveau_frere.Enable(self.inscrit!=None)
+        self.nouveau_frere.Enable(self.inscrit is not None)
         
         if new > old:
             for i in range(old, new):
@@ -531,20 +539,23 @@ class ParentsPanel(InscriptionsTab):
 class ModeAccueilPanel(InscriptionsTab):
     def __init__(self, parent):
         InscriptionsTab.__init__(self, parent)
-
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(PeriodeChoice(self, None, 'inscriptions', self.nouvelleInscription))
-        sizer.Add(AutoRadioBox(self, None, 'inscriptions[self.parent.periode].mode', "Mode d'accueil", [u'Crèche', 'Halte-garderie']))
+        if creche.modes_inscription & MODE_HALTE_GARDERIE:
+            sizer.Add(AutoRadioBox(self, None, 'inscriptions[self.parent.periode].mode', "Mode d'accueil", [u'Crèche', 'Halte-garderie']))
         sizer.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'essai :"), 0, wx.ALIGN_CENTER_VERTICAL), AutoDateCtrl(self, None, 'inscriptions[self.parent.periode].fin_periode_essai')])
-        sizer1 = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Semaine type'), wx.HORIZONTAL)
-        sizer.Add(sizer1)
-        self.week_ctrl = WeekWindow(self)
-        self.week_ctrl.Bind(WeekWindow.EVT_CHANGE, self.OnPeriodeChange)
-        sizer1.Add(self.week_ctrl)
-        bmp = wx.Bitmap("./bitmaps/icone_plein_temps.png", wx.BITMAP_TYPE_PNG)
-        btn = wx.BitmapButton(self, -1, bmp)
-        sizer1.Add(btn)
-        self.Bind(wx.EVT_BUTTON, self.EvtButton55e, btn)
+        if creche.modes_inscription != MODE_CRECHE:
+            sizer1 = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Semaine type'), wx.HORIZONTAL)
+            sizer.Add(sizer1)
+            self.week_ctrl = WeekWindow(self)
+            self.week_ctrl.Bind(WeekWindow.EVT_CHANGE, self.OnPeriodeChange)
+            sizer1.Add(self.week_ctrl)
+            bmp = wx.Bitmap("./bitmaps/icone_plein_temps.png", wx.BITMAP_TYPE_PNG)
+            btn = wx.BitmapButton(self, -1, bmp)
+            sizer1.Add(btn)
+            self.Bind(wx.EVT_BUTTON, self.EvtButton55e, btn)
+        else:
+            self.week_ctrl = None
         self.SetSizer(sizer)
         self.SetAutoLayout(1)
         self.SetupScrolling()
@@ -554,10 +565,11 @@ class ModeAccueilPanel(InscriptionsTab):
     
     def SetInscrit(self, inscrit):
         InscriptionsTab.SetInscrit(self, inscrit)
-        if inscrit: # TODO week_ctrl comme les autres ctrls ?
-            self.week_ctrl.SetSemaine(inscrit.inscriptions[self.periode].periode_reference)
-        else:
-            self.week_ctrl.SetSemaine(None)
+        if self.week_ctrl: # TODO week_ctrl comme les autres ctrls ?
+            if inscrit:
+                self.week_ctrl.SetSemaine(inscrit.inscriptions[self.periode].periode_reference)
+            else:
+                self.week_ctrl.SetSemaine(None)
     
     def EvtButton55e(self, event):
         if self.inscrit.inscriptions[self.periode].periode_reference != 5 * [[1, 1, 1]]:
@@ -569,10 +581,11 @@ class ModeAccueilPanel(InscriptionsTab):
 
     def UpdateContents(self):
         InscriptionsTab.UpdateContents(self)
-        if self.inscrit:
-            self.week_ctrl.SetSemaine(self.inscrit.inscriptions[self.periode].periode_reference)
-        else:
-            self.week_ctrl.SetSemaine(None)
+        if self.week_ctrl:
+            if self.inscrit:
+                self.week_ctrl.SetSemaine(self.inscrit.inscriptions[self.periode].periode_reference)
+            else:
+                self.week_ctrl.SetSemaine(None)
     
 class InscriptionsNotebook(wx.Notebook):
     def __init__(self, parent, *args, **kwargs):

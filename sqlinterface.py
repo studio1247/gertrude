@@ -59,7 +59,10 @@ class BDDConnection(object):
             adresse VARCHAR,
             code_postal INTEGER,
             ville VARCHAR,
-            server_url VARCHAR
+            server_url VARCHAR,
+            mois_payes INTEGER,
+            presences_previsionnelles BOOLEAN,
+            modes_inscription INTEGER
           );""")
     
         cur.execute("""

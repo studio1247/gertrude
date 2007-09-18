@@ -83,7 +83,6 @@ def getAdaptationIndexes(date_debut, date_fin):
     result = []
     return result
 
-
 def getTriParCommuneEtNomIndexes(indexes):
     # Tri par commune (Rennes en premier) + ordre alphabetique des noms
     def tri(one, two):
@@ -169,8 +168,8 @@ class EtatsTrimestrielsModifications(object):
                 fin = datetime.date(self.annee, 12, 31)
             else:
                 fin = datetime.date(self.annee, trimestre * 3 + 4, 1) - datetime.timedelta(1)
-	    if fin > today:
-	        break
+            if fin > today:
+                break
 
 	    # On retire ceux qui ne sont pas inscrits pendant la periode qui nous interesse
             indexes = getPresentsIndexes(global_indexes, (debut, fin))
@@ -236,7 +235,7 @@ class EtatsTrimestrielsModifications(object):
         table = tables.item(0)
         debut = datetime.date(self.annee, 1, 1)
         fin = datetime.date(self.annee, 12, 31)
-	if fin < today:
+        if fin < today:
             lignes = table.getElementsByTagName("table:table-row")
 
             # Les inscrits en creche
@@ -434,11 +433,45 @@ class PlanningModifications(object):
                         else:
                             ReplaceFields([cellule], [('p', '')])
 
+class AppelCotisationsModifications(object):
+    def __init__(self, debut):
+        self.debut = debut
+        if debut.month == 12:
+            self.fin = datetime.date(debut.year, 12, 31)
+        else:
+            self.fin = datetime.date(debut.year, debut.month+1, 1) - datetime.timedelta(1)
+        
+    def execute(self, dom):
+        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
+        table = spreadsheet.getElementsByTagName("table:table").item(0)
+        lignes = table.getElementsByTagName("table:table-row")
+
+        # Les titres des pages
+#        ReplaceFields(lignes, [('date', self.debut)])
+        template = lignes.item(4)
+        print template.toprettyxml()
+        
+        indexes = getCrecheIndexes(self.debut, self.fin)
+        for index in indexes:
+            inscrit = creche.inscrits[index]
+            line = template.cloneNode(1)
+            ReplaceFields([line], [('prenom', inscrit.prenom)])
+            table.insertBefore(line, template)
+        table.removeChild(template)
+##
+##        #print dom.toprettyxml()
+
+
+
+                            
 def GenereEtatsTrimestriels(annee, oofilename):
     GenerateDocument('./templates/Etats trimestriels.ods', oofilename, EtatsTrimestrielsModifications(annee))
 
 def GenerePlanningPresences(date, oofilename):
     GenerateDocument('./templates/Planning Presences.ods', oofilename, PlanningModifications(date))
+
+def GenereAppelCotisations(date, oofilename):
+    GenerateDocument('./templates/Appel Cotisations.ods', oofilename, AppelCotisationsModifications(date))
 
 class RelevesPanel(GPanel):
     def __init__(self, parent):
@@ -446,6 +479,9 @@ class RelevesPanel(GPanel):
 
         today = datetime.date.today()
 
+        # Les appels de cotisations
+        # ...
+        
         # Les releves trimestriels
         wx.StaticBox(self, -1, u'Relevés trimestriels', pos=(5, 35), size=(400, 75))
         self.choice = wx.Choice(self, -1, pos=(20, 60), size=(270, 30))
@@ -514,8 +550,12 @@ if __name__ == '__main__':
     import sys, os, __builtin__
     from datafiles import *
     __builtin__.creche = Load()
-    #today = datetime.date.today()
+    today = datetime.date.today()
 
+    filename = 'appel_cotisations_%d_%d.ods' % (today.month, today.year)
+    GenereAppelCotisations(datetime.date(today.year, 9, 1), filename)
+    sys.exit(0)
+        
     filename = 'etats_trimestriels_%d.ods' % (today.year - 1)
     try:
         GenereEtatsTrimestriels(today.year - 1, filename)
