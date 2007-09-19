@@ -448,16 +448,24 @@ class AppelCotisationsModifications(object):
 
         # Les titres des pages
 #        ReplaceFields(lignes, [('date', self.debut)])
-        template = lignes.item(4)
-        print template.toprettyxml()
-        
+        template = [lignes.item(4), lignes.item(5)]
+#        print template[0].toprettyxml()
+#        print template[1].toprettyxml()        
         indexes = getCrecheIndexes(self.debut, self.fin)
-        for index in indexes:
+        for i, index in enumerate(indexes):
             inscrit = creche.inscrits[index]
-            line = template.cloneNode(1)
-            ReplaceFields([line], [('prenom', inscrit.prenom)])
-            table.insertBefore(line, template)
-        table.removeChild(template)
+            line = template[i % 2].cloneNode(1)
+            try:
+                facture = Facture(inscrit, self.debut.year, self.debut.month)                
+                ReplaceFields([line], [('prenom', inscrit.prenom),
+                                       ('cotisation', '%.2f' % facture.cotisation_mensuelle)])
+            except CotisationException, e:
+                ReplaceFields([line], [('prenom', inscrit.prenom),
+                                       ('commentaire', '\n'.join(e.errors))])           
+            table.insertBefore(line, template[0])
+
+        table.removeChild(template[0])
+        table.removeChild(template[1])
 ##
 ##        #print dom.toprettyxml()
 
@@ -553,7 +561,7 @@ if __name__ == '__main__':
     today = datetime.date.today()
 
     filename = 'appel_cotisations_%d_%d.ods' % (today.month, today.year)
-    GenereAppelCotisations(datetime.date(today.year, 9, 1), filename)
+    GenereAppelCotisations(datetime.date(today.year, 8, 1), filename)
     sys.exit(0)
         
     filename = 'etats_trimestriels_%d.ods' % (today.year - 1)

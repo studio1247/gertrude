@@ -31,7 +31,11 @@ def ReplaceTextFields(dom, fields):
                     replace = True
                     text = text.replace(field, value)
             if replace:
-                node.firstChild.replaceWholeText(text)
+                for line in text.split('\n'):
+                    clone = node.cloneNode(1)
+                    clone.firstChild.replaceWholeText(line)                   
+                    node.parentNode.insertBefore(clone)
+                node.parentNode.removeChild(node)
         except:
             pass
 
