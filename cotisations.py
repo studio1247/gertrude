@@ -29,7 +29,7 @@ from common import *
 from facture import Facture
 from cotisation import Cotisation, CotisationException
 from planning import GPanel
-from ooffice import GenerateDocument, ReplaceTextFields
+from ooffice import *
 
 couleurs = ['C2', 'D2', 'B2', 'E2', 'A2']
 
@@ -110,15 +110,77 @@ class FactureModifications(object):
 
         ReplaceTextFields(dom, fields)
 
+class AppelCotisationsModifications(object):
+    def __init__(self, debut):
+        self.debut = debut
+        if debut.month == 12:
+            self.fin = datetime.date(debut.year, 12, 31)
+        else:
+            self.fin = datetime.date(debut.year, debut.month+1, 1) - datetime.timedelta(1)
+        
+    def execute(self, dom):
+        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
+        table = spreadsheet.getElementsByTagName("table:table").item(0)
+        lignes = table.getElementsByTagName("table:table-row")
+
+        # La date
+        ReplaceFields(lignes, [('date', self.debut)])
+        template = [lignes.item(5), lignes.item(6)]
+
+        # Les cotisations
+        indexes = getCrecheIndexes(self.debut, self.fin)
+        for i, index in enumerate(indexes):
+            inscrit = creche.inscrits[index]
+            line = template[i % 2].cloneNode(1)
+            try:
+                facture = Facture(inscrit, self.debut.year, self.debut.month)                
+                ReplaceFields(line, [('prenom', inscrit.prenom),
+                                     ('cotisation', facture.cotisation_mensuelle),
+                                     ('commentaire', None)])
+            except CotisationException, e:
+                ReplaceFields(line, [('prenom', inscrit.prenom),
+                                     ('cotisation', '?'),
+                                     ('commentaire', '\n'.join(e.errors))])
+            table.insertBefore(line, template[0])
+            IncrementFormulas(template[i % 2], +2)
+
+        table.removeChild(template[0])
+        table.removeChild(template[1])
+
 def GenereFacture(inscrit, periode, oofilename):
     GenerateDocument('./templates/facture_mensuelle_creche.odt', oofilename, FactureModifications(inscrit, periode))
+
+def GenereAppelCotisations(date, oofilename):
+    GenerateDocument('./templates/Appel Cotisations.ods', oofilename, AppelCotisationsModifications(date))
 
 class CotisationsPanel(GPanel):
     def __init__(self, parent):
         GPanel.__init__(self, parent, "Cotisations")
-        wx.StaticBox(self, -1, u'Edition des appels de cotisation', pos=(5, 35), size=(600, 75))
-        self.choice = wx.Choice(self, -1, pos=(20, 60), size=(200, 30))
-        self.monthchoice = wx.Choice(self, -1, pos=(240, 60), size=(200, 30))
+        sizer = wx.BoxSizer(wx.VERTICAL)
+
+        # Les appels de cotisations
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Edition des appels de cotisation'), wx.HORIZONTAL)
+        self.monthchoice1 = wx.Choice(self)
+        date = getfirstmonday()
+        first_date = datetime.date(year=date.year, month=date.month, day=1) 
+        while date < last_date:
+            string = '%s %d' % (months[date.month - 1], date.year)
+            self.monthchoice1.Append(string, date)
+            if date.month < 12:
+                date = datetime.date(year=date.year, month=date.month + 1, day=1)
+            else:
+                date = datetime.date(year=date.year + 1, month=1, day=1)
+        # Par defaut, on selectionne le mois courant
+        self.monthchoice1.SetStringSelection('%s %d' % (months[today.month - 1], today.year))
+        button = wx.Button(self, -1, u'Génération')
+        self.Bind(wx.EVT_BUTTON, self.EvtGenerationAppelCotisations, button)
+        box_sizer.AddMany([(self.monthchoice1, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        sizer.Add(box_sizer, 0, wx.EXPAND|wx.ALL, 5)
+
+        # Les factures
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Edition des factures'), wx.HORIZONTAL)
+        self.choice = wx.Choice(self)
+        self.monthchoice = wx.Choice(self)
         date = getfirstmonday()
         first_date = datetime.date(year=date.year, month=date.month, day=1) 
         while date < last_date:
@@ -133,8 +195,13 @@ class CotisationsPanel(GPanel):
             self.monthchoice.SetStringSelection('%s %d' % (months[11], today.year - 1))
         else:
             self.monthchoice.SetStringSelection('%s %d' % (months[today.month - 2], today.year))
-        button = wx.Button(self, -1, u'Génération', pos=(480, 60))
+        button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationFacture, button)
+        box_sizer.AddMany([(self.choice, 1, wx.ALL|wx.EXPAND, 5), (self.monthchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        sizer.Add(box_sizer, 0, wx.EXPAND|wx.ALL, 5)
+
+        self.sizer.Add(sizer, 1, wx.EXPAND)
+                    
 
     def UpdateContents(self):
         self.choice.Clear()
@@ -170,6 +237,23 @@ class CotisationsPanel(GPanel):
                 oofilename = dlg.GetPath()
                 self.GenereFactures([inscrit], periode, oofilename)
 
+    def EvtGenerationAppelCotisations(self, evt):
+        periode = self.monthchoice1.GetClientData(self.monthchoice1.GetSelection())
+        wildcard = "OpenDocument (*.ods)|*.ods"
+        oodefaultfilename = u"Appel cotisations %s %d.ods" % (months[periode.month - 1], periode.year)
+        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
+        response = dlg.ShowModal()
+        if response == wx.ID_OK:
+            oofilename = dlg.GetPath()
+            try:
+                GenereAppelCotisations(periode, oofilename)
+                dlg = wx.MessageDialog(self, u"Document %s généré" % oofilename, 'Message', wx.OK)                
+            except Exception, e:
+                dlg = wx.MessageDialog(self, str(e), 'Erreur', wx.OK | wx.ICON_WARNING)
+            dlg.ShowModal()
+            dlg.Destroy()
+               
+
     def GenereFactures(self, inscrits, periode, oofilename=None, oopath=None):
         nbfactures = 0
         errors = []
@@ -200,14 +284,17 @@ class CotisationsPanel(GPanel):
         dlg.Destroy()
 
 if __name__ == '__main__':
-  import sys, os
-  from datafiles import *
-  creche, inscrits = readBase(con)
-  #today = datetime.date.today()
-
-  for inscrit in inscrits:
-      if inscrit.prenom == 'Basile':
-          GenereFacture(inscrit, datetime.date(2005, 12, 1), 'basile.ods')
+    import sys, os, __builtin__
+    from datafiles import *
+    __builtin__.creche = Load()
+   
+    GenereAppelCotisations(datetime.date(2007, 8, 1), 'appel cotisations.ods')
+    print u'Fichier "appel cotisations.ods" généré'
+    
+    for inscrit in creche.inscrits:
+        if inscrit.prenom == 'Basile':
+            GenereFacture(inscrit, datetime.date(2005, 12, 1), 'basile.ods')
+            print u'Fichier "basile.ods" généré'
 
 
 

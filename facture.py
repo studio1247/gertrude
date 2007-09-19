@@ -18,7 +18,7 @@
 
 import datetime
 from constants import *
-from cotisation import Cotisation
+from cotisation import *
 
 class Facture(object):
     def __init__(self, inscrit, annee, mois):
@@ -50,7 +50,7 @@ class Facture(object):
                 else:
                     jours_ouvres += 1
                     if inscrit.getInscription(date):
-                        cotisation = Cotisation(inscrit, (date, date))
+                        cotisation = Cotisation(inscrit, (date, date), options=NO_ADDRESS)
                         if (cotisation.mode_garde, cotisation.cotisation_mensuelle) in cotisations_mensuelles:
                             cotisations_mensuelles[(cotisation.mode_garde, cotisation.cotisation_mensuelle)] += 1
                         else:

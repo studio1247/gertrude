@@ -353,7 +353,7 @@ class IdentitePanel(InscriptionsTab):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         sizer1 = wx.BoxSizer(wx.HORIZONTAL)
         sizer2 = wx.FlexGridSizer(4, 2, 5, 5)
-        ctrl = AutoTextCtrl(self, None, 'prenom', size=(120, 23))
+        ctrl = AutoTextCtrl(self, None, 'prenom', size=(-1, -1))
         self.Bind(wx.EVT_TEXT, self.EvtChangementPrenom, ctrl)
         sizer2.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.ALIGN_CENTER_VERTICAL), (ctrl, 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'nom'), 0, wx.EXPAND)])
@@ -501,7 +501,7 @@ class ParentsPanel(InscriptionsTab):
             sizer2.AddMany([(wx.StaticText(self, -1, 'E-mail :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, '%s.email' % parent), 0, wx.EXPAND)])           
             sizer11.Add(sizer2)
             
-	    if profil & PROFIL_TRESORIER:
+            if profil & PROFIL_TRESORIER:
                 panel = PeriodePanel(self)
                 sizer4 = wx.BoxSizer(wx.VERTICAL)
                 sizer4.Add(PeriodeChoice(panel, None, '%s.revenus' % parent, eval('self.nouveau_revenu_%s' % parent)))
@@ -639,16 +639,16 @@ class InscriptionsPanel(GPanel):
         GPanel.__init__(self, parent, "Inscriptions")
 
         # Le control pour la selection du bebe
-	sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.choice = wx.Choice(self, -1)
         self.Bind(wx.EVT_CHOICE, self.EvtInscritChoice, self.choice)
         self.delbutton = wx.Button(self, -1, 'Suppression')
         self.Bind(wx.EVT_BUTTON, self.EvtInscritDelButton, self.delbutton)
         sizer.AddMany([(self.choice, 1, wx.EXPAND), (self.delbutton, 0, wx.RIGHT)])
-	self.sizer.Add(sizer, 0, wx.EXPAND)
+        self.sizer.Add(sizer, 0, wx.EXPAND)
         # le notebook pour la fiche d'inscription
         self.notebook = InscriptionsNotebook(self)
-	self.sizer.Add(self.notebook, 1, wx.EXPAND)
+        self.sizer.Add(self.notebook, 1, wx.EXPAND)
         self.InitInscrits()
 
     def UpdateContents(self):

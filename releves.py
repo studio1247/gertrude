@@ -30,103 +30,6 @@ from cotisation import CotisationException
 from facture import Facture
 from ooffice import *
 
-def getPleinTempsIndexes(date_debut, date_fin):
-    result = []
-    for i, inscrit in enumerate(creche.inscrits):
-        inscriptions = inscrit.getInscriptions(date_debut, date_fin)
-        if len(inscriptions) > 0:
-            inscription = inscriptions[0]
-            if inscription.mode == 0:
-                periode_reference = inscription.periode_reference
-                for jour in periode_reference:
-                    if jour != [1, 1, 1]:
-                        break
-                else:
-                    result.append(i)
-    return result
-
-def getMiTempsIndexes(date_debut, date_fin):
-    result = []
-    for i, inscrit in enumerate(creche.inscrits):
-        inscriptions = inscrit.getInscriptions(date_debut, date_fin)
-        if len(inscriptions) > 0:
-            inscription = inscriptions[0]
-            if inscription.mode == 0:
-                periode_reference = inscription.periode_reference
-                nb_jours = 0
-                for jour in periode_reference:
-                    if jour == [1, 1, 1]:
-                        nb_jours += 1
-                if nb_jours != 5:
-                    result.append(i)
-    return result
-
-def getCrecheIndexes(date_debut, date_fin):
-    result = []
-    for i, inscrit in enumerate(creche.inscrits):
-        inscriptions = inscrit.getInscriptions(date_debut, date_fin)
-        if len(inscriptions) > 0:
-            inscription = inscriptions[0]
-            if inscription.mode == 0:
-                result.append(i)
-    return result
-
-def getHalteGarderieIndexes(date_debut, date_fin):
-    result = []
-    for i, inscrit in enumerate(creche.inscrits):
-        inscriptions = inscrit.getInscriptions(date_debut, date_fin)
-        if len(inscriptions) and inscriptions[0].mode == 1:
-            result.append(i)
-    return result
-
-def getAdaptationIndexes(date_debut, date_fin):
-    result = []
-    return result
-
-def getTriParCommuneEtNomIndexes(indexes):
-    # Tri par commune (Rennes en premier) + ordre alphabetique des noms
-    def tri(one, two):
-        i1 = creche.inscrits[one] ; i2 = creche.inscrits[two]
-        if (i1.ville.lower() != 'rennes' and i2.ville.lower() == 'rennes'):
-            return 1
-        elif (i1.ville.lower() == 'rennes' and i2.ville.lower() != 'rennes'):
-            return -1
-        else:
-            return cmp("%s %s" % (i1.nom, i1.prenom), "%s %s" % (i2.nom, i2.prenom))
-
-    indexes.sort(tri)
-    return indexes
-
-def getTriParPrenomIndexes(indexes):
-    # Tri par ordre alphabetique des prenoms
-    def tri(one, two):
-        i1 = creche.inscrits[one] ; i2 = creche.inscrits[two]
-        return cmp(i1.prenom, i2.prenom)
-
-    indexes.sort(tri)
-    return indexes
-
-def getTriParNomIndexes(indexes):
-    # Tri par ordre alphabetique des prenoms
-    def tri(one, two):
-        i1 = creche.inscrits[one] ; i2 = creche.inscrits[two]
-        return cmp(i1.nom, i2.nom)
-
-    indexes.sort(tri)
-    return indexes
-
-def getPresentsIndexes(indexes, (debut, fin)):
-    result = []
-    for i in range(len(indexes)):
-        inscrit = creche.inscrits[indexes[i]]
-        #print inscrit.prenom
-        for inscription in inscrit.inscriptions:
-            if ((inscription.fin == None or inscription.fin >= debut) and (inscription.debut != None and inscription.debut <= fin)):
-                result.append(indexes[i])
-                break
-
-    return result
-
 #def PresencesEffectives(inscrit, annee, mois):
 #  date = datetime.date(annee, mois, 1)
 #  while (date.month == mois):
@@ -432,54 +335,12 @@ class PlanningModifications(object):
                             ReplaceFields([cellule], [('p', int(presence.isPresentDuringTranche(tranche)))])
                         else:
                             ReplaceFields([cellule], [('p', '')])
-
-class AppelCotisationsModifications(object):
-    def __init__(self, debut):
-        self.debut = debut
-        if debut.month == 12:
-            self.fin = datetime.date(debut.year, 12, 31)
-        else:
-            self.fin = datetime.date(debut.year, debut.month+1, 1) - datetime.timedelta(1)
-        
-    def execute(self, dom):
-        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
-        table = spreadsheet.getElementsByTagName("table:table").item(0)
-        lignes = table.getElementsByTagName("table:table-row")
-
-        # Les titres des pages
-#        ReplaceFields(lignes, [('date', self.debut)])
-        template = [lignes.item(4), lignes.item(5)]
-#        print template[0].toprettyxml()
-#        print template[1].toprettyxml()        
-        indexes = getCrecheIndexes(self.debut, self.fin)
-        for i, index in enumerate(indexes):
-            inscrit = creche.inscrits[index]
-            line = template[i % 2].cloneNode(1)
-            try:
-                facture = Facture(inscrit, self.debut.year, self.debut.month)                
-                ReplaceFields([line], [('prenom', inscrit.prenom),
-                                       ('cotisation', '%.2f' % facture.cotisation_mensuelle)])
-            except CotisationException, e:
-                ReplaceFields([line], [('prenom', inscrit.prenom),
-                                       ('commentaire', '\n'.join(e.errors))])           
-            table.insertBefore(line, template[0])
-
-        table.removeChild(template[0])
-        table.removeChild(template[1])
-##
-##        #print dom.toprettyxml()
-
-
-
                             
 def GenereEtatsTrimestriels(annee, oofilename):
     GenerateDocument('./templates/Etats trimestriels.ods', oofilename, EtatsTrimestrielsModifications(annee))
 
 def GenerePlanningPresences(date, oofilename):
     GenerateDocument('./templates/Planning Presences.ods', oofilename, PlanningModifications(date))
-
-def GenereAppelCotisations(date, oofilename):
-    GenerateDocument('./templates/Appel Cotisations.ods', oofilename, AppelCotisationsModifications(date))
 
 class RelevesPanel(GPanel):
     def __init__(self, parent):
@@ -559,10 +420,6 @@ if __name__ == '__main__':
     from datafiles import *
     __builtin__.creche = Load()
     today = datetime.date.today()
-
-    filename = 'appel_cotisations_%d_%d.ods' % (today.month, today.year)
-    GenereAppelCotisations(datetime.date(today.year, 8, 1), filename)
-    sys.exit(0)
         
     filename = 'etats_trimestriels_%d.ods' % (today.year - 1)
     try:

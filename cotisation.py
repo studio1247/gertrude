@@ -22,13 +22,17 @@ class CotisationException(Exception):
     def __init__(self, errors):
         self.errors = errors
 
+NO_ADDRESS = 1
+
 class Cotisation(object):
-    def __init__(self, inscrit, periode):
+    def __init__(self, inscrit, periode, options=0):
         self.inscrit = inscrit
         self.debut, self.fin = periode
         errors = []
-        if not inscrit.prenom or not inscrit.nom or not inscrit.naissance or not inscrit.code_postal or not inscrit.ville:
+        if not inscrit.prenom or not inscrit.nom:
             errors.append(u" - L'état civil de l'enfant est incomplet.")
+        if not options & NO_ADDRESS and (not inscrit.code_postal or not inscrit.ville):
+            errors.append(u" - L'adresse l'enfant est incomplète.")
         if not inscrit.papa.prenom or not inscrit.maman.prenom or not inscrit.papa.nom or not inscrit.maman.nom:
             errors.append(u" - L'état civil des parents est incomplet.")
         if self.debut is None:
@@ -40,9 +44,12 @@ class Cotisation(object):
         self.revenus_maman = Select(inscrit.maman.revenus, self.debut)
         if self.revenus_maman is None or self.revenus_maman.revenu == '':
             errors.append(u" - Les déclarations de revenus de la maman sont incomplètes.")
-        self.bureau = Select(creche.bureaux, self.debut)     
+        self.bureau = Select(creche.bureaux, self.debut)
         if self.bureau is None:
             errors.append(u" - Il n'y a pas de bureau à cette date.")
+        self.bareme_caf = Select(creche.baremes_caf, self.debut)
+        if self.bareme_caf is None:
+            errors.append(u" - Il n'y a pas de barème CAF à cette date.")
         self.inscription = inscrit.getInscription(self.debut)
         if self.inscription is None:
             errors.append(u" - Il n'y a pas d'inscription à cette date.")
@@ -70,7 +77,12 @@ class Cotisation(object):
         if self.revenus_maman.chomage:
             self.abattement_chomage_maman = 0.3 * float(self.revenus_maman.revenu)
             self.assiette_annuelle -= self.abattement_chomage_maman
-            
+
+        if self.assiette_annuelle > self.bareme_caf.plafond:
+            self.assiette_annuelle = self.bareme_caf.plafond
+        elif self.assiette_annuelle < self.bareme_caf.plancher:
+            self.assiette_annuelle = self.bareme_caf.plancher
+
         self.assiette_mensuelle = self.assiette_annuelle / 12
         
         self.taux_horaire = 0.05

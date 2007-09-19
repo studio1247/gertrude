@@ -583,3 +583,100 @@ def GetInscritId(inscrit, inscrits):
         if (inscrit != i and inscrit.prenom == i.prenom):
             return inscrit.prenom + " " + inscrit.nom
     return inscrit.prenom
+
+def getPleinTempsIndexes(date_debut, date_fin):
+    result = []
+    for i, inscrit in enumerate(creche.inscrits):
+        inscriptions = inscrit.getInscriptions(date_debut, date_fin)
+        if len(inscriptions) > 0:
+            inscription = inscriptions[0]
+            if inscription.mode == 0:
+                periode_reference = inscription.periode_reference
+                for jour in periode_reference:
+                    if jour != [1, 1, 1]:
+                        break
+                else:
+                    result.append(i)
+    return result
+
+def getMiTempsIndexes(date_debut, date_fin):
+    result = []
+    for i, inscrit in enumerate(creche.inscrits):
+        inscriptions = inscrit.getInscriptions(date_debut, date_fin)
+        if len(inscriptions) > 0:
+            inscription = inscriptions[0]
+            if inscription.mode == 0:
+                periode_reference = inscription.periode_reference
+                nb_jours = 0
+                for jour in periode_reference:
+                    if jour == [1, 1, 1]:
+                        nb_jours += 1
+                if nb_jours != 5:
+                    result.append(i)
+    return result
+
+def getCrecheIndexes(date_debut, date_fin):
+    result = []
+    for i, inscrit in enumerate(creche.inscrits):
+        inscriptions = inscrit.getInscriptions(date_debut, date_fin)
+        if len(inscriptions) > 0:
+            inscription = inscriptions[0]
+            if inscription.mode == 0:
+                result.append(i)
+    return result
+
+def getHalteGarderieIndexes(date_debut, date_fin):
+    result = []
+    for i, inscrit in enumerate(creche.inscrits):
+        inscriptions = inscrit.getInscriptions(date_debut, date_fin)
+        if len(inscriptions) and inscriptions[0].mode == 1:
+            result.append(i)
+    return result
+
+def getAdaptationIndexes(date_debut, date_fin):
+    result = []
+    return result
+
+def getTriParCommuneEtNomIndexes(indexes):
+    # Tri par commune (Rennes en premier) + ordre alphabetique des noms
+    def tri(one, two):
+        i1 = creche.inscrits[one] ; i2 = creche.inscrits[two]
+        if (i1.ville.lower() != 'rennes' and i2.ville.lower() == 'rennes'):
+            return 1
+        elif (i1.ville.lower() == 'rennes' and i2.ville.lower() != 'rennes'):
+            return -1
+        else:
+            return cmp("%s %s" % (i1.nom, i1.prenom), "%s %s" % (i2.nom, i2.prenom))
+
+    indexes.sort(tri)
+    return indexes
+
+def getTriParPrenomIndexes(indexes):
+    # Tri par ordre alphabetique des prenoms
+    def tri(one, two):
+        i1 = creche.inscrits[one] ; i2 = creche.inscrits[two]
+        return cmp(i1.prenom, i2.prenom)
+
+    indexes.sort(tri)
+    return indexes
+
+def getTriParNomIndexes(indexes):
+    # Tri par ordre alphabetique des prenoms
+    def tri(one, two):
+        i1 = creche.inscrits[one] ; i2 = creche.inscrits[two]
+        return cmp(i1.nom, i2.nom)
+
+    indexes.sort(tri)
+    return indexes
+
+def getPresentsIndexes(indexes, (debut, fin)):
+    result = []
+    for i in range(len(indexes)):
+        inscrit = creche.inscrits[indexes[i]]
+        #print inscrit.prenom
+        for inscription in inscrit.inscriptions:
+            if ((inscription.fin == None or inscription.fin >= debut) and (inscription.debut != None and inscription.debut <= fin)):
+                result.append(indexes[i])
+                break
+
+    return result

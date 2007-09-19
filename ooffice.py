@@ -19,6 +19,7 @@
 import datetime
 import zipfile
 import xml.dom.minidom
+import re
 
 def ReplaceTextFields(dom, fields):
     for node in dom.getElementsByTagName("text:p"):
@@ -40,40 +41,74 @@ def ReplaceTextFields(dom, fields):
             pass
 
 def ReplaceFields(cellules, fields):
-    # print fields
+    for i, field in enumerate(fields):
+        if len(field) == 2:
+            param, value = field
+            if isinstance(value, basestring):
+                text = value
+            elif isinstance(value, datetime.date):
+                text = '%.2d/%.2d/%.4d' % (value.day, value.month, value.year)
+            else:
+                text = str(value)
+            fields[i] = (param, value, text)
+        
     # Si l'argument est une ligne ...
     if cellules.__class__ == xml.dom.minidom.Element:
-        cellules = cellules.getElementsByTagName("table:table-cell")
-    # Fonction ...
+        if cellules.nodeName == "table:table-cell":
+            cellules = [cellule]
+        else:
+            cellules = cellules.getElementsByTagName("table:table-cell")
+    elif len(cellules) > 0 and cellules[0].nodeName != "table:table-cell":
+        nodes = cellules
+        cellules = []
+        for node in nodes:
+            cellules.extend(node.getElementsByTagName("table:table-cell"))
+
+    # Remplacement ...
     for cellule in cellules:
         for node in cellule.getElementsByTagName("text:p"):
-            text = node.firstChild.wholeText
-            if '<' in text and '>' in text:
-                for field, value in fields:
-                    field = '<%s>' % field
-                    if field in text:
-                        if value is None:
-                            text = text.replace(field, '')
-                        elif type(value) == int:
-                            if text == field:
-                                cellule.setAttribute("office:value-type", 'float')
-                                cellule.setAttribute("office:value", '%d' % value)
-                            text = text.replace(field, str(value))
-                        elif type(value) == datetime.date:
-                            if text == field:
-                                cellule.setAttribute("office:value-type", 'date')
-                                cellule.setAttribute("office:date-value", '%d-%d-%d' % (value.year, value.month, value.day))
-                            text = text.replace(field, '%.2d/%.2d/%.4d' % (value.day, value.month, value.year))
-                        else:
-                            text = text.replace(field, value)
+            if node.firstChild and node.firstChild.nodeType == node.TEXT_NODE:
+                nodeText = node.firstChild.wholeText
+                if '<' in nodeText and '>' in nodeText:
+                    for param, value, text in fields:
+                        tag = '<%s>' % param
+                        if tag in nodeText:
+                            if value is None:
+                                nodeText = nodeText.replace(tag, '')
+                            elif isinstance(value, int) or isinstance(value, float):
+                                if nodeText == tag:
+                                    cellule.setAttribute("office:value-type", 'float')
+                                    cellule.setAttribute("office:value", str(value))
+                                nodeText = nodeText.replace(tag, text)
+                            elif isinstance(value, datetime.date):
+                                if nodeText == tag:
+                                    cellule.setAttribute("office:value-type", 'date')
+                                    cellule.setAttribute("office:date-value", '%d-%d-%d' % (value.year, value.month, value.day))
+                                nodeText = nodeText.replace(tag, text)
+                            else:
+                                nodeText = nodeText.replace(tag, text)
 
-                    if '<' not in text or '>' not in text:
-                        break
-                else:
-                    text = ''
+                        if '<' not in nodeText or '>' not in nodeText:
+                            break
 
-                # print node.firstChild.wholeText, '=>', text
-                node.firstChild.replaceWholeText(text)
+                    # print node.firstChild.wholeText, '=>', text
+                    node.firstChild.replaceWholeText(nodeText)
+
+def IncrementFormulas(cellules, inc=1):
+    formula_gure = re.compile("\[\.([A-Z]+)([0-9]+)\]")
+    if cellules.__class__ == xml.dom.minidom.Element:
+        cellules = cellules.getElementsByTagName("table:table-cell")
+    for cellule in cellules:
+        if cellule.hasAttribute("table:formula"):
+            formula = cellule.getAttribute("table:formula")
+            mo = True
+            while mo is not None:
+                mo = formula_gure.search(formula)
+                if mo:
+                    formula = formula.replace(mo.group(0), "[_.%s%d_]" % (mo.group(1), int(mo.group(2))+inc))
+            formula = formula.replace('[_', '[').replace('_]', ']')
+            cellule.setAttribute("table:formula", formula)
+            
 
 def GenerateDocument(src, dest, modifications):
     template = zipfile.ZipFile(src, 'r')
