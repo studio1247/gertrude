@@ -347,22 +347,23 @@ class RelevesPanel(GPanel):
         GPanel.__init__(self, parent, u'Relevés')
 
         today = datetime.date.today()
-
-        # Les appels de cotisations
-        # ...
         
+	sizer = wx.BoxSizer(wx.VERTICAL)
+
         # Les releves trimestriels
-        wx.StaticBox(self, -1, u'Relevés trimestriels', pos=(5, 35), size=(400, 75))
-        self.choice = wx.Choice(self, -1, pos=(20, 60), size=(270, 30))
-        button = wx.Button(self, -1, u'Génération', pos=(310, 60))
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés trimestriels'), wx.HORIZONTAL)
+        self.choice = wx.Choice(self)
+        button = wx.Button(self, -1, u'Génération')
         for year in range(first_date.year, last_date.year + 1):
             self.choice.Append(u'Année %d' % year, year)
         self.choice.SetSelection(today.year - first_date.year)
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationEtatsTrimestriels, button)
+        box_sizer.AddMany([(self.choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
         # Les plannings de presence enfants
-        wx.StaticBox(self, -1, u'Planning des présences', pos=(5, 130), size=(400, 75))
-        self.weekchoice = wx.Choice(self, -1, pos=(20, 155), size=(270, 30))
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Planning des présences'), wx.HORIZONTAL)
+        self.weekchoice = wx.Choice(self)
         day = getfirstmonday()
         semaine = 1
         while day < last_date:
@@ -374,8 +375,12 @@ class RelevesPanel(GPanel):
                 semaine = 1
             day += datetime.timedelta(14)
         self.weekchoice.SetSelection((today - getfirstmonday()).days / 14 + 1)
-        button = wx.Button(self, -1, u'Génération', pos=(310, 155))
+        button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationPlanningPresences, button)
+        box_sizer.AddMany([(self.weekchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+
+        self.sizer.Add(sizer, 1, wx.EXPAND)
 
     def EvtGenerationEtatsTrimestriels(self, evt):
         annee = self.choice.GetClientData(self.choice.GetSelection())

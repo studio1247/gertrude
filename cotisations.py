@@ -175,7 +175,7 @@ class CotisationsPanel(GPanel):
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationAppelCotisations, button)
         box_sizer.AddMany([(self.monthchoice1, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
-        sizer.Add(box_sizer, 0, wx.EXPAND|wx.ALL, 5)
+        sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
         # Les factures
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Edition des factures'), wx.HORIZONTAL)
@@ -198,7 +198,7 @@ class CotisationsPanel(GPanel):
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationFacture, button)
         box_sizer.AddMany([(self.choice, 1, wx.ALL|wx.EXPAND, 5), (self.monthchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
-        sizer.Add(box_sizer, 0, wx.EXPAND|wx.ALL, 5)
+        sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
         self.sizer.Add(sizer, 1, wx.EXPAND)
                     

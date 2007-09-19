@@ -640,11 +640,11 @@ class InscriptionsPanel(GPanel):
 
         # Le control pour la selection du bebe
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.choice = wx.Choice(self, -1)
+        self.choice = wx.Choice(self)
         self.Bind(wx.EVT_CHOICE, self.EvtInscritChoice, self.choice)
         self.delbutton = wx.Button(self, -1, 'Suppression')
         self.Bind(wx.EVT_BUTTON, self.EvtInscritDelButton, self.delbutton)
-        sizer.AddMany([(self.choice, 1, wx.EXPAND), (self.delbutton, 0, wx.RIGHT)])
+        sizer.AddMany([(self.choice, 1, wx.EXPAND|wx.RIGHT, 10), self.delbutton])
         self.sizer.Add(sizer, 0, wx.EXPAND)
         # le notebook pour la fiche d'inscription
         self.notebook = InscriptionsNotebook(self)
