@@ -151,6 +151,8 @@ class EtatsTrimestrielsModifications(object):
         if len(self.errors) > 0:
             raise CotisationException(self.errors)
 
+        return []
+
     def get_facture(self, inscrit, mois):
         if (inscrit.idx, mois) not in self.factures:
             try:
@@ -295,6 +297,7 @@ class PlanningModifications(object):
                 cellule.setAttribute('table:formula', formule)
 
         #print dom.toprettyxml()
+        return []
 
     def printPresences(self, dom, indexes, ligne_depart):
         lignes = dom.getElementsByTagName("table:table-row")
@@ -337,10 +340,10 @@ class PlanningModifications(object):
                             ReplaceFields([cellule], [('p', '')])
                             
 def GenereEtatsTrimestriels(annee, oofilename):
-    GenerateDocument('./templates/Etats trimestriels.ods', oofilename, EtatsTrimestrielsModifications(annee))
+    return GenerateDocument('./templates/Etats trimestriels.ods', oofilename, EtatsTrimestrielsModifications(annee))
 
 def GenerePlanningPresences(date, oofilename):
-    GenerateDocument('./templates/Planning Presences.ods', oofilename, PlanningModifications(date))
+    return GenerateDocument('./templates/Planning Presences.ods', oofilename, PlanningModifications(date))
 
 class RelevesPanel(GPanel):
     def __init__(self, parent):

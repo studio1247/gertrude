@@ -19,20 +19,20 @@
 import os.path
 import datetime
 from common import *
-from planning import GPanel
+from gpanel import GPanel
 from controls import *
 
 class CrechePanel(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer2 = wx.FlexGridSizer(4, 2, 5, 5)
-        sizer2.AddMany([wx.StaticText(self, -1, u'Nom de la crèche :'), AutoTextCtrl(self, creche, 'nom', size=(200, 21))])
-        sizer2.AddMany([wx.StaticText(self, -1, 'Adresse :'), AutoTextCtrl(self, creche, 'adresse', size=(200, 21))])
-        sizer2.AddMany([wx.StaticText(self, -1, 'Code Postal :'), AutoNumericCtrl(self, creche, 'code_postal', precision=0, size=(200, 21))])
-        sizer2.AddMany([wx.StaticText(self, -1, 'Ville :'), AutoTextCtrl(self, creche, 'ville', size=(200, 21))])       
-        sizer.Add(sizer2)
-        sizer.Fit(self)
+        sizer2 = wx.FlexGridSizer(0, 2, 5, 5)
+        sizer2.AddGrowableCol(1, 1)
+        sizer2.AddMany([wx.StaticText(self, -1, u'Nom de la crèche :'), (AutoTextCtrl(self, creche, 'nom'), 0, wx.EXPAND)])
+        sizer2.AddMany([wx.StaticText(self, -1, 'Adresse :'), (AutoTextCtrl(self, creche, 'adresse'), 0, wx.EXPAND)])
+        sizer2.AddMany([wx.StaticText(self, -1, 'Code Postal :'), (AutoNumericCtrl(self, creche, 'code_postal', precision=0), 0, wx.EXPAND)])
+        sizer2.AddMany([wx.StaticText(self, -1, 'Ville :'), (AutoTextCtrl(self, creche, 'ville'), 0, wx.EXPAND)])       
+        sizer.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(sizer)
         
 class ResponsabilitesPanel(AutoTab):
@@ -40,19 +40,19 @@ class ResponsabilitesPanel(AutoTab):
         AutoTab.__init__(self, parent)
         parents = self.GetNomsParents()
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(PeriodeChoice(self, creche, 'bureaux', Bureau))
-        sizer2 = wx.FlexGridSizer(4, 2, 5, 5)
+        sizer.Add(PeriodeChoice(self, creche, 'bureaux', Bureau), 0, wx.TOP, 5)
+        sizer2 = wx.FlexGridSizer(0, 2, 5, 5)
+        sizer2.AddGrowableCol(1, 1)
         self.responsables_ctrls = []
         self.responsables_ctrls.append(AutoChoiceCtrl(self, creche, 'bureaux[self.parent.periode].president', items=parents))
-        sizer2.AddMany([wx.StaticText(self, -1, u'Président :'), self.responsables_ctrls[-1]])
+        sizer2.AddMany([wx.StaticText(self, -1, u'Président :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
         self.responsables_ctrls.append(AutoChoiceCtrl(self, creche, 'bureaux[self.parent.periode].vice_president', items=parents))
-        sizer2.AddMany([wx.StaticText(self, -1, u'Vice président :'), self.responsables_ctrls[-1]])
+        sizer2.AddMany([wx.StaticText(self, -1, u'Vice président :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
         self.responsables_ctrls.append(AutoChoiceCtrl(self, creche, 'bureaux[self.parent.periode].tresorier', items=parents))
-        sizer2.AddMany([wx.StaticText(self, -1, u'Trésorier :'), self.responsables_ctrls[-1]])
+        sizer2.AddMany([wx.StaticText(self, -1, u'Trésorier :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
         self.responsables_ctrls.append(AutoChoiceCtrl(self, creche, 'bureaux[self.parent.periode].secretaire', items=parents))        
-        sizer2.AddMany([wx.StaticText(self, -1, u'Secrétaire :'), self.responsables_ctrls[-1]])
-        sizer.Add(sizer2)
-        sizer.Fit(self)
+        sizer2.AddMany([wx.StaticText(self, -1, u'Secrétaire :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
+        sizer.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(sizer)
 
     def UpdateContents(self):
@@ -78,11 +78,11 @@ class CafPanel(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(PeriodeChoice(self, creche, 'baremes_caf', BaremeCAF))
+        sizer.Add(PeriodeChoice(self, creche, 'baremes_caf', BaremeCAF), 0, wx.TOP, 5)
         sizer2 = wx.FlexGridSizer(4, 2, 5, 5)
         sizer2.AddMany([wx.StaticText(self, -1, 'Plancher :'), AutoNumericCtrl(self, creche, 'baremes_caf[self.parent.periode].plancher', precision=2)])
         sizer2.AddMany([wx.StaticText(self, -1, 'Plafond :'), AutoNumericCtrl(self, creche, 'baremes_caf[self.parent.periode].plafond', precision=2)])
-        sizer.Add(sizer2)
+        sizer.Add(sizer2, 0, wx.ALL, 5)
         sizer.Fit(self)
         self.SetSizer(sizer)
         

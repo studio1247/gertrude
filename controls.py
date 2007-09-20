@@ -143,7 +143,7 @@ class PhoneCtrl(wx.TextCtrl):
 #        if kw.has_key('style'): this_sty = this_sty | kw['style']
 #        kw['style'] = this_sty
 
-        wx.TextCtrl.__init__(self, parent, id, size=(110, 23), *args, **kw)
+        wx.TextCtrl.__init__(self, parent, id, size=(-1, -1), *args, **kw)
         self.SetMaxLength(14)
 
         wx.EVT_CHAR(self, self.onChar)
@@ -154,7 +154,7 @@ class PhoneCtrl(wx.TextCtrl):
         """ on Character event"""
         ip = self.GetInsertionPoint()
         lp = self.GetLastPosition()
-        key   = event.KeyCode()
+        key = event.KeyCode
 
         # 2. other non-text characters are passed without change
         if (key == wx.WXK_BACK):
@@ -430,30 +430,30 @@ class PeriodeChoice(wx.BoxSizer):
         self.constructor = constructor
         
         sizer1 = wx.BoxSizer(wx.VERTICAL)
-        self.periodechoice = wx.Choice(parent, -1, size=(200, 25))
+        self.periodechoice = wx.Choice(parent)
         parent.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.periodechoice)
 	delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
 	plusbmp = wx.Bitmap("bitmaps/plus.png", wx.BITMAP_TYPE_PNG)
-	self.periodeaddbutton = wx.BitmapButton(parent, -1, plusbmp, size=(25, 25))
-	self.periodedelbutton = wx.BitmapButton(parent, -1, delbmp, size=(25, 25))
+	self.periodeaddbutton = wx.BitmapButton(parent, -1, plusbmp, size=(14, 14))
+	self.periodedelbutton = wx.BitmapButton(parent, -1, delbmp, size=(14, 14))
         sizer2 = wx.BoxSizer(wx.HORIZONTAL)
-	sizer2.AddMany([self.periodechoice, self.periodeaddbutton, self.periodedelbutton])
+	sizer2.AddMany([(self.periodechoice, 1, wx.EXPAND), (self.periodeaddbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT|wx.RIGHT, 5), (self.periodedelbutton, 0, wx.ALIGN_CENTER_VERTICAL)])
         parent.Bind(wx.EVT_BUTTON, self.EvtPeriodeAddButton, self.periodeaddbutton)
         parent.Bind(wx.EVT_BUTTON, self.EvtPeriodeDelButton, self.periodedelbutton)
         parent.ctrls.append(self)
         sizer3 = wx.BoxSizer(wx.HORIZONTAL)
 
         date_debut = AutoDateCtrl(parent, instance, member+'[self.parent.periode].debut')
-        sizer3.AddMany([(wx.StaticText(parent, -1, u'début :'), 0, wx.ALIGN_CENTER_VERTICAL), (date_debut, 0, wx.LEFT, 5)])
+        sizer3.AddMany([(wx.StaticText(parent, -1, u'début :'), 0, wx.ALIGN_CENTER_VERTICAL), (date_debut, 1, wx.LEFT|wx.EXPAND, 5)])
         date_fin = AutoDateCtrl(parent, instance, member+'[self.parent.periode].fin', style=wx.DP_ALLOWNONE)
-        sizer3.AddMany([(wx.StaticText(parent, -1, 'fin :'), 0, wx.ALIGN_CENTER_VERTICAL+wx.LEFT, 10), (date_fin, 0, wx.LEFT, 5)])
+        sizer3.AddMany([(wx.StaticText(parent, -1, 'fin :'), 0, wx.ALIGN_CENTER_VERTICAL+wx.LEFT, 10), (date_fin, 1, wx.LEFT|wx.EXPAND, 5)])
         #parent.Bind(wx.EVT_DATE_CHANGED, self.EvtChangementPeriode, date_debut)
         #parent.Bind(wx.EVT_DATE_CHANGED, self.EvtChangementPeriode, date_fin)
         parent.Bind(wx.EVT_TEXT, self.EvtChangementPeriode, date_debut)
         parent.Bind(wx.EVT_TEXT, self.EvtChangementPeriode, date_fin)
         
-        sizer1.AddMany([sizer2, (sizer3, 0, wx.TOP, 3)])
-        self.AddMany([wx.StaticText(parent, -1, u'Période :'), (sizer1, 0, wx.LEFT, 5)])
+        sizer1.AddMany([(sizer2, 1, wx.EXPAND), (sizer3, 1, wx.TOP|wx.EXPAND, 3)])
+        self.AddMany([(sizer1, 1, wx.LEFT|wx.EXPAND, 5)])
         self.SetInstance(instance, member)
         
     def SetInstance(self, instance, member=None):

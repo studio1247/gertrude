@@ -32,13 +32,9 @@ def ReplaceTextFields(dom, fields):
                     replace = True
                     text = text.replace(field, value)
             if replace:
-                for line in text.split('\n'):
-                    clone = node.cloneNode(1)
-                    clone.firstChild.replaceWholeText(line)                   
-                    node.parentNode.insertBefore(clone)
-                node.parentNode.removeChild(node)
-        except:
-            pass
+                node.firstChild.replaceWholeText(text)
+        except Exception, e:
+            print e
 
 def ReplaceFields(cellules, fields):
     for i, field in enumerate(fields):
@@ -111,13 +107,14 @@ def IncrementFormulas(cellules, inc=1):
             
 
 def GenerateDocument(src, dest, modifications):
+    errors = []
     template = zipfile.ZipFile(src, 'r')
     files = []
     for filename in template.namelist():
         data = template.read(filename)
         if filename == 'content.xml':
             dom = xml.dom.minidom.parseString(data)
-            modifications.execute(dom)
+            errors.extend(modifications.execute(dom))
             data = dom.toxml('UTF-8')
         files.append((filename, data))
     template.close()
@@ -125,3 +122,4 @@ def GenerateDocument(src, dest, modifications):
     for filename, data in files:
         oofile.writestr(filename, data)
     oofile.close()
+    return errors

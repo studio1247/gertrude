@@ -19,9 +19,8 @@
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import __builtin__
-import wx, wx.lib.scrolledpanel, wx.html
-import datetime, sys, shutil
-from planning import GPanel, PlanningPanel
+import wx, datetime, sys, shutil
+from planning import PlanningPanel
 from inscriptions import InscriptionsPanel
 from cotisations import CotisationsPanel
 from releves import RelevesPanel
@@ -107,7 +106,7 @@ class GertrudeListbook(Listbook):
 
 class GertrudeFrame(wx.Frame):
     def __init__(self, parent, ID, title):
-        wx.Frame.__init__(self, parent, ID, title, wx.DefaultPosition, wx.Size(900, 700))
+        wx.Frame.__init__(self, parent, ID, title, wx.DefaultPosition, wx.Size(1000, 750))
 
         # Icone
         icon = wx.Icon('./bitmaps/gertrude.ico', wx.BITMAP_TYPE_ICO)

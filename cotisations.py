@@ -99,6 +99,7 @@ class FactureModifications(object):
                 ('raison-deduction', facture.raison_deduction),
                 ('total', '%.2f' % facture.total)
                 ]
+
         if months[debut.month - 1][0] == 'A' or months[debut.month - 1][0] == 'O':
             fields.append(('de-mois', 'd\'%s %d' % (months[debut.month - 1].lower(), debut.year)))
         else:
@@ -109,6 +110,7 @@ class FactureModifications(object):
             fields.append(('parents', '%s %s et %s %s' % (self.inscrit.maman.prenom, self.inscrit.maman.nom, self.inscrit.papa.prenom, self.inscrit.papa.nom)))
 
         ReplaceTextFields(dom, fields)
+        return []
 
 class AppelCotisationsModifications(object):
     def __init__(self, debut):
@@ -119,6 +121,7 @@ class AppelCotisationsModifications(object):
             self.fin = datetime.date(debut.year, debut.month+1, 1) - datetime.timedelta(1)
         
     def execute(self, dom):
+        errors = []
         spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
         table = spreadsheet.getElementsByTagName("table:table").item(0)
         lignes = table.getElementsByTagName("table:table-row")
@@ -141,17 +144,19 @@ class AppelCotisationsModifications(object):
                 ReplaceFields(line, [('prenom', inscrit.prenom),
                                      ('cotisation', '?'),
                                      ('commentaire', '\n'.join(e.errors))])
+                errors.append((inscrit, e.errors))
             table.insertBefore(line, template[0])
             IncrementFormulas(template[i % 2], +2)
 
         table.removeChild(template[0])
         table.removeChild(template[1])
+        return errors
 
 def GenereFacture(inscrit, periode, oofilename):
-    GenerateDocument('./templates/facture_mensuelle_creche.odt', oofilename, FactureModifications(inscrit, periode))
+    return GenerateDocument('./templates/facture_mensuelle_creche.odt', oofilename, FactureModifications(inscrit, periode))
 
 def GenereAppelCotisations(date, oofilename):
-    GenerateDocument('./templates/Appel Cotisations.ods', oofilename, AppelCotisationsModifications(date))
+    return GenerateDocument('./templates/Appel Cotisations.ods', oofilename, AppelCotisationsModifications(date))
 
 class CotisationsPanel(GPanel):
     def __init__(self, parent):
@@ -201,7 +206,6 @@ class CotisationsPanel(GPanel):
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
         self.sizer.Add(sizer, 1, wx.EXPAND)
-                    
 
     def UpdateContents(self):
         self.choice.Clear()
@@ -246,13 +250,18 @@ class CotisationsPanel(GPanel):
         if response == wx.ID_OK:
             oofilename = dlg.GetPath()
             try:
-                GenereAppelCotisations(periode, oofilename)
-                dlg = wx.MessageDialog(self, u"Document %s généré" % oofilename, 'Message', wx.OK)                
+                errors = GenereAppelCotisations(periode, oofilename)
+                message = u"Document %s généré" % oofilename
+                if errors:
+                    message += ' avec des erreurs :\n'
+                    for error in errors:
+                        message += '\n'+error[0].prenom+'\n  '
+                        message += '\n  '.join(error[1])
+                dlg = wx.MessageDialog(self, message, 'Message', wx.OK)                
             except Exception, e:
                 dlg = wx.MessageDialog(self, str(e), 'Erreur', wx.OK | wx.ICON_WARNING)
             dlg.ShowModal()
             dlg.Destroy()
-               
 
     def GenereFactures(self, inscrits, periode, oofilename=None, oopath=None):
         nbfactures = 0

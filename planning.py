@@ -20,30 +20,12 @@ import wx
 import wx.lib.scrolledpanel
 import datetime
 from common import *
+from gpanel import GPanel
 
 PRENOMS_WIDTH = 80 # px
 BUTTONS_WIDTH = 34 # px
-HEURE_WIDTH = 40 # px
+HEURE_WIDTH = 48 # px
 BEBE_HEIGHT = 30 # px
-
-class GPanel(wx.Panel):
-    def __init__(self, parent, title):
-        wx.Panel.__init__(self, parent, id=-1, style=wx.LB_DEFAULT)
-	self.sizer = wx.BoxSizer(wx.VERTICAL)
-	sizer = wx.BoxSizer(wx.HORIZONTAL)
-        st = wx.StaticText(self, -1, title, size=(100, 28), style=wx.BORDER_SUNKEN)
-        st.SetBackgroundColour(wx.Colour(10, 36, 106))
-        st.SetBackgroundStyle(wx.BG_STYLE_COLOUR)
-        st.SetForegroundColour(wx.Colour(255, 255, 255))
-        font = wx.Font(12, wx.SWISS, wx.NORMAL, wx.BOLD)
-        st.SetFont(font)
-	sizer.Add(st, 1, wx.EXPAND)
-	self.sizer.Add(sizer, 0, wx.EXPAND | wx.BOTTOM, 5)
-	self.SetSizer(self.sizer)
-        self.SetAutoLayout(1)
-        
-    def UpdateContents(self):
-        pass
 
 class DayTabWindow(wx.Window):
     def __init__(self, parent, inscrits, date, *args, **kwargs):
@@ -387,7 +369,7 @@ class PlanningPanel(GPanel):
         
         # La combobox pour la selection de la semaine
         self.combobox = wx.Choice(self, -1)
-	self.sizer.Add(self.combobox)
+	self.sizer.Add(self.combobox, 0, wx.EXPAND, 0)
         day = first_monday = getfirstmonday()
         semaine = getNumeroSemaine(day)
         while day < last_date:
@@ -405,7 +387,7 @@ class PlanningPanel(GPanel):
 
         # le notebook pour les jours de la semaine
         self.notebook = wx.Notebook(self, style=wx.LB_DEFAULT)
-	self.sizer.Add(self.notebook, 1, wx.EXPAND)
+	self.sizer.Add(self.notebook, 1, wx.EXPAND|wx.TOP, 5)
         for week_day in range(5):
             day = first_monday + datetime.timedelta(semaine * 7 + week_day)
             title = days[week_day] + " " + str(day.day) + " " + months[day.month - 1] + " " + str(day.year)
