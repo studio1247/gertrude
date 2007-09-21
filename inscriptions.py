@@ -21,7 +21,7 @@ import wx, wx.lib.scrolledpanel, wx.html
 from common import *
 from gpanel import GPanel
 from controls import *
-from cotisation import Cotisation, CotisationException
+from cotisation import *
 
 def ParseHtml(filename, context):
     locals().update(context.__dict__)
@@ -182,9 +182,6 @@ class ForfaitPanel(ContextPanel):
             addseparator(frere_soeur.naissance)
             addseparator(frere_soeur.entree)
             addseparator(frere_soeur.sortie, 1)
-        for bareme in creche.baremes_caf:
-            addseparator(bareme.debut)
-            addseparator(bareme.fin, 1)
         for year in range(debut.year, fin.year):
             addseparator(datetime.date(day=1, month=9, year=year))
             
@@ -199,7 +196,7 @@ class ForfaitPanel(ContextPanel):
             self.periodechoice.Disable()
         else:
             try:
-                context = Cotisation(self.inscrit, self.periode)
+                context = Cotisation(self.inscrit, self.periode, options=NO_ADDRESS)
                 if context.mode_garde == 0:
                     self.html = ParseHtml("./templates/frais_de_garde.html", context)
                 else:
@@ -388,7 +385,7 @@ class IdentitePanel(InscriptionsTab):
         sizer.AddMany([(wx.StaticText(self, -1, 'Naissance :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].naissance' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'En crèche du'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].entree' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, 'au'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].sortie' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)])
-        delbutton = wx.BitmapButton(self, -1, self.delbmp, size=(25, 25))
+        delbutton = wx.BitmapButton(self, -1, self.delbmp, size=(14, 14))
         delbutton.index = index
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
         self.Bind(wx.EVT_BUTTON, self.EvtSuppressionFrere, delbutton)

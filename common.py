@@ -39,13 +39,25 @@ def getfirstmonday():
 def getNumeroSemaine(date):
     return int((date - datetime.date(date.year, 1, 1)).days / 7) + 1
 
+def getMonthEnd(date):
+    if date.month == 12:
+        return datetime.date(date.year, 12, 31)
+    else:
+        return datetime.date(date.year, date.month + 1, 1) - datetime.timedelta(1)
+
+def getNextMonthStart(date):
+    if date.month == 12:
+        return datetime.date(date.year+1, 1, 1)
+    else:
+        return datetime.date(date.year, date.month+1, 1)
+
 def str2date(str, year=None):
     day = str.strip()
     if year and str.count('/') == 1:
         day += '/%d' % year
     try:
         (jour, mois, annee) = map(lambda x: int(x), day.split('/'))
-        if annee < 2000:
+        if annee < 1900:
             return None
         else:
             return datetime.date(annee, mois, jour)

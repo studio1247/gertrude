@@ -22,19 +22,22 @@ import xml.dom.minidom
 import re
 
 def ReplaceTextFields(dom, fields):
-    for node in dom.getElementsByTagName("text:p"):
-        try:
-            text = node.firstChild.wholeText
-            replace = False
-            for field, value in fields:
-                field = '<%s>' % field
-                if field in text:
-                    replace = True
-                    text = text.replace(field, value)
-            if replace:
-                node.firstChild.replaceWholeText(text)
-        except Exception, e:
-            print e
+#    print dom.toprettyxml()
+    for node in dom.getElementsByTagName("text:p") + dom.getElementsByTagName("text:span"):
+        for child in node.childNodes:
+            if child.nodeType == child.TEXT_NODE:
+                try:
+                    text = child.wholeText
+                    replace = False
+                    for field, value in fields:
+                        field = '<%s>' % field
+                        if field in text:
+                            replace = True
+                            text = text.replace(field, value)
+                    if replace:
+                        child.replaceWholeText(text)
+                except Exception, e:
+                    print e
 
 def ReplaceFields(cellules, fields):
     for i, field in enumerate(fields):

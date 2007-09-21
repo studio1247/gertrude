@@ -32,7 +32,7 @@ class Cotisation(object):
         if not inscrit.prenom or not inscrit.nom:
             errors.append(u" - L'état civil de l'enfant est incomplet.")
         if not options & NO_ADDRESS and (not inscrit.code_postal or not inscrit.ville):
-            errors.append(u" - L'adresse l'enfant est incomplète.")
+            errors.append(u" - L'adresse de l'enfant est incomplète.")
         if not inscrit.papa.prenom or not inscrit.maman.prenom or not inscrit.papa.nom or not inscrit.maman.nom:
             errors.append(u" - L'état civil des parents est incomplet.")
         if self.debut is None:
