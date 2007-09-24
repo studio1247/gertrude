@@ -201,51 +201,55 @@ class CotisationsPanel(GPanel):
         
         # Les appels de cotisations
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Edition des appels de cotisation'), wx.HORIZONTAL)
-        self.monthchoice1 = wx.Choice(self)
+        self.appels_monthchoice = wx.Choice(self)
         date = getfirstmonday()
         first_date = datetime.date(year=date.year, month=date.month, day=1) 
         while date < last_date:
             string = '%s %d' % (months[date.month - 1], date.year)
-            self.monthchoice1.Append(string, date)
+            self.appels_monthchoice.Append(string, date)
             date = getNextMonthStart(date)
-        self.monthchoice1.SetStringSelection('%s %d' % (months[today.month - 1], today.year))
+        self.appels_monthchoice.SetStringSelection('%s %d' % (months[today.month - 1], today.year))
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationAppelCotisations, button)
-        box_sizer.AddMany([(self.monthchoice1, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        box_sizer.AddMany([(self.appels_monthchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
         # Les factures
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Edition des factures'), wx.HORIZONTAL)
         self.inscrits_choice["factures"] = wx.Choice(self)
-        self.monthchoice = wx.Choice(self)
-        date = getfirstmonday()
-        while date < today:
-            string = '%s %d' % (months[date.month - 1], date.year)
-            self.monthchoice.Append(string, date)
-            date = getNextMonthStart(date)
-        if today.month == 1:
-            self.monthchoice.SetStringSelection('%s %d' % (months[11], today.year - 1))
-        else:
-            self.monthchoice.SetStringSelection('%s %d' % (months[today.month - 2], today.year))
+        self.factures_monthchoice = wx.Choice(self)
+        self.Bind(wx.EVT_CHOICE, self.EvtFacturesInscritChoice, self.inscrits_choice["factures"])
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationFacture, button)
-        box_sizer.AddMany([(self.inscrits_choice["factures"], 1, wx.ALL|wx.EXPAND, 5), (self.monthchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        box_sizer.AddMany([(self.inscrits_choice["factures"], 1, wx.ALL|wx.EXPAND, 5), (self.factures_monthchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
         # Les attestations de paiement
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Edition des attestations de paiement'), wx.HORIZONTAL)
         self.inscrits_choice["recus"] = wx.Choice(self)
         self.recus_periodechoice = wx.Choice(self)
-        self.Bind(wx.EVT_CHOICE, self.EvtRecuInscritChoice, self.inscrits_choice["recus"])
+        self.Bind(wx.EVT_CHOICE, self.EvtRecusInscritChoice, self.inscrits_choice["recus"])
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationRecu, button)
         box_sizer.AddMany([(self.inscrits_choice["recus"], 1, wx.ALL|wx.EXPAND, 5), (self.recus_periodechoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
-##        (self.recus_endchoice[1], 1, wx.ALL|wx.EXPAND, 5),
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
         self.sizer.Add(sizer, 1, wx.EXPAND)
 
-    def EvtRecuInscritChoice(self, evt):
+    def EvtFacturesInscritChoice(self, evt):
+        self.factures_monthchoice.Clear()
+        inscrit = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
+        date = getfirstmonday()
+        while date < today:
+            if isinstance(inscrit, list) or inscrit.getInscriptions(datetime.date(date.year, date.month, 1), getMonthEnd(date)):
+                self.factures_monthchoice.Append('%s %d' % (months[date.month - 1], date.year), date)
+            date = getNextMonthStart(date)
+        if today.month == 1:
+            self.factures_monthchoice.SetStringSelection('%s %d' % (months[11], today.year - 1))
+        else:
+            self.factures_monthchoice.SetStringSelection('%s %d' % (months[today.month - 2], today.year))
+
+    def EvtRecusInscritChoice(self, evt):
         self.recus_periodechoice.Clear()
         inscrit = self.inscrits_choice["recus"].GetClientData(self.inscrits_choice["recus"].GetSelection())
         if isinstance(inscrit, list) or inscrit.getInscriptions(datetime.date(today.year-1, 1, 1), datetime.date(today.year-1, 12, 31)):
@@ -263,7 +267,7 @@ class CotisationsPanel(GPanel):
                 self.recus_periodechoice.Append("%s %d" % (months[debut-1], today.year), (datetime.date(today.year, debut, 1), getMonthEnd(datetime.date(today.year, debut, 1))))
             else:
                 self.recus_periodechoice.Append(u"%s - %s %d" % (months[debut-1], months[today.month-1], today.year), (datetime.date(today.year, debut, 1), datetime.date(today.year, today.month, 1)))
-                    
+
         self.recus_periodechoice.Append(50 * "-", None)
         date = getfirstmonday()
         while date < today:
@@ -290,11 +294,13 @@ class CotisationsPanel(GPanel):
                     choice.Append(GetInscritId(inscrit, creche.inscrits), inscrit)
         for choice in self.inscrits_choice.values():
             choice.SetSelection(0)
-        self.EvtRecuInscritChoice(None)
+
+        self.EvtFacturesInscritChoice(None)
+        self.EvtRecusInscritChoice(None)
 
     def EvtGenerationFacture(self, evt):
         inscrit = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
-        periode = self.monthchoice.GetClientData(self.monthchoice.GetSelection())
+        periode = self.factures_monthchoice.GetClientData(self.factures_monthchoice.GetSelection())
         if type(inscrit) == list:
             dlg = wx.DirDialog(self, u'Générer des documents OpenOffice', style=wx.DD_DEFAULT_STYLE|wx.DD_NEW_DIR_BUTTON)
             response = dlg.ShowModal()
@@ -312,7 +318,7 @@ class CotisationsPanel(GPanel):
                 self.GenereFactures([inscrit], periode, oofilename)
 
     def EvtGenerationAppelCotisations(self, evt):
-        periode = self.monthchoice1.GetClientData(self.monthchoice1.GetSelection())
+        periode = self.appels_monthchoice.GetClientData(self.appels_monthchoice.GetSelection())
         wildcard = "OpenDocument (*.ods)|*.ods"
         oodefaultfilename = u"Appel cotisations %s %d.ods" % (months[periode.month - 1], periode.year)
         dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
