@@ -221,8 +221,8 @@ class PhoneCtrl(wx.TextCtrl):
             self.SetInsertionPoint(ip + 1)
 
 class DateCtrl(wx.TextCtrl):
-    def __init__(self, parent, id, value=None, *args, **kwargs):
-        wx.TextCtrl.__init__(self, parent, id, *args, **kwargs)
+    def __init__(self, parent, id=-1, value=None, *args, **kwargs):
+        wx.TextCtrl.__init__(self, parent, id=-1, *args, **kwargs)
         
         #self.__CheckValid(self.__val)
         #self.SetValue(self.__val)

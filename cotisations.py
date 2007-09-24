@@ -49,7 +49,7 @@ class FactureModifications(object):
         if empty_cells > 4:
             empty_cells -= 7
         for table in dom.getElementsByTagName('table:table'):
-            if table.getAttribute('table:name') == 'Tableau1':
+            if table.getAttribute('table:name') == 'Presences':
                 rows = table.getElementsByTagName('table:table-row')[1:]
                 cells = []
                 for i in range(len(rows)):
@@ -79,7 +79,7 @@ class FactureModifications(object):
             table.removeChild(rows[i])
 
         # Les champs de la facture
-        fields = [('nom-creche', creche.nom.upper()),
+        fields = [('nom-creche', creche.nom),
                 ('adresse-creche', creche.adresse),
                 ('code-postal-creche', str(creche.code_postal)),
                 ('ville-creche', creche.ville),
@@ -122,8 +122,8 @@ class RecuModifications(object):
         
         tresorier = Select(creche.bureaux, today).tresorier
 
-        # Les champs de la facture
-        fields = [('nom-creche', creche.nom.upper()),
+        # Les champs du recu
+        fields = [('nom-creche', creche.nom),
                 ('adresse-creche', creche.adresse),
                 ('code-postal-creche', str(creche.code_postal)),
                 ('ville-creche', creche.ville),
@@ -143,7 +143,7 @@ class RecuModifications(object):
         else:
             fields.append(('ne-e', u"née"))
 
-        print fields
+        #print fields
         ReplaceTextFields(dom, fields)
         return []
 

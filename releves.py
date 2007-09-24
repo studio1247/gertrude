@@ -45,6 +45,65 @@ from ooffice import *
 #            previsionnel[inscrit.mode[periode]][j] = 1
 #    date += datetime.timedelta(1)
 
+class CoordonneesModifications:
+    def __init__(self, date):
+        if date:
+            self.date = date
+        else:
+            self.date = today
+        
+    def execute(self, dom):
+        # print dom.toprettyxml()
+
+        fields = [('nom-creche', creche.nom),
+                  ('adresse-creche', creche.adresse),
+                  ('code-postal-creche', str(creche.code_postal)),
+                  ('ville-creche', creche.ville),
+                  ('date', '%.2d/%.2d/%d' % (self.date.day, self.date.month, self.date.year))
+                 ]
+        ReplaceTextFields(dom, fields)
+        
+        for table in dom.getElementsByTagName('table:table'):
+            if table.getAttribute('table:name') == 'Enfants':                
+                template = table.getElementsByTagName('table:table-row')[1]
+                #print template.toprettyxml()
+                for inscrit in creche.inscrits:
+                    if inscrit.getInscription(self.date):
+                        line = template.cloneNode(1)
+                        ReplaceTextFields(line, [('prenom', inscrit.prenom),
+                                                 ('papa', "%s %s" % (inscrit.papa.prenom, inscrit.papa.nom.upper())),
+                                                 ('maman', "%s %s" % (inscrit.maman.prenom, inscrit.maman.nom.upper())),
+                                                 ('commentaire', None)])
+                        phoneCell = line.getElementsByTagName('table:table-cell')[2]
+                        phoneTemplate = phoneCell.getElementsByTagName('text:p')[0]
+                        phones = []
+                        for phoneType in ["domicile", "portable", "travail"]:
+                            telephone_papa = getattr(inscrit.papa, "telephone_"+phoneType)
+                            telephone_maman = getattr(inscrit.maman, "telephone_"+phoneType)
+                            if telephone_papa and telephone_maman == telephone_papa:
+                                phones.append((telephone_papa, phoneType))
+                            else:
+                                if telephone_maman:
+                                    phones.append((telephone_maman, "%s %s" % (phoneType, inscrit.maman.prenom[0])))
+                                if telephone_papa:
+                                    phones.append((telephone_papa, "%s %s" % (phoneType, inscrit.papa.prenom[0])))
+                        for phone, remark in phones:
+                            phoneLine = phoneTemplate.cloneNode(1)
+                            ReplaceTextFields(phoneLine, [('telephone', phone),
+                                                          ('remarque', remark)])
+                            phoneCell.insertBefore(phoneLine, phoneTemplate)
+                        phoneCell.removeChild(phoneTemplate)
+                        emailCell = line.getElementsByTagName('table:table-cell')[3]
+                        emailTemplate = emailCell.getElementsByTagName('text:p')[0]
+                        for email in (inscrit.maman.email, inscrit.papa.email):
+                            emailLine = emailTemplate.cloneNode(1)
+                            ReplaceTextFields(emailLine, [('email', email)])
+                            emailCell.insertBefore(emailLine, emailTemplate)
+                        emailCell.removeChild(emailTemplate)
+                        table.insertBefore(line, template)
+                table.removeChild(template)
+        return []
+        
 class EtatsTrimestrielsModifications(object):
     def __init__(self, annee):
         self.annee = annee
@@ -339,6 +398,9 @@ class PlanningModifications(object):
                         else:
                             ReplaceFields([cellule], [('p', '')])
                             
+def GenereCoordonnees(date, oofilename):
+    return GenerateDocument('./templates/Coordonnees parents.odt', oofilename, CoordonneesModifications(date))
+
 def GenereEtatsTrimestriels(annee, oofilename):
     return GenerateDocument('./templates/Etats trimestriels.ods', oofilename, EtatsTrimestrielsModifications(annee))
 
@@ -351,8 +413,17 @@ class RelevesPanel(GPanel):
 
         today = datetime.date.today()
         
-	sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer = wx.BoxSizer(wx.VERTICAL)
 
+        # Les coordonnees des parents
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Coordonnées des parents'), wx.HORIZONTAL)
+        self.coords_date = wx.TextCtrl(self)
+        self.coords_date.SetValue("Aujourd'hui")
+        button = wx.Button(self, -1, u'Génération')
+        self.Bind(wx.EVT_BUTTON, self.EvtGenerationCoordonnees, button)
+        box_sizer.AddMany([(self.coords_date, 1, wx.EXPAND|wx.ALL, 5), (button, 0, wx.ALL, 5)])
+        sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+        
         # Les releves trimestriels
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés trimestriels'), wx.HORIZONTAL)
         self.choice = wx.Choice(self)
@@ -384,6 +455,27 @@ class RelevesPanel(GPanel):
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
         self.sizer.Add(sizer, 1, wx.EXPAND)
+
+    def EvtGenerationCoordonnees(self, evt):
+        date = str2date(self.coords_date.GetValue())
+        if not date:
+            date = today
+        wildcard = "OpenDocument (*.ods)|*.ods"
+        oodefaultfilename = u"Coordonnées parents %s.ods" % getDateStr(date)
+        old_path = os.getcwd()
+        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE | wx.CHANGE_DIR)
+        response = dlg.ShowModal()
+        os.chdir(old_path)
+
+        if response == wx.ID_OK:
+            oofilename = dlg.GetPath()
+            try:
+                GenereCoordonnees(date, oofilename)
+                dlg = wx.MessageDialog(self, u"Document %s généré" % oofilename, 'Message', wx.OK)
+            except Exception, e:
+                dlg = wx.MessageDialog(self, str(e), 'Erreur', wx.OK | wx.ICON_WARNING)
+            dlg.ShowModal()
+            dlg.Destroy()
 
     def EvtGenerationEtatsTrimestriels(self, evt):
         annee = self.choice.GetClientData(self.choice.GetSelection())
@@ -428,7 +520,9 @@ if __name__ == '__main__':
     from datafiles import *
     __builtin__.creche = Load()
     today = datetime.date.today()
-        
+
+    GenereCoordonnees("coordonnees.odt")
+    sys.exit(0)    
     filename = 'etats_trimestriels_%d.ods' % (today.year - 1)
     try:
         GenereEtatsTrimestriels(today.year - 1, filename)

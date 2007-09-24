@@ -21,30 +21,8 @@ import zipfile
 import xml.dom.minidom
 import re
 
-def ReplaceTextFields(dom, fields):
-#    print dom.toprettyxml()
-    for node in dom.getElementsByTagName("text:p") + dom.getElementsByTagName("text:span"):
-        for child in node.childNodes:
-            if child.nodeType == child.TEXT_NODE:
-                try:
-                    text = child.wholeText
-                    replace = False
-                    for field, value in fields:
-                        field = '<%s>' % field
-                        if field in text:
-                            if isinstance(value, int) or isinstance(value, float):
-                                value = str(value)
-                            elif isinstance(value, datetime.date):
-                                value = '%.2d/%.2d/%.4d' % (value.day, value.month, value.year)
-                            replace = True
-                            text = text.replace(field, value)
-                    if replace:
-                        child.replaceWholeText(text)
-                except Exception, e:
-                    print e
-
-def ReplaceFields(cellules, fields):
-    for i, field in enumerate(fields):
+def evalFields(fields):
+    for i, field in enumerate(fields[:]):
         if len(field) == 2:
             param, value = field
             if isinstance(value, basestring):
@@ -54,7 +32,35 @@ def ReplaceFields(cellules, fields):
             else:
                 text = str(value)
             fields[i] = (param, value, text)
-        
+        fields.append((param.upper(), value, text.upper()))
+    return fields
+            
+def ReplaceTextFields(dom, fields):
+    evalFields(fields)
+#    print dom.toprettyxml()
+    if dom.__class__ == xml.dom.minidom.Element and dom.nodeName in ["text:p", "text:span"]:
+        nodes = [dom] + dom.getElementsByTagName("text:span")
+    else:
+        nodes = dom.getElementsByTagName("text:p") + dom.getElementsByTagName("text:span")
+    for node in nodes:
+        for child in node.childNodes:
+            if child.nodeType == child.TEXT_NODE:
+                try:
+                    nodeText = child.wholeText
+                    replace = False
+                    for field, value, text in fields:
+                        tag = '<%s>' % field
+                        if tag in nodeText:
+                            replace = True
+                            nodeText = nodeText.replace(tag, text)
+                    if replace:
+                        child.replaceWholeText(nodeText)
+                except Exception, e:
+                    print e
+
+def ReplaceFields(cellules, fields):
+    evalFields(fields)
+    
     # Si l'argument est une ligne ...
     if cellules.__class__ == xml.dom.minidom.Element:
         if cellules.nodeName == "table:table-cell":

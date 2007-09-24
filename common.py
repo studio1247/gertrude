@@ -51,6 +51,12 @@ def getNextMonthStart(date):
     else:
         return datetime.date(date.year, date.month+1, 1)
 
+def getDateStr(date):
+    if date.day == 1:
+        return "1er %s %d" % (months[date.month-1].lower(), date.year)
+    else:
+        return "%d %s %d" % (date.day, months[date.month-1].lower(), date.year)
+
 def str2date(str, year=None):
     day = str.strip()
     if year and str.count('/') == 1:
