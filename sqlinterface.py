@@ -86,6 +86,19 @@ class BDDConnection(object):
           );""")
     
         cur.execute("""
+          CREATE TABLE EMPLOYES(
+            idx INTEGER PRIMARY KEY,
+            date_embauche DATE,
+            prenom VARCHAR,
+            nom VARCHAR,
+            telephone_domicile VARCHAR,
+            telephone_domicile_notes VARCHAR,
+            telephone_portable VARCHAR,
+            telephone_portable_notes VARCHAR,
+            email VARCHAR
+          );""")
+
+        cur.execute("""
           CREATE TABLE INSCRITS(
             idx INTEGER PRIMARY KEY,
             prenom VARCHAR,

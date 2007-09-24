@@ -101,6 +101,20 @@ def Translate():
         cur.execute("ALTER TABLE INSCRITS ADD sexe INTEGER;")
         cur.execute('UPDATE INSCRITS SET sexe=?', (1,))
         
+    if version < 8:
+        cur.execute("""
+          CREATE TABLE EMPLOYES(
+            idx INTEGER PRIMARY KEY,
+            date_embauche DATE,
+            prenom VARCHAR,
+            nom VARCHAR,
+            telephone_domicile VARCHAR,
+            telephone_domicile_notes VARCHAR,
+            telephone_portable VARCHAR,
+            telephone_portable_notes VARCHAR,
+            email VARCHAR
+        );""")            
+
     if version < VERSION:
         try:
             cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))

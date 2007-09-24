@@ -253,6 +253,13 @@ def Load():
 	bareme.debut, bareme.fin, bareme.idx = getdate(bareme.debut), getdate(bareme.fin), idx
         creche.baremes_caf.append(bareme)
 
+    cur.execute('SELECT date_embauche, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, email, idx FROM EMPLOYES')
+    for employe_entry in cur.fetchall():
+        employe = Employe(creation=False)
+        employe.date_embauche = getdate(employe_entry[0])
+        employe.prenom, employe.nom, employe.telephone_domicile, employe.telephone_domicile_notes, employe.telephone_portable, employe.telephone_portable_notes, employe.email, employe.idx = employe_entry[1:]
+        creche.employes.append(employe)
+
     parents = {None: None}
     cur.execute('SELECT idx, prenom, nom, sexe, naissance, adresse, code_postal, ville, marche, photo FROM INSCRITS')
     for idx, prenom, nom, sexe, naissance, adresse, code_postal, ville, marche, photo in cur.fetchall():

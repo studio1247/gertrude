@@ -34,6 +34,48 @@ class CrechePanel(AutoTab):
         sizer2.AddMany([wx.StaticText(self, -1, 'Ville :'), (AutoTextCtrl(self, creche, 'ville'), 0, wx.EXPAND)])       
         sizer.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(sizer)
+
+class EmployesPanel(AutoTab):
+    def __init__(self, parent):
+        global delbmp
+        delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
+        AutoTab.__init__(self, parent)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.employes_sizer = wx.BoxSizer(wx.VERTICAL)
+        for i, employe in enumerate(creche.employes):
+            self.display_employe(i)
+        self.sizer.Add(self.employes_sizer, 0, wx.EXPAND|wx.ALL, 5)
+        button_add = wx.Button(self, -1, u'Nouvel employé')
+        self.sizer.Add(button_add, 0, wx.ALL, 5)
+        self.Bind(wx.EVT_BUTTON, self.employe_add, button_add)
+        self.SetSizer(self.sizer)
+
+    def display_employe(self, index):
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, creche, 'employes[%d].prenom' % index)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, creche, 'employes[%d].nom' % index)])
+        sizer.AddMany([(wx.StaticText(self, -1, "Date d'embauche :"), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, creche, 'employes[%d].date_embauche' % index)])
+        sizer.AddMany([(wx.StaticText(self, -1, u"Téléphone :"), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoPhoneCtrl(self, creche, 'employes[%d].telephone_domicile' % index)])
+        delbutton = wx.BitmapButton(self, -1, delbmp, size=(14, 14))
+        delbutton.index = index
+        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
+        self.Bind(wx.EVT_BUTTON, self.employe_del, delbutton)
+        self.employes_sizer.Add(sizer)
+
+    def employe_add(self, event):
+        creche.employes.append(Employe())
+        self.display_employe(len(creche.employes) - 1)
+        self.sizer.Layout()
+
+    def employe_del(self, event):
+        index = event.GetEventObject().index
+        sizer = self.employes_sizer.GetItem(len(creche.employes)-1)
+        sizer.DeleteWindows()
+        self.employes_sizer.Detach(len(creche.employes)-1)
+        creche.employes[index].delete()
+        del creche.employes[index]
+        self.sizer.Layout()
+        self.UpdateContents()
         
 class ResponsabilitesPanel(AutoTab):
     def __init__(self, parent):
@@ -90,6 +132,7 @@ class GeneralNotebook(wx.Notebook):
     def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
         self.AddPage(CrechePanel(self), u'Crèche')
+        self.AddPage(EmployesPanel(self), u'Employés')
         self.AddPage(ResponsabilitesPanel(self), u'Responsabilités')
         self.AddPage(CafPanel(self), 'C.A.F.')        
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)

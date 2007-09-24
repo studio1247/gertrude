@@ -30,14 +30,13 @@ profiles = [("Administrateur", PROFIL_ALL),
             ]
 
 class UsersPanel(AutoTab):
-    def __init__(self, parent, creche):
+    def __init__(self, parent):
         global delbmp
         delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
         AutoTab.__init__(self, parent)
-        self.creche = creche
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.users_sizer = wx.BoxSizer(wx.VERTICAL)
-        for i, user in enumerate(self.creche.users):
+        for i, user in enumerate(creche.users):
             self.display_user(i)
         self.sizer.Add(self.users_sizer, 0, wx.EXPAND|wx.ALL, 5)
         button_add = wx.Button(self, -1, 'Nouvel utilisateur')
@@ -47,9 +46,9 @@ class UsersPanel(AutoTab):
 
     def display_user(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddMany([(wx.StaticText(self, -1, 'Login :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, self.creche, 'users[%d].login' % index)])
-        sizer.AddMany([(wx.StaticText(self, -1, 'Mot de passe :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, self.creche, 'users[%d].password' % index)])
-        profile_choice = AutoChoiceCtrl(self, self.creche, 'users[%d].profile' % index, items=profiles)
+        sizer.AddMany([(wx.StaticText(self, -1, 'Login :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, creche, 'users[%d].login' % index)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Mot de passe :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, creche, 'users[%d].password' % index)])
+        profile_choice = AutoChoiceCtrl(self, creche, 'users[%d].profile' % index, items=profiles)
         profile_choice.index = index
         self.Bind(wx.EVT_CHOICE, self.user_modify_profile, profile_choice)
         sizer.AddMany([(wx.StaticText(self, -1, 'Profil :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), profile_choice])
@@ -60,19 +59,19 @@ class UsersPanel(AutoTab):
         self.users_sizer.Add(sizer)
 
     def user_add(self, event):
-        self.creche.users.append(User())
-        self.display_user(len(self.creche.users) - 1)
+        creche.users.append(User())
+        self.display_user(len(creche.users) - 1)
         self.sizer.Layout()
 
     def user_del(self, event):
         index = event.GetEventObject().index
-        nb_admins = len([user for i, user in enumerate(self.creche.users) if (i != index and user.profile == PROFIL_ALL)])
-        if len(self.creche.users) == 1 or nb_admins > 0:
-            sizer = self.users_sizer.GetItem(len(self.creche.users)-1)
+        nb_admins = len([user for i, user in enumerate(creche.users) if (i != index and user.profile == PROFIL_ALL)])
+        if len(creche.users) == 1 or nb_admins > 0:
+            sizer = self.users_sizer.GetItem(len(creche.users)-1)
             sizer.DeleteWindows()
-            self.users_sizer.Detach(len(self.creche.users)-1)
-            self.creche.users[index].delete()
-            del self.creche.users[index]
+            self.users_sizer.Detach(len(creche.users)-1)
+            creche.users[index].delete()
+            del creche.users[index]
             self.sizer.Layout()
             self.UpdateContents()
         else:
@@ -83,8 +82,8 @@ class UsersPanel(AutoTab):
     def user_modify_profile(self, event):
         obj = event.GetEventObject()
         index = obj.index
-        if self.creche.users[index].profile == PROFIL_ALL and event.GetClientData() != PROFIL_ALL:
-            nb_admins = len([user for i, user in enumerate(self.creche.users) if (i != index and user.profile == PROFIL_ALL)])
+        if creche.users[index].profile == PROFIL_ALL and event.GetClientData() != PROFIL_ALL:
+            nb_admins = len([user for i, user in enumerate(creche.users) if (i != index and user.profile == PROFIL_ALL)])
             if nb_admins == 0:
                 dlg = wx.MessageDialog(self, "Il faut au moins un administrateur", "Message", wx.ICON_INFORMATION)
                 dlg.ShowModal()
@@ -97,9 +96,8 @@ class UsersPanel(AutoTab):
             event.Skip(True)
 
 class CongesPanel(AutoTab):
-    def __init__(self, parent, creche):
-        AutoTab.__init__(self, parent)
-        self.creche = creche
+    def __init__(self, parent):
+        AutoTab.__init__(self, parent)       
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         for text in [j[0] for j in jours_feries]:
@@ -107,7 +105,7 @@ class CongesPanel(AutoTab):
             textctrl.Disable()
             self.sizer.Add(textctrl, 0, wx.EXPAND)
         self.conges_sizer = wx.BoxSizer(wx.VERTICAL)
-        for i, conge in enumerate(self.creche.conges):
+        for i, conge in enumerate(creche.conges):
             self.display_conge(i)
         self.sizer.Add(self.conges_sizer, 0, wx.ALL, 5)
         button_add = wx.Button(self, -1, u'Nouvelle période de congés')
@@ -118,8 +116,8 @@ class CongesPanel(AutoTab):
 
     def display_conge(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddMany([(wx.StaticText(self, -1, 'Debut :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, self.creche, 'conges[%d].debut' % index)])
-        sizer.AddMany([(wx.StaticText(self, -1, 'Fin :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, self.creche, 'conges[%d].fin' % index)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Debut :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, creche, 'conges[%d].debut' % index)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Fin :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, creche, 'conges[%d].fin' % index)])
         delbutton = wx.BitmapButton(self, -1, delbmp, size=(delbmp.GetWidth(), delbmp.GetHeight()))
         delbutton.index = index
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
@@ -127,40 +125,39 @@ class CongesPanel(AutoTab):
         self.conges_sizer.Add(sizer)
         
     def conges_add(self, event):
-        self.creche.add_conge(Conge())
-        self.display_conge(len(self.creche.conges) - 1)
+        creche.add_conge(Conge())
+        self.display_conge(len(creche.conges) - 1)
         self.sizer.Layout()
 
     def conges_del(self, event):
         index = event.GetEventObject().index
-        sizer = self.conges_sizer.GetItem(len(self.creche.conges)-1)
+        sizer = self.conges_sizer.GetItem(len(creche.conges)-1)
         sizer.DeleteWindows()
-        self.conges_sizer.Detach(len(self.creche.conges)-1)
-        self.creche.conges[index].delete()
-        del self.creche.conges[index]
+        self.conges_sizer.Detach(len(creche.conges)-1)
+        creche.conges[index].delete()
+        del creche.conges[index]
         self.sizer.Layout()
         self.UpdateContents()
 
 class ParametersPanel(AutoTab):
-    def __init__(self, parent, creche):
+    def __init__(self, parent):
         AutoTab.__init__(self, parent)
-        self.creche = creche
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         sizer = wx.FlexGridSizer(0, 2, 5, 5)
         sizer.AddGrowableCol(1, 1)
-        sizer.AddMany([(wx.StaticText(self, -1, 'Serveur HTTP :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, self.creche, 'server_url'), 0, wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Nombre de mois payés :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, self.creche, 'mois_payes', [('12 mois', 12), ('11 mois', 11)]), 0, wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Présences prévisionnelles :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, self.creche, 'presences_previsionnelles', [(u'Géré', True), (u'Non géré', False)]), 0, wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, u"Modes d'inscription :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, self.creche, 'modes_inscription', [(u'Crèche à plein-temps uniquement', 0), (u'Crèche (5/5 4/5 3/5) et halte-garderie', MODE_HALTE_GARDERIE+MODE_4_5+MODE_3_5)]), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Serveur HTTP :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, creche, 'server_url'), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Nombre de mois payés :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'mois_payes', [('12 mois', 12), ('11 mois', 11)]), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Présences prévisionnelles :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'presences_previsionnelles', [(u'Géré', True), (u'Non géré', False)]), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u"Modes d'inscription :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'modes_inscription', [(u'Crèche à plein-temps uniquement', 0), (u'Crèche (5/5 4/5 3/5) et halte-garderie', MODE_HALTE_GARDERIE+MODE_4_5+MODE_3_5)]), 0, wx.EXPAND)])
         self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(self.sizer)
         
 class AdminNotebook(wx.Notebook):
-    def __init__(self, parent, creche):
+    def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
-        self.AddPage(UsersPanel(self, creche), 'Utilisateurs')
-        self.AddPage(CongesPanel(self, creche), u'Congés')
-        self.AddPage(ParametersPanel(self, creche), u'Paramètres')
+        self.AddPage(UsersPanel(self), 'Utilisateurs')
+        self.AddPage(CongesPanel(self), u'Congés')
+        self.AddPage(ParametersPanel(self), u'Paramètres')
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
     def OnPageChanged(self, event):
@@ -175,7 +172,7 @@ class AdminNotebook(wx.Notebook):
 class AdminPanel(GPanel):
     def __init__(self, parent):
         GPanel.__init__(self, parent, 'Administration')
-        self.notebook = AdminNotebook(self, creche)
+        self.notebook = AdminNotebook(self)
 	self.sizer.Add(self.notebook, 1, wx.EXPAND)
             
     def UpdateContents(self):

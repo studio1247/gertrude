@@ -259,6 +259,33 @@ class Conge(object):
             if self.creche:
                 self.creche.calcule_jours_fermeture()
 
+class Employe(object):
+    def __init__(self, creation=True):
+        self.idx = None
+        self.date_embauche = None
+        self.prenom = ""
+        self.nom = ""
+        self.telephone_domicile = ""
+        self.telephone_domicile_notes = ""
+        self.telephone_portable = ""
+        self.telephone_portable_notes = ""
+        self.email = ""
+
+        if creation:
+            print 'nouvel employe'
+            result = connection.execute('INSERT INTO EMPLOYES (idx, date_embauche, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, email) VALUES(NULL,?,?,?,?,?,?,?,?)', (self.date_embauche, self.prenom, self.nom, self.telephone_domicile, self.telephone_domicile_notes, self.telephone_portable, self.telephone_portable_notes, self.email))
+            self.idx = result.lastrowid
+        
+    def delete(self):
+        print 'suppression employe'
+        connection.execute('DELETE FROM EMPLOYES WHERE idx=?', (self.idx,))
+
+    def __setattr__(self, name, value):
+        self.__dict__[name] = value
+        if name in ['date_embauche', 'prenom', 'nom', 'telephone_domicile', 'telephone_domicile_notes', 'telephone_portable', 'telephone_portable_notes', 'email'] and self.idx:
+            print 'update', name
+            connection.execute('UPDATE EMPLOYES SET %s=? WHERE idx=?' % name, (value, self.idx))
+
 class Creche(object): 
     def __init__(self, creation=True):
         self.idx = None
@@ -267,6 +294,7 @@ class Creche(object):
         self.code_postal = ''
         self.ville = ''
         self.users = []
+        self.employes = []
         self.conges = []
         self.bureaux = []
         self.baremes_caf = []
