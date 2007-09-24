@@ -57,6 +57,13 @@ def getDateStr(date):
     else:
         return "%d %s %d" % (date.day, months[date.month-1].lower(), date.year)
 
+def getInitialesPrenom(person):
+    for char in ('-', ' '):
+        if char in person.prenom:
+            parts = person.prenom.split(char)
+            return ''.join([part[0] for part in parts])
+    return person.prenom[0]   
+
 def str2date(str, year=None):
     day = str.strip()
     if year and str.count('/') == 1:

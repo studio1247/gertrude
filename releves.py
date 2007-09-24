@@ -84,9 +84,9 @@ class CoordonneesModifications:
                                 phones.append((telephone_papa, phoneType))
                             else:
                                 if telephone_maman:
-                                    phones.append((telephone_maman, "%s %s" % (phoneType, inscrit.maman.prenom[0])))
+                                    phones.append((telephone_maman, "%s %s" % (phoneType, getInitialesPrenom(inscrit.maman))))
                                 if telephone_papa:
-                                    phones.append((telephone_papa, "%s %s" % (phoneType, inscrit.papa.prenom[0])))
+                                    phones.append((telephone_papa, "%s %s" % (phoneType, getInitialesPrenom(inscrit.papa))))
                         for phone, remark in phones:
                             phoneLine = phoneTemplate.cloneNode(1)
                             ReplaceTextFields(phoneLine, [('telephone', phone),
@@ -102,6 +102,20 @@ class CoordonneesModifications:
                         emailCell.removeChild(emailTemplate)
                         table.insertBefore(line, template)
                 table.removeChild(template)
+
+            if table.getAttribute('table:name') == 'Employes':
+                template = table.getElementsByTagName('table:table-row')[0]
+                #print template.toprettyxml()
+                for employe in creche.employes:
+                    if 1: # TODO
+                        line = template.cloneNode(1)
+                        ReplaceTextFields(line, [('prenom', employe.prenom),
+                                                 ('nom', employe.nom),
+                                                 ('domicile', employe.telephone_domicile),
+                                                 ('portable', employe.telephone_portable)])
+                        table.insertBefore(line, template)
+                table.removeChild(template)
+
         return []
         
 class EtatsTrimestrielsModifications(object):

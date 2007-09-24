@@ -52,7 +52,7 @@ class UsersPanel(AutoTab):
         profile_choice.index = index
         self.Bind(wx.EVT_CHOICE, self.user_modify_profile, profile_choice)
         sizer.AddMany([(wx.StaticText(self, -1, 'Profil :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), profile_choice])
-        delbutton = wx.BitmapButton(self, -1, delbmp, size=(14, 14))
+        delbutton = wx.BitmapButton(self, -1, delbmp)
         delbutton.index = index
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
         self.Bind(wx.EVT_BUTTON, self.user_del, delbutton)

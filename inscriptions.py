@@ -372,7 +372,7 @@ class IdentitePanel(InscriptionsTab):
         sizer3.Add(self.fratries_sizer, 0, wx.EXPAND|wx.ALL-wx.BOTTOM, 10)
         self.nouveau_frere = wx.Button(self, -1, u'Nouveau frère ou nouvelle soeur')
         self.nouveau_frere.Disable()
-        sizer3.Add(self.nouveau_frere, 0, wx.ALL, 10)
+        sizer3.Add(self.nouveau_frere, 0, wx.ALL, 5)
         self.Bind(wx.EVT_BUTTON, self.EvtNouveauFrere, self.nouveau_frere)
         self.sizer.Add(sizer1, 0, wx.EXPAND|wx.ALL, 5)
         self.sizer.Add(sizer3, 0, wx.EXPAND|wx.ALL, 5)
@@ -386,7 +386,7 @@ class IdentitePanel(InscriptionsTab):
         sizer.AddMany([(wx.StaticText(self, -1, 'Naissance :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].naissance' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'En crèche du'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].entree' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, 'au'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].sortie' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)])
-        delbutton = wx.BitmapButton(self, -1, self.delbmp, size=(14, 14))
+        delbutton = wx.BitmapButton(self, -1, self.delbmp)
         delbutton.index = index
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
         self.Bind(wx.EVT_BUTTON, self.EvtSuppressionFrere, delbutton)
@@ -604,7 +604,7 @@ class InscriptionsNotebook(wx.Notebook):
         if profil & PROFIL_TRESORIER:
             self.contrat_panel = ContratPanel(self)
             self.forfait_panel = ForfaitPanel(self)
-            self.AddPage(self.contrat_panel, 'Contrat PSU')
+            self.AddPage(self.contrat_panel, "Contrat d'accueil")
             self.AddPage(self.forfait_panel, 'Frais de garde mensuels')
         else:
             self.contrat_panel = self.forfait_panel = None
