@@ -313,7 +313,7 @@ class Creche(object):
 
         if creation:
             print 'nouvelle creche'
-            result = connection.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, server_url, mois_payes, presences_previsionnelles, modes_inscription) VALUES (NULL,?,?,?,?,?)', (self.nom, self.adresse, self.code_postal, self.ville, self.server_url, 12, True, MODE_HALTE_GARDERIE+MODE_4_5+MODE_3_5))
+            result = connection.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, server_url, mois_payes, presences_previsionnelles, modes_inscription) VALUES (NULL,?,?,?,?,?,?,?,?)', (self.nom, self.adresse, self.code_postal, self.ville, self.server_url, 12, True, MODE_HALTE_GARDERIE+MODE_4_5+MODE_3_5))
             self.idx = result.lastrowid
             self.bureaux.append(Bureau(self))
             self.baremes_caf.append(BaremeCAF())

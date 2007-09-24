@@ -152,19 +152,7 @@ class GertrudeFrame(wx.Frame):
 
 class LoginDialog(wx.Dialog):
     def __init__(self):
-        # Instead of calling wx.Dialog.__init__ we precreate the dialog
-        # so we can set an extra style that must be set before
-        # creation, and then we create the GUI dialog using the Create
-        # method.
-
-        pre = wx.PreDialog()
-        #pre.SetExtraStyle(DIALOG_EX_CONTEXTHELP)
-        pre.Create(None, -1, "Identification", wx.DefaultPosition, wx.DefaultSize)
-
-        # This next step is the most important, it turns this Python
-        # object into the real wrapper of the dialog (instead of pre)
-        # as far as the wxPython extension is concerned.
-        self.PostCreate(pre)
+        wx.Dialog.__init__(self, None, -1, "Identification", wx.DefaultPosition, wx.DefaultSize)
 
         # Icone
         icon = wx.Icon('./bitmaps/gertrude.ico', wx.BITMAP_TYPE_ICO )
@@ -176,51 +164,29 @@ class LoginDialog(wx.Dialog):
 
         bmp = wx.Bitmap("./bitmaps/splash_gertrude.png", wx.BITMAP_TYPE_PNG)
         bmp32 = wx.StaticBitmap(self, -1, bmp, style=wx.SUNKEN_BORDER)
-        #label = wx.StaticText(self, -1, "This is a wx.Dialog")
-        #label.SetHelpText("This is the help text for the label")
         sizer.Add(bmp32, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
 
-        box = wx.BoxSizer(wx.HORIZONTAL)
-
-        label = wx.StaticText(self, -1, "Identifiant :     ")
-        box.Add(label, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
-
+        fields_sizer = wx.FlexGridSizer(0, 2, 5, 10)
+        fields_sizer.AddGrowableCol(1, 1)
+        sizer.Add(fields_sizer, 0, wx.EXPAND|wx.ALL, 5)
         self.login_ctrl = wx.TextCtrl(self, -1, "", size=(80,-1))
         self.login_ctrl.SetHelpText("Entrez votre identifiant")
-        box.Add(self.login_ctrl, 1, wx.ALIGN_CENTRE|wx.ALL, 5)
-
-        sizer.Add(box, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
-
-        box = wx.BoxSizer(wx.HORIZONTAL)
-
-        label = wx.StaticText(self, -1, "Mot de passe :")
-        box.Add(label, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
-
+        fields_sizer.AddMany([(wx.StaticText(self, -1, "Identifiant :"), 0, wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5), (self.login_ctrl, 0, wx.EXPAND|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5)])
         self.passwd_ctrl = wx.TextCtrl(self, -1, "", size=(80,-1), style=wx.TE_PASSWORD)
         self.passwd_ctrl.SetHelpText("Entrez votre mot de passe")
-        box.Add(self.passwd_ctrl, 1, wx.ALIGN_CENTRE|wx.ALL, 5)
-
-        sizer.Add(box, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
-
-        line = wx.StaticLine(self, -1, size=(20,-1), style=wx.LI_HORIZONTAL)
-        sizer.Add(line, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.RIGHT|wx.TOP, 5)
-
+        fields_sizer.AddMany([(wx.StaticText(self, -1, "Mot de passe :"), 0, wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5), (self.passwd_ctrl, 0, wx.EXPAND|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5)])
+        
         btnsizer = wx.StdDialogButtonSizer()
         btn = wx.Button(self, wx.ID_OK)
-        btn.SetDefault()
-        btnsizer.AddButton(btn)
         self.Bind(wx.EVT_BUTTON, self.onOkButton, btn)
-
+        btnsizer.AddButton(btn)
         btn = wx.Button(self, wx.ID_CANCEL)
         btnsizer.AddButton(btn)
         self.Bind(wx.EVT_BUTTON, self.OnExit, btn)
-        btnsizer.Realize()
-
-        sizer.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
-
+        btnsizer.Realize()       
+        sizer.Add(btnsizer, 0, wx.ALL, 5)
         self.SetSizer(sizer)
         sizer.Fit(self)
-
         self.Bind(wx.EVT_CLOSE, self.OnExit)
 
     def onOkButton(self, evt):
