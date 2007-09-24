@@ -96,6 +96,10 @@ def Translate():
         cur.execute('UPDATE CRECHE SET mois_payes=?', (12,))
         cur.execute('UPDATE CRECHE SET presences_previsionnelles=?', (True,))
         cur.execute('UPDATE CRECHE SET modes_inscription=?', (MODE_HALTE_GARDERIE+MODE_4_5+MODE_3_5,))
+
+    if version < 7:
+        cur.execute("ALTER TABLE INSCRITS ADD sexe INTEGER;")
+        cur.execute('UPDATE INSCRITS SET sexe=?', (1,))
         
     if version < VERSION:
         try:

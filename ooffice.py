@@ -32,6 +32,10 @@ def ReplaceTextFields(dom, fields):
                     for field, value in fields:
                         field = '<%s>' % field
                         if field in text:
+                            if isinstance(value, int) or isinstance(value, float):
+                                value = str(value)
+                            elif isinstance(value, datetime.date):
+                                value = '%.2d/%.2d/%.4d' % (value.day, value.month, value.year)
                             replace = True
                             text = text.replace(field, value)
                     if replace:

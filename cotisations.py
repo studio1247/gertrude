@@ -138,6 +138,11 @@ class RecuModifications(object):
                 ('total', '%.2f' % total)
                 ]
 
+        if self.inscrit.sexe == 1:
+            fields.append(('ne-e', u"né"))
+        else:
+            fields.append(('ne-e', u"née"))
+
         print fields
         ReplaceTextFields(dom, fields)
         return []
@@ -230,27 +235,43 @@ class CotisationsPanel(GPanel):
         # Les attestations de paiement
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Edition des attestations de paiement'), wx.HORIZONTAL)
         self.inscrits_choice["recus"] = wx.Choice(self)
-        self.recus_startchoice = wx.Choice(self)
-        self.recus_startchoice.Append(u"Année %d" % (today.year-1), (datetime.date(today.year-1, 1, 1), datetime.date(today.year-1, 12, 31)))
-        if today.month == 2:
-            self.recus_startchoice.Append("Janvier %d" % today.year, (datetime.date(today.year, 1, 1), datetime.date(today.year, 1, 31)))
-        elif today.month > 2:
-            self.recus_startchoice.Append(u"Janvier - %s %d" % (months[today.month-2], today.year), (datetime.date(today.year, 1, 1), datetime.date(today.year, today.month-1, 1)))
-        self.recus_startchoice.Append(50 * "-", None)
-        date = getfirstmonday()
-        while date < today:
-            string = '%s %d' % (months[date.month - 1], date.year)
-            self.recus_startchoice.Append(string, date)
-            date = getNextMonthStart(date)
-        self.recus_startchoice.SetSelection(0)
+        self.recus_periodechoice = wx.Choice(self)
+        self.Bind(wx.EVT_CHOICE, self.EvtRecuInscritChoice, self.inscrits_choice["recus"])
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationRecu, button)
-        box_sizer.AddMany([(self.inscrits_choice["recus"], 1, wx.ALL|wx.EXPAND, 5), (self.recus_startchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        box_sizer.AddMany([(self.inscrits_choice["recus"], 1, wx.ALL|wx.EXPAND, 5), (self.recus_periodechoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
 ##        (self.recus_endchoice[1], 1, wx.ALL|wx.EXPAND, 5),
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
         self.sizer.Add(sizer, 1, wx.EXPAND)
 
+    def EvtRecuInscritChoice(self, evt):
+        self.recus_periodechoice.Clear()
+        inscrit = self.inscrits_choice["recus"].GetClientData(self.inscrits_choice["recus"].GetSelection())
+        if isinstance(inscrit, list) or inscrit.getInscriptions(datetime.date(today.year-1, 1, 1), datetime.date(today.year-1, 12, 31)):
+            self.recus_periodechoice.Append(u"Année %d" % (today.year-1), (datetime.date(today.year-1, 1, 1), datetime.date(today.year-1, 12, 31)))
+        if isinstance(inscrit, list):
+            if today.month == 1:
+                self.recus_periodechoice.Append("Janvier %d" % today.year, (datetime.date(today.year, 1, 1), datetime.date(today.year, 1, 31)))
+            else:
+                self.recus_periodechoice.Append(u"Janvier - %s %d" % (months[today.month-1], today.year), (datetime.date(today.year, 1, 1), datetime.date(today.year, today.month, 1)))
+        elif inscrit.getInscriptions(datetime.date(today.year, 1, 1), getMonthEnd(today)):
+            debut = 1
+            while not inscrit.getInscriptions(datetime.date(today.year, debut, 1), getMonthEnd(datetime.date(today.year, debut, 1))) and debut < today.month:
+                debut += 1
+            if debut == today.month:
+                self.recus_periodechoice.Append("%s %d" % (months[debut-1], today.year), (datetime.date(today.year, debut, 1), getMonthEnd(datetime.date(today.year, debut, 1))))
+            else:
+                self.recus_periodechoice.Append(u"%s - %s %d" % (months[debut-1], months[today.month-1], today.year), (datetime.date(today.year, debut, 1), datetime.date(today.year, today.month, 1)))
+                    
+        self.recus_periodechoice.Append(50 * "-", None)
+        date = getfirstmonday()
+        while date < today:
+            if isinstance(inscrit, list) or inscrit.getInscriptions(datetime.date(date.year, date.month, 1), getMonthEnd(date)):
+                self.recus_periodechoice.Append('%s %d' % (months[date.month - 1], date.year), (datetime.date(date.year, date.month, 1), getMonthEnd(date)))
+            date = getNextMonthStart(date)
+        self.recus_periodechoice.SetSelection(0)
+        
     def UpdateContents(self):
         for choice in self.inscrits_choice.values():
             choice.Clear()
@@ -269,10 +290,10 @@ class CotisationsPanel(GPanel):
                     choice.Append(GetInscritId(inscrit, creche.inscrits), inscrit)
         for choice in self.inscrits_choice.values():
             choice.SetSelection(0)
+        self.EvtRecuInscritChoice(None)
 
     def EvtGenerationFacture(self, evt):
-        inscrits_choice = self.inscrits_choice["factures"]
-        inscrit = inscrits_choice.GetClientData(inscrits_choice.GetSelection())
+        inscrit = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
         periode = self.monthchoice.GetClientData(self.monthchoice.GetSelection())
         if type(inscrit) == list:
             dlg = wx.DirDialog(self, u'Générer des documents OpenOffice', style=wx.DD_DEFAULT_STYLE|wx.DD_NEW_DIR_BUTTON)
@@ -315,7 +336,7 @@ class CotisationsPanel(GPanel):
     def EvtGenerationRecu(self, evt):
         inscrits_choice = self.inscrits_choice["recus"]
         inscrit = inscrits_choice.GetClientData(inscrits_choice.GetSelection())
-        debut, fin = self.recus_startchoice.GetClientData(self.recus_startchoice.GetSelection())
+        debut, fin = self.recus_periodechoice.GetClientData(self.recus_periodechoice.GetSelection())
         wildcard = "OpenDocument (*.odt)|*.odt"
         oodefaultfilename = u"Attestation de paiement %s %s-%s %d.odt" % (inscrit.prenom, months[debut.month - 1], months[fin.month - 1], debut.year)
         dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)

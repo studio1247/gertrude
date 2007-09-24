@@ -16,7 +16,7 @@
 ##    along with Gertrude; if not, write to the Free Software
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-VERSION = 6
+VERSION = 7
 
 PROFIL_INSCRIPTIONS = 1
 PROFIL_TRESORIER = 2

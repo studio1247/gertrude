@@ -90,6 +90,7 @@ class BDDConnection(object):
             idx INTEGER PRIMARY KEY,
             prenom VARCHAR,
             nom VARCHAR,
+            sexe INTEGER,
             naissance DATE,
             adresse VARCHAR,
             code_postal INTEGER,

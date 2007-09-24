@@ -254,13 +254,13 @@ def Load():
         creche.baremes_caf.append(bareme)
 
     parents = {None: None}
-    cur.execute('SELECT idx, prenom, nom, naissance, adresse, code_postal, ville, marche, photo FROM INSCRITS')
-    for idx, prenom, nom, naissance, adresse, code_postal, ville, marche, photo in cur.fetchall():
+    cur.execute('SELECT idx, prenom, nom, sexe, naissance, adresse, code_postal, ville, marche, photo FROM INSCRITS')
+    for idx, prenom, nom, sexe, naissance, adresse, code_postal, ville, marche, photo in cur.fetchall():
         if photo:
             photo = binascii.a2b_base64(photo)
         inscrit = Inscrit(creation=False)
         creche.inscrits.append(inscrit)
-        inscrit.prenom, inscrit.nom, inscrit.naissance, inscrit.adresse, inscrit.code_postal, inscrit.ville, inscrit.marche, inscrit.photo, inscrit.idx = prenom, nom, getdate(naissance), adresse, code_postal, ville, getdate(marche), photo, idx
+        inscrit.prenom, inscrit.nom, inscrit.sexe, inscrit.naissance, inscrit.adresse, inscrit.code_postal, inscrit.ville, inscrit.marche, inscrit.photo, inscrit.idx = prenom, nom, sexe, getdate(naissance), adresse, code_postal, ville, getdate(marche), photo, idx
         cur.execute('SELECT prenom, naissance, entree, sortie, idx FROM FRATRIES WHERE inscrit=?', (inscrit.idx,))
         for frere_entry in cur.fetchall():
             frere = Frere_Soeur(inscrit, creation=False)
