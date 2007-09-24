@@ -79,6 +79,19 @@ def Select(object, date):
             return o
     return None
 
+def getDeMoisStr(mois):
+    if months[mois].startswith('A') or months[mois].startswith('O'):
+        return "d'%s" % months[mois].lower()
+    else:
+        return "de %s" % months[mois].lower()
+
+def getParentsStr(inscrit):
+    if inscrit.papa.nom == inscrit.maman.nom:
+        return '%s et %s %s' % (inscrit.maman.prenom, inscrit.papa.prenom, inscrit.papa.nom)
+    else:
+        return '%s %s et %s %s' % (inscrit.maman.prenom, inscrit.maman.nom, inscrit.papa.prenom, inscrit.papa.nom)
+
+
 from sqlinterface import connection
 
 class Presence(object):

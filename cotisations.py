@@ -87,7 +87,9 @@ class FactureModifications(object):
                 ('code-postal', str(self.inscrit.code_postal)),
                 ('ville', self.inscrit.ville),
                 ('mois', '%s %d' % (months[debut.month - 1], debut.year)),
+                ('de-mois', '%s %d' % (getDeMoisStr(debut.month - 1), debut.year)),
                 ('prenom', self.inscrit.prenom),
+                ('parents', getParentsStr(self.inscrit)),
                 ('date', '%.2d/%.2d/%d' % (debut.day, debut.month, debut.year)),
                 ('numfact', '%.2d%.4d%.2d%.4d' % (inscriptions[0].mode + 1, debut.year, debut.month, inscriptions[0].idx)),
                 ('cotisation-mensuelle', '%.2f' % facture.cotisation_mensuelle),
@@ -96,15 +98,6 @@ class FactureModifications(object):
                 ('raison-deduction', facture.raison_deduction),
                 ('total', '%.2f' % facture.total)
                 ]
-
-        if months[debut.month - 1][0] == 'A' or months[debut.month - 1][0] == 'O':
-            fields.append(('de-mois', 'd\'%s %d' % (months[debut.month - 1].lower(), debut.year)))
-        else:
-            fields.append(('de-mois', 'de %s %d' % (months[debut.month - 1].lower(), debut.year)))
-        if self.inscrit.papa.nom == self.inscrit.maman.nom:
-            fields.append(('parents', '%s et %s %s' % (self.inscrit.maman.prenom, self.inscrit.papa.prenom, self.inscrit.papa.nom)))
-        else:
-            fields.append(('parents', '%s %s et %s %s' % (self.inscrit.maman.prenom, self.inscrit.maman.nom, self.inscrit.papa.prenom, self.inscrit.papa.nom)))
 
         ReplaceTextFields(dom, fields)
         return []
@@ -120,6 +113,8 @@ class RecuModifications(object):
         while date.year < self.fin.year or date.month <= self.fin.month:
             try:
                 facture = Facture(self.inscrit, date.year, date.month)
+                if facture.total == 0:
+                    self.debut = getNextMonthStart(self.debut)
             except CotisationException, e:
                 print e.errors
             total += facture.total
@@ -132,20 +127,16 @@ class RecuModifications(object):
                 ('adresse-creche', creche.adresse),
                 ('code-postal-creche', str(creche.code_postal)),
                 ('ville-creche', creche.ville),
-                ('debut', '%s %d' % (months[self.debut.month - 1], self.debut.year)),
-                ('fin', '%s %d' % (months[self.fin.month - 1], self.fin.year)),
+                ('de-debut', '%s %d' % (getDeMoisStr(self.debut.month - 1), self.debut.year)),
+                ('de-fin', '%s %d' % (getDeMoisStr(self.fin.month - 1), self.fin.year)),
                 ('prenom', self.inscrit.prenom),
+                ('parents', getParentsStr(self.inscrit)),
                 ('naissance', self.inscrit.naissance),
                 ('nom', self.inscrit.nom),
                 ('tresorier', "%s %s" % (tresorier.prenom, tresorier.nom)),
                 ('date', '%.2d/%.2d/%d' % (today.day, today.month, today.year)),
                 ('total', '%.2f' % total)
                 ]
-
-        if self.inscrit.papa.nom == self.inscrit.maman.nom:
-            fields.append(('parents', '%s et %s %s' % (self.inscrit.maman.prenom, self.inscrit.papa.prenom, self.inscrit.papa.nom)))
-        else:
-            fields.append(('parents', '%s %s et %s %s' % (self.inscrit.maman.prenom, self.inscrit.maman.nom, self.inscrit.papa.prenom, self.inscrit.papa.nom)))
 
         print fields
         ReplaceTextFields(dom, fields)
@@ -212,7 +203,6 @@ class CotisationsPanel(GPanel):
             string = '%s %d' % (months[date.month - 1], date.year)
             self.monthchoice1.Append(string, date)
             date = getNextMonthStart(date)
-        # Par defaut, on selectionne le mois courant
         self.monthchoice1.SetStringSelection('%s %d' % (months[today.month - 1], today.year))
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationAppelCotisations, button)
@@ -228,7 +218,6 @@ class CotisationsPanel(GPanel):
             string = '%s %d' % (months[date.month - 1], date.year)
             self.monthchoice.Append(string, date)
             date = getNextMonthStart(date)
-        # Par defaut, on selectionne le mois precedent
         if today.month == 1:
             self.monthchoice.SetStringSelection('%s %d' % (months[11], today.year - 1))
         else:
@@ -244,20 +233,19 @@ class CotisationsPanel(GPanel):
         self.recus_startchoice = wx.Choice(self)
         self.recus_startchoice.Append(u"Année %d" % (today.year-1), (datetime.date(today.year-1, 1, 1), datetime.date(today.year-1, 12, 31)))
         if today.month == 2:
-            self.recus_startchoice.Append("Janvier %d" % today.year, None)
+            self.recus_startchoice.Append("Janvier %d" % today.year, (datetime.date(today.year, 1, 1), datetime.date(today.year, 1, 31)))
         elif today.month > 2:
-            self.recus_startchoice.Append(u"Janvier - %s %d" % (months[today.month-2], today.year), None)
-        self.recus_startchoice.Append("-" * 10, None)
+            self.recus_startchoice.Append(u"Janvier - %s %d" % (months[today.month-2], today.year), (datetime.date(today.year, 1, 1), datetime.date(today.year, today.month-1, 1)))
+        self.recus_startchoice.Append(50 * "-", None)
         date = getfirstmonday()
         while date < today:
             string = '%s %d' % (months[date.month - 1], date.year)
             self.recus_startchoice.Append(string, date)
             date = getNextMonthStart(date)
-        # Par defaut, on selectionne le mois courant
-##        self.recus_monthchoice.SetStringSelection('%s %d' % (months[today.month - 1], today.year))
+        self.recus_startchoice.SetSelection(0)
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationRecu, button)
-        box_sizer.AddMany([(self.inscrits_choice["recus"], 1, wx.ALL|wx.EXPAND, 5), (self.recus_startchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.RIGHT, 5)])
+        box_sizer.AddMany([(self.inscrits_choice["recus"], 1, wx.ALL|wx.EXPAND, 5), (self.recus_startchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
 ##        (self.recus_endchoice[1], 1, wx.ALL|wx.EXPAND, 5),
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
@@ -327,8 +315,7 @@ class CotisationsPanel(GPanel):
     def EvtGenerationRecu(self, evt):
         inscrits_choice = self.inscrits_choice["recus"]
         inscrit = inscrits_choice.GetClientData(inscrits_choice.GetSelection())
-        debut = self.recus_monthchoice[0].GetClientData(self.recus_monthchoice[0].GetSelection())
-        fin = self.recus_monthchoice[1].GetClientData(self.recus_monthchoice[1].GetSelection())
+        debut, fin = self.recus_startchoice.GetClientData(self.recus_startchoice.GetSelection())
         wildcard = "OpenDocument (*.odt)|*.odt"
         oodefaultfilename = u"Attestation de paiement %s %s-%s %d.odt" % (inscrit.prenom, months[debut.month - 1], months[fin.month - 1], debut.year)
         dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
