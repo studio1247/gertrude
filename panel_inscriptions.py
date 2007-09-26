@@ -121,7 +121,7 @@ class ContratPanel(ContextPanel):
                     self.html = ParseHtml("./templates/contrat_accueil_creche.html", context)
             except CotisationException, e:
                 error = '<br>'.join(e.errors)               
-                self.html = u"<html><body><b>Le contrat d'accueil de l'enfant ne peut être édit&eacute; pour la (les) raison(s) suivante(s) :</b><br>" + error + "</body></html>"
+                self.html = u"<html><body><b>Le contrat d'accueil de l'enfant ne peut Ãªtre Ã©dit&eacute; pour la (les) raison(s) suivante(s) :</b><br>" + error + "</body></html>"
         
         self.html_window.SetPage(self.html)
         
@@ -203,7 +203,7 @@ class ForfaitPanel(ContextPanel):
                     self.html = ParseHtml("./templates/frais_de_garde_hg.html", context)
             except CotisationException, e:
                 error = '<br>'.join(e.errors)
-                self.html = u"<html><body><b>Les frais de garde mensuels ne peuvent être calcul&eacute;s pour la (les) raison(s) suivante(s) :</b><br>" + error  + "</body></html>"
+                self.html = u"<html><body><b>Les frais de garde mensuels ne peuvent Ãªtre calcul&eacute;s pour la (les) raison(s) suivante(s) :</b><br>" + error  + "</body></html>"
                 
         self.html_window.SetPage(self.html)
 
@@ -236,7 +236,7 @@ class WeekWindow(wx.Window):
         dc.SetFont(font)
         dc.DrawText('Matin', self.pxColonnes[0] + 90, 8)
         dc.DrawText('Midi', self.pxColonnes[1] + 75, 8)
-        dc.DrawText(u'Après-midi', self.pxColonnes[2] + 80, 8)
+        dc.DrawText(u'AprÃ¨s-midi', self.pxColonnes[2] + 80, 8)
         
         for i in range(5):
             dc.DrawText(days[i], 0, i * self.pxLigne + 37)
@@ -351,9 +351,9 @@ class IdentitePanel(InscriptionsTab):
         sizer2.AddGrowableCol(1, 1)
         ctrl = AutoTextCtrl(self, None, 'prenom')
         self.Bind(wx.EVT_TEXT, self.EvtChangementPrenom, ctrl)
-        sizer2.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.ALIGN_CENTER_VERTICAL), (ctrl, 0, wx.EXPAND)])
+        sizer2.AddMany([(wx.StaticText(self, -1, u'PrÃ©nom :'), 0, wx.ALIGN_CENTER_VERTICAL), (ctrl, 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'nom'), 0, wx.EXPAND)])
-        sizer2.AddMany([(wx.StaticText(self, -1, 'Sexe :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoChoiceCtrl(self, None, 'sexe', items=[(u"Garçon", 1), ("Fille", 2)]), 0, wx.EXPAND)])
+        sizer2.AddMany([(wx.StaticText(self, -1, 'Sexe :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoChoiceCtrl(self, None, 'sexe', items=[(u"GarÃ§on", 1), ("Fille", 2)]), 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, 'Date de naissance :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'naissance'), 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, 'Adresse :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'adresse'), 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, 'Code Postal :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'code_postal', min=0, precision=0), 0, wx.EXPAND)])
@@ -367,10 +367,10 @@ class IdentitePanel(InscriptionsTab):
 ##        self.Bind(wx.EVT_BUTTON, self.OnPhotoButton, self.photo)
 ##        sizer1.Add(self.photo)
         
-        sizer3 = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Frères et soeurs'), wx.VERTICAL)
+        sizer3 = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'FrÃ¨res et soeurs'), wx.VERTICAL)
         self.fratries_sizer = wx.BoxSizer(wx.VERTICAL)
         sizer3.Add(self.fratries_sizer, 0, wx.EXPAND|wx.ALL-wx.BOTTOM, 10)
-        self.nouveau_frere = wx.Button(self, -1, u'Nouveau frère ou nouvelle soeur')
+        self.nouveau_frere = wx.Button(self, -1, u'Nouveau frÃ¨re ou nouvelle soeur')
         self.nouveau_frere.Disable()
         sizer3.Add(self.nouveau_frere, 0, wx.ALL, 5)
         self.Bind(wx.EVT_BUTTON, self.EvtNouveauFrere, self.nouveau_frere)
@@ -380,9 +380,9 @@ class IdentitePanel(InscriptionsTab):
         
     def __add_fratrie(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, self.inscrit, 'freres_soeurs[%d].prenom' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'PrÃ©nom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, self.inscrit, 'freres_soeurs[%d].prenom' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, 'Naissance :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].naissance' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'En crèche du'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].entree' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'En crÃ¨che du'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].entree' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, 'au'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].sortie' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)])
         delbutton = wx.BitmapButton(self, -1, self.delbmp)
         delbutton.index = index
@@ -465,7 +465,7 @@ class IdentitePanel(InscriptionsTab):
                 dlg.Destroy()
             else:
                 dlg = wx.MessageDialog(self, 
-                                       u"Il faut d'abord remplir le prénom et le nom de l'enfant",
+                                       u"Il faut d'abord remplir le prÃ©nom et le nom de l'enfant",
                                        'Message',
                                        wx.ICON_INFORMATION)
                 dlg.ShowModal()
@@ -483,17 +483,17 @@ class ParentsPanel(InscriptionsTab):
             sizer1.Add(sizer11, 0, wx.EXPAND)
             sizer2 = wx.FlexGridSizer(0, 2, 5, 5)
             sizer2.AddGrowableCol(1, 1)
-            sizer2.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, '%s.prenom' % parent), 0, wx.EXPAND)])
+            sizer2.AddMany([(wx.StaticText(self, -1, u'PrÃ©nom :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, '%s.prenom' % parent), 0, wx.EXPAND)])
             sizer2.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, '%s.nom' % parent), 0, wx.EXPAND)])
             sizer3 = wx.BoxSizer(wx.HORIZONTAL)
             sizer3.AddMany([AutoPhoneCtrl(self, None, '%s.telephone_domicile' % parent), (AutoTextCtrl(self, None, '%s.telephone_domicile_notes' % parent), 1, wx.LEFT|wx.EXPAND, 5)])
-            sizer2.AddMany([(wx.StaticText(self, -1, u'Téléphone domicile :'), 0, wx.ALIGN_CENTER_VERTICAL), (sizer3, 0, wx.EXPAND)])
+            sizer2.AddMany([(wx.StaticText(self, -1, u'TÃ©lÃ©phone domicile :'), 0, wx.ALIGN_CENTER_VERTICAL), (sizer3, 0, wx.EXPAND)])
             sizer3 = wx.BoxSizer(wx.HORIZONTAL)
             sizer3.AddMany([AutoPhoneCtrl(self, None, '%s.telephone_portable' % parent), (AutoTextCtrl(self, None, '%s.telephone_portable_notes' % parent), 1, wx.LEFT|wx.EXPAND, 5)])        
-            sizer2.AddMany([(wx.StaticText(self, -1, u'Téléphone portable :'), 0, wx.ALIGN_CENTER_VERTICAL), (sizer3, 0, wx.EXPAND)])
+            sizer2.AddMany([(wx.StaticText(self, -1, u'TÃ©lÃ©phone portable :'), 0, wx.ALIGN_CENTER_VERTICAL), (sizer3, 0, wx.EXPAND)])
             sizer3 = wx.BoxSizer(wx.HORIZONTAL)
             sizer3.AddMany([AutoPhoneCtrl(self, None, '%s.telephone_travail' % parent), (AutoTextCtrl(self, None, '%s.telephone_travail_notes' % parent), 1, wx.LEFT|wx.EXPAND, 5)])        
-            sizer2.AddMany([(wx.StaticText(self, -1, u'Téléphone travail :'), 0, wx.ALIGN_CENTER_VERTICAL), (sizer3, 0, wx.EXPAND)])
+            sizer2.AddMany([(wx.StaticText(self, -1, u'TÃ©lÃ©phone travail :'), 0, wx.ALIGN_CENTER_VERTICAL), (sizer3, 0, wx.EXPAND)])
             sizer2.AddMany([(wx.StaticText(self, -1, 'E-mail :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, '%s.email' % parent), 0, wx.EXPAND)])
             sizer11.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
             
@@ -504,13 +504,13 @@ class ParentsPanel(InscriptionsTab):
                 revenus_gridsizer = wx.FlexGridSizer(0, 2, 5, 10)
                 revenus_gridsizer.AddGrowableCol(1, 1)
                 revenus_gridsizer.AddMany([(wx.StaticText(panel, -1, 'Revenus annuels bruts :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(panel, None, '%s.revenus[self.parent.periode].revenu' % parent, precision=2), 0, wx.EXPAND)])
-                revenus_gridsizer.AddMany([(0, 0), (AutoCheckBox(panel, None, '%s.revenus[self.parent.periode].chomage' % parent, u'Chômage'), 0, wx.EXPAND)])
+                revenus_gridsizer.AddMany([(0, 0), (AutoCheckBox(panel, None, '%s.revenus[self.parent.periode].chomage' % parent, u'ChÃ´mage'), 0, wx.EXPAND)])
                 choice = AutoChoiceCtrl(panel, None, '%s.revenus[self.parent.periode].regime' % parent)
                 self.regimes_choices.append(choice)
-                for i, regime in enumerate([u'Pas de sélection', u'Régime général', u'Régime de la fonction publique', u'Régime MSA', u'Régime EDF-GDF', u'Régime RATP', u'Régime Pêche maritime', u'Régime Marins du Commerce']):
+                for i, regime in enumerate([u'Pas de sÃ©lection', u'RÃ©gime gÃ©nÃ©ral', u'RÃ©gime de la fonction publique', u'RÃ©gime MSA', u'RÃ©gime EDF-GDF', u'RÃ©gime RATP', u'RÃ©gime PÃªche maritime', u'RÃ©gime Marins du Commerce']):
                     choice.Append(regime, i)
                 panel.Bind(wx.EVT_CHOICE, self.onRegimeChoice, choice)
-                revenus_gridsizer.AddMany([wx.StaticText(panel, -1, u"Régime d'appartenance :"), (choice, 0, wx.EXPAND)])
+                revenus_gridsizer.AddMany([wx.StaticText(panel, -1, u"RÃ©gime d'appartenance :"), (choice, 0, wx.EXPAND)])
                 revenus_sizer.Add(revenus_gridsizer, 0, wx.ALL|wx.EXPAND, 5)
                 panel.SetSizer(revenus_sizer)
 #		sizer11.Add(wx.StaticLine(panel, -1, size=(100, 10), style=wx.LI_HORIZONTAL))
@@ -540,9 +540,9 @@ class ModeAccueilPanel(InscriptionsTab):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(PeriodeChoice(self, None, 'inscriptions', self.nouvelleInscription), 0, wx.TOP|wx.BOTTOM, 5)
         if creche.modes_inscription & MODE_HALTE_GARDERIE:
-            sizer.Add(AutoRadioBox(self, None, 'inscriptions[self.parent.periode].mode', "Mode d'accueil", [u'Crèche', 'Halte-garderie']))
+            sizer.Add(AutoRadioBox(self, None, 'inscriptions[self.parent.periode].mode', "Mode d'accueil", [u'CrÃ¨che', 'Halte-garderie']))
         gridsizer = wx.FlexGridSizer(0, 2, 5, 10)
-        gridsizer.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'inscriptions[self.parent.periode].fin_periode_essai'), 0, 0)])
+        gridsizer.AddMany([(wx.StaticText(self, -1, u"Date de fin de la pÃ©riode d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'inscriptions[self.parent.periode].fin_periode_essai'), 0, 0)])
         sizer.Add(gridsizer, 0, wx.EXPAND|wx.ALL, 5)
         if creche.modes_inscription != MODE_CRECHE:
             sizer1 = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Semaine type'), wx.HORIZONTAL)
@@ -591,7 +591,7 @@ class InscriptionsNotebook(wx.Notebook):
         self.parent = parent
         self.inscrit = None
 
-        self.AddPage(IdentitePanel(self), u'Identité')
+        self.AddPage(IdentitePanel(self), u'IdentitÃ©')
         self.AddPage(ParentsPanel(self), 'Parents')
         self.AddPage(ModeAccueilPanel(self), "Mode d'accueil")
 
@@ -706,7 +706,7 @@ class InscriptionsPanel(GPanel):
         inscrit = self.choice.GetClientData(selected)
         if inscrit:
             dlg = wx.MessageDialog(self,
-                                   'Cette inscription va être supprimée, êtes-vous sûr de vouloir continuer ?',
+                                   'Cette inscription va Ãªtre supprimÃ©e, Ãªtes-vous sÃ»r de vouloir continuer ?',
                                    'Confirmation',
                                    wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION )
             if dlg.ShowModal() == wx.ID_YES:

@@ -444,7 +444,7 @@ class PeriodeChoice(wx.BoxSizer):
         sizer3 = wx.BoxSizer(wx.HORIZONTAL)
 
         date_debut = AutoDateCtrl(parent, instance, member+'[self.parent.periode].debut')
-        sizer3.AddMany([(wx.StaticText(parent, -1, u'début :'), 0, wx.ALIGN_CENTER_VERTICAL), (date_debut, 1, wx.LEFT|wx.EXPAND, 5)])
+        sizer3.AddMany([(wx.StaticText(parent, -1, u'dÃ©but :'), 0, wx.ALIGN_CENTER_VERTICAL), (date_debut, 1, wx.LEFT|wx.EXPAND, 5)])
         date_fin = AutoDateCtrl(parent, instance, member+'[self.parent.periode].fin', style=wx.DP_ALLOWNONE)
         sizer3.AddMany([(wx.StaticText(parent, -1, 'fin :'), 0, wx.ALIGN_CENTER_VERTICAL+wx.LEFT, 10), (date_fin, 1, wx.LEFT|wx.EXPAND, 5)])
         #parent.Bind(wx.EVT_DATE_CHANGED, self.EvtChangementPeriode, date_debut)

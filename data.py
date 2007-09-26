@@ -100,7 +100,7 @@ class HttpConnection(object):
                 return result
         except urllib2.HTTPError, e:
             if e.code == 404:
-                print "Echec - page non trouvÈe"
+                print "Echec - page non trouv√©e"
                 return None
             else:
                 print "Echec - code %d (%s)" % (e.code, e.msg)
@@ -148,14 +148,14 @@ class HttpConnection(object):
 
     def download(self):
         if self.has_token():
-            print u"Token dÈj‡ pris. Pas de download."
+            print u"Token d√©j√† pris. Pas de download."
             return 1
         elif self.get_token():
             if self.do_download():
                 return 1
             else:
                 self.rel_token()
-                print u"Le download a ÈchouÈ"
+                print u"Le download a √©chou√©"
                 return 0
         else:
             print "Impossible de prendre le token."
@@ -169,7 +169,7 @@ class HttpConnection(object):
 
     def upload(self):
         if not self.has_token():
-            print u"Pas de token prÈsent. Pas d'upload."
+            print u"Pas de token pr√©sent. Pas d'upload."
             return 0
         if self.do_upload():
             return self.rel_token()

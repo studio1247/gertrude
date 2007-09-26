@@ -368,7 +368,7 @@ class PlanningPanel(GPanel):
     index = 20
     profil = PROFIL_ALL
     def __init__(self, parent):
-        GPanel.__init__(self, parent, u'Présences enfants')
+        GPanel.__init__(self, parent, u'PrÃ©sences enfants')
         
         # La combobox pour la selection de la semaine
         self.combobox = wx.Choice(self, -1)

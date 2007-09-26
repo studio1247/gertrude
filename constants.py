@@ -17,9 +17,9 @@
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"]
-months = ["Janvier", u'Février', "Mars", "Avril", "Mai", "Juin", "Juillet", u'Août', "Septembre", "Octobre", "Novembre", u'Décembre']
-months_abbrev = ["Janv", u'Fév', "Mars", "Avril", "Mai", "Juin", "Juil", u'Août', "Sept", "Oct", "Nov", u'Déc']
-trimestres = ["1er", u'2ème', u'3ème', u'4ème']
+months = ["Janvier", u'FÃ©vrier', "Mars", "Avril", "Mai", "Juin", "Juillet", u'AoÃ»t', "Septembre", "Octobre", "Novembre", u'DÃ©cembre']
+months_abbrev = ["Janv", u'FÃ©v', "Mars", "Avril", "Mai", "Juin", "Juil", u'AoÃ»t', "Sept", "Oct", "Nov", u'DÃ©c']
+trimestres = ["1er", u'2Ã¨me', u'3Ã¨me', u'4Ã¨me']
 
 PROFIL_INSCRIPTIONS = 1
 PROFIL_TRESORIER = 2
@@ -28,7 +28,7 @@ PROFIL_SAISIE_PRESENCES = 8
 PROFIL_ADMIN = 16
 PROFIL_ALL = PROFIL_ADMIN + PROFIL_INSCRIPTIONS + PROFIL_TRESORIER + PROFIL_BUREAU + PROFIL_SAISIE_PRESENCES
 
-# Attention ces paramètres modifient l'interprétation des données de la base
+# Attention ces paramÃ¨tres modifient l'interprÃ©tation des donnÃ©es de la base
 BASE_MIN_HOUR = 6 # 6h00
 BASE_MAX_HOUR = 22 # 22h00
 BASE_GRANULARITY = 4 # au quart d'heure

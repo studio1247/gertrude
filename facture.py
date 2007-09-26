@@ -77,7 +77,7 @@ class Facture(object):
                             else:
                                 self.jours_maladie_deduits.append(date)
                                 self.deduction += cotisation.montant_jour_supplementaire
-                                self.raison_deduction = u'(maladie > 15j consécutifs)'
+                                self.raison_deduction = u'(maladie > 15j consÃ©cutifs)'
             date += datetime.timedelta(1)
 
         self.semaines_payantes = 4 - int(jours_fermeture / 5)

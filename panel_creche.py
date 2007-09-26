@@ -28,7 +28,7 @@ class CrecheTab(AutoTab):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer2 = wx.FlexGridSizer(0, 2, 5, 5)
         sizer2.AddGrowableCol(1, 1)
-        sizer2.AddMany([wx.StaticText(self, -1, u'Nom de la crèche :'), (AutoTextCtrl(self, creche, 'nom'), 0, wx.EXPAND)])
+        sizer2.AddMany([wx.StaticText(self, -1, u'Nom de la crÃ¨che :'), (AutoTextCtrl(self, creche, 'nom'), 0, wx.EXPAND)])
         sizer2.AddMany([wx.StaticText(self, -1, 'Adresse :'), (AutoTextCtrl(self, creche, 'adresse'), 0, wx.EXPAND)])
         sizer2.AddMany([wx.StaticText(self, -1, 'Code Postal :'), (AutoNumericCtrl(self, creche, 'code_postal', precision=0), 0, wx.EXPAND)])
         sizer2.AddMany([wx.StaticText(self, -1, 'Ville :'), (AutoTextCtrl(self, creche, 'ville'), 0, wx.EXPAND)])       
@@ -45,16 +45,16 @@ class EmployesTab(AutoTab):
         for i, employe in enumerate(creche.employes):
             self.display_employe(i)
         self.sizer.Add(self.employes_sizer, 0, wx.EXPAND|wx.ALL, 5)
-        button_add = wx.Button(self, -1, u'Nouvel employé')
+        button_add = wx.Button(self, -1, u'Nouvel employÃ©')
         self.sizer.Add(button_add, 0, wx.ALL, 5)
         self.Bind(wx.EVT_BUTTON, self.employe_add, button_add)
         self.SetSizer(self.sizer)
 
     def display_employe(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, creche, 'employes[%d].prenom' % index), 1, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'PrÃ©nom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, creche, 'employes[%d].prenom' % index), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, creche, 'employes[%d].nom' % index), 1, wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Arrivée :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoDateCtrl(self, creche, 'employes[%d].date_embauche' % index), 1, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'ArrivÃ©e :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoDateCtrl(self, creche, 'employes[%d].date_embauche' % index), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u"Domicile :"), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoPhoneCtrl(self, creche, 'employes[%d].telephone_domicile' % index), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u"Portable :"), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoPhoneCtrl(self, creche, 'employes[%d].telephone_portable' % index), 1, wx.EXPAND)])
         delbutton = wx.BitmapButton(self, -1, delbmp)
@@ -88,13 +88,13 @@ class ResponsabilitesTab(AutoTab):
         sizer2.AddGrowableCol(1, 1)
         self.responsables_ctrls = []
         self.responsables_ctrls.append(AutoChoiceCtrl(self, creche, 'bureaux[self.parent.periode].president', items=parents))
-        sizer2.AddMany([wx.StaticText(self, -1, u'Président :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
+        sizer2.AddMany([wx.StaticText(self, -1, u'PrÃ©sident :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
         self.responsables_ctrls.append(AutoChoiceCtrl(self, creche, 'bureaux[self.parent.periode].vice_president', items=parents))
-        sizer2.AddMany([wx.StaticText(self, -1, u'Vice président :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
+        sizer2.AddMany([wx.StaticText(self, -1, u'Vice prÃ©sident :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
         self.responsables_ctrls.append(AutoChoiceCtrl(self, creche, 'bureaux[self.parent.periode].tresorier', items=parents))
-        sizer2.AddMany([wx.StaticText(self, -1, u'Trésorier :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
+        sizer2.AddMany([wx.StaticText(self, -1, u'TrÃ©sorier :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
         self.responsables_ctrls.append(AutoChoiceCtrl(self, creche, 'bureaux[self.parent.periode].secretaire', items=parents))        
-        sizer2.AddMany([wx.StaticText(self, -1, u'Secrétaire :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
+        sizer2.AddMany([wx.StaticText(self, -1, u'SecrÃ©taire :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
         sizer.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(sizer)
 
@@ -132,9 +132,9 @@ class CafTab(AutoTab):
 class GeneralNotebook(wx.Notebook):
     def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
-        self.AddPage(CrecheTab(self), u'Crèche')
-        self.AddPage(EmployesTab(self), u'Employés')
-        self.AddPage(ResponsabilitesTab(self), u'Responsabilités')
+        self.AddPage(CrecheTab(self), u'CrÃ¨che')
+        self.AddPage(EmployesTab(self), u'EmployÃ©s')
+        self.AddPage(ResponsabilitesTab(self), u'ResponsabilitÃ©s')
         self.AddPage(CafTab(self), 'C.A.F.')        
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
@@ -152,7 +152,7 @@ class CrechePanel(GPanel):
     index = 50
     profil = PROFIL_BUREAU
     def __init__(self, parent):
-        GPanel.__init__(self, parent, u'Crèche')
+        GPanel.__init__(self, parent, u'CrÃ¨che')
         self.notebook = GeneralNotebook(self)
 	self.sizer.Add(self.notebook, 1, wx.EXPAND)
             

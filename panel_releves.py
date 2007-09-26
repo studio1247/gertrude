@@ -426,34 +426,34 @@ class RelevesPanel(GPanel):
     index = 40
     profil = PROFIL_ALL
     def __init__(self, parent):
-        GPanel.__init__(self, parent, u'Relevés')
+        GPanel.__init__(self, parent, u'RelevÃ©s')
 
         today = datetime.date.today()
         
         sizer = wx.BoxSizer(wx.VERTICAL)
 
         # Les coordonnees des parents
-        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Coordonnées des parents'), wx.HORIZONTAL)
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'CoordonnÃ©es des parents'), wx.HORIZONTAL)
         self.coords_date = wx.TextCtrl(self)
         self.coords_date.SetValue("Aujourd'hui")
-        button = wx.Button(self, -1, u'Génération')
+        button = wx.Button(self, -1, u'GÃ©nÃ©ration')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationCoordonnees, button)
         box_sizer.AddMany([(self.coords_date, 1, wx.EXPAND|wx.ALL, 5), (button, 0, wx.ALL, 5)])
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
         
         # Les releves trimestriels
-        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés trimestriels'), wx.HORIZONTAL)
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'RelevÃ©s trimestriels'), wx.HORIZONTAL)
         self.choice = wx.Choice(self)
-        button = wx.Button(self, -1, u'Génération')
+        button = wx.Button(self, -1, u'GÃ©nÃ©ration')
         for year in range(first_date.year, last_date.year + 1):
-            self.choice.Append(u'Année %d' % year, year)
+            self.choice.Append(u'AnnÃ©e %d' % year, year)
         self.choice.SetSelection(today.year - first_date.year)
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationEtatsTrimestriels, button)
         box_sizer.AddMany([(self.choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
         # Les plannings de presence enfants
-        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Planning des présences'), wx.HORIZONTAL)
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Planning des prÃ©sences'), wx.HORIZONTAL)
         self.weekchoice = wx.Choice(self)
         day = getfirstmonday()
         semaine = 1
@@ -466,7 +466,7 @@ class RelevesPanel(GPanel):
                 semaine = 1
             day += datetime.timedelta(14)
         self.weekchoice.SetSelection((today - getfirstmonday()).days / 14 + 1)
-        button = wx.Button(self, -1, u'Génération')
+        button = wx.Button(self, -1, u'GÃ©nÃ©ration')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationPlanningPresences, button)
         box_sizer.AddMany([(self.weekchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
@@ -478,9 +478,9 @@ class RelevesPanel(GPanel):
         if not date:
             date = today
         wildcard = "OpenDocument (*.ods)|*.ods"
-        oodefaultfilename = u"Coordonnées parents %s.ods" % getDateStr(date)
+        oodefaultfilename = u"CoordonnÃ©es parents %s.ods" % getDateStr(date)
         old_path = os.getcwd()
-        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE | wx.CHANGE_DIR)
+        dlg = wx.FileDialog(self, message=u'GÃ©nÃ©rer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE | wx.CHANGE_DIR)
         response = dlg.ShowModal()
         os.chdir(old_path)
 
@@ -488,7 +488,7 @@ class RelevesPanel(GPanel):
             oofilename = dlg.GetPath()
             try:
                 GenereCoordonnees(date, oofilename)
-                dlg = wx.MessageDialog(self, u"Document %s généré" % oofilename, 'Message', wx.OK)
+                dlg = wx.MessageDialog(self, u"Document %s gÃ©nÃ©rÃ©" % oofilename, 'Message', wx.OK)
             except Exception, e:
                 dlg = wx.MessageDialog(self, str(e), 'Erreur', wx.OK | wx.ICON_WARNING)
             dlg.ShowModal()
@@ -500,7 +500,7 @@ class RelevesPanel(GPanel):
         wildcard = "OpenDocument (*.ods)|*.ods"
         oodefaultfilename = "Etats trimestriels %d.ods" % annee
         old_path = os.getcwd()
-        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE | wx.CHANGE_DIR)
+        dlg = wx.FileDialog(self, message=u'GÃ©nÃ©rer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE | wx.CHANGE_DIR)
         response = dlg.ShowModal()
         os.chdir(old_path)
 
@@ -508,7 +508,7 @@ class RelevesPanel(GPanel):
             oofilename = dlg.GetPath()
             try:
                 GenereEtatsTrimestriels(annee, oofilename)
-                dlg = wx.MessageDialog(self, u"Document %s généré" % oofilename, 'Message', wx.OK)
+                dlg = wx.MessageDialog(self, u"Document %s gÃ©nÃ©rÃ©" % oofilename, 'Message', wx.OK)
             except CotisationException, e:
                 message = '\n'.join(['%s %s :\n%s' % (tmp[0], tmp[1], '\n'.join(list(e.errors[tmp]))) for tmp in e.errors])
                 dlg = wx.MessageDialog(self, message, 'Erreur', wx.OK | wx.ICON_WARNING)
@@ -521,14 +521,14 @@ class RelevesPanel(GPanel):
         wildcard = "OpenDocument (*.ods)|*.ods"
         oodefaultfilename = "Planning presences %s.ods" % str(date)
         old_path = os.getcwd()
-        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE | wx.CHANGE_DIR)
+        dlg = wx.FileDialog(self, message=u'GÃ©nÃ©rer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE | wx.CHANGE_DIR)
         response = dlg.ShowModal()
         os.chdir(old_path)
 
         if response == wx.ID_OK:
             oofilename = dlg.GetPath()
             GenerePlanningPresences(date, oofilename)
-            dlg = wx.MessageDialog(self, u"Document %s généré" % oofilename, 'Message', wx.OK)
+            dlg = wx.MessageDialog(self, u"Document %s gÃ©nÃ©rÃ©" % oofilename, 'Message', wx.OK)
             dlg.ShowModal()
             dlg.Destroy()
 
@@ -545,10 +545,10 @@ if __name__ == '__main__':
     filename = 'etats_trimestriels_%d.ods' % (today.year - 1)
     try:
         GenereEtatsTrimestriels(today.year - 1, filename)
-        print u'Fichier %s généré' % filename
+        print u'Fichier %s gÃ©nÃ©rÃ©' % filename
     except CotisationException, e:
         print e.errors
 
     filename = 'planning_presences_%s.ods' % first_date
     GenerePlanningPresences(getfirstmonday(), filename)
-    print u'Fichier %s généré' % filename
+    print u'Fichier %s gÃ©nÃ©rÃ©' % filename

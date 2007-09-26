@@ -24,9 +24,9 @@ from controls import *
 
 profiles = [("Administrateur", PROFIL_ALL),
             ("Bureau", PROFIL_BUREAU),
-            (u"Trésorier", PROFIL_TRESORIER),
+            (u"TrÃ©sorier", PROFIL_TRESORIER),
             ("Inscriptions", PROFIL_INSCRIPTIONS),
-            (u"Saisie présences", PROFIL_SAISIE_PRESENCES),
+            (u"Saisie prÃ©sences", PROFIL_SAISIE_PRESENCES),
             ]
 
 class UsersPanel(AutoTab):
@@ -108,7 +108,7 @@ class CongesPanel(AutoTab):
         for i, conge in enumerate(creche.conges):
             self.display_conge(i)
         self.sizer.Add(self.conges_sizer, 0, wx.ALL, 5)
-        button_add = wx.Button(self, -1, u'Nouvelle période de congés')
+        button_add = wx.Button(self, -1, u'Nouvelle pÃ©riode de congÃ©s')
         self.sizer.Add(button_add, 0, wx.EXPAND+wx.TOP, 5)
         self.Bind(wx.EVT_BUTTON, self.conges_add, button_add)
         sizer.Add(self.sizer, 0, wx.EXPAND+wx.ALL, 5)
@@ -145,9 +145,9 @@ class ParametersPanel(AutoTab):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         sizer = wx.FlexGridSizer(0, 2, 5, 5)
         sizer.AddGrowableCol(1, 1)
-        sizer.AddMany([(wx.StaticText(self, -1, u'Nombre de mois payés :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'mois_payes', [('12 mois', 12), ('11 mois', 11)]), 0, wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Présences prévisionnelles :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'presences_previsionnelles', [(u'Géré', True), (u'Non géré', False)]), 0, wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, u"Modes d'inscription :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'modes_inscription', [(u'Crèche à plein-temps uniquement', 0), (u'Crèche (5/5 4/5 3/5) et halte-garderie', MODE_HALTE_GARDERIE+MODE_4_5+MODE_3_5)]), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Nombre de mois payÃ©s :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'mois_payes', [('12 mois', 12), ('11 mois', 11)]), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'PrÃ©sences prÃ©visionnelles :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'presences_previsionnelles', [(u'GÃ©rÃ©', True), (u'Non gÃ©rÃ©', False)]), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u"Modes d'inscription :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'modes_inscription', [(u'CrÃ¨che Ã  plein-temps uniquement', 0), (u'CrÃ¨che (5/5 4/5 3/5) et halte-garderie', MODE_HALTE_GARDERIE+MODE_4_5+MODE_3_5)]), 0, wx.EXPAND)])
         self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(self.sizer)
         
@@ -155,8 +155,8 @@ class AdminNotebook(wx.Notebook):
     def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
         self.AddPage(UsersPanel(self), 'Utilisateurs')
-        self.AddPage(CongesPanel(self), u'Congés')
-        self.AddPage(ParametersPanel(self), u'Paramètres')
+        self.AddPage(CongesPanel(self), u'CongÃ©s')
+        self.AddPage(ParametersPanel(self), u'ParamÃ¨tres')
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
     def OnPageChanged(self, event):

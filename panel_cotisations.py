@@ -139,9 +139,9 @@ class RecuModifications(object):
                 ]
 
         if self.inscrit.sexe == 1:
-            fields.append(('ne-e', u"né"))
+            fields.append(('ne-e', u"nÃ©"))
         else:
-            fields.append(('ne-e', u"née"))
+            fields.append(('ne-e', u"nÃ©e"))
 
         #print fields
         ReplaceTextFields(dom, fields)
@@ -212,7 +212,7 @@ class CotisationsPanel(GPanel):
             self.appels_monthchoice.Append(string, date)
             date = getNextMonthStart(date)
         self.appels_monthchoice.SetStringSelection('%s %d' % (months[today.month - 1], today.year))
-        button = wx.Button(self, -1, u'Génération')
+        button = wx.Button(self, -1, u'GÃ©nÃ©ration')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationAppelCotisations, button)
         box_sizer.AddMany([(self.appels_monthchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
@@ -222,7 +222,7 @@ class CotisationsPanel(GPanel):
         self.inscrits_choice["factures"] = wx.Choice(self)
         self.factures_monthchoice = wx.Choice(self)
         self.Bind(wx.EVT_CHOICE, self.EvtFacturesInscritChoice, self.inscrits_choice["factures"])
-        button = wx.Button(self, -1, u'Génération')
+        button = wx.Button(self, -1, u'GÃ©nÃ©ration')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationFacture, button)
         box_sizer.AddMany([(self.inscrits_choice["factures"], 1, wx.ALL|wx.EXPAND, 5), (self.factures_monthchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
@@ -232,7 +232,7 @@ class CotisationsPanel(GPanel):
         self.inscrits_choice["recus"] = wx.Choice(self)
         self.recus_periodechoice = wx.Choice(self)
         self.Bind(wx.EVT_CHOICE, self.EvtRecusInscritChoice, self.inscrits_choice["recus"])
-        button = wx.Button(self, -1, u'Génération')
+        button = wx.Button(self, -1, u'GÃ©nÃ©ration')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationRecu, button)
         box_sizer.AddMany([(self.inscrits_choice["recus"], 1, wx.ALL|wx.EXPAND, 5), (self.recus_periodechoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
@@ -256,7 +256,7 @@ class CotisationsPanel(GPanel):
         self.recus_periodechoice.Clear()
         inscrit = self.inscrits_choice["recus"].GetClientData(self.inscrits_choice["recus"].GetSelection())
         if isinstance(inscrit, list) or inscrit.getInscriptions(datetime.date(today.year-1, 1, 1), datetime.date(today.year-1, 12, 31)):
-            self.recus_periodechoice.Append(u"Année %d" % (today.year-1), (datetime.date(today.year-1, 1, 1), datetime.date(today.year-1, 12, 31)))
+            self.recus_periodechoice.Append(u"AnnÃ©e %d" % (today.year-1), (datetime.date(today.year-1, 1, 1), datetime.date(today.year-1, 12, 31)))
         if isinstance(inscrit, list):
             if today.month == 1:
                 self.recus_periodechoice.Append("Janvier %d" % today.year, (datetime.date(today.year, 1, 1), datetime.date(today.year, 1, 31)))
@@ -305,7 +305,7 @@ class CotisationsPanel(GPanel):
         inscrit = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
         periode = self.factures_monthchoice.GetClientData(self.factures_monthchoice.GetSelection())
         if type(inscrit) == list:
-            dlg = wx.DirDialog(self, u'Générer des documents OpenOffice', style=wx.DD_DEFAULT_STYLE|wx.DD_NEW_DIR_BUTTON)
+            dlg = wx.DirDialog(self, u'GÃ©nÃ©rer des documents OpenOffice', style=wx.DD_DEFAULT_STYLE|wx.DD_NEW_DIR_BUTTON)
             response = dlg.ShowModal()
             if response == wx.ID_OK:
                 oopath = dlg.GetPath()
@@ -314,7 +314,7 @@ class CotisationsPanel(GPanel):
         else:
             wildcard = "OpenDocument (*.odt)|*.odt"
             oodefaultfilename = u"Cotisation %s %s %d.odt" % (inscrit.prenom, months[periode.month - 1], periode.year)
-            dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
+            dlg = wx.FileDialog(self, message=u'GÃ©nÃ©rer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
             response = dlg.ShowModal()
             if response == wx.ID_OK:
                 oofilename = dlg.GetPath()
@@ -324,13 +324,13 @@ class CotisationsPanel(GPanel):
         periode = self.appels_monthchoice.GetClientData(self.appels_monthchoice.GetSelection())
         wildcard = "OpenDocument (*.ods)|*.ods"
         oodefaultfilename = u"Appel cotisations %s %d.ods" % (months[periode.month - 1], periode.year)
-        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
+        dlg = wx.FileDialog(self, message=u'GÃ©nÃ©rer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
         response = dlg.ShowModal()
         if response == wx.ID_OK:
             oofilename = dlg.GetPath()
             try:
                 errors = GenereAppelCotisations(periode, oofilename)
-                message = u"Document %s généré" % oofilename
+                message = u"Document %s gÃ©nÃ©rÃ©" % oofilename
                 if errors:
                     message += ' avec des erreurs :\n'
                     for error in errors:
@@ -348,13 +348,13 @@ class CotisationsPanel(GPanel):
         debut, fin = self.recus_periodechoice.GetClientData(self.recus_periodechoice.GetSelection())
         wildcard = "OpenDocument (*.odt)|*.odt"
         oodefaultfilename = u"Attestation de paiement %s %s-%s %d.odt" % (inscrit.prenom, months[debut.month - 1], months[fin.month - 1], debut.year)
-        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
+        dlg = wx.FileDialog(self, message=u'GÃ©nÃ©rer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
         response = dlg.ShowModal()
         if response == wx.ID_OK:
             oofilename = dlg.GetPath()
             try:
                 errors = GenereRecu(inscrit, debut, fin, oofilename)
-                message = u"Document %s généré" % oofilename
+                message = u"Document %s gÃ©nÃ©rÃ©" % oofilename
                 if errors:
                     message += ' avec des erreurs :\n'
                     for error in errors:
@@ -382,11 +382,11 @@ class CotisationsPanel(GPanel):
                 errors.extend(e.errors)
 
         if nbfactures > 1:
-            message = u'%d factures générées' % nbfactures
+            message = u'%d factures gÃ©nÃ©rÃ©es' % nbfactures
         elif nbfactures == 1:
-            message = u'1 facture générée'
+            message = u'1 facture gÃ©nÃ©rÃ©e'
         else:
-            message = u'Aucune facture générée'
+            message = u'Aucune facture gÃ©nÃ©rÃ©e'
         if errors:
             message += '\n\n' + '\n'.join(errors)
             dlg = wx.MessageDialog(self, message, 'Message', wx.OK | wx.ICON_WARNING)
@@ -405,16 +405,16 @@ if __name__ == '__main__':
     for inscrit in creche.inscrits:
         if inscrit.prenom == 'Soen':
             GenereRecu(inscrit, datetime.date(2007, 4, 1), datetime.date(2007, 9, 1), 'recu soen.ods')
-            print u'Fichier "recu soen.ods" généré'
+            print u'Fichier "recu soen.ods" gÃ©nÃ©rÃ©'
 
     sys.exit(0)
     GenereAppelCotisations(datetime.date(2007, 8, 1), 'appel cotisations.ods')
-    print u'Fichier "appel cotisations.ods" généré'
+    print u'Fichier "appel cotisations.ods" gÃ©nÃ©rÃ©'
     
     for inscrit in creche.inscrits:
         if inscrit.prenom == 'Basile':
             GenereFacture(inscrit, datetime.date(2005, 12, 1), 'basile.ods')
-            print u'Fichier "basile.ods" généré'
+            print u'Fichier "basile.ods" gÃ©nÃ©rÃ©'
 
 
 

@@ -30,29 +30,29 @@ class Cotisation(object):
         self.debut, self.fin = periode
         errors = []
         if not inscrit.prenom or not inscrit.nom:
-            errors.append(u" - L'état civil de l'enfant est incomplet.")
+            errors.append(u" - L'Ã©tat civil de l'enfant est incomplet.")
         if not options & NO_ADDRESS and (not inscrit.code_postal or not inscrit.ville):
-            errors.append(u" - L'adresse de l'enfant est incomplète.")
+            errors.append(u" - L'adresse de l'enfant est incomplÃ¨te.")
         if not inscrit.papa.prenom or not inscrit.maman.prenom or not inscrit.papa.nom or not inscrit.maman.nom:
-            errors.append(u" - L'état civil des parents est incomplet.")
+            errors.append(u" - L'Ã©tat civil des parents est incomplet.")
         if self.debut is None:
-            errors.append(u" - La date de début de la période n'est pas renseignée.")
+            errors.append(u" - La date de dÃ©but de la pÃ©riode n'est pas renseignÃ©e.")
             raise CotisationException(errors)
         self.revenus_papa = Select(inscrit.papa.revenus, self.debut)
         if self.revenus_papa is None or self.revenus_papa.revenu == '':
-            errors.append(u" - Les déclarations de revenus du papa sont incomplètes.")
+            errors.append(u" - Les dÃ©clarations de revenus du papa sont incomplÃ¨tes.")
         self.revenus_maman = Select(inscrit.maman.revenus, self.debut)
         if self.revenus_maman is None or self.revenus_maman.revenu == '':
-            errors.append(u" - Les déclarations de revenus de la maman sont incomplètes.")
+            errors.append(u" - Les dÃ©clarations de revenus de la maman sont incomplÃ¨tes.")
         self.bureau = Select(creche.bureaux, self.debut)
         if self.bureau is None:
-            errors.append(u" - Il n'y a pas de bureau à cette date.")
+            errors.append(u" - Il n'y a pas de bureau Ã  cette date.")
         self.bareme_caf = Select(creche.baremes_caf, self.debut)
         if self.bareme_caf is None:
-            errors.append(u" - Il n'y a pas de barème CAF à cette date.")
+            errors.append(u" - Il n'y a pas de barÃ¨me CAF Ã  cette date.")
         self.inscription = inscrit.getInscription(self.debut)
         if self.inscription is None:
-            errors.append(u" - Il n'y a pas d'inscription à cette date.")
+            errors.append(u" - Il n'y a pas d'inscription Ã  cette date.")
             raise CotisationException(errors)
 
         self.mode_garde = self.inscription.mode
@@ -63,7 +63,7 @@ class Cotisation(object):
                     jours_garde += 1
                     break
         if self.inscription.mode == 0 and jours_garde < 3:
-            errors.append(u" - La semaine type de l'enfant est incomplète pour le mode d'accueil choisi.")
+            errors.append(u" - La semaine type de l'enfant est incomplÃ¨te pour le mode d'accueil choisi.")
 
         if len(errors) > 0:
             raise CotisationException(errors)
@@ -96,10 +96,10 @@ class Cotisation(object):
                     self.enfants_en_creche += 1
 
         if self.enfants_en_creche > 1:
-            self.mode_taux_horaire = u'%d enfants en crèche' % self.enfants_en_creche
+            self.mode_taux_horaire = u'%d enfants en crÃ¨che' % self.enfants_en_creche
             self.taux_horaire = 0.02 # !!
         else:
-            self.mode_taux_horaire = u'%d enfants à charge' % self.enfants_a_charge
+            self.mode_taux_horaire = u'%d enfants Ã  charge' % self.enfants_a_charge
             if self.enfants_a_charge > 3:
                 self.taux_horaire = 5.55/200 # 0.02 !!
             elif self.enfants_a_charge == 3:
@@ -107,18 +107,18 @@ class Cotisation(object):
             elif self.enfants_a_charge == 2:
                 self.taux_horaire = 8.33/200 # 0.04 !!
             else:
-                self.mode_taux_horaire = u'1 enfant à charge'
+                self.mode_taux_horaire = u'1 enfant Ã  charge'
                 self.taux_horaire = 10.0/200 # 0.05 !!
 
 #        if (inscrit.handicape and self.taux_horaire > 0.02):
-#            self.mode_taux_horaire += u', handicapé'
+#            self.mode_taux_horaire += u', handicapÃ©'
 #            self.taux_horaire -= 0.01
 
         self.heures_garde = jours_garde * 40
         if jours_garde == 5:
             self.mode_heures_garde = u'plein temps'
         else:
-            self.mode_heures_garde = u'%d/5èmes' % jours_garde
+            self.mode_heures_garde = u'%d/5Ã¨mes' % jours_garde
 
         self.montant_heure_garde = self.assiette_mensuelle * self.taux_horaire / 100
         self.cotisation_mensuelle = self.assiette_mensuelle * self.taux_horaire * self.heures_garde * creche.mois_payes / 12 / 100
