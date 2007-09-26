@@ -16,7 +16,10 @@
 ##    along with Gertrude; if not, write to the Free Software
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-VERSION = 8
+days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"]
+months = ["Janvier", u'Février', "Mars", "Avril", "Mai", "Juin", "Juillet", u'Août', "Septembre", "Octobre", "Novembre", u'Décembre']
+months_abbrev = ["Janv", u'Fév', "Mars", "Avril", "Mai", "Juin", "Juil", u'Août', "Sept", "Oct", "Nov", u'Déc']
+trimestres = ["1er", u'2ème', u'3ème', u'4ème']
 
 PROFIL_INSCRIPTIONS = 1
 PROFIL_TRESORIER = 2
@@ -43,3 +46,4 @@ SUPPLEMENT = 4 # utilise dans getPresence
 
 ID_SYNCHRO = 10001
 ID_UNDO = 10002
+

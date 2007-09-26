@@ -27,7 +27,7 @@ from releves import RelevesPanel
 from general import GeneralPanel
 from admin import AdminPanel
 from common import *
-from datafiles import *
+from data import Backup, Load, Save
 
 VERSION = '0.36'
 
@@ -220,9 +220,8 @@ class MyApp(wx.App):
             frame.Show()
         return True
 
-__builtin__.creche = Load()
-__builtin__.profil = 0
 Backup()
+Load()
 app = MyApp(0)
 app.MainLoop()
-connection.close()
+Save()
