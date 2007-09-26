@@ -59,7 +59,6 @@ class SQLConnection(object):
             adresse VARCHAR,
             code_postal INTEGER,
             ville VARCHAR,
-            server_url VARCHAR,
             mois_payes INTEGER,
             presences_previsionnelles BOOLEAN,
             modes_inscription INTEGER
@@ -204,11 +203,11 @@ class SQLConnection(object):
 
         cur = self.cursor()
 
-        cur.execute('SELECT nom, adresse, code_postal, ville, server_url, mois_payes, presences_previsionnelles, modes_inscription, idx FROM CRECHE')
+        cur.execute('SELECT nom, adresse, code_postal, ville, mois_payes, presences_previsionnelles, modes_inscription, idx FROM CRECHE')
         creche_entry = cur.fetchall()
         if len(creche_entry) > 0:
             creche = Creche(creation=False)
-            creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.server_url, creche.mois_payes, creche.presences_previsionnelles, creche.modes_inscription, creche.idx = creche_entry[0]
+            creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.mois_payes, creche.presences_previsionnelles, creche.modes_inscription, creche.idx = creche_entry[0]
         else:
             creche = Creche()
 
@@ -313,9 +312,10 @@ class SQLConnection(object):
                 profile INTEGER
               );""")
 
-        if version < 2:
-            cur.execute("ALTER TABLE CRECHE ADD server_url VARCHAR;")
-            cur.execute('UPDATE CRECHE SET server_url=?', ("",))
+##        Not used now
+##        if version < 2:
+##            cur.execute("ALTER TABLE CRECHE ADD server_url VARCHAR;")
+##            cur.execute('UPDATE CRECHE SET server_url=?', ("",))
 
         if version < 3:
             cur.execute("ALTER TABLE PRESENCES RENAME TO OLD;")
