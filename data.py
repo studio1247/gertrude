@@ -181,6 +181,8 @@ class HttpConnection(object):
             return FileConnection().Load()
         elif self.do_download():
             return FileConnection().Load()[0], 1
+	else:
+	    return None, 0
 
     def Save(self):
         return FileConnection().Save() and self.upload()

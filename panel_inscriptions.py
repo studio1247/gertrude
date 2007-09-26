@@ -377,8 +377,6 @@ class IdentitePanel(InscriptionsTab):
         self.sizer.Add(sizer1, 0, wx.EXPAND|wx.ALL, 5)
         self.sizer.Add(sizer3, 0, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(self.sizer)
-        self.SetAutoLayout(1)
-        self.SetupScrolling()
         
     def __add_fratrie(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -521,8 +519,6 @@ class ParentsPanel(InscriptionsTab):
             sizer.Add(sizer1, 1, wx.EXPAND|wx.ALL, 5)
 
         self.SetSizer(sizer)
-        self.SetAutoLayout(1)
-        self.SetupScrolling()
 
     def nouveau_revenu_papa(self):
         return Revenu(self.inscrit.papa)
@@ -561,8 +557,6 @@ class ModeAccueilPanel(InscriptionsTab):
         else:
             self.week_ctrl = None
         self.SetSizer(sizer)
-        self.SetAutoLayout(1)
-        self.SetupScrolling()
         
     def nouvelleInscription(self): # TODO les autres pareil ...
         return Inscription(self.inscrit)

@@ -537,6 +537,8 @@ class AutoTab(wx.lib.scrolledpanel.ScrolledPanel):
         wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent)
         self.parent = parent
         self.ctrls = []
+        self.SetAutoLayout(1)
+        self.SetupScrolling()
            
     def UpdateContents(self):
         for ctrl in self.ctrls:
