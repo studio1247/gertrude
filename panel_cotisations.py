@@ -194,6 +194,9 @@ def GenereRecu(inscrit, debut, fin, oofilename):
     return GenerateDocument('./templates/Attestation paiement.odt', oofilename, RecuModifications(inscrit, debut, fin))
 
 class CotisationsPanel(GPanel):
+    bitmap = './bitmaps/facturation.png'
+    index = 30
+    profil = PROFIL_TRESORIER
     def __init__(self, parent):
         GPanel.__init__(self, parent, "Cotisations")
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -391,6 +394,8 @@ class CotisationsPanel(GPanel):
             dlg = wx.MessageDialog(self, message, 'Message', wx.OK)
         dlg.ShowModal()
         dlg.Destroy()
+
+panels = [CotisationsPanel]
 
 if __name__ == '__main__':
     import sys, os, __builtin__

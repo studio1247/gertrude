@@ -364,6 +364,9 @@ class DayPanel(wx.Panel):
         dc.EndDrawing()
 
 class PlanningPanel(GPanel):
+    bitmap = './bitmaps/presences.png'
+    index = 20
+    profil = PROFIL_ALL
     def __init__(self, parent):
         GPanel.__init__(self, parent, u'Présences enfants')
         
@@ -417,3 +420,5 @@ class PlanningPanel(GPanel):
             note = self.notebook.GetPage(week_day)
             note.presences_panel.UpdateContents()
         self.sizer.Layout()
+
+panels = [PlanningPanel]

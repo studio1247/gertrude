@@ -19,18 +19,11 @@
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import __builtin__
-import wx, datetime, sys, shutil
+import os, sys, shutil, glob, wx
 from common import *
 from data import Backup, Load, Save
 
-from panel_inscriptions import InscriptionsPanel
-from panel_planning import PlanningPanel
-from panel_cotisations import CotisationsPanel
-from panel_releves import RelevesPanel
-from panel_creche import CrechePanel
-from panel_admin import AdminPanel
-
-VERSION = '0.36'
+VERSION = '0.37'
 
 __builtin__.history = []
 
@@ -86,15 +79,15 @@ class Listbook(wx.Panel):
 class GertrudeListbook(Listbook):
     def __init__(self, parent, id=-1):
         Listbook.__init__(self, parent, id=-1, style=wx.LB_DEFAULT, pos=(10, 10))
-        self.AddPage(InscriptionsPanel(self), './bitmaps/inscriptions.png')
-        self.AddPage(PlanningPanel(self), './bitmaps/presences.png')
-        if profil & PROFIL_TRESORIER:
-            self.AddPage(CotisationsPanel(self), './bitmaps/facturation.png')
-        self.AddPage(RelevesPanel(self), './bitmaps/releves.png')
-        if profil & PROFIL_BUREAU:
-            self.AddPage(CrechePanel(self), './bitmaps/creche.png')
-        if profil & PROFIL_ADMIN:
-            self.AddPage(AdminPanel(self), './bitmaps/administration.png')
+        panels = []
+        for filename in glob.glob('panel_*.py'):
+            module_name = os.path.split(filename)[1][:-3]
+            print 'importing panel %s' % module_name
+            panels.extend([tmp(self) for tmp in __import__(module_name).panels])
+        panels.sort(lambda a, b: a.index-b.index)
+        for panel in panels:            
+            if panel.profil & profil:
+                self.AddPage(panel, panel.bitmap)
         self.Draw()
 
     def OnPageChanged(self, event):

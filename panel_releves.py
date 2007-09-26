@@ -422,6 +422,9 @@ def GenerePlanningPresences(date, oofilename):
     return GenerateDocument('./templates/Planning Presences.ods', oofilename, PlanningModifications(date))
 
 class RelevesPanel(GPanel):
+    bitmap = './bitmaps/releves.png'
+    index = 40
+    profil = PROFIL_ALL
     def __init__(self, parent):
         GPanel.__init__(self, parent, u'Relevés')
 
@@ -528,6 +531,8 @@ class RelevesPanel(GPanel):
             dlg = wx.MessageDialog(self, u"Document %s généré" % oofilename, 'Message', wx.OK)
             dlg.ShowModal()
             dlg.Destroy()
+
+panels = [RelevesPanel]
 
 if __name__ == '__main__':
     import sys, os, __builtin__

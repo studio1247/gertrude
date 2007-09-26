@@ -16,7 +16,7 @@
 ##    along with Gertrude; if not, write to the Free Software
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-import wx
+import wx, wx.lib, wx.lib.scrolledpanel
 import fpformat
 import datetime
 from common import *
@@ -306,10 +306,10 @@ class AutoMixin:
         if not self.instance:
             self.Disable()
         else:
-	    self.__ontext = False
+            self.__ontext = False
             self.SetValue(eval('self.instance.%s' % self.member))
-	    self.__ontext = True
-	    self.Enable()
+            self.__ontext = True
+            self.Enable()
             
     def onText(self, event):
         obj = event.GetEventObject()
@@ -432,12 +432,12 @@ class PeriodeChoice(wx.BoxSizer):
         sizer1 = wx.BoxSizer(wx.VERTICAL)
         self.periodechoice = wx.Choice(parent)
         parent.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.periodechoice)
-	delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
-	plusbmp = wx.Bitmap("bitmaps/plus.png", wx.BITMAP_TYPE_PNG)
-	self.periodeaddbutton = wx.BitmapButton(parent, -1, plusbmp, style=wx.BU_EXACTFIT)
-	self.periodedelbutton = wx.BitmapButton(parent, -1, delbmp)
+        delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
+        plusbmp = wx.Bitmap("bitmaps/plus.png", wx.BITMAP_TYPE_PNG)
+        self.periodeaddbutton = wx.BitmapButton(parent, -1, plusbmp, style=wx.BU_EXACTFIT)
+        self.periodedelbutton = wx.BitmapButton(parent, -1, delbmp)
         sizer2 = wx.BoxSizer(wx.HORIZONTAL)
-	sizer2.AddMany([(self.periodechoice, 1, wx.EXPAND), (self.periodeaddbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT|wx.RIGHT, 5), (self.periodedelbutton, 0, wx.ALIGN_CENTER_VERTICAL)])
+        sizer2.AddMany([(self.periodechoice, 1, wx.EXPAND), (self.periodeaddbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT|wx.RIGHT, 5), (self.periodedelbutton, 0, wx.ALIGN_CENTER_VERTICAL)])
         parent.Bind(wx.EVT_BUTTON, self.EvtPeriodeAddButton, self.periodeaddbutton)
         parent.Bind(wx.EVT_BUTTON, self.EvtPeriodeDelButton, self.periodedelbutton)
         parent.ctrls.append(self)
@@ -451,7 +451,7 @@ class PeriodeChoice(wx.BoxSizer):
         #parent.Bind(wx.EVT_DATE_CHANGED, self.EvtChangementPeriode, date_fin)
         parent.Bind(wx.EVT_TEXT, self.EvtChangementPeriode, date_debut)
         parent.Bind(wx.EVT_TEXT, self.EvtChangementPeriode, date_fin)
-        
+
         sizer1.AddMany([(sizer2, 1, wx.EXPAND), (sizer3, 1, wx.TOP|wx.EXPAND, 3)])
         self.AddMany([(sizer1, 1, wx.LEFT|wx.EXPAND, 5)])
         self.SetInstance(instance, member)
