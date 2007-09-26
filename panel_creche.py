@@ -22,7 +22,7 @@ from common import *
 from gpanel import GPanel
 from controls import *
 
-class CrechePanel(AutoTab):
+class CrecheTab(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -35,7 +35,7 @@ class CrechePanel(AutoTab):
         sizer.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(sizer)
 
-class EmployesPanel(AutoTab):
+class EmployesTab(AutoTab):
     def __init__(self, parent):
         global delbmp
         delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
@@ -78,7 +78,7 @@ class EmployesPanel(AutoTab):
         self.sizer.Layout()
         self.UpdateContents()
         
-class ResponsabilitesPanel(AutoTab):
+class ResponsabilitesTab(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
         parents = self.GetNomsParents()
@@ -117,7 +117,7 @@ class ResponsabilitesPanel(AutoTab):
         result.sort(cmp=lambda x,y: cmp(x[0].lower(), y[0].lower()))
         return result
 
-class CafPanel(AutoTab):
+class CafTab(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -132,10 +132,10 @@ class CafPanel(AutoTab):
 class GeneralNotebook(wx.Notebook):
     def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
-        self.AddPage(CrechePanel(self), u'Crèche')
-        self.AddPage(EmployesPanel(self), u'Employés')
-        self.AddPage(ResponsabilitesPanel(self), u'Responsabilités')
-        self.AddPage(CafPanel(self), 'C.A.F.')        
+        self.AddPage(CrecheTab(self), u'Crèche')
+        self.AddPage(EmployesTab(self), u'Employés')
+        self.AddPage(ResponsabilitesTab(self), u'Responsabilités')
+        self.AddPage(CafTab(self), 'C.A.F.')        
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
     def OnPageChanged(self, event):
@@ -147,7 +147,7 @@ class GeneralNotebook(wx.Notebook):
         page = self.GetCurrentPage()
         page.UpdateContents()
      
-class GeneralPanel(GPanel):
+class CrechePanel(GPanel):
     def __init__(self, parent):
         GPanel.__init__(self, parent, u'Crèche')
         self.notebook = GeneralNotebook(self)

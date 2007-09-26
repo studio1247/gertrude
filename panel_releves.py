@@ -24,7 +24,7 @@ import wx
 import wx.lib.scrolledpanel
 import wx.html
 from common import *
-from planning import GPanel
+from gpanel import GPanel
 from controls import *
 from cotisation import CotisationException
 from facture import Facture

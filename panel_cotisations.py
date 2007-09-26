@@ -28,7 +28,7 @@ import xml.dom.minidom
 from common import *
 from facture import Facture
 from cotisation import Cotisation, CotisationException
-from planning import GPanel
+from gpanel import GPanel
 from ooffice import *
 
 couleurs = ['C2', 'D2', 'B2', 'E2', 'A2']

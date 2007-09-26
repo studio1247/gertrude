@@ -20,14 +20,15 @@
 
 import __builtin__
 import wx, datetime, sys, shutil
-from planning import PlanningPanel
-from inscriptions import InscriptionsPanel
-from cotisations import CotisationsPanel
-from releves import RelevesPanel
-from general import GeneralPanel
-from admin import AdminPanel
 from common import *
 from data import Backup, Load, Save
+
+from panel_inscriptions import InscriptionsPanel
+from panel_planning import PlanningPanel
+from panel_cotisations import CotisationsPanel
+from panel_releves import RelevesPanel
+from panel_creche import CrechePanel
+from panel_admin import AdminPanel
 
 VERSION = '0.36'
 
@@ -91,7 +92,7 @@ class GertrudeListbook(Listbook):
             self.AddPage(CotisationsPanel(self), './bitmaps/facturation.png')
         self.AddPage(RelevesPanel(self), './bitmaps/releves.png')
         if profil & PROFIL_BUREAU:
-            self.AddPage(GeneralPanel(self), './bitmaps/creche.png')
+            self.AddPage(CrechePanel(self), './bitmaps/creche.png')
         if profil & PROFIL_ADMIN:
             self.AddPage(AdminPanel(self), './bitmaps/administration.png')
         self.Draw()
