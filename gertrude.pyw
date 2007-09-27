@@ -27,7 +27,7 @@ from startdialog import StartDialog
 import gpanel, controls, zipfile, xml.dom.minidom, wx.html, ooffice
 sys.path.insert(0, ".")
 
-VERSION = '0.38'
+VERSION = '0.39'
 
 __builtin__.history = []
 
@@ -86,7 +86,7 @@ class GertrudeListbook(Listbook):
         panels = []
         for filename in glob.glob('panel_*.py'):
             module_name = os.path.split(filename)[1][:-3]
-            print 'importing panel %s' % module_name
+            print 'Importation de %s.py' % module_name
             panels.extend([tmp(self) for tmp in __import__(module_name).panels])
         panels.sort(lambda a, b: a.index-b.index)
         for panel in panels:            
@@ -113,14 +113,19 @@ class GertrudeFrame(wx.Frame):
         # Statusbar
         self.CreateStatusBar()
 
-        # Toolbar
-        tb = self.CreateToolBar(wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT)
-        tb.SetToolBitmapSize(wx.Size(24, 24))
-        tb.AddSimpleTool(ID_SYNCHRO, wx.BitmapFromImage(wx.Image("./bitmaps/reload.png", wx.BITMAP_TYPE_PNG)), "Synchroniser")
-        tb.AddSimpleTool(ID_UNDO, wx.BitmapFromImage(wx.Image("./bitmaps/undo.png", wx.BITMAP_TYPE_PNG)), "Undo")
-        self.Bind(wx.EVT_TOOL, self.onToolbarButton)
-        tb.Realize()
-
+        # MenuBar
+        menuBar = wx.MenuBar()
+        menu1 = wx.Menu()
+        menu1.Append(101, "&Fermer\tAlt+F4", u"Ferme la fenêtre")
+        self.Bind(wx.EVT_MENU, self.OnExit, id=101)
+        menuBar.Append(menu1, "&Fichier")        
+        menu2 = wx.Menu()
+        menu2.Append(201, "&Annuler\tCtrl+Z", u"Annule l'action précédente")
+        self.Bind(wx.EVT_MENU, self.OnUndo, id=201)
+        menuBar.Append(menu2, "&Edition")
+        self.SetMenuBar(menuBar)
+        
+        # Inside
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         panel = wx.Panel(self, -1)
         sizer.Add(panel, 1, wx.EXPAND)
@@ -138,21 +143,11 @@ class GertrudeFrame(wx.Frame):
         Save()
         self.Destroy()
 
-    def onToolbarButton(self, event):
-        evtId = event.GetId()
-        if evtId == ID_UNDO:
-            if len(history) > 0:
-                for obj, member, value in history.pop(-1):
-                    exec('obj.%s = value' % member)
-                self.listbook.UpdateContents()
-        elif evtId == ID_SYNCHRO:
-            dlg = SynchroDialog(self, creche.server_url)
-            dlg.CenterOnScreen()
-            val = dlg.ShowModal()
-            dlg.Destroy()
-            if val == ID_SYNCHRO:
-                __builtin__.creche = Load()
-                self.listbook.UpdateContents()
+    def OnUndo(self, event):
+        if len(history) > 0:
+            for obj, member, value in history.pop(-1):
+                exec('obj.%s = value' % member)
+            self.listbook.UpdateContents()
 
 
 class MyApp(wx.App):

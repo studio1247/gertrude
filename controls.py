@@ -314,10 +314,19 @@ class AutoMixin:
     def onText(self, event):
         obj = event.GetEventObject()
         if self.__ontext:
-            value = obj.GetValue()
-            if eval('self.instance.%s' % self.member) != value:
-                exec('self.instance.%s = value' % self.member)
+            self.AutoChange(obj.GetValue())
         event.Skip()
+
+    def AutoChange(self, new_value):
+        old_value = eval('self.instance.%s' % self.member)
+        if old_value != new_value:
+            if len(history) > 0 and len(history[-1]) == 1:
+                last_instance, last_member, last_change = history[-1][0]
+                if last_instance != self.instance or last_member != self.member:
+                    history.append([(self.instance, self.member, old_value)])
+            else:
+                history.append([(self.instance, self.member, old_value)])
+            exec('self.instance.%s = new_value' % self.member)
         
 class AutoTextCtrl(wx.TextCtrl, AutoMixin):
     def __init__(self, parent, instance, member, *args, **kwargs):
@@ -356,8 +365,7 @@ class AutoChoiceCtrl(wx.Choice, AutoMixin):
         
     def onChoice(self, event):
         value = event.GetClientData()
-        if eval('self.instance.%s' % self.member) != value:
-            exec('self.instance.%s = value' % self.member)
+        self.AutoChange(event.GetClientData())
         event.Skip()
     
     def SetValue(self, value):
@@ -390,8 +398,7 @@ class AutoCheckBox(wx.CheckBox, AutoMixin):
 
     def EvtCheckbox(self, event):
         box = event.GetEventObject()
-        value = event.Checked()
-        exec("self.instance." + self.member + " = value")
+        self.AutoChange(event.Checked())
         
 class AutoRadioBox(wx.RadioBox, AutoMixin):
     def __init__(self, parent, instance, member, label, choices, *args, **kwargs):
@@ -400,8 +407,7 @@ class AutoRadioBox(wx.RadioBox, AutoMixin):
         parent.Bind(wx.EVT_RADIOBOX, self.EvtRadiobox, self)
 
     def EvtRadiobox(self, event):
-        value = event.GetInt()
-        exec('self.instance.%s = value' % self.member)
+        self.AutoChange(event.GetInt())
         
     def SetValue(self, value):
         self.SetSelection(value)

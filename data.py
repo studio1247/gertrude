@@ -206,6 +206,7 @@ class FileConnection(object):
         pass
     
     def Load(self, handler=default_handler):
+        handler(msg="Chargement de la base ...")
         creche = sql_connection.load()
         handler(100)
         return creche, 0
