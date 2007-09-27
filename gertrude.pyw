@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-
-# -*- coding: cp1252 -*-
+# -*- coding: utf8 -*-
 
 ##    This file is part of Gertrude.
 ##

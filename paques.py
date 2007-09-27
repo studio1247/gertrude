@@ -1,3 +1,5 @@
+# -*- coding: utf8 -*-
+
 ##    This file is part of Gertrude.
 ##
 ##    Gertrude is free software; you can redistribute it and/or modify
