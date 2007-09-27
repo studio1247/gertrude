@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 ##    This file is part of Gertrude.
 ##
@@ -18,9 +18,10 @@
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import __builtin__
-import os, sys, shutil, glob, wx
+import os, sys, time, shutil, glob, wx
 from common import *
 from data import Backup, Load, Save
+from startdialog import StartDialog
 
 VERSION = '0.37'
 
@@ -98,16 +99,15 @@ class GertrudeListbook(Listbook):
         self.GetPage(self.list_box.GetSelection()).UpdateContents()
 
 class GertrudeFrame(wx.Frame):
-    def __init__(self, parent, ID, title):
-        wx.Frame.__init__(self, parent, ID, title, wx.DefaultPosition, wx.Size(1000, 750))
+    def __init__(self):
+        wx.Frame.__init__(self, None, -1, "Gertrude v%s" % VERSION, wx.DefaultPosition, wx.Size(1000, 750))
 
-        # Icone
+        # Icon
         icon = wx.Icon('./bitmaps/gertrude.ico', wx.BITMAP_TYPE_ICO)
         self.SetIcon(icon)
 
         # Statusbar
         self.CreateStatusBar()
-        self.SetStatusText("This is the statusbar")
 
         # Toolbar
         tb = self.CreateToolBar(wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT)
@@ -127,6 +127,13 @@ class GertrudeFrame(wx.Frame):
         sizer2.Add(self.listbook, 1, wx.EXPAND)
         panel.SetSizer(sizer2)
 
+        self.Bind(wx.EVT_CLOSE, self.OnExit)
+
+    def OnExit(self, evt):
+        self.SetStatusText("Fermeture en cours ....")
+        Save()
+        self.Destroy()
+
     def onToolbarButton(self, event):
         evtId = event.GetId()
         if evtId == ID_UNDO:
@@ -143,78 +150,14 @@ class GertrudeFrame(wx.Frame):
                 __builtin__.creche = Load()
                 self.listbook.UpdateContents()
 
-class LoginDialog(wx.Dialog):
-    def __init__(self):
-        wx.Dialog.__init__(self, None, -1, "Identification", wx.DefaultPosition, wx.DefaultSize)
-
-        # Icone
-        icon = wx.Icon('./bitmaps/gertrude.ico', wx.BITMAP_TYPE_ICO )
-        self.SetIcon(icon)
-
-        # Now continue with the normal construction of the dialog
-        # contents
-        sizer = wx.BoxSizer(wx.VERTICAL)
-
-        bmp = wx.Bitmap("./bitmaps/splash_gertrude.png", wx.BITMAP_TYPE_PNG)
-        bmp32 = wx.StaticBitmap(self, -1, bmp, style=wx.SUNKEN_BORDER)
-        sizer.Add(bmp32, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
-
-        fields_sizer = wx.FlexGridSizer(0, 2, 5, 10)
-        fields_sizer.AddGrowableCol(1, 1)
-        sizer.Add(fields_sizer, 0, wx.EXPAND|wx.ALL, 5)
-        self.login_ctrl = wx.TextCtrl(self, -1, "", size=(80,-1))
-        self.login_ctrl.SetHelpText("Entrez votre identifiant")
-        fields_sizer.AddMany([(wx.StaticText(self, -1, "Identifiant :"), 0, wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5), (self.login_ctrl, 0, wx.EXPAND|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5)])
-        self.passwd_ctrl = wx.TextCtrl(self, -1, "", size=(80,-1), style=wx.TE_PASSWORD)
-        self.passwd_ctrl.SetHelpText("Entrez votre mot de passe")
-        fields_sizer.AddMany([(wx.StaticText(self, -1, "Mot de passe :"), 0, wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5), (self.passwd_ctrl, 0, wx.EXPAND|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5)])
-        
-        btnsizer = wx.StdDialogButtonSizer()
-        btn = wx.Button(self, wx.ID_OK)
-        self.Bind(wx.EVT_BUTTON, self.onOkButton, btn)
-        btnsizer.AddButton(btn)
-        btn = wx.Button(self, wx.ID_CANCEL)
-        btnsizer.AddButton(btn)
-        self.Bind(wx.EVT_BUTTON, self.OnExit, btn)
-        btnsizer.Realize()       
-        sizer.Add(btnsizer, 0, wx.ALL, 5)
-        self.SetSizer(sizer)
-        sizer.Fit(self)
-        self.Bind(wx.EVT_CLOSE, self.OnExit)
-
-    def onOkButton(self, evt):
-        login = self.login_ctrl.GetValue()
-        password = self.passwd_ctrl.GetValue()
-
-        for user in creche.users:
-            if login == user.login and password == user.password:
-                self.Destroy()
-                __builtin__.profil = user.profile
-                frame = GertrudeFrame(None, -1, "Gertrude v%s" % VERSION)
-                frame.Show()
-                return
-
-        self.login_ctrl.Clear()
-        self.passwd_ctrl.Clear()
-        self.login_ctrl.SetFocus()
-
-    def OnExit(self, evt):
-        self.Destroy()
-        evt.Skip()
 
 class MyApp(wx.App):
     def OnInit(self):
-        if len(creche.users) > 0:
-            login_dialog = LoginDialog()
-            login_dialog.Show(True)
-        else:
-            __builtin__.profil = PROFIL_ALL
-            frame = GertrudeFrame(None, -1, "Gertrude v%s" % VERSION)
-            frame.Show()
+        start_dialog = StartDialog(GertrudeFrame)
+        start_dialog.Show(True)
         return True
 
-Backup()
-Load()
-app = MyApp(0)
-app.MainLoop()
-Save()
+if __name__ == '__main__':
+    app = MyApp(0)
+    app.MainLoop()
+

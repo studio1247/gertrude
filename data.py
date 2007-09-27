@@ -1,4 +1,4 @@
-﻿# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 ##    This file is part of Gertrude.
 ##
@@ -22,19 +22,25 @@ import urllib2, mimetypes
 import ConfigParser
 import sqlinterface
 
+def default_handler(count=None, msg=None, max=None):
+    if msg: print msg
+    if max: return default_handler
+
 BACKUPS_DIRECTORY = './backups'
-def Backup():
-    print 'backup...'
+def Backup(handler=default_handler):
+    handler(msg='Sauvegarde ...')
     if os.path.isfile('gertrude.db'):
         if not os.path.isdir(BACKUPS_DIRECTORY):
             os.mkdir(BACKUPS_DIRECTORY)
-
         backup_filename = 'backup_%d.db' % time.time()
         shutil.copyfile('gertrude.db', BACKUPS_DIRECTORY + '/' + backup_filename)
+    handler(100)
 
 TOKEN_FILENAME = '.token'
+
+    
 class HttpConnection(object):
-    def __init__(self, url, auth_info, proxy_info=None):
+    def __init__(self, url, auth_info=None, proxy_info=None):
         self.url = url
         opener = urllib2.build_opener()
         if auth_info:
@@ -48,6 +54,7 @@ class HttpConnection(object):
             self.token = file(TOKEN_FILENAME).read()
         else:
             self.token = 0
+        self.handler = default_handler
 
     def get_content_type(self, filename):
         return mimetypes.guess_type(filename)[0] or 'application/octet-stream'
@@ -113,11 +120,11 @@ class HttpConnection(object):
             return None
 
     def has_token(self):
-        print "has token..."
+        self.handler(msg=u"Vérification du jeton ...")
         return self.token and self.urlopen('has_token')
 
     def get_token(self):
-        print "get token..."
+        self.handler(msg=u"Récupération du jeton ...")
         self.token = self.urlopen('get_token', decode=False)
         if not self.token or self.token == "0":
             return 0
@@ -126,7 +133,7 @@ class HttpConnection(object):
             return 1
 
     def rel_token(self):
-        print "release token..."
+        self.handler(msg=u"Libération du jeton ...")
         if not self.urlopen('rel_token'):
             return 0
         else:
@@ -135,7 +142,7 @@ class HttpConnection(object):
             return 1
 
     def do_download(self):
-        print "download..."
+        self.handler(msg=u"Téléchargement de la base ...")
         data = self.urlopen('download', decode=False)
         if data:
             f = file('./gertrude.db', 'wb')
@@ -146,57 +153,66 @@ class HttpConnection(object):
         else:
             return 0
 
-    def download(self):
+    def download(self):       
         if self.has_token():
-            print u"Token déjà pris. Pas de download."
+            self.handler(msg=u"Jeton déjà pris => pas de download")
             return 1
         elif self.get_token():
+            self.handler(30)
             if self.do_download():
+                self.handler(90)
                 return 1
             else:
+                self.handler(90)
                 self.rel_token()
-                print u"Le download a échoué"
+                self.handler(msg=u"Le download a échoué")
                 return 0
         else:
-            print "Impossible de prendre le token."
+            self.handler(msg="Impossible de prendre le jeton.")
             return 0
        
     def do_upload(self):
-        print "upload..."
+        self.handler(msg="Envoi vers le serveur ...")
         content_type, body = self.encode_multipart_formdata([], [("database", "./gertrude.db")])
         headers = {"Content-Type": content_type, 'Content-Length': str(len(body))}
         return self.urlopen('upload', body, headers)
 
     def upload(self):
         if not self.has_token():
-            print u"Pas de token présent. Pas d'upload."
+            self.handler(u"Pas de jeton présent => pas d'envoi vers le serveur.")
             return 0
         if self.do_upload():
             return self.rel_token()
         else:
             return 0
 
-    def Load(self):
+    def Load(self, handler=default_handler):
+        self.handler = handler
         if self.download():
-            return FileConnection().Load()
+            result = FileConnection().Load()
         elif self.do_download():
-            return FileConnection().Load()[0], 1
-	else:
-	    return None, 0
+            result = FileConnection().Load()[0], 1
+        else:
+            result = None, 0
+        handler(100)
+        return result
 
-    def Save(self):
+    def Save(self, handler=default_handler):
+        self.handler = handler
         return FileConnection().Save() and self.upload()
 
 class FileConnection(object):
     def __init__(self):
         pass
     
-    def Load(self):
+    def Load(self, handler=default_handler):
         creche = sql_connection.load()
+        handler(100)
         return creche, 0
 
-    def Save(self):
+    def Save(self, handler=default_handler):
         sql_connection.close()
+        handler(100)
         return True
 
 def getConnection():
@@ -221,16 +237,18 @@ def getConnection():
         connection = FileConnection()
     return connection
 
-def Load():
+def Load(handler=default_handler):
     connection = getConnection()
-    __builtin__.creche, __builtin__.readonly = connection.Load()
+    handler(10)
+    __builtin__.creche, __builtin__.readonly = connection.Load(handler(max=90))
+    handler(100)
     return creche is not None
 
-def Save():
-    database = getConnection()
-    return database.Save()
+def Save(handler=default_handler):
+    connection = getConnection()
+    return connection.Save(handler(max=100))
     
-if __name__ == '__main__':   
+if __name__ == '__main__':
     loaded = Load()
     if loaded and not readonly:
         Save()    
