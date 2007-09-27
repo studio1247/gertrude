@@ -23,7 +23,11 @@ from common import *
 from data import Backup, Load, Save
 from startdialog import StartDialog
 
-VERSION = '0.37'
+# Don't remove these 2 lines (mandatory for py2exe)
+import gpanel, controls, zipfile, xml.dom.minidom, wx.html, ooffice
+sys.path.insert(0, ".")
+
+VERSION = '0.38'
 
 __builtin__.history = []
 

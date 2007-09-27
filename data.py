@@ -217,23 +217,26 @@ class FileConnection(object):
 
 def getConnection():
     parser = ConfigParser.ConfigParser()
-    parser.read("./gertrude.ini")
-    url = parser.get("gertrude", "url")
-    if url.startswith("http://"):
-        try:
-            auth_info = (parser.get("gertrude", "login"), parser.get("gertrude", "password"))
-        except:
-            auth_info = None
-        try:
-            proxy_info = { 'host' : parser.get("gertrude", "proxy-host"),
-                           'port' : int(parser.get("gertrude", "proxy-port")),
-                           'user' : parser.get("gertrude", "proxy-user"),
-                           'pass' : parser.get("gertrude", "proxy-pass")
-                           }
-        except:
-            proxy_info = None
-        connection = HttpConnection(url, auth_info, proxy_info)
-    else:
+    try:
+        parser.read("./gertrude.ini")
+        url = parser.get("gertrude", "url")
+        if url.startswith("http://"):
+            try:
+                auth_info = (parser.get("gertrude", "login"), parser.get("gertrude", "password"))
+            except:
+                auth_info = None
+            try:
+                proxy_info = { 'host' : parser.get("gertrude", "proxy-host"),
+                               'port' : int(parser.get("gertrude", "proxy-port")),
+                               'user' : parser.get("gertrude", "proxy-user"),
+                               'pass' : parser.get("gertrude", "proxy-pass")
+                               }
+            except:
+                proxy_info = None
+            connection = HttpConnection(url, auth_info, proxy_info)
+        else:
+            connection = FileConnection()
+    except:
         connection = FileConnection()
     return connection
 
