@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 ##    This file is part of Gertrude.
 ##
@@ -17,12 +17,13 @@
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import __builtin__
-import wx
+import wx, wx.lib, wx.lib.delayedresult
 from common import *
 from data import Backup, Load, Save
 
 class StartDialog(wx.Dialog):
     def __init__(self, frame):
+        self.loaded = False
         self.frame = frame
         wx.Dialog.__init__(self, None, -1, "Gertrude", wx.DefaultPosition, wx.DefaultSize)
 
@@ -65,7 +66,7 @@ class StartDialog(wx.Dialog):
         self.SetSizer(self.sizer)
         self.sizer.Fit(self)
 
-        self.timer = wx.FutureCall(500, self.Start)
+        wx.lib.delayedresult.startWorker(self.OnLoaded, self.Load)
    
     def handler(self, count=None, msg=None, max=None):
         if msg:
@@ -79,9 +80,21 @@ class StartDialog(wx.Dialog):
             if count == 100:
                 self.gauge_intervals.pop(-1)
 
-    def Start(self):
-        Backup(self.handler(max=10))
-        Load(self.handler(max=80))
+    def OnLoaded(self, event):
+        try:
+            result = event.get()
+        except Exception, e:
+            self.info.AppendText(str(e))
+            self.gauge.SetValue(100)
+            return
+
+        if not result:
+            self.info.AppendText("Erreur lors du chargement !\n")
+            self.gauge.SetValue(100)
+            return
+
+        self.loaded = True
+        sql_connection.open()
         if len(creche.users) == 0:
             __builtin__.profil = PROFIL_ALL
             self.StartFrame()
@@ -93,6 +106,14 @@ class StartDialog(wx.Dialog):
 
             self.sizer.Layout()
             self.sizer.Fit(self)
+        
+    def Load(self):
+        Backup(self.handler(max=10))
+        if not Load(self.handler(max=80)):
+            return False
+        # we close database since it's opened from an other thread
+        sql_connection.close()
+        return True
 
     def StartFrame(self):
         self.Destroy()
@@ -114,5 +135,6 @@ class StartDialog(wx.Dialog):
 
     def OnExit(self, evt):
         self.info.AppendText("\nFermeture ...\n")
-        Save(self.handler(max=100))
+        if self.loaded:
+            Save(self.handler(max=100))
         self.Destroy()

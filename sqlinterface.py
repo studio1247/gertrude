@@ -27,7 +27,7 @@ VERSION = 8
 
 class SQLConnection(object):
     def __init__(self):
-        self.open()
+        self.con = None
         
     def open(self):
         if not os.path.exists('gertrude.db'):
@@ -195,6 +195,9 @@ class SQLConnection(object):
         self.con.commit()
 
     def load(self):
+        if not self.con:
+            self.open()
+            
         def getdate(str):
             if str is None:
                 return None

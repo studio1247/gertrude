@@ -88,7 +88,6 @@ class HttpConnection(object):
         content_type = 'multipart/form-data; boundary=%s' % BOUNDARY
         return content_type, body
 
-
     def urlopen(self, action, body=None, headers=None, decode=True):
         try:
             url = '%s?action=%s' % (self.url, action)
@@ -107,17 +106,13 @@ class HttpConnection(object):
                 return result
         except urllib2.HTTPError, e:
             if e.code == 404:
-                print "Echec - page non trouvée"
-                return None
+                raise Exception("Echec - page non trouvée")
             else:
-                print "Echec - code %d (%s)" % (e.code, e.msg)
-                return None
+                raise Exception("Echec - code %d (%s)" % (e.code, e.msg))
         except urllib2.URLError, e:
-            print "Echec - cause:", e.reason
-            return None
+            raise Exception("Echec - cause:", e.reason)
         except Exception, e:
-            print "Echec - exception:", e
-            return None
+            raise
 
     def has_token(self):
         self.handler(msg=u"Vérification du jeton ...")
@@ -189,9 +184,9 @@ class HttpConnection(object):
     def Load(self, handler=default_handler):
         self.handler = handler
         if self.download():
-            result = FileConnection().Load()
+            result = FileConnection().Load(handler(max=10))
         elif self.do_download():
-            result = FileConnection().Load()[0], 1
+            result = FileConnection().Load(handler(max=10))[0], 1
         else:
             result = None, 0
         handler(100)
