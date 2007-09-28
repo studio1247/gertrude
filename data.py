@@ -25,13 +25,12 @@ from functions import *
 
 BACKUPS_DIRECTORY = './backups'
 def Backup(progress_handler=default_progress_handler):
-    progress_handler('Sauvegarde ...')
+    progress_handler.display('Sauvegarde ...')
     if os.path.isfile(sqlinterface.DB_FILENAME):
         if not os.path.isdir(BACKUPS_DIRECTORY):
             os.mkdir(BACKUPS_DIRECTORY)
         backup_filename = 'backup_%d.db' % time.time()
         shutil.copyfile(sqlinterface.DB_FILENAME, BACKUPS_DIRECTORY + '/' + backup_filename)
-    progress_handler(count=100)
 
 TOKEN_FILENAME = '.token'
 
@@ -112,11 +111,11 @@ class HttpConnection(object):
             raise
 
     def has_token(self):
-        self.progress_handler(u"Vérification du jeton ...")
+        self.progress_handler.display(u"Vérification du jeton ...")
         return self.token and self.urlopen('has_token')
 
     def get_token(self):
-        self.progress_handler(u"Récupération du jeton ...")
+        self.progress_handler.display(u"Récupération du jeton ...")
         self.token = self.urlopen('get_token')
         if not self.token:
             return 0
@@ -125,7 +124,7 @@ class HttpConnection(object):
             return 1
 
     def rel_token(self):
-        self.progress_handler(u"Libération du jeton ...")
+        self.progress_handler.display(u"Libération du jeton ...")
         if not self.urlopen('rel_token'):
             return 0
         else:
@@ -134,47 +133,47 @@ class HttpConnection(object):
             return 1
 
     def do_download(self):
-        self.progress_handler(u"Téléchargement de la base ...")
+        self.progress_handler.display(u"Téléchargement de la base ...")
         data = self.urlopen('download')
         if data:
             f = file(sqlinterface.DB_FILENAME, 'wb')
             f.write(data)
             f.close()
-            self.progress_handler(u'%d octets transférés.' % len(data))
+            self.progress_handler.display(u'%d octets transférés.' % len(data))
         else:
-            self.progress_handler(u'Pas de base présente sur le serveur')
+            self.progress_handler.display(u'Pas de base présente sur le serveur')
             if os.path.isfile(sqlinterface.DB_FILENAME):
-                self.progress_handler("Suppression de la base locale ...")
+                self.progress_handler.display("Suppression de la base locale ...")
                 os.remove(sqlinterface.DB_FILENAME)
         return 1
 
     def download(self):       
         if self.has_token():
-            self.progress_handler(u"Jeton déjà pris => pas de download")
+            self.progress_handler.display(u"Jeton déjà pris => pas de download")
             return 1
         elif self.get_token():
-            self.progress_handler(count=30)
+            self.progress_handler.set(30)
             if self.do_download():
-                self.progress_handler(count=90)
+                self.progress_handler.set(90)
                 return 1
             else:
-                self.progress_handler(count=90)
+                self.progress_handler.set(90)
                 self.rel_token()
-                self.progress_handler(u"Le download a échoué")
+                self.progress_handler.display(u"Le download a échoué")
                 return 0
         else:
-            self.progress_handler("Impossible de prendre le jeton.")
+            self.progress_handler.display("Impossible de prendre le jeton.")
             return 0
        
     def do_upload(self):
-        self.progress_handler("Envoi vers le serveur ...")
+        self.progress_handler.display("Envoi vers le serveur ...")
         content_type, body = self.encode_multipart_formdata([], [("database", "./gertrude.db")])
         headers = {"Content-Type": content_type, 'Content-Length': str(len(body))}
         return self.urlopen('upload', body, headers)
 
     def upload(self):
         if not self.has_token():
-            self.progress_handler(u"Pas de jeton présent => pas d'envoi vers le serveur.")
+            self.progress_handler.display(u"Pas de jeton présent => pas d'envoi vers le serveur.")
             return 0
         if self.do_upload():
             return self.rel_token()
@@ -184,17 +183,21 @@ class HttpConnection(object):
     def Load(self, progress_handler=default_progress_handler):
         self.progress_handler = progress_handler
         if self.download():
-            result = FileConnection().Load(progress_handler(max=10))
+            result = FileConnection().Load(progress_handler)
         elif self.do_download():
-            result = FileConnection().Load(progress_handler(max=10))[0], 1
+            result = FileConnection().Load(progress_handler)[0], 1
         else:
             result = None, 0
-        progress_handler(count=100)
         return result
 
     def Save(self, progress_handler=default_progress_handler):
         self.progress_handler = progress_handler
         return FileConnection().Save() and self.upload()
+
+    def Exit(self, progress_handler=default_progress_handler):
+        self.progress_handler = progress_handler
+        return FileConnection().Save() and self.rel_token()
+
 
 class FileConnection(object):
     def __init__(self):
@@ -202,27 +205,35 @@ class FileConnection(object):
     
     def Load(self, progress_handler=default_progress_handler):
         if not os.path.isfile(sqlinterface.DB_FILENAME):
-            progress_handler(u"Création d'une nouvelle base ...")
+            progress_handler.display(u"Création d'une nouvelle base ...")
             sql_connection.create()
-        progress_handler(u"Chargement en mémoire de la base ...")
+        progress_handler.display(u"Chargement en mémoire de la base ...")
         creche = sql_connection.load()
-        progress_handler(count=100)
         return creche, 0
 
     def Save(self, progress_handler=default_progress_handler):
         sql_connection.close()
-        progress_handler(count=100)
         return True
+
+    def Exit(self, progress_handler=default_progress_handler):
+        sql_connection.close()
+        return True        
 
 
 def Load(progress_handler=default_progress_handler):
-    __builtin__.creche, __builtin__.readonly = config.connection.Load(progress_handler(max=90))
+    __builtin__.creche, __builtin__.readonly = config.connection.Load(progress_handler)
     return creche is not None
 
 def Save(progress_handler=default_progress_handler):
-    return config.connection.Save(progress_handler(max=100))
-    
-if __name__ == '__main__':
+    if len(history) > 0:
+        return config.connection.Save(progress_handler)
+    else:
+        return config.connection.Exit(progress_handler)
+
+def Exit(progress_handler=default_progress_handler):
+    return config.connection.Exit(progress_handler)
+
+if __name__ == '__main__':    
     loaded = Load()
     if loaded and not readonly:
         Save()    

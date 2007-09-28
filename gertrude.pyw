@@ -19,7 +19,7 @@
 
 import __builtin__
 import os, sys, time, shutil, glob, wx
-from data import Backup, Load, Save
+from data import *
 from startdialog import StartDialog
 
 # Don't remove these 2 lines (mandatory for py2exe)
@@ -136,10 +136,19 @@ class GertrudeFrame(wx.Frame):
         panel.SetSizer(sizer2)
 
         self.Bind(wx.EVT_CLOSE, self.OnExit)
-
+                
     def OnExit(self, evt):
         self.SetStatusText("Fermeture en cours ....")
-        Save()
+        if len(history) > 0:
+            dlg = wx.MessageDialog(self, "Voulez-vous enregistrer les changements ?", "Gertrude", wx.YES_NO|wx.ICON_QUESTION|wx.NO_DEFAULT)
+            result = dlg.ShowModal()
+            dlg.Destroy()
+            if result == wx.ID_NO:
+                Exit(ProgressHandler(self.SetStatusText))
+                self.Destroy()
+                return
+            
+        Save(ProgressHandler(self.SetStatusText))
         self.Destroy()
 
     def OnUndo(self, event):

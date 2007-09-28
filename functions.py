@@ -20,10 +20,6 @@ import datetime, binascii
 from constants import *
 from parameters import *
 
-def default_progress_handler(msg=None, count=None, max=None):
-    if msg: print msg
-    return default_progress_handler
-
 def getfirstmonday():
     first_monday = first_date
     while first_monday.weekday() != 0:
@@ -210,3 +206,30 @@ def decodeErrors(errors):
         message += '\n'+error[0].prenom+' :\n  '
         message += '\n  '.join(error[1])
     return message
+
+class ProgressHandler:
+    def __init__(self, display_fn=None, gauge=None, max=None):
+        self.display_fn = display_fn
+        self.gauge = gauge
+        self.max = max
+        if self.gauge: self.min = self.gauge.GetValue()
+        
+    def __del__(self):
+        if self.gauge: self.gauge.SetValue(self.max)
+
+    def set(self, value):
+        if self.gauge: self.gauge.SetValue(self.min + (self.max-self.min)*value/100)
+
+    def display(self, s):
+        if self.display_fn:
+            self.display_fn(s+"\n")
+        else:
+            print s
+
+    def new(self, value):
+        if self.gauge:
+            return ProgressHandler(self.display_fn, self.gauge, self.gauge.GetValue(), self.gauge.GetValue() + (self.max-self.min)*value/100)
+        else:
+            return ProgressHandler(self.display_fn)
+
+default_progress_handler = ProgressHandler()

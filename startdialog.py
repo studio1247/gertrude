@@ -20,6 +20,7 @@ import __builtin__
 import wx, wx.lib, wx.lib.delayedresult
 from config import LoadConfig
 from constants import *
+from functions import *
 from data import Backup, Load, Save
 
 class StartDialog(wx.Dialog):
@@ -37,7 +38,6 @@ class StartDialog(wx.Dialog):
 
         self.info = wx.TextCtrl(self, -1, u"Démarrage ...\n", size=(-1, 50), style=wx.TE_READONLY|wx.TE_MULTILINE)
         self.sizer.Add(self.info, 0, wx.EXPAND|wx.ALL, 5)
-        self.gauge_intervals = [(0, 100)]
         self.gauge = wx.Gauge(self, -1, 100, style=wx.GA_SMOOTH)
         self.sizer.Add(self.gauge, 0, wx.EXPAND|wx.ALL, 5)
         
@@ -68,18 +68,6 @@ class StartDialog(wx.Dialog):
         self.sizer.Fit(self)
 
         wx.lib.delayedresult.startWorker(self.OnLoaded, self.Load)
-   
-    def progress_handler(self, msg=None, count=None, max=None):
-        if msg:
-            self.info.AppendText(msg + "\n")
-        if max is not None:
-            self.gauge_intervals.append((self.gauge.GetValue(), self.gauge.GetValue() + (self.gauge_intervals[-1][1]-self.gauge_intervals[-1][0]) * max / 100))
-            return self.progress_handler
-        if count:
-            interval = self.gauge_intervals[-1]
-            self.gauge.SetValue(interval[0] + (interval[1]-interval[0]) * count / 100)
-            if count == 100:
-                self.gauge_intervals.pop(-1)
 
     def OnLoaded(self, event):
         try:
@@ -107,11 +95,11 @@ class StartDialog(wx.Dialog):
 
             self.sizer.Layout()
             self.sizer.Fit(self)
-        
+                
     def Load(self):
-        LoadConfig(self.progress_handler(max=5))
-        Backup(self.progress_handler(max=10))
-        result = Load(self.progress_handler(max=80))
+        LoadConfig(ProgressHandler(self.info.AppendText, self.gauge, 5))
+        Backup(ProgressHandler(self.info.AppendText, self.gauge, 5))
+        result = Load(ProgressHandler(self.info.AppendText, self.gauge, 90))
         # we close database since it's opened from an other thread
         try:
             sql_connection.close()
