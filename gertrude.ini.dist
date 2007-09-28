@@ -1,5 +1,5 @@
 [gertrude]
-http://monsite.free.fr/gertrude.php
+url: http://monsite.free.fr/gertrude.php
 ;login: monlogin
 ;password : monpassword
 ;proxy-host: monproxy-host
