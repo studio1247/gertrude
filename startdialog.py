@@ -18,7 +18,8 @@
 
 import __builtin__
 import wx, wx.lib, wx.lib.delayedresult
-from common import *
+from config import LoadConfig
+from constants import *
 from data import Backup, Load, Save
 
 class StartDialog(wx.Dialog):
@@ -68,12 +69,12 @@ class StartDialog(wx.Dialog):
 
         wx.lib.delayedresult.startWorker(self.OnLoaded, self.Load)
    
-    def handler(self, count=None, msg=None, max=None):
+    def progress_handler(self, msg=None, count=None, max=None):
         if msg:
             self.info.AppendText(msg + "\n")
         if max is not None:
             self.gauge_intervals.append((self.gauge.GetValue(), self.gauge.GetValue() + (self.gauge_intervals[-1][1]-self.gauge_intervals[-1][0]) * max / 100))
-            return self.handler
+            return self.progress_handler
         if count:
             interval = self.gauge_intervals[-1]
             self.gauge.SetValue(interval[0] + (interval[1]-interval[0]) * count / 100)
@@ -108,8 +109,9 @@ class StartDialog(wx.Dialog):
             self.sizer.Fit(self)
         
     def Load(self):
-        Backup(self.handler(max=10))
-        result = Load(self.handler(max=80))
+        LoadConfig(self.progress_handler(max=5))
+        Backup(self.progress_handler(max=10))
+        result = Load(self.progress_handler(max=80))
         # we close database since it's opened from an other thread
         try:
             sql_connection.close()
@@ -138,5 +140,5 @@ class StartDialog(wx.Dialog):
     def OnExit(self, evt):
         self.info.AppendText("\nFermeture ...\n")
         if self.loaded:
-            Save(self.handler(max=100))
+            Save(self.progress_handler(max=100))
         self.Destroy()

@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 ##    This file is part of Gertrude.
 ##
@@ -18,7 +18,8 @@
 
 import os, datetime, xml.dom.minidom, cStringIO
 import wx, wx.lib.scrolledpanel, wx.html
-from common import *
+from constants import *
+from sqlobjects import *
 from gpanel import GPanel
 from controls import *
 from cotisation import *
@@ -509,11 +510,9 @@ class ParentsPanel(InscriptionsTab):
                 self.regimes_choices.append(choice)
                 for i, regime in enumerate([u'Pas de sélection', u'Régime général', u'Régime de la fonction publique', u'Régime MSA', u'Régime EDF-GDF', u'Régime RATP', u'Régime Pêche maritime', u'Régime Marins du Commerce']):
                     choice.Append(regime, i)
-                panel.Bind(wx.EVT_CHOICE, self.onRegimeChoice, choice)
                 revenus_gridsizer.AddMany([wx.StaticText(panel, -1, u"Régime d'appartenance :"), (choice, 0, wx.EXPAND)])
                 revenus_sizer.Add(revenus_gridsizer, 0, wx.ALL|wx.EXPAND, 5)
                 panel.SetSizer(revenus_sizer)
-#		sizer11.Add(wx.StaticLine(panel, -1, size=(100, 10), style=wx.LI_HORIZONTAL))
                 sizer11.Add(panel, 0, wx.ALL|wx.EXPAND, 5)
 
             sizer.Add(sizer1, 1, wx.EXPAND|wx.ALL, 5)
@@ -525,14 +524,6 @@ class ParentsPanel(InscriptionsTab):
     
     def nouveau_revenu_maman(self):
         return Revenu(self.inscrit.maman)
-   
-    def onRegimeChoice(self, event):
-        obj = event.GetEventObject()
-        if obj.GetSelection() != 0:
-            for choice in self.regimes_choices:
-                if choice != obj:
-                    choice.SetValue(0)
-        event.Skip()
 
 class ModeAccueilPanel(InscriptionsTab):
     def __init__(self, parent):
@@ -706,7 +697,7 @@ class InscriptionsPanel(GPanel):
         inscrit = self.choice.GetClientData(selected)
         if inscrit:
             dlg = wx.MessageDialog(self,
-                                   'Cette inscription va être supprimée, êtes-vous sûr de vouloir continuer ?',
+                                   u'Cette inscription va être supprimée, êtes-vous sûr de vouloir continuer ?',
                                    'Confirmation',
                                    wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION )
             if dlg.ShowModal() == wx.ID_YES:

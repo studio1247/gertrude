@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 ##    This file is part of Gertrude.
 ##
@@ -18,9 +18,10 @@
 
 import os.path
 import datetime
-from common import *
 from gpanel import GPanel
+from constants import *
 from controls import *
+from sqlobjects import *
 
 class CrecheTab(AutoTab):
     def __init__(self, parent):

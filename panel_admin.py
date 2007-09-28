@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 ##    This file is part of Gertrude.
 ##
@@ -18,7 +18,8 @@
 
 import os.path
 import datetime
-from common import *
+from constants import *
+from parameters import *
 from gpanel import GPanel
 from controls import *
 

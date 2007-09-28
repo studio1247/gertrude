@@ -23,7 +23,7 @@ import datetime
 import wx
 import wx.lib.scrolledpanel
 import wx.html
-from common import *
+from constants import *
 from gpanel import GPanel
 from controls import *
 from cotisation import CotisationException

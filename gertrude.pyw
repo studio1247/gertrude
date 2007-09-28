@@ -19,7 +19,6 @@
 
 import __builtin__
 import os, sys, time, shutil, glob, wx
-from common import *
 from data import Backup, Load, Save
 from startdialog import StartDialog
 
@@ -27,7 +26,7 @@ from startdialog import StartDialog
 import gpanel, controls, zipfile, xml.dom.minidom, wx.html, ooffice
 sys.path.insert(0, ".")
 
-VERSION = '0.40'
+VERSION = '0.41'
 
 __builtin__.history = []
 

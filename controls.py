@@ -19,7 +19,7 @@
 import wx, wx.lib, wx.lib.scrolledpanel
 import fpformat
 import datetime
-from common import *
+from functions import *
               
 class NumericCtrl(wx.TextCtrl):
 ##    __fgcol_valid   ="Black"

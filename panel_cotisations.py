@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 ##    This file is part of Gertrude.
 ##
@@ -25,7 +25,8 @@ import wx
 import wx.lib.scrolledpanel
 import wx.html
 import xml.dom.minidom
-from common import *
+from constants import *
+from functions import *
 from facture import Facture
 from cotisation import Cotisation, CotisationException
 from gpanel import GPanel

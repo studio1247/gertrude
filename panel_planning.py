@@ -19,7 +19,9 @@
 import wx
 import wx.lib.scrolledpanel
 import datetime
-from common import *
+from constants import *
+from parameters import *
+from functions import *
 from gpanel import GPanel
 
 PRENOMS_WIDTH = 80 # px
