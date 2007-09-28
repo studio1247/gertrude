@@ -27,7 +27,7 @@ from startdialog import StartDialog
 import gpanel, controls, zipfile, xml.dom.minidom, wx.html, ooffice
 sys.path.insert(0, ".")
 
-VERSION = '0.39'
+VERSION = '0.40'
 
 __builtin__.history = []
 

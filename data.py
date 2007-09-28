@@ -29,11 +29,11 @@ def default_handler(count=None, msg=None, max=None):
 BACKUPS_DIRECTORY = './backups'
 def Backup(handler=default_handler):
     handler(msg='Sauvegarde ...')
-    if os.path.isfile('gertrude.db'):
+    if os.path.isfile(sqlinterface.DB_FILENAME):
         if not os.path.isdir(BACKUPS_DIRECTORY):
             os.mkdir(BACKUPS_DIRECTORY)
         backup_filename = 'backup_%d.db' % time.time()
-        shutil.copyfile('gertrude.db', BACKUPS_DIRECTORY + '/' + backup_filename)
+        shutil.copyfile(sqlinterface.DB_FILENAME, BACKUPS_DIRECTORY + '/' + backup_filename)
     handler(100)
 
 TOKEN_FILENAME = '.token'
@@ -88,7 +88,7 @@ class HttpConnection(object):
         content_type = 'multipart/form-data; boundary=%s' % BOUNDARY
         return content_type, body
 
-    def urlopen(self, action, body=None, headers=None, decode=True):
+    def urlopen(self, action, body=None, headers=None):
         try:
             url = '%s?action=%s' % (self.url, action)
             if self.token:
@@ -99,8 +99,8 @@ class HttpConnection(object):
             else:
                 req = urllib2.Request(url)
             result = urllib2.urlopen(req).read()
-            print result[:100]
-            if decode:
+            print result[:64]
+            if len(result) == 1:
                 return eval(result)
             else:
                 return result
@@ -120,8 +120,8 @@ class HttpConnection(object):
 
     def get_token(self):
         self.handler(msg=u"Récupération du jeton ...")
-        self.token = self.urlopen('get_token', decode=False)
-        if not self.token or self.token == "0":
+        self.token = self.urlopen('get_token')
+        if not self.token:
             return 0
         else:
             file(TOKEN_FILENAME, 'w').write(self.token)
@@ -138,15 +138,18 @@ class HttpConnection(object):
 
     def do_download(self):
         self.handler(msg=u"Téléchargement de la base ...")
-        data = self.urlopen('download', decode=False)
+        data = self.urlopen('download')
         if data:
-            f = file('./gertrude.db', 'wb')
+            f = file(sqlinterface.DB_FILENAME, 'wb')
             f.write(data)
             f.close()
-            print '%d bytes writen' % len(data)
-            return 1
+            self.handler(msg=u'%d octets transférés.' % len(data))
         else:
-            return 0
+            self.handler(msg=u'Pas de base présente sur le serveur')
+            if os.path.isfile(sqlinterface.DB_FILENAME):
+                self.handler(msg="Suppression de la base locale ...")
+                os.remove(sqlinterface.DB_FILENAME)
+        return 1
 
     def download(self):       
         if self.has_token():
@@ -201,7 +204,10 @@ class FileConnection(object):
         pass
     
     def Load(self, handler=default_handler):
-        handler(msg="Chargement de la base ...")
+        if not os.path.isfile(sqlinterface.DB_FILENAME):
+            handler(msg=u"Création d'une nouvelle base ...")
+            sql_connection.create()
+        handler(msg=u"Chargement en mémoire de la base ...")
         creche = sql_connection.load()
         handler(100)
         return creche, 0

@@ -23,6 +23,7 @@ except:
     from pysqlite2 import dbapi2 as sqlite3
 from common import *
 
+DB_FILENAME = 'gertrude.db'
 VERSION = 8
 
 class SQLConnection(object):
@@ -30,19 +31,16 @@ class SQLConnection(object):
         self.con = None
         
     def open(self):
-        if not os.path.exists('gertrude.db'):
-            self.con = sqlite3.connect('gertrude.db')
-            self.create()
-        else:
-            self.con = sqlite3.connect('gertrude.db')
+        self.con = sqlite3.connect(DB_FILENAME)
 
     def commit(self):
         self.con.commit()
         
     def close(self):
-        self.con.commit()
-        self.con.close()
-        self.con = None
+        if self.con:
+            self.con.commit()
+            self.con.close()
+            self.con = None
         
     def cursor(self):
         if self.con is None:
@@ -53,6 +51,9 @@ class SQLConnection(object):
         return self.con.execute(cmd, *args)
         
     def create(self):
+        if not self.con:
+            self.open()
+            
         cur = self.con.cursor()
         cur.execute("""
           CREATE TABLE CRECHE(

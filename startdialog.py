@@ -109,11 +109,13 @@ class StartDialog(wx.Dialog):
         
     def Load(self):
         Backup(self.handler(max=10))
-        if not Load(self.handler(max=80)):
-            return False
+        result = Load(self.handler(max=80))
         # we close database since it's opened from an other thread
-        sql_connection.close()
-        return True
+        try:
+            sql_connection.close()
+        except:
+            pass
+        return result
 
     def StartFrame(self):
         self.Destroy()
