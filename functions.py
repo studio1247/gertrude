@@ -33,6 +33,9 @@ def getfirstmonday():
 def getNumeroSemaine(date):
     return int((date - datetime.date(date.year, 1, 1)).days / 7) + 1
 
+def getMonthStart(date):
+    return datetime.date(date.year, date.month, 1)
+
 def getMonthEnd(date):
     if date.month == 12:
         return datetime.date(date.year, 12, 31)
@@ -200,3 +203,10 @@ def getPresentsIndexes(indexes, (debut, fin)):
                 break
 
     return result
+
+def decodeErrors(errors):
+    message = ""
+    for error in errors:
+        message += '\n'+error[0].prenom+' :\n  '
+        message += '\n  '.join(error[1])
+    return message

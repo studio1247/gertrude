@@ -31,7 +31,7 @@ from facture import Facture
 from cotisation import Cotisation, CotisationException
 from gpanel import GPanel
 from ooffice import *
-
+   
 couleurs = ['C2', 'D2', 'B2', 'E2', 'A2']
 
 class FactureModifications(object):
@@ -40,9 +40,12 @@ class FactureModifications(object):
         self.periode = periode
 
     def execute(self, dom):
-        facture = Facture(self.inscrit, self.periode.year, self.periode.month)
-        debut = datetime.date(self.periode.year, self.periode.month, 1)
-        fin = getMonthEnd(debut)
+        try:
+            facture = Facture(self.inscrit, self.periode.year, self.periode.month)
+        except CotisationException, e:
+            return [(self.inscrit, e.errors)]
+
+        debut, fin = getMonthStart(self.periode), getMonthEnd(self.periode)
         inscriptions = self.inscrit.getInscriptions(debut, fin)
 
         # D'abord le tableau des presences du mois
@@ -111,14 +114,16 @@ class RecuModifications(object):
     def execute(self, dom):
         date = self.debut
         total = 0.0
-        while date.year < self.fin.year or date.month <= self.fin.month:
+        while date <= self.fin:
             try:
                 facture = Facture(self.inscrit, date.year, date.month)
                 if facture.total == 0:
                     self.debut = getNextMonthStart(self.debut)
+                else:
+                    total += facture.total
             except CotisationException, e:
-                print e.errors
-            total += facture.total
+                return [(self.inscrit, e.errors)]
+
             date = getNextMonthStart(date)
         
         tresorier = Select(creche.bureaux, today).tresorier
@@ -302,10 +307,31 @@ class CotisationsPanel(GPanel):
         self.EvtFacturesInscritChoice(None)
         self.EvtRecusInscritChoice(None)
 
+    def EvtGenerationAppelCotisations(self, evt):
+        periode = self.appels_monthchoice.GetClientData(self.appels_monthchoice.GetSelection())
+        wildcard = "OpenDocument (*.ods)|*.ods"
+        oodefaultfilename = u"Appel cotisations %s %d.ods" % (months[periode.month - 1], periode.year)
+        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
+        response = dlg.ShowModal()
+        if response == wx.ID_OK:
+            oofilename = dlg.GetPath()
+            try:
+                errors = GenereAppelCotisations(periode, oofilename)
+                message = u"Document %s généré" % oofilename
+                if errors:
+                    message += ' avec des erreurs :\n' + decodeErrors(errors)                    
+                    dlg = wx.MessageDialog(self, message, 'Message', wx.OK|wx.ICON_WARNING)
+                else:
+                    dlg = wx.MessageDialog(self, message, 'Message', wx.OK)
+            except Exception, e:
+                dlg = wx.MessageDialog(self, str(e), 'Erreur', wx.OK|wx.ICON_WARNING)
+            dlg.ShowModal()
+            dlg.Destroy()
+
     def EvtGenerationFacture(self, evt):
         inscrit = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
         periode = self.factures_monthchoice.GetClientData(self.factures_monthchoice.GetSelection())
-        if type(inscrit) == list:
+        if isinstance(inscrit, list):
             dlg = wx.DirDialog(self, u'Générer des documents OpenOffice', style=wx.DD_DEFAULT_STYLE|wx.DD_NEW_DIR_BUTTON)
             response = dlg.ShowModal()
             if response == wx.ID_OK:
@@ -321,76 +347,74 @@ class CotisationsPanel(GPanel):
                 oofilename = dlg.GetPath()
                 self.GenereFactures([inscrit], periode, oofilename)
 
-    def EvtGenerationAppelCotisations(self, evt):
-        periode = self.appels_monthchoice.GetClientData(self.appels_monthchoice.GetSelection())
-        wildcard = "OpenDocument (*.ods)|*.ods"
-        oodefaultfilename = u"Appel cotisations %s %d.ods" % (months[periode.month - 1], periode.year)
-        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
-        response = dlg.ShowModal()
-        if response == wx.ID_OK:
-            oofilename = dlg.GetPath()
-            try:
-                errors = GenereAppelCotisations(periode, oofilename)
-                message = u"Document %s généré" % oofilename
-                if errors:
-                    message += ' avec des erreurs :\n'
-                    for error in errors:
-                        message += '\n'+error[0].prenom+'\n  '
-                        message += '\n  '.join(error[1])
-                dlg = wx.MessageDialog(self, message, 'Message', wx.OK)                
-            except Exception, e:
-                dlg = wx.MessageDialog(self, str(e), 'Erreur', wx.OK | wx.ICON_WARNING)
-            dlg.ShowModal()
-            dlg.Destroy()
-
     def EvtGenerationRecu(self, evt):
-        inscrits_choice = self.inscrits_choice["recus"]
-        inscrit = inscrits_choice.GetClientData(inscrits_choice.GetSelection())
+        inscrit = self.inscrits_choice["recus"].GetClientData(self.inscrits_choice["recus"].GetSelection())
         debut, fin = self.recus_periodechoice.GetClientData(self.recus_periodechoice.GetSelection())
-        wildcard = "OpenDocument (*.odt)|*.odt"
-        oodefaultfilename = u"Attestation de paiement %s %s-%s %d.odt" % (inscrit.prenom, months[debut.month - 1], months[fin.month - 1], debut.year)
-        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
-        response = dlg.ShowModal()
-        if response == wx.ID_OK:
-            oofilename = dlg.GetPath()
-            try:
-                errors = GenereRecu(inscrit, debut, fin, oofilename)
-                message = u"Document %s généré" % oofilename
-                if errors:
-                    message += ' avec des erreurs :\n'
-                    for error in errors:
-                        message += '\n'+error[0].prenom+'\n  '
-                        message += '\n  '.join(error[1])
-                dlg = wx.MessageDialog(self, message, 'Message', wx.OK)                
-            except Exception, e:
-                dlg = wx.MessageDialog(self, str(e), 'Erreur', wx.OK | wx.ICON_WARNING)
-            dlg.ShowModal()
-            dlg.Destroy()
+        if isinstance(inscrit, list):
+            dlg = wx.DirDialog(self, u'Générer des documents OpenOffice', style=wx.DD_DEFAULT_STYLE|wx.DD_NEW_DIR_BUTTON)
+            response = dlg.ShowModal()
+            if response == wx.ID_OK:
+                oopath = dlg.GetPath()
+                inscrits = [inscrit for inscrit in creche.inscrits if inscrit.getInscriptions(debut, fin)]
+                self.GenereRecus(inscrits, debut, fin, oopath=oopath)
+        else:
+            wildcard = "OpenDocument (*.odt)|*.odt"
+            oodefaultfilename = u"Attestation de paiement %s %s-%s %d.odt" % (inscrit.prenom, months[debut.month - 1], months[fin.month - 1], debut.year)
+            dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
+            response = dlg.ShowModal()
+            if response == wx.ID_OK:
+                oofilename = dlg.GetPath()
+                self.GenereRecus([inscrit], debut, fin, oofilename)
 
     def GenereFactures(self, inscrits, periode, oofilename=None, oopath=None):
-        nbfactures = 0
-        errors = []
+        nbdocs, errors = 0, []
         for inscrit in inscrits:
-            try:
-                if oofilename is None:
-                    filename = '%s/Cotisation %s %s %d.odt' % (oopath, inscrit.prenom, months[periode.month - 1], periode.year)
-                else:
-                    filename = oofilename
-                GenereFacture(inscrit, periode, filename)
-                nbfactures += 1
-            except CotisationException, e:
-                errors.append('%s %s' % (inscrit.prenom, inscrit.nom))
-                errors.extend(e.errors)
+            if oofilename is None:
+                filename = '%s/Cotisation %s %s %d.odt' % (oopath, inscrit.prenom, months[periode.month - 1], periode.year)
+            else:
+                filename = oofilename
+            doc_errors = GenereFacture(inscrit, periode, filename)
+            if doc_errors:
+                errors.extend(doc_errors)
+            else:
+                nbdocs += 1
 
-        if nbfactures > 1:
-            message = u'%d factures générées' % nbfactures
-        elif nbfactures == 1:
+        if nbdocs > 1:
+            message = u'%d factures générées' % nbdocs
+        elif nbdocs == 1:
             message = u'1 facture générée'
         else:
             message = u'Aucune facture générée'
         if errors:
-            message += '\n\n' + '\n'.join(errors)
-            dlg = wx.MessageDialog(self, message, 'Message', wx.OK | wx.ICON_WARNING)
+            message += '\n' + decodeErrors(errors)
+            dlg = wx.MessageDialog(self, message, 'Message', wx.OK|wx.ICON_WARNING)
+        else:
+            dlg = wx.MessageDialog(self, message, 'Message', wx.OK)
+        dlg.ShowModal()
+        dlg.Destroy()
+
+    def GenereRecus(self, inscrits, debut, fin, oofilename=None, oopath=None):
+        nbdocs, errors = 0, []
+        for inscrit in inscrits:
+            if oofilename is None:
+                filename = '%s/Attestation de paiement %s %s-%s %d.odt' % (oopath, inscrit.prenom, months[debut.month - 1], months[fin.month - 1], debut.year)
+            else:
+                filename = oofilename
+            doc_errors = GenereRecu(inscrit, debut, fin, filename)
+            if doc_errors:
+                errors.extend(doc_errors)
+            else:
+                nbdocs += 1
+
+        if nbdocs > 1:
+            message = u'%d attestations générées' % nbdocs
+        elif nbdocs == 1:
+            message = u'1 attestation générée'
+        else:
+            message = u'Aucune attestation générée'
+        if errors:
+            message += '\n' + decodeErrors(errors)
+            dlg = wx.MessageDialog(self, message, 'Message', wx.OK|wx.ICON_WARNING)
         else:
             dlg = wx.MessageDialog(self, message, 'Message', wx.OK)
         dlg.ShowModal()
@@ -399,9 +423,10 @@ class CotisationsPanel(GPanel):
 panels = [CotisationsPanel]
 
 if __name__ == '__main__':
-    import sys, os, __builtin__
-    from datafiles import *
-    __builtin__.creche = Load()
+    import sys, os
+    import config
+    from data import *
+    Load()
 
     for inscrit in creche.inscrits:
         if inscrit.prenom == 'Soen':
