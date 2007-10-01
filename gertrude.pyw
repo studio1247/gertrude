@@ -103,7 +103,7 @@ class GertrudeListbook(Listbook):
 
 class GertrudeFrame(wx.Frame):
     def __init__(self):
-        wx.Frame.__init__(self, None, -1, "Gertrude v%s" % VERSION, wx.DefaultPosition, wx.Size(1000, 750))
+        wx.Frame.__init__(self, None, -1, "Gertrude v%s" % VERSION, wx.DefaultPosition, (920, 600))
 
         # Icon
         icon = wx.Icon('./bitmaps/gertrude.ico', wx.BITMAP_TYPE_ICO)

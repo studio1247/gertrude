@@ -21,10 +21,11 @@ try:
     import sqlite3
 except:
     from pysqlite2 import dbapi2 as sqlite3
+from functions import *
 from sqlobjects import *
 
 DB_FILENAME = 'gertrude.db'
-VERSION = 8
+VERSION = 9
 
 class SQLConnection(object):
     def __init__(self):
@@ -118,6 +119,7 @@ class SQLConnection(object):
           CREATE TABLE PARENTS(
             idx INTEGER PRIMARY KEY,
             inscrit INTEGER REFERENCES INSCRITS(idx),
+            absent BOOLEAN,
             prenom VARCHAR,
             nom VARCHAR,
             telephone_domicile VARCHAR,
@@ -195,7 +197,7 @@ class SQLConnection(object):
         cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
         self.con.commit()
 
-    def load(self):
+    def load(self, progress_handler=default_progress_handler):
         if not self.con:
             self.open()
             
@@ -205,7 +207,8 @@ class SQLConnection(object):
             annee, mois, jour = map(lambda x: int(x), str.split('-'))
             return datetime.date(annee, mois, jour)
 
-        self.translate()
+        if not self.translate(progress_handler):
+            return None
 
         cur = self.cursor()
 
@@ -262,21 +265,22 @@ class SQLConnection(object):
                 inscription = Inscription(inscrit, creation=False)
                 inscription.debut, inscription.fin, inscription.mode, inscription.periode_reference, inscription.fin_periode_essai, inscription.idx = getdate(debut), getdate(fin), mode, eval(periode_reference), getdate(fin_periode_essai), idx
                 inscrit.inscriptions.append(inscription)
-            cur.execute('SELECT prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email, idx FROM PARENTS WHERE inscrit=?', (inscrit.idx,))
+            cur.execute('SELECT absent, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email, idx FROM PARENTS WHERE inscrit=?', (inscrit.idx,))
             for parent_entry in cur.fetchall():
                 parent = Parent(inscrit, creation=False)
-                parent.prenom, parent.nom, parent.telephone_domicile, parent.telephone_domicile_notes, parent.telephone_portable, parent.telephone_portable_notes, parent.telephone_travail, parent.telephone_travail_notes, parent.email, parent.idx = parent_entry
+                parent.absent, parent.prenom, parent.nom, parent.telephone_domicile, parent.telephone_domicile_notes, parent.telephone_portable, parent.telephone_portable_notes, parent.telephone_travail, parent.telephone_travail_notes, parent.email, parent.idx = parent_entry
                 parents[parent.idx] = parent
                 if not inscrit.papa:
                     inscrit.papa = parent
                 else:
                     inscrit.maman = parent
-                cur.execute('SELECT debut, fin, revenu, chomage, regime, idx FROM REVENUS WHERE parent=?', (parent.idx,))
-                for revenu_entry in cur.fetchall():
-                    revenu = Revenu(parent, creation=False)
-                    revenu.debut, revenu.fin, revenu.revenu, revenu.chomage, revenu.regime, idx = revenu_entry
-                    revenu.debut, revenu.fin, revenu.idx = getdate(revenu.debut), getdate(revenu.fin), idx
-                    parent.revenus.append(revenu)
+                if not parent.absent:
+                    cur.execute('SELECT debut, fin, revenu, chomage, regime, idx FROM REVENUS WHERE parent=?', (parent.idx,))
+                    for revenu_entry in cur.fetchall():
+                        revenu = Revenu(parent, creation=False)
+                        revenu.debut, revenu.fin, revenu.revenu, revenu.chomage, revenu.regime, idx = revenu_entry
+                        revenu.debut, revenu.fin, revenu.idx = getdate(revenu.debut), getdate(revenu.fin), idx
+                        parent.revenus.append(revenu)
             cur.execute('SELECT date, previsionnel, value, details, idx FROM PRESENCES WHERE inscrit=?', (inscrit.idx,))
             for date, previsionnel, value, details, idx in cur.fetchall():
                 presence = Presence(inscrit, getdate(date), previsionnel, value, creation=False)
@@ -293,7 +297,7 @@ class SQLConnection(object):
         creche.inscrits.sort()
         return creche
 
-    def translate(self):
+    def translate(self, progress_handler=default_progress_handler):
         cur = self.cursor()
         try:
             cur.execute('SELECT value FROM DATA WHERE key="VERSION"')
@@ -301,8 +305,15 @@ class SQLConnection(object):
         except:
             version = 0
 
-        print version, '=>', VERSION
+        if version == VERSION:
+            return True
 
+        if version > VERSION:
+            progress_handler.display(u"Base de données plus récente que votre version de Gertrude !")
+            return False
+
+        progress_handler.display(u"Conversion de la base de données (version %d => version %d) ..." % (version, VERSION))
+        
         if version < 1:
             cur.execute("""
               CREATE TABLE DATA(
@@ -388,6 +399,10 @@ class SQLConnection(object):
                 email VARCHAR
             );""")            
 
+        if version < 9:
+            cur.execute("ALTER TABLE PARENTS ADD absent BOOLEAN;")
+            cur.execute('UPDATE PARENTS SET absent=?', (False,))
+
         if version < VERSION:
             try:
                 cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))
@@ -398,5 +413,7 @@ class SQLConnection(object):
             cur.execute("VACUUM")
 
             self.commit()
+
+        return True
         
 __builtin__.sql_connection = SQLConnection()

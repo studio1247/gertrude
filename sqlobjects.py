@@ -304,6 +304,7 @@ class Revenu(object):
 class Parent(object):
     def __init__(self, inscrit, creation=True):
         self.idx = None
+        self.absent = False
         self.prenom = ""
         self.nom = ""
         self.telephone_domicile = ""
@@ -319,9 +320,10 @@ class Parent(object):
 
         if creation:
             print 'nouveau parent'
-            result = sql_connection.execute('INSERT INTO PARENTS (idx, inscrit, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email) VALUES(NULL,?,?,?,?,?,?,?,?,?,?)', (inscrit.idx, self.prenom, self.nom, self.telephone_domicile, self.telephone_domicile_notes, self.telephone_portable, self.telephone_portable_notes, self.telephone_travail, self.telephone_travail_notes, self.email))
+            result = sql_connection.execute('INSERT INTO PARENTS (idx, inscrit, absent, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?)', (inscrit.idx, self.absent, self.prenom, self.nom, self.telephone_domicile, self.telephone_domicile_notes, self.telephone_portable, self.telephone_portable_notes, self.telephone_travail, self.telephone_travail_notes, self.email))
             self.idx = result.lastrowid
-            self.revenus.append(Revenu(self))
+            if not self.absent:
+                self.revenus.append(Revenu(self))
         
     def delete(self):
         print 'suppression parent'
@@ -331,7 +333,7 @@ class Parent(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['prenom', 'nom', 'telephone_domicile', 'telephone_domicile_notes', 'telephone_portable', 'telephone_portable_notes', 'telephone_travail', 'telephone_travail_notes', 'email'] and self.idx:
+        if name in ['absent', 'prenom', 'nom', 'telephone_domicile', 'telephone_domicile_notes', 'telephone_portable', 'telephone_portable_notes', 'telephone_travail', 'telephone_travail_notes', 'email'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE PARENTS SET %s=? WHERE idx=?' % name, (value, self.idx))
 

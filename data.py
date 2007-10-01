@@ -87,6 +87,7 @@ class HttpConnection(object):
     def urlopen(self, action, body=None, headers=None):
         try:
             url = '%s?action=%s' % (self.url, action)
+            print url
             if self.token:
                 url += "&token=%s" % self.token
             # print url
@@ -95,7 +96,7 @@ class HttpConnection(object):
             else:
                 req = urllib2.Request(url)
             result = urllib2.urlopen(req).read()
-            print result[:64]
+            print '=>', result[:64]
             if len(result) == 1:
                 return eval(result)
             else:
@@ -208,7 +209,7 @@ class FileConnection(object):
             progress_handler.display(u"Création d'une nouvelle base ...")
             sql_connection.create()
         progress_handler.display(u"Chargement en mémoire de la base ...")
-        creche = sql_connection.load()
+        creche = sql_connection.load(progress_handler)
         return creche, 0
 
     def Save(self, progress_handler=default_progress_handler):
