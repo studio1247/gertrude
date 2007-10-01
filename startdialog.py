@@ -17,7 +17,8 @@
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import __builtin__
-import wx, wx.lib, wx.lib.delayedresult
+import time, thread
+import wx, wx.lib, wx.lib.newevent
 from config import LoadConfig
 from constants import *
 from functions import *
@@ -67,17 +68,12 @@ class StartDialog(wx.Dialog):
         self.SetSizer(self.sizer)
         self.sizer.Fit(self)
 
-        wx.lib.delayedresult.startWorker(self.OnLoaded, self.Load)
+        self.LoadedEvent, EVT_PROGRESS_EVENT = wx.lib.newevent.NewEvent()
+        self.Bind(EVT_PROGRESS_EVENT, self.OnLoaded)
+        thread.start_new_thread(self.Load, ())
 
     def OnLoaded(self, event):
-        try:
-            result = event.get()
-        except Exception, e:
-            self.info.AppendText(str(e))
-            self.gauge.SetValue(100)
-            return
-
-        if not result:
+        if not event.result:
             self.info.AppendText("Erreur lors du chargement !\n")
             self.gauge.SetValue(100)
             return
@@ -95,7 +91,7 @@ class StartDialog(wx.Dialog):
 
             self.sizer.Layout()
             self.sizer.Fit(self)
-                
+
     def Load(self):
         LoadConfig(ProgressHandler(self.info.AppendText, self.gauge, 5))
         Backup(ProgressHandler(self.info.AppendText, self.gauge, 5))
@@ -105,7 +101,9 @@ class StartDialog(wx.Dialog):
             sql_connection.close()
         except:
             pass
-        return result
+        time.sleep(1)
+        self.gauge.SetValue(100)
+        wx.PostEvent(self, self.LoadedEvent(result=result))
 
     def StartFrame(self):
         self.Destroy()
