@@ -3,7 +3,7 @@
 $token_filename = "./.token";
 $db_filename = "./gertrude.db";
 
-$token = $HTTP_GET_VARS["token"];
+$token = $_GET["token"];
 
 function check_token() {
   global $token_filename;
@@ -28,9 +28,16 @@ function get_token() {
   if (file_exists($token_filename))
     return 0;
 
-  $token = uniqid(md5(rand()), true);
   $f = fopen($token_filename, "w");
-  fputs($f, $token);
+  if (flock($f, LOCK_EX)) {
+    $token = uniqid(md5(rand()), true);
+    fwrite($f, $token);
+    flock($f, LOCK_UN);
+  }
+  else {
+    $token = 0;
+  }
+
   fclose($f);
   return $token;
 }
@@ -107,6 +114,6 @@ function execute($action) {
   }
 }
 
-echo execute($HTTP_GET_VARS["action"]);
+echo execute($_GET["action"]);
 
 ?>
