@@ -558,4 +558,6 @@ class Inscrit(object):
 #        return total, previsionnel
 
     def __cmp__(self, other):
+        if other is self: return 0
+	if other is None: return 1
         return cmp("%s %s" % (self.prenom, self.nom), "%s %s" % (other.prenom, other.nom))
