@@ -542,6 +542,7 @@ class PeriodeChoice(wx.BoxSizer):
         periode = eval('self.instance.'+self.member+'[self.parent.periode]')
         dlg = PeriodeDialog(self.parent, periode)
         response = dlg.ShowModal()
+	dlg.Destroy()
         if response == wx.ID_OK:
             history.Append([Change(self.instance, self.member+'[%d].debut' % self.parent.periode, periode.debut), Change(self.instance, self.member+'[%d].fin' % self.parent.periode, periode.fin)])
             periode.debut, periode.fin = dlg.debut_ctrl.GetValue(), dlg.fin_ctrl.GetValue()
