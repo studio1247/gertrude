@@ -22,6 +22,7 @@ import datetime
 from constants import *
 from parameters import *
 from functions import *
+from history import Change
 from gpanel import GPanel
 
 PRENOMS_WIDTH = 80 # px

@@ -126,5 +126,5 @@ class StartDialog(wx.Dialog):
     def OnExit(self, evt):
         self.info.AppendText("\nFermeture ...\n")
         if self.loaded:
-            Save(self.progress_handler(max=100))
+            Save(ProgressHandler(self.info.AppendText, self.gauge, 100))
         self.Destroy()
