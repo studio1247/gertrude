@@ -28,8 +28,6 @@ sys.path.insert(0, ".")
 
 VERSION = '0.41'
 
-__builtin__.history = []
-
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):
         wx.HtmlListBox.__init__(self, parent, id, size=size, style=style)
@@ -143,6 +141,7 @@ class GertrudeFrame(wx.Frame):
             dlg = wx.MessageDialog(self, "Voulez-vous enregistrer les changements ?", "Gertrude", wx.YES_NO|wx.ICON_QUESTION|wx.NO_DEFAULT)
             result = dlg.ShowModal()
             dlg.Destroy()
+            # TODO annuler !
             if result == wx.ID_NO:
                 Exit(ProgressHandler(self.SetStatusText))
                 self.Destroy()
@@ -152,9 +151,7 @@ class GertrudeFrame(wx.Frame):
         self.Destroy()
 
     def OnUndo(self, event):
-        if len(history) > 0:
-            for obj, member, value in history.pop(-1):
-                exec('obj.%s = value' % member)
+        if history.Undo():
             self.listbook.UpdateContents()
 
 

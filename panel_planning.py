@@ -174,13 +174,13 @@ class DayTabWindow(wx.Window):
                 obj = inscrit.presences[self.date]
                 original_presence = inscrit.getPresenceFromSemaineType(self.date)
             if original_presence.value == PRESENT:
-                history.append([(obj, 'value', original_presence.value),
-                                (obj, 'previsionnel', original_presence.previsionnel),
-                                (obj, 'details', original_presence.details[:])])
+                history.Append([Change(obj, 'value', original_presence.value),
+                                Change(obj, 'previsionnel', original_presence.previsionnel),
+                                Change(obj, 'details', original_presence.details[:])])
             else:
-                history.append([(obj, 'value', original_presence.value),
-                                (obj, 'previsionnel', original_presence.previsionnel),
-                                (obj, 'details', None)])
+                history.Append([Change(obj, 'value', original_presence.value),
+                                Change(obj, 'previsionnel', original_presence.previsionnel),
+                                Change(obj, 'details', None)])
             if self.original_presence:
                 self.original_presence.value = presence.value
                 self.original_presence.previsionnel = presence.previsionnel
@@ -227,19 +227,19 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
         else:
             presence = inscrit.presences[self.date]
         if presence.previsionnel and presence.value == PRESENT and self.date <= datetime.date.today():
-            history.append([(presence, 'previsionnel', 1)])
+            history.Append(Change(presence, 'previsionnel', 1))
             presence.previsionnel = 0
         elif presence.value == PRESENT:
-            history.append([(presence, 'value', PRESENT),
-                            (presence, 'details', presence.details[:])])
+            history.append([Change(presence, 'value', PRESENT),
+                            Change(presence, 'details', presence.details[:])])
             presence.value = VACANCES
         elif presence.value == VACANCES:
-            history.append([(presence, 'value', VACANCES)])
+            history.append(Change(presence, 'value', VACANCES))
             presence.value = MALADE
         elif presence.value == MALADE:
-            history.append([(presence, 'value', MALADE),
-                            (presence, 'details', None),
-                            (presence, 'previsionnel', presence.previsionnel)])
+            history.append([Change(presence, 'value', MALADE),
+                            Change(presence, 'details', None),
+                            Change(presence, 'previsionnel', presence.previsionnel)])
             new_presence = inscrit.getPresenceFromSemaineType(self.date)
             presence.value, presence.details = new_presence.value, new_presence.details
             if creche.presences_previsionnelles and self.date > datetime.date.today():
