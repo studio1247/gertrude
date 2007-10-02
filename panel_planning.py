@@ -22,6 +22,7 @@ import datetime
 from constants import *
 from parameters import *
 from functions import *
+from sqlobjects import *
 from history import Change
 from gpanel import GPanel
 
