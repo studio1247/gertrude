@@ -460,7 +460,7 @@ class PeriodeChoice(wx.BoxSizer):
         self.constructor = constructor
         self.instance = None
 
-        self.periodechoice = wx.Choice(parent, size=(200,-1))
+        self.periodechoice = wx.Choice(parent, size=(220,-1))
         parent.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.periodechoice)
         delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
         plusbmp = wx.Bitmap("bitmaps/plus.png", wx.BITMAP_TYPE_PNG)

@@ -78,7 +78,7 @@ class EmployesTab(AutoTab):
         del creche.employes[index]
         self.sizer.Layout()
         self.UpdateContents()
-        
+
 class ResponsabilitesTab(AutoTab, PeriodeMixin):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
@@ -105,7 +105,7 @@ class ResponsabilitesTab(AutoTab, PeriodeMixin):
         parents = self.GetNomsParents()
         for ctrl in self.responsables_ctrls:
             ctrl.SetItems(parents)
-        AutoTab.UpdateContents(self)
+        self.SetInstance(creche)
 
     def GetNomsParents(self):
         result = []
@@ -132,15 +132,17 @@ class CafTab(AutoTab, PeriodeMixin):
         sizer.Add(sizer2, 0, wx.ALL, 5)
         sizer.Fit(self)
         self.SetSizer(sizer)
+
+    def UpdateContents(self):
         self.SetInstance(creche)
-        
+
 class GeneralNotebook(wx.Notebook):
     def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
         self.AddPage(CrecheTab(self), u'Crèche')
         self.AddPage(EmployesTab(self), u'Employés')
         self.AddPage(ResponsabilitesTab(self), u'Responsabilités')
-        self.AddPage(CafTab(self), 'C.A.F.')        
+        self.AddPage(CafTab(self), 'C.A.F.')
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
     def OnPageChanged(self, event):
@@ -151,7 +153,7 @@ class GeneralNotebook(wx.Notebook):
     def UpdateContents(self):
         page = self.GetCurrentPage()
         page.UpdateContents()
-     
+
 class CrechePanel(GPanel):
     bitmap = './bitmaps/creche.png'
     index = 50
@@ -159,8 +161,8 @@ class CrechePanel(GPanel):
     def __init__(self, parent):
         GPanel.__init__(self, parent, u'Crèche')
         self.notebook = GeneralNotebook(self)
-	self.sizer.Add(self.notebook, 1, wx.EXPAND)
-            
+        self.sizer.Add(self.notebook, 1, wx.EXPAND)
+
     def UpdateContents(self):
         self.notebook.UpdateContents()
 

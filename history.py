@@ -40,7 +40,7 @@ class Insert:
 
     def Undo(self):
         self.instance.insert(self.index, self.value)
-        
+
 class History(list):
     def __init__(self):
         list.__init__(self)
