@@ -83,34 +83,41 @@ class ResponsabilitesTab(AutoTab, PeriodeMixin):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
         PeriodeMixin.__init__(self, 'bureaux')
-        parents = self.GetNomsParents()
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(PeriodeChoice(self, Bureau), 0, wx.TOP, 5)
         sizer2 = wx.FlexGridSizer(0, 2, 5, 5)
         sizer2.AddGrowableCol(1, 1)
         self.responsables_ctrls = []
-        self.responsables_ctrls.append(AutoChoiceCtrl(self, None, 'president', items=parents))
+        self.responsables_ctrls.append(AutoChoiceCtrl(self, None, 'president'))
         sizer2.AddMany([wx.StaticText(self, -1, u'Président :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
-        self.responsables_ctrls.append(AutoChoiceCtrl(self, None, 'vice_president', items=parents))
+        self.responsables_ctrls.append(AutoChoiceCtrl(self, None, 'vice_president'))
         sizer2.AddMany([wx.StaticText(self, -1, u'Vice président :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
-        self.responsables_ctrls.append(AutoChoiceCtrl(self, None, 'tresorier', items=parents))
+        self.responsables_ctrls.append(AutoChoiceCtrl(self, None, 'tresorier'))
         sizer2.AddMany([wx.StaticText(self, -1, u'Trésorier :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
-        self.responsables_ctrls.append(AutoChoiceCtrl(self, None, 'secretaire', items=parents))        
+        self.responsables_ctrls.append(AutoChoiceCtrl(self, None, 'secretaire'))        
         sizer2.AddMany([wx.StaticText(self, -1, u'Secrétaire :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
         sizer.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(sizer)
-        self.SetInstance(creche)
 
     def UpdateContents(self):
-        parents = self.GetNomsParents()
-        for ctrl in self.responsables_ctrls:
-            ctrl.SetItems(parents)
         self.SetInstance(creche)
 
-    def GetNomsParents(self):
+    def SetInstance(self, instance, periode=None):
+        self.instance = instance
+        if instance:
+            if periode is None:
+                current_periode = eval("self.instance.%s[-1]" % self.member)
+            else:
+                current_periode = eval("self.instance.%s[%d]" % (self.member, periode))
+            parents = self.GetNomsParents(current_periode)
+            for ctrl in self.responsables_ctrls:
+                ctrl.SetItems(parents)
+        PeriodeMixin.SetInstance(self, instance, periode)
+            
+    def GetNomsParents(self, periode):
         result = []
         parents = []
-        for inscrit in creche.inscrits:
+        for inscrit in getInscrits(periode.debut, periode.fin):
             for parent in (inscrit.papa, inscrit.maman):
                 if parent.prenom and parent.nom:
                     tmp = parent.prenom + ' ' + parent.nom

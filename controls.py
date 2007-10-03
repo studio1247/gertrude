@@ -568,6 +568,7 @@ class PeriodeMixin:
         self.instance = None
         self.member = member        
         self.periode = None
+        self.current_periode = None
         self.ctrls = []
         self.periodechoice = None
     
@@ -585,9 +586,11 @@ class PeriodeMixin:
                 self.periode = len(periodes) - 1
                 if self.periodechoice:
                     self.periodechoice.SetInstance(periodes, self.periode)
+            self.current_periode = periodes[self.periode]
             for ctrl in self.ctrls:
-                ctrl.SetInstance(periodes[self.periode])
+                ctrl.SetInstance(self.current_periode)
         else:
+            self.current_periode = None
             if self.periodechoice:
                 self.periodechoice.SetInstance(None)
             for ctrl in self.ctrls:

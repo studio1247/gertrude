@@ -189,16 +189,21 @@ def getTriParNomIndexes(indexes):
     return indexes
 
 def getPresentsIndexes(indexes, (debut, fin)):
+    if indexes is None:
+        indexes = range(len(creche.inscrits))
     result = []
     for i in range(len(indexes)):
         inscrit = creche.inscrits[indexes[i]]
         #print inscrit.prenom
         for inscription in inscrit.inscriptions:
-            if ((inscription.fin == None or inscription.fin >= debut) and (inscription.debut != None and inscription.debut <= fin)):
+            if ((inscription.fin is None or inscription.fin >= debut) and (inscription.debut != None and (not fin or inscription.debut <= fin))):
                 result.append(indexes[i])
                 break
-
     return result
+
+def getInscrits(debut, fin):
+    indexes = getPresentsIndexes(None, (debut, fin))
+    return [creche.inscrits[i] for i in indexes]
 
 def decodeErrors(errors):
     message = ""

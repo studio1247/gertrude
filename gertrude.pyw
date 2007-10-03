@@ -138,17 +138,18 @@ class GertrudeFrame(wx.Frame):
     def OnExit(self, evt):
         self.SetStatusText("Fermeture en cours ....")
         if len(history) > 0:
-            dlg = wx.MessageDialog(self, "Voulez-vous enregistrer les changements ?", "Gertrude", wx.YES_NO|wx.ICON_QUESTION|wx.NO_DEFAULT)
+            dlg = wx.MessageDialog(self, "Voulez-vous enregistrer les changements ?", "Gertrude", wx.YES_NO|wx.YES_DEFAULT|wx.CANCEL|wx.ICON_QUESTION)
             result = dlg.ShowModal()
             dlg.Destroy()
-            # TODO annuler !
-            if result == wx.ID_NO:
-                Exit(ProgressHandler(self.SetStatusText))
-                self.Destroy()
-                return
+        else:
+            result = wx.ID_NO
             
-        Save(ProgressHandler(self.SetStatusText))
-        self.Destroy()
+        if result == wx.ID_NO:
+            Exit(ProgressHandler(self.SetStatusText))
+            self.Destroy()
+        elif result == wx.ID_YES:            
+            Save(ProgressHandler(self.SetStatusText))
+            self.Destroy()
 
     def OnUndo(self, event):
         if history.Undo():
