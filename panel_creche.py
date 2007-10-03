@@ -79,25 +79,27 @@ class EmployesTab(AutoTab):
         self.sizer.Layout()
         self.UpdateContents()
         
-class ResponsabilitesTab(AutoTab):
+class ResponsabilitesTab(AutoTab, PeriodeMixin):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
+        PeriodeMixin.__init__(self, 'bureaux')
         parents = self.GetNomsParents()
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(PeriodeChoice(self, creche, 'bureaux', Bureau), 0, wx.TOP, 5)
+        sizer.Add(PeriodeChoice(self, Bureau), 0, wx.TOP, 5)
         sizer2 = wx.FlexGridSizer(0, 2, 5, 5)
         sizer2.AddGrowableCol(1, 1)
         self.responsables_ctrls = []
-        self.responsables_ctrls.append(AutoChoiceCtrl(self, creche, 'bureaux[self.parent.periode].president', items=parents))
+        self.responsables_ctrls.append(AutoChoiceCtrl(self, None, 'president', items=parents))
         sizer2.AddMany([wx.StaticText(self, -1, u'Président :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
-        self.responsables_ctrls.append(AutoChoiceCtrl(self, creche, 'bureaux[self.parent.periode].vice_president', items=parents))
+        self.responsables_ctrls.append(AutoChoiceCtrl(self, None, 'vice_president', items=parents))
         sizer2.AddMany([wx.StaticText(self, -1, u'Vice président :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
-        self.responsables_ctrls.append(AutoChoiceCtrl(self, creche, 'bureaux[self.parent.periode].tresorier', items=parents))
+        self.responsables_ctrls.append(AutoChoiceCtrl(self, None, 'tresorier', items=parents))
         sizer2.AddMany([wx.StaticText(self, -1, u'Trésorier :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
-        self.responsables_ctrls.append(AutoChoiceCtrl(self, creche, 'bureaux[self.parent.periode].secretaire', items=parents))        
+        self.responsables_ctrls.append(AutoChoiceCtrl(self, None, 'secretaire', items=parents))        
         sizer2.AddMany([wx.StaticText(self, -1, u'Secrétaire :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
         sizer.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(sizer)
+        self.SetInstance(creche)
 
     def UpdateContents(self):
         parents = self.GetNomsParents()
@@ -118,17 +120,19 @@ class ResponsabilitesTab(AutoTab):
         result.sort(cmp=lambda x,y: cmp(x[0].lower(), y[0].lower()))
         return result
 
-class CafTab(AutoTab):
+class CafTab(AutoTab, PeriodeMixin):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
+        PeriodeMixin.__init__(self, 'baremes_caf')
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(PeriodeChoice(self, creche, 'baremes_caf', BaremeCAF), 0, wx.TOP, 5)
+        sizer.Add(PeriodeChoice(self, BaremeCAF), 0, wx.TOP, 5)
         sizer2 = wx.FlexGridSizer(4, 2, 5, 5)
-        sizer2.AddMany([wx.StaticText(self, -1, 'Plancher :'), AutoNumericCtrl(self, creche, 'baremes_caf[self.parent.periode].plancher', precision=2)])
-        sizer2.AddMany([wx.StaticText(self, -1, 'Plafond :'), AutoNumericCtrl(self, creche, 'baremes_caf[self.parent.periode].plafond', precision=2)])
+        sizer2.AddMany([wx.StaticText(self, -1, 'Plancher :'), AutoNumericCtrl(self, None, 'plancher', precision=2)])
+        sizer2.AddMany([wx.StaticText(self, -1, 'Plafond :'), AutoNumericCtrl(self, None, 'plafond', precision=2)])
         sizer.Add(sizer2, 0, wx.ALL, 5)
         sizer.Fit(self)
         self.SetSizer(sizer)
+        self.SetInstance(creche)
         
 class GeneralNotebook(wx.Notebook):
     def __init__(self, parent):

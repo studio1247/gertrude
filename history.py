@@ -27,19 +27,19 @@ class Change:
         exec('self.instance.%s = self.value' % self.member)
 
 class Delete:
-    def __init__(self, instance, member):
-        self.instance, self.member = instance, member
+    def __init__(self, instance, index):
+        self.instance, self.index = instance, index
 
     def Undo(self):
-        # exec('self.instance.%s.delete()' % self.member)
-        exec('del self.instance.%s' % self.member)
+        self.instance[self.index].delete()
+        del self.instance[self.index]
 
-class Append:
-    def __init__(self, instance, member, constructor):
-        self.instance, self.member, self.constructor = instance, member, constructor
+class Insert:
+    def __init__(self, instance, index, value):
+        self.instance, self.index, self.value = instance, index, value
 
     def Undo(self):
-        exec("self.instance.%s.append(self.constructor())" % self.member)
+        self.instance.insert(self.index, self.value)
         
 class History(list):
     def __init__(self):

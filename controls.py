@@ -20,7 +20,7 @@ import wx, wx.lib, wx.lib.scrolledpanel
 import fpformat
 import datetime
 from functions import *
-from history import Change, Delete, Append
+from history import Change, Delete, Insert
               
 class NumericCtrl(wx.TextCtrl):
 ##    __fgcol_valid   ="Black"
@@ -321,7 +321,7 @@ class AutoMixin:
     def AutoChange(self, new_value):
         old_value = eval('self.instance.%s' % self.member)
         if old_value != new_value:
-            last = history.Last()                
+            last = history.Last()
             if last is not None and len(last) == 1 and isinstance(last[-1], Change):
                 if last[-1].instance != self.instance or last[-1].member != self.member:
                     history.Append(Change(self.instance, self.member, old_value))
@@ -454,11 +454,11 @@ class PeriodeDialog(wx.Dialog):
         self.sizer.Fit(self)
         
 class PeriodeChoice(wx.BoxSizer):
-    def __init__(self, parent, instance, member, constructor):
+    def __init__(self, parent, constructor):
         wx.BoxSizer.__init__(self, wx.HORIZONTAL)
         self.parent = parent
-        self.parent.periode = 0
         self.constructor = constructor
+        self.instance = None
 
         self.periodechoice = wx.Choice(parent, size=(200,-1))
         parent.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.periodechoice)
@@ -479,85 +479,71 @@ class PeriodeChoice(wx.BoxSizer):
         parent.Bind(wx.EVT_BUTTON, self.EvtPeriodeAddButton, self.periodeaddbutton)
         parent.Bind(wx.EVT_BUTTON, self.EvtPeriodeDelButton, self.periodedelbutton)
         parent.Bind(wx.EVT_BUTTON, self.EvtPeriodeSettingsButton, self.periodesettingsbutton)
-        parent.ctrls.append(self)
-        self.SetInstance(instance, member)
+        parent.periodechoice = self
         
-    def SetInstance(self, instance, member=None):
+    def SetInstance(self, instance, periode=None):
         self.instance = instance
-        if member:
-            self.member = member
-        if not self.instance:
-            self.Disable()
-            self.parent.periode = 0
-        else:
-            self.parent.periode = eval('len(instance.%s) - 1' % self.member)
+        self.periode = periode
+        if instance:
             self.periodechoice.Clear()
-            for item in eval('instance.%s' % self.member):
+            for item in instance:
                 self.periodechoice.Append(periodestr(item))
-
             self.Enable()
-            self.periodechoice.SetSelection(self.parent.periode)
-            
-    def UpdateContents(self):
-        pass
-      
+            self.periodechoice.SetSelection(periode)
+        else:
+            self.Disable()
+     
     def EvtPeriodeChoice(self, evt):
         ctrl = evt.GetEventObject()
-        self.parent.periode = ctrl.GetSelection()
-        self.parent.UpdateContents()
+        self.periode = ctrl.GetSelection()
+        self.parent.SetPeriode(self.periode)
         self.Enable()
   
     def EvtPeriodeAddButton(self, evt):
-        last_periode = eval('self.instance.'+self.member+'[-1]')       
-        periode_nb = eval('len(self.instance.%s)' % self.member)
+        last_periode = self.instance[-1]
+        self.periode = len(self.instance)
         new_periode = self.constructor()
         new_periode.debut = last_periode.fin + datetime.timedelta(1)
         if last_periode.debut.day == new_periode.debut.day and last_periode.debut.month == new_periode.debut.month:
             new_periode.fin = datetime.date(last_periode.fin.year+new_periode.debut.year-last_periode.debut.year, last_periode.fin.month, last_periode.fin.day)
-        exec('self.instance.%s.append(new_periode)' % self.member)
+        self.instance.append(new_periode)
         self.periodechoice.Append(periodestr(new_periode))
-        self.periodechoice.SetSelection(periode_nb)
-        self.parent.periode = periode_nb
-        self.parent.UpdateContents()
+        self.periodechoice.SetSelection(self.periode)
+        self.parent.SetPeriode(self.periode)
+        history.Append(Delete(self.instance, -1))
         self.Enable()
-        history.Append(Delete(self.instance, self.member+'[-1]'))
 
     def EvtPeriodeDelButton(self, evt):
         index = self.periodechoice.GetSelection()
-        periode = eval('self.instance.'+self.member+'[index]')
-        history.Append(Append(self.instance, self.member, self.constructor))
-        # TODO pas fini
-        #for ctrl in self.parent.ctrls:
-        #    print ctrl.member
-        exec('self.instance.'+self.member+'[index].delete()')
-        exec('del self.instance.'+self.member+'[index]')
+        periode = self.instance[index]
+        history.Append(Insert(self.instance, index, periode))
+        periode.delete()
+        del self.instance[index]
         self.periodechoice.Delete(index)
-        last_periode = eval('len(self.instance.'+self.member+') - 1')
-        self.periodechoice.SetSelection(last_periode)
-        self.parent.periode = last_periode
-        self.parent.UpdateContents()
+        self.periode = len(self.instance) - 1
+        self.periodechoice.SetSelection(self.periode)
+        self.parent.SetPeriode(self.periode)
         self.Enable()
 
     def EvtPeriodeSettingsButton(self, evt):
-        periode = eval('self.instance.'+self.member+'[self.parent.periode]')
+        periode = self.instance[self.periode]
         dlg = PeriodeDialog(self.parent, periode)
         response = dlg.ShowModal()
-	dlg.Destroy()
+        dlg.Destroy()
         if response == wx.ID_OK:
-            history.Append([Change(self.instance, self.member+'[%d].debut' % self.parent.periode, periode.debut), Change(self.instance, self.member+'[%d].fin' % self.parent.periode, periode.fin)])
+            history.Append([Change(periode, 'debut', periode.debut), Change(periode, 'fin', periode.fin)])
             periode.debut, periode.fin = dlg.debut_ctrl.GetValue(), dlg.fin_ctrl.GetValue()
-            self.periodechoice.SetString(self.parent.periode, periodestr(periode))
-            self.periodechoice.SetSelection(self.parent.periode)
+            self.periodechoice.SetString(self.periode, periodestr(periode))
+            self.periodechoice.SetSelection(self.periode)
             self.Enable()
 
     def Enable(self, value=True):
         self.periodechoice.Enable(value)
-        if self.instance and eval('self.instance.'+self.member+'[-1]').fin:
+        if self.instance and self.instance[-1].fin:
             self.periodeaddbutton.Enable(value)
         else:
             self.periodeaddbutton.Disable()
-        count = self.periodechoice.GetCount()
-        if count <= 1 or self.parent.periode != count - 1:
+        if len(self.instance) <= 1 or self.parent.periode != len(self.instance) - 1:
             self.periodedelbutton.Disable()
         else:
             self.periodedelbutton.Enable(value)
@@ -576,19 +562,43 @@ class AutoTab(wx.lib.scrolledpanel.ScrolledPanel):
     def UpdateContents(self):
         for ctrl in self.ctrls:
             ctrl.UpdateContents()
-            
-class PeriodePanel(wx.Panel):
-    def __init__(self, parent, *args, **kwargs):
-        wx.Panel.__init__(self, parent, -1, *args, **kwargs)
+
+class PeriodeMixin:
+    def __init__(self, member):
+        self.instance = None
+        self.member = member        
+        self.periode = None
         self.ctrls = []
-        parent.ctrls.append(self)
+        self.periodechoice = None
     
     def UpdateContents(self):
         for ctrl in self.ctrls:
             ctrl.UpdateContents()
     
-    def SetInstance(self, instance):
-        for ctrl in self.ctrls:
-            ctrl.SetInstance(instance)
+    def SetInstance(self, instance, periode=None):
+        self.instance = instance
+        self.periode = periode
         
-        
+        if instance:
+            periodes = eval("instance.%s" % self.member)
+            if periode is None:
+                self.periode = len(periodes) - 1
+                if self.periodechoice:
+                    self.periodechoice.SetInstance(periodes, self.periode)
+            for ctrl in self.ctrls:
+                ctrl.SetInstance(periodes[self.periode])
+        else:
+            if self.periodechoice:
+                self.periodechoice.SetInstance(None)
+            for ctrl in self.ctrls:
+                ctrl.SetInstance(None)
+
+    def SetPeriode(self, periode):
+        self.SetInstance(self.instance, periode)
+
+class PeriodePanel(wx.Panel, PeriodeMixin):
+    def __init__(self, parent, member, *args, **kwargs):
+        wx.Panel.__init__(self, parent, -1, *args, **kwargs)
+        PeriodeMixin.__init__(self, member)
+        parent.ctrls.append(self)
+    

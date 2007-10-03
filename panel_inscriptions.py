@@ -499,14 +499,14 @@ class ParentsPanel(InscriptionsTab):
             sizer11.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
             
             if profil & PROFIL_TRESORIER:
-                panel = PeriodePanel(self)
+                panel = PeriodePanel(self, parent+'.revenus')
                 revenus_sizer = wx.StaticBoxSizer(wx.StaticBox(panel, -1, "Revenus"), wx.VERTICAL)
-                revenus_sizer.Add(PeriodeChoice(panel, None, '%s.revenus' % parent, eval('self.nouveau_revenu_%s' % parent)), 0, wx.EXPAND|wx.ALL, 5)
+                revenus_sizer.Add(PeriodeChoice(panel, eval('self.nouveau_revenu_%s' % parent)), 0, wx.EXPAND|wx.ALL, 5)
                 revenus_gridsizer = wx.FlexGridSizer(0, 2, 5, 10)
                 revenus_gridsizer.AddGrowableCol(1, 1)
-                revenus_gridsizer.AddMany([(wx.StaticText(panel, -1, 'Revenus annuels bruts :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(panel, None, '%s.revenus[self.parent.periode].revenu' % parent, precision=2), 0, wx.EXPAND)])
-                revenus_gridsizer.AddMany([(0, 0), (AutoCheckBox(panel, None, '%s.revenus[self.parent.periode].chomage' % parent, u'Chômage'), 0, wx.EXPAND)])
-                choice = AutoChoiceCtrl(panel, None, '%s.revenus[self.parent.periode].regime' % parent)
+                revenus_gridsizer.AddMany([(wx.StaticText(panel, -1, 'Revenus annuels bruts :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(panel, None, 'revenu', precision=2), 0, wx.EXPAND)])
+                revenus_gridsizer.AddMany([(0, 0), (AutoCheckBox(panel, None, 'chomage', u'Chômage'), 0, wx.EXPAND)])
+                choice = AutoChoiceCtrl(panel, None, 'regime')
                 self.regimes_choices.append(choice)
                 for i, regime in enumerate([u'Pas de sélection', u'Régime général', u'Régime de la fonction publique', u'Régime MSA', u'Régime EDF-GDF', u'Régime RATP', u'Régime Pêche maritime', u'Régime Marins du Commerce']):
                     choice.Append(regime, i)
@@ -525,15 +525,16 @@ class ParentsPanel(InscriptionsTab):
     def nouveau_revenu_maman(self):
         return Revenu(self.inscrit.maman)
 
-class ModeAccueilPanel(InscriptionsTab):
+class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
     def __init__(self, parent):
         InscriptionsTab.__init__(self, parent)
+        PeriodeMixin.__init__(self, 'inscriptions')
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(PeriodeChoice(self, None, 'inscriptions', self.nouvelleInscription), 0, wx.TOP|wx.BOTTOM, 5)
+        sizer.Add(PeriodeChoice(self, self.nouvelleInscription), 0, wx.TOP|wx.BOTTOM, 5)
         if creche.modes_inscription & MODE_HALTE_GARDERIE:
-            sizer.Add(AutoRadioBox(self, None, 'inscriptions[self.parent.periode].mode', "Mode d'accueil", [u'Crèche', 'Halte-garderie']))
+            sizer.Add(AutoRadioBox(self, None, 'mode', "Mode d'accueil", [u'Crèche', 'Halte-garderie']))
         gridsizer = wx.FlexGridSizer(0, 2, 5, 10)
-        gridsizer.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'inscriptions[self.parent.periode].fin_periode_essai'), 0, 0)])
+        gridsizer.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_essai'), 0, 0)])
         sizer.Add(gridsizer, 0, wx.EXPAND|wx.ALL, 5)
         if creche.modes_inscription != MODE_CRECHE:
             sizer1 = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Semaine type'), wx.HORIZONTAL)
@@ -553,7 +554,8 @@ class ModeAccueilPanel(InscriptionsTab):
         return Inscription(self.inscrit)
     
     def SetInscrit(self, inscrit):
-        InscriptionsTab.SetInscrit(self, inscrit)
+        self.inscrit = inscrit
+        self.SetInstance(inscrit)
         if self.week_ctrl: # TODO week_ctrl comme les autres ctrls ?
             if inscrit:
                 self.week_ctrl.SetSemaine(inscrit.inscriptions[self.periode].periode_reference)
