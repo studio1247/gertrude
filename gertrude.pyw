@@ -138,11 +138,11 @@ class GertrudeFrame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.OnExit)
                 
     def OnSave(self, evt):
-        self.SetStatusText("Enregistrement en cours ....")
+        self.SetStatusText("Enregistrement en cours ...")
         Save(ProgressHandler(self.SetStatusText))
 
     def OnExit(self, evt):
-        self.SetStatusText("Fermeture en cours ....")
+        self.SetStatusText("Fermeture en cours ...")
         if len(history) > 0:
             dlg = wx.MessageDialog(self, "Voulez-vous enregistrer les changements ?", "Gertrude", wx.YES_NO|wx.YES_DEFAULT|wx.CANCEL|wx.ICON_QUESTION)
             result = dlg.ShowModal()

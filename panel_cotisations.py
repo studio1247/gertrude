@@ -27,7 +27,7 @@ import wx.html
 import xml.dom.minidom
 from constants import *
 from functions import *
-from facture import Facture
+from facture import *
 from cotisation import Cotisation, CotisationException
 from gpanel import GPanel
 from ooffice import *
@@ -154,9 +154,9 @@ class RecuModifications(object):
         return []
 
 class AppelCotisationsModifications(object):
-    def __init__(self, debut):
-        self.debut = debut
-        self.fin = getMonthEnd(self.debut)
+    def __init__(self, debut, options=0):
+        self.debut, self.fin = debut, getMonthEnd(debut)
+        self.options = options
         
     def execute(self, dom):
         errors = []
@@ -169,20 +169,25 @@ class AppelCotisationsModifications(object):
         template = [lignes.item(5), lignes.item(6)]
 
         # Les cotisations
-        indexes = getCrecheIndexes(self.debut, self.fin)
-        for i, index in enumerate(indexes):
-            inscrit = creche.inscrits[index]
+        inscrits = getInscrits(self.debut, self.fin)
+        for i, inscrit in enumerate(inscrits):
             line = template[i % 2].cloneNode(1)
             try:
-                facture = Facture(inscrit, self.debut.year, self.debut.month)                
-                ReplaceFields(line, [('prenom', inscrit.prenom),
-                                     ('cotisation', facture.cotisation_mensuelle),
-                                     ('commentaire', None)])
+                facture = Facture(inscrit, self.debut.year, self.debut.month, self.options)
+                cotisation, supplement = facture.cotisation_mensuelle, None
+                commentaire = None
+                if self.debut.month == 10 and self.options & RATTRAPAGE_SEPTEMBRE:
+                    facture_septembre = Facture(inscrit, self.debut.year, 9)
+                    facture_septembre_fausse = Facture(inscrit, self.debut.year, 9, REVENUS_ANNEE_PRECEDENTE)
+                    supplement = facture_septembre.cotisation_mensuelle - facture_septembre_fausse.cotisation_mensuelle
             except CotisationException, e:
-                ReplaceFields(line, [('prenom', inscrit.prenom),
-                                     ('cotisation', '?'),
-                                     ('commentaire', '\n'.join(e.errors))])
+                cotisation, supplement = '?', None
+                commentaire = '\n'.join(e.errors)
                 errors.append((inscrit, e.errors))
+            ReplaceFields(line, [('prenom', inscrit.prenom),
+                                 ('cotisation', cotisation),
+                                 ('supplement', supplement),
+                                 ('commentaire', commentaire)])
             table.insertBefore(line, template[0])
             IncrementFormulas(template[i % 2], +2)
 
@@ -190,13 +195,13 @@ class AppelCotisationsModifications(object):
         table.removeChild(template[1])
         return errors
 
-def GenereAppelCotisations(date, oofilename):
-    return GenerateDocument('./templates/Appel Cotisations.ods', oofilename, AppelCotisationsModifications(date))
+def GenereAppelCotisations(oofilename, date, options=0):
+    return GenerateDocument('./templates/Appel Cotisations.ods', oofilename, AppelCotisationsModifications(date, options))
 
-def GenereFacture(inscrit, periode, oofilename):
+def GenereFacture(oofilename, inscrit, periode):
     return GenerateDocument('./templates/facture_mensuelle_creche.odt', oofilename, FactureModifications(inscrit, periode))
 
-def GenereRecu(inscrit, debut, fin, oofilename):
+def GenereRecu(oofilename, inscrit, debut, fin):
     return GenerateDocument('./templates/Attestation paiement.odt', oofilename, RecuModifications(inscrit, debut, fin))
 
 class CotisationsPanel(GPanel):
@@ -313,10 +318,24 @@ class CotisationsPanel(GPanel):
         oodefaultfilename = u"Appel cotisations %s %d.ods" % (months[periode.month - 1], periode.year)
         dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
         response = dlg.ShowModal()
+        dlg.Destroy()
         if response == wx.ID_OK:
             oofilename = dlg.GetPath()
+            options = 0
+            if periode.month == 9:
+                dlg = wx.MessageDialog(self, u"Voulez-vous un appel de cotisations basé sur les revenus de l'année précédente ?",
+                                       'Message', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+                if dlg.ShowModal() == wx.ID_YES:
+                    options |= REVENUS_ANNEE_PRECEDENTE
+                dlg.Destroy()
+            elif periode.month == 10:
+                dlg = wx.MessageDialog(self, u"Voulez-vous un appel de cotisations prenant en compte les rattrapages du mois de septembre ?",
+                                       'Message', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+                if dlg.ShowModal() == wx.ID_YES:
+                    options |= RATTRAPAGE_SEPTEMBRE
+                dlg.Destroy()
             try:
-                errors = GenereAppelCotisations(periode, oofilename)
+                errors = GenereAppelCotisations(oofilename, periode, options)
                 message = u"Document %s généré" % oofilename
                 if errors:
                     message += ' avec des erreurs :\n' + decodeErrors(errors)                    
@@ -334,6 +353,7 @@ class CotisationsPanel(GPanel):
         if isinstance(inscrit, list):
             dlg = wx.DirDialog(self, u'Générer des documents OpenOffice', style=wx.DD_DEFAULT_STYLE|wx.DD_NEW_DIR_BUTTON)
             response = dlg.ShowModal()
+            dlg.Destroy()
             if response == wx.ID_OK:
                 oopath = dlg.GetPath()
                 inscrits = [inscrit for inscrit in creche.inscrits if inscrit.getInscription(periode) is not None]
@@ -353,6 +373,7 @@ class CotisationsPanel(GPanel):
         if isinstance(inscrit, list):
             dlg = wx.DirDialog(self, u'Générer des documents OpenOffice', style=wx.DD_DEFAULT_STYLE|wx.DD_NEW_DIR_BUTTON)
             response = dlg.ShowModal()
+            dlg.Destroy()
             if response == wx.ID_OK:
                 oopath = dlg.GetPath()
                 inscrits = [inscrit for inscrit in creche.inscrits if inscrit.getInscriptions(debut, fin)]
@@ -362,6 +383,7 @@ class CotisationsPanel(GPanel):
             oodefaultfilename = u"Attestation de paiement %s %s-%s %d.odt" % (inscrit.prenom, months[debut.month - 1], months[fin.month - 1], debut.year)
             dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
             response = dlg.ShowModal()
+            dlg.Destroy()
             if response == wx.ID_OK:
                 oofilename = dlg.GetPath()
                 self.GenereRecus([inscrit], debut, fin, oofilename)
@@ -373,7 +395,7 @@ class CotisationsPanel(GPanel):
                 filename = '%s/Cotisation %s %s %d.odt' % (oopath, inscrit.prenom, months[periode.month - 1], periode.year)
             else:
                 filename = oofilename
-            doc_errors = GenereFacture(inscrit, periode, filename)
+            doc_errors = GenereFacture(filename, inscrit, periode)
             if doc_errors:
                 errors.extend(doc_errors)
             else:
@@ -400,7 +422,7 @@ class CotisationsPanel(GPanel):
                 filename = '%s/Attestation de paiement %s %s-%s %d.odt' % (oopath, inscrit.prenom, months[debut.month - 1], months[fin.month - 1], debut.year)
             else:
                 filename = oofilename
-            doc_errors = GenereRecu(inscrit, debut, fin, filename)
+            doc_errors = GenereRecu(filename, inscrit, debut, fin)
             if doc_errors:
                 errors.extend(doc_errors)
             else:
@@ -430,16 +452,16 @@ if __name__ == '__main__':
 
     for inscrit in creche.inscrits:
         if inscrit.prenom == 'Soen':
-            GenereRecu(inscrit, datetime.date(2007, 4, 1), datetime.date(2007, 9, 1), 'recu soen.ods')
+            GenereRecu('recu soen.ods', inscrit, datetime.date(2007, 4, 1), datetime.date(2007, 9, 1))
             print u'Fichier "recu soen.ods" généré'
 
     sys.exit(0)
-    GenereAppelCotisations(datetime.date(2007, 8, 1), 'appel cotisations.ods')
+    GenereAppelCotisations('appel cotisations.ods', datetime.date(2007, 8, 1))
     print u'Fichier "appel cotisations.ods" généré'
     
     for inscrit in creche.inscrits:
         if inscrit.prenom == 'Basile':
-            GenereFacture(inscrit, datetime.date(2005, 12, 1), 'basile.ods')
+            GenereFacture('basile.ods', inscrit, datetime.date(2005, 12, 1))
             print u'Fichier "basile.ods" généré'
 
 

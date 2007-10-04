@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 ##    This file is part of Gertrude.
 ##
@@ -21,10 +21,11 @@ from constants import *
 from cotisation import *
 
 class Facture(object):
-    def __init__(self, inscrit, annee, mois):
+    def __init__(self, inscrit, annee, mois, options=0):
         self.inscrit = inscrit
         self.annee = annee
         self.mois = mois
+        self.options = options
         self.cotisation_mensuelle = 0.0
         self.detail_cotisation_mensuelle = [0.0, 0.0]
         self.heures_facturees = 0
@@ -50,7 +51,7 @@ class Facture(object):
                 else:
                     jours_ouvres += 1
                     if inscrit.getInscription(date):
-                        cotisation = Cotisation(inscrit, (date, date), options=NO_ADDRESS)
+                        cotisation = Cotisation(inscrit, (date, date), options=NO_ADDRESS|self.options)
                         if (cotisation.mode_garde, cotisation.cotisation_mensuelle) in cotisations_mensuelles:
                             cotisations_mensuelles[(cotisation.mode_garde, cotisation.cotisation_mensuelle)] += 1
                         else:

@@ -16,6 +16,7 @@
 ##    along with Gertrude; if not, write to the Free Software
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+import datetime
 from functions import *
 
 class CotisationException(Exception):
@@ -23,11 +24,14 @@ class CotisationException(Exception):
         self.errors = errors
 
 NO_ADDRESS = 1
+REVENUS_ANNEE_PRECEDENTE = 2
+RATTRAPAGE_SEPTEMBRE = 4
 
 class Cotisation(object):
     def __init__(self, inscrit, periode, options=0):
         self.inscrit = inscrit
         self.debut, self.fin = periode
+        self.options = options
         errors = []
         if not inscrit.prenom or not inscrit.nom:
             errors.append(u" - L'état civil de l'enfant est incomplet.")
@@ -38,10 +42,13 @@ class Cotisation(object):
         if self.debut is None:
             errors.append(u" - La date de début de la période n'est pas renseignée.")
             raise CotisationException(errors)
-        self.revenus_papa = Select(inscrit.papa.revenus, self.debut)
+        revenus_debut = self.debut
+        if options & REVENUS_ANNEE_PRECEDENTE:
+            revenus_debut = datetime.date(self.debut.year-1, self.debut.month, self.debut.day)
+        self.revenus_papa = Select(inscrit.papa.revenus, revenus_debut)
         if self.revenus_papa is None or self.revenus_papa.revenu == '':
             errors.append(u" - Les déclarations de revenus du papa sont incomplètes.")
-        self.revenus_maman = Select(inscrit.maman.revenus, self.debut)
+        self.revenus_maman = Select(inscrit.maman.revenus, revenus_debut)
         if self.revenus_maman is None or self.revenus_maman.revenu == '':
             errors.append(u" - Les déclarations de revenus de la maman sont incomplètes.")
         self.bureau = Select(creche.bureaux, self.debut)
@@ -85,7 +92,7 @@ class Cotisation(object):
 
         self.assiette_mensuelle = self.assiette_annuelle / 12
         
-        self.taux_horaire = 0.05
+        self.taux_horaire = 10.0/200 # 0.05 !
         
         self.enfants_a_charge = 1
         self.enfants_en_creche = 1
@@ -97,22 +104,18 @@ class Cotisation(object):
 
         if self.enfants_en_creche > 1:
             self.mode_taux_horaire = u'%d enfants en crèche' % self.enfants_en_creche
-            self.taux_horaire = 0.02 # !!
+            self.taux_horaire = 5.55/200 # 0.02 !
         else:
             self.mode_taux_horaire = u'%d enfants à charge' % self.enfants_a_charge
             if self.enfants_a_charge > 3:
-                self.taux_horaire = 5.55/200 # 0.02 !!
+                self.taux_horaire = 5.55/200 # 0.02 !
             elif self.enfants_a_charge == 3:
-                self.taux_horaire = 6.25/200 # 0.03 !!
+                self.taux_horaire = 6.25/200 # 0.03 !
             elif self.enfants_a_charge == 2:
-                self.taux_horaire = 8.33/200 # 0.04 !!
+                self.taux_horaire = 8.33/200 # 0.04 !
             else:
                 self.mode_taux_horaire = u'1 enfant à charge'
-                self.taux_horaire = 10.0/200 # 0.05 !!
-
-#        if (inscrit.handicape and self.taux_horaire > 0.02):
-#            self.mode_taux_horaire += u', handicapé'
-#            self.taux_horaire -= 0.01
+                self.taux_horaire = 10.0/200 # 0.05 !
 
         self.heures_garde = jours_garde * 40
         if jours_garde == 5:
