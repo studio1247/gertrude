@@ -591,7 +591,7 @@ class InscriptionsPanel(GPanel):
         self.delbutton.SetToolTipString(u"Supprimer cet enfant")
         self.Bind(wx.EVT_BUTTON, self.EvtInscritAddButton, self.addbutton)
         self.Bind(wx.EVT_BUTTON, self.EvtInscritDelButton, self.delbutton)
-        sizer.AddMany([(self.choice, 1, wx.EXPAND|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (self.addbutton, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (self.delbutton, 0, wx.ALIGN_CENTER_VERTICAL)])
+        sizer.AddMany([(self.choice, 1, wx.EXPAND|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (self.addbutton, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (self.delbutton, 0, wx.ALIGN_CENTER_VERTICAL)])
         self.sizer.Add(sizer, 0, wx.EXPAND)
         # le notebook pour la fiche d'inscription
         self.notebook = InscriptionsNotebook(self)
