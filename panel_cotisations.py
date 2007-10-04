@@ -52,6 +52,8 @@ class FactureModifications(object):
         empty_cells = debut.weekday()
         if empty_cells > 4:
             empty_cells -= 7
+
+        #    création d'un tableau de cells
         for table in dom.getElementsByTagName('table:table'):
             if table.getAttribute('table:name') == 'Presences':
                 rows = table.getElementsByTagName('table:table-row')[1:]
@@ -62,25 +64,24 @@ class FactureModifications(object):
                         cell.setAttribute('table:style-name', 'Tableau1.E2')
                         text_node = cell.getElementsByTagName('text:p')[0]
                         text_node.firstChild.replaceWholeText(' ')
-                break
 
-        date = debut
-        while date.month == debut.month:
-            col = date.weekday()
-            if col < 5:
-                row = (date.day + empty_cells) / 7
-                cell = cells[row][col]
-                # ecriture de la date dans la cellule
-                text_node = cell.getElementsByTagName('text:p')[0]
-                text_node.firstChild.replaceWholeText('%d' % date.day)
-                if not date in creche.jours_fermeture:
-                    # changement de la couleur de la cellule
-                    presence = self.inscrit.getPresence(date)[0]
-                    cell.setAttribute('table:style-name', 'Tableau1.%s' % couleurs[presence])
-            date += datetime.timedelta(1)
+                date = debut
+                while date.month == debut.month:
+                    col = date.weekday()
+                    if col < 5:
+                        row = (date.day + empty_cells) / 7
+                        cell = cells[row][col]
+                        # ecriture de la date dans la cellule
+                        text_node = cell.getElementsByTagName('text:p')[0]
+                        text_node.firstChild.replaceWholeText('%d' % date.day)
+                        if not date in creche.jours_fermeture:
+                            # changement de la couleur de la cellule
+                            presence = self.inscrit.getPresence(date)[0]
+                            cell.setAttribute('table:style-name', 'Presences.%s' % couleurs[presence])
+                    date += datetime.timedelta(1)
 
-        for i in range(row + 1, len(rows)):
-            table.removeChild(rows[i])
+                for i in range(row + 1, len(rows)):
+                    table.removeChild(rows[i])
 
         # Les champs de la facture
         fields = [('nom-creche', creche.nom),
@@ -299,11 +300,14 @@ class CotisationsPanel(GPanel):
             if inscrit.getInscription(datetime.date.today()) != None:
                 for choice in self.inscrits_choice.values():
                     choice.Append(GetInscritId(inscrit, creche.inscrits), inscrit)
-        for choice in self.inscrits_choice.values():
-            choice.Append(50 * '-', None)
         # Les autres
+        separator = False
         for inscrit in creche.inscrits:
             if inscrit.getInscription(datetime.date.today()) == None:
+                if not separator:
+                    separator = True
+                    for choice in self.inscrits_choice.values():
+                        choice.Append(50 * '-', None)
                 for choice in self.inscrits_choice.values():
                     choice.Append(GetInscritId(inscrit, creche.inscrits), inscrit)
         for choice in self.inscrits_choice.values():
@@ -450,18 +454,18 @@ if __name__ == '__main__':
     from data import *
     Load()
 
-    for inscrit in creche.inscrits:
-        if inscrit.prenom == 'Soen':
-            GenereRecu('recu soen.ods', inscrit, datetime.date(2007, 4, 1), datetime.date(2007, 9, 1))
-            print u'Fichier "recu soen.ods" généré'
-
-    sys.exit(0)
-    GenereAppelCotisations('appel cotisations.ods', datetime.date(2007, 8, 1))
-    print u'Fichier "appel cotisations.ods" généré'
+##    for inscrit in creche.inscrits:
+##        if inscrit.prenom == 'Soen':
+##            GenereRecu('recu soen.ods', inscrit, datetime.date(2007, 4, 1), datetime.date(2007, 9, 1))
+##            print u'Fichier "recu soen.ods" généré'
+##
+##    sys.exit(0)
+##    GenereAppelCotisations('appel cotisations.ods', datetime.date(2007, 8, 1))
+##    print u'Fichier "appel cotisations.ods" généré'
     
     for inscrit in creche.inscrits:
-        if inscrit.prenom == 'Basile':
-            GenereFacture('basile.ods', inscrit, datetime.date(2005, 12, 1))
+        if inscrit.prenom == 'Germain':
+            GenereFacture('basile.ods', inscrit, datetime.date(2007, 7, 1))
             print u'Fichier "basile.ods" généré'
 
 

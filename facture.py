@@ -53,9 +53,9 @@ class Facture(object):
                     if inscrit.getInscription(date):
                         cotisation = Cotisation(inscrit, (date, date), options=NO_ADDRESS|self.options)
                         if (cotisation.mode_garde, cotisation.cotisation_mensuelle) in cotisations_mensuelles:
-                            cotisations_mensuelles[(cotisation.mode_garde, cotisation.cotisation_mensuelle)] += 1
+                            cotisations_mensuelles[(cotisation.mode_garde, cotisation.cotisation_mensuelle)][0] += 1
                         else:
-                            cotisations_mensuelles[(cotisation.mode_garde, cotisation.cotisation_mensuelle)] = 1
+                            cotisations_mensuelles[(cotisation.mode_garde, cotisation.cotisation_mensuelle)] = [1, 0]
                         if (cotisation.mode_garde, cotisation.total_semaine) in heures_hebdomadaires:
                             heures_hebdomadaires[(cotisation.mode_garde, cotisation.total_semaine)] += 1
                         else:
@@ -69,24 +69,38 @@ class Facture(object):
                             self.supplement += cotisation.montant_jour_supplementaire
                         elif presence == MALADE:
                             self.jours_maladie.append(date)
-                            tmp = date - datetime.timedelta(1)
-                            while date - tmp < datetime.timedelta(15):
-                                presence_tmp = inscrit.getPresence(tmp)[0]
-                                if presence_tmp == PRESENT or presence_tmp == VACANCES:
-                                    break
+                            # recherche du premier et du dernier jour
+                            premier_jour_maladie = tmp = date
+                            while tmp >= inscrit.inscriptions[0].debut and inscrit.getPresence(tmp)[0] not in (PRESENT, VACANCES):
                                 tmp -= datetime.timedelta(1)
+                                if inscrit.getPresence(tmp)[0] == MALADE:
+                                    premier_jour_maladie = tmp
+                            dernier_jour_maladie = tmp = date
+                            while (not inscrit.inscriptions[-1].fin or tmp <= inscrit.inscriptions[-1].fin) and inscrit.getPresence(tmp)[0] not in (PRESENT, VACANCES):
+                                tmp += datetime.timedelta(1)
+                                if inscrit.getPresence(tmp)[0] == MALADE:
+                                    dernier_jour_maladie = tmp
+
+                            if creche.mode_maladie == DEDUCTION_TOTALE:
+                                nb_jours_maladie = dernier_jour_maladie - premier_jour_maladie + datetime.timedelta(1)
                             else:
+                                nb_jours_maladie = date - premier_jour_maladie + datetime.timedelta(1)
+                            if nb_jours_maladie > datetime.timedelta(creche.minimum_maladie):
                                 self.jours_maladie_deduits.append(date)
-                                self.deduction += cotisation.montant_jour_supplementaire
-                                self.raison_deduction = u'(maladie > 15j consécutifs)'
+                                cotisations_mensuelles[(cotisation.mode_garde, cotisation.cotisation_mensuelle)][1] += 1
+                                self.raison_deduction = u'(maladie > %dj consécutifs)' % creche.minimum_maladie
+
             date += datetime.timedelta(1)
 
+        
         self.semaines_payantes = 4 - int(jours_fermeture / 5)
 
         for mode_garde, cotisation in cotisations_mensuelles:
-            pro_rata = cotisation * self.semaines_payantes * float(cotisations_mensuelles[mode_garde, cotisation]) / jours_ouvres / 4
+            cotisation_journaliere = cotisation * self.semaines_payantes / jours_ouvres / 4
+            pro_rata = cotisation_journaliere * float(cotisations_mensuelles[mode_garde, cotisation][0])
             self.cotisation_mensuelle += pro_rata
             self.detail_cotisation_mensuelle[mode_garde] += pro_rata
+            self.deduction += cotisation_journaliere * cotisations_mensuelles[mode_garde, cotisation][1]
 
         heures_facturees = 0.0
         detail_heures_facturees = [0.0, 0.0]

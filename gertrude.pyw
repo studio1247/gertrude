@@ -26,7 +26,7 @@ from startdialog import StartDialog
 import gpanel, controls, zipfile, xml.dom.minidom, wx.html, ooffice
 sys.path.insert(0, ".")
 
-VERSION = '0.42'
+VERSION = '0.44'
 
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):

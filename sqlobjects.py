@@ -236,6 +236,8 @@ class Creche(object):
         self.baremes_caf = []
         self.inscrits = []
         self.mois_payes = 12
+        self.minimum_maladie = 15
+        self.mode_maladie = DEDUCTION_AVEC_CARENCE
         self.presences_previsionnelles = True
         self.modes_inscription = MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5
 
@@ -246,7 +248,7 @@ class Creche(object):
 
     def create(self):
         print 'nouvelle creche'
-        result = sql_connection.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, mois_payes, presences_previsionnelles, modes_inscription) VALUES (NULL,?,?,?,?,?,?,?)', (self.nom, self.adresse, self.code_postal, self.ville, 12, True, MODE_HALTE_GARDERIE+MODE_4_5+MODE_3_5))
+        result = sql_connection.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, mode_maladie) VALUES (NULL,?,?,?,?,?,?,?,?,?)', (self.nom, self.adresse, self.code_postal, self.ville, self.mois_payes, self.presences_previsionnelles, self.modes_inscription, self.minimum_maladie, self.mode_maladie))
         self.idx = result.lastrowid
         self.bureaux.append(Bureau(self))
         self.baremes_caf.append(BaremeCAF())
@@ -291,7 +293,7 @@ class Creche(object):
        
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'mois_payes', 'presences_previsionnelles', 'modes_inscription'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'mois_payes', 'presences_previsionnelles', 'modes_inscription', 'minimum_maladie', 'mode_maladie'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
       

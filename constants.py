@@ -33,11 +33,17 @@ BASE_MIN_HOUR = 6 # 6h00
 BASE_MAX_HOUR = 22 # 22h00
 BASE_GRANULARITY = 4 # au quart d'heure
 
+# Modes d'accueil
 MODE_CRECHE = 0
 MODE_HALTE_GARDERIE = 1
 MODE_4_5 = 2
 MODE_3_5 = 4
 
+# Modes de déduction pour maladie
+DEDUCTION_TOTALE = 1
+DEDUCTION_AVEC_CARENCE = 2
+
+# Valeurs de présence
 PRESENT = 0
 VACANCES = 1
 MALADE = 2

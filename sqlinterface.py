@@ -25,7 +25,7 @@ from functions import *
 from sqlobjects import *
 
 DB_FILENAME = 'gertrude.db'
-VERSION = 9
+VERSION = 10
 
 class SQLConnection(object):
     def __init__(self):
@@ -65,7 +65,9 @@ class SQLConnection(object):
             ville VARCHAR,
             mois_payes INTEGER,
             presences_previsionnelles BOOLEAN,
-            modes_inscription INTEGER
+            modes_inscription INTEGER,
+            minimum_maladie INTEGER,
+            mode_maladie INTEGER
           );""")
     
         cur.execute("""
@@ -212,11 +214,11 @@ class SQLConnection(object):
 
         cur = self.cursor()
 
-        cur.execute('SELECT nom, adresse, code_postal, ville, mois_payes, presences_previsionnelles, modes_inscription, idx FROM CRECHE')
+        cur.execute('SELECT nom, adresse, code_postal, ville, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, mode_maladie, idx FROM CRECHE')
         creche_entry = cur.fetchall()
         if len(creche_entry) > 0:
             creche = Creche(creation=False)
-            creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.mois_payes, creche.presences_previsionnelles, creche.modes_inscription, creche.idx = creche_entry[0]
+            creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.mois_payes, creche.presences_previsionnelles, creche.modes_inscription, creche.minimum_maladie, creche.mode_maladie, creche.idx = creche_entry[0]
         else:
             creche = Creche()
 
@@ -402,6 +404,12 @@ class SQLConnection(object):
         if version < 9:
             cur.execute("ALTER TABLE PARENTS ADD absent BOOLEAN;")
             cur.execute('UPDATE PARENTS SET absent=?', (False,))
+
+        if version < 10:
+            cur.execute("ALTER TABLE CRECHE ADD minimum_maladie INTEGER;")
+            cur.execute("ALTER TABLE CRECHE ADD mode_maladie INTEGER;")
+            cur.execute('UPDATE CRECHE SET minimum_maladie=?', (15,))
+            cur.execute('UPDATE CRECHE SET mode_maladie=?', (DEDUCTION_AVEC_CARENCE,))
 
         if version < VERSION:
             try:

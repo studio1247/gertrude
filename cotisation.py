@@ -126,8 +126,10 @@ class Cotisation(object):
         self.montant_heure_garde = self.assiette_mensuelle * self.taux_horaire / 100
         self.cotisation_mensuelle = self.assiette_mensuelle * self.taux_horaire * self.heures_garde * creche.mois_payes / 12 / 100
 
+        self.montant_jour_maladie_deduit = self.assiette_mensuelle * self.taux_horaire / 10
+        
         if self.heures_garde < 200:
-            self.montant_jour_supplementaire = self.assiette_mensuelle * self.taux_horaire / 10
+            self.montant_jour_supplementaire = self.montant_jour_maladie_deduit
         else:
             self.montant_jour_supplementaire = 0
 
