@@ -543,7 +543,7 @@ class PeriodeChoice(wx.BoxSizer):
             self.periodeaddbutton.Enable(value)
         else:
             self.periodeaddbutton.Disable()
-        if len(self.instance) <= 1 or self.parent.periode != len(self.instance) - 1:
+        if not self.instance or len(self.instance) <= 1 or self.parent.periode != len(self.instance) - 1:
             self.periodedelbutton.Disable()
         else:
             self.periodedelbutton.Enable(value)

@@ -232,14 +232,14 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
             history.Append(Change(presence, 'previsionnel', 1))
             presence.previsionnel = 0
         elif presence.value == PRESENT:
-            history.append([Change(presence, 'value', PRESENT),
+            history.Append([Change(presence, 'value', PRESENT),
                             Change(presence, 'details', presence.details[:])])
             presence.value = VACANCES
         elif presence.value == VACANCES:
-            history.append(Change(presence, 'value', VACANCES))
+            history.Append(Change(presence, 'value', VACANCES))
             presence.value = MALADE
         elif presence.value == MALADE:
-            history.append([Change(presence, 'value', MALADE),
+            history.Append([Change(presence, 'value', MALADE),
                             Change(presence, 'details', None),
                             Change(presence, 'previsionnel', presence.previsionnel)])
             new_presence = inscrit.getPresenceFromSemaineType(self.date)

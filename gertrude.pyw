@@ -113,8 +113,10 @@ class GertrudeFrame(wx.Frame):
         # MenuBar
         menuBar = wx.MenuBar()
         menu1 = wx.Menu()
+        menu1.Append(101, "&Enregistrer\tCtrl+S", u"Enregistre")
+        self.Bind(wx.EVT_MENU, self.OnSave, id=101)
         menu1.Append(101, "&Fermer\tAlt+F4", u"Ferme la fenêtre")
-        self.Bind(wx.EVT_MENU, self.OnExit, id=101)
+        self.Bind(wx.EVT_MENU, self.OnExit, id=102)
         menuBar.Append(menu1, "&Fichier")        
         menu2 = wx.Menu()
         menu2.Append(201, "&Annuler\tCtrl+Z", u"Annule l'action précédente")
@@ -135,6 +137,10 @@ class GertrudeFrame(wx.Frame):
 
         self.Bind(wx.EVT_CLOSE, self.OnExit)
                 
+    def OnSave(self, evt):
+        self.SetStatusText("Enregistrement en cours ....")
+        Save(ProgressHandler(self.SetStatusText))
+
     def OnExit(self, evt):
         self.SetStatusText("Fermeture en cours ....")
         if len(history) > 0:
@@ -143,13 +149,13 @@ class GertrudeFrame(wx.Frame):
             dlg.Destroy()
         else:
             result = wx.ID_NO
-            
-        if result == wx.ID_NO:
-            Exit(ProgressHandler(self.SetStatusText))
-            self.Destroy()
+
+        if result == wx.ID_CANCEL:
+            return
         elif result == wx.ID_YES:            
             Save(ProgressHandler(self.SetStatusText))
-            self.Destroy()
+        Exit(ProgressHandler(self.SetStatusText))
+        self.Destroy()
 
     def OnUndo(self, event):
         if history.Undo():

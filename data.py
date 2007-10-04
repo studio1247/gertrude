@@ -176,10 +176,7 @@ class HttpConnection(object):
         if not self.has_token():
             self.progress_handler.display(u"Pas de jeton présent => pas d'envoi vers le serveur.")
             return 0
-        if self.do_upload():
-            return self.rel_token()
-        else:
-            return 0
+        return self.do_upload()
 
     def Load(self, progress_handler=default_progress_handler):
         self.progress_handler = progress_handler
@@ -213,7 +210,7 @@ class FileConnection(object):
         return creche, 0
 
     def Save(self, progress_handler=default_progress_handler):
-        sql_connection.close()
+        sql_connection.commit()
         return True
 
     def Exit(self, progress_handler=default_progress_handler):
@@ -226,10 +223,7 @@ def Load(progress_handler=default_progress_handler):
     return creche is not None
 
 def Save(progress_handler=default_progress_handler):
-    if len(history) > 0:
-        return config.connection.Save(progress_handler)
-    else:
-        return config.connection.Exit(progress_handler)
+    return config.connection.Save(progress_handler)
 
 def Exit(progress_handler=default_progress_handler):
     return config.connection.Exit(progress_handler)
@@ -237,4 +231,5 @@ def Exit(progress_handler=default_progress_handler):
 if __name__ == '__main__':    
     loaded = Load()
     if loaded and not readonly:
-        Save()    
+        Save()
+    Exit()

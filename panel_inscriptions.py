@@ -360,14 +360,7 @@ class IdentitePanel(InscriptionsTab):
         sizer2.AddMany([(wx.StaticText(self, -1, 'Code Postal :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'code_postal', min=0, precision=0), 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, 'Ville :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'ville'), 0, wx.EXPAND)])
 ##        sizer2.AddMany([(wx.StaticText(self, -1, 'Date de marche :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'marche'), 0, wx.EXPAND)])
-        sizer1.Add(sizer2, 1, wx.EXPAND)
-
-##        self.photo = wx.BitmapButton(self, 30, pos=(280, 40), size=(100, 150))
-##        self.nophoto = wx.Bitmap('./bitmaps/essai.png')
-##        self.photo.SetBitmapLabel(self.nophoto)
-##        self.Bind(wx.EVT_BUTTON, self.OnPhotoButton, self.photo)
-##        sizer1.Add(self.photo)
-        
+        sizer1.Add(sizer2, 1, wx.EXPAND)       
         sizer3 = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Frères et soeurs'), wx.VERTICAL)
         self.fratries_sizer = wx.BoxSizer(wx.VERTICAL)
         sizer3.Add(self.fratries_sizer, 0, wx.EXPAND|wx.ALL-wx.BOTTOM, 10)
@@ -378,8 +371,8 @@ class IdentitePanel(InscriptionsTab):
         self.sizer.Add(sizer1, 0, wx.EXPAND|wx.ALL, 5)
         self.sizer.Add(sizer3, 0, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(self.sizer)
-        
-    def __add_fratrie(self, index):
+
+    def line_add(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, self.inscrit, 'freres_soeurs[%d].prenom' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, 'Naissance :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].naissance' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)])
@@ -391,86 +384,49 @@ class IdentitePanel(InscriptionsTab):
         self.Bind(wx.EVT_BUTTON, self.EvtSuppressionFrere, delbutton)
         self.fratries_sizer.Add(sizer, 0, wx.EXPAND)
         self.sizer.Layout()
+
+    def line_del(self):
+        index = len(self.fratries_sizer.GetChildren()) - 1
+        sizer = self.fratries_sizer.GetItem(index)
+        sizer.DeleteWindows()
+        self.fratries_sizer.Detach(index)
     
     def EvtChangementPrenom(self, event):
         event.GetEventObject().onText(event)
         self.parent.EvtChangementPrenom(event)
         
     def EvtNouveauFrere(self, event):
+        history.Append(Delete(self.inscrit.freres_soeurs, -1))
         self.inscrit.freres_soeurs.append(Frere_Soeur(self.inscrit))
-        self.__add_fratrie(len(self.inscrit.freres_soeurs) - 1)
+        self.line_add(len(self.inscrit.freres_soeurs) - 1)
         self.sizer.Layout()
         
     def EvtSuppressionFrere(self, event):
         index = event.GetEventObject().index
-        sizer = self.fratries_sizer.GetItem(len(self.inscrit.freres_soeurs)-1)
-        sizer.DeleteWindows()
-        self.fratries_sizer.Detach(len(self.inscrit.freres_soeurs)-1)
+        history.Append(Insert(self.inscrit.freres_soeurs, index, self.inscrit.freres_soeurs[index]))
+        self.line_del()
         self.inscrit.freres_soeurs[index].delete()
         del self.inscrit.freres_soeurs[index]
         self.sizer.Layout()
         self.UpdateContents()
+
+    def UpdateContents(self):
+        if self.inscrit:
+            count = len(self.inscrit.freres_soeurs)
+            for i in range(len(self.fratries_sizer.GetChildren()), count):
+                self.line_add(i)
+        else:
+            count = 0
+        for i in range(count, len(self.fratries_sizer.GetChildren())):
+            self.line_del()
+        self.sizer.Layout()
+        AutoTab.UpdateContents(self)
         
     def SetInscrit(self, inscrit):
-        old = new = 0
-        if self.inscrit:
-            old = len(self.inscrit.freres_soeurs)
-        if inscrit:
-            new = len(inscrit.freres_soeurs)
-        if old > new:
-            for i in range(old-1, new-1, -1):
-                self.fratries_sizer.GetItem(i).DeleteWindows()
-                self.fratries_sizer.Detach(i)
-
+        self.inscrit = inscrit
+        self.UpdateContents()
         InscriptionsTab.SetInscrit(self, inscrit)
         self.nouveau_frere.Enable(self.inscrit is not None)
-        
-        if new > old:
-            for i in range(old, new):
-                self.__add_fratrie(i)
-
-        self.sizer.Layout()
-        
-##        if inscrit:
-##            self.photo.Enable()
-##            if inscrit.photo:
-##                img = wx.ImageFromData(80, 130, inscrit.photo)
-##                bmp = wx.BitmapFromImage(img)
-##            else:
-##                bmp = self.nophoto
-##        else:
-##            self.photo.Disable()
-##            bmp = self.nophoto
-##            
-##        self.photo.SetBitmapLabel(bmp)
-##        self.photo.Refresh()
-                
-    def OnPhotoButton(self, event):
-        if self.inscrit:
-            if self.inscrit.prenom and self.inscrit.nom:
-                old_path = os.getcwd()
-                dlg = wx.FileDialog(self, message="Choisir un fichier", defaultDir=os.getcwd(),
-                                    defaultFile="", wildcard=wildcard, style=wx.OPEN | wx.CHANGE_DIR)
-                response = dlg.ShowModal()
-                os.chdir(old_path)
-                if response == wx.ID_OK:
-                    img = wx.Image(dlg.GetPath())
-                    #if img.GetWidth() > 80 or img.GetHeight() > 130:
-                    img.Rescale(80, 130)
-                    
-                    #img.SaveFile(cStringIO.StringIO(data), wx.BITMAP_TYPE_PNG )
-                    #bmp = wx.BitmapFromImage(wx.ImageFromStream(cStringIO.StringIO(data)))
-                    self.photo.SetBitmapLabel(wx.BitmapFromImage(img))
-                    self.photo.Refresh()
-                    self.inscrit.photo = img.GetData()
-                dlg.Destroy()
-            else:
-                dlg = wx.MessageDialog(self, 
-                                       u"Il faut d'abord remplir le prénom et le nom de l'enfant",
-                                       'Message',
-                                       wx.ICON_INFORMATION)
-                dlg.ShowModal()
-                dlg.Destroy()
 
 class ParentsPanel(InscriptionsTab):
     def __init__(self, parent):
@@ -615,14 +571,6 @@ class InscriptionsNotebook(wx.Notebook):
     def UpdateContents(self):
         page = self.GetCurrentPage()
         page.Update()
-
-#                if self.inscrit.photo:
-#                    bmp = wxBitmap(self.inscrit.photo)
-#                else:
-#                    bmp = wxBitmap("./bitmaps/essai.png", wx.BITMAP_TYPE_PNG)
-#    
-#                self.photo.SetBitmapLabel(bmp)
-#                self.photo.Refresh()
             
 class InscriptionsPanel(GPanel):
     bitmap = './bitmaps/inscriptions.png'
@@ -635,9 +583,15 @@ class InscriptionsPanel(GPanel):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.choice = wx.Choice(self)
         self.Bind(wx.EVT_CHOICE, self.EvtInscritChoice, self.choice)
-        self.delbutton = wx.Button(self, -1, 'Suppression')
+        plusbmp = wx.Bitmap("bitmaps/plus.png", wx.BITMAP_TYPE_PNG)
+        delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
+        self.addbutton = wx.BitmapButton(self, -1, plusbmp, style=wx.BU_EXACTFIT)
+        self.delbutton = wx.BitmapButton(self, -1, delbmp, style=wx.BU_EXACTFIT)
+        self.addbutton.SetToolTipString(u"Ajouter un enfant")
+        self.delbutton.SetToolTipString(u"Supprimer cet enfant")
+        self.Bind(wx.EVT_BUTTON, self.EvtInscritAddButton, self.addbutton)
         self.Bind(wx.EVT_BUTTON, self.EvtInscritDelButton, self.delbutton)
-        sizer.AddMany([(self.choice, 1, wx.EXPAND|wx.RIGHT, 10), self.delbutton])
+        sizer.AddMany([(self.choice, 1, wx.EXPAND|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (self.addbutton, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (self.delbutton, 0, wx.ALIGN_CENTER_VERTICAL)])
         self.sizer.Add(sizer, 0, wx.EXPAND)
         # le notebook pour la fiche d'inscription
         self.notebook = InscriptionsNotebook(self)
@@ -653,12 +607,13 @@ class InscriptionsPanel(GPanel):
         for inscrit in creche.inscrits:
             if inscrit.getInscription(datetime.date.today()) != None:
                 self.choice.Append(GetInscritId(inscrit, creche.inscrits), inscrit)
-        self.choice.Append(150 * '-', None)
-        self.choice.Append('Nouvelle inscription', None)
-        self.choice.Append(150 * '-', None)
         # Les autres
+        separator = False
         for inscrit in creche.inscrits:
             if inscrit.getInscription(datetime.date.today()) == None:
+                if not separator:
+                    self.choice.Append(150 * '-', None)
+                    separator = True
                 self.choice.Append(GetInscritId(inscrit, creche.inscrits), inscrit)
 
         if len(creche.inscrits) > 0 and selected != None and selected in creche.inscrits:
@@ -675,14 +630,7 @@ class InscriptionsPanel(GPanel):
         if inscrit:
             self.delbutton.Enable()
             self.SelectInscrit(inscrit)
-        else:
-            ctrl.SetStringSelection('Nouvelle inscription')
-            if self.notebook.inscrit is None or GetInscritId(self.notebook.inscrit, creche.inscrits) != '':
-                inscrit = Inscrit()
-                creche.inscrits.append(inscrit)
-                self.notebook.SetInscrit(inscrit)
-                self.notebook.SetSelection(0) # Selectionne la page identite
-                self.delbutton.Disable()
+        # TODO else revenir sur l'ancien
 
     def SelectInscrit(self, inscrit):
         if inscrit:
@@ -693,7 +641,16 @@ class InscriptionsPanel(GPanel):
         else:
             self.choice.SetSelection(-1)
         self.notebook.SetInscrit(inscrit)
-            
+
+    def EvtInscritAddButton(self, evt):
+        history.Append(Delete(creche.inscrits, -1))
+        inscrit = Inscrit()
+        self.choice.Insert('Nouvelle inscription', 0, inscrit)
+        self.choice.SetSelection(0)
+        creche.inscrits.append(inscrit)
+        self.notebook.SetInscrit(inscrit)
+        self.notebook.SetSelection(0) # Selectionne la page identite
+
     def EvtInscritDelButton(self, evt):
         selected = self.choice.GetSelection()
         inscrit = self.choice.GetClientData(selected)
@@ -703,8 +660,10 @@ class InscriptionsPanel(GPanel):
                                    'Confirmation',
                                    wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION )
             if dlg.ShowModal() == wx.ID_YES:
+                index = creche.inscrits.index(inscrit)
+                history.Append(Insert(creche.inscrits, index, inscrit))
                 inscrit.delete()
-                creche.inscrits.remove(inscrit)
+                del creche.inscrits[index]
                 self.choice.Delete(selected)
                 self.choice.SetSelection(-1)
                 self.notebook.SetInscrit(None)
@@ -712,13 +671,11 @@ class InscriptionsPanel(GPanel):
             dlg.Destroy()
         
     def ChangePrenom(self, inscrit):
-        inscritId = GetInscritId(inscrit, creche.inscrits)
-        if self.choice.GetClientData(self.choice.GetSelection()) is None:
-            if inscritId != '':
-                self.choice.Insert(inscritId, 0, inscrit)
-                self.delbutton.Enable()
-        else:
+        if inscrit:
+            inscritId = GetInscritId(inscrit, creche.inscrits)
+            if inscritId == '':
+                inscritId = 'Nouvelle inscription'
             self.choice.SetString(self.choice.GetSelection(), inscritId)
-        self.choice.SetStringSelection(inscritId)
+            self.choice.SetStringSelection(inscritId)
                                 
 panels = [InscriptionsPanel]

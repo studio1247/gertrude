@@ -93,9 +93,12 @@ class Bureau(object):
         self.secretaire = None
 
         if creation:
-            print 'nouveau bureau'
-            result = sql_connection.execute('INSERT INTO BUREAUX (idx, debut, fin, president, vice_president, tresorier, secretaire) VALUES (NULL,?,?,?,?,?,?)', (self.debut, self.fin, None, None, None, None))
-            self.idx = result.lastrowid
+            self.create()
+
+    def create(self):
+        print 'nouveau bureau'
+        result = sql_connection.execute('INSERT INTO BUREAUX (idx, debut, fin, president, vice_president, tresorier, secretaire) VALUES (NULL,?,?,?,?,?,?)', (self.debut, self.fin, None, None, None, None))
+        self.idx = result.lastrowid
 
     def delete(self):
         print 'suppression bureau'
@@ -118,9 +121,12 @@ class BaremeCAF(object):
         self.plafond = 4000
 
         if creation:
-            print 'nouveau bareme caf'
-            result = sql_connection.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (self.debut, self.fin, self.plancher, self.plafond))
-            self.idx = result.lastrowid
+            self.create()
+
+    def create(self):
+        print 'nouveau bareme caf'
+        result = sql_connection.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (self.debut, self.fin, self.plancher, self.plafond))
+        self.idx = result.lastrowid
 
     def delete(self):
         print 'suppression bareme caf'
@@ -140,9 +146,12 @@ class User(object):
         self.profile = PROFIL_ALL
 
         if creation:
-            print 'nouveau user'
-            result = sql_connection.execute('INSERT INTO USERS (idx, login, password, profile) VALUES (NULL,?,?,?)', (self.login, self.password, self.profile))
-            self.idx = result.lastrowid
+            self.create()
+
+    def create(self):
+        print 'nouveau user'
+        result = sql_connection.execute('INSERT INTO USERS (idx, login, password, profile) VALUES (NULL,?,?,?)', (self.login, self.password, self.profile))
+        self.idx = result.lastrowid
 
     def delete(self):
         print 'suppression user'
@@ -162,9 +171,12 @@ class Conge(object):
         self.creche = None
 
         if creation:
-            print 'nouveau conge'
-            result = sql_connection.execute('INSERT INTO CONGES (idx, debut, fin) VALUES (NULL,?,?)', (self.debut, self.fin))
-            self.idx = result.lastrowid
+            self.create()
+
+    def create(self):
+        print 'nouveau conge'
+        result = sql_connection.execute('INSERT INTO CONGES (idx, debut, fin) VALUES (NULL,?,?)', (self.debut, self.fin))
+        self.idx = result.lastrowid
 
     def delete(self):
         print 'suppression conge'
@@ -193,9 +205,12 @@ class Employe(object):
         self.email = ""
 
         if creation:
-            print 'nouvel employe'
-            result = sql_connection.execute('INSERT INTO EMPLOYES (idx, date_embauche, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, email) VALUES(NULL,?,?,?,?,?,?,?,?)', (self.date_embauche, self.prenom, self.nom, self.telephone_domicile, self.telephone_domicile_notes, self.telephone_portable, self.telephone_portable_notes, self.email))
-            self.idx = result.lastrowid
+            self.create()
+
+    def create(self):
+        print 'nouvel employe'
+        result = sql_connection.execute('INSERT INTO EMPLOYES (idx, date_embauche, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, email) VALUES(NULL,?,?,?,?,?,?,?,?)', (self.date_embauche, self.prenom, self.nom, self.telephone_domicile, self.telephone_domicile_notes, self.telephone_portable, self.telephone_portable_notes, self.email))
+        self.idx = result.lastrowid
         
     def delete(self):
         print 'suppression employe'
@@ -225,13 +240,16 @@ class Creche(object):
         self.modes_inscription = MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5
 
         if creation:
-            print 'nouvelle creche'
-            result = sql_connection.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, mois_payes, presences_previsionnelles, modes_inscription) VALUES (NULL,?,?,?,?,?,?,?)', (self.nom, self.adresse, self.code_postal, self.ville, 12, True, MODE_HALTE_GARDERIE+MODE_4_5+MODE_3_5))
-            self.idx = result.lastrowid
-            self.bureaux.append(Bureau(self))
-            self.baremes_caf.append(BaremeCAF())
+            self.create()
 
         self.calcule_jours_fermeture()
+
+    def create(self):
+        print 'nouvelle creche'
+        result = sql_connection.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, mois_payes, presences_previsionnelles, modes_inscription) VALUES (NULL,?,?,?,?,?,?,?)', (self.nom, self.adresse, self.code_postal, self.ville, 12, True, MODE_HALTE_GARDERIE+MODE_4_5+MODE_3_5))
+        self.idx = result.lastrowid
+        self.bureaux.append(Bureau(self))
+        self.baremes_caf.append(BaremeCAF())
 
     def calcule_jours_fermeture(self):
         self.jours_fermeture = []
@@ -279,6 +297,7 @@ class Creche(object):
       
 class Revenu(object):
     def __init__(self, parent, creation=True):
+        self.parent = parent
         self.idx = None
         self.debut = None
         self.fin = None
@@ -287,9 +306,12 @@ class Revenu(object):
         self.regime = 0
 
         if creation:
-            print 'nouveau revenu'
-            result = sql_connection.execute('INSERT INTO REVENUS (idx, parent, debut, fin, revenu, chomage, regime) VALUES(NULL,?,?,?,?,?,?)', (parent.idx, self.debut, self.fin, self.revenu, self.chomage, self.regime))
-            self.idx = result.lastrowid
+            self.create()
+
+    def create(self):
+        print 'nouveau revenu'
+        result = sql_connection.execute('INSERT INTO REVENUS (idx, parent, debut, fin, revenu, chomage, regime) VALUES(NULL,?,?,?,?,?,?)', (self.parent.idx, self.debut, self.fin, self.revenu, self.chomage, self.regime))
+        self.idx = result.lastrowid
         
     def delete(self):
         print 'suppression revenu'
@@ -303,6 +325,7 @@ class Revenu(object):
 
 class Parent(object):
     def __init__(self, inscrit, creation=True):
+        self.inscrit = inscrit
         self.idx = None
         self.absent = False
         self.prenom = ""
@@ -319,11 +342,15 @@ class Parent(object):
         # self.justificatif_chomage = 0
 
         if creation:
-            print 'nouveau parent'
-            result = sql_connection.execute('INSERT INTO PARENTS (idx, inscrit, absent, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?)', (inscrit.idx, self.absent, self.prenom, self.nom, self.telephone_domicile, self.telephone_domicile_notes, self.telephone_portable, self.telephone_portable_notes, self.telephone_travail, self.telephone_travail_notes, self.email))
-            self.idx = result.lastrowid
-            if not self.absent:
-                self.revenus.append(Revenu(self))
+            self.create()
+            self.revenus.append(Revenu(self))
+
+    def create(self):
+        print 'nouveau parent'
+        result = sql_connection.execute('INSERT INTO PARENTS (idx, inscrit, absent, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?)', (self.inscrit.idx, self.absent, self.prenom, self.nom, self.telephone_domicile, self.telephone_domicile_notes, self.telephone_portable, self.telephone_portable_notes, self.telephone_travail, self.telephone_travail_notes, self.email))
+        self.idx = result.lastrowid
+        for revenu in self.revenus:
+            revenu.create()
         
     def delete(self):
         print 'suppression parent'
@@ -339,6 +366,7 @@ class Parent(object):
 
 class Inscription(object):
     def __init__(self, inscrit, creation=True):
+        self.inscrit = inscrit
         self.idx = None
         self.debut = None
         self.fin = None
@@ -347,11 +375,14 @@ class Inscription(object):
         self.fin_periode_essai = None
 
         if creation:
-            print 'nouvelle inscription'
-            if creche.modes_inscription == MODE_CRECHE: # plein-temps uniquement
-                self.periode_reference = 5 * [[1, 1, 1]]
-            result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, periode_reference, fin_periode_essai) VALUES(NULL,?,?,?,?,?,?)', (inscrit.idx, self.debut, self.fin, self.mode, str(self.periode_reference), self.fin_periode_essai))
-            self.idx = result.lastrowid
+            self.create()
+
+    def create(self):
+        print 'nouvelle inscription'
+        if creche.modes_inscription == MODE_CRECHE: # plein-temps uniquement
+            self.periode_reference = 5 * [[1, 1, 1]]
+        result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, periode_reference, fin_periode_essai) VALUES(NULL,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, str(self.periode_reference), self.fin_periode_essai))
+        self.idx = result.lastrowid
         
     def delete(self):
         print 'suppression inscription'
@@ -375,6 +406,7 @@ class Inscription(object):
 class Frere_Soeur(object):
     def __init__(self, inscrit, creation=True):
         self.idx = None
+        self.inscrit = inscrit
         self.prenom = ''
         self.naissance = None
         # self.handicape = 0
@@ -382,9 +414,12 @@ class Frere_Soeur(object):
         self.sortie = None
 
         if creation:
-            print 'nouveau frere / soeur'
-            result = sql_connection.execute('INSERT INTO FRATRIES (idx, inscrit, prenom, naissance, entree, sortie) VALUES(NULL,?,?,?,?,?)', (inscrit.idx, self.prenom, self.naissance, self.entree, self.sortie))
-            self.idx = result.lastrowid
+            self.create()
+
+    def create(self):
+        print 'nouveau frere / soeur'
+        result = sql_connection.execute('INSERT INTO FRATRIES (idx, inscrit, prenom, naissance, entree, sortie) VALUES(NULL,?,?,?,?,?)', (self.inscrit.idx, self.prenom, self.naissance, self.entree, self.sortie))
+        self.idx = result.lastrowid
         
     def delete(self):
         print 'suppression frere / soeur'
@@ -412,8 +447,15 @@ class Inscrit(object):
         self.papa = None
         self.maman = None
         self.inscriptions = []
-        #self.handicape = 0
         self.presences = { }
+        
+        if creation:
+            self.create()
+            self.papa = Parent(self)
+            self.maman = Parent(self)
+            self.inscriptions.append(Inscription(self))
+
+#       self.handicape = 0
 #        self.reglement_cotisation = 0
 #        self.reglement_caution = 0
 #        self.reglement_premier_mois = 0
@@ -429,13 +471,13 @@ class Inscrit(object):
 #        self.autorisation_image = 0
 #        self.autorisation_recherche = 0
 
-        if creation:
-            print 'nouvel inscrit'
-            result = sql_connection.execute('INSERT INTO INSCRITS (idx, prenom, nom, naissance, adresse, code_postal, ville, marche, photo) VALUES(NULL,?,?,?,?,?,?,?,?)', (self.prenom, self.nom, self.naissance, self.adresse, self.code_postal, self.ville, self.marche, self.photo))
-            self.idx = result.lastrowid
-            self.papa = Parent(self)
-            self.maman = Parent(self)
-            self.inscriptions.append(Inscription(self))
+
+    def create(self):
+        print 'nouvel inscrit'
+        result = sql_connection.execute('INSERT INTO INSCRITS (idx, prenom, nom, naissance, adresse, code_postal, ville, marche, photo) VALUES(NULL,?,?,?,?,?,?,?,?)', (self.prenom, self.nom, self.naissance, self.adresse, self.code_postal, self.ville, self.marche, self.photo))
+        self.idx = result.lastrowid
+        for obj in [self.papa, self.maman] + self.freres_soeurs + self.inscriptions + self.presences.values():
+            if obj: obj.create()
         
     def delete(self):
         print 'suppression inscrit'

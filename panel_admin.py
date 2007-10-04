@@ -39,14 +39,22 @@ class UsersPanel(AutoTab):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.users_sizer = wx.BoxSizer(wx.VERTICAL)
         for i, user in enumerate(creche.users):
-            self.display_user(i)
+            self.line_add(i)
         self.sizer.Add(self.users_sizer, 0, wx.EXPAND|wx.ALL, 5)
         button_add = wx.Button(self, -1, 'Nouvel utilisateur')
         self.sizer.Add(button_add, 0, wx.ALL, 5)
         self.Bind(wx.EVT_BUTTON, self.user_add, button_add)
         self.SetSizer(self.sizer)
 
-    def display_user(self, index):
+    def UpdateContents(self):
+        for i in range(len(self.users_sizer.GetChildren()), len(creche.users)):
+            self.line_add(i)
+        for i in range(len(creche.users), len(self.users_sizer.GetChildren())):
+            self.line_del()                       
+        self.sizer.Layout()
+        AutoTab.UpdateContents(self)
+        
+    def line_add(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, 'Login :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, creche, 'users[%d].login' % index), 0, wx.ALIGN_CENTER_VERTICAL)])
         sizer.AddMany([(wx.StaticText(self, -1, 'Mot de passe :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, creche, 'users[%d].password' % index), 0, wx.ALIGN_CENTER_VERTICAL)])
@@ -60,18 +68,24 @@ class UsersPanel(AutoTab):
         self.Bind(wx.EVT_BUTTON, self.user_del, delbutton)
         self.users_sizer.Add(sizer)
 
+    def line_del(self):
+        index = len(self.users_sizer.GetChildren()) - 1
+        sizer = self.users_sizer.GetItem(index)
+        sizer.DeleteWindows()
+        self.users_sizer.Detach(index)
+
     def user_add(self, event):
+        history.Append(Delete(creche.users, -1))
         creche.users.append(User())
-        self.display_user(len(creche.users) - 1)
-        self.sizer.Layout()
+        self.line_add(len(creche.users) - 1)
+        self.sizer.Layout()        
 
     def user_del(self, event):
         index = event.GetEventObject().index
         nb_admins = len([user for i, user in enumerate(creche.users) if (i != index and user.profile == PROFIL_ALL)])
         if len(creche.users) == 1 or nb_admins > 0:
-            sizer = self.users_sizer.GetItem(len(creche.users)-1)
-            sizer.DeleteWindows()
-            self.users_sizer.Detach(len(creche.users)-1)
+            history.Append(Insert(creche.users, index, creche.users[index]))
+            self.line_del()
             creche.users[index].delete()
             del creche.users[index]
             self.sizer.Layout()
@@ -108,7 +122,7 @@ class CongesPanel(AutoTab):
             self.sizer.Add(textctrl, 0, wx.EXPAND)
         self.conges_sizer = wx.BoxSizer(wx.VERTICAL)
         for i, conge in enumerate(creche.conges):
-            self.display_conge(i)
+            self.line_add(i)
         self.sizer.Add(self.conges_sizer, 0, wx.ALL, 5)
         button_add = wx.Button(self, -1, u'Nouvelle période de congés')
         self.sizer.Add(button_add, 0, wx.EXPAND+wx.TOP, 5)
@@ -116,7 +130,15 @@ class CongesPanel(AutoTab):
         sizer.Add(self.sizer, 0, wx.EXPAND+wx.ALL, 5)
         self.SetSizer(sizer)
 
-    def display_conge(self, index):
+    def UpdateContents(self):
+        for i in range(len(self.conges_sizer.GetChildren()), len(creche.conges)):
+            self.line_add(i)
+        for i in range(len(creche.conges), len(self.conges_sizer.GetChildren())):
+            self.line_del()                       
+        self.sizer.Layout()
+        AutoTab.UpdateContents(self)
+
+    def line_add(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, 'Debut :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, creche, 'conges[%d].debut' % index)])
         sizer.AddMany([(wx.StaticText(self, -1, 'Fin :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, creche, 'conges[%d].fin' % index)])
@@ -125,17 +147,23 @@ class CongesPanel(AutoTab):
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
         self.Bind(wx.EVT_BUTTON, self.conges_del, delbutton)
         self.conges_sizer.Add(sizer)
+
+    def line_del(self):
+        index = len(self.conges_sizer.GetChildren()) - 1
+        sizer = self.conges_sizer.GetItem(index)
+        sizer.DeleteWindows()
+        self.conges_sizer.Detach(index)
         
     def conges_add(self, event):
+        history.Append(Delete(creche.conges, -1))
         creche.add_conge(Conge())
-        self.display_conge(len(creche.conges) - 1)
+        self.line_add(len(creche.conges) - 1)
         self.sizer.Layout()
 
     def conges_del(self, event):
         index = event.GetEventObject().index
-        sizer = self.conges_sizer.GetItem(len(creche.conges)-1)
-        sizer.DeleteWindows()
-        self.conges_sizer.Detach(len(creche.conges)-1)
+        history.Append(Insert(creche.conges, index, creche.conges[index]))
+        self.line_del()
         creche.conges[index].delete()
         del creche.conges[index]
         self.sizer.Layout()

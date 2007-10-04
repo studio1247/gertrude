@@ -44,14 +44,22 @@ class EmployesTab(AutoTab):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.employes_sizer = wx.BoxSizer(wx.VERTICAL)
         for i, employe in enumerate(creche.employes):
-            self.display_employe(i)
+            self.line_add(i)
         self.sizer.Add(self.employes_sizer, 0, wx.EXPAND|wx.ALL, 5)
         button_add = wx.Button(self, -1, u'Nouvel employé')
         self.sizer.Add(button_add, 0, wx.ALL, 5)
         self.Bind(wx.EVT_BUTTON, self.employe_add, button_add)
         self.SetSizer(self.sizer)
 
-    def display_employe(self, index):
+    def UpdateContents(self):
+        for i in range(len(self.employes_sizer.GetChildren()), len(creche.employes)):
+            self.line_add(i)
+        for i in range(len(creche.employes), len(self.employes_sizer.GetChildren())):
+            self.line_del()                       
+        self.sizer.Layout()
+        AutoTab.UpdateContents(self)
+
+    def line_add(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, creche, 'employes[%d].prenom' % index), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, creche, 'employes[%d].nom' % index), 1, wx.EXPAND)])
@@ -64,16 +72,22 @@ class EmployesTab(AutoTab):
         self.Bind(wx.EVT_BUTTON, self.employe_del, delbutton)
         self.employes_sizer.Add(sizer, 0, wx.EXPAND)
 
+    def line_del(self):
+        index = len(self.employes_sizer.GetChildren()) - 1
+        sizer = self.employes_sizer.GetItem(index)
+        sizer.DeleteWindows()
+        self.employes_sizer.Detach(index)
+        
     def employe_add(self, event):
+        history.Append(Delete(creche.employes, -1))
         creche.employes.append(Employe())
-        self.display_employe(len(creche.employes) - 1)
+        self.line_add(len(creche.employes) - 1)
         self.sizer.Layout()
 
     def employe_del(self, event):
         index = event.GetEventObject().index
-        sizer = self.employes_sizer.GetItem(len(creche.employes)-1)
-        sizer.DeleteWindows()
-        self.employes_sizer.Detach(len(creche.employes)-1)
+        history.Append(Insert(creche.employes, index, creche.employes[index]))
+        self.line_del()
         creche.employes[index].delete()
         del creche.employes[index]
         self.sizer.Layout()
