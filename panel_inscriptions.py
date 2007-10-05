@@ -330,12 +330,12 @@ class WeekWindow(wx.Window):
 wildcard = "PNG (*.png)|*.png|"     \
            "BMP (*.pmp)|*.bmp|"     \
            "All files (*.*)|*.*"
-           
+
 class InscriptionsTab(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
         self.inscrit = None
-    
+
     def SetInscrit(self, inscrit):
         self.inscrit = inscrit
         for ctrl in self.ctrls:
@@ -620,7 +620,7 @@ class InscriptionsPanel(GPanel):
             self.SelectInscrit(self.choice.GetClientData(0))
         else:
             self.SelectInscrit(None)
-        
+
     def EvtInscritChoice(self, evt):
         ctrl = evt.GetEventObject()
         selected = ctrl.GetSelection()
@@ -628,7 +628,9 @@ class InscriptionsPanel(GPanel):
         if inscrit:
             self.delbutton.Enable()
             self.SelectInscrit(inscrit)
-        # TODO else revenir sur l'ancien
+        else:
+            ctrl.SetSelection(0)
+            self.EvtInscritChoice(evt)
 
     def SelectInscrit(self, inscrit):
         if inscrit:

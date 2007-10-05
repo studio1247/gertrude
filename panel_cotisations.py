@@ -300,19 +300,24 @@ class CotisationsPanel(GPanel):
 
     def EvtRecusPeriodeChoice(self, evt):
         inscrit = self.inscrits_choice["recus"].GetClientData(self.inscrits_choice["recus"].GetSelection())
-        debut, fin = self.recus_periodechoice.GetClientData(self.recus_periodechoice.GetSelection())
+        periode = self.recus_periodechoice.GetClientData(self.recus_periodechoice.GetSelection())
         self.recus_endchoice.Clear()
-        if debut.month == fin.month and debut < today:
-            date = debut
-            while date < today:
-                if isinstance(inscrit, list) or inscrit.getInscriptions(datetime.date(date.year, date.month, 1), getMonthEnd(date)):
-                    self.recus_endchoice.Append('%s %d' % (months[date.month - 1], date.year), (datetime.date(date.year, date.month, 1), getMonthEnd(date)))
-                date = getNextMonthStart(date)
-            self.recus_endchoice.Enable()
-            self.recus_endchoice.SetSelection(0)
+        if periode:
+            debut, fin = periode
+            if debut.month == fin.month and debut < today:
+                date = debut
+                while date < today:
+                    if isinstance(inscrit, list) or inscrit.getInscriptions(datetime.date(date.year, date.month, 1), getMonthEnd(date)):
+                        self.recus_endchoice.Append('%s %d' % (months[date.month - 1], date.year), (datetime.date(date.year, date.month, 1), getMonthEnd(date)))
+                    date = getNextMonthStart(date)
+                self.recus_endchoice.Enable()
+                self.recus_endchoice.SetSelection(0)
+            else:
+                self.recus_endchoice.Disable()
         else:
-            self.recus_endchoice.Disable()
-    
+            self.recus_periodechoice.SetSelection(0)
+            self.EvtRecusPeriodeChoice(evt)
+
     def UpdateContents(self):
         for choice in self.inscrits_choice.values():
             choice.Clear()
