@@ -243,12 +243,18 @@ class CotisationsPanel(GPanel):
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Edition des attestations de paiement'), wx.HORIZONTAL)
         self.inscrits_choice["recus"] = wx.Choice(self)
         self.recus_periodechoice = wx.Choice(self)
+        self.recus_endchoice = wx.Choice(self)
+        self.recus_endchoice.Disable()
         self.Bind(wx.EVT_CHOICE, self.EvtRecusInscritChoice, self.inscrits_choice["recus"])
+        self.Bind(wx.EVT_CHOICE, self.EvtRecusPeriodeChoice, self.recus_periodechoice)
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationRecu, button)
-        box_sizer.AddMany([(self.inscrits_choice["recus"], 1, wx.ALL|wx.EXPAND, 5), (self.recus_periodechoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        box_sizer.AddMany([(self.inscrits_choice["recus"], 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL|wx.EXPAND, 5),
+                           (self.recus_periodechoice, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL|wx.EXPAND, 5),
+                           (wx.StaticText(self, -1, '-'), 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5),
+                           (self.recus_endchoice, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL|wx.EXPAND, 5),
+                           (button, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)])
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
-
         self.sizer.Add(sizer, 1, wx.EXPAND)
 
     def EvtFacturesInscritChoice(self, evt):
@@ -290,7 +296,23 @@ class CotisationsPanel(GPanel):
                 self.recus_periodechoice.Append('%s %d' % (months[date.month - 1], date.year), (datetime.date(date.year, date.month, 1), getMonthEnd(date)))
             date = getNextMonthStart(date)
         self.recus_periodechoice.SetSelection(0)
-        
+        self.EvtRecusPeriodeChoice(evt)
+
+    def EvtRecusPeriodeChoice(self, evt):
+        inscrit = self.inscrits_choice["recus"].GetClientData(self.inscrits_choice["recus"].GetSelection())
+        debut, fin = self.recus_periodechoice.GetClientData(self.recus_periodechoice.GetSelection())
+        self.recus_endchoice.Clear()
+        if debut.month == fin.month and debut < today:
+            date = debut
+            while date < today:
+                if isinstance(inscrit, list) or inscrit.getInscriptions(datetime.date(date.year, date.month, 1), getMonthEnd(date)):
+                    self.recus_endchoice.Append('%s %d' % (months[date.month - 1], date.year), (datetime.date(date.year, date.month, 1), getMonthEnd(date)))
+                date = getNextMonthStart(date)
+            self.recus_endchoice.Enable()
+            self.recus_endchoice.SetSelection(0)
+        else:
+            self.recus_endchoice.Disable()
+    
     def UpdateContents(self):
         for choice in self.inscrits_choice.values():
             choice.Clear()
@@ -374,6 +396,8 @@ class CotisationsPanel(GPanel):
     def EvtGenerationRecu(self, evt):
         inscrit = self.inscrits_choice["recus"].GetClientData(self.inscrits_choice["recus"].GetSelection())
         debut, fin = self.recus_periodechoice.GetClientData(self.recus_periodechoice.GetSelection())
+        if self.recus_endchoice.IsEnabled():
+            fin = self.recus_endchoice.GetClientData(self.recus_endchoice.GetSelection())[1]
         if isinstance(inscrit, list):
             dlg = wx.DirDialog(self, u'Générer des documents OpenOffice', style=wx.DD_DEFAULT_STYLE|wx.DD_NEW_DIR_BUTTON)
             response = dlg.ShowModal()
