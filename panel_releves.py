@@ -27,7 +27,7 @@ from constants import *
 from gpanel import GPanel
 from controls import *
 from cotisation import CotisationException
-from facture import Facture
+from facture import *
 from ooffice import *
 
 #def PresencesEffectives(inscrit, annee, mois):
@@ -117,7 +117,7 @@ class CoordonneesModifications:
                 table.removeChild(template)
 
         return []
-        
+
 class EtatsTrimestrielsModifications(object):
     def __init__(self, annee):
         self.annee = annee
@@ -229,7 +229,7 @@ class EtatsTrimestrielsModifications(object):
     def get_facture(self, inscrit, mois):
         if (inscrit.idx, mois) not in self.factures:
             try:
-                self.factures[inscrit.idx, mois] = Facture(inscrit, self.annee, mois)
+                self.factures[inscrit.idx, mois] = Facture(inscrit, self.annee, mois, options=NO_REVENUS)
             except CotisationException, e:
                 if not (inscrit.prenom, inscrit.nom) in self.errors:
                     self.errors[(inscrit.prenom, inscrit.nom)] = set(e.errors)

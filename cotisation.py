@@ -24,8 +24,9 @@ class CotisationException(Exception):
         self.errors = errors
 
 NO_ADDRESS = 1
-REVENUS_ANNEE_PRECEDENTE = 2
-RATTRAPAGE_SEPTEMBRE = 4
+NO_REVENUS = 2
+REVENUS_ANNEE_PRECEDENTE = 4
+RATTRAPAGE_SEPTEMBRE = 8
 
 class Cotisation(object):
     def __init__(self, inscrit, periode, options=0):
@@ -46,10 +47,10 @@ class Cotisation(object):
         if options & REVENUS_ANNEE_PRECEDENTE:
             revenus_debut = datetime.date(self.debut.year-1, self.debut.month, self.debut.day)
         self.revenus_papa = Select(inscrit.papa.revenus, revenus_debut)
-        if self.revenus_papa is None or self.revenus_papa.revenu == '':
+        if not options & NO_REVENUS and (self.revenus_papa is None or self.revenus_papa.revenu == ''):
             errors.append(u" - Les déclarations de revenus du papa sont incomplètes.")
         self.revenus_maman = Select(inscrit.maman.revenus, revenus_debut)
-        if self.revenus_maman is None or self.revenus_maman.revenu == '':
+        if not options & NO_REVENUS and (self.revenus_maman is None or self.revenus_maman.revenu == ''):
             errors.append(u" - Les déclarations de revenus de la maman sont incomplètes.")
         self.bureau = Select(creche.bureaux, self.debut)
         if self.bureau is None:
