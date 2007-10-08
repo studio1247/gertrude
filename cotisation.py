@@ -24,9 +24,10 @@ class CotisationException(Exception):
         self.errors = errors
 
 NO_ADDRESS = 1
-NO_REVENUS = 2
-REVENUS_ANNEE_PRECEDENTE = 4
-RATTRAPAGE_SEPTEMBRE = 8
+NO_NOM = 2
+NO_REVENUS = 4
+REVENUS_ANNEE_PRECEDENTE = 8
+RATTRAPAGE_SEPTEMBRE = 16
 
 class Cotisation(object):
     def __init__(self, inscrit, periode, options=0):
@@ -34,7 +35,7 @@ class Cotisation(object):
         self.debut, self.fin = periode
         self.options = options
         errors = []
-        if not inscrit.prenom or not inscrit.nom:
+        if not inscrit.prenom or (not options & NO_NOM and not inscrit.nom):
             errors.append(u" - L'état civil de l'enfant est incomplet.")
         if not options & NO_ADDRESS and (not inscrit.code_postal or not inscrit.ville):
             errors.append(u" - L'adresse de l'enfant est incomplète.")
@@ -55,7 +56,7 @@ class Cotisation(object):
         self.bureau = Select(creche.bureaux, self.debut)
         if self.bureau is None:
             errors.append(u" - Il n'y a pas de bureau à cette date.")
-        self.bareme_caf = Select(creche.baremes_caf, self.debut)
+        self.bareme_caf = Select(creche.baremes_caf, revenus_debut)
         if self.bareme_caf is None:
             errors.append(u" - Il n'y a pas de barème CAF à cette date.")
         self.inscription = inscrit.getInscription(self.debut)
@@ -75,12 +76,12 @@ class Cotisation(object):
 
         if len(errors) > 0:
             raise CotisationException(errors)
-        
+
         self.assiette_annuelle = float(self.revenus_papa.revenu) 
         if self.revenus_papa.chomage:
             self.abattement_chomage_papa = 0.3 * float(self.revenus_papa.revenu)
             self.assiette_annuelle -= self.abattement_chomage_papa
-            
+
         self.assiette_annuelle += float(self.revenus_maman.revenu)
         if self.revenus_maman.chomage:
             self.abattement_chomage_maman = 0.3 * float(self.revenus_maman.revenu)
@@ -92,9 +93,9 @@ class Cotisation(object):
             self.assiette_annuelle = self.bareme_caf.plancher
 
         self.assiette_mensuelle = self.assiette_annuelle / 12
-        
+
         self.taux_horaire = 10.0/200 # 0.05 !
-        
+
         self.enfants_a_charge = 1
         self.enfants_en_creche = 1
         for frere_soeur in inscrit.freres_soeurs:
@@ -128,7 +129,7 @@ class Cotisation(object):
         self.cotisation_mensuelle = self.assiette_mensuelle * self.taux_horaire * self.heures_garde * creche.mois_payes / 12 / 100
 
         self.montant_jour_maladie_deduit = self.assiette_mensuelle * self.taux_horaire / 10
-        
+
         if self.heures_garde < 200:
             self.montant_jour_supplementaire = self.montant_jour_maladie_deduit
         else:

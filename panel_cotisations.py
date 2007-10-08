@@ -352,7 +352,7 @@ class CotisationsPanel(GPanel):
         dlg.Destroy()
         if response == wx.ID_OK:
             oofilename = dlg.GetPath()
-            options = 0
+            options = NO_NOM
             if periode.month == 9:
                 dlg = wx.MessageDialog(self, u"Voulez-vous un appel de cotisations basé sur les revenus de l'année précédente ?",
                                        'Message', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
