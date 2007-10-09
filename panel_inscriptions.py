@@ -356,8 +356,11 @@ class IdentitePanel(InscriptionsTab):
         sizer2.AddMany([(wx.StaticText(self, -1, 'Sexe :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoChoiceCtrl(self, None, 'sexe', items=[(u"Garçon", 1), ("Fille", 2)]), 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, 'Date de naissance :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'naissance'), 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, 'Adresse :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'adresse'), 0, wx.EXPAND)])
-        sizer2.AddMany([(wx.StaticText(self, -1, 'Code Postal :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'code_postal', min=0, precision=0), 0, wx.EXPAND)])
-        sizer2.AddMany([(wx.StaticText(self, -1, 'Ville :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'ville'), 0, wx.EXPAND)])
+        self.code_postal_ctrl = AutoNumericCtrl(self, None, 'code_postal', min=0, precision=0)
+        self.Bind(wx.EVT_TEXT, self.EvtChangementCodePostal, self.code_postal_ctrl)
+        sizer2.AddMany([(wx.StaticText(self, -1, 'Code Postal :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.code_postal_ctrl, 0, wx.EXPAND)])
+        self.ville_ctrl = AutoTextCtrl(self, None, 'ville')
+        sizer2.AddMany([(wx.StaticText(self, -1, 'Ville :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.ville_ctrl, 0, wx.EXPAND)])
 ##        sizer2.AddMany([(wx.StaticText(self, -1, 'Date de marche :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'marche'), 0, wx.EXPAND)])
         sizer3 = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Frères et soeurs'), wx.VERTICAL)
         self.fratries_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -392,7 +395,15 @@ class IdentitePanel(InscriptionsTab):
     def EvtChangementPrenom(self, event):
         event.GetEventObject().onText(event)
         self.parent.EvtChangementPrenom(event)
-        
+
+    def EvtChangementCodePostal(self, event):
+        code_postal = self.code_postal_ctrl.GetValue()
+        if code_postal and not self.ville_ctrl.GetValue():
+            for inscrit in creche.inscrits:
+                if inscrit.code_postal == code_postal and inscrit.ville:
+                    self.ville_ctrl.SetValue(inscrit.ville)
+                    break
+
     def EvtNouveauFrere(self, event):
         history.Append(Delete(self.inscrit.freres_soeurs, -1))
         self.inscrit.freres_soeurs.append(Frere_Soeur(self.inscrit))

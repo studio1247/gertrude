@@ -78,6 +78,14 @@ class StartDialog(wx.Dialog):
             self.gauge.SetValue(100)
             return
 
+        if readonly:
+            dlg = wx.MessageDialog(self,
+                                   u"Le jeton n'a pas pu être pris. Gertrude sera accessible en lecture seule",
+                                   'Gertrude',
+                                   wx.OK | wx.ICON_EXCLAMATION )
+            dlg.ShowModal()
+            dlg.Destroy()
+
         self.loaded = True
         sql_connection.open()
         if len(creche.users) == 0:
@@ -93,9 +101,13 @@ class StartDialog(wx.Dialog):
             self.sizer.Fit(self)
 
     def Load(self):
-        LoadConfig(ProgressHandler(self.info.AppendText, self.gauge, 5))
-        Backup(ProgressHandler(self.info.AppendText, self.gauge, 5))
-        result = Load(ProgressHandler(self.info.AppendText, self.gauge, 90))
+        try:
+            LoadConfig(ProgressHandler(self.info.AppendText, self.gauge, 5))
+            Backup(ProgressHandler(self.info.AppendText, self.gauge, 5))
+            result = Load(ProgressHandler(self.info.AppendText, self.gauge, 90))
+        except Exception, e:
+            self.info.AppendText(e.message + u'\n')
+            result = False
         # we close database since it's opened from an other thread
         try:
             sql_connection.close()

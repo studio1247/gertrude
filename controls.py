@@ -310,7 +310,7 @@ class AutoMixin:
             self.__ontext = False
             self.SetValue(eval('self.instance.%s' % self.member))
             self.__ontext = True
-            self.Enable()
+            self.Enable(not readonly)
             
     def onText(self, event):
         obj = event.GetEventObject()
@@ -353,7 +353,7 @@ class AutoPhoneCtrl(PhoneCtrl, AutoMixin):
 
 class AutoChoiceCtrl(wx.Choice, AutoMixin):
     def __init__(self, parent, instance, member, items=None, *args, **kwargs):
-        wx.Choice.__init__(self, parent, -1, *args, **kwargs) # style=wxCB_SORT        
+        wx.Choice.__init__(self, parent, -1, *args, **kwargs) 
         self.values = {}
         if items:
             self.SetItems(items)
@@ -378,12 +378,12 @@ class AutoChoiceCtrl(wx.Choice, AutoMixin):
         if not self.instance:
             self.Disable()
         else:
-            self.Enable()
             value = eval('self.instance.%s' % self.member)
             if value in self.values:
                 self.SetSelection(self.values[value])
             else:
                 self.SetSelection(-1)
+            self.Enable(not readonly)
 
     def SetItems(self, items):
         wx.Choice.Clear(self)
@@ -393,7 +393,7 @@ class AutoChoiceCtrl(wx.Choice, AutoMixin):
 
 class AutoCheckBox(wx.CheckBox, AutoMixin):
     def __init__(self, parent, instance, member, label, *args, **kwargs):
-        wx.CheckBox.__init__(self, parent, -1, label)
+        wx.CheckBox.__init__(self, parent, -1, label, *args, **kwargs)
         AutoMixin.__init__(self, parent, instance, member)
         parent.Bind(wx.EVT_CHECKBOX, self.EvtCheckbox, self)
 
@@ -403,7 +403,7 @@ class AutoCheckBox(wx.CheckBox, AutoMixin):
         
 class AutoRadioBox(wx.RadioBox, AutoMixin):
     def __init__(self, parent, instance, member, label, choices, *args, **kwargs):
-        wx.RadioBox.__init__(self, parent, -1, label=label, choices=choices)
+        wx.RadioBox.__init__(self, parent, -1, label=label, choices=choices, *args, **kwargs)
         AutoMixin.__init__(self, parent, instance, member)
         parent.Bind(wx.EVT_RADIOBOX, self.EvtRadiobox, self)
 
@@ -539,14 +539,15 @@ class PeriodeChoice(wx.BoxSizer):
 
     def Enable(self, value=True):
         self.periodechoice.Enable(value)
+        self.periodesettingsbutton.Enable(not readonly)
         if self.instance and self.instance[-1].fin:
-            self.periodeaddbutton.Enable(value)
+            self.periodeaddbutton.Enable(value and not readonly)
         else:
             self.periodeaddbutton.Disable()
         if not self.instance or len(self.instance) <= 1 or self.parent.periode != len(self.instance) - 1:
             self.periodedelbutton.Disable()
         else:
-            self.periodedelbutton.Enable(value)
+            self.periodedelbutton.Enable(value and not readonly)
     
     def Disable(self):
         self.Enable(False)

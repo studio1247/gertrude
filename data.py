@@ -103,9 +103,9 @@ class HttpConnection(object):
                 return result
         except urllib2.HTTPError, e:
             if e.code == 404:
-                raise Exception("Echec - page non trouvée")
+                raise Exception(u"Echec - code 404 (page non trouvée)")
             else:
-                raise Exception("Echec - code %d (%s)" % (e.code, e.msg))
+                raise Exception(u"Echec - code %d (%s)" % (e.code, e.msg))
         except urllib2.URLError, e:
             raise Exception("Echec - cause:", e.reason)
         except Exception, e:
@@ -125,10 +125,13 @@ class HttpConnection(object):
             return 1
 
     def rel_token(self):
+        if not self.token:
+            return 1
         self.progress_handler.display(u"Libération du jeton ...")
         if not self.urlopen('rel_token'):
             return 0
         else:
+            self.token = 0
             if os.path.exists(TOKEN_FILENAME):
                 os.remove(TOKEN_FILENAME)
             return 1
@@ -203,9 +206,7 @@ class FileConnection(object):
     
     def Load(self, progress_handler=default_progress_handler):
         if not os.path.isfile(sqlinterface.DB_FILENAME):
-            progress_handler.display(u"Création d'une nouvelle base ...")
-            sql_connection.create()
-        progress_handler.display(u"Chargement en mémoire de la base ...")
+            sql_connection.create(progress_handler)
         creche = sql_connection.load(progress_handler)
         return creche, 0
 

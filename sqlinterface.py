@@ -51,10 +51,12 @@ class SQLConnection(object):
     def execute(self, cmd, *args):
         return self.con.execute(cmd, *args)
         
-    def create(self):
+    def create(self, progress_handler=default_progress_handler):
         if not self.con:
             self.open()
-            
+
+        progress_handler.display(u"Création d'une nouvelle base ...")
+
         cur = self.con.cursor()
         cur.execute("""
           CREATE TABLE CRECHE(
@@ -212,6 +214,8 @@ class SQLConnection(object):
         if not self.translate(progress_handler):
             return None
 
+        progress_handler.display(u"Chargement en mémoire de la base ...")
+        
         cur = self.cursor()
 
         cur.execute('SELECT nom, adresse, code_postal, ville, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, mode_maladie, idx FROM CRECHE')
