@@ -521,7 +521,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
     def SetInscrit(self, inscrit):
         self.inscrit = inscrit
         self.SetInstance(inscrit)
-        if self.week_ctrl: # TODO week_ctrl comme les autres ctrls ?
+        if self.week_ctrl: # TODO week_ctrl comme les autres auto ctrls
             if inscrit:
                 self.week_ctrl.SetSemaine(inscrit.inscriptions[self.periode].periode_reference)
             else:
@@ -535,8 +535,16 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
     def OnPeriodeChange(self, periode):
         self.inscrit.inscriptions[self.periode].periode_reference = periode
 
-    def UpdateContents(self):
+    def UpdateContents(self):# TODO week_ctrl comme les autres auto ctrls
         InscriptionsTab.UpdateContents(self)
+        if self.week_ctrl:
+            if self.inscrit:
+                self.week_ctrl.SetSemaine(self.inscrit.inscriptions[self.periode].periode_reference)
+            else:
+                self.week_ctrl.SetSemaine(None)
+
+    def SetPeriode(self, periode):# TODO week_ctrl comme les autres auto ctrls
+        PeriodeMixin.SetPeriode(self, periode)
         if self.week_ctrl:
             if self.inscrit:
                 self.week_ctrl.SetSemaine(self.inscrit.inscriptions[self.periode].periode_reference)

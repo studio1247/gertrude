@@ -323,7 +323,7 @@ class AutoMixin:
         if old_value != new_value:
             last = history.Last()
             if last is not None and len(last) == 1 and isinstance(last[-1], Change):
-                if last[-1].instance != self.instance or last[-1].member != self.member:
+                if last[-1].instance is not self.instance or last[-1].member != self.member:
                     history.Append(Change(self.instance, self.member, old_value))
             else:
                 history.Append(Change(self.instance, self.member, old_value))
