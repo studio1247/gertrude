@@ -5,6 +5,13 @@ $db_filename = "./gertrude.db";
 
 $token = $_GET["token"];
 
+// pour free.fr
+function wa_flock($f, $mode) {
+  // sur serveur free => décommenter la ligne suivante
+  // return true;
+  return flock($f, $mode);
+}
+  
 function check_token() {
   global $token_filename;
   global $token;
@@ -29,10 +36,10 @@ function get_token() {
     return 0;
 
   $f = fopen($token_filename, "w");
-  if (flock($f, LOCK_EX)) {
+  if (wa_flock($f, LOCK_EX)) {
     $token = uniqid(md5(rand()), true);
     fwrite($f, $token);
-    flock($f, LOCK_UN);
+    wa_flock($f, LOCK_UN);
   }
   else {
     $token = 0;
