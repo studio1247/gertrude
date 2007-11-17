@@ -46,7 +46,7 @@ class DayTabWindow(wx.Window):
             self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftButtonDown)
             self.Bind(wx.EVT_LEFT_UP, self.OnLeftButtonUp)
             self.Bind(wx.EVT_MOTION, self.OnLeftButtonDragging)
-        
+
     def OnPaint(self, event):
         dc = wx.PaintDC(self)
         self.PrepareDC(dc)
@@ -56,7 +56,7 @@ class DayTabWindow(wx.Window):
         if not dc:
             dc = wx.ClientDC(self)
             self.PrepareDC(dc)
-            
+
         dc.SetPen(wx.TRANSPARENT_PEN)
         green_brush = [ wx.Brush(wx.Color(5, 203, 28)), wx.Brush(wx.Color(150, 229, 139)) ]
         red_brush = [ wx.Brush(wx.Color(203, 5, 28)), wx.Brush(wx.Color(229, 150, 139)) ]
@@ -87,10 +87,10 @@ class DayTabWindow(wx.Window):
         else:
             presence = inscrit.getPresenceFromSemaineType(self.date)
         self.DrawLine(index, presence, dc)
-        
+
     def DoDrawing(self, dc, printing=False):
         dc.BeginDrawing()
-       
+
         # le quadrillage
         dc.SetPen(wx.GREY_PEN)
         dc.SetBrush(wx.WHITE_BRUSH)
@@ -110,15 +110,15 @@ class DayTabWindow(wx.Window):
         # les presences
         for i, inscrit in enumerate(self.inscrits):
             self.DrawPresence(i, dc)
-            
+
         dc.EndDrawing()
-    
+
     def __get_pos(self, x, y):
         posX = int((heureAffichageMin - BASE_MIN_HOUR + float(x * heureGranularite / HEURE_WIDTH) / heureGranularite) * BASE_GRANULARITY)
         posY = int(y / BEBE_HEIGHT)
         return posX, posY
 
-    def OnLeftButtonDown(self, event):            
+    def OnLeftButtonDown(self, event):
         # tests au cas ou ...  if self.curStartX < 4 * (heureAffichageMax-heureOuverture) and self.curStartY < len(self.inscrits):
         self.curStartX, self.curStartY = self.__get_pos(event.GetX(), event.GetY())
         inscrit = self.inscrits[self.curStartY]
@@ -146,7 +146,7 @@ class DayTabWindow(wx.Window):
         self.parent.UpdateButton(self.curStartY) # TODO pas toujours
         self.OnLeftButtonDragging(event)
 
-    def OnLeftButtonDragging(self, event):            
+    def OnLeftButtonDragging(self, event):
         if self.valeur_selection != -1:
             inscrit = self.inscrits[self.curStartY]
             presence = inscrit.presences[self.date]
@@ -156,16 +156,16 @@ class DayTabWindow(wx.Window):
             presence.details[start:end+BASE_GRANULARITY/heureGranularite] = [self.valeur_selection] * (end - start + BASE_GRANULARITY/heureGranularite)
             self.DrawLine(self.curStartY, presence)
 
-    def OnLeftButtonUp(self, event):            
+    def OnLeftButtonUp(self, event):
          if self.valeur_selection != -1:
-            inscrit = self.inscrits[self.curStartY]            
+            inscrit = self.inscrits[self.curStartY]
             presence = inscrit.presences[self.date]
             start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX)
             presence.details = presence.original_details[:]
             presence.details[start:end+BASE_GRANULARITY/heureGranularite] = [self.valeur_selection] * (end - start + BASE_GRANULARITY/heureGranularite)
             for i in range(len(presence.details)):
                 if presence.details[i] == 2:
-                    presence.details[i] = 0           
+                    presence.details[i] = 0
             if not 1 in presence.details:
                 presence.value = VACANCES
                 presence.details = None
@@ -222,7 +222,7 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
 
     def OnButtonPressed(self, event):
         button = event.GetEventObject()
-        inscrit = self.inscrits[button.inscrit]               
+        inscrit = self.inscrits[button.inscrit]
         if self.date not in inscrit.presences:
             inscrit.presences[self.date] = presence = inscrit.getPresenceFromSemaineType(self.date)
             presence.create()
@@ -261,8 +261,8 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
 
         bmp_index = 2 * presence.value + presence.previsionnel
         self.buttons_sizer.GetItem(index).GetWindow().button.SetBitmapLabel(self.bmp[bmp_index])
-        
-    def UpdateContents(self):       
+
+    def UpdateContents(self):
         old = len(self.inscrits)
         self.inscrits = []
         for inscrit in creche.inscrits:
@@ -283,7 +283,7 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
             self.buttons_sizer.GetItem(i-1).DeleteWindows()
             self.buttons_sizer.Detach(i-1)
         for i in range(old, new):
-	    panel = wx.Panel(self, style=wx.SUNKEN_BORDER)
+            panel = wx.Panel(self, style=wx.SUNKEN_BORDER)
             self.buttons_sizer.Add(panel)
             panel.button = wx.BitmapButton(panel, -1, self.bmp[0], size=(26, 26), style=wx.NO_BORDER)
             panel.button.inscrit = i
@@ -295,11 +295,11 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
         self.sizer.Layout()
         for i in range(len(self.inscrits)):
             self.UpdateButton(i)
-        
+
         self.Refresh()
         self.tab_window.Refresh()
 
-        
+
     def OnPaint(self, event):
         dc = wx.PaintDC(self.prenoms)
         self.prenoms.PrepareDC(dc)
@@ -309,7 +309,7 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
 
     def DoDrawing(self, dc, printing=False):
         dc.BeginDrawing()
-       
+
         # les bebes
         dc.SetTextForeground("BLACK")
         font = wx.Font(8, wx.SWISS, wx.NORMAL, wx.NORMAL)
@@ -318,7 +318,7 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
         for i, inscrit in enumerate(self.inscrits):
             if inscrit.getInscription(self.date) is not None:
                 dc.DrawText(GetInscritId(inscrit, self.inscrits), 10, 5 + i * BEBE_HEIGHT)
-        
+
         dc.EndDrawing()
 
     def SetDate(self, date):
@@ -329,30 +329,30 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
 class DayPanel(wx.Panel):
     def __init__(self, parent, date):
         wx.Panel.__init__(self, parent, id=-1, style=wx.LB_DEFAULT)
-	self.sizer = wx.BoxSizer(wx.VERTICAL)
-	self.echelle = wx.Window(self, -1, size=(0, 25))
-	self.sizer.Add(self.echelle, 0, wx.EXPAND)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.echelle = wx.Window(self, -1, size=(0, 25))
+        self.sizer.Add(self.echelle, 0, wx.EXPAND)
         self.presences_panel = PresencesPanel(self, date)
-	self.sizer.Add(self.presences_panel, 1, wx.EXPAND)
-	self.SetSizer(self.sizer)
+        self.sizer.Add(self.presences_panel, 1, wx.EXPAND)
+        self.SetSizer(self.sizer)
         self.SetAutoLayout(1)
         self.echelle.Bind(wx.EVT_PAINT, self.OnPaint)
 
     def SetDate(self, date):
         self.presences_panel.SetDate(date)
-	self.sizer.Layout()
-        
+        self.sizer.Layout()
+
     def OnPaint(self, event):
         dc = wx.PaintDC(self.echelle)
         self.echelle.PrepareDC(dc)
         dc.BeginDrawing()
-        
+
         # l'echelle
         dc.SetBrush(wx.GREY_BRUSH)
         dc.SetPen(wx.GREY_PEN)
         dc.DrawRectangle(0, 1, dc.GetSize()[0], 25)
         dc.SetPen(wx.WHITE_PEN)
-	font = wx.Font(7, wx.SWISS, wx.NORMAL, wx.NORMAL)
+        font = wx.Font(7, wx.SWISS, wx.NORMAL, wx.NORMAL)
         dc.SetFont(font)
         dc.SetTextForeground("WHITE")
         heure = heureAffichageMin
@@ -364,7 +364,7 @@ class DayPanel(wx.Panel):
             else:
                 dc.DrawLine(x, 20, x, 15)
             heure += 1.0 / heureGranularite
-            
+
         dc.EndDrawing()
 
 class PlanningPanel(GPanel):
@@ -373,10 +373,10 @@ class PlanningPanel(GPanel):
     profil = PROFIL_ALL
     def __init__(self, parent):
         GPanel.__init__(self, parent, u'Présences enfants')
-        
+
         # La combobox pour la selection de la semaine
         self.combobox = wx.Choice(self, -1)
-	self.sizer.Add(self.combobox, 0, wx.EXPAND, 0)
+        self.sizer.Add(self.combobox, 0, wx.EXPAND, 0)
         day = first_monday = getfirstmonday()
         semaine = getNumeroSemaine(day)
         while day < last_date:
@@ -394,12 +394,12 @@ class PlanningPanel(GPanel):
 
         # le notebook pour les jours de la semaine
         self.notebook = wx.Notebook(self, style=wx.LB_DEFAULT)
-	self.sizer.Add(self.notebook, 1, wx.EXPAND|wx.TOP, 5)
+        self.sizer.Add(self.notebook, 1, wx.EXPAND|wx.TOP, 5)
         for week_day in range(5):
             day = first_monday + datetime.timedelta(semaine * 7 + week_day)
             title = days[week_day] + " " + str(day.day) + " " + months[day.month - 1] + " " + str(day.year)
             self.notebook.AddPage(DayPanel(self.notebook, day), title)
-        
+
         self.Bind(wx.EVT_CHOICE, self.EvtChoice, self.combobox)
 
     def EvtChoice(self, evt):
@@ -407,7 +407,7 @@ class PlanningPanel(GPanel):
         monday = cb.GetClientData(cb.GetSelection())
         for week_day in range(5):
             day = monday + datetime.timedelta(week_day)
-	    note = self.notebook.GetPage(week_day)
+            note = self.notebook.GetPage(week_day)
             self.notebook.SetPageText(week_day, days[week_day] + " " + str(day.day) + " " + months[day.month - 1] + " " + str(day.year))
             note = self.notebook.GetPage(week_day)
             if day in creche.jours_fermeture:
