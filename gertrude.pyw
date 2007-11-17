@@ -26,7 +26,7 @@ from startdialog import StartDialog
 import gpanel, controls, zipfile, xml.dom.minidom, wx.html, ooffice
 sys.path.insert(0, ".")
 
-VERSION = '0.48'
+VERSION = '0.49'
 
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):
@@ -86,7 +86,7 @@ class GertrudeListbook(Listbook):
             print 'Importation de %s.py' % module_name
             panels.extend([tmp(self) for tmp in __import__(module_name).panels])
         panels.sort(lambda a, b: a.index-b.index)
-        for panel in panels:            
+        for panel in panels:
             if panel.profil & profil:
                 self.AddPage(panel, panel.bitmap)
         self.Draw()
@@ -115,15 +115,15 @@ class GertrudeFrame(wx.Frame):
         menu1 = wx.Menu()
         menu1.Append(101, "&Enregistrer\tCtrl+S", u"Enregistre")
         self.Bind(wx.EVT_MENU, self.OnSave, id=101)
-        menu1.Append(101, "&Fermer\tAlt+F4", u"Ferme la fenêtre")
+        menu1.Append(102, "&Fermer\tAlt+F4", u"Ferme la fenêtre")
         self.Bind(wx.EVT_MENU, self.OnExit, id=102)
-        menuBar.Append(menu1, "&Fichier")        
+        menuBar.Append(menu1, "&Fichier")
         menu2 = wx.Menu()
         menu2.Append(201, "&Annuler\tCtrl+Z", u"Annule l'action précédente")
         self.Bind(wx.EVT_MENU, self.OnUndo, id=201)
         menuBar.Append(menu2, "&Edition")
         self.SetMenuBar(menuBar)
-        
+
         # Inside
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         panel = wx.Panel(self, -1)
@@ -136,7 +136,7 @@ class GertrudeFrame(wx.Frame):
         panel.SetSizer(sizer2)
 
         self.Bind(wx.EVT_CLOSE, self.OnExit)
-                
+
     def OnSave(self, evt):
         self.SetStatusText("Enregistrement en cours ...")
         Save(ProgressHandler(self.SetStatusText))
@@ -152,7 +152,7 @@ class GertrudeFrame(wx.Frame):
 
         if result == wx.ID_CANCEL:
             return
-        elif result == wx.ID_YES:            
+        elif result == wx.ID_YES:
             Save(ProgressHandler(self.SetStatusText))
         Exit(ProgressHandler(self.SetStatusText))
         self.Destroy()
