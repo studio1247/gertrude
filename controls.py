@@ -452,7 +452,7 @@ class PeriodeDialog(wx.Dialog):
         self.sizer.Add(self.btnsizer, 0, wx.ALL, 5)
         self.SetSizer(self.sizer)
         self.sizer.Fit(self)
-        
+
 class PeriodeChoice(wx.BoxSizer):
     def __init__(self, parent, constructor):
         wx.BoxSizer.__init__(self, wx.HORIZONTAL)
@@ -471,7 +471,7 @@ class PeriodeChoice(wx.BoxSizer):
         self.periodedelbutton.SetToolTipString(u"Supprimer la période")
         self.periodesettingsbutton = wx.BitmapButton(parent, -1, settingsbmp, style=wx.BU_EXACTFIT)
         self.periodesettingsbutton.SetToolTipString(u"Modifier la période")
-        
+
         self.Add(self.periodechoice, 1, wx.EXPAND)
         self.Add(self.periodeaddbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT|wx.RIGHT, 5)
         self.Add(self.periodedelbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 5)
@@ -480,32 +480,34 @@ class PeriodeChoice(wx.BoxSizer):
         parent.Bind(wx.EVT_BUTTON, self.EvtPeriodeDelButton, self.periodedelbutton)
         parent.Bind(wx.EVT_BUTTON, self.EvtPeriodeSettingsButton, self.periodesettingsbutton)
         parent.periodechoice = self
-        
+
     def SetInstance(self, instance, periode=None):
         self.instance = instance
         self.periode = periode
-        if instance:
+        if instance is not None:
             self.periodechoice.Clear()
             for item in instance:
                 self.periodechoice.Append(periodestr(item))
             self.Enable()
-            self.periodechoice.SetSelection(periode)
+            if periode is not None:
+                self.periodechoice.SetSelection(periode)
         else:
             self.Disable()
-     
+
     def EvtPeriodeChoice(self, evt):
         ctrl = evt.GetEventObject()
         self.periode = ctrl.GetSelection()
         self.parent.SetPeriode(self.periode)
         self.Enable()
-  
+
     def EvtPeriodeAddButton(self, evt):
-        last_periode = self.instance[-1]
         self.periode = len(self.instance)
         new_periode = self.constructor()
-        new_periode.debut = last_periode.fin + datetime.timedelta(1)
-        if last_periode.debut.day == new_periode.debut.day and last_periode.debut.month == new_periode.debut.month:
-            new_periode.fin = datetime.date(last_periode.fin.year+new_periode.debut.year-last_periode.debut.year, last_periode.fin.month, last_periode.fin.day)
+        if len(self.instance) > 0:
+            last_periode = self.instance[-1]
+            new_periode.debut = last_periode.fin + datetime.timedelta(1)
+            if last_periode.debut.day == new_periode.debut.day and last_periode.debut.month == new_periode.debut.month:
+                new_periode.fin = datetime.date(last_periode.fin.year+new_periode.debut.year-last_periode.debut.year, last_periode.fin.month, last_periode.fin.day)
         self.instance.append(new_periode)
         self.periodechoice.Append(periodestr(new_periode))
         self.periodechoice.SetSelection(self.periode)
@@ -538,17 +540,11 @@ class PeriodeChoice(wx.BoxSizer):
             self.Enable()
 
     def Enable(self, value=True):
-        self.periodechoice.Enable(value)
-        self.periodesettingsbutton.Enable(not readonly)
-        if self.instance and self.instance[-1].fin:
-            self.periodeaddbutton.Enable(value and not readonly)
-        else:
-            self.periodeaddbutton.Disable()
-        if not self.instance or len(self.instance) <= 1 or self.parent.periode != len(self.instance) - 1:
-            self.periodedelbutton.Disable()
-        else:
-            self.periodedelbutton.Enable(value and not readonly)
-    
+        self.periodechoice.Enable(value and len(self.instance)>0)
+        self.periodesettingsbutton.Enable(value and len(self.instance)>0 and not readonly)
+        self.periodeaddbutton.Enable(value and self.instance is not None and (len(self.instance) == 0 or self.instance[-1].fin is not None) and not readonly)
+        self.periodedelbutton.Enable(value and self.instance is not None and len(self.instance) > 0 and not readonly)
+
     def Disable(self):
         self.Enable(False)
 
@@ -559,7 +555,7 @@ class AutoTab(wx.lib.scrolledpanel.ScrolledPanel):
         self.ctrls = []
         self.SetAutoLayout(1)
         self.SetupScrolling()
-           
+
     def UpdateContents(self):
         for ctrl in self.ctrls:
             ctrl.UpdateContents()
@@ -567,27 +563,32 @@ class AutoTab(wx.lib.scrolledpanel.ScrolledPanel):
 class PeriodeMixin:
     def __init__(self, member):
         self.instance = None
-        self.member = member        
+        self.member = member
         self.periode = None
         self.current_periode = None
         self.ctrls = []
         self.periodechoice = None
-    
+
     def UpdateContents(self):
         for ctrl in self.ctrls:
             ctrl.UpdateContents()
-    
+
     def SetInstance(self, instance, periode=None):
         self.instance = instance
         self.periode = periode
-        
+
         if instance:
             periodes = eval("instance.%s" % self.member)
-            if periode is None:
-                self.periode = len(periodes) - 1
+            if len(periodes) > 0:
+                if periode is None:
+                    self.periode = len(periodes) - 1
+                    if self.periodechoice:
+                        self.periodechoice.SetInstance(periodes, self.periode)
+                self.current_periode = periodes[self.periode]
+            else:
+                self.current_periode = None
                 if self.periodechoice:
-                    self.periodechoice.SetInstance(periodes, self.periode)
-            self.current_periode = periodes[self.periode]
+                    self.periodechoice.SetInstance(periodes)
             for ctrl in self.ctrls:
                 ctrl.SetInstance(self.current_periode)
         else:

@@ -30,19 +30,19 @@ VERSION = 10
 class SQLConnection(object):
     def __init__(self):
         self.con = None
-        
+
     def open(self):
         self.con = sqlite3.connect(DB_FILENAME)
 
     def commit(self):
         self.con.commit()
-        
+
     def close(self):
         if self.con:
             self.con.commit()
             self.con.close()
             self.con = None
-        
+
     def cursor(self):
         if self.con is None:
             self.open()
@@ -50,7 +50,7 @@ class SQLConnection(object):
 
     def execute(self, cmd, *args):
         return self.con.execute(cmd, *args)
-        
+
     def create(self, progress_handler=default_progress_handler):
         if not self.con:
             self.open()
@@ -199,6 +199,12 @@ class SQLConnection(object):
           );""")
 
         cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
+
+        cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, mode_maladie) VALUES (NULL,?,?,?,?,?,?,?,?,?)', ("","","","",12,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,15,DEDUCTION_AVEC_CARENCE))
+
+        cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2006, 9, 1), datetime.date(2007, 8, 31), 6547.92, 51723.60))
+        cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2007, 9, 1), datetime.date(2008, 8, 31), 6660.00, 52608.00))
+
         self.con.commit()
 
     def load(self, progress_handler=default_progress_handler):
@@ -221,7 +227,7 @@ class SQLConnection(object):
         cur.execute('SELECT nom, adresse, code_postal, ville, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, mode_maladie, idx FROM CRECHE')
         creche_entry = cur.fetchall()
         if len(creche_entry) > 0:
-            creche = Creche(creation=False)
+            creche = Creche()
             creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.mois_payes, creche.presences_previsionnelles, creche.modes_inscription, creche.minimum_maladie, creche.mode_maladie, creche.idx = creche_entry[0]
         else:
             creche = Creche()

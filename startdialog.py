@@ -106,7 +106,10 @@ class StartDialog(wx.Dialog):
             Backup(ProgressHandler(self.info.AppendText, self.gauge, 5))
             result = Load(ProgressHandler(self.info.AppendText, self.gauge, 90))
         except Exception, e:
-            self.info.AppendText(e.message + u'\n')
+            try:
+                self.info.AppendText(e.message + u'\n')
+            except:
+                self.info.AppendText('Erreur : ' + str(e) + u'\n')
             result = False
         # we close database since it's opened from an other thread
         try:

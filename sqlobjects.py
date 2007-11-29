@@ -223,7 +223,7 @@ class Employe(object):
             sql_connection.execute('UPDATE EMPLOYES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 class Creche(object): 
-    def __init__(self, creation=True):
+    def __init__(self):
         self.idx = None
         self.nom = ''
         self.adresse = ''
@@ -241,17 +241,7 @@ class Creche(object):
         self.presences_previsionnelles = True
         self.modes_inscription = MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5
 
-        if creation:
-            self.create()
-
         self.calcule_jours_fermeture()
-
-    def create(self):
-        print 'nouvelle creche'
-        result = sql_connection.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, mode_maladie) VALUES (NULL,?,?,?,?,?,?,?,?,?)', (self.nom, self.adresse, self.code_postal, self.ville, self.mois_payes, self.presences_previsionnelles, self.modes_inscription, self.minimum_maladie, self.mode_maladie))
-        self.idx = result.lastrowid
-        self.bureaux.append(Bureau(self))
-        self.baremes_caf.append(BaremeCAF())
 
     def calcule_jours_fermeture(self):
         self.jours_fermeture = []
@@ -290,13 +280,13 @@ class Creche(object):
         conge.creche = self
         self.conges.append(conge)
         self.calcule_jours_fermeture()
-       
+
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['nom', 'adresse', 'code_postal', 'ville', 'mois_payes', 'presences_previsionnelles', 'modes_inscription', 'minimum_maladie', 'mode_maladie'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
-      
+
 class Revenu(object):
     def __init__(self, parent, creation=True):
         self.parent = parent

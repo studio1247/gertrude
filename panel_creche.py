@@ -55,7 +55,7 @@ class EmployesTab(AutoTab):
         for i in range(len(self.employes_sizer.GetChildren()), len(creche.employes)):
             self.line_add(i)
         for i in range(len(creche.employes), len(self.employes_sizer.GetChildren())):
-            self.line_del()                       
+            self.line_del()
         self.sizer.Layout()
         AutoTab.UpdateContents(self)
 
@@ -77,7 +77,7 @@ class EmployesTab(AutoTab):
         sizer = self.employes_sizer.GetItem(index)
         sizer.DeleteWindows()
         self.employes_sizer.Detach(index)
-        
+
     def employe_add(self, event):
         history.Append(Delete(creche.employes, -1))
         creche.employes.append(Employe())
@@ -118,7 +118,7 @@ class ResponsabilitesTab(AutoTab, PeriodeMixin):
 
     def SetInstance(self, instance, periode=None):
         self.instance = instance
-        if instance:
+        if instance and len(instance.bureaux) > 0:
             if periode is None:
                 current_periode = eval("self.instance.%s[-1]" % self.member)
             else:
@@ -127,7 +127,7 @@ class ResponsabilitesTab(AutoTab, PeriodeMixin):
             for ctrl in self.responsables_ctrls:
                 ctrl.SetItems(parents)
         PeriodeMixin.SetInstance(self, instance, periode)
-            
+
     def GetNomsParents(self, periode):
         result = []
         parents = []
