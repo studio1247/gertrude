@@ -70,13 +70,13 @@ class ContextPanel(wx.Panel):
         self.html_window = wx.html.HtmlWindow(self, style=wx.SUNKEN_BORDER)
         sizer.AddMany([(self.periodechoice, 0, wx.EXPAND|wx.ALL, 5), (self.html_window, 1, wx.EXPAND|wx.ALL-wx.TOP, 5)])
         self.SetSizer(sizer)
-    
+
     def SetInscrit(self, inscrit):
         self.inscrit = inscrit
         self.UpdateContents()
-    
+
     def UpdateContents(self):
-        if self.inscrit and self.inscrit.inscriptions[0].debut:
+        if self.inscrit and self.inscrit.inscriptions and self.inscrit.inscriptions[0].debut:
             self.periodechoice.Clear()   
             self.periodes = self.GetPeriodes()
             for p in self.periodes:
@@ -356,10 +356,10 @@ class IdentitePanel(InscriptionsTab):
         sizer2.AddMany([(wx.StaticText(self, -1, 'Sexe :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoChoiceCtrl(self, None, 'sexe', items=[(u"Garçon", 1), ("Fille", 2)]), 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, 'Date de naissance :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'naissance'), 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, 'Adresse :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'adresse'), 0, wx.EXPAND)])
+        self.ville_ctrl = AutoTextCtrl(self, None, 'ville') # A laisser avant le code postal !
         self.code_postal_ctrl = AutoNumericCtrl(self, None, 'code_postal', min=0, precision=0)
         self.Bind(wx.EVT_TEXT, self.EvtChangementCodePostal, self.code_postal_ctrl)
         sizer2.AddMany([(wx.StaticText(self, -1, 'Code Postal :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.code_postal_ctrl, 0, wx.EXPAND)])
-        self.ville_ctrl = AutoTextCtrl(self, None, 'ville')
         sizer2.AddMany([(wx.StaticText(self, -1, 'Ville :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.ville_ctrl, 0, wx.EXPAND)])
 ##        sizer2.AddMany([(wx.StaticText(self, -1, 'Date de marche :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'marche'), 0, wx.EXPAND)])
         sizer3 = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Frères et soeurs'), wx.VERTICAL)
@@ -391,7 +391,7 @@ class IdentitePanel(InscriptionsTab):
         sizer = self.fratries_sizer.GetItem(index)
         sizer.DeleteWindows()
         self.fratries_sizer.Detach(index)
-    
+
     def EvtChangementPrenom(self, event):
         event.GetEventObject().onText(event)
         self.parent.EvtChangementPrenom(event)
@@ -409,7 +409,7 @@ class IdentitePanel(InscriptionsTab):
         self.inscrit.freres_soeurs.append(Frere_Soeur(self.inscrit))
         self.line_add(len(self.inscrit.freres_soeurs) - 1)
         self.sizer.Layout()
-        
+
     def EvtSuppressionFrere(self, event):
         index = event.GetEventObject().index
         history.Append(Insert(self.inscrit.freres_soeurs, index, self.inscrit.freres_soeurs[index]))
