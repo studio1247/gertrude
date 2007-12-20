@@ -143,8 +143,8 @@ class EtatsTrimestrielsModifications(object):
                 fin = datetime.date(self.annee, 12, 31)
             else:
                 fin = datetime.date(self.annee, trimestre * 3 + 4, 1) - datetime.timedelta(1)
-            if fin > today:
-                break
+            #if fin > today:
+            #    break
 
 	    # On retire ceux qui ne sont pas inscrits pendant la periode qui nous interesse
             indexes = getPresentsIndexes(global_indexes, (debut, fin))
@@ -197,7 +197,7 @@ class EtatsTrimestrielsModifications(object):
                                 for i in range(3):
                                     if heures[m][i] == 0:
                                         fields.append(('%s(%d)' % (mode, i+1), ''))
-                                    elif previsionnel[m]:
+                                    elif getMonthEnd(datetime.date(self.annee, trimestre * 3 + i + 1, 1)) > today or (creche.presences_previsionnelles and previsionnel[m]):
                                         fields.append(('%s(%d)' % (mode, i+1), '(%d)' % heures[m][i]))
                                     else:
                                         fields.append(('%s(%d)' % (mode, i+1), heures[m][i]))
@@ -511,6 +511,8 @@ class RelevesPanel(GPanel):
             except CotisationException, e:
                 message = '\n'.join(['%s %s :\n%s' % (tmp[0], tmp[1], '\n'.join(list(e.errors[tmp]))) for tmp in e.errors])
                 dlg = wx.MessageDialog(self, message, 'Erreur', wx.OK | wx.ICON_WARNING)
+            except Exception, e:
+                dlg = wx.MessageDialog(self, str(e), 'Exception', wx.OK | wx.ICON_WARNING)
             dlg.ShowModal()
             dlg.Destroy()
 
