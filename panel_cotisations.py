@@ -112,14 +112,16 @@ class RecuModifications(object):
         self.debut, self.fin = debut, fin
 
     def execute(self, dom):
+        facture_debut = facture_fin = None
         date = self.debut
         total = 0.0
         while date <= self.fin:
             try:
                 facture = Facture(self.inscrit, date.year, date.month)
-                if facture.total == 0:
-                    self.debut = getNextMonthStart(self.debut)
-                else:
+                if facture.total != 0:
+		    if facture_debut is None:
+		        facture_debut = date
+	            facture_fin = getMonthEnd(date)
                     total += facture.total
             except CotisationException, e:
                 return [(self.inscrit, e.errors)]
@@ -133,8 +135,8 @@ class RecuModifications(object):
                 ('adresse-creche', creche.adresse),
                 ('code-postal-creche', str(creche.code_postal)),
                 ('ville-creche', creche.ville),
-                ('de-debut', '%s %d' % (getDeMoisStr(self.debut.month - 1), self.debut.year)),
-                ('de-fin', '%s %d' % (getDeMoisStr(self.fin.month - 1), self.fin.year)),
+                ('de-debut', '%s %d' % (getDeMoisStr(facture_debut.month - 1), facture_debut.year)),
+                ('de-fin', '%s %d' % (getDeMoisStr(facture_fin.month - 1), facture_fin.year)),
                 ('prenom', self.inscrit.prenom),
                 ('parents', getParentsStr(self.inscrit)),
                 ('naissance', self.inscrit.naissance),
