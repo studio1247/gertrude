@@ -139,12 +139,13 @@ class EtatsTrimestrielsModifications(object):
         spreadsheet.removeChild(template)
         for trimestre in range(4):
             debut = datetime.date(self.annee, trimestre * 3 + 1, 1)
+            if debut > today:
+                break
+
             if trimestre == 3:
                 fin = datetime.date(self.annee, 12, 31)
             else:
                 fin = datetime.date(self.annee, trimestre * 3 + 4, 1) - datetime.timedelta(1)
-            #if fin > today:
-            #    break
 
 	    # On retire ceux qui ne sont pas inscrits pendant la periode qui nous interesse
             indexes = getPresentsIndexes(global_indexes, (debut, fin))
@@ -194,31 +195,37 @@ class EtatsTrimestrielsModifications(object):
                                   ('sortie', inscrit.inscriptions[-1].fin)]
 
                         for m, mode in enumerate(["creche", "halte"]):
-                                for i in range(3):
-                                    if heures[m][i] == 0:
-                                        fields.append(('%s(%d)' % (mode, i+1), ''))
-                                    elif getMonthEnd(datetime.date(self.annee, trimestre * 3 + i + 1, 1)) > today or (creche.presences_previsionnelles and previsionnel[m]):
-                                        fields.append(('%s(%d)' % (mode, i+1), '(%d)' % heures[m][i]))
-                                    else:
-                                        fields.append(('%s(%d)' % (mode, i+1), heures[m][i]))
+                            for i in range(3):
+                                if heures[m][i] == 0:
+                                    fields.append(('%s(%d)' % (mode, i+1), ''))
+                                elif getMonthEnd(datetime.date(self.annee, trimestre * 3 + i + 1, 1)) > today or (creche.presences_previsionnelles and previsionnel[m]):
+                                    fields.append(('%s(%d)' % (mode, i+1), '(%d)' % heures[m][i]))
+                                else:
+                                    fields.append(('%s(%d)' % (mode, i+1), heures[m][i]))
                     else:
-                        fields = []
+                        fields = [(tmp, '') for tmp in ('nom', 'prenom', 'adresse', 'ville', 'code_postal', 'naissance', 'entree', 'sortie')]
+                        for mode in ["creche", "halte"]:
+                            for i in range(3):
+                                fields.append(('%s(%d)' % (mode, i+1), ''))
 
                     ReplaceFields(cellules[page * nb_cellules : (page + 1) * nb_cellules], fields)
 
         # LA SYNTHESE ANNUELLE
         table = tables.item(0)
-        debut = datetime.date(self.annee, 1, 1)
-        fin = datetime.date(self.annee, 12, 31)
-        if fin < today:
-            lignes = table.getElementsByTagName("table:table-row")
+        if datetime.date(self.annee, 9, 1) < today:       
+            debut = datetime.date(self.annee, 1, 1)
+            fin = datetime.date(self.annee, 12, 31)
+            if debut < today:
+                lignes = table.getElementsByTagName("table:table-row")
 
-            # Les inscrits en creche
-            indexes = getCrecheIndexes(debut, fin)
-            self.Synthese(table, lignes, indexes, MODE_CRECHE, 'creche', 0)
-            # Les inscrits en halte-garderie
-            indexes = getHalteGarderieIndexes(debut, fin)
-            self.Synthese(table, lignes, indexes, MODE_HALTE_GARDERIE, 'halte', 6)
+                # Les inscrits en creche
+                indexes = getCrecheIndexes(debut, fin)
+                self.Synthese(table, lignes, indexes, MODE_CRECHE, 'creche', 0)
+                # Les inscrits en halte-garderie
+                indexes = getHalteGarderieIndexes(debut, fin)
+                self.Synthese(table, lignes, indexes, MODE_HALTE_GARDERIE, 'halte', 6)
+        else:
+            spreadsheet.removeChild(table)
 
         if len(self.errors) > 0:
             raise CotisationException(self.errors)
