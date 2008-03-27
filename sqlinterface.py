@@ -24,7 +24,7 @@ from functions import *
 from sqlobjects import *
 
 DB_FILENAME = 'gertrude.db'
-VERSION = 10
+VERSION = 11
 
 class SQLConnection(object):
     def __init__(self):
@@ -68,7 +68,9 @@ class SQLConnection(object):
             presences_previsionnelles BOOLEAN,
             modes_inscription INTEGER,
             minimum_maladie INTEGER,
-            mode_maladie INTEGER
+            mode_maladie INTEGER,
+            email VARCHAR,
+            capacite INTEGER
           );""")
     
         cur.execute("""
@@ -199,7 +201,7 @@ class SQLConnection(object):
 
         cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
 
-        cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, mode_maladie) VALUES (NULL,?,?,?,?,?,?,?,?,?)', ("","","","",12,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,15,DEDUCTION_AVEC_CARENCE))
+        cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, mode_maladie, email, capacite) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?)', ("","","","",12,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,15,DEDUCTION_AVEC_CARENCE,"",0))
 
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2006, 9, 1), datetime.date(2007, 8, 31), 6547.92, 51723.60))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2007, 9, 1), datetime.date(2008, 8, 31), 6660.00, 52608.00))
@@ -223,11 +225,11 @@ class SQLConnection(object):
         
         cur = self.cursor()
 
-        cur.execute('SELECT nom, adresse, code_postal, ville, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, mode_maladie, idx FROM CRECHE')
+        cur.execute('SELECT nom, adresse, code_postal, ville, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, mode_maladie, email, capacite, idx FROM CRECHE')
         creche_entry = cur.fetchall()
         if len(creche_entry) > 0:
             creche = Creche()
-            creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.mois_payes, creche.presences_previsionnelles, creche.modes_inscription, creche.minimum_maladie, creche.mode_maladie, creche.idx = creche_entry[0]
+            creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.mois_payes, creche.presences_previsionnelles, creche.modes_inscription, creche.minimum_maladie, creche.mode_maladie, creche.email, creche.capacite, creche.idx = creche_entry[0]
         else:
             creche = Creche()
 
@@ -419,6 +421,12 @@ class SQLConnection(object):
             cur.execute("ALTER TABLE CRECHE ADD mode_maladie INTEGER;")
             cur.execute('UPDATE CRECHE SET minimum_maladie=?', (15,))
             cur.execute('UPDATE CRECHE SET mode_maladie=?', (DEDUCTION_AVEC_CARENCE,))
+
+        if version < 11:
+            cur.execute("ALTER TABLE CRECHE ADD email VARCHAR;")
+            cur.execute("ALTER TABLE CRECHE ADD capacite INTEGER;")
+            cur.execute('UPDATE CRECHE SET email=?', ("",))
+            cur.execute('UPDATE CRECHE SET capacite=?', (0,))
 
         if version < VERSION:
             try:

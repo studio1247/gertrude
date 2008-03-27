@@ -38,7 +38,10 @@ class FactureModifications(object):
         self.inscrit = inscrit
         self.periode = periode
 
-    def execute(self, dom):
+    def execute(self, filename, dom):
+        if filename != 'content.xml':
+            return []
+        
         try:
             facture = Facture(self.inscrit, self.periode.year, self.periode.month)
         except CotisationException, e:
@@ -111,7 +114,10 @@ class RecuModifications(object):
         self.inscrit = inscrit
         self.debut, self.fin = debut, fin
 
-    def execute(self, dom):
+    def execute(self, filename, dom):
+        if filename != 'content.xml':
+            return []
+        
         facture_debut = facture_fin = None
         date = self.debut
         total = 0.0
@@ -160,7 +166,10 @@ class AppelCotisationsModifications(object):
         self.debut, self.fin = debut, getMonthEnd(debut)
         self.options = options
         
-    def execute(self, dom):
+    def execute(self, filename, dom):
+        if filename != 'content.xml':
+            return []
+        
         errors = []
         spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
         table = spreadsheet.getElementsByTagName("table:table").item(0)

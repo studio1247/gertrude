@@ -36,7 +36,8 @@ def evalFields(fields):
             
 def ReplaceTextFields(dom, fields):
     evalFields(fields)
-#    print dom.toprettyxml()
+    #print dom.toprettyxml()
+
     if dom.__class__ == xml.dom.minidom.Element and dom.nodeName in ["text:p", "text:span"]:
         nodes = [dom] + dom.getElementsByTagName("text:span")
     else:
@@ -124,9 +125,10 @@ def GenerateDocument(src, dest, modifications):
     files = []
     for filename in template.namelist():
         data = template.read(filename)
-        if filename == 'content.xml':
+        if filename in ('content.xml', 'styles.xml'):
             dom = xml.dom.minidom.parseString(data)
-            errors.extend(modifications.execute(dom))
+            #print dom.toprettyxml()
+            errors.extend(modifications.execute(filename, dom))
             data = dom.toxml('UTF-8')
         files.append((filename, data))
     template.close()

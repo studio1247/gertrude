@@ -51,8 +51,10 @@ class CoordonneesModifications:
         else:
             self.date = today
         
-    def execute(self, dom):
+    def execute(self, filename, dom):
         # print dom.toprettyxml()
+        if filename != 'content.xml':
+            return []
 
         fields = [('nom-creche', creche.nom),
                   ('adresse-creche', creche.adresse),
@@ -123,7 +125,17 @@ class EtatsTrimestrielsModifications(object):
         self.factures = {}
         self.errors = {}
 
-    def execute(self, dom):
+    def execute(self, filename, dom):
+        if filename == 'styles.xml':
+            fields = [('nom-creche', creche.nom),
+                      ('adresse-creche', creche.adresse),
+                      ('code-postal-creche', str(creche.code_postal)),
+                      ('ville-creche', creche.ville),
+                      ('capacite', creche.capacite),
+                     ]
+            ReplaceTextFields(dom, fields)
+            return []
+        
         nb_cellules = 13
         premiere_ligne = 4
         nb_lignes = 8
@@ -198,8 +210,8 @@ class EtatsTrimestrielsModifications(object):
                             for i in range(3):
                                 if heures[m][i] == 0:
                                     fields.append(('%s(%d)' % (mode, i+1), ''))
-                                elif getMonthEnd(datetime.date(self.annee, trimestre * 3 + i + 1, 1)) > today or (creche.presences_previsionnelles and previsionnel[m]):
-                                    fields.append(('%s(%d)' % (mode, i+1), '(%d)' % heures[m][i]))
+                                # elif getMonthEnd(datetime.date(self.annee, trimestre * 3 + i + 1, 1)) > today or (creche.presences_previsionnelles and previsionnel[m]):
+                                #     fields.append(('%s(%d)' % (mode, i+1), '(%d)' % heures[m][i]))
                                 else:
                                     fields.append(('%s(%d)' % (mode, i+1), heures[m][i]))
                     else:
@@ -319,7 +331,10 @@ class PlanningModifications(object):
     def __init__(self, debut):
         self.debut = debut
 
-    def execute(self, dom):
+    def execute(self, filename, dom):
+        if filename != 'content.xml':
+            return []
+        
         date_fin = self.debut + datetime.timedelta(11)
         spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
         tables = spreadsheet.getElementsByTagName("table:table")
@@ -543,13 +558,16 @@ class RelevesPanel(GPanel):
 panels = [RelevesPanel]
 
 if __name__ == '__main__':
-    import sys, os, __builtin__
-    from datafiles import *
-    __builtin__.creche = Load()
+    import os
+    from config import *
+    from data import *
+    LoadConfig()
+    Load()
+            
     today = datetime.date.today()
 
-    GenereCoordonnees("coordonnees.odt")
-    sys.exit(0)    
+    #GenereCoordonnees("coordonnees.odt")
+    #sys.exit(0)    
     filename = 'etats_trimestriels_%d.ods' % (today.year - 1)
     try:
         GenereEtatsTrimestriels(today.year - 1, filename)
@@ -557,6 +575,6 @@ if __name__ == '__main__':
     except CotisationException, e:
         print e.errors
 
-    filename = 'planning_presences_%s.ods' % first_date
-    GenerePlanningPresences(getfirstmonday(), filename)
-    print u'Fichier %s généré' % filename
+    #filename = 'planning_presences_%s.ods' % first_date
+    #GenerePlanningPresences(getfirstmonday(), filename)
+    #print u'Fichier %s généré' % filename
