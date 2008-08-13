@@ -23,13 +23,6 @@ today = datetime.date.today()
 first_date = today - datetime.timedelta(12*30)
 last_date = today + datetime.timedelta(6*30)
 
-# Paramètres d'affichage du planning
-heureOuverture = 7.75
-heureFermeture = 18.5
-heureAffichageMin = 7.75
-heureAffichageMax = 20
-heureGranularite = 4 # au quart d'heure
-
 # Jours fériés
 jours_feries = []
 jours_feries.append(("1er janvier", lambda year: datetime.date(year, 1, 1)))
@@ -43,26 +36,4 @@ jours_feries.append((u"25 décembre", lambda year: datetime.date(year, 12, 25)))
 jours_feries.append((u"Lundi de Pâques", lambda year: getPaquesDate(year) + datetime.timedelta(1)))
 jours_feries.append(("Jeudi de l'Ascension", lambda year: getPaquesDate(year) + datetime.timedelta(39)))
 # jours_feries.append((u"Lundi de Pentecôte", lambda year: paques + datetime.timedelta(50)))
-
-# Tranches horaires
-tranches = [(heureOuverture, 12, 4), (12, 14, 2), (14, heureFermeture, 4)]
-
-def get_total_heures_jour(presence):
-    # Total en tout ou rien
-    if self.value == 0:
-        for i in self.details:
-            if i != 0:
-                return sum([t[2] for t in tranches])
-    return 0
-##    # Total en tranches
-##    total = 0
-##    if self.value == 0:
-##        for debut, fin, valeur in tranches:
-##            for i in self.details[int((debut-BASE_MIN_HOUR) * 4), int((fin-BASE_MIN_HOUR) * 4)]:
-##                if i != 0:
-##                    total += valeur
-##                    break
-##    return total
-
-
 

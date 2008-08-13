@@ -42,8 +42,8 @@ def LoadConfig(progress_handler=default_progress_handler):
     except:
         progress_handler.display(u"Fichier gertrude.ini erroné. Utilisation de la configuration par défaut.")
         return
-        
-    try:       
+
+    try:
         url = parser.get("gertrude", "url")
     except:
         progress_handler.display(u"Pas d'url définie. Utilisation de la configuration par défaut.")
@@ -55,6 +55,10 @@ def LoadConfig(progress_handler=default_progress_handler):
         except:
             auth_info = None
         try:
+            identity = parser.get("gertrude", "identity")
+        except:
+            identity = ""
+        try:
             proxy_info = { 'host' : parser.get("gertrude", "proxy-host"),
                            'port' : int(parser.get("gertrude", "proxy-port")),
                            'user' : parser.get("gertrude", "proxy-user"),
@@ -62,4 +66,4 @@ def LoadConfig(progress_handler=default_progress_handler):
                          }
         except:
             proxy_info = None
-        config.connection = HttpConnection(url, auth_info, proxy_info)
+        config.connection = HttpConnection(url, identity, auth_info, proxy_info)

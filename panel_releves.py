@@ -29,6 +29,18 @@ from cotisation import CotisationException
 from facture import *
 from ooffice import *
 
+# Tranches horaires
+tranches = [(creche.ouverture, 12, 4), (12, 14, 2), (14, creche.fermeture, 4)]
+
+def isPresentDuringTranche(presence, tranche):
+    if (presence.value == 0):
+        debut, fin, valeur = tranches[tranche]
+        for i in range(int((debut - BASE_MIN_HOUR) * 4), int((fin - BASE_MIN_HOUR) * 4)):
+            if presence.details[i]:
+              return True
+    return False
+
+
 #def PresencesEffectives(inscrit, annee, mois):
 #  date = datetime.date(annee, mois, 1)
 #  while (date.month == mois):
@@ -327,6 +339,7 @@ class EtatsTrimestrielsModifications(object):
                 fields.append(('total', sum(total)))
         ReplaceFields(ligne, fields)
 
+
 class PlanningModifications(object):
     def __init__(self, debut):
         self.debut = debut
@@ -429,7 +442,7 @@ class PlanningModifications(object):
                     for tranche in range(3):
                         cellule = cellules.item(1 + semaine * 17 + jour * 3 + tranche)
                         if inscrit:
-                            ReplaceFields([cellule], [('p', int(presence.isPresentDuringTranche(tranche)))])
+                            ReplaceFields([cellule], [('p', int(isPresentDuringTranche(presence, tranche)))])
                         else:
                             ReplaceFields([cellule], [('p', '')])
                             

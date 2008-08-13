@@ -24,7 +24,7 @@ from functions import *
 from sqlobjects import *
 
 DB_FILENAME = 'gertrude.db'
-VERSION = 11
+VERSION = 12
 
 class SQLConnection(object):
     def __init__(self):
@@ -64,6 +64,11 @@ class SQLConnection(object):
             adresse VARCHAR,
             code_postal INTEGER,
             ville VARCHAR,
+            ouverture FLOAT,
+            fermeture FLOAT,
+            affichage_min FLOAT,
+            affichage_max FLOAT,
+            granularite INTEGER,
             mois_payes INTEGER,
             presences_previsionnelles BOOLEAN,
             modes_inscription INTEGER,
@@ -72,7 +77,7 @@ class SQLConnection(object):
             email VARCHAR,
             capacite INTEGER
           );""")
-    
+
         cur.execute("""
           CREATE TABLE BUREAUX(
             idx INTEGER PRIMARY KEY,
@@ -83,7 +88,7 @@ class SQLConnection(object):
             tresorier INTEGER REFERENCES INSCRITS(idx),
             secretaire INTEGER REFERENCES INSCRITS(idx)
           );""")
-        
+
         cur.execute("""
           CREATE TABLE BAREMESCAF(
             idx INTEGER PRIMARY KEY,
@@ -92,7 +97,7 @@ class SQLConnection(object):
             plancher INTEGER,
             plafond INTEGER
           );""")
-    
+
         cur.execute("""
           CREATE TABLE EMPLOYES(
             idx INTEGER PRIMARY KEY,
@@ -119,7 +124,7 @@ class SQLConnection(object):
             marche BOOLEAN,
             photo VARCHAR
           );""")
-        
+
         cur.execute("""
           CREATE TABLE PARENTS(
             idx INTEGER PRIMARY KEY,
@@ -135,7 +140,7 @@ class SQLConnection(object):
             telephone_travail_notes VARCHAR,
             email VARCHAR
           );""")
-        
+
         cur.execute("""  
           CREATE TABLE FRATRIES (
             idx INTEGER PRIMARY KEY,
@@ -145,7 +150,7 @@ class SQLConnection(object):
             entree DATE,
             sortie DATE
           );""")
-        
+
         cur.execute("""  
           CREATE TABLE INSCRIPTIONS(
             idx INTEGER PRIMARY KEY,
@@ -156,7 +161,7 @@ class SQLConnection(object):
             periode_reference VARCHAR,
             fin_periode_essai DATE
           );""")
-        
+
         cur.execute("""
           CREATE TABLE REVENUS(
             idx INTEGER PRIMARY KEY,
@@ -201,7 +206,7 @@ class SQLConnection(object):
 
         cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
 
-        cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, mode_maladie, email, capacite) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?)', ("","","","",12,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,15,DEDUCTION_AVEC_CARENCE,"",0))
+        cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, mode_maladie, email, capacite) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', ("","","","",7.75,18.5,7.75,19.0,4,12,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,15,DEDUCTION_AVEC_CARENCE,"",0))
 
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2006, 9, 1), datetime.date(2007, 8, 31), 6547.92, 51723.60))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2007, 9, 1), datetime.date(2008, 8, 31), 6660.00, 52608.00))
@@ -211,7 +216,7 @@ class SQLConnection(object):
     def load(self, progress_handler=default_progress_handler):
         if not self.con:
             self.open()
-            
+
         def getdate(str):
             if str is None:
                 return None
@@ -222,14 +227,14 @@ class SQLConnection(object):
             return None
 
         progress_handler.display(u"Chargement en mémoire de la base ...")
-        
+
         cur = self.cursor()
 
-        cur.execute('SELECT nom, adresse, code_postal, ville, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, mode_maladie, email, capacite, idx FROM CRECHE')
+        cur.execute('SELECT nom, adresse, code_postal, ville, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, mode_maladie, email, capacite, idx FROM CRECHE')
         creche_entry = cur.fetchall()
         if len(creche_entry) > 0:
             creche = Creche()
-            creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.mois_payes, creche.presences_previsionnelles, creche.modes_inscription, creche.minimum_maladie, creche.mode_maladie, creche.email, creche.capacite, creche.idx = creche_entry[0]
+            creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.ouverture, creche.fermeture, creche.affichage_min, creche.affichage_max, creche.granularite, creche.mois_payes, creche.presences_previsionnelles, creche.modes_inscription, creche.minimum_maladie, creche.mode_maladie, creche.email, creche.capacite, creche.idx = creche_entry[0]
         else:
             creche = Creche()
 
@@ -326,14 +331,14 @@ class SQLConnection(object):
             return False
 
         progress_handler.display(u"Conversion de la base de données (version %d => version %d) ..." % (version, VERSION))
-        
+
         if version < 1:
             cur.execute("""
               CREATE TABLE DATA(
                 key VARCHAR,
                 value VARCHAR
               );""")
-            
+
             cur.execute("""
               CREATE TABLE USERS(
                 idx INTEGER PRIMARY KEY,
@@ -377,7 +382,7 @@ class SQLConnection(object):
                 if details is not None:
                     details = eval(details) << 7
                     cur.execute('UPDATE PRESENCES SET details=? WHERE idx=?', (details, idx))
-            
+
         if version < 5:
             cur.execute("""
               CREATE TABLE CONGES(
@@ -397,7 +402,7 @@ class SQLConnection(object):
         if version < 7:
             cur.execute("ALTER TABLE INSCRITS ADD sexe INTEGER;")
             cur.execute('UPDATE INSCRITS SET sexe=?', (1,))
-            
+
         if version < 8:
             cur.execute("""
               CREATE TABLE EMPLOYES(
@@ -410,7 +415,7 @@ class SQLConnection(object):
                 telephone_portable VARCHAR,
                 telephone_portable_notes VARCHAR,
                 email VARCHAR
-            );""")            
+            );""")
 
         if version < 9:
             cur.execute("ALTER TABLE PARENTS ADD absent BOOLEAN;")
@@ -428,6 +433,18 @@ class SQLConnection(object):
             cur.execute('UPDATE CRECHE SET email=?', ("",))
             cur.execute('UPDATE CRECHE SET capacite=?', (0,))
 
+        if version < 12:
+            cur.execute("ALTER TABLE CRECHE ADD ouverture FLOAT;")
+            cur.execute("ALTER TABLE CRECHE ADD fermeture FLOAT;")
+            cur.execute("ALTER TABLE CRECHE ADD affichage_min FLOAT;")
+            cur.execute("ALTER TABLE CRECHE ADD affichage_max FLOAT;")
+            cur.execute('UPDATE CRECHE SET ouverture=?', (7.75,))
+            cur.execute('UPDATE CRECHE SET fermeture=?', (18.5,))
+            cur.execute('UPDATE CRECHE SET affichage_min=?', (7.75,))
+            cur.execute('UPDATE CRECHE SET affichage_max=?', (19.0,))
+            cur.execute("ALTER TABLE CRECHE ADD granularite INTEGER;")
+            cur.execute('UPDATE CRECHE SET granularite=?', (4,))
+
         if version < VERSION:
             try:
                 cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))
@@ -440,5 +457,5 @@ class SQLConnection(object):
             self.commit()
 
         return True
-        
+
 __builtin__.sql_connection = SQLConnection()

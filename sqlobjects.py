@@ -73,14 +73,6 @@ class Presence(object):
             print 'update', name, value
             sql_connection.execute('UPDATE PRESENCES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
-    def isPresentDuringTranche(self, tranche):
-        if (self.value == 0):
-            debut, fin, valeur = tranches[tranche]
-            for i in range(int((debut - heureOuverture) * 4), int((fin - heureOuverture) * 4)):
-                if self.details[i]:
-                  return True
-        return False
-
 class Bureau(object):
     def __init__(self, creation=True):
         self.idx = None
@@ -210,7 +202,7 @@ class Employe(object):
         print 'nouvel employe'
         result = sql_connection.execute('INSERT INTO EMPLOYES (idx, date_embauche, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, email) VALUES(NULL,?,?,?,?,?,?,?,?)', (self.date_embauche, self.prenom, self.nom, self.telephone_domicile, self.telephone_domicile_notes, self.telephone_portable, self.telephone_portable_notes, self.email))
         self.idx = result.lastrowid
-        
+
     def delete(self):
         print 'suppression employe'
         sql_connection.execute('DELETE FROM EMPLOYES WHERE idx=?', (self.idx,))
@@ -234,6 +226,11 @@ class Creche(object):
         self.bureaux = []
         self.baremes_caf = []
         self.inscrits = []
+        self.ouverture = 7.75
+        self.fermeture = 18.5
+        self.affichage_min = 7.75
+        self.affichage_max = 19.0
+        self.granularite = 4
         self.mois_payes = 12
         self.minimum_maladie = 15
         self.mode_maladie = DEDUCTION_AVEC_CARENCE
@@ -284,7 +281,7 @@ class Creche(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'mois_payes', 'presences_previsionnelles', 'modes_inscription', 'minimum_maladie', 'mode_maladie', 'email', 'capacite'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'presences_previsionnelles', 'modes_inscription', 'minimum_maladie', 'mode_maladie', 'email', 'capacite'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
@@ -441,7 +438,7 @@ class Inscrit(object):
         self.maman = None
         self.inscriptions = []
         self.presences = { }
-        
+
         if creation:
             self.create()
             self.papa = Parent(self)
@@ -509,10 +506,12 @@ class Inscrit(object):
                   result.append(inscription)
             except:
               pass
-            
         return result
 
     def getPresenceFromSemaineType(self, date):
+        # TODO sont à 2 endroits : tranches horaires
+        tranches = [(creche.ouverture, 12, 4), (12, 14, 2), (14, creche.fermeture, 4)]
+
         # retourne toujours du previsionnel
         weekday = date.weekday()
         if weekday > 4:
@@ -520,26 +519,19 @@ class Inscrit(object):
 
         previsionnel = int(creche.presences_previsionnelles)
         presence = Presence(self, date, previsionnel, 1, creation=False)
-        
+
         inscription = self.getInscription(date)
-        
+
         if inscription is not None:
             for i in range(3):
                 if inscription.periode_reference[weekday][i] == 1:
                     if presence.value != 0:
                         presence = Presence(self, date, previsionnel, 0, creation=False)
-                    if i == 0:
-                        debut = int((8-BASE_MIN_HOUR) * BASE_GRANULARITY)
-                        fin = int((12-BASE_MIN_HOUR) * BASE_GRANULARITY)
-                    elif i == 1:
-                        debut = int((12-BASE_MIN_HOUR) * BASE_GRANULARITY)
-                        fin = int((14-BASE_MIN_HOUR) * BASE_GRANULARITY)
-                    else:
-                        debut = int((14-BASE_MIN_HOUR) * BASE_GRANULARITY)
-                        fin = int((18-BASE_MIN_HOUR) * BASE_GRANULARITY)
-                    for i in range(debut, fin):
-                        presence.details[i] = 1
-    
+                    debut, fin, tmp = tranches[i]
+                    x1 = int((debut-BASE_MIN_HOUR) * BASE_GRANULARITY)
+                    x2 = int((fin-BASE_MIN_HOUR) * BASE_GRANULARITY)
+                    for x in range(x1, x2):
+                        presence.details[x] = 1
         return presence
 
     def getPresence(self, date):

@@ -32,7 +32,7 @@ BEBE_HEIGHT = 30 # px
 
 class DayTabWindow(wx.Window):
     def __init__(self, parent, inscrits, date, *args, **kwargs):
-        wx.Window.__init__(self, parent, size=((heureAffichageMax-heureAffichageMin) * HEURE_WIDTH + 1, BEBE_HEIGHT * len(inscrits) + 1), *args, **kwargs)
+        wx.Window.__init__(self, parent, size=((creche.affichage_max-creche.affichage_min) * HEURE_WIDTH + 1, BEBE_HEIGHT * len(inscrits) + 1), *args, **kwargs)
         self.parent = parent
         self.inscrits = inscrits
         self.SetBackgroundColour(wx.WHITE)
@@ -59,9 +59,12 @@ class DayTabWindow(wx.Window):
         dc.SetPen(wx.TRANSPARENT_PEN)
         green_brush = [ wx.Brush(wx.Color(5, 203, 28)), wx.Brush(wx.Color(150, 229, 139)) ]
         red_brush = [ wx.Brush(wx.Color(203, 5, 28)), wx.Brush(wx.Color(229, 150, 139)) ]
-        heure = heureAffichageMin
-        while heure < heureAffichageMax:
+        heure = creche.affichage_min
+        print heure, creche.affichage_min, creche.affichage_max
+        while heure < creche.affichage_max:
+            print heure
             i = int((heure-BASE_MIN_HOUR) * BASE_GRANULARITY)
+            print i
             if presence.value == PRESENT and presence.details[i]:
                 if not creche.presences_previsionnelles:
                     previsionnel = 0
@@ -69,15 +72,15 @@ class DayTabWindow(wx.Window):
                     previsionnel = 1
                 else:
                     previsionnel = presence.previsionnel
-                if heure >= heureOuverture and heure <= heureFermeture:
+                if heure >= creche.ouverture and heure < creche.fermeture:
                     brush = green_brush[previsionnel]
                 else:
                     brush = red_brush[previsionnel]
                 dc.SetBrush(brush)
             else:
                 dc.SetBrush(wx.WHITE_BRUSH)
-            dc.DrawRectangle(1 + (heure - heureAffichageMin) * HEURE_WIDTH, 1 + ligne * BEBE_HEIGHT, (1.0/heureGranularite) * HEURE_WIDTH - 1, BEBE_HEIGHT - 1)
-            heure += 1.0 / heureGranularite
+            dc.DrawRectangle(1 + (heure - creche.affichage_min) * HEURE_WIDTH, 1 + ligne * BEBE_HEIGHT, (1.0/creche.granularite) * HEURE_WIDTH - 1, BEBE_HEIGHT - 1)
+            heure += 1.0 / creche.granularite
 
     def DrawPresence(self, index, dc=None):
         inscrit = self.inscrits[index]
@@ -94,17 +97,17 @@ class DayTabWindow(wx.Window):
         dc.SetPen(wx.GREY_PEN)
         dc.SetBrush(wx.WHITE_BRUSH)
         for i in range(len(self.inscrits)+1):
-            dc.DrawLine(0, i*BEBE_HEIGHT, (heureAffichageMax-heureAffichageMin) * HEURE_WIDTH + 1, i*BEBE_HEIGHT)
+            dc.DrawLine(0, i*BEBE_HEIGHT, (creche.affichage_max-creche.affichage_min) * HEURE_WIDTH + 1, i*BEBE_HEIGHT)
 
-        heure = heureAffichageMin
-        while heure <= heureAffichageMax:
-            x = (heure - heureAffichageMin) * HEURE_WIDTH
+        heure = creche.affichage_min
+        while heure <= creche.affichage_max:
+            x = (heure - creche.affichage_min) * HEURE_WIDTH
             if heure == int(heure):
                 dc.SetPen(wx.GREY_PEN)
             else:
                 dc.SetPen(wx.LIGHT_GREY_PEN)
             dc.DrawLine(x, 0,  x, BEBE_HEIGHT * len(self.inscrits))
-            heure += 1.0 / heureGranularite
+            heure += 1.0 / creche.granularite
 
         # les presences
         for i, inscrit in enumerate(self.inscrits):
@@ -113,12 +116,11 @@ class DayTabWindow(wx.Window):
         dc.EndDrawing()
 
     def __get_pos(self, x, y):
-        posX = int((heureAffichageMin - BASE_MIN_HOUR + float(x * heureGranularite / HEURE_WIDTH) / heureGranularite) * BASE_GRANULARITY)
+        posX = int((creche.affichage_min - BASE_MIN_HOUR + float(x * creche.granularite / HEURE_WIDTH) / creche.granularite) * BASE_GRANULARITY)
         posY = int(y / BEBE_HEIGHT)
         return posX, posY
 
     def OnLeftButtonDown(self, event):
-        # tests au cas ou ...  if self.curStartX < 4 * (heureAffichageMax-heureOuverture) and self.curStartY < len(self.inscrits):
         self.curStartX, self.curStartY = self.__get_pos(event.GetX(), event.GetY())
         inscrit = self.inscrits[self.curStartY]
         if self.date not in inscrit.presences:
@@ -152,7 +154,7 @@ class DayTabWindow(wx.Window):
             self.curEndX, self.curEndY = self.__get_pos(event.GetX(), event.GetY())
             start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX)
             presence.details = presence.original_details[:]
-            presence.details[start:end+BASE_GRANULARITY/heureGranularite] = [self.valeur_selection] * (end - start + BASE_GRANULARITY/heureGranularite)
+            presence.details[start:end+BASE_GRANULARITY/creche.granularite] = [self.valeur_selection] * (end - start + BASE_GRANULARITY/creche.granularite)
             self.DrawLine(self.curStartY, presence)
 
     def OnLeftButtonUp(self, event):
@@ -161,7 +163,7 @@ class DayTabWindow(wx.Window):
             presence = inscrit.presences[self.date]
             start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX)
             presence.details = presence.original_details[:]
-            presence.details[start:end+BASE_GRANULARITY/heureGranularite] = [self.valeur_selection] * (end - start + BASE_GRANULARITY/heureGranularite)
+            presence.details[start:end+BASE_GRANULARITY/creche.granularite] = [self.valeur_selection] * (end - start + BASE_GRANULARITY/creche.granularite)
             for i in range(len(presence.details)):
                 if presence.details[i] == 2:
                     presence.details[i] = 0
@@ -275,7 +277,7 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
             self.buttons_sizer.ShowItems(0)
         else:
             self.prenoms.SetMinSize((PRENOMS_WIDTH, BEBE_HEIGHT * len(self.inscrits) + 1))
-            self.tab_window.SetMinSize((int((heureAffichageMax-heureOuverture) * HEURE_WIDTH + 1), BEBE_HEIGHT * len(self.inscrits) + 1))
+            self.tab_window.SetMinSize((int((creche.affichage_max-creche.affichage_min) * HEURE_WIDTH + 1), BEBE_HEIGHT * len(self.inscrits) + 1))
             self.buttons_sizer.ShowItems(1)
 
         for i in range(old, new, -1):
@@ -354,15 +356,15 @@ class DayPanel(wx.Panel):
         font = wx.Font(7, wx.SWISS, wx.NORMAL, wx.NORMAL)
         dc.SetFont(font)
         dc.SetTextForeground("WHITE")
-        heure = heureAffichageMin
-        while heure <= heureAffichageMax:
-            x = PRENOMS_WIDTH + BUTTONS_WIDTH + (heure - heureAffichageMin) * HEURE_WIDTH
+        heure = creche.affichage_min
+        while heure <= creche.affichage_max:
+            x = PRENOMS_WIDTH + BUTTONS_WIDTH + (heure - creche.affichage_min) * HEURE_WIDTH
             if abs(heure - round(heure)) < 0.01:
                 dc.DrawLine(x, 20, x, 12)
                 dc.DrawText(str(int(round(heure)))+"h", x - 3, 0)
             else:
                 dc.DrawLine(x, 20, x, 15)
-            heure += 1.0 / heureGranularite
+            heure += 1.0 / creche.granularite
 
         dc.EndDrawing()
 

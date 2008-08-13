@@ -33,10 +33,10 @@ def Backup(progress_handler=default_progress_handler):
 
 TOKEN_FILENAME = '.token'
 
-    
 class HttpConnection(object):
-    def __init__(self, url, auth_info=None, proxy_info=None):
+    def __init__(self, url, identity, auth_info=None, proxy_info=None):
         self.url = url
+        self.identity = identity
         opener = urllib2.build_opener()
         if auth_info:
             password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
@@ -85,7 +85,7 @@ class HttpConnection(object):
 
     def urlopen(self, action, body=None, headers=None):
         try:
-            url = '%s?action=%s' % (self.url, action)
+            url = '%s?action=%s&identity=%s' % (self.url, action, self.identity)
             print url
             if self.token:
                 url += "&token=%s" % self.token
