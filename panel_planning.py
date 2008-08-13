@@ -60,11 +60,8 @@ class DayTabWindow(wx.Window):
         green_brush = [ wx.Brush(wx.Color(5, 203, 28)), wx.Brush(wx.Color(150, 229, 139)) ]
         red_brush = [ wx.Brush(wx.Color(203, 5, 28)), wx.Brush(wx.Color(229, 150, 139)) ]
         heure = creche.affichage_min
-        print heure, creche.affichage_min, creche.affichage_max
         while heure < creche.affichage_max:
-            print heure
             i = int((heure-BASE_MIN_HOUR) * BASE_GRANULARITY)
-            print i
             if presence.value == PRESENT and presence.details[i]:
                 if not creche.presences_previsionnelles:
                     previsionnel = 0
