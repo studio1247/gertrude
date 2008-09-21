@@ -30,7 +30,7 @@ from facture import *
 from cotisation import Cotisation, CotisationException
 from gpanel import GPanel
 from ooffice import *
-   
+
 couleurs = ['C2', 'D2', 'B2', 'E2', 'A2']
 
 class FactureModifications(object):
@@ -41,7 +41,7 @@ class FactureModifications(object):
     def execute(self, filename, dom):
         if filename != 'content.xml':
             return []
-        
+
         try:
             facture = Facture(self.inscrit, self.periode.year, self.periode.month)
         except CotisationException, e:

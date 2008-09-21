@@ -41,7 +41,7 @@ def ParseHtml(filename, context):
         else:
             replacement = ''
         data = data.replace(text, replacement)
-        
+
     # remplacement des <var>
     while 1:
         start = data.find('<var ')
@@ -50,7 +50,10 @@ def ParseHtml(filename, context):
         end = data.find('/>', start) + 2
         text = data[start:end]
         dom = xml.dom.minidom.parseString(text)
-        replacement = eval(dom.getElementsByTagName('var')[0].getAttribute('value'))
+        try:
+          replacement = eval(dom.getElementsByTagName('var')[0].getAttribute('value'))
+        except:
+          replacement = "<erreur (%s)>" % dom.getElementsByTagName('var')[0].getAttribute('value')
         if type(replacement) == datetime.date:
             replacement = date2str(replacement)
         elif type(replacement) != str and type(replacement) != unicode:
@@ -92,12 +95,12 @@ class ContextPanel(wx.Panel):
             self.periodechoice.Clear()
             self.periodechoice.Disable()
         self.UpdatePage()
-       
+
     def EvtPeriodeChoice(self, evt):
         ctrl = evt.GetEventObject()
         self.periode = self.periodes[ctrl.GetSelection()]
         self.UpdatePage()
-    
+
 class ContratPanel(ContextPanel):
     def __init__(self, parent):
         ContextPanel.__init__(self, parent)
@@ -120,15 +123,15 @@ class ContratPanel(ContextPanel):
                 else:
                     self.html = ParseHtml("./templates/contrat_accueil_creche.html", context)
             except CotisationException, e:
-                error = '<br>'.join(e.errors)               
+                error = '<br>'.join(e.errors)
                 self.html = u"<html><body><b>Le contrat d'accueil de l'enfant ne peut être édit&eacute; pour la (les) raison(s) suivante(s) :</b><br>" + error + "</body></html>"
-        
+
         self.html_window.SetPage(self.html)
-        
+
 class ForfaitPanel(ContextPanel):
     def __init__(self, parent):
         ContextPanel.__init__(self, parent)
-        
+
     def GetPeriodes(self):
         periodes = []
         for inscription in self.inscrit.inscriptions:

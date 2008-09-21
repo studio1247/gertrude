@@ -341,12 +341,16 @@ class Parent(object):
         self.idx = result.lastrowid
         for revenu in self.revenus:
             revenu.create()
-        
+
     def delete(self):
         print 'suppression parent'
         sql_connection.execute('DELETE FROM PARENTS WHERE idx=?', (self.idx,))
         for revenu in self.revenus:
             revenu.delete()
+        for bureau in creche.bureaux:
+            for attr in ('president', 'vice_president', 'tresorier', 'secretaire'):
+                if getattr(bureau, attr) is self:
+                    setattr(bureau, attr, None)
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
