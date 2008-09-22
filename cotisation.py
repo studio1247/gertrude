@@ -25,8 +25,6 @@ class CotisationException(Exception):
 NO_ADDRESS = 1
 NO_NOM = 2
 NO_REVENUS = 4
-REVENUS_ANNEE_PRECEDENTE = 8
-RATTRAPAGE_SEPTEMBRE = 16
 
 class Cotisation(object):
     def __init__(self, inscrit, periode, options=0):
@@ -43,9 +41,10 @@ class Cotisation(object):
         if self.debut is None:
             errors.append(u" - La date de début de la période n'est pas renseignée.")
             raise CotisationException(errors)
-        revenus_debut = self.debut
-        if options & REVENUS_ANNEE_PRECEDENTE:
-            revenus_debut = datetime.date(self.debut.year-1, self.debut.month, self.debut.day)
+        if self.debut < datetime.date(self.debut.year, 9, 1) or self.debut >= datetime.date(2008, 9, 1):
+            revenus_debut = datetime.date(self.debut.year-2, 1, 1)
+        else:
+            revenus_debut = datetime.date(self.debut.year-1, 1, 1)
         self.revenus_papa = Select(inscrit.papa.revenus, revenus_debut)
         if not options & NO_REVENUS and (self.revenus_papa is None or self.revenus_papa.revenu == ''):
             errors.append(u" - Les déclarations de revenus du papa sont incomplètes.")
@@ -55,7 +54,7 @@ class Cotisation(object):
         self.bureau = Select(creche.bureaux, self.debut)
         if self.bureau is None:
             errors.append(u" - Il n'y a pas de bureau à cette date.")
-        self.bareme_caf = Select(creche.baremes_caf, revenus_debut)
+        self.bareme_caf = Select(creche.baremes_caf, self.debut)
         if self.bareme_caf is None:
             errors.append(u" - Il n'y a pas de barème CAF à cette date.")
         self.inscription = inscrit.getInscription(self.debut)

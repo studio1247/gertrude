@@ -15,7 +15,7 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import os, __builtin__
+import os, datetime, __builtin__
 try:
     import sqlite3
 except:
@@ -24,7 +24,13 @@ from functions import *
 from sqlobjects import *
 
 DB_FILENAME = 'gertrude.db'
-VERSION = 12
+VERSION = 13
+
+def getdate(s):
+    if s is None:
+        return None
+    annee, mois, jour = map(lambda x: int(x), s.split('-'))
+    return datetime.date(annee, mois, jour)
 
 class SQLConnection(object):
     def __init__(self):
@@ -216,12 +222,6 @@ class SQLConnection(object):
     def load(self, progress_handler=default_progress_handler):
         if not self.con:
             self.open()
-
-        def getdate(str):
-            if str is None:
-                return None
-            annee, mois, jour = map(lambda x: int(x), str.split('-'))
-            return datetime.date(annee, mois, jour)
 
         if not self.translate(progress_handler):
             return None
@@ -444,6 +444,16 @@ class SQLConnection(object):
             cur.execute('UPDATE CRECHE SET affichage_max=?', (19.0,))
             cur.execute("ALTER TABLE CRECHE ADD granularite INTEGER;")
             cur.execute('UPDATE CRECHE SET granularite=?', (4,))
+
+        if version < 13:
+            cur.execute('SELECT debut, fin, idx FROM REVENUS;')
+            for debut, fin, idx in cur.fetchall():
+                if debut is not None:
+                    debut = datetime.date(getdate(debut).year-1, 1, 1)
+                    sql_connection.execute('UPDATE REVENUS SET debut=? WHERE idx=?', (debut, idx))
+                if fin is not None:
+                    fin = datetime.date(getdate(fin).year-2, 12, 31)
+                    sql_connection.execute('UPDATE REVENUS SET fin=? WHERE idx=?', (fin, idx))
 
         if version < VERSION:
             try:

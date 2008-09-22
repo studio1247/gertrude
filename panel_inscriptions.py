@@ -135,8 +135,7 @@ class ForfaitPanel(ContextPanel):
     def GetPeriodes(self):
         periodes = []
         for inscription in self.inscrit.inscriptions:
-            separators = self.__get_separators(inscription.debut, inscription.fin)
-            separators.sort()
+            separators = self.get_separators(inscription.debut, inscription.fin)
             all_periodes = [(separators[i], separators[i+1] - datetime.timedelta(1)) for i in range(len(separators)-1)]
             previous_context = None
             previous_periode = None
@@ -155,20 +154,17 @@ class ForfaitPanel(ContextPanel):
                     previous_context = None
         return periodes
 
-    def __get_separators(self, debut, fin):
+    def get_separators(self, debut, fin):
         if debut is None:
             return []
-            
+
         if fin is None:
-            if today.month < 9:
-                fin = datetime.date(day=1, month=9, year=datetime.date.today().year)
-            else:
-                fin = datetime.date(day=1, month=9, year=datetime.date.today().year + 1)
+            fin = datetime.date(day=1, month=1, year=datetime.date.today().year+1)
         else:
             fin = fin + datetime.timedelta(1)
 
         separators = [debut, fin]
-            
+
         def addseparator(separator, end=0):
             if separator is None:
                 return
@@ -187,7 +183,9 @@ class ForfaitPanel(ContextPanel):
             addseparator(frere_soeur.sortie, 1)
         for year in range(debut.year, fin.year):
             addseparator(datetime.date(day=1, month=9, year=year))
-            
+            addseparator(datetime.date(day=1, month=1, year=year))
+
+        separators.sort()
         return separators
 
     def UpdatePage(self):      

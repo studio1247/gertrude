@@ -187,10 +187,6 @@ class AppelCotisationsModifications(object):
                 facture = Facture(inscrit, self.debut.year, self.debut.month, self.options)
                 cotisation, supplement = facture.cotisation_mensuelle, None
                 commentaire = None
-                if self.debut.month == 10 and self.options & RATTRAPAGE_SEPTEMBRE:
-                    facture_septembre = Facture(inscrit, self.debut.year, 9)
-                    facture_septembre_fausse = Facture(inscrit, self.debut.year, 9, REVENUS_ANNEE_PRECEDENTE)
-                    supplement = facture_septembre.cotisation_mensuelle - facture_septembre_fausse.cotisation_mensuelle
             except CotisationException, e:
                 cotisation, supplement = '?', None
                 commentaire = '\n'.join(e.errors)
@@ -363,23 +359,11 @@ class CotisationsPanel(GPanel):
         if response == wx.ID_OK:
             oofilename = dlg.GetPath()
             options = NO_NOM
-            if periode.month == 9:
-                dlg = wx.MessageDialog(self, u"Voulez-vous un appel de cotisations basé sur les revenus de l'année précédente ?",
-                                       'Message', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
-                if dlg.ShowModal() == wx.ID_YES:
-                    options |= REVENUS_ANNEE_PRECEDENTE
-                dlg.Destroy()
-            elif periode.month == 10:
-                dlg = wx.MessageDialog(self, u"Voulez-vous un appel de cotisations prenant en compte les rattrapages du mois de septembre ?",
-                                       'Message', wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
-                if dlg.ShowModal() == wx.ID_YES:
-                    options |= RATTRAPAGE_SEPTEMBRE
-                dlg.Destroy()
             try:
                 errors = GenereAppelCotisations(oofilename, periode, options)
                 message = u"Document %s généré" % oofilename
                 if errors:
-                    message += ' avec des erreurs :\n' + decodeErrors(errors)                    
+                    message += ' avec des erreurs :\n' + decodeErrors(errors)
                     dlg = wx.MessageDialog(self, message, 'Message', wx.OK|wx.ICON_WARNING)
                 else:
                     dlg = wx.MessageDialog(self, message, 'Message', wx.OK)
