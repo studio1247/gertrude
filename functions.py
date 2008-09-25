@@ -70,13 +70,16 @@ def str2date(str, year=None):
         return None
 
 def date2str(date):
-  if date == None:
+  if date is None:
     return ''
   else:
     return '%.02d/%.02d/%.04d' % (date.day, date.month, date.year)
 
-def periodestr(o):      
-    return date2str(o.debut) + ' - ' + date2str(o.fin)
+def periodestr(o):
+    if None in (o.debut, o.fin) or (o.debut.year, o.debut.month, o.debut.day) != (o.fin.year, 1, 1) or (o.fin.month, o.fin.day) != (12, 31):
+        return date2str(o.debut) + ' - ' + date2str(o.fin)
+    else:
+        return u"Année %d" % o.debut.year
 
 def Select(object, date):
     for o in object:
