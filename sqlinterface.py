@@ -212,7 +212,7 @@ class SQLConnection(object):
 
         cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
 
-        cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, mode_maladie, email, capacite) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', ("","","","",7.75,18.5,7.75,19.0,4,12,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,15,DEDUCTION_AVEC_CARENCE,"",0))
+        cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, mode_maladie, email, capacite) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', ("","","","",7.75,18.5,7.75,19.0,4,12,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,15,DEDUCTION_AVEC_CARENCE,"",0))
 
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2006, 9, 1), datetime.date(2007, 8, 31), 6547.92, 51723.60))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2007, 9, 1), datetime.date(2008, 12, 31), 6660.00, 52608.00))
