@@ -3,7 +3,7 @@
 
 [Setup]
 AppName=Gertrude
-AppVerName=Gertrude 0.52
+AppVerName=Gertrude 0.54
 DefaultDirName={pf}\Gertrude
 DefaultGroupName=Gertrude
 OutputBaseFilename=setup
