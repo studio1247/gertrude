@@ -56,6 +56,7 @@ class DayTabWindow(wx.Window):
     def DrawLine(self, ligne, journee, dc):
         for debut, fin, valeur in journee.get_activities():
             style = wx.SOLID
+            t = 150
             if valeur == MALADE:
                 r, g, b = 190, 35, 29
             elif valeur == VACANCES:
@@ -63,12 +64,13 @@ class DayTabWindow(wx.Window):
             elif valeur & PRESENT:
                 r, g, b = 5, 203, 28
                 if valeur & PREVISIONNEL:
-                    style = wx.BDIAGONAL_HATCH
+                    t = 75
+                    # style = wx.BDIAGONAL_HATCH
             else:
                 continue
             try:
               dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
-              dc.SetBrush(wx.Brush(wx.Colour(r, g, b, 128), style))
+              dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), style))
             except:
               dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
               dc.SetBrush(wx.Brush(wx.Colour(r, g, b), style))
