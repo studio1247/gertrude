@@ -66,8 +66,12 @@ class DayTabWindow(wx.Window):
                     style = wx.BDIAGONAL_HATCH
             else:
                 continue
-            dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
-            dc.SetBrush(wx.Brush(wx.Colour(r, g, b, 128), style))
+            try:
+              dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
+              dc.SetBrush(wx.Brush(wx.Colour(r, g, b, 128), style))
+            except:
+              dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
+              dc.SetBrush(wx.Brush(wx.Colour(r, g, b), style))
             rect = wx.Rect(1+(debut-int(creche.affichage_min*4))*BASE_WIDTH, 1 + ligne * BEBE_HEIGHT, (fin-debut)*BASE_WIDTH-1, BEBE_HEIGHT-1)
             dc.DrawRoundedRectangleRect(rect, 4)
 
