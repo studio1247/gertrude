@@ -1,0 +1,141 @@
+# -*- coding: utf-8 -*-
+
+##    This file is part of Gertrude.
+##
+##    Gertrude is free software; you can redistribute it and/or modify
+##    it under the terms of the GNU General Public License as published by
+##    the Free Software Foundation; either version 3 of the License, or
+##    (at your option) any later version.
+##
+##    Gertrude is distributed in the hope that it will be useful,
+##    but WITHOUT ANY WARRANTY; without even the implied warranty of
+##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+##    GNU General Public License for more details.
+##
+##    You should have received a copy of the GNU General Public License
+##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
+
+from constants import *
+from functions import *
+from facture import *
+from cotisation import Cotisation, CotisationException
+from ooffice import *
+
+# Tranches horaires
+tranches = [(creche.ouverture, 12), (12, 14), (14, creche.fermeture)]
+
+def isPresentDuringTranche(journee, tranche):
+    debut, fin = tranches[tranche]
+    for i in range(int(debut * 4), int(fin * 4)):
+        if journee.values[i]:
+            return True
+    return False
+
+class PlanningModifications(object):
+    def __init__(self, debut):
+        self.debut = debut
+
+    def execute(self, filename, dom):
+        if filename != 'content.xml':
+            return []
+        
+        date_fin = self.debut + datetime.timedelta(11)
+        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
+        tables = spreadsheet.getElementsByTagName("table:table")
+        template = tables.item(0)
+        template.setAttribute('table:name', '%d %s %d - %d %s %d' % (self.debut.day, months[self.debut.month - 1], date_fin.year, date_fin.day, months[date_fin.month - 1], date_fin.year))
+
+        lignes = template.getElementsByTagName("table:table-row")
+
+        # Les titres des pages
+        ReplaceFields(lignes.item(0), [('date-debut', self.debut),
+                                       ('date-fin', date_fin)])
+
+        # Les jours
+        ligne = lignes.item(1)
+        cellules = ligne.getElementsByTagName("table:table-cell")
+        for semaine in range(2):
+            for jour in range(5):
+                date = self.debut + datetime.timedelta(semaine * 7 + jour)
+                cellule = cellules.item(1 + semaine * 6 + jour)
+                ReplaceFields([cellule], [('date', date)])
+
+        ligne_total = lignes.item(19)
+
+        # Les enfants en adaptation
+        indexes = getAdaptationIndexes(self.debut, date_fin)
+        indexes = getTriParPrenomIndexes(indexes)
+        self.printPresences(template, indexes, 15)
+        nb_ad = max(2, len(indexes))
+
+        # Les halte-garderie
+        indexes = getHalteGarderieIndexes(self.debut, date_fin)
+        indexes = getTriParPrenomIndexes(indexes)
+        self.printPresences(template, indexes, 11)
+        nb_hg = max(2, len(indexes))
+
+        # Les mi-temps
+        indexes = getMiTempsIndexes(self.debut, date_fin)
+        indexes = getTriParPrenomIndexes(indexes)
+        self.printPresences(template, indexes, 7)
+        nb_45 = max(2, len(indexes))
+
+        # Les plein-temps
+        indexes = getPleinTempsIndexes(self.debut, date_fin)
+        indexes = getTriParPrenomIndexes(indexes)
+        self.printPresences(template, indexes, 3)
+        nb_55 = max(2, len(indexes))
+
+        cellules = ligne_total.getElementsByTagName("table:table-cell")
+        for i in range(cellules.length):
+            cellule = cellules.item(i)
+            if (cellule.hasAttribute('table:formula')):
+                formule = cellule.getAttribute('table:formula')
+                formule = formule.replace('18', '%d' % (3+nb_55+1+nb_45+1+nb_hg+1+nb_ad))
+                cellule.setAttribute('table:formula', formule)
+
+        #print dom.toprettyxml()
+        return []
+
+    def printPresences(self, dom, indexes, ligne_depart):
+        lignes = dom.getElementsByTagName("table:table-row")
+        nb_lignes = 3
+        if len(indexes) > 3:
+            for i in range(3, len(indexes)):
+                dom.insertBefore(lignes.item(ligne_depart+1).cloneNode(1), lignes.item(ligne_depart+2))
+            nb_lignes = len(indexes)
+        elif len(indexes) < 3:
+            dom.removeChild(lignes.item(ligne_depart+1))
+            nb_lignes = 2
+        lignes = dom.getElementsByTagName("table:table-row")
+        for i in range(nb_lignes):
+            if (i < len(indexes)):
+                inscrit = creche.inscrits[indexes[i]]
+            else:
+                inscrit = None
+            ligne = lignes.item(ligne_depart + i)
+            cellules = ligne.getElementsByTagName("table:table-cell")
+            for semaine in range(2):
+                # le prenom
+                cellule = cellules.item(semaine * 17)
+                if inscrit:
+                    ReplaceFields([cellule], [('prenom', inscrit.prenom)])
+                else:
+                    ReplaceFields([cellule], [('prenom', '')])
+                # les presences
+                for jour in range(5):
+                    date = self.debut + datetime.timedelta(semaine * 7 + jour)
+                    if inscrit:
+                        if date in inscrit.journees:
+                            journee = inscrit.presences[date]
+                        else:
+                            journee = inscrit.getJourneeFromSemaineType(date)
+                    for tranche in range(3):
+                        cellule = cellules.item(1 + semaine * 17 + jour * 3 + tranche)
+                        if inscrit:
+                            ReplaceFields([cellule], [('p', int(isPresentDuringTranche(journee, tranche)))])
+                        else:
+                            ReplaceFields([cellule], [('p', '')])
+
+def GenerePlanningPresences(date, oofilename):
+    return GenerateDocument('./templates/Planning presences.ods', oofilename, PlanningModifications(date))

@@ -24,7 +24,7 @@ from functions import *
 from sqlobjects import *
 
 DB_FILENAME = 'gertrude.db'
-VERSION = 14
+VERSION = 15
 
 def getdate(s):
     if s is None:
@@ -180,13 +180,13 @@ class SQLConnection(object):
           );""")
         
         cur.execute("""
-          CREATE TABLE PRESENCES(
+          CREATE TABLE ACTIVITES(
             idx INTEGER PRIMARY KEY,
             inscrit INTEGER REFERENCES INSCRITS(idx),
             date DATE,
-            previsionnel INTEGER,
             value INTEGER,
-            details VARCHAR
+            debut INTEGER,
+            fin INTEGER
           );""")
 
         cur.execute("""
@@ -211,12 +211,9 @@ class SQLConnection(object):
           );""")
 
         cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
-
         cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, mode_maladie, email, capacite) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', ("","","","",7.75,18.5,7.75,19.0,4,12,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,15,DEDUCTION_AVEC_CARENCE,"",0))
-
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2006, 9, 1), datetime.date(2007, 8, 31), 6547.92, 51723.60))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2007, 9, 1), datetime.date(2008, 12, 31), 6660.00, 52608.00))
-
         self.con.commit()
 
     def load(self, progress_handler=default_progress_handler):
@@ -299,12 +296,15 @@ class SQLConnection(object):
                         revenu.debut, revenu.fin, revenu.revenu, revenu.chomage, revenu.regime, idx = revenu_entry
                         revenu.debut, revenu.fin, revenu.idx = getdate(revenu.debut), getdate(revenu.fin), idx
                         parent.revenus.append(revenu)
-            cur.execute('SELECT date, previsionnel, value, details, idx FROM PRESENCES WHERE inscrit=?', (inscrit.idx,))
-            for date, previsionnel, value, details, idx in cur.fetchall():
-                presence = Presence(inscrit, getdate(date), previsionnel, value, creation=False)
-                presence.set_details(details)
-                presence.idx = idx
-                inscrit.presences[getdate(date)] = presence
+            cur.execute('SELECT date, value, debut, fin, idx FROM ACTIVITES WHERE inscrit=?', (inscrit.idx,))
+            for date, value, debut, fin, idx in cur.fetchall():
+                key = getdate(date)
+                if key in inscrit.journees:
+                    journee = inscrit.journees[key]
+                else:
+                    journee = Journee(inscrit, key)
+                    inscrit.journees[key] = journee
+                journee.add_activity(debut, fin, value, idx)
 
         cur.execute('SELECT idx, debut, fin, president, vice_president, tresorier, secretaire FROM BUREAUX')
         for idx, debut, fin, president, vice_president, tresorier, secretaire in cur.fetchall():
@@ -322,7 +322,7 @@ class SQLConnection(object):
             version = int(cur.fetchall()[0][0])
         except:
             version = 0
-
+        # version = 12
         if version == VERSION:
             return True
 
@@ -458,6 +458,46 @@ class SQLConnection(object):
         if version < 14:
             cur.execute('UPDATE BAREMESCAF SET fin=? WHERE debut=? and fin=? and plancher=? and plafond=?;', (datetime.date(2008, 12, 31), datetime.date(2007, 9, 1), datetime.date(2008, 8, 31), 6660.00, 52608.00))
 
+        if version < 15:
+            cur.execute("""
+              CREATE TABLE ACTIVITES(
+                idx INTEGER PRIMARY KEY,
+                inscrit INTEGER REFERENCES INSCRITS(idx),
+                date DATE,
+                value INTEGER,
+                debut INTEGER,
+                fin INTEGER
+                );""")
+            cur.execute('SELECT inscrit, date, value, previsionnel, details FROM PRESENCES')
+            for inscrit_idx, date, value, previsionnel, val_details in cur.fetchall():
+                if value == 0:
+                    value = 1
+                    if previsionnel:
+                        value += 256
+                    if isinstance(val_details, basestring):
+                        val_details = eval(val_details)
+                    details = 64 * [0]
+                    for i in range(64):
+                        if val_details & (1 << i):
+                            details[i] = 1
+                   
+                    a = v = 0
+                    h = 6*4
+                    while h <= 22*4:
+                        if h == 22*4:
+                            nv = 0
+                        else:
+                            nv = details[h-(6*4)]
+                        if nv != v:
+                            if v != 0:
+                                sql_connection.execute('INSERT INTO ACTIVITES (idx, inscrit, date, value, debut, fin) VALUES (NULL,?,?,?,?,?)', (inscrit_idx, date, value, a, h))
+                            a = h
+                            v = nv
+                        h += 1
+                elif value in (1, 2): # VACANCES & MALADE
+                    sql_connection.execute('INSERT INTO ACTIVITES (idx, inscrit, date, value, debut, fin) VALUES (NULL,?,?,?,?,?)', (inscrit_idx, date, -value, 32, 72))
+            cur.execute("DROP TABLE PRESENCES;")
+                                   
         if version < VERSION:
             try:
                 cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))

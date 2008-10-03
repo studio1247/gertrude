@@ -20,58 +20,156 @@ from constants import *
 from parameters import *
 from functions import *
 
-class Presence(object):
-    def __init__(self, inscrit, date, previsionnel=0, value=PRESENT, creation=True):
-        self.idx = None
+class Journee(object):
+    def __init__(self, inscrit, date):
         self.inscrit_idx = inscrit.idx
         self.date = date
-        self.previsionnel = previsionnel
-        self.set_value(value)
-        if creation:
-            self.create()
+        self.activites = {}
+        self.values = [0] * 24 * 4 # une valeur par 1/4h
+        self.previsionnel = 0
 
-    def set_value(self, value):
-        self.value = value
-        if value == PRESENT:
-            self.details = [0] * int((BASE_MAX_HOUR - BASE_MIN_HOUR) * BASE_GRANULARITY)
-        else:
-            self.details = None
+    def set_value(self, value, debut, fin, creation=True):
+        print 'set_value', debut, fin, value
+        for i in range(debut, fin):
+            self.values[i] = value
+        self.save()
 
-    def encode_details(self, details):
-        if details is None:
-            return None
-        result = 0
-        for i, v in enumerate(details):
-            result += v << i
-        return result
+    def save(self):            
+        to_delete = self.activites.keys()
+        a = v = h = 0
+        while h <= 24*4:
+            if h == 24*4:
+                nv = 0
+            else:
+                nv = self.values[h]
+            if nv != v:
+                if v != 0:
+                    if self.activites.has_key((a, h, v)) :
+                        to_delete.remove((a, h, v))
+                    else:
+                        self.add_activity(a, h, v)
+                a = h
+                v = nv
+            h += 1
+        for a, b, v in to_delete:
+            print 'suppression activite %d' % self.activites[(a, b, v)]
+            sql_connection.execute('DELETE FROM ACTIVITES WHERE idx=?', (self.activites[(a, b, v)],))
+            del self.activites[(a, b, v)]
 
-    def set_details(self, details):
-        if isinstance(details, basestring):
-            details = eval(details)
-        if details is None:
-            self.details = None
-            return
-        self.details = 64 * [0]
-        for i in range(64):
-            if details & (1 << i):
-                self.details[i] = 1
+    def get_activities(self): # TODO code en double
+        result = []
+        a = v = h = 0
+        while h <= 24*4:
+            if h == 24*4:
+                nv = 0
+            else:
+                nv = self.values[h]
+            if nv != v:
+                if v != 0:
+                   result.append((a, h, v))
+                a = h
+                v = nv
+            h += 1
+        return result        
 
-    def create(self):
-        print 'nouvelle presence'
-        result = sql_connection.execute('INSERT INTO PRESENCES (idx, inscrit, date, previsionnel, value, details) VALUES (NULL,?,?,?,?,?)', (self.inscrit_idx, self.date, self.previsionnel, self.value, self.encode_details(self.details)))
-        self.idx = result.lastrowid
+    def add_activity(self, debut, fin, value, idx=None):
+        for i in range(debut, fin):
+            self.values[i] = value
+        if idx is None:
+            print 'nouvelle activite (%d, %d, %d)' % (debut, fin, value), 
+            result = sql_connection.execute('INSERT INTO ACTIVITES (idx, inscrit, date, value, debut, fin) VALUES (NULL,?,?,?,?,?)', (self.inscrit_idx, self.date, value, debut, fin))
+            idx = result.lastrowid
+            print idx
+        self.activites[(debut, fin, value)] = idx
 
-    def delete(self):
-        print 'suppression presence'
-        sql_connection.execute('DELETE FROM PRESENCES WHERE idx=?', (self.idx,))
+    def get_state(self):
+        state = ABSENT 
+        for i in range(24*4):
+            if self.values[i] < 0:
+                return self.values[i]
+            if self.values[i] & PRESENT:
+                state |= PRESENT
+            if self.values[i] & PREVISIONNEL:
+                state |= PREVISIONNEL
+        return state
 
-    def __setattr__(self, name, value):
-        self.__dict__[name] = value
-        if name == 'details':
-            value = self.encode_details(value)
-        if name in ['date', 'previsionnel', 'value', 'details'] and self.idx:
-            print 'update', name, value
-            sql_connection.execute('UPDATE PRESENCES SET %s=? WHERE idx=?' % name, (value, self.idx))
+    def set_state(self, state, journee_type=None):
+        for i in range(24*4):
+            if journee_type.values[i] != 0:
+                self.values[i] = state
+            else:
+                self.values[i] = 0
+        self.save()
+        
+    def confirm(self):
+        for i in range(24*4):
+            self.values[i] &= ~PREVISIONNEL
+        self.save()
+
+####    def del_activity(self, debut):
+####        print 'suppression activite'
+####        sql_connection.execute('DELETE FROM ACTIVITES WHERE idx=?', (self.idx,))
+##
+####    def __setattr__(self, name, value):
+####        self.__dict__[name] = value
+####        if name == 'details':
+####            value = self.encode_details(value)
+####        if name in ['date', 'previsionnel', 'value', 'details'] and self.idx:
+####            print 'update', name, value
+####            sql_connection.execute('UPDATE PRESENCES SET %s=? WHERE idx=?' % name, (value, self.idx))
+##
+##class Presence(object):
+##    def __init__(self, inscrit, date, previsionnel=0, value=PRESENT, creation=True):
+##        self.idx = None
+##        self.inscrit_idx = inscrit.idx
+##        self.date = date
+##        self.previsionnel = previsionnel
+##        self.set_value(value)
+##        if creation:
+##            self.create()
+##
+##    def set_value(self, value):
+##        self.value = value
+##        if value == PRESENT:
+##            self.details = [0] * int((BASE_MAX_HOUR - BASE_MIN_HOUR) * BASE_GRANULARITY)
+##        else:
+##            self.details = None
+##
+##    def encode_details(self, details):
+##        if details is None:
+##            return None
+##        result = 0
+##        for i, v in enumerate(details):
+##            result += v << i
+##        return result
+##
+##    def set_details(self, details):
+##        if isinstance(details, basestring):
+##            details = eval(details)
+##        if details is None:
+##            self.details = None
+##            return
+##        self.details = 64 * [0]
+##        for i in range(64):
+##            if details & (1 << i):
+##                self.details[i] = 1
+##
+##    def create(self):
+##        print 'nouvelle presence'
+##        result = sql_connection.execute('INSERT INTO PRESENCES (idx, inscrit, date, previsionnel, value, details) VALUES (NULL,?,?,?,?,?)', (self.inscrit_idx, self.date, self.previsionnel, self.value, self.encode_details(self.details)))
+##        self.idx = result.lastrowid
+##
+##    def delete(self):
+##        print 'suppression presence'
+##        sql_connection.execute('DELETE FROM PRESENCES WHERE idx=?', (self.idx,))
+##
+##    def __setattr__(self, name, value):
+##        self.__dict__[name] = value
+##        if name == 'details':
+##            value = self.encode_details(value)
+##        if name in ['date', 'previsionnel', 'value', 'details'] and self.idx:
+##            print 'update', name, value
+##            sql_connection.execute('UPDATE PRESENCES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 class Bureau(object):
     def __init__(self, creation=True):
@@ -441,7 +539,7 @@ class Inscrit(object):
         self.papa = None
         self.maman = None
         self.inscriptions = []
-        self.presences = { }
+        self.journees = { }
 
         if creation:
             self.create()
@@ -470,7 +568,7 @@ class Inscrit(object):
         print 'nouvel inscrit'
         result = sql_connection.execute('INSERT INTO INSCRITS (idx, prenom, nom, naissance, adresse, code_postal, ville, marche, photo) VALUES(NULL,?,?,?,?,?,?,?,?)', (self.prenom, self.nom, self.naissance, self.adresse, self.code_postal, self.ville, self.marche, self.photo))
         self.idx = result.lastrowid
-        for obj in [self.papa, self.maman] + self.freres_soeurs + self.inscriptions + self.presences.values():
+        for obj in [self.papa, self.maman] + self.freres_soeurs + self.inscriptions: # TODO + self.presences.values():
             if obj: obj.create()
         
     def delete(self):
@@ -512,54 +610,50 @@ class Inscrit(object):
               pass
         return result
 
-    def getPresenceFromSemaineType(self, date):
-        # TODO sont à 2 endroits : tranches horaires
-        tranches = [(creche.ouverture, 12, 4), (12, 14, 2), (14, creche.fermeture, 4)]
-
-        # retourne toujours du previsionnel
+    def getJourneeFromSemaineType(self, date, creation=False):
         weekday = date.weekday()
         if weekday > 4:
           raise Exception('La date doit etre un jour de semaine')
 
-        previsionnel = int(creche.presences_previsionnelles)
-        presence = Presence(self, date, previsionnel, 1, creation=False)
-
         inscription = self.getInscription(date)
+        previsionnel = int(creche.presences_previsionnelles) * PREVISIONNEL
+        journee = Journee(self, date)
 
         if inscription is not None:
-            for i in range(3):
-                if inscription.periode_reference[weekday][i] == 1:
-                    if presence.value != 0:
-                        presence = Presence(self, date, previsionnel, 0, creation=False)
-                    debut, fin, tmp = tranches[i]
-                    x1 = int((debut-BASE_MIN_HOUR) * BASE_GRANULARITY)
-                    x2 = int((fin-BASE_MIN_HOUR) * BASE_GRANULARITY)
-                    for x in range(x1, x2):
-                        presence.details[x] = 1
-        return presence
+            tranches = [(creche.ouverture, 12), (12, 14), (14, creche.fermeture)] # TODO virer tout ça
+            for i, tranche in enumerate(tranches):
+                debut, fin = tranche
+                for j in range(int(debut*4), int(fin*4)):
+                    journee.values[j] = inscription.periode_reference[weekday][i] | previsionnel
+            
+        return journee
 
     def getPresence(self, date):
         inscription = self.getInscription(date)
         if inscription is None or date.weekday() > 4:
             return NONINSCRIT, False
         presence_contrat = (1 in inscription.periode_reference[date.weekday()])
-        if date in self.presences:
-            presence = self.presences[date]
-            if presence.value == MALADE:
+        if date in self.journees:
+            journee = self.journees[date]
+            state = journee.get_state()
+            if state == MALADE:
                 return MALADE, False
-            elif presence.value == VACANCES:
+            elif state == VACANCES:
                 if presence_contrat:
                     return VACANCES, False
                 else:
                     return NONINSCRIT, False
             else: # PRESENT
                 if presence_contrat:
-                    return PRESENT, presence.previsionnel
+                    return PRESENT, bool(state & PREVISIONNEL)
                 else:
-                    return SUPPLEMENT, presence.previsionnel
+                    return PRESENT+SUPPLEMENT, bool(state & PREVISIONNEL)
         else:
             if presence_contrat:
-                return PRESENT, True
+                if creche.presences_previsionnelles or date > today:
+                    return PRESENT, True
+                else:
+                    return PRESENT, False
             else:
                 return NONINSCRIT, False
             

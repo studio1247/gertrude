@@ -30,186 +30,9 @@ from facture import *
 from cotisation import Cotisation, CotisationException
 from gpanel import GPanel
 from ooffice import *
-
-couleurs = ['C2', 'D2', 'B2', 'E2', 'A2']
-
-class FactureModifications(object):
-    def __init__(self, inscrit, periode):
-        self.inscrit = inscrit
-        self.periode = periode
-
-    def execute(self, filename, dom):
-        if filename != 'content.xml':
-            return []
-
-        try:
-            facture = Facture(self.inscrit, self.periode.year, self.periode.month)
-        except CotisationException, e:
-            return [(self.inscrit, e.errors)]
-
-        debut, fin = getMonthStart(self.periode), getMonthEnd(self.periode)
-        inscriptions = self.inscrit.getInscriptions(debut, fin)
-
-        # D'abord le tableau des presences du mois
-        empty_cells = debut.weekday()
-        if empty_cells > 4:
-            empty_cells -= 7
-
-        #    création d'un tableau de cells
-        for table in dom.getElementsByTagName('table:table'):
-            if table.getAttribute('table:name') == 'Presences':
-                rows = table.getElementsByTagName('table:table-row')[1:]
-                cells = []
-                for i in range(len(rows)):
-                    cells.append(rows[i].getElementsByTagName('table:table-cell'))
-                    for cell in cells[i]:
-                        cell.setAttribute('table:style-name', 'Tableau1.E2')
-                        text_node = cell.getElementsByTagName('text:p')[0]
-                        text_node.firstChild.replaceWholeText(' ')
-
-                date = debut
-                while date.month == debut.month:
-                    col = date.weekday()
-                    if col < 5:
-                        row = (date.day + empty_cells) / 7
-                        cell = cells[row][col]
-                        # ecriture de la date dans la cellule
-                        text_node = cell.getElementsByTagName('text:p')[0]
-                        text_node.firstChild.replaceWholeText('%d' % date.day)
-                        if not date in creche.jours_fermeture:
-                            # changement de la couleur de la cellule
-                            presence = self.inscrit.getPresence(date)[0]
-                            cell.setAttribute('table:style-name', 'Presences.%s' % couleurs[presence])
-                    date += datetime.timedelta(1)
-
-                for i in range(row + 1, len(rows)):
-                    table.removeChild(rows[i])
-
-        # Les champs de la facture
-        fields = [('nom-creche', creche.nom),
-                ('adresse-creche', creche.adresse),
-                ('code-postal-creche', str(creche.code_postal)),
-                ('ville-creche', creche.ville),
-                ('adresse', self.inscrit.adresse),
-                ('code-postal', str(self.inscrit.code_postal)),
-                ('ville', self.inscrit.ville),
-                ('mois', '%s %d' % (months[debut.month - 1], debut.year)),
-                ('de-mois', '%s %d' % (getDeMoisStr(debut.month - 1), debut.year)),
-                ('prenom', self.inscrit.prenom),
-                ('parents', getParentsStr(self.inscrit)),
-                ('date', '%.2d/%.2d/%d' % (debut.day, debut.month, debut.year)),
-                ('numfact', '%.2d%.4d%.2d%.4d' % (inscriptions[0].mode + 1, debut.year, debut.month, inscriptions[0].idx)),
-                ('cotisation-mensuelle', '%.2f' % facture.cotisation_mensuelle),
-                ('supplement', '%.2f' % facture.supplement),
-                ('deduction', '- %.2f' % facture.deduction),
-                ('raison-deduction', facture.raison_deduction),
-                ('total', '%.2f' % facture.total)
-                ]
-
-        ReplaceTextFields(dom, fields)
-        return []
-
-class RecuModifications(object):
-    def __init__(self, inscrit, debut, fin):
-        self.inscrit = inscrit
-        self.debut, self.fin = debut, fin
-
-    def execute(self, filename, dom):
-        if filename != 'content.xml':
-            return []
-        
-        facture_debut = facture_fin = None
-        date = self.debut
-        total = 0.0
-        while date <= self.fin:
-            try:
-                facture = Facture(self.inscrit, date.year, date.month)
-                if facture.total != 0:
-		    if facture_debut is None:
-		        facture_debut = date
-	            facture_fin = getMonthEnd(date)
-                    total += facture.total
-            except CotisationException, e:
-                return [(self.inscrit, e.errors)]
-
-            date = getNextMonthStart(date)
-        
-        tresorier = Select(creche.bureaux, today).tresorier
-
-        # Les champs du recu
-        fields = [('nom-creche', creche.nom),
-                ('adresse-creche', creche.adresse),
-                ('code-postal-creche', str(creche.code_postal)),
-                ('ville-creche', creche.ville),
-                ('de-debut', '%s %d' % (getDeMoisStr(facture_debut.month - 1), facture_debut.year)),
-                ('de-fin', '%s %d' % (getDeMoisStr(facture_fin.month - 1), facture_fin.year)),
-                ('prenom', self.inscrit.prenom),
-                ('parents', getParentsStr(self.inscrit)),
-                ('naissance', self.inscrit.naissance),
-                ('nom', self.inscrit.nom),
-                ('tresorier', "%s %s" % (tresorier.prenom, tresorier.nom)),
-                ('date', '%.2d/%.2d/%d' % (today.day, today.month, today.year)),
-                ('total', '%.2f' % total)
-                ]
-
-        if self.inscrit.sexe == 1:
-            fields.append(('ne-e', u"né"))
-        else:
-            fields.append(('ne-e', u"née"))
-
-        #print fields
-        ReplaceTextFields(dom, fields)
-        return []
-
-class AppelCotisationsModifications(object):
-    def __init__(self, debut, options=0):
-        self.debut, self.fin = debut, getMonthEnd(debut)
-        self.options = options
-        
-    def execute(self, filename, dom):
-        if filename != 'content.xml':
-            return []
-        
-        errors = []
-        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
-        table = spreadsheet.getElementsByTagName("table:table").item(0)
-        lignes = table.getElementsByTagName("table:table-row")
-
-        # La date
-        ReplaceFields(lignes, [('date', self.debut)])
-        template = [lignes.item(5), lignes.item(6)]
-
-        # Les cotisations
-        inscrits = getInscrits(self.debut, self.fin)
-        for i, inscrit in enumerate(inscrits):
-            line = template[i % 2].cloneNode(1)
-            try:
-                facture = Facture(inscrit, self.debut.year, self.debut.month, self.options)
-                cotisation, supplement = facture.cotisation_mensuelle, None
-                commentaire = None
-            except CotisationException, e:
-                cotisation, supplement = '?', None
-                commentaire = '\n'.join(e.errors)
-                errors.append((inscrit, e.errors))
-            ReplaceFields(line, [('prenom', inscrit.prenom),
-                                 ('cotisation', cotisation),
-                                 ('supplement', supplement),
-                                 ('commentaire', commentaire)])
-            table.insertBefore(line, template[0])
-            IncrementFormulas(template[i % 2], +2)
-
-        table.removeChild(template[0])
-        table.removeChild(template[1])
-        return errors
-
-def GenereAppelCotisations(oofilename, date, options=0):
-    return GenerateDocument('./templates/Appel Cotisations.ods', oofilename, AppelCotisationsModifications(date, options))
-
-def GenereFacture(oofilename, inscrit, periode):
-    return GenerateDocument('./templates/facture_mensuelle_creche.odt', oofilename, FactureModifications(inscrit, periode))
-
-def GenereRecu(oofilename, inscrit, debut, fin):
-    return GenerateDocument('./templates/Attestation paiement.odt', oofilename, RecuModifications(inscrit, debut, fin))
+from facture_mensuelle import GenereFactureMensuelle
+from attestation_paiement import GenereAttestationPaiement
+from appel_cotisations import GenereAppelCotisations
 
 class CotisationsPanel(GPanel):
     bitmap = './bitmaps/facturation.png'
@@ -404,7 +227,7 @@ class CotisationsPanel(GPanel):
             if response == wx.ID_OK:
                 oopath = dlg.GetPath()
                 inscrits = [inscrit for inscrit in creche.inscrits if inscrit.getInscriptions(debut, fin)]
-                self.GenereRecus(inscrits, debut, fin, oopath=oopath)
+                self.GenereAttestationsPaiement(inscrits, debut, fin, oopath=oopath)
         else:
             wildcard = "OpenDocument (*.odt)|*.odt"
             oodefaultfilename = u"Attestation de paiement %s %s-%s %d.odt" % (inscrit.prenom, months[debut.month - 1], months[fin.month - 1], debut.year)
@@ -413,7 +236,7 @@ class CotisationsPanel(GPanel):
             dlg.Destroy()
             if response == wx.ID_OK:
                 oofilename = dlg.GetPath()
-                self.GenereRecus([inscrit], debut, fin, oofilename)
+                self.GenereAttestationsPaiement([inscrit], debut, fin, oofilename)
 
     def GenereFactures(self, inscrits, periode, oofilename=None, oopath=None):
         nbdocs, errors = 0, []
@@ -422,7 +245,7 @@ class CotisationsPanel(GPanel):
                 filename = '%s/Cotisation %s %s %d.odt' % (oopath, inscrit.prenom, months[periode.month - 1], periode.year)
             else:
                 filename = oofilename
-            doc_errors = GenereFacture(filename, inscrit, periode)
+            doc_errors = GenereFactureMensuelle(filename, inscrit, periode)
             if doc_errors:
                 errors.extend(doc_errors)
             else:
@@ -442,14 +265,14 @@ class CotisationsPanel(GPanel):
         dlg.ShowModal()
         dlg.Destroy()
 
-    def GenereRecus(self, inscrits, debut, fin, oofilename=None, oopath=None):
+    def GenereAttestationsPaiement(self, inscrits, debut, fin, oofilename=None, oopath=None):
         nbdocs, errors = 0, []
         for inscrit in inscrits:
             if oofilename is None:
                 filename = '%s/Attestation de paiement %s %s-%s %d.odt' % (oopath, inscrit.prenom, months[debut.month - 1], months[fin.month - 1], debut.year)
             else:
                 filename = oofilename
-            doc_errors = GenereRecu(filename, inscrit, debut, fin)
+            doc_errors = GenereAttestationPaiement(filename, inscrit, debut, fin)
             if doc_errors:
                 errors.extend(doc_errors)
             else:
@@ -479,7 +302,7 @@ if __name__ == '__main__':
 
 ##    for inscrit in creche.inscrits:
 ##        if inscrit.prenom == 'Soen':
-##            GenereRecu('recu soen.ods', inscrit, datetime.date(2007, 4, 1), datetime.date(2007, 9, 1))
+##            GenereAttestationPaiement('recu soen.ods', inscrit, datetime.date(2007, 4, 1), datetime.date(2007, 9, 1))
 ##            print u'Fichier "recu soen.ods" généré'
 ##
 ##    sys.exit(0)
@@ -488,7 +311,7 @@ if __name__ == '__main__':
     
     for inscrit in creche.inscrits:
         if inscrit.prenom == 'Germain':
-            GenereFacture('basile.ods', inscrit, datetime.date(2007, 7, 1))
+            GenereFactureMensuelle('basile.ods', inscrit, datetime.date(2007, 7, 1))
             print u'Fichier "basile.ods" généré'
 
 

@@ -63,19 +63,19 @@ class Facture(object):
                         presence, previsionnel = inscrit.getPresence(date)
                         if previsionnel:
                             self.previsionnel = True
-                        if presence == SUPPLEMENT:
+                        if presence & SUPPLEMENT:
                             self.jours_supplementaires.append(date)
                             self.supplement += cotisation.montant_jour_supplementaire
                         elif presence == MALADE:
                             self.jours_maladie.append(date)
                             # recherche du premier et du dernier jour
                             premier_jour_maladie = tmp = date
-                            while tmp >= inscrit.inscriptions[0].debut and inscrit.getPresence(tmp)[0] not in (PRESENT, VACANCES):
+                            while tmp >= inscrit.inscriptions[0].debut and (inscrit.getPresence(tmp)[0] != VACANCES and not (inscrit.getPresence(tmp)[0] & PRESENT)):
                                 tmp -= datetime.timedelta(1)
                                 if inscrit.getPresence(tmp)[0] == MALADE:
                                     premier_jour_maladie = tmp
                             dernier_jour_maladie = tmp = date
-                            while (not inscrit.inscriptions[-1].fin or tmp <= inscrit.inscriptions[-1].fin) and inscrit.getPresence(tmp)[0] not in (PRESENT, VACANCES):
+                            while (not inscrit.inscriptions[-1].fin or tmp <= inscrit.inscriptions[-1].fin) and (inscrit.getPresence(tmp)[0] != VACANCES and not (inscrit.getPresence(tmp)[0] & PRESENT)):
                                 tmp += datetime.timedelta(1)
                                 if inscrit.getPresence(tmp)[0] == MALADE:
                                     dernier_jour_maladie = tmp

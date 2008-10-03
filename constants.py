@@ -28,8 +28,8 @@ PROFIL_ADMIN = 16
 PROFIL_ALL = PROFIL_ADMIN + PROFIL_INSCRIPTIONS + PROFIL_TRESORIER + PROFIL_BUREAU + PROFIL_SAISIE_PRESENCES
 
 # Attention ces paramètres modifient l'interprétation des données de la base
-BASE_MIN_HOUR = 6 # 6h00
-BASE_MAX_HOUR = 22 # 22h00
+#BASE_MIN_HOUR = 6 # 6h00
+#BASE_MAX_HOUR = 22 # 22h00
 BASE_GRANULARITY = 4 # au quart d'heure
 
 # Modes d'accueil
@@ -43,11 +43,13 @@ DEDUCTION_TOTALE = 1
 DEDUCTION_AVEC_CARENCE = 2
 
 # Valeurs de présence
-PRESENT = 0
-VACANCES = 1
-MALADE = 2
-NONINSCRIT = 3 # utilise dans getPresence
-SUPPLEMENT = 4 # utilise dans getPresence
+ABSENT = 0
+PRESENT = 1
+VACANCES = -1
+MALADE = -2
+NONINSCRIT = -3
+PREVISIONNEL = 256
+SUPPLEMENT = 512
 
 ID_SYNCHRO = 10001
 ID_UNDO = 10002
