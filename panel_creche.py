@@ -142,6 +142,67 @@ class ResponsabilitesTab(AutoTab, PeriodeMixin):
         result.sort(cmp=lambda x,y: cmp(x[0].lower(), y[0].lower()))
         return result
 
+activity_modes = [("Normal", 0),
+                  (u"Libère une place", MODE_LIBERE_PLACE),
+                 ]
+
+class ActivitesTab(AutoTab):
+    def __init__(self, parent):
+        global delbmp
+        delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
+        AutoTab.__init__(self, parent)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.activites_sizer = wx.BoxSizer(wx.VERTICAL)
+        for i, activite in enumerate(creche.activites):
+            self.line_add(i)
+        self.sizer.Add(self.activites_sizer, 0, wx.EXPAND|wx.ALL, 5)
+        button_add = wx.Button(self, -1, u'Nouvelle activité')
+        self.sizer.Add(button_add, 0, wx.ALL, 5)
+        self.Bind(wx.EVT_BUTTON, self.activite_add, button_add)
+        self.SetSizer(self.sizer)
+
+    def UpdateContents(self):
+        for i in range(len(self.activites_sizer.GetChildren()), len(creche.activites)):
+            self.line_add(i)
+        for i in range(len(creche.activites), len(self.activites_sizer.GetChildren())):
+            self.line_del()
+        self.sizer.Layout()
+        AutoTab.UpdateContents(self)
+
+    def line_add(self, index):
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.AddMany([(wx.StaticText(self, -1, 'Label :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, creche, 'activites[%d].label' % index), 1, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Mode :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'activites[%d].mode' % index, items=activity_modes), 1, wx.EXPAND)])
+        #sizer.AddMany([(wx.StaticText(self, -1, u'Arrivée :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoDateCtrl(self, creche, 'employes[%d].date_embauche' % index), 1, wx.EXPAND)])
+        #sizer.AddMany([(wx.StaticText(self, -1, u"Domicile :"), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoPhoneCtrl(self, creche, 'employes[%d].telephone_domicile' % index), 1, wx.EXPAND)])
+        #sizer.AddMany([(wx.StaticText(self, -1, u"Portable :"), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoPhoneCtrl(self, creche, 'employes[%d].telephone_portable' % index), 1, wx.EXPAND)])
+        delbutton = wx.BitmapButton(self, -1, delbmp)
+        delbutton.index = index
+        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
+        self.Bind(wx.EVT_BUTTON, self.activite_del, delbutton)
+        self.activites_sizer.Add(sizer, 0, wx.EXPAND)
+
+    def line_del(self):
+        index = len(self.activites_sizer.GetChildren()) - 1
+        sizer = self.activites_sizer.GetItem(index)
+        sizer.DeleteWindows()
+        self.activites_sizer.Detach(index)
+
+    def activite_add(self, event):
+        history.Append(Delete(creche.activites, -1))
+        creche.activites.append(Activite())
+        self.line_add(len(creche.activites) - 1)
+        self.sizer.Layout()
+
+    def activite_del(self, event):
+        index = event.GetEventObject().index
+        history.Append(Insert(creche.activites, index, creche.activites[index]))
+        self.line_del()
+        creche.activites[index].delete()
+        del creche.activites[index]
+        self.sizer.Layout()
+        self.UpdateContents()
+
 class CafTab(AutoTab, PeriodeMixin):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
@@ -158,12 +219,13 @@ class CafTab(AutoTab, PeriodeMixin):
     def UpdateContents(self):
         self.SetInstance(creche)
 
-class GeneralNotebook(wx.Notebook):
+class CrecheNotebook(wx.Notebook):
     def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
         self.AddPage(CrecheTab(self), u'Crèche')
         self.AddPage(EmployesTab(self), u'Employés')
         self.AddPage(ResponsabilitesTab(self), u'Responsabilités')
+        self.AddPage(ActivitesTab(self), u'Activités')
         self.AddPage(CafTab(self), 'C.A.F.')
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
@@ -182,7 +244,7 @@ class CrechePanel(GPanel):
     profil = PROFIL_BUREAU
     def __init__(self, parent):
         GPanel.__init__(self, parent, u'Crèche')
-        self.notebook = GeneralNotebook(self)
+        self.notebook = CrecheNotebook(self)
         self.sizer.Add(self.notebook, 1, wx.EXPAND)
 
     def UpdateContents(self):

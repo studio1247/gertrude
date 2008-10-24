@@ -58,18 +58,20 @@ class Journee(object):
 
     def get_activities(self): # TODO code en double
         result = []
-        a = v = h = 0
-        while h <= 24*4:
-            if h == 24*4:
-                nv = 0
-            else:
-                nv = self.values[h]
-            if nv != v:
-                if v != 0:
-                   result.append((a, h, v))
-                a = h
-                v = nv
-            h += 1
+        for value in [0] + [activity.value for activity in creche.activites]:
+            mask = PRESENT << value
+            a = v = h = 0
+            while h <= 24*4:
+                if h == 24*4:
+                    nv = 0
+                else:
+                    nv = self.values[h] & mask
+                if nv != v:
+                    if v != 0:
+                        result.append((a, h, value))
+                    a = h
+                    v = nv
+                h += 1
         return result        
 
     def add_activity(self, debut, fin, value, idx=None):
@@ -281,6 +283,37 @@ class Conge(object):
             if self.creche:
                 self.creche.calcule_jours_fermeture()
 
+class Activite(object):
+    def __init__(self, creation=True):
+        self.idx = None
+        self.label = ""
+        self.value = None
+        self.mode = 0
+
+        if creation:
+            self.create()
+
+    def create(self):
+        print 'nouvelle activite', 
+        values = [activite.value for activite in creche.activites]
+        for value in range(1, 10):
+            if value not in values:
+                self.value = value
+                break
+        print self.value
+        result = sql_connection.execute('INSERT INTO ACTIVITIES (idx, label, value, mode) VALUES(NULL,?,?,?)', (self.label, self.value, self.mode))
+        self.idx = result.lastrowid
+
+    def delete(self):
+        print 'suppression activite'
+        sql_connection.execute('DELETE FROM ACTIVITIES WHERE idx=?', (self.idx,))
+
+    def __setattr__(self, name, value):
+        self.__dict__[name] = value
+        if name in ['label', 'value', 'mode'] and self.idx:
+            print 'update', name
+            sql_connection.execute('UPDATE ACTIVITIES SET %s=? WHERE idx=?' % name, (value, self.idx))
+
 class Employe(object):
     def __init__(self, creation=True):
         self.idx = None
@@ -319,6 +352,7 @@ class Creche(object):
         self.code_postal = ''
         self.ville = ''
         self.users = []
+        self.activites = []
         self.employes = []
         self.conges = []
         self.bureaux = []

@@ -30,6 +30,8 @@ BUTTONS_WIDTH = 34 # px
 BASE_WIDTH = 14 # px
 BEBE_HEIGHT = 30 # px
 
+activity = 0
+
 class DayTabWindow(wx.Window):
     def __init__(self, parent, inscrits, date, *args, **kwargs):
         wx.Window.__init__(self, parent, size=((creche.affichage_max-creche.affichage_min) * 4 * BASE_WIDTH + 1, BEBE_HEIGHT * len(inscrits) + 1), *args, **kwargs)
@@ -55,19 +57,21 @@ class DayTabWindow(wx.Window):
 
     def DrawLine(self, ligne, journee, dc):
         for debut, fin, valeur in journee.get_activities():
+            #print 'activity', valeur, debut, fin
             style = wx.SOLID
             t = 150
             if valeur == MALADE:
                 r, g, b = 190, 35, 29
             elif valeur == VACANCES:
                 r, g, b = 0, 0, 255
-            elif valeur & PRESENT:
+            elif valeur == 0:
                 r, g, b = 5, 203, 28
                 if valeur & PREVISIONNEL:
                     t = 75
                     # style = wx.BDIAGONAL_HATCH
             else:
-                continue
+                r, g, b = 250, 0, 0
+                style = wx.BDIAGONAL_HATCH
             try:
               dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
               dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), style))
@@ -139,10 +143,10 @@ class DayTabWindow(wx.Window):
 #            presence.previsionnel = 0
 #            presence.details = [tmp * 2 for tmp in presence.details]
         journee.original_values = journee.values[:]
-        if journee.get_state() < 0 or not journee.values[posX] & PRESENT or (datetime.date.today() >= self.date and creche.presences_previsionnelles and (journee.values[posX] & PREVISIONNEL)):
-            self.valeur_selection = PRESENT
+        if journee.get_state() < 0 or not journee.values[posX] & (PRESENT<<activity) or (datetime.date.today() >= self.date and creche.presences_previsionnelles and (journee.values[posX] & PREVISIONNEL)):
+            self.valeur_selection = 1
         else:
-            self.valeur_selection = ABSENT
+            self.valeur_selection = 0
 
         if datetime.date.today() < self.date and creche.presences_previsionnelles:
             self.valeur_selection |= PREVISIONNEL
@@ -158,7 +162,12 @@ class DayTabWindow(wx.Window):
             self.curEndX = (posX / (4 / creche.granularite)) * (4 / creche.granularite)
             start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX)
             journee.values = journee.original_values[:]
-            journee.values[start:end+BASE_GRANULARITY/creche.granularite] = [self.valeur_selection] * (end - start + BASE_GRANULARITY/creche.granularite)
+            for i in range(start, end+BASE_GRANULARITY/creche.granularite):
+                if self.valeur_selection:
+                    journee.values[i] |= PRESENT << activity
+                else:
+                    journee.values[i] &= ~(PRESENT << activity)
+                #print i, journee.values[i]
             self.Refresh(True, wx.Rect(0, self.curStartY*BEBE_HEIGHT, (creche.affichage_max-creche.affichage_min)*4*BASE_WIDTH, BEBE_HEIGHT))
 
     def OnLeftButtonUp(self, event):
@@ -395,12 +404,14 @@ class PlanningPanel(GPanel):
     bitmap = './bitmaps/presences.png'
     index = 20
     profil = PROFIL_ALL
+
     def __init__(self, parent):
         GPanel.__init__(self, parent, u'Présences enfants')
 
-        # La combobox pour la selection de la semaine
+        # La combobox pour la selection de la semaine et les boutons d'activité
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.combobox = wx.Choice(self, -1)
-        self.sizer.Add(self.combobox, 0, wx.EXPAND, 0)
+        sizer.Add(self.combobox, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
         day = first_monday = getfirstmonday()
         semaine = getNumeroSemaine(day)
         while day < last_date:
@@ -411,10 +422,20 @@ class PlanningPanel(GPanel):
             else:
                 semaine = 1
             day += datetime.timedelta(7)
-
         delta = datetime.date.today() - first_monday
         semaine = int(delta.days / 7)
         self.combobox.SetSelection(semaine)
+        if len(creche.activites) > 0:
+            button = wx.Button(self, -1, u"Présence")
+            button.value = 0
+            self.Bind(wx.EVT_BUTTON, self.changeTool, button)
+            sizer.Add(button, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
+            for activity in creche.activites:
+                button = wx.Button(self, -1, activity.label)
+                button.value = activity.value
+                self.Bind(wx.EVT_BUTTON, self.changeTool, button)
+                sizer.Add(button, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
+        self.sizer.Add(sizer, 0, wx.EXPAND)
 
         # le notebook pour les jours de la semaine
         self.notebook = wx.Notebook(self, style=wx.LB_DEFAULT)
@@ -442,6 +463,10 @@ class PlanningPanel(GPanel):
             note.presences_panel.UpdateContents()
             self.notebook.SetSelection(0)
         self.sizer.Layout()
+
+    def changeTool(self, evt):
+        global activity
+        activity = evt.GetEventObject().value
 
     def UpdateContents(self):
         for week_day in range(5):

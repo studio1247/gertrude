@@ -24,7 +24,7 @@ from functions import *
 from sqlobjects import *
 
 DB_FILENAME = 'gertrude.db'
-VERSION = 15
+VERSION = 16
 
 def getdate(s):
     if s is None:
@@ -102,6 +102,14 @@ class SQLConnection(object):
             fin DATE,
             plancher INTEGER,
             plafond INTEGER
+          );""")
+
+        cur.execute("""
+          CREATE TABLE ACTIVITIES(
+            idx INTEGER PRIMARY KEY,
+            label VARCHAR,
+            value INTEGER,
+            mode INTEGER
           );""")
 
         cur.execute("""
@@ -254,6 +262,12 @@ class SQLConnection(object):
             bareme.debut, bareme.fin, bareme.idx = getdate(bareme.debut), getdate(bareme.fin), idx
             creche.baremes_caf.append(bareme)
 
+        cur.execute('SELECT label, value, mode, idx FROM ACTIVITIES')
+        for entry in cur.fetchall():
+            activity = Activite(creation=False)
+            activity.label, activity.value, activity.mode, activity.idx = entry
+            creche.activites.append(activity)
+        
         cur.execute('SELECT date_embauche, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, email, idx FROM EMPLOYES')
         for employe_entry in cur.fetchall():
             employe = Employe(creation=False)
@@ -322,7 +336,7 @@ class SQLConnection(object):
             version = int(cur.fetchall()[0][0])
         except:
             version = 0
-        # version = 12
+
         if version == VERSION:
             return True
 
@@ -498,6 +512,15 @@ class SQLConnection(object):
                     sql_connection.execute('INSERT INTO ACTIVITES (idx, inscrit, date, value, debut, fin) VALUES (NULL,?,?,?,?,?)', (inscrit_idx, date, -value, 32, 72))
             cur.execute("DROP TABLE PRESENCES;")
                                    
+        if version < 16:
+            cur.execute("""
+              CREATE TABLE ACTIVITIES(
+                idx INTEGER PRIMARY KEY,
+                label VARCHAR,
+                value INTEGER,
+                mode INTEGER
+              );""")
+            
         if version < VERSION:
             try:
                 cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))

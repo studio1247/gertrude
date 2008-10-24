@@ -20,6 +20,7 @@ months = ["Janvier", u'Février', "Mars", "Avril", "Mai", "Juin", "Juillet", u'A
 months_abbrev = ["Janv", u'Fév', "Mars", "Avril", "Mai", "Juin", "Juil", u'Août', "Sept", "Oct", "Nov", u'Déc']
 trimestres = ["1er", u'2ème', u'3ème', u'4ème']
 
+# Profils des utilisateurs
 PROFIL_INSCRIPTIONS = 1
 PROFIL_TRESORIER = 2
 PROFIL_BUREAU = 4
@@ -27,9 +28,10 @@ PROFIL_SAISIE_PRESENCES = 8
 PROFIL_ADMIN = 16
 PROFIL_ALL = PROFIL_ADMIN + PROFIL_INSCRIPTIONS + PROFIL_TRESORIER + PROFIL_BUREAU + PROFIL_SAISIE_PRESENCES
 
-# Attention ces paramètres modifient l'interprétation des données de la base
-#BASE_MIN_HOUR = 6 # 6h00
-#BASE_MAX_HOUR = 22 # 22h00
+# Modes des activités
+MODE_LIBERE_PLACE = 1
+
+# Granularité du planning dans la base
 BASE_GRANULARITY = 4 # au quart d'heure
 
 # Modes d'accueil
@@ -51,6 +53,7 @@ NONINSCRIT = -3
 PREVISIONNEL = 256
 SUPPLEMENT = 512
 
+#IDs de boutons
 ID_SYNCHRO = 10001
 ID_UNDO = 10002
 
