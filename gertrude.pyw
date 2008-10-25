@@ -21,7 +21,10 @@ import __builtin__
 import os, sys, time, shutil, glob, wx
 from data import *
 from startdialog import StartDialog
-import winsound
+try:
+  import winsound
+except:
+  pass
 
 # Don't remove these 2 lines (mandatory for py2exe)
 import gpanel, controls, zipfile, xml.dom.minidom, wx.html, ooffice
@@ -162,7 +165,10 @@ class GertrudeFrame(wx.Frame):
         if history.Undo():
             self.listbook.UpdateContents()
         else:
-            winsound.MessageBeep()
+            try:
+                winsound.MessageBeep()
+            except:
+                pass
 
 
 class MyApp(wx.App):
