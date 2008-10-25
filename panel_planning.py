@@ -15,8 +15,7 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import wx
-import wx.lib.scrolledpanel
+import wx, wx.lib.scrolledpanel, wx.combo
 import datetime
 from constants import *
 from parameters import *
@@ -32,6 +31,23 @@ BEBE_HEIGHT = 30 # px
 
 activity = 0
 
+def getColor(value):
+    t = 150
+    s = wx.SOLID
+    if value == MALADE:
+        return 190, 35, 29, t, s
+    elif value == VACANCES:
+        return 0, 0, 255, t, s
+    elif value == 0:
+        r, g, b = 5, 203, 28
+        if value & PREVISIONNEL:
+            t = 75
+        return r, g, b, t, s
+    elif value == 1:
+        return 250, 0, 0, t, wx.BDIAGONAL_HATCH 
+    else:
+        return 0, 0, 255, t, wx.FDIAGONAL_HATCH
+        
 class DayTabWindow(wx.Window):
     def __init__(self, parent, inscrits, date, *args, **kwargs):
         wx.Window.__init__(self, parent, size=((creche.affichage_max-creche.affichage_min) * 4 * BASE_WIDTH + 1, BEBE_HEIGHT * len(inscrits) + 1), *args, **kwargs)
@@ -58,29 +74,13 @@ class DayTabWindow(wx.Window):
     def DrawLine(self, ligne, journee, dc):
         for debut, fin, valeur in journee.get_activities():
             # print 'activity', valeur, debut, fin
-            style = wx.SOLID
-            t = 150
-            if valeur == MALADE:
-                r, g, b = 190, 35, 29
-            elif valeur == VACANCES:
-                r, g, b = 0, 0, 255
-            elif valeur == 0:
-                r, g, b = 5, 203, 28
-                if valeur & PREVISIONNEL:
-                    t = 75
-                    # style = wx.BDIAGONAL_HATCH
-            elif valeur == 1:
-                r, g, b = 250, 0, 0
-                style = wx.BDIAGONAL_HATCH
-            elif valeur == 2:
-                r, g, b = 0, 0, 255
-                style = wx.FDIAGONAL_HATCH
+            r, g, b, t, s = getColor(valeur)
             try:
               dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
-              dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), style))
+              dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
             except:
               dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
-              dc.SetBrush(wx.Brush(wx.Colour(r, g, b), style))
+              dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
             rect = wx.Rect(1+(debut-int(creche.affichage_min*4))*BASE_WIDTH, 1 + ligne * BEBE_HEIGHT, (fin-debut)*BASE_WIDTH-1, BEBE_HEIGHT-1)
             dc.DrawRoundedRectangleRect(rect, 4)
 
@@ -118,7 +118,6 @@ class DayTabWindow(wx.Window):
             dc = wx.GCDC(dc)
         except:
             pass
-        
         for i, inscrit in enumerate(self.inscrits):
             self.DrawPresence(i, dc)
 
@@ -369,6 +368,28 @@ class DayPanel(wx.Panel):
 
         dc.EndDrawing()
 
+class ActivityComboBox(wx.combo.OwnerDrawnComboBox):
+    def OnDrawItem(self, dc, rect, item, flags):
+        if item == wx.NOT_FOUND:
+            return
+
+        rr = wx.Rect(*rect)  # make a copy
+        rr.Deflate(3, 5)
+
+        r, g, b, t, s = getColor(self.GetClientData(item).value)
+        dc = wx.GCDC(dc)
+        dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
+        dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
+
+        if flags & wx.combo.ODCB_PAINTING_CONTROL:
+           dc.DrawRoundedRectangleRect(wx.Rect(rr.x, rr.y-3, rr.width, rr.height+6), 4)
+        else:
+           dc.DrawRoundedRectangleRect(wx.Rect(rr.x, rr.y-3, rr.width, rr.height+6), 4)
+           dc.DrawText(self.GetString(item), rr.x + 10, rr.y)
+
+    def OnMeasureItem(self, item):
+        return 24
+
 class PlanningPanel(GPanel):
     bitmap = './bitmaps/presences.png'
     index = 20
@@ -377,15 +398,15 @@ class PlanningPanel(GPanel):
     def __init__(self, parent):
         GPanel.__init__(self, parent, u'Présences enfants')
 
-        # La combobox pour la selection de la semaine et les boutons d'activité
+        # La combobox pour la selection de la semaine
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.combobox = wx.Choice(self, -1)
-        sizer.Add(self.combobox, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+        self.week_choice = wx.Choice(self, -1)
+        sizer.Add(self.week_choice, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
         day = first_monday = getfirstmonday()
         semaine = getNumeroSemaine(day)
         while day < last_date:
             string = 'Semaine %d (%d %s %d)' % (semaine, day.day, months[day.month - 1], day.year)
-            self.combobox.Append(string, day)
+            self.week_choice.Append(string, day)
             if day.year == (day + datetime.timedelta(7)).year:
                 semaine += 1
             else:
@@ -393,19 +414,23 @@ class PlanningPanel(GPanel):
             day += datetime.timedelta(7)
         delta = datetime.date.today() - first_monday
         semaine = int(delta.days / 7)
-        self.combobox.SetSelection(semaine)
+        self.week_choice.SetSelection(semaine)
+        self.Bind(wx.EVT_CHOICE, self.EvtChoice, self.week_choice)
+        
+        # La combobox pour la selection de l'outil (si activités)
         if len(creche.activites) > 0:
-            button = wx.Button(self, -1, u"Présence")
-            button.value = 0
-            self.Bind(wx.EVT_BUTTON, self.changeTool, button)
-            sizer.Add(button, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
+            self.activity_choice = ActivityComboBox(self, -1, style=wx.CB_READONLY, size=(100, -1))
+            tmp = Activite(creation=False)
+            tmp.value = 0
+            self.activity_choice.Append(u'Présences', tmp)
             for activity in creche.activites:
-                button = wx.Button(self, -1, activity.label)
-                button.value = activity.value
-                self.Bind(wx.EVT_BUTTON, self.changeTool, button)
-                sizer.Add(button, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
-        self.sizer.Add(sizer, 0, wx.EXPAND)
+                self.activity_choice.Append(activity.label, activity)
+            self.activity_choice.SetSelection(0)
+            self.Bind(wx.EVT_COMBOBOX, self.changeTool, self.activity_choice)
+            sizer.Add(self.activity_choice, 0, wx.ALIGN_CENTER_VERTICAL)
 
+        self.sizer.Add(sizer, 0, wx.EXPAND)
+        
         # le notebook pour les jours de la semaine
         self.notebook = wx.Notebook(self, style=wx.LB_DEFAULT)
         self.sizer.Add(self.notebook, 1, wx.EXPAND|wx.TOP, 5)
@@ -414,7 +439,7 @@ class PlanningPanel(GPanel):
             title = days[week_day] + " " + str(day.day) + " " + months[day.month - 1] + " " + str(day.year)
             self.notebook.AddPage(DayPanel(self.notebook, day), title)
 
-        self.Bind(wx.EVT_CHOICE, self.EvtChoice, self.combobox)
+        self.sizer.Layout()
 
     def EvtChoice(self, evt):
         cb = evt.GetEventObject()
@@ -435,9 +460,17 @@ class PlanningPanel(GPanel):
 
     def changeTool(self, evt):
         global activity
-        activity = evt.GetEventObject().value
+        cb = evt.GetEventObject()
+        activity = cb.GetClientData(cb.GetSelection()).value
 
     def UpdateContents(self):
+        self.activity_choice.Clear()
+        tmp = Activite(creation=False)
+        tmp.value = 0
+        self.activity_choice.Append(u'Présences', tmp)
+        for activity in creche.activites:
+            self.activity_choice.Append(activity.label, activity)
+        self.activity_choice.SetSelection(0)
         for week_day in range(5):
             note = self.notebook.GetPage(week_day)
             note.presences_panel.UpdateContents()
