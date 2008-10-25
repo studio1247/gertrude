@@ -22,7 +22,7 @@ from constants import *
 from parameters import *
 from functions import *
 from sqlobjects import *
-from history import Change
+from history import *
 from gpanel import GPanel
 
 PRENOMS_WIDTH = 80 # px
@@ -57,7 +57,7 @@ class DayTabWindow(wx.Window):
 
     def DrawLine(self, ligne, journee, dc):
         for debut, fin, valeur in journee.get_activities():
-            #print 'activity', valeur, debut, fin
+            # print 'activity', valeur, debut, fin
             style = wx.SOLID
             t = 150
             if valeur == MALADE:
@@ -69,9 +69,12 @@ class DayTabWindow(wx.Window):
                 if valeur & PREVISIONNEL:
                     t = 75
                     # style = wx.BDIAGONAL_HATCH
-            else:
+            elif valeur == 1:
                 r, g, b = 250, 0, 0
                 style = wx.BDIAGONAL_HATCH
+            elif valeur == 2:
+                r, g, b = 0, 0, 255
+                style = wx.FDIAGONAL_HATCH
             try:
               dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
               dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), style))
@@ -137,11 +140,6 @@ class DayTabWindow(wx.Window):
         else:
             journee = inscrit.journees[self.date]
 
-#        if presence.value != PRESENT:
-#            presence.set_value(PRESENT)
-#        if self.date <= datetime.date.today() and presence.previsionnel:
-#            presence.previsionnel = 0
-#            presence.details = [tmp * 2 for tmp in presence.details]
         journee.original_values = journee.values[:]
         if journee.get_state() < 0 or not journee.values[posX] & (PRESENT<<activity) or (datetime.date.today() >= self.date and creche.presences_previsionnelles and (journee.values[posX] & PREVISIONNEL)):
             self.valeur_selection = 1
@@ -163,56 +161,33 @@ class DayTabWindow(wx.Window):
             start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX)
             journee.values = journee.original_values[:]
             for i in range(start, end+BASE_GRANULARITY/creche.granularite):
+                if journee.values[i] < 0:
+                    journee.values[i] = 0
                 if self.valeur_selection:
                     journee.values[i] |= PRESENT << activity
                 else:
                     journee.values[i] &= ~(PRESENT << activity)
-                #print i, journee.values[i]
             self.Refresh(True, wx.Rect(0, self.curStartY*BEBE_HEIGHT, (creche.affichage_max-creche.affichage_min)*4*BASE_WIDTH, BEBE_HEIGHT))
 
     def OnLeftButtonUp(self, event):
          if self.valeur_selection != -1:
+            start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX)
             inscrit = self.inscrits[self.curStartY]
             journee = inscrit.journees[self.date]
-            start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX)
             journee.values = journee.original_values[:]
             state = journee.get_state()
             if state < 0:
                 journee.set_state(ABSENT, inscrit.getJourneeFromSemaineType(self.date))
-            if datetime.date.today() >= self.date:
-                for i in range(24*4):
-                    if journee.values[i] == (self.valeur_selection | PREVISIONNEL):
-                        journee.values[i] = 0
-            journee.set_value(self.valeur_selection, start, end + BASE_GRANULARITY/creche.granularite)
+            for i in range(start, end+BASE_GRANULARITY/creche.granularite):
+                if self.valeur_selection:
+                    journee.values[i] |= PRESENT << activity
+                else:
+                    journee.values[i] &= ~(PRESENT << activity)
+            journee.save()
+            history.Append([Change(journee, 'values', journee.original_values),
+                            Call(journee.save)])
+
             self.Refresh(True, wx.Rect(0, self.curStartY*BEBE_HEIGHT, (creche.affichage_max-creche.affichage_min)*4*BASE_WIDTH, BEBE_HEIGHT))
-            # journee.values[start:end+BASE_GRANULARITY/creche.granularite] = [self.valeur_selection] * (end - start + BASE_GRANULARITY/creche.granularite)
-##            for i in range(24*4):
-##                if presence.details[i] == 2:
-##                    presence.details[i] = 0
-##            if not 1 in presence.details:
-##                presence.value = VACANCES
-##                presence.details = None
-##            if self.original_journee:
-##                obj = self.original_journee
-##                original_journee = self.original_journee
-##            else:
-##                obj = inscrit.journees[self.date]
-##                original_journee = inscrit.getJourneeFromSemaineType(self.date)
-##            if original_journee.value == PRESENT:
-##                history.Append([Change(obj, 'value', original_presence.value),
-##                                Change(obj, 'previsionnel', original_presence.previsionnel),
-##                                Change(obj, 'details', original_presence.details[:])])
-##            else:
-##                history.Append([Change(obj, 'value', original_presence.value),
-##                                Change(obj, 'previsionnel', original_presence.previsionnel),
-##                                Change(obj, 'details', None)])
-##            if self.original_presence:
-##                self.original_presence.value = presence.value
-##                self.original_presence.previsionnel = presence.previsionnel
-##                self.original_presence.details = presence.details
-##                inscrit.presences[self.date] = self.original_presence
-##            else:
-##                presence.create()
             self.valeur_selection = -1
             self.parent.UpdateButton(self.curStartY)
 
@@ -245,9 +220,11 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
         inscrit = self.inscrits[button.inscrit]
         if self.date not in inscrit.journees:
             inscrit.journees[self.date] = journee = inscrit.getJourneeFromSemaineType(self.date)
-            # TODO ? presence.create()
         else:
             journee = inscrit.journees[self.date]
+
+        history.Append([Change(journee, 'values', journee.values[:]),
+                        Call(journee.save)])
 
         state = journee.get_state()
         if state == VACANCES:
@@ -258,17 +235,10 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
             else:
                 journee.set_state(PRESENT|PREVISIONNEL, inscrit.getJourneeFromSemaineType(self.date))
         elif self.date <= datetime.date.today() and state == PRESENT+PREVISIONNEL:
-            # history.Append(Change(presence, 'previsionnel', 1))
             journee.confirm()
         else:
             journee.set_state(VACANCES, inscrit.getJourneeFromSemaineType(self.date))
 
-##            history.Append([Change(presence, 'value', PRESENT),
-##                            Change(presence, 'details', presence.details[:])])
-##            history.Append(Change(presence, 'value', VACANCES))
-##            history.Append([Change(presence, 'value', MALADE),
-##                            Change(presence, 'details', None),
-##                            Change(presence, 'previsionnel', presence.previsionnel)])
 
         self.UpdateButton(button.inscrit)
         self.tab_window.Refresh()
@@ -390,7 +360,6 @@ class DayPanel(wx.Panel):
         heure = affichage_min
         while heure <= affichage_max:
             x = PRENOMS_WIDTH + BUTTONS_WIDTH + (heure - affichage_min) * BASE_WIDTH
-            # print abs(heure - round(heure))
             if heure % 4 == 0:
                 dc.DrawLine(x, 20, x, 12)
                 dc.DrawText(str(int(round(heure/4)))+"h", x - 3, 0)

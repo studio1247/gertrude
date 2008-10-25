@@ -40,6 +40,13 @@ class Insert:
         self.instance.insert(self.index, self.value)
         self.instance[self.index].create()
 
+class Call:
+    def __init__(self, function):
+        self.function = function
+
+    def Undo(self):
+        self.function()
+        
 class History(list):
     def __init__(self):
         list.__init__(self)

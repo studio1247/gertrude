@@ -35,39 +35,38 @@ class Journee(object):
         self.save()
 
     def save(self):            
-        to_delete = self.activites.keys()
-        a = v = h = 0
-        while h <= 24*4:
-            if h == 24*4:
-                nv = 0
+        old_activities = self.activites.keys()
+        new_activities = self.get_activities()
+        for activity in new_activities:
+            if activity in old_activities:
+                old_activities.remove(activity)
             else:
-                nv = self.values[h]
-            if nv != v:
-                if v != 0:
-                    if self.activites.has_key((a, h, v)) :
-                        to_delete.remove((a, h, v))
-                    else:
-                        self.add_activity(a, h, v)
-                a = h
-                v = nv
-            h += 1
-        for a, b, v in to_delete:
+                a, b, v = activity
+                self.add_activity(a, b, v)
+        for a, b, v in old_activities:
             print 'suppression activite %d' % self.activites[(a, b, v)]
             sql_connection.execute('DELETE FROM ACTIVITES WHERE idx=?', (self.activites[(a, b, v)],))
             del self.activites[(a, b, v)]
 
-    def get_activities(self): # TODO code en double
+    def get_activities(self):
         result = []
         for value in [0] + [activity.value for activity in creche.activites]:
-            mask = PRESENT << value
+            mask = (PRESENT << value)
             a = v = h = 0
             while h <= 24*4:
                 if h == 24*4:
                     nv = 0
+                elif self.values[h] < 0:
+                    if value == 0:
+                        nv = self.values[h]
+                    else:
+                        nv = 0
                 else:
                     nv = self.values[h] & mask
                 if nv != v:
-                    if v != 0:
+                    if v < 0:
+                        result.append((a, h, v))
+                    elif v > 0:
                         result.append((a, h, value))
                     a = h
                     v = nv
@@ -76,7 +75,10 @@ class Journee(object):
 
     def add_activity(self, debut, fin, value, idx=None):
         for i in range(debut, fin):
-            self.values[i] = value
+            if value >= 0:
+                self.values[i] |= (1 << value)
+            else:
+                self.values[i] = value
         if idx is None:
             print 'nouvelle activite (%d, %d, %d)' % (debut, fin, value), 
             result = sql_connection.execute('INSERT INTO ACTIVITES (idx, inscrit, date, value, debut, fin) VALUES (NULL,?,?,?,?,?)', (self.inscrit_idx, self.date, value, debut, fin))
@@ -107,71 +109,6 @@ class Journee(object):
         for i in range(24*4):
             self.values[i] &= ~PREVISIONNEL
         self.save()
-
-####    def del_activity(self, debut):
-####        print 'suppression activite'
-####        sql_connection.execute('DELETE FROM ACTIVITES WHERE idx=?', (self.idx,))
-##
-####    def __setattr__(self, name, value):
-####        self.__dict__[name] = value
-####        if name == 'details':
-####            value = self.encode_details(value)
-####        if name in ['date', 'previsionnel', 'value', 'details'] and self.idx:
-####            print 'update', name, value
-####            sql_connection.execute('UPDATE PRESENCES SET %s=? WHERE idx=?' % name, (value, self.idx))
-##
-##class Presence(object):
-##    def __init__(self, inscrit, date, previsionnel=0, value=PRESENT, creation=True):
-##        self.idx = None
-##        self.inscrit_idx = inscrit.idx
-##        self.date = date
-##        self.previsionnel = previsionnel
-##        self.set_value(value)
-##        if creation:
-##            self.create()
-##
-##    def set_value(self, value):
-##        self.value = value
-##        if value == PRESENT:
-##            self.details = [0] * int((BASE_MAX_HOUR - BASE_MIN_HOUR) * BASE_GRANULARITY)
-##        else:
-##            self.details = None
-##
-##    def encode_details(self, details):
-##        if details is None:
-##            return None
-##        result = 0
-##        for i, v in enumerate(details):
-##            result += v << i
-##        return result
-##
-##    def set_details(self, details):
-##        if isinstance(details, basestring):
-##            details = eval(details)
-##        if details is None:
-##            self.details = None
-##            return
-##        self.details = 64 * [0]
-##        for i in range(64):
-##            if details & (1 << i):
-##                self.details[i] = 1
-##
-##    def create(self):
-##        print 'nouvelle presence'
-##        result = sql_connection.execute('INSERT INTO PRESENCES (idx, inscrit, date, previsionnel, value, details) VALUES (NULL,?,?,?,?,?)', (self.inscrit_idx, self.date, self.previsionnel, self.value, self.encode_details(self.details)))
-##        self.idx = result.lastrowid
-##
-##    def delete(self):
-##        print 'suppression presence'
-##        sql_connection.execute('DELETE FROM PRESENCES WHERE idx=?', (self.idx,))
-##
-##    def __setattr__(self, name, value):
-##        self.__dict__[name] = value
-##        if name == 'details':
-##            value = self.encode_details(value)
-##        if name in ['date', 'previsionnel', 'value', 'details'] and self.idx:
-##            print 'update', name, value
-##            sql_connection.execute('UPDATE PRESENCES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 class Bureau(object):
     def __init__(self, creation=True):

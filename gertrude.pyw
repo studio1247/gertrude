@@ -21,6 +21,7 @@ import __builtin__
 import os, sys, time, shutil, glob, wx
 from data import *
 from startdialog import StartDialog
+import winsound
 
 # Don't remove these 2 lines (mandatory for py2exe)
 import gpanel, controls, zipfile, xml.dom.minidom, wx.html, ooffice
@@ -160,6 +161,8 @@ class GertrudeFrame(wx.Frame):
     def OnUndo(self, event):
         if history.Undo():
             self.listbook.UpdateContents()
+        else:
+            winsound.MessageBeep()
 
 
 class MyApp(wx.App):
