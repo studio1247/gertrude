@@ -20,16 +20,14 @@ import sys
 import string
 import datetime
 import zipfile
-import wx
-import wx.lib.scrolledpanel
-import wx.html
+import wx, wx.lib.scrolledpanel, wx.html
 import xml.dom.minidom
 from constants import *
 from functions import *
 from facture import *
 from cotisation import Cotisation, CotisationException
-from gpanel import GPanel
 from ooffice import *
+from controls import *
 from facture_mensuelle import GenereFactureMensuelle
 from attestation_paiement import GenereAttestationPaiement
 from appel_cotisations import GenereAppelCotisations

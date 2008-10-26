@@ -37,8 +37,11 @@ class Insert:
         self.instance, self.index, self.value = instance, index, value
 
     def Undo(self):
-        self.instance.insert(self.index, self.value)
-        self.instance[self.index].create()
+        if isinstance(self.instance, list):
+            self.instance.insert(self.index, self.value)
+        else:
+            self.instance[self.index] = self.value
+        self.value.create()
 
 class Call:
     def __init__(self, function):

@@ -50,7 +50,7 @@ class Journee(object):
 
     def get_activities(self):
         result = []
-        for value in [0] + [activity.value for activity in creche.activites]:
+        for value in [0] + [activity.value for activity in creche.activites.values()]:
             mask = (PRESENT << value)
             a = v = h = 0
             while h <= 24*4:
@@ -226,13 +226,14 @@ class Activite(object):
         self.label = ""
         self.value = value
         self.mode = 0
+        self.color = 0
 
         if creation:
             self.create()
 
     def create(self):
         print 'nouvelle activite', 
-        values = [activite.value for activite in creche.activites]
+        values = creche.activites.keys()
         for value in range(1, 10):
             if value not in values:
                 self.value = value
@@ -247,7 +248,7 @@ class Activite(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['label', 'value', 'mode'] and self.idx:
+        if name in ['label', 'value', 'mode', 'color'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE ACTIVITIES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
@@ -289,7 +290,7 @@ class Creche(object):
         self.code_postal = ''
         self.ville = ''
         self.users = []
-        self.activites = []
+        self.activites = {}
         self.employes = []
         self.conges = []
         self.bureaux = []

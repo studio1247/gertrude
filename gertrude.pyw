@@ -27,7 +27,7 @@ except:
   pass
 
 # Don't remove these 2 lines (mandatory for py2exe)
-import gpanel, controls, zipfile, xml.dom.minidom, wx.html, ooffice
+import controls, zipfile, xml.dom.minidom, wx.html, ooffice
 sys.path.insert(0, ".")
 
 VERSION = '0.55'

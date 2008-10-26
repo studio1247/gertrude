@@ -20,7 +20,6 @@ import datetime
 from constants import *
 from parameters import *
 from sqlobjects import *
-from gpanel import GPanel
 from controls import *
 
 profiles = [("Administrateur", PROFIL_ALL),

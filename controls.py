@@ -15,12 +15,37 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import wx, wx.lib, wx.lib.scrolledpanel
+import sys
+import wx, wx.lib, wx.lib.scrolledpanel, wx.lib.stattext, wx.combo
 import fpformat
 import datetime
 from functions import *
 from history import Change, Delete, Insert
-              
+
+class GPanel(wx.Panel):
+    def __init__(self, parent, title):
+        wx.Panel.__init__(self, parent, style=wx.LB_DEFAULT)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        if sys.platform == 'win32':
+            st = wx.StaticText(self, -1, title, size=(-1, 24), style=wx.BORDER_SUNKEN|wx.ST_NO_AUTORESIZE)
+            font = wx.Font(12, wx.SWISS, wx.NORMAL, wx.BOLD)
+        else:
+            st = wx.lib.stattext.GenStaticText(self, -1, title, size=(-1, 28), style=wx.BORDER_SUNKEN|wx.ST_NO_AUTORESIZE)
+            font = st.GetFont()
+            font.SetPointSize(12)
+        st.SetFont(font)
+        st.SetBackgroundColour(wx.Colour(10, 36, 106))
+        st.SetBackgroundStyle(wx.BG_STYLE_COLOUR)
+        st.SetForegroundColour(wx.Colour(255, 255, 255))
+        sizer.Add(st, 1, wx.EXPAND)
+        self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALIGN_CENTER_VERTICAL|wx.BOTTOM, 5)
+        self.SetSizer(self.sizer)
+        self.SetAutoLayout(1)
+
+    def UpdateContents(self):
+        pass
+ 
 class NumericCtrl(wx.TextCtrl):
 ##    __fgcol_valid   ="Black"
 ##    __bgcol_valid   ="White"
@@ -605,4 +630,58 @@ class PeriodePanel(wx.Panel, PeriodeMixin):
         wx.Panel.__init__(self, parent, -1, *args, **kwargs)
         PeriodeMixin.__init__(self, member)
         parent.ctrls.append(self)
+
+activity_colors = [(0, 0, 0, 150, wx.SOLID), # ERREUR
+                   (250, 0, 0, 150, wx.BDIAGONAL_HATCH),
+                   (0, 0, 255, 150, wx.FDIAGONAL_HATCH),
+                   (255, 0, 255, 150, wx.FDIAGONAL_HATCH),
+                   (255, 255, 0, 150, wx.FDIAGONAL_HATCH),
+                   ]
+
+def getActivityColor(value, color=None):
+    t = 150
+    s = wx.SOLID
+    if value == MALADE:
+        return 190, 35, 29, t, s
+    elif value == VACANCES:
+        return 0, 0, 255, t, s
+    elif value == 0:
+        r, g, b = 5, 203, 28
+        if value & PREVISIONNEL:
+            t = 75
+        return r, g, b, t, s
+    else:
+        if color is None:
+            color = creche.activites[value].color
+        try:
+            return activity_colors[color]
+        except:
+            return activity_colors[0]
+    
+class ActivityComboBox(wx.combo.OwnerDrawnComboBox):
+    def OnDrawItem(self, dc, rect, item, flags):
+        if item == wx.NOT_FOUND:
+            return
+
+        rr = wx.Rect(*rect) # make a copy
+        rr.Deflate(3, 5)
+
+        data = self.GetClientData(item)
+        if isinstance(data, int):
+            r, g, b, t, s = getActivityColor(data, data)
+        else:
+            r, g, b, t, s = getActivityColor(self.GetClientData(item).value)
+        dc = wx.GCDC(dc)
+        dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
+        dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
+
+        if flags & wx.combo.ODCB_PAINTING_CONTROL:
+           dc.DrawRoundedRectangleRect(wx.Rect(rr.x, rr.y-3, rr.width, rr.height+6), 4)
+        else:
+           dc.DrawRoundedRectangleRect(wx.Rect(rr.x, rr.y-3, rr.width, rr.height+6), 4)
+           dc.DrawText(self.GetString(item), rr.x + 10, rr.y)
+
+    def OnMeasureItem(self, item):
+        return 24
+
     

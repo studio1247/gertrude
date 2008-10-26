@@ -24,7 +24,7 @@ from functions import *
 from sqlobjects import *
 
 DB_FILENAME = 'gertrude.db'
-VERSION = 16
+VERSION = 17
 
 def getdate(s):
     if s is None:
@@ -109,7 +109,8 @@ class SQLConnection(object):
             idx INTEGER PRIMARY KEY,
             label VARCHAR,
             value INTEGER,
-            mode INTEGER
+            mode INTEGER,
+            color INTEGER
           );""")
 
         cur.execute("""
@@ -262,11 +263,11 @@ class SQLConnection(object):
             bareme.debut, bareme.fin, bareme.idx = getdate(bareme.debut), getdate(bareme.fin), idx
             creche.baremes_caf.append(bareme)
 
-        cur.execute('SELECT label, value, mode, idx FROM ACTIVITIES')
+        cur.execute('SELECT label, value, mode, color, idx FROM ACTIVITIES')
         for entry in cur.fetchall():
             activity = Activite(creation=False)
-            activity.label, activity.value, activity.mode, activity.idx = entry
-            creche.activites.append(activity)
+            activity.label, activity.value, activity.mode, activity.color, activity.idx = entry
+            creche.activites[activity.value] = activity
         
         cur.execute('SELECT date_embauche, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, email, idx FROM EMPLOYES')
         for employe_entry in cur.fetchall():
@@ -520,6 +521,15 @@ class SQLConnection(object):
                 value INTEGER,
                 mode INTEGER
               );""")
+
+        if version < 17:
+            cur.execute("ALTER TABLE ACTIVITIES ADD color INTEGER;")
+            cur.execute('SELECT value, idx FROM ACTIVITIES')
+            activities = []
+            for value, idx in cur.fetchall():
+                activities.append((value, idx))
+            for value, idx in activities:
+                cur.execute('UPDATE ACTIVITIES SET color=? WHERE idx=?', (value,idx))
             
         if version < VERSION:
             try:

@@ -17,7 +17,6 @@
 
 import os.path
 import datetime
-from gpanel import GPanel
 from constants import *
 from controls import *
 from sqlobjects import *
@@ -153,55 +152,63 @@ class ActivitesTab(AutoTab):
         AutoTab.__init__(self, parent)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.activites_sizer = wx.BoxSizer(wx.VERTICAL)
-        for i, activite in enumerate(creche.activites):
-            self.line_add(i)
+        for activity in creche.activites.values():
+            self.line_add(activity)
         self.sizer.Add(self.activites_sizer, 0, wx.EXPAND|wx.ALL, 5)
         button_add = wx.Button(self, -1, u'Nouvelle activité')
         self.sizer.Add(button_add, 0, wx.ALL, 5)
         self.Bind(wx.EVT_BUTTON, self.activite_add, button_add)
         self.SetSizer(self.sizer)
-
-    def UpdateContents(self):
-        for i in range(len(self.activites_sizer.GetChildren()), len(creche.activites)):
-            self.line_add(i)
-        for i in range(len(creche.activites), len(self.activites_sizer.GetChildren())):
-            self.line_del()
         self.sizer.Layout()
         AutoTab.UpdateContents(self)
 
-    def line_add(self, index):
+    def line_add(self, activity):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddMany([(wx.StaticText(self, -1, 'Label :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, creche, 'activites[%d].label' % index), 1, wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, 'Mode :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'activites[%d].mode' % index, items=activity_modes), 1, wx.EXPAND)])
-        #sizer.AddMany([(wx.StaticText(self, -1, u'Arrivée :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoDateCtrl(self, creche, 'employes[%d].date_embauche' % index), 1, wx.EXPAND)])
-        #sizer.AddMany([(wx.StaticText(self, -1, u"Domicile :"), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoPhoneCtrl(self, creche, 'employes[%d].telephone_domicile' % index), 1, wx.EXPAND)])
-        #sizer.AddMany([(wx.StaticText(self, -1, u"Portable :"), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoPhoneCtrl(self, creche, 'employes[%d].telephone_portable' % index), 1, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Label :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, creche, 'activites[%d].label' % activity.value), 1, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Mode :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'activites[%d].mode' % activity.value, items=activity_modes), 1, wx.EXPAND)])
+        color_cb = ActivityComboBox(self, -1, style=wx.CB_READONLY, size=(100, -1))
+        color_cb.activity = activity
+        for color in range(1, 10):
+            color_cb.Append("", color)
+        color_cb.SetSelection(activity.color-1)
+        self.Bind(wx.EVT_COMBOBOX, self.changeColor, color_cb)
+        sizer.AddMany([(wx.StaticText(self, -1, 'Couleur :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (color_cb, 1, wx.EXPAND)])
+        
         delbutton = wx.BitmapButton(self, -1, delbmp)
-        delbutton.index = index
+        delbutton.index = activity.value
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
         self.Bind(wx.EVT_BUTTON, self.activite_del, delbutton)
         self.activites_sizer.Add(sizer, 0, wx.EXPAND)
 
-    def line_del(self):
-        index = len(self.activites_sizer.GetChildren()) - 1
-        sizer = self.activites_sizer.GetItem(index)
-        sizer.DeleteWindows()
-        self.activites_sizer.Detach(index)
-
     def activite_add(self, event):
-        history.Append(Delete(creche.activites, -1))
-        creche.activites.append(Activite())
-        self.line_add(len(creche.activites) - 1)
+        activity = Activite()
+        colors = [tmp.color for tmp in creche.activites.values()]
+        for color in range(1, 10):
+            if color not in colors:
+                activity.color = color
+                break
+        creche.activites[activity.value] = activity
+        history.Append(Delete(creche.activites, activity.value))
+        self.line_add(activity)
         self.sizer.Layout()
 
     def activite_del(self, event):
         index = event.GetEventObject().index
         history.Append(Insert(creche.activites, index, creche.activites[index]))
-        self.line_del()
+        for i, child in enumerate(self.activites_sizer.GetChildren()):
+            sizer = child.GetSizer()
+            if index == sizer.GetItem(6).GetWindow().index:
+                sizer.DeleteWindows()
+                self.activites_sizer.Detach(i)
+        
         creche.activites[index].delete()
         del creche.activites[index]
         self.sizer.Layout()
         self.UpdateContents()
+
+    def changeColor(self, event):
+        obj = event.GetEventObject()
+        obj.activity.color = obj.GetSelection() + 1
 
 class CafTab(AutoTab, PeriodeMixin):
     def __init__(self, parent):

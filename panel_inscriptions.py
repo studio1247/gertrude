@@ -19,7 +19,6 @@ import os, datetime, xml.dom.minidom, cStringIO
 import wx, wx.lib.scrolledpanel, wx.html
 from constants import *
 from sqlobjects import *
-from gpanel import GPanel
 from controls import *
 from cotisation import *
 

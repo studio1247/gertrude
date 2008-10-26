@@ -15,36 +15,19 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import wx, wx.lib.scrolledpanel, wx.combo
+import wx, wx.lib.scrolledpanel
 import datetime
 from constants import *
 from parameters import *
 from functions import *
 from sqlobjects import *
 from history import *
-from gpanel import GPanel
+from controls import *
 
 PRENOMS_WIDTH = 80 # px
 BUTTONS_WIDTH = 34 # px
 BASE_WIDTH = 14 # px
 BEBE_HEIGHT = 30 # px
-
-def getColor(value):
-    t = 150
-    s = wx.SOLID
-    if value == MALADE:
-        return 190, 35, 29, t, s
-    elif value == VACANCES:
-        return 0, 0, 255, t, s
-    elif value == 0:
-        r, g, b = 5, 203, 28
-        if value & PREVISIONNEL:
-            t = 75
-        return r, g, b, t, s
-    elif value == 1:
-        return 250, 0, 0, t, wx.BDIAGONAL_HATCH 
-    else:
-        return 0, 0, 255, t, wx.FDIAGONAL_HATCH
         
 class DayTabWindow(wx.Window):
     def __init__(self, parent, inscrits, date, *args, **kwargs):
@@ -72,7 +55,7 @@ class DayTabWindow(wx.Window):
     def DrawLine(self, ligne, journee, dc):
         for debut, fin, valeur in journee.get_activities():
             # print 'activity', valeur, debut, fin
-            r, g, b, t, s = getColor(valeur)
+            r, g, b, t, s = getActivityColor(valeur)
             try:
               dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
               dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
@@ -372,28 +355,6 @@ class DayPanel(wx.Panel):
 
         dc.EndDrawing()
 
-class ActivityComboBox(wx.combo.OwnerDrawnComboBox):
-    def OnDrawItem(self, dc, rect, item, flags):
-        if item == wx.NOT_FOUND:
-            return
-
-        rr = wx.Rect(*rect)  # make a copy
-        rr.Deflate(3, 5)
-
-        r, g, b, t, s = getColor(self.GetClientData(item).value)
-        dc = wx.GCDC(dc)
-        dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
-        dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
-
-        if flags & wx.combo.ODCB_PAINTING_CONTROL:
-           dc.DrawRoundedRectangleRect(wx.Rect(rr.x, rr.y-3, rr.width, rr.height+6), 4)
-        else:
-           dc.DrawRoundedRectangleRect(wx.Rect(rr.x, rr.y-3, rr.width, rr.height+6), 4)
-           dc.DrawText(self.GetString(item), rr.x + 10, rr.y)
-
-    def OnMeasureItem(self, item):
-        return 24
-
 class PlanningPanel(GPanel):
     bitmap = './bitmaps/presences.png'
     index = 20
@@ -428,7 +389,7 @@ class PlanningPanel(GPanel):
             tmp = Activite(creation=False)
             tmp.value = 0
             self.activity_choice.Append(u'Présences', tmp)
-            for activity in creche.activites:
+            for activity in creche.activites.values():
                 self.activity_choice.Append(activity.label, activity)
             self.activity_choice.SetSelection(0)
             self.Bind(wx.EVT_COMBOBOX, self.changeTool, self.activity_choice)
@@ -473,7 +434,7 @@ class PlanningPanel(GPanel):
         tmp.value = 0
         self.activity_choice.Append(u'Présences', tmp)
         selected = 0
-        for i, activity in enumerate(creche.activites):
+        for i, activity in enumerate(creche.activites.values()):
             self.activity_choice.Append(activity.label, activity)
             if self.activity.value == activity.value:
                 selected = i+1
