@@ -221,10 +221,10 @@ class Conge(object):
                 self.creche.calcule_jours_fermeture()
 
 class Activite(object):
-    def __init__(self, creation=True):
+    def __init__(self, creation=True, value=None):
         self.idx = None
         self.label = ""
-        self.value = None
+        self.value = value
         self.mode = 0
 
         if creation:
