@@ -120,8 +120,8 @@ class StartDialog(wx.Dialog):
         wx.PostEvent(self, self.LoadedEvent(result=result))
 
     def StartFrame(self):
-        self.Destroy()
         self.frame().Show()
+        self.Destroy()
 
     def OnOk(self, evt):
         login = self.login_ctrl.GetValue()
