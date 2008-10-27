@@ -384,17 +384,9 @@ class PlanningPanel(GPanel):
         self.Bind(wx.EVT_CHOICE, self.EvtChoice, self.week_choice)
         
         # La combobox pour la selection de l'outil (si activités)
-        if len(creche.activites) > 0:
-            self.activity_choice = ActivityComboBox(self, -1, style=wx.CB_READONLY, size=(100, -1))
-            tmp = Activite(creation=False)
-            tmp.value = 0
-            self.activity_choice.Append(u'Présences', tmp)
-            for activity in creche.activites.values():
-                self.activity_choice.Append(activity.label, activity)
-            self.activity_choice.SetSelection(0)
-            self.Bind(wx.EVT_COMBOBOX, self.changeTool, self.activity_choice)
-            sizer.Add(self.activity_choice, 0, wx.ALIGN_CENTER_VERTICAL)
-
+        self.activity_choice = ActivityComboBox(self, -1, style=wx.CB_READONLY, size=(100, -1))
+        sizer.Add(self.activity_choice, 0, wx.ALIGN_CENTER_VERTICAL)
+        self.Bind(wx.EVT_COMBOBOX, self.changeTool, self.activity_choice)
         self.sizer.Add(sizer, 0, wx.EXPAND)
         
         # le notebook pour les jours de la semaine
@@ -434,10 +426,14 @@ class PlanningPanel(GPanel):
         tmp.value = 0
         self.activity_choice.Append(u'Présences', tmp)
         selected = 0
-        for i, activity in enumerate(creche.activites.values()):
-            self.activity_choice.Append(activity.label, activity)
-            if self.activity.value == activity.value:
-                selected = i+1
+        if len(creche.activites) > 0:
+            self.activity_choice.Enable()
+            for i, activity in enumerate(creche.activites.values()):
+                self.activity_choice.Append(activity.label, activity)
+                if self.activity.value == activity.value:
+                    selected = i+1
+        else:
+            self.activity_choice.Disable()
         self.activity_choice.SetSelection(selected)
         for week_day in range(5):
             note = self.notebook.GetPage(week_day)
