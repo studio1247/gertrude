@@ -26,12 +26,12 @@ from controls import *
 
 PRENOMS_WIDTH = 80 # px
 BUTTONS_WIDTH = 34 # px
-BASE_WIDTH = 14 # px
-BEBE_HEIGHT = 30 # px
+BASE_WIDTH = 12 # px
+LINE_HEIGHT = 30 # px
         
 class DayTabWindow(wx.Window):
     def __init__(self, parent, inscrits, date, *args, **kwargs):
-        wx.Window.__init__(self, parent, size=((creche.affichage_max-creche.affichage_min) * 4 * BASE_WIDTH + 1, BEBE_HEIGHT * len(inscrits) + 1), *args, **kwargs)
+        wx.Window.__init__(self, parent, size=((creche.affichage_max-creche.affichage_min) * 4 * BASE_WIDTH + 1, LINE_HEIGHT * len(inscrits) + 1), *args, **kwargs)
         self.parent = parent
         self.inscrits = inscrits
         self.SetBackgroundColour(wx.WHITE)
@@ -54,7 +54,6 @@ class DayTabWindow(wx.Window):
 
     def DrawLine(self, ligne, journee, dc):
         for debut, fin, valeur in journee.get_activities():
-            # print 'activity', valeur, debut, fin
             r, g, b, t, s = getActivityColor(valeur)
             try:
               dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
@@ -62,7 +61,7 @@ class DayTabWindow(wx.Window):
             except:
               dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
               dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
-            rect = wx.Rect(1+(debut-int(creche.affichage_min*4))*BASE_WIDTH, 1 + ligne * BEBE_HEIGHT, (fin-debut)*BASE_WIDTH-1, BEBE_HEIGHT-1)
+            rect = wx.Rect(1+(debut-int(creche.affichage_min*4))*BASE_WIDTH, 1 + ligne * LINE_HEIGHT, (fin-debut)*BASE_WIDTH-1, LINE_HEIGHT-1)
             dc.DrawRoundedRectangleRect(rect, 4)
 
     def DrawPresence(self, index, dc):
@@ -79,9 +78,6 @@ class DayTabWindow(wx.Window):
         # le quadrillage
         dc.SetPen(wx.GREY_PEN)
         dc.SetBrush(wx.WHITE_BRUSH)
-#        for i in range(len(self.inscrits)+1):
-#            dc.DrawLine(0, i*BEBE_HEIGHT, (creche.affichage_max-creche.affichage_min) * 4 * BASE_WIDTH + 1, i*BEBE_HEIGHT)
-
         affichage_min = int(creche.affichage_min * 4)
         affichage_max = int(creche.affichage_max * 4)
         heure = affichage_min
@@ -91,7 +87,7 @@ class DayTabWindow(wx.Window):
                 dc.SetPen(wx.GREY_PEN)
             else:
                 dc.SetPen(wx.LIGHT_GREY_PEN)
-            dc.DrawLine(x, 0,  x, BEBE_HEIGHT * len(self.inscrits))
+            dc.DrawLine(x, 0,  x, dc.GetSize()[1])
             heure += 1
 
         # les presences
@@ -106,7 +102,7 @@ class DayTabWindow(wx.Window):
 
     def __get_pos(self, x, y):
         posX = int(creche.affichage_min * BASE_GRANULARITY + (x / BASE_WIDTH))
-        posY = int(y / BEBE_HEIGHT)
+        posY = int(y / LINE_HEIGHT)
         return posX, posY
 
     def OnLeftButtonDown(self, event):
@@ -147,7 +143,7 @@ class DayTabWindow(wx.Window):
                     journee.values[i] |= PRESENT << self.parent.parent.panel.activity.value
                 else:
                     journee.values[i] &= ~(PRESENT << self.parent.parent.panel.activity.value)
-            self.Refresh(True, wx.Rect(0, self.curStartY*BEBE_HEIGHT, (creche.affichage_max-creche.affichage_min)*4*BASE_WIDTH, BEBE_HEIGHT))
+            self.Refresh(True, wx.Rect(0, self.curStartY*LINE_HEIGHT, (creche.affichage_max-creche.affichage_min)*4*BASE_WIDTH, LINE_HEIGHT))
 
     def OnLeftButtonUp(self, event):
          if self.valeur_selection != -1:
@@ -171,23 +167,23 @@ class DayTabWindow(wx.Window):
             history.Append([Change(journee, 'values', journee.original_values),
                             Call(journee.save)])
 
-            self.Refresh(True, wx.Rect(0, self.curStartY*BEBE_HEIGHT, (creche.affichage_max-creche.affichage_min)*4*BASE_WIDTH, BEBE_HEIGHT))
+            self.Refresh(True, wx.Rect(0, self.curStartY*LINE_HEIGHT, (creche.affichage_max-creche.affichage_min)*4*BASE_WIDTH, LINE_HEIGHT))
             self.valeur_selection = -1
             self.parent.UpdateButton(self.curStartY)
 
 class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, date = datetime.date.today()):
-        wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, -1, style=wx.SUNKEN_BORDER)
+        wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, -1, size=((creche.affichage_max-creche.affichage_min) * 4 * BASE_WIDTH + PRENOMS_WIDTH + 60, -1), style=wx.SUNKEN_BORDER)
         self.parent = parent
         self.profil = profil
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.prenoms = wx.Window(self, -1, size=(PRENOMS_WIDTH, 0))
-        self.sizer.Add(self.prenoms)
+        self.sizer.Add(self.prenoms, 0, wx.EXPAND)
         self.buttons_sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.Add(self.buttons_sizer, 0, wx.RIGHT, 2)
+        self.sizer.Add(self.buttons_sizer, 0, wx.EXPAND|wx.RIGHT, 2)
         self.inscrits = []
         self.tab_window = DayTabWindow(self, self.inscrits, date=date)
-        self.sizer.Add(self.tab_window)
+        self.sizer.Add(self.tab_window, 0, wx.EXPAND)
         self.date = date
         self.bmp = range(6)
         self.bmp[0] = wx.Bitmap("./bitmaps/icone_presence.png", wx.BITMAP_TYPE_PNG)
@@ -197,8 +193,8 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
         self.UpdateContents()
         self.prenoms.Bind(wx.EVT_PAINT, self.OnPaint)
         self.SetSizer(self.sizer)
+        self.SetupScrolling(scroll_x = False)
         self.SetAutoLayout(1)
-        self.SetupScrolling()
 
     def OnButtonPressed(self, event):
         button = event.GetEventObject()
@@ -260,8 +256,8 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
             self.tab_window.SetMinSize((0, 0))
             self.buttons_sizer.ShowItems(0)
         else:
-            self.prenoms.SetMinSize((PRENOMS_WIDTH, BEBE_HEIGHT * len(self.inscrits) + 1))
-            self.tab_window.SetMinSize((int((creche.affichage_max-creche.affichage_min) * 4 * BASE_WIDTH + 1), BEBE_HEIGHT * len(self.inscrits) + 1))
+            self.prenoms.SetMinSize((PRENOMS_WIDTH, LINE_HEIGHT * len(self.inscrits) - 1))
+            self.tab_window.SetMinSize((int((creche.affichage_max-creche.affichage_min) * 4 * BASE_WIDTH + 1), LINE_HEIGHT * len(self.inscrits) - 1))
             self.buttons_sizer.ShowItems(1)
 
         for i in range(old, new, -1):
@@ -295,15 +291,17 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def DoDrawing(self, dc, printing=False):
         dc.BeginDrawing()
 
-        # les bebes
+        # les prénoms des inscrits
         dc.SetTextForeground("BLACK")
         font = wx.Font(8, wx.SWISS, wx.NORMAL, wx.NORMAL)
         dc.SetFont(font)
 
         for i, inscrit in enumerate(self.inscrits):
             if inscrit.getInscription(self.date) is not None:
-                dc.DrawText(GetInscritId(inscrit, self.inscrits), 10, 5 + i * BEBE_HEIGHT)
+                dc.DrawText(GetInscritId(inscrit, self.inscrits), 5, 5 + i * LINE_HEIGHT)
 
+        dc.SetPen(wx.GREY_PEN)
+        dc.SetBrush(wx.WHITE_BRUSH)
         dc.EndDrawing()
 
     def SetDate(self, date):
@@ -311,16 +309,23 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
         self.tab_window.date = date
         self.UpdateContents()
 
-class DayPanel(wx.Panel):
+class ActivitiesPanel(wx.Window):
+    def __init__(self, parent):
+        wx.Window.__init__(self, parent, -1, size=(-1, 50))
+        
+class DayPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, panel, date):
-        wx.Panel.__init__(self, parent, id=-1, style=wx.LB_DEFAULT)
+        wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, id=-1, style=wx.LB_DEFAULT)
         self.panel = panel
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.echelle = wx.Window(self, -1, size=(0, 25))
+        self.echelle = wx.Window(self, -1, size=(-1, 25))
         self.sizer.Add(self.echelle, 0, wx.EXPAND)
         self.presences_panel = PresencesPanel(self, date)
         self.sizer.Add(self.presences_panel, 1, wx.EXPAND)
+        self.activities_panel = ActivitiesPanel(self)
+        self.sizer.Add(self.activities_panel, 0, wx.EXPAND)
         self.SetSizer(self.sizer)
+        self.SetupScrolling(scroll_y = False)
         self.SetAutoLayout(1)
         self.echelle.Bind(wx.EVT_PAINT, self.OnPaint)
 
