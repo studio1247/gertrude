@@ -221,6 +221,7 @@ class Conge(object):
                 self.creche.calcule_jours_fermeture()
 
 class Activite(object):
+    last_value = 0
     def __init__(self, creation=True, value=None):
         self.idx = None
         self.label = ""
@@ -233,13 +234,14 @@ class Activite(object):
 
     def create(self):
         print 'nouvelle activite', 
-        values = creche.activites.keys()
-        for value in range(1, 10):
-            if value not in values:
-                self.value = value
-                break
+        if self.value is None:
+            values = creche.activites.keys()
+            value = Activite.last_value + 1
+            while value in values:
+                value += 1
+            Activite.last_value = self.value = value
         print self.value
-        result = sql_connection.execute('INSERT INTO ACTIVITIES (idx, label, value, mode) VALUES(NULL,?,?,?)', (self.label, self.value, self.mode))
+        result = sql_connection.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, color) VALUES(NULL,?,?,?,?)', (self.label, self.value, self.mode, self.color))
         self.idx = result.lastrowid
 
     def delete(self):

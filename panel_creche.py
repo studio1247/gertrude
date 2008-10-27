@@ -162,6 +162,12 @@ class ActivitesTab(AutoTab):
         self.sizer.Layout()
         AutoTab.UpdateContents(self)
 
+    def UpdateContents(self):
+        self.activites_sizer.Clear(True)
+        for activity in creche.activites.values():
+            self.line_add(activity)
+        self.sizer.Layout()
+
     def line_add(self, activity):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, 'Label :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, creche, 'activites[%d].label' % activity.value), 1, wx.EXPAND)])
@@ -170,7 +176,8 @@ class ActivitesTab(AutoTab):
         color_cb.activity = activity
         for color in range(1, 10):
             color_cb.Append("", color)
-        color_cb.SetSelection(activity.color-1)
+        if activity.color is not None:
+            color_cb.SetSelection(activity.color-1)
         self.Bind(wx.EVT_COMBOBOX, self.changeColor, color_cb)
         sizer.AddMany([(wx.StaticText(self, -1, 'Couleur :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (color_cb, 1, wx.EXPAND)])
         
@@ -200,7 +207,6 @@ class ActivitesTab(AutoTab):
             if index == sizer.GetItem(6).GetWindow().index:
                 sizer.DeleteWindows()
                 self.activites_sizer.Detach(i)
-        
         creche.activites[index].delete()
         del creche.activites[index]
         self.sizer.Layout()

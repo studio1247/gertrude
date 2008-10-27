@@ -332,7 +332,10 @@ class AutoMixin:
             self.Disable()
         else:
             self.__ontext = False
-            self.SetValue(eval('self.instance.%s' % self.member))
+            try:
+                self.SetValue(eval('self.instance.%s' % self.member))
+            except:
+                print u"Erreur lors de l'évaluation de self.instance.%s" % self.member
             self.__ontext = True
             self.Enable(not readonly)
             
