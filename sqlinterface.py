@@ -319,6 +319,7 @@ class SQLConnection(object):
                 else:
                     journee = Journee(inscrit, key)
                     inscrit.journees[key] = journee
+                #print inscrit.prenom, key, debut, fin, value
                 journee.add_activity(debut, fin, value, idx)
 
         cur.execute('SELECT idx, debut, fin, president, vice_president, tresorier, secretaire FROM BUREAUX')

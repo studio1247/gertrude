@@ -224,9 +224,9 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
         else:
             journee.set_state(VACANCES, inscrit.getJourneeFromSemaineType(self.date))
 
-
         self.UpdateButton(button.inscrit)
         self.tab_window.Refresh()
+        self.activity_panel.UpdateContents()
 
     def UpdateButton(self, index):
         inscrit = self.inscrits[index]

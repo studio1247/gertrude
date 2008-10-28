@@ -78,7 +78,7 @@ class Journee(object):
     def add_activity(self, debut, fin, value, idx=None):
         for i in range(debut, fin):
             if value >= 0:
-                self.values[i] |= (1 << value)
+                self.values[i] |= (1 << (value % PREVISIONNEL)) + (value & PREVISIONNEL)
             else:
                 self.values[i] = value
         if idx is None:
