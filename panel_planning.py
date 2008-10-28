@@ -54,6 +54,7 @@ class DayTabWindow(wx.Window):
 
     def DrawLine(self, ligne, journee, dc):
         for debut, fin, valeur in journee.get_activities():
+            #print debut, fin, valeur
             r, g, b, t, s = getActivityColor(valeur)
             try:
               dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
@@ -66,6 +67,7 @@ class DayTabWindow(wx.Window):
 
     def DrawPresence(self, index, dc):
         inscrit = self.inscrits[index]
+        #print inscrit.prenom
         if self.date in inscrit.journees:
             journee = inscrit.journees[self.date]
         else:
@@ -170,11 +172,13 @@ class DayTabWindow(wx.Window):
             self.Refresh(True, wx.Rect(0, self.curStartY*LINE_HEIGHT, (creche.affichage_max-creche.affichage_min)*4*BASE_WIDTH, LINE_HEIGHT))
             self.valeur_selection = -1
             self.parent.UpdateButton(self.curStartY)
+            self.parent.activity_panel.UpdateContents()
 
 class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, date = datetime.date.today()):
         wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, -1, size=((creche.affichage_max-creche.affichage_min) * 4 * BASE_WIDTH + PRENOMS_WIDTH + 60, -1), style=wx.SUNKEN_BORDER)
         self.parent = parent
+        self.activity_panel = None
         self.profil = profil
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.prenoms = wx.Window(self, -1, size=(PRENOMS_WIDTH, 0))
@@ -279,7 +283,8 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
 
         self.Refresh()
         self.tab_window.Refresh()
-
+        if self.activity_panel:
+            self.activity_panel.UpdateContents()
 
     def OnPaint(self, event):
         dc = wx.PaintDC(self.prenoms)
@@ -309,9 +314,85 @@ class PresencesPanel(wx.lib.scrolledpanel.ScrolledPanel):
         self.tab_window.date = date
         self.UpdateContents()
 
-class ActivitiesPanel(wx.Window):
-    def __init__(self, parent):
-        wx.Window.__init__(self, parent, -1, size=(-1, 50))
+class ActivityPanel(wx.Window):
+    def __init__(self, parent, presences_panel):
+        wx.Window.__init__(self, parent, -1, size=(-1, 22+20*len(creche.activites)))
+        self.presences_panel = presences_panel
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
+
+    def UpdateContents(self):
+        journees = []
+        for inscrit in self.presences_panel.inscrits:
+            if self.presences_panel.date in inscrit.journees:
+                journees.append(inscrit.journees[self.presences_panel.date].values)
+            else:
+                journees.append(inscrit.getJourneeFromSemaineType(self.presences_panel.date).values)
+
+        self.lines = {}
+        for activity in [0] + creche.activites.keys():
+            self.lines[activity] = [0] * 96
+            for i in range(96):
+                for journee in journees:
+                    if journee[i] > 0 and journee[i] & (1 << activity):
+                        self.lines[activity][i] += 1
+        self.Refresh()
+    
+    def OnPaint(self, event):
+        dc = wx.PaintDC(self)
+        self.PrepareDC(dc)
+
+        try:
+            dc = wx.GCDC(dc)
+        except:
+            pass
+        
+        for i, value in enumerate(self.lines.keys()):
+            if value == 0:
+                dc.DrawText(u"Présences", 5, 6 + i * 20)
+            else:
+                dc.DrawText(creche.activites[i].label, 5, 6 + i * 20)
+            self.DrawLine(dc, i, value)
+
+    def DrawLine(self, dc, index, value):
+        line = self.lines[value]
+        r, g, b, t, s = getActivityColor(value)
+        try:
+            dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
+            dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
+        except:
+            dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
+            dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
+        
+        debut = int(creche.affichage_min*4)
+        fin = int(creche.affichage_max*4)
+        x = debut
+        v = 0
+        holes = []
+        a = 0
+        while x <= fin:
+            if x == fin:
+                nv = 0
+            else:
+                nv = line[x]
+            if nv != v:
+                if v != 0:
+                    rect = wx.Rect(PRENOMS_WIDTH+35+(a-debut)*BASE_WIDTH, 2 + index * 20, (x-a)*BASE_WIDTH-1, 19)
+                    dc.DrawRoundedRectangleRect(rect, 4)
+                    dc.DrawText(str(v), PRENOMS_WIDTH - 4*len(str(v)) + 36 + (float(x+a)/2-debut)*BASE_WIDTH, 4 + index * 20)
+                else:
+                    holes.append((a, x))
+                a = x    
+                v = nv
+            x += 1
+        
+        dc.SetPen(wx.GREY_PEN)
+        for a, b in holes:
+            if a == 0:
+                a1 = 5
+            else:
+                a1 = PRENOMS_WIDTH+36+(a-debut)*BASE_WIDTH
+            dc.DrawLine(a1, 20 + index * 20, PRENOMS_WIDTH+32+(b-debut)*BASE_WIDTH, 20 + index * 20)
+            
         
 class DayPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, panel, date):
@@ -322,8 +403,10 @@ class DayPanel(wx.lib.scrolledpanel.ScrolledPanel):
         self.sizer.Add(self.echelle, 0, wx.EXPAND)
         self.presences_panel = PresencesPanel(self, date)
         self.sizer.Add(self.presences_panel, 1, wx.EXPAND)
-        self.activities_panel = ActivitiesPanel(self)
-        self.sizer.Add(self.activities_panel, 0, wx.EXPAND)
+        self.activity_panel = ActivityPanel(self, self.presences_panel)
+        self.presences_panel.activity_panel = self.activity_panel
+        self.activity_panel.UpdateContents()
+        self.sizer.Add(self.activity_panel, 0, wx.EXPAND)
         self.SetSizer(self.sizer)
         self.SetupScrolling(scroll_y = False)
         self.SetAutoLayout(1)

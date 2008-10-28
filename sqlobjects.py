@@ -63,11 +63,13 @@ class Journee(object):
                         nv = 0
                 else:
                     nv = self.values[h] & mask
+                    if nv:
+                        nv += self.values[h] & PREVISIONNEL
                 if nv != v:
                     if v < 0:
                         result.append((a, h, v))
                     elif v > 0:
-                        result.append((a, h, value))
+                        result.append((a, h, value+(v&PREVISIONNEL)))
                     a = h
                     v = nv
                 h += 1
@@ -109,6 +111,12 @@ class Journee(object):
         for i in range(24*4):
             self.values[i] &= ~PREVISIONNEL
         self.save()
+
+    def delete(self):
+        for a, b, v in self.activites.keys():
+            print 'suppression activite %d' % self.activites[(a, b, v)]
+            sql_connection.execute('DELETE FROM ACTIVITES WHERE idx=?', (self.activites[(a, b, v)],))
+            del self.activites[(a, b, v)]
 
 class Bureau(object):
     def __init__(self, creation=True):
@@ -548,7 +556,7 @@ class Inscrit(object):
     def delete(self):
         print 'suppression inscrit'
         sql_connection.execute('DELETE FROM INSCRITS WHERE idx=?', (self.idx,))
-        for obj in [self.papa, self.maman] + self.freres_soeurs + self.inscriptions + self.presences.values():
+        for obj in [self.papa, self.maman] + self.freres_soeurs + self.inscriptions + self.journees.values():
             obj.delete()
 
     def __setattr__(self, name, value):

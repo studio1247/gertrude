@@ -648,15 +648,15 @@ def getActivityColor(value, color=None):
         return 190, 35, 29, t, s
     elif value == VACANCES:
         return 0, 0, 255, t, s
-    elif value == 0:
+    elif value % PREVISIONNEL == 0:
         r, g, b = 5, 203, 28
         if value & PREVISIONNEL:
             t = 75
         return r, g, b, t, s
     else:
-        if color is None:
-            color = creche.activites[value].color
         try:
+            if color is None:
+                color = creche.activites[value % PREVISIONNEL].color
             return activity_colors[color]
         except:
             return activity_colors[0]
