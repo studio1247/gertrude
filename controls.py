@@ -687,4 +687,8 @@ class ActivityComboBox(wx.combo.OwnerDrawnComboBox):
     def OnMeasureItem(self, item):
         return 24
 
+    def SetSelection(self, item):
+        wx.combo.OwnerDrawnComboBox.SetSelection(self, item)
+        self.activity = self.GetClientData(item)
+
     

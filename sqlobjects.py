@@ -89,12 +89,10 @@ class Journee(object):
         self.activites[(debut, fin, value)] = idx
 
     def get_state(self):
-        state = ABSENT 
+        state = 0 
         for i in range(24*4):
             if self.values[i] < 0:
                 return self.values[i]
-            if self.values[i] & PRESENT:
-                state |= PRESENT
             if self.values[i] & PREVISIONNEL:
                 state |= PREVISIONNEL
         return state
