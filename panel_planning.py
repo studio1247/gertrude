@@ -321,6 +321,8 @@ class ActivityPanel(wx.Window):
         self.Bind(wx.EVT_PAINT, self.OnPaint)
 
     def UpdateContents(self):
+        self.SetMinSize((-1, 22+20*len(creche.activites)))
+        self.GetParent().sizer.Layout()
         journees = []
         for inscrit in self.presences_panel.inscrits:
             if self.presences_panel.date in inscrit.journees:
@@ -414,7 +416,6 @@ class DayPanel(wx.lib.scrolledpanel.ScrolledPanel):
 
     def SetDate(self, date):
         self.presences_panel.SetDate(date)
-        self.sizer.Layout()
 
     def OnPaint(self, event):
         dc = wx.PaintDC(self.echelle)
@@ -485,6 +486,7 @@ class PlanningPanel(GPanel):
             title = days[week_day] + " " + str(day.day) + " " + months[day.month - 1] + " " + str(day.year)
             self.notebook.AddPage(DayPanel(self.notebook, self, day), title)
 
+        self.SetAutoLayout(1)
         self.sizer.Layout()
 
     def EvtChoice(self, evt):
