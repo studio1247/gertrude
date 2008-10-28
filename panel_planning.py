@@ -119,13 +119,10 @@ class DayTabWindow(wx.Window):
             journee = inscrit.journees[self.date]
 
         journee.original_values = journee.values[:]
-        if journee.get_state() < 0 or not journee.values[posX] & (PRESENT<<self.parent.parent.panel.activity.value) or (datetime.date.today() >= self.date and creche.presences_previsionnelles and (journee.values[posX] & PREVISIONNEL)):
+        if journee.get_state() < 0 or not journee.values[posX] & (PRESENT<<self.parent.parent.panel.activity.value):
             self.valeur_selection = 1
         else:
             self.valeur_selection = 0
-
-        if datetime.date.today() < self.date and creche.presences_previsionnelles:
-            self.valeur_selection |= PREVISIONNEL
 
         self.parent.UpdateButton(self.curStartY) # TODO pas toujours
         self.OnLeftButtonDragging(event)

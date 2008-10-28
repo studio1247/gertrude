@@ -489,7 +489,7 @@ class SQLConnection(object):
                 if value == 0:
                     value = 1
                     if previsionnel:
-                        value += 256
+                        value += PREVISIONNEL
                     if isinstance(val_details, basestring):
                         val_details = eval(val_details)
                     details = 64 * [0]
