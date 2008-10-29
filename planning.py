@@ -26,8 +26,8 @@ ICONS_WIDTH = 34 # px
 COLUMN_WIDTH = 12 # px
 LINE_HEIGHT = 30 # px
 
-BUTTON_BITMAPS = { 0: wx.Bitmap("./bitmaps/icone_presence.png", wx.BITMAP_TYPE_PNG),
-                   PREVISIONNEL: wx.Bitmap("./bitmaps/icone_presence_prev.png", wx.BITMAP_TYPE_PNG),
+BUTTON_BITMAPS = { PRESENT: wx.Bitmap("./bitmaps/icone_presence.png", wx.BITMAP_TYPE_PNG),
+                   PRESENT+PREVISIONNEL: wx.Bitmap("./bitmaps/icone_presence_prev.png", wx.BITMAP_TYPE_PNG),
                    VACANCES: wx.Bitmap("./bitmaps/icone_vacances.png", wx.BITMAP_TYPE_PNG),
                    MALADE: wx.Bitmap("./bitmaps/icone_maladie.png", wx.BITMAP_TYPE_PNG),
                    }
@@ -136,8 +136,7 @@ class PlanningGridWindow(wx.Window):
             start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX)
             line = self.lines[self.curStartY]
             line.values = line.original_values[:]
-            state = line.get_state()
-            if state < 0:
+            if line.get_state() < 0:
                 if creche.presences_previsionnelles and line.date > datetime.date.today():
                     line.values = [PREVISIONNEL] * 96
                 else:
@@ -219,7 +218,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         for i in range(previous_count, count):
             panel = wx.Panel(self, style=wx.SUNKEN_BORDER)
             self.buttons_sizer.Add(panel)
-            panel.button = wx.BitmapButton(panel, -1, BUTTON_BITMAPS[0], size=(26, 26), style=wx.NO_BORDER)
+            panel.button = wx.BitmapButton(panel, -1, BUTTON_BITMAPS[PRESENT], size=(26, 26), style=wx.NO_BORDER)
             panel.button.line = i
             sizer = wx.BoxSizer(wx.VERTICAL)
             sizer.Add(panel.button)

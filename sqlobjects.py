@@ -51,7 +51,7 @@ class Journee(object):
     def get_activities(self):
         result = []
         for value in [0] + [activity.value for activity in creche.activites.values()]:
-            mask = (PRESENT << value)
+            mask = (1 << value)
             a = v = h = 0
             while h <= 24*4:
                 if h == 24*4:
@@ -89,7 +89,7 @@ class Journee(object):
         self.activites[(debut, fin, value)] = idx
 
     def get_state(self):
-        state = 0 
+        state = PRESENT
         for i in range(24*4):
             if self.values[i] < 0:
                 return self.values[i]

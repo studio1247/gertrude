@@ -103,7 +103,6 @@ class PlanningPanel(GPanel):
             if day in creche.jours_fermeture:
                 print "TODO"
             note.SetDate(day)
-            note.presences_panel.UpdateContents()
             self.notebook.SetSelection(0)
         self.sizer.Layout()
 
