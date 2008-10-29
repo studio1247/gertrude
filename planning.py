@@ -185,10 +185,11 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         if state == VACANCES:
             line.set_state(MALADE, line.reference)
         elif state == MALADE:
-            if line.date <= datetime.date.today():
+            # TODO dans ce cas plutôt recopier la référence que mettre PRESENT partout
+            if not creche.presences_previsionnelles or line.date <= datetime.date.today():
                 line.set_state(PRESENT, line.reference)
             else:
-                line.set_state(PRESENT|PREVISIONNEL, line.reference) # TODO mais si on n'active pas la gestion des présences prev ??
+                line.set_state(PRESENT|PREVISIONNEL, line.reference)
         elif line.date <= datetime.date.today() and state == PREVISIONNEL:
             line.confirm()
         else:
