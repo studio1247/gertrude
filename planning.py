@@ -210,25 +210,33 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def SetLines(self, lines):
         previous_count = len(self.lines)
         self.lines = lines
-        self.grid_panel.SetLines(lines)
+        self.grid_panel.SetLines(lines)        
         count = len(self.lines)
-        self.labels_panel.SetMinSize((LABEL_WIDTH, LINE_HEIGHT*count - 1))
-        for i in range(previous_count, count, -1):
-            self.buttons_sizer.GetItem(i-1).DeleteWindows()
-            self.buttons_sizer.Detach(i-1)
-        for i in range(previous_count, count):
-            panel = wx.Panel(self, style=wx.SUNKEN_BORDER)
-            self.buttons_sizer.Add(panel)
-            panel.button = wx.BitmapButton(panel, -1, BUTTON_BITMAPS[PRESENT], size=(26, 26), style=wx.NO_BORDER)
-            panel.button.line = i
-            sizer = wx.BoxSizer(wx.VERTICAL)
-            sizer.Add(panel.button)
-            panel.SetSizer(sizer)
+        if count != previous_count:
+            self.SetScrollPos(wx.VERTICAL, 0)
+            for i in range(previous_count, count, -1):
+                self.buttons_sizer.GetItem(i-1).DeleteWindows()
+                self.buttons_sizer.Detach(i-1)
+            for i in range(previous_count, count):
+                panel = wx.Panel(self, style=wx.SUNKEN_BORDER)
+                self.buttons_sizer.Add(panel)
+                panel.button = wx.BitmapButton(panel, -1, BUTTON_BITMAPS[PRESENT], size=(26, 26), style=wx.NO_BORDER)
+                panel.button.line = i
+                sizer = wx.BoxSizer(wx.VERTICAL)
+                sizer.Add(panel.button)
+                panel.SetSizer(sizer)
+                sizer.Layout()
 ##            if (self.profil & PROFIL_SAISIE_PRESENCES) or self.date > datetime.date.today():
-            self.Bind(wx.EVT_BUTTON, self.OnButtonPressed, panel.button)
+                self.Bind(wx.EVT_BUTTON, self.OnButtonPressed, panel.button)
+            self.buttons_sizer.Layout()
+            self.labels_panel.SetMinSize((LABEL_WIDTH, LINE_HEIGHT*count - 1))
+            self.sizer.Layout()
+            self.SetupScrolling(scroll_x=False)
+            self.GetParent().sizer.Layout()
+
         for i in range(count):
             self.UpdateButton(i)
-        self.sizer.Layout()
+
         self.grid_panel.Refresh()
         self.labels_panel.Refresh()
             
