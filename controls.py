@@ -691,4 +691,10 @@ class ActivityComboBox(wx.combo.OwnerDrawnComboBox):
         wx.combo.OwnerDrawnComboBox.SetSelection(self, item)
         self.activity = self.GetClientData(item)
 
+    def OnDrawBackground(self, dc, rect, item, flags):
+        if flags & wx.combo.ODCB_PAINTING_SELECTED:
+            bgCol = wx.Colour(160, 160, 160)
+            dc.SetBrush(wx.Brush(bgCol))
+            dc.SetPen(wx.Pen(bgCol))
+            dc.DrawRectangleRect(rect);
     

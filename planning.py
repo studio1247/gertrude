@@ -16,6 +16,7 @@
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import wx, wx.lib.scrolledpanel
+from buffered_window import BufferedWindow
 import datetime
 from constants import *
 from controls import getActivityColor
@@ -32,14 +33,13 @@ BUTTON_BITMAPS = { PRESENT: wx.Bitmap("./bitmaps/icone_presence.png", wx.BITMAP_
                    MALADE: wx.Bitmap("./bitmaps/icone_maladie.png", wx.BITMAP_TYPE_PNG),
                    }
 
-class PlanningGridWindow(wx.Window):
+class PlanningGridWindow(BufferedWindow):
     def __init__(self, parent, activity_combobox):
-        wx.Window.__init__(self, parent, size=((creche.affichage_max-creche.affichage_min) * 4 * COLUMN_WIDTH + 1, -1))
-        self.SetBackgroundColour(wx.WHITE)
         self.lines = []
+        BufferedWindow.__init__(self, parent, size=((creche.affichage_max-creche.affichage_min) * 4 * COLUMN_WIDTH + 1, -1))
+        self.SetBackgroundColour(wx.WHITE)
         self.activity_combobox = activity_combobox
         self.state = -1
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
 
 ##        if (profil & PROFIL_SAISIE_PRESENCES) or date > datetime.date.today():
         self.SetCursor(wx.StockCursor(wx.CURSOR_PENCIL))        
@@ -50,11 +50,13 @@ class PlanningGridWindow(wx.Window):
     def SetLines(self, lines):
         self.lines = lines
         self.SetMinSize((int((creche.affichage_max-creche.affichage_min) * 4 * COLUMN_WIDTH + 1), LINE_HEIGHT * len(self.lines) - 1))
+       
+    def UpdateLine(self, index):
+        self.UpdateDrawing()
 
-    def OnPaint(self, event):
-        dc = wx.PaintDC(self)
-        self.PrepareDC(dc)
+    def Draw(self, dc):
         dc.BeginDrawing()
+        dc.Clear()
 
         # le quadrillage
         dc.SetPen(wx.GREY_PEN)
@@ -72,7 +74,7 @@ class PlanningGridWindow(wx.Window):
             dc.DrawLine(x, 0,  x, height)
             heure += 1
 
-        # les presences
+        # les présences
         try:
             dc = wx.GCDC(dc)
         except:
@@ -129,7 +131,7 @@ class PlanningGridWindow(wx.Window):
                     line.values[i] |= 1 << self.activity_combobox.activity.value
                 else:
                     line.values[i] &= ~(1 << self.activity_combobox.activity.value)
-            self.Refresh(True, wx.Rect(0, self.curStartY*LINE_HEIGHT, (creche.affichage_max-creche.affichage_min)*4*COLUMN_WIDTH, LINE_HEIGHT))
+            self.UpdateLine(self.curStartY)
 
     def OnLeftButtonUp(self, event):
          if self.state != -1:
@@ -154,7 +156,7 @@ class PlanningGridWindow(wx.Window):
             history.Append([Change(line, 'values', line.original_values),
                             Call(line.save)])
 
-            self.Refresh(True, wx.Rect(0, self.curStartY*LINE_HEIGHT, (creche.affichage_max-creche.affichage_min)*4*COLUMN_WIDTH, LINE_HEIGHT))
+            self.UpdateLine(self.curStartY)
             self.state = -1
             self.GetParent().UpdateLine(self.curStartY)
 
@@ -195,7 +197,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         else:
             line.set_state(VACANCES, line.reference)
 
-        self.grid_panel.Refresh() # TODO UpdateLine aussi !
+        self.grid_panel.UpdateLine(button.line)
         self.UpdateLine(button.line)
 
     def UpdateLine(self, index):
@@ -237,7 +239,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         for i in range(count):
             self.UpdateButton(i)
 
-        self.grid_panel.Refresh()
+        self.grid_panel.UpdateDrawing()
         self.labels_panel.Refresh()
             
     def OnPaint(self, event):
@@ -252,12 +254,11 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         dc.EndDrawing()
 
 
-class PlanningSummaryPanel(wx.Window):
+class PlanningSummaryPanel(BufferedWindow):
     def __init__(self, parent):
         self.activities_count = len(creche.activites)
         self.summary = {}
-        wx.Window.__init__(self, parent, -1, size=(-1, 22+20*self.activities_count))
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        BufferedWindow.__init__(self, parent, size=(-1, 22+20*self.activities_count))
 
     def UpdateContents(self):
         if self.activities_count != len(creche.activites):
@@ -273,12 +274,13 @@ class PlanningSummaryPanel(wx.Window):
                 for line in lines:
                     if line[i] > 0 and line[i] & (1 << activity):
                         self.summary[activity][i] += 1
-        self.Refresh()
+        self.UpdateDrawing()
 
-    def OnPaint(self, event):
-        dc = wx.PaintDC(self)
-        self.PrepareDC(dc)
-
+    def Draw(self, dc):
+        dc.BeginDrawing()
+        dc.SetBackground(wx.ClientDC(self).GetBackground())
+        dc.Clear()
+        
         try:
             dc = wx.GCDC(dc)
         except:
@@ -290,6 +292,8 @@ class PlanningSummaryPanel(wx.Window):
             else:
                 dc.DrawText(creche.activites[i].label, 5, 6 + i * 20)
             self.DrawLine(dc, i, activity)
+
+        dc.EndDrawing()
 
     def DrawLine(self, dc, index, activity):
         line = self.summary[activity]
