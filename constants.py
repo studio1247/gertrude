@@ -46,12 +46,12 @@ DEDUCTION_AVEC_CARENCE = 2
 
 # Valeurs de présence
 ABSENT = 0
-PRESENT = 1
+PRESENT = 1 << 0 # activité 0
 VACANCES = -1
 MALADE = -2
 NONINSCRIT = -3
-PREVISIONNEL = 1<<30
-SUPPLEMENT = 512
+PREVISIONNEL = 1 << 30 #  flag previsionnel
+SUPPLEMENT = 512 # ne pas utiliser avec activités
 
 #IDs de boutons
 ID_SYNCHRO = 10001
