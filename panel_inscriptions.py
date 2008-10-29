@@ -20,6 +20,7 @@ import wx, wx.lib.scrolledpanel, wx.html
 from constants import *
 from sqlobjects import *
 from controls import *
+from planning import *
 from cotisation import *
 
 def ParseHtml(filename, context):
@@ -207,124 +208,6 @@ class ForfaitPanel(ContextPanel):
                 
         self.html_window.SetPage(self.html)
 
-class WeekWindow(wx.Window):
-    pxLigne = 30
-    pxColonnes = [ -1, 100, 150, 250 ]
-    EVT_CHANGE = 1
-    
-    def __init__(self, parent):
-        wx.Window.__init__(self, parent, -1, size=(self.pxColonnes[-1] + 71, self.pxLigne * 5 + 31))
-        self.tabwindow = wx.Window(self, pos=(60, 30), size=(self.pxColonnes[-1]+1, self.pxLigne * 5 + 1), style = wx.SUNKEN_BORDER)
-        self.tabwindow.Bind(wx.EVT_PAINT, self.OnTabPaint)
-        self.curStartX = None
-        self.semaine_type = None
-        self.on_change_handler = None
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
-        
-    def Bind(self, event, handler):
-        if event == self.EVT_CHANGE:
-            self.on_change_handler = handler
-        else:
-            wx.Window.Bind(self, event, handler)
-        
-    def OnPaint(self, event):
-        dc = wx.PaintDC(self)
-        self.PrepareDC(dc)
-        dc.SetPen(wx.GREY_PEN)
-        dc.SetTextForeground('BLACK')
-        font = wx.Font(10, wx.SWISS, wx.NORMAL, wx.NORMAL) # TODO statictext
-        dc.SetFont(font)
-        dc.DrawText('Matin', self.pxColonnes[0] + 90, 8)
-        dc.DrawText('Midi', self.pxColonnes[1] + 75, 8)
-        dc.DrawText(u'Après-midi', self.pxColonnes[2] + 80, 8)
-        
-        for i in range(5):
-            dc.DrawText(days[i], 0, i * self.pxLigne + 37)
-            
-    def OnTabPaint(self, event):
-        dc = wx.PaintDC(self.tabwindow)
-        self.tabwindow.PrepareDC(dc)
-        if self.semaine_type:
-            self.DoDrawing(dc)
-
-    def DrawDay(self, dc, ligne, presence):
-        dc.SetPen(wx.TRANSPARENT_PEN)
-        for i in range(3):
-            if presence[i]:
-                dc.SetBrush(wx.Brush(wx.Color(5, 203, 28)))
-            else:
-                dc.SetBrush(wx.WHITE_BRUSH)
-            dc.DrawRectangle(self.pxColonnes[i]+1, ligne * self.pxLigne, self.pxColonnes[i+1]-self.pxColonnes[i]-1, self.pxLigne - 1)
-
-    def DoDrawing(self, dc):
-        dc.BeginDrawing()
-        dc.SetPen(wx.GREY_PEN)
-        for i in range(5):
-            dc.DrawLine(0, (i + 1) * self.pxLigne - 1, self.pxColonnes[-1], (i + 1) * self.pxLigne - 1)
-        for i in self.pxColonnes[1:]:
-            dc.DrawLine(i, 0, i, self.pxLigne * 5 + 1)
-        if self.semaine_type:
-            for i in range(5):
-                self.DrawDay(dc, i, self.semaine_type[i])
-        dc.EndDrawing()
-
-    def __get_pos(self, x, y):
-        posY = int(y / self.pxLigne)
-        for i in range(1, 4):
-            if x < self.pxColonnes[i]:
-                posX = i - 1
-                return posX, posY
-
-    def OnLeftButtonEvent(self, event):
-        x = event.GetX()
-        y = event.GetY()
-
-        if event.LeftDown():
-            self.curStartX, self.curStartY = self.__get_pos(x, y)
-            
-        if (event.LeftDown() or event.Dragging()) and self.curStartX is not None:
-            self.curEndX, self.curEndY = self.__get_pos(x, y)
-
-            if self.curEndY == self.curStartY:
-                dc = wx.ClientDC(self.tabwindow)
-                self.tabwindow.PrepareDC(dc)
-                start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX)
-                valeur_selection = not self.semaine_type[self.curStartY][self.curStartX]                  
-                self.jour_tmp = 3 * [0]
-                self.jour_tmp[:] = self.semaine_type[self.curStartY]
-                for i in range(start, end+1):
-                    self.jour_tmp[i] = valeur_selection
-                self.DrawDay(dc, self.curStartY, self.jour_tmp)
-                
-        elif event.LeftUp() and self.curStartX is not None:
-                if self.jour_tmp != [0, 1, 0]:
-                    self.semaine_type[self.curStartY] = self.jour_tmp
-                else:
-                    self.semaine_type[self.curStartY] = [0, 0, 0]
-                    dc = wx.ClientDC(self.tabwindow)
-                    self.tabwindow.PrepareDC(dc)
-                    self.DrawDay(dc, self.curStartY, self.semaine_type[self.curStartY])
-                self.curStartX = None
-                self.OnChange(self.semaine_type)
-                
-    def SetSemaine(self, semaine_type):
-        self.semaine_type = semaine_type
-        if semaine_type:
-            self.tabwindow.SetBackgroundColour(wx.WHITE)
-            self.tabwindow.Bind(wx.EVT_LEFT_DOWN, self.OnLeftButtonEvent)
-            self.tabwindow.Bind(wx.EVT_LEFT_UP, self.OnLeftButtonEvent)
-            self.tabwindow.Bind(wx.EVT_MOTION, self.OnLeftButtonEvent)
-            self.tabwindow.SetCursor(wx.StockCursor(wx.CURSOR_PENCIL))
-        else:
-            self.tabwindow.SetBackgroundColour(wx.LIGHT_GREY)
-            for evt in [wx.EVT_LEFT_DOWN, wx.EVT_LEFT_UP, wx.EVT_MOTION]:
-                self.tabwindow.Unbind(evt)
-            self.tabwindow.SetCursor(wx.STANDARD_CURSOR)
-        self.tabwindow.Refresh()
-        
-    def OnChange(self, value):
-        if self.on_change_handler:
-            self.on_change_handler(value)
             
 wildcard = "PNG (*.png)|*.png|"     \
            "BMP (*.pmp)|*.bmp|"     \
@@ -489,6 +372,23 @@ class ParentsPanel(InscriptionsTab):
     def nouveau_revenu_maman(self):
         return Revenu(self.inscrit.maman)
 
+class ReferencePlanningPanel(PlanningWidget):
+    def __init__(self, parent, activity_choice):
+        PlanningWidget.__init__(self, parent, activity_choice, options=NO_ICONS)
+        
+    def UpdateContents(self):
+        lines = []
+        for day in range(5):
+            line = self.inscription.reference[day]
+            line.label = days[day]
+            line.reference = None
+            lines.append(line)
+        self.SetLines(lines)
+
+    def SetInscription(self, inscription):
+        self.inscription = inscription
+        self.UpdateContents()
+        
 class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
     def __init__(self, parent):
         InscriptionsTab.__init__(self, parent)
@@ -500,55 +400,76 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         gridsizer = wx.FlexGridSizer(0, 2, 5, 10)
         gridsizer.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_essai'), 0, 0)])
         sizer.Add(gridsizer, 0, wx.EXPAND|wx.ALL, 5)
-        if creche.modes_inscription != MODE_CRECHE:
-            sizer1 = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Semaine type'), wx.HORIZONTAL)
-            sizer.Add(sizer1)
-            self.week_ctrl = WeekWindow(self)
-            self.week_ctrl.Bind(WeekWindow.EVT_CHANGE, self.OnPeriodeChange)
-            sizer1.Add(self.week_ctrl)
-            bmp = wx.Bitmap("./bitmaps/icone_plein_temps.png", wx.BITMAP_TYPE_PNG)
-            btn = wx.BitmapButton(self, -1, bmp)
-            sizer1.Add(btn)
-            self.Bind(wx.EVT_BUTTON, self.EvtButton55e, btn)
-        else:
-            self.week_ctrl = None
+##        if creche.modes_inscription != MODE_CRECHE:
+##            sizer1 = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Semaine type'), wx.HORIZONTAL)
+##            sizer.Add(sizer1)
+
+        self.activity = Activite(creation=False, value=0)
+        self.activity_choice = ActivityComboBox(self)
+        sizer.Add(self.activity_choice)
+        
+        self.planning_panel = ReferencePlanningPanel(self, self.activity_choice)
+        sizer.Add(self.planning_panel, 1, wx.EXPAND)
+#            self.week_ctrl.Bind(WeekWindow.EVT_CHANGE, self.OnPeriodeChange)
+#            sizer1.Add(self.week_ctrl)
+#            bmp = wx.Bitmap("./bitmaps/icone_plein_temps.png", wx.BITMAP_TYPE_PNG)
+#            btn = wx.BitmapButton(self, -1, bmp)
+#            sizer1.Add(btn)
+#            self.Bind(wx.EVT_BUTTON, self.EvtButton55e, btn)
+#        else:
+#            self.week_ctrl = None
         self.SetSizer(sizer)
+        self.UpdateContents()
         
     def nouvelleInscription(self): # TODO les autres pareil ...
         return Inscription(self.inscrit)
-    
+
+    def UpdateContents(self):
+        self.activity_choice.Clear()
+        tmp = Activite(creation=False)
+        tmp.value = 0
+        self.activity_choice.Append(u'Présences', tmp)
+        selected = 0
+        if len(creche.activites) > 0:
+            self.activity_choice.Enable()
+            for i, activity in enumerate(creche.activites.values()):
+                self.activity_choice.Append(activity.label, activity)
+                if self.activity.value == activity.value:
+                    selected = i+1
+        else:
+            self.activity_choice.Disable()
+        self.activity_choice.SetSelection(selected)
+        
     def SetInscrit(self, inscrit):
         self.inscrit = inscrit
         self.SetInstance(inscrit)
-        if self.week_ctrl: # TODO week_ctrl comme les autres auto ctrls
-            if inscrit:
-                self.week_ctrl.SetSemaine(inscrit.inscriptions[self.periode].periode_reference)
-            else:
-                self.week_ctrl.SetSemaine(None)
+        self.planning_panel.SetInscription(inscrit.inscriptions[self.periode])
+##  TODO          else:
+##                self.week_ctrl.SetSemaine(None)
     
-    def EvtButton55e(self, event):
-        if self.inscrit.inscriptions[self.periode].periode_reference != 5 * [[1, 1, 1]]:
-            self.inscrit.inscriptions[self.periode].periode_reference = 5 * [[1, 1, 1]]
-            self.week_ctrl.SetSemaine(self.inscrit.inscriptions[self.periode].periode_reference)
+##    def EvtButton55e(self, event):
+##        if self.inscrit.inscriptions[self.periode].periode_reference != 5 * [[1, 1, 1]]:
+##            self.inscrit.inscriptions[self.periode].periode_reference = 5 * [[1, 1, 1]]
+####            self.week_ctrl.SetSemaine(self.inscrit.inscriptions[self.periode].periode_reference)
     
     def OnPeriodeChange(self, periode):
         self.inscrit.inscriptions[self.periode].periode_reference = periode
 
-    def UpdateContents(self):# TODO week_ctrl comme les autres auto ctrls
-        InscriptionsTab.UpdateContents(self)
-        if self.week_ctrl:
-            if self.inscrit:
-                self.week_ctrl.SetSemaine(self.inscrit.inscriptions[self.periode].periode_reference)
-            else:
-                self.week_ctrl.SetSemaine(None)
+##    def UpdateContents(self):# TODO week_ctrl comme les autres auto ctrls
+##        InscriptionsTab.UpdateContents(self)
+##        if self.week_ctrl:
+##            if self.inscrit:
+##                self.week_ctrl.SetSemaine(self.inscrit.inscriptions[self.periode].periode_reference)
+##            else:
+##                self.week_ctrl.SetSemaine(None)
 
-    def SetPeriode(self, periode):# TODO week_ctrl comme les autres auto ctrls
-        PeriodeMixin.SetPeriode(self, periode)
-        if self.week_ctrl:
-            if self.inscrit:
-                self.week_ctrl.SetSemaine(self.inscrit.inscriptions[self.periode].periode_reference)
-            else:
-                self.week_ctrl.SetSemaine(None)
+##    def SetPeriode(self, periode):# TODO week_ctrl comme les autres auto ctrls
+##        PeriodeMixin.SetPeriode(self, periode)
+##        if self.week_ctrl:
+##            if self.inscrit:
+##                self.week_ctrl.SetSemaine(self.inscrit.inscriptions[self.periode].periode_reference)
+##            else:
+##                self.week_ctrl.SetSemaine(None)
     
 class InscriptionsNotebook(wx.Notebook):
     def __init__(self, parent, *args, **kwargs):

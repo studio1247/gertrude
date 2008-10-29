@@ -172,7 +172,7 @@ class ActivitesTab(AutoTab):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, 'Label :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, creche, 'activites[%d].label' % activity.value), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, 'Mode :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'activites[%d].mode' % activity.value, items=activity_modes), 1, wx.EXPAND)])
-        color_cb = ActivityComboBox(self, -1, style=wx.CB_READONLY, size=(100, -1))
+        color_cb = ActivityComboBox(self)
         color_cb.activity = activity
         for color in range(1, 10):
             color_cb.Append("", color)

@@ -24,9 +24,6 @@ from controls import *
 from planning import PlanningWidget
 
 class DayPlanningPanel(PlanningWidget):
-    def __init__(self, parent, activity_choice):
-        PlanningWidget.__init__(self, parent, activity_choice)
-
     def UpdateContents(self):
         lines = []
         for inscrit in creche.inscrits:
@@ -37,8 +34,7 @@ class DayPlanningPanel(PlanningWidget):
                 else:
                     line = inscrit.getJourneeFromSemaineType(self.date)
                 line.label = GetInscritId(inscrit, creche.inscrits)
-                line.date = self.date
-                line.reference = inscrit.getJourneeFromSemaineType(self.date)
+                line.reference = inscrit.getReferenceDay(self.date)
                 lines.append(line)
         self.SetLines(lines)
 
@@ -75,9 +71,8 @@ class PlanningPanel(GPanel):
         self.Bind(wx.EVT_CHOICE, self.OnChangeWeek, self.week_choice)
         
         # La combobox pour la selection de l'outil (si activités)
-        self.activity_choice = ActivityComboBox(self, -1, style=wx.CB_READONLY, size=(100, -1))
+        self.activity_choice = ActivityComboBox(self)
         sizer.Add(self.activity_choice, 0, wx.ALIGN_CENTER_VERTICAL)
-        self.Bind(wx.EVT_COMBOBOX, self.OnChangeActivity, self.activity_choice)
         self.sizer.Add(sizer, 0, wx.EXPAND)
         
         # le notebook pour les jours de la semaine
@@ -105,10 +100,6 @@ class PlanningPanel(GPanel):
             note.SetDate(day)
             self.notebook.SetSelection(0)
         self.sizer.Layout()
-
-    def OnChangeActivity(self, evt):
-        cb = evt.GetEventObject()
-        cb.activity = cb.GetClientData(cb.GetSelection())
 
     def UpdateContents(self):
         self.activity_choice.Clear()

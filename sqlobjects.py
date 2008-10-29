@@ -20,18 +20,13 @@ from constants import *
 from parameters import *
 from functions import *
 
-class Journee(object):
-    def __init__(self, inscrit, date):
-        self.inscrit_idx = inscrit.idx
-        self.date = date
+class Day(object):
+    def __init__(self):
         self.activites = {}
-        self.values = [0] * 24 * 4 # une valeur par 1/4h
-        self.previsionnel = 0
+        self.values = [0] * 96 # une valeur par 1/4h
 
-    def set_value(self, value, debut, fin, creation=True):
-        print 'set_value', debut, fin, value
-        for i in range(debut, fin):
-            self.values[i] = value
+    def set_value(self, value, debut, fin): # TODO utilisé quand ? set_values ?
+        self.values[debut:fin] = value
         self.save()
 
     def save(self):            
@@ -42,19 +37,17 @@ class Journee(object):
                 old_activities.remove(activity)
             else:
                 a, b, v = activity
-                self.add_activity(a, b, v)
+                self.insert_activity(a, b, v)
         for a, b, v in old_activities:
-            print 'suppression activite %d' % self.activites[(a, b, v)]
-            sql_connection.execute('DELETE FROM ACTIVITES WHERE idx=?', (self.activites[(a, b, v)],))
-            del self.activites[(a, b, v)]
+            self.remove_activity(a, b, v)
 
     def get_activities(self):
         result = []
         for value in [0] + [activity.value for activity in creche.activites.values()]:
             mask = (1 << value)
             a = v = h = 0
-            while h <= 24*4:
-                if h == 24*4:
+            while h <= 96:
+                if h == 96:
                     nv = 0
                 elif self.values[h] < 0:
                     if value == 0:
@@ -75,47 +68,86 @@ class Journee(object):
                 h += 1
         return result        
 
-    def add_activity(self, debut, fin, value, idx=None):
-        for i in range(debut, fin):
+    def add_activity(self, start, end, value, idx): # TODO uniquement appelé lors de la lecture de la base
+        for i in range(start, end):
             if value >= 0:
                 self.values[i] |= (1 << (value % PREVISIONNEL)) + (value & PREVISIONNEL)
             else:
                 self.values[i] = value
-        if idx is None:
-            print 'nouvelle activite (%d, %d, %d)' % (debut, fin, value), 
-            result = sql_connection.execute('INSERT INTO ACTIVITES (idx, inscrit, date, value, debut, fin) VALUES (NULL,?,?,?,?,?)', (self.inscrit_idx, self.date, value, debut, fin))
-            idx = result.lastrowid
-            print idx
-        self.activites[(debut, fin, value)] = idx
+        self.activites[(start, end, value)] = idx
+
+    def delete(self):
+        for start, end, value in self.activites.keys():
+            remove_activity(start, end, value)
+
+class ReferenceDay(Day):
+    def __init__(self, inscription, day):
+        Day.__init__(self)
+        self.inscription = inscription
+        self.day = day
+
+    def insert_activity(self, start, end, value):
+        print 'nouvelle activite de reference (%d, %d, %d)' % (start, end, value), 
+        result = sql_connection.execute('INSERT INTO REF_ACTIVITIES (idx, reference, day, value, debut, fin) VALUES (NULL,?,?,?,?,?)', (self.inscription.idx, self.day, value, start, end))
+        idx = result.lastrowid
+        self.activites[(start, end, value)] = idx
+        print idx
+        
+    def remove_activity(self, start, end, value):
+        print 'suppression activite de reference %d' % self.activites[(start, end, value)]
+        sql_connection.execute('DELETE FROM REF_ACTIVITIES WHERE idx=?', (self.activites[(start, end, value)],))
+        del self.activites[(start, end, value)]
+
+    def get_state(self):
+        return PRESENT
+        
+class Journee(Day):
+    def __init__(self, inscrit, date, reference=None):
+        Day.__init__(self)
+        self.inscrit_idx = inscrit.idx
+        self.date = date
+        self.previsionnel = 0
+        if reference:
+            self.copy_reference(reference, creche.presences_previsionnelles)
+
+    def insert_activity(self, start, end, value):
+        print 'nouvelle activite (%d, %d, %d)' % (start, end, value), 
+        result = sql_connection.execute('INSERT INTO ACTIVITES (idx, inscrit, date, value, debut, fin) VALUES (NULL,?,?,?,?,?)', (self.inscrit_idx, self.date, value, start, end))
+        idx = result.lastrowid
+        self.activites[(start, end, value)] = idx
+        print idx
+        
+    def remove_activity(self, start, end, value):
+        print 'suppression activite %d' % self.activites[(start, end, value)]
+        sql_connection.execute('DELETE FROM ACTIVITES WHERE idx=?', (self.activites[(start, end, value)],))
+        del self.activites[(start, end, value)]
 
     def get_state(self):
         state = PRESENT
-        for i in range(24*4):
+        for i in range(96):
             if self.values[i] < 0:
                 return self.values[i]
             if self.values[i] & PREVISIONNEL:
                 state |= PREVISIONNEL
         return state
 
-    def set_state(self, state, journee_type=None):
-        for i in range(24*4):
-            if journee_type.values[i] != 0:
-                self.values[i] = state
-            else:
-                self.values[i] = 0
+    def set_state(self, state):
+        start, end = int(creche.ouverture*4), int(creche.fermeture*4)
+        self.values[start:end] = [state] * (end-start)
         self.save()
+
+    def copy_reference(self, reference, previsionnel=True):
+        self.values = reference.values[:]
+        if previsionnel:
+            for i in range(96):
+                if self.values[i]:
+                    self.values[i] |= PREVISIONNEL
         
     def confirm(self):
-        for i in range(24*4):
+        for i in range(96):
             self.values[i] &= ~PREVISIONNEL
         self.save()
-
-    def delete(self):
-        for a, b, v in self.activites.keys():
-            print 'suppression activite %d' % self.activites[(a, b, v)]
-            sql_connection.execute('DELETE FROM ACTIVITES WHERE idx=?', (self.activites[(a, b, v)],))
-            del self.activites[(a, b, v)]
-
+        
 class Bureau(object):
     def __init__(self, creation=True):
         self.idx = None
@@ -443,7 +475,9 @@ class Inscription(object):
         self.debut = None
         self.fin = None
         self.mode = MODE_CRECHE
-        self.periode_reference = 5 * [[0, 0, 0]]
+        self.reference = []
+        for i in range(5):
+            self.reference.append(ReferenceDay(self, i))
         self.fin_periode_essai = None
 
         if creation:
@@ -451,9 +485,7 @@ class Inscription(object):
 
     def create(self):
         print 'nouvelle inscription'
-        if creche.modes_inscription == MODE_CRECHE: # plein-temps uniquement
-            self.periode_reference = 5 * [[1, 1, 1]]
-        result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, periode_reference, fin_periode_essai) VALUES(NULL,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, str(self.periode_reference), self.fin_periode_essai))
+        result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, fin_periode_essai) VALUES(NULL,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, self.fin_periode_essai))
         self.idx = result.lastrowid
         
     def delete(self):
@@ -462,9 +494,7 @@ class Inscription(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name == 'periode_reference':
-            value = str(value)
-        if name in ['debut', 'fin', 'mode', 'fin_periode_essai', 'periode_reference'] and self.idx:
+        if name in ['debut', 'fin', 'mode', 'fin_periode_essai'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE INSCRIPTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
@@ -590,23 +620,23 @@ class Inscrit(object):
               pass
         return result
 
-    def getJourneeFromSemaineType(self, date, creation=False):
+    def getReferenceDay(self, date):
         weekday = date.weekday()
         if weekday > 4:
-          raise Exception('La date doit etre un jour de semaine')
+            raise Exception(u'La date doit être un jour de semaine')
 
         inscription = self.getInscription(date)
-        previsionnel = int(creche.presences_previsionnelles) * PREVISIONNEL
-        journee = Journee(self, date)
-
-        if inscription is not None:
-            tranches = [(creche.ouverture, 12), (12, 14), (14, creche.fermeture)] # TODO virer tout ça
-            for i, tranche in enumerate(tranches):
-                debut, fin = tranche
-                for j in range(int(debut*4), int(fin*4)):
-                    journee.values[j] = inscription.periode_reference[weekday][i] | previsionnel
-            
-        return journee
+        if inscription:
+            return inscription.reference[weekday]
+        else:
+            return None
+        
+    def getJourneeFromSemaineType(self, date): # TODO supprimer
+        reference = self.getReferenceDay(date)
+        if reference:
+            return Journee(self, date, reference)
+        else:
+            return None
 
     def getPresence(self, date):
         inscription = self.getInscription(date)

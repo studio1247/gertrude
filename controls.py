@@ -662,6 +662,10 @@ def getActivityColor(value, color=None):
             return activity_colors[0]
     
 class ActivityComboBox(wx.combo.OwnerDrawnComboBox):
+    def __init__(self, parent, id=-1):
+        wx.combo.OwnerDrawnComboBox.__init__(self, parent, id, style=wx.CB_READONLY, size=(100, -1))
+        self.Bind(wx.EVT_COMBOBOX, self.OnChangeActivity, self)
+        
     def OnDrawItem(self, dc, rect, item, flags):
         if item == wx.NOT_FOUND:
             return
@@ -698,3 +702,5 @@ class ActivityComboBox(wx.combo.OwnerDrawnComboBox):
             dc.SetPen(wx.Pen(bgCol))
             dc.DrawRectangleRect(rect);
     
+    def OnChangeActivity(self, evt):
+        self.activity = self.GetClientData(self.GetSelection())

@@ -64,11 +64,13 @@ class Cotisation(object):
 
         self.mode_garde = self.inscription.mode
         jours_garde = 0
-        for jour in range(5):
-            for tranche in range(3):
-                if self.inscription.periode_reference[jour][tranche]:
-                    jours_garde += 1
-                    break
+        # TODO
+##        for jour in range(5):
+##            for tranche in range(3):
+##                if self.inscription.periode_reference[jour][tranche]:
+##                    jours_garde += 1
+##                    break
+                
         if self.inscription.mode == 0 and jours_garde < 3:
             errors.append(u" - La semaine type de l'enfant est incomplète pour le mode d'accueil choisi.")
 

@@ -24,7 +24,7 @@ from functions import *
 from sqlobjects import *
 
 DB_FILENAME = 'gertrude.db'
-VERSION = 17
+VERSION = 18
 
 def getdate(s):
     if s is None:
@@ -173,8 +173,17 @@ class SQLConnection(object):
             debut DATE,
             fin DATE,
             mode, INTEGER,
-            periode_reference VARCHAR,
             fin_periode_essai DATE
+          );""")
+
+        cur.execute("""
+          CREATE TABLE REF_ACTIVITIES(
+            idx INTEGER PRIMARY KEY,
+            reference INTEGER REFERENCES INSCRIPTIONS(idx),
+            day INTEGER,
+            value INTEGER,
+            debut INTEGER,
+            fin INTEGER
           );""")
 
         cur.execute("""
@@ -290,11 +299,17 @@ class SQLConnection(object):
                 frere.prenom, frere.naissance, frere.entree, frere.sortie, idx = frere_entry
                 frere.naissance, frere.entree, frere.sortie, frere.idx = getdate(frere.naissance), getdate(frere.entree), getdate(frere.sortie), idx
                 inscrit.freres_soeurs.append(frere)
-            cur.execute('SELECT idx, debut, fin, mode, periode_reference, fin_periode_essai FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
-            for idx, debut, fin, mode, periode_reference, fin_periode_essai in cur.fetchall():
+            cur.execute('SELECT idx, debut, fin, mode, fin_periode_essai FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
+            for idx, debut, fin, mode, fin_periode_essai in cur.fetchall():
                 inscription = Inscription(inscrit, creation=False)
-                inscription.debut, inscription.fin, inscription.mode, inscription.periode_reference, inscription.fin_periode_essai, inscription.idx = getdate(debut), getdate(fin), mode, eval(periode_reference), getdate(fin_periode_essai), idx
+                inscription.debut, inscription.fin, inscription.mode, inscription.fin_periode_essai, inscription.idx = getdate(debut), getdate(fin), mode, getdate(fin_periode_essai), idx
                 inscrit.inscriptions.append(inscription)
+            for inscription in inscrit.inscriptions:
+                cur.execute('SELECT day, value, debut, fin, idx FROM REF_ACTIVITIES WHERE reference=?', (inscription.idx,))
+                for day, value, debut, fin, idx in cur.fetchall():
+                    reference_day = inscription.reference[day]
+                    reference_day.add_activity(debut, fin, value, idx)
+                    # print inscrit.prenom, day, debut, fin, value
             cur.execute('SELECT absent, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email, idx FROM PARENTS WHERE inscrit=?', (inscrit.idx,))
             for parent_entry in cur.fetchall():
                 parent = Parent(inscrit, creation=False)
@@ -319,7 +334,7 @@ class SQLConnection(object):
                 else:
                     journee = Journee(inscrit, key)
                     inscrit.journees[key] = journee
-                #print inscrit.prenom, key, debut, fin, value
+                # print inscrit.prenom, key, debut, fin, value
                 journee.add_activity(debut, fin, value, idx)
 
         cur.execute('SELECT idx, debut, fin, president, vice_president, tresorier, secretaire FROM BUREAUX')
@@ -531,7 +546,36 @@ class SQLConnection(object):
                 activities.append((value, idx))
             for value, idx in activities:
                 cur.execute('UPDATE ACTIVITIES SET color=? WHERE idx=?', (value,idx))
+
+        if version < 18:
+            cur.execute('SELECT ouverture, fermeture FROM CRECHE')
+            ouverture, fermeture = cur.fetchall()[0]
+            tranches = [(ouverture, 12), (12, 14), (14, fermeture)]
+            __builtin__.creche = Creche()
             
+            cur.execute("""
+              CREATE TABLE REF_ACTIVITIES(
+                idx INTEGER PRIMARY KEY,
+                reference INTEGER REFERENCES INSCRIPTIONS(idx),
+                day INTEGER,
+                value INTEGER,
+                debut INTEGER,
+                fin INTEGER
+              );""")
+
+            cur.execute('SELECT idx, periode_reference FROM INSCRIPTIONS')
+            for idx, periode_reference in cur.fetchall():
+                inscription = Inscription(None, False)
+                inscription.idx = idx
+                periode_reference = eval(periode_reference)
+                for weekday in range(5):
+                    day = ReferenceDay(inscription, weekday)
+                    for i, tranche in enumerate(tranches):
+                        debut, fin = tranche
+                        for j in range(int(debut*4), int(fin*4)):
+                            day.values[j] = periode_reference[weekday][i]
+                    day.save()
+
         if version < VERSION:
             try:
                 cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))
