@@ -149,9 +149,10 @@ class PlanningGridWindow(BufferedWindow):
                     line.values = [PREVISIONNEL] * 96
                 else:
                     line.values = [0] * 96
+            clear_values = [1 << activity.value for activity in creche.activites.values() if (activity.mode & MODE_LIBERE_PLACE)]
             for i in range(start, end+BASE_GRANULARITY/creche.granularite):
                 if self.state:
-                    if self.activity_combobox.activity.mode & MODE_LIBERE_PLACE:
+                    if self.activity_combobox.activity.mode & MODE_LIBERE_PLACE or line.values[i] in clear_values:
                         line.values[i] = 1 << self.activity_combobox.activity.value
                     else:
                         line.values[i] |= 1 << self.activity_combobox.activity.value
