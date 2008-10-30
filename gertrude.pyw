@@ -18,7 +18,8 @@
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import __builtin__
-import os, sys, imp, time, shutil, glob, wx
+import os, sys, imp, time, shutil, glob
+import wx, wx.lib.wordwrap
 from data import *
 from startdialog import StartDialog
 try:
@@ -118,18 +119,22 @@ class GertrudeFrame(wx.Frame):
 
         # MenuBar
         menuBar = wx.MenuBar()
-        menu1 = wx.Menu()
-        menu1.Append(101, "&Enregistrer\tCtrl+S", u"Enregistre")
+        menu = wx.Menu()
+        menu.Append(101, "&Enregistrer\tCtrl+S", u"Enregistre")
         self.Bind(wx.EVT_MENU, self.OnSave, id=101)
-        menu1.Append(102, "&Fermer\tAlt+F4", u"Ferme la fenêtre")
+        menu.Append(102, "&Fermer\tAlt+F4", u"Ferme la fenêtre")
         self.Bind(wx.EVT_MENU, self.OnExit, id=102)
-        menuBar.Append(menu1, "&Fichier")
-        menu2 = wx.Menu()
-        menu2.Append(201, "&Annuler\tCtrl+Z", u"Annule l'action précédente")
+        menuBar.Append(menu, "&Fichier")
+        menu = wx.Menu()
+        menu.Append(201, "&Annuler\tCtrl+Z", u"Annule l'action précédente")
         self.Bind(wx.EVT_MENU, self.OnUndo, id=201)
-        menuBar.Append(menu2, "&Edition")
+        menuBar.Append(menu, "&Edition")
+        menu = wx.Menu()
+        menu.Append(301, "A &propos de Gertrude", u"A propos de Gertrude")
+        self.Bind(wx.EVT_MENU, self.OnAbout, id=301)
+        menuBar.Append(menu, "&?")
         self.SetMenuBar(menuBar)
-
+        
         # Inside
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         panel = wx.Panel(self, -1)
@@ -172,6 +177,35 @@ class GertrudeFrame(wx.Frame):
             except:
                 pass
 
+    def OnAbout(self, event):
+        info = wx.AboutDialogInfo()
+        info.Name = "Gertrude"
+        info.Version = VERSION
+        info.Copyright = "(C) 2005-2008 Bertrand Songis"
+        info.Description = wx.lib.wordwrap.wordwrap(
+            u"Gertrude est un logiciel libre adapté aux besoins de gestion des crèches et haltes-garderies en France.\n\n"
+            u"Développé pour une crèche parentale rennaise début 2005, il a été adapté en 2007 et 2008 pour d’autres crèches ; il est désormais accessible à tous.\n\n"
+            u"Il permet l'édition de contrats, la gestion de planning, la facturation, les appels de cotisations, les attestations de paiement, les rapports de fréquentation, la synthèse des contributions familiales.\n\n",
+            350, wx.ClientDC(self))
+        info.WebSite = ("http://gertrude.creches.free.fr", "Gertrude")
+        info.Contributors = [ "Mairie des Orres" ]
+        info.License = wx.lib.wordwrap.wordwrap(
+            "Gertrude is free software; you can redistribute it and/or modify "
+            "it under the terms of the GNU General Public License as published by "
+            "the Free Software Foundation; either version 2 of the License, or "
+            "(at your option) any later version.\n\n"
+        
+            "Gertrude is distributed in the hope that it will be useful, "
+            "but WITHOUT ANY WARRANTY; without even the implied warranty of "
+            "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the "
+            "GNU General Public License for more details.\n\n"
+        
+            "You should have received a copy of the GNU General Public License "
+            "along with Gertrude; if not, write to the Free Software "
+            "Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA",
+            350, wx.ClientDC(self))
+
+        wx.AboutBox(info)
 
 class MyApp(wx.App):
     def OnInit(self):
