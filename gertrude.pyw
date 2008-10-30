@@ -18,7 +18,7 @@
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import __builtin__
-import os, sys, time, shutil, glob, wx
+import os, sys, imp, time, shutil, glob, wx
 from data import *
 from startdialog import StartDialog
 try:
@@ -87,8 +87,10 @@ class GertrudeListbook(Listbook):
         panels = []
         for filename in glob.glob('panel_*.py'):
             module_name = os.path.split(filename)[1][:-3]
-            print 'Importation de %s.py' % module_name
-            panels.extend([tmp(self) for tmp in __import__(module_name).panels])
+            print 'Import de %s.py' % module_name
+            f, filename, description = imp.find_module(module_name, [os.getcwd()])
+            module = imp.load_module(module_name, f, filename, description)
+            panels.extend([tmp(self) for tmp in module.panels])
         panels.sort(lambda a, b: a.index-b.index)
         for panel in panels:
             if panel.profil & profil:

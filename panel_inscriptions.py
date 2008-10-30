@@ -395,13 +395,13 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         InscriptionsTab.__init__(self, parent)
         PeriodeMixin.__init__(self, 'inscriptions')
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(PeriodeChoice(self, self.nouvelleInscription), 0, wx.TOP|wx.BOTTOM, 5)
-        if creche.modes_inscription & MODE_HALTE_GARDERIE:
-            sizer.Add(AutoRadioBox(self, None, 'mode', "Mode d'accueil", [u'Crèche', 'Halte-garderie']))
-        gridsizer = wx.FlexGridSizer(0, 2, 5, 10)
-        gridsizer.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_essai'), 0, 0)])
-        sizer.Add(gridsizer, 0, wx.EXPAND|wx.ALL, 5)
-##        if creche.modes_inscription != MODE_CRECHE:
+        sizer.Add(PeriodeChoice(self, self.nouvelleInscription), 0, wx.TOP|wx.BOTTOM, 5)               
+        sizer1 = wx.FlexGridSizer(0, 2, 5, 10)
+        sizer1.AddGrowableCol(1, 1)
+        # TODO if creche.modes_inscription & MODE_HALTE_GARDERIE:
+        sizer1.AddMany([(wx.StaticText(self, -1, u"Mode d'accueil :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoChoiceCtrl(self, None, 'mode', items=[(u"Crèche", MODE_CRECHE), ("Halte-garderie", MODE_HALTE_GARDERIE)]), 0, wx.EXPAND)])
+        sizer1.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_essai'), 0, wx.EXPAND)])
+        sizer.Add(sizer1, 0, wx.ALL|wx.EXPAND, 5)
 
         self.activity = Activite(creation=False, value=0)
         self.activity_choice = ActivityComboBox(self)
