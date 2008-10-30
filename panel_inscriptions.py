@@ -401,8 +401,8 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         sizer.Add(PeriodeChoice(self, self.nouvelleInscription), 0, wx.TOP|wx.BOTTOM, 5)               
         sizer1 = wx.FlexGridSizer(0, 2, 5, 10)
         sizer1.AddGrowableCol(1, 1)
-        # TODO if creche.modes_inscription & MODE_HALTE_GARDERIE:
-        sizer1.AddMany([(wx.StaticText(self, -1, u"Mode d'accueil :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoChoiceCtrl(self, None, 'mode', items=[("Plein temps", MODE_5_5), (u"4/5èmes", MODE_4_5), (u"3/5èmes", MODE_3_5), ("Halte-garderie", MODE_HALTE_GARDERIE)]), 0, wx.EXPAND)])
+        self.mode_accueil_choice = AutoChoiceCtrl(self, None, 'mode', items=[("Plein temps", MODE_5_5), (u"4/5èmes", MODE_4_5), (u"3/5èmes", MODE_3_5), ("Halte-garderie", MODE_HALTE_GARDERIE)])
+        sizer1.AddMany([(wx.StaticText(self, -1, u"Mode d'accueil :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.mode_accueil_choice, 0, wx.EXPAND)])
         sizer1.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_essai'), 0, wx.EXPAND)])
         sizer.Add(sizer1, 0, wx.ALL|wx.EXPAND, 5)
 
@@ -421,18 +421,17 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
     def SetInscrit(self, inscrit):
         self.inscrit = inscrit
         self.SetInstance(inscrit)
-        if inscrit:
-            self.planning_panel.SetInscription(inscrit.inscriptions[self.periode])
-        else:
-            self.planning_panel.SetInscription(None)
+        self.UpdateContents()
     
-##    def EvtButton55e(self, event):
+##    def EvtButton55e(self, event): TODO
 ##        if self.inscrit.inscriptions[self.periode].periode_reference != 5 * [[1, 1, 1]]:
 ##            self.inscrit.inscriptions[self.periode].periode_reference = 5 * [[1, 1, 1]]
 ####            self.week_ctrl.SetSemaine(self.inscrit.inscriptions[self.periode].periode_reference)
     
     def UpdateContents(self):
         InscriptionsTab.UpdateContents(self)
+        self.mode_accueil_choice.Enable(creche.modes_inscription != MODE_5_5)
+        
         if self.inscrit:
             self.planning_panel.SetInscription(self.inscrit.inscriptions[self.periode])
         else:
