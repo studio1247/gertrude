@@ -378,11 +378,12 @@ class ReferencePlanningPanel(PlanningWidget):
         
     def UpdateContents(self):
         lines = []
-        for day in range(5):
-            line = self.inscription.reference[day]
-            line.label = days[day]
-            line.reference = None
-            lines.append(line)
+        if self.inscription:
+            for day in range(5):
+                line = self.inscription.reference[day]
+                line.label = days[day]
+                line.reference = None
+                lines.append(line)
         self.SetLines(lines)
 
     def SetInscription(self, inscription):
@@ -424,7 +425,26 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
     def nouvelleInscription(self): # TODO les autres pareil ...
         return Inscription(self.inscrit)
 
+    def SetInscrit(self, inscrit):
+        self.inscrit = inscrit
+        self.SetInstance(inscrit)
+        if inscrit:
+            self.planning_panel.SetInscription(inscrit.inscriptions[self.periode])
+        else:
+            self.planning_panel.SetInscription(None)
+    
+##    def EvtButton55e(self, event):
+##        if self.inscrit.inscriptions[self.periode].periode_reference != 5 * [[1, 1, 1]]:
+##            self.inscrit.inscriptions[self.periode].periode_reference = 5 * [[1, 1, 1]]
+####            self.week_ctrl.SetSemaine(self.inscrit.inscriptions[self.periode].periode_reference)
+    
     def UpdateContents(self):
+        InscriptionsTab.UpdateContents(self)
+        if self.inscrit:
+            self.planning_panel.SetInscription(self.inscrit.inscriptions[self.periode])
+        else:
+            self.planning_panel.SetInscription(None)
+        
         self.activity_choice.Clear()
         tmp = Activite(creation=False)
         tmp.value = 0
@@ -439,37 +459,13 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         else:
             self.activity_choice.Disable()
         self.activity_choice.SetSelection(selected)
-        
-    def SetInscrit(self, inscrit):
-        self.inscrit = inscrit
-        self.SetInstance(inscrit)
-        self.planning_panel.SetInscription(inscrit.inscriptions[self.periode])
-##  TODO          else:
-##                self.week_ctrl.SetSemaine(None)
-    
-##    def EvtButton55e(self, event):
-##        if self.inscrit.inscriptions[self.periode].periode_reference != 5 * [[1, 1, 1]]:
-##            self.inscrit.inscriptions[self.periode].periode_reference = 5 * [[1, 1, 1]]
-####            self.week_ctrl.SetSemaine(self.inscrit.inscriptions[self.periode].periode_reference)
-    
-    def OnPeriodeChange(self, periode):
-        self.inscrit.inscriptions[self.periode].periode_reference = periode
 
-##    def UpdateContents(self):# TODO week_ctrl comme les autres auto ctrls
-##        InscriptionsTab.UpdateContents(self)
-##        if self.week_ctrl:
-##            if self.inscrit:
-##                self.week_ctrl.SetSemaine(self.inscrit.inscriptions[self.periode].periode_reference)
-##            else:
-##                self.week_ctrl.SetSemaine(None)
-
-##    def SetPeriode(self, periode):# TODO week_ctrl comme les autres auto ctrls
-##        PeriodeMixin.SetPeriode(self, periode)
-##        if self.week_ctrl:
-##            if self.inscrit:
-##                self.week_ctrl.SetSemaine(self.inscrit.inscriptions[self.periode].periode_reference)
-##            else:
-##                self.week_ctrl.SetSemaine(None)
+    def SetPeriode(self, periode):
+        PeriodeMixin.SetPeriode(self, periode)
+        if self.inscrit:
+            self.planning_panel.SetInscription(self.inscrit.inscriptions[self.periode])
+        else:
+            self.planning_panel.SetInscription(None)
     
 class InscriptionsNotebook(wx.Notebook):
     def __init__(self, parent, *args, **kwargs):

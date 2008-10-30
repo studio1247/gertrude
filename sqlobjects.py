@@ -25,10 +25,6 @@ class Day(object):
         self.activites = {}
         self.values = [0] * 96 # une valeur par 1/4h
 
-    def set_value(self, value, debut, fin): # TODO utilisé quand ? set_values ?
-        self.values[debut:fin] = value
-        self.save()
-
     def save(self):            
         old_activities = self.activites.keys()
         new_activities = self.get_activities()
@@ -68,7 +64,7 @@ class Day(object):
                 h += 1
         return result        
 
-    def add_activity(self, start, end, value, idx): # TODO uniquement appelé lors de la lecture de la base
+    def add_activity(self, start, end, value, idx):
         for i in range(start, end):
             if value >= 0:
                 self.values[i] |= (1 << (value % PREVISIONNEL)) + (value & PREVISIONNEL)
@@ -79,6 +75,20 @@ class Day(object):
     def delete(self):
         for start, end, value in self.activites.keys():
             remove_activity(start, end, value)
+            
+    def set_state(self, state):
+        start, end = int(creche.ouverture*4), int(creche.fermeture*4)
+        self.values[start:end] = [state] * (end-start)
+        self.save()
+        
+    def get_state(self): # TODO devrait aussi retourner ABSENT
+        state = PRESENT
+        for i in range(96):
+            if self.values[i] < 0:
+                return self.values[i]
+            if self.values[i] & PREVISIONNEL:
+                state |= PREVISIONNEL
+        return state
 
 class ReferenceDay(Day):
     def __init__(self, inscription, day):
@@ -97,10 +107,7 @@ class ReferenceDay(Day):
         print 'suppression activite de reference %d' % self.activites[(start, end, value)]
         sql_connection.execute('DELETE FROM REF_ACTIVITIES WHERE idx=?', (self.activites[(start, end, value)],))
         del self.activites[(start, end, value)]
-
-    def get_state(self):
-        return PRESENT
-        
+       
 class Journee(Day):
     def __init__(self, inscrit, date, reference=None):
         Day.__init__(self)
@@ -121,20 +128,6 @@ class Journee(Day):
         print 'suppression activite %d' % self.activites[(start, end, value)]
         sql_connection.execute('DELETE FROM ACTIVITES WHERE idx=?', (self.activites[(start, end, value)],))
         del self.activites[(start, end, value)]
-
-    def get_state(self):
-        state = PRESENT
-        for i in range(96):
-            if self.values[i] < 0:
-                return self.values[i]
-            if self.values[i] & PREVISIONNEL:
-                state |= PREVISIONNEL
-        return state
-
-    def set_state(self, state):
-        start, end = int(creche.ouverture*4), int(creche.fermeture*4)
-        self.values[start:end] = [state] * (end-start)
-        self.save()
 
     def copy_reference(self, reference, previsionnel=True):
         self.values = reference.values[:]
@@ -482,6 +475,9 @@ class Inscription(object):
 
         if creation:
             self.create()
+            if creche.modes_inscription == MODE_CRECHE:
+                for i in range(5):
+                    self.reference[i].set_state(PRESENT)
 
     def create(self):
         print 'nouvelle inscription'
