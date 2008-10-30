@@ -402,8 +402,6 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         gridsizer.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_essai'), 0, 0)])
         sizer.Add(gridsizer, 0, wx.EXPAND|wx.ALL, 5)
 ##        if creche.modes_inscription != MODE_CRECHE:
-##            sizer1 = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Semaine type'), wx.HORIZONTAL)
-##            sizer.Add(sizer1)
 
         self.activity = Activite(creation=False, value=0)
         self.activity_choice = ActivityComboBox(self)
@@ -411,14 +409,6 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         
         self.planning_panel = ReferencePlanningPanel(self, self.activity_choice)
         sizer.Add(self.planning_panel, 1, wx.EXPAND)
-#            self.week_ctrl.Bind(WeekWindow.EVT_CHANGE, self.OnPeriodeChange)
-#            sizer1.Add(self.week_ctrl)
-#            bmp = wx.Bitmap("./bitmaps/icone_plein_temps.png", wx.BITMAP_TYPE_PNG)
-#            btn = wx.BitmapButton(self, -1, bmp)
-#            sizer1.Add(btn)
-#            self.Bind(wx.EVT_BUTTON, self.EvtButton55e, btn)
-#        else:
-#            self.week_ctrl = None
         self.SetSizer(sizer)
         self.UpdateContents()
         
