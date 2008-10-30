@@ -105,57 +105,14 @@ def GetInscritId(inscrit, inscrits):
             return inscrit.prenom + " " + inscrit.nom
     return inscrit.prenom
 
-def getPleinTempsIndexes(date_debut, date_fin):
+def getInscritsByMode(start, end, mode): # TODO pourquoi retourner les index
     result = []
     for i, inscrit in enumerate(creche.inscrits):
-        inscriptions = inscrit.getInscriptions(date_debut, date_fin)
+        inscriptions = inscrit.getInscriptions(start, end)
         if len(inscriptions) > 0:
             inscription = inscriptions[0]
-            if inscription.mode == 0:
-                periode_reference = inscription.periode_reference
-                for jour in periode_reference:
-                    if jour != [1, 1, 1]:
-                        break
-                else:
-                    result.append(i)
-    return result
-
-def getMiTempsIndexes(date_debut, date_fin):
-    result = []
-    for i, inscrit in enumerate(creche.inscrits):
-        inscriptions = inscrit.getInscriptions(date_debut, date_fin)
-        if len(inscriptions) > 0:
-            inscription = inscriptions[0]
-            if inscription.mode == 0:
-                periode_reference = inscription.periode_reference
-                nb_jours = 0
-                for jour in periode_reference:
-                    if jour == [1, 1, 1]:
-                        nb_jours += 1
-                if nb_jours != 5:
-                    result.append(i)
-    return result
-
-def getCrecheIndexes(date_debut, date_fin):
-    result = []
-    for i, inscrit in enumerate(creche.inscrits):
-        inscriptions = inscrit.getInscriptions(date_debut, date_fin)
-        if len(inscriptions) > 0:
-            inscription = inscriptions[0]
-            if inscription.mode == 0:
+            if inscription.mode & mode:
                 result.append(i)
-    return result
-
-def getHalteGarderieIndexes(date_debut, date_fin):
-    result = []
-    for i, inscrit in enumerate(creche.inscrits):
-        inscriptions = inscrit.getInscriptions(date_debut, date_fin)
-        if len(inscriptions) and inscriptions[0].mode == 1:
-            result.append(i)
-    return result
-
-def getAdaptationIndexes(date_debut, date_fin):
-    result = []
     return result
 
 def getTriParCommuneEtNomIndexes(indexes):

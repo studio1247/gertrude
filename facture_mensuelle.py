@@ -25,7 +25,6 @@ couleurs = { PRESENT+SUPPLEMENT: 'A2',
              MALADE: 'B2',
              PRESENT: 'C2',
              VACANCES: 'D2',
-             NONINSCRIT: 'E2',
              ABSENT: 'E2'}
 
 class FactureModifications(object):
@@ -73,8 +72,10 @@ class FactureModifications(object):
                         text_node.firstChild.replaceWholeText('%d' % date.day)
                         if not date in creche.jours_fermeture:
                             # changement de la couleur de la cellule
-                            presence = self.inscrit.getPresence(date)[0]
-                            cell.setAttribute('table:style-name', 'Presences.%s' % couleurs[presence])
+                            state = self.inscrit.getState(date)
+                            if state > 0:
+                                state = state % PREVISIONNEL
+                            cell.setAttribute('table:style-name', 'Presences.%s' % couleurs[state])
                     date += datetime.timedelta(1)
 
                 for i in range(row + 1, len(rows)):

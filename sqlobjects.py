@@ -81,13 +81,12 @@ class Day(object):
         self.values[start:end] = [state] * (end-start)
         self.save()
         
-    def get_state(self): # TODO devrait aussi retourner ABSENT
-        state = PRESENT
+    def get_state(self):
+        state = ABSENT
         for i in range(96):
             if self.values[i] < 0:
                 return self.values[i]
-            if self.values[i] & PREVISIONNEL:
-                state |= PREVISIONNEL
+            state |= self.values[i] & (PRESENT|PREVISIONNEL)
         return state
 
 class ReferenceDay(Day):
@@ -467,7 +466,7 @@ class Inscription(object):
         self.idx = None
         self.debut = None
         self.fin = None
-        self.mode = MODE_CRECHE
+        self.mode = MODE_5_5
         self.reference = []
         for i in range(5):
             self.reference.append(ReferenceDay(self, i))
@@ -475,10 +474,10 @@ class Inscription(object):
 
         if creation:
             self.create()
-            if creche.modes_inscription == MODE_CRECHE:
+            if creche.modes_inscription == MODE_5_5:
                 for i in range(5):
                     self.reference[i].set_state(PRESENT)
-
+                   
     def create(self):
         print 'nouvelle inscription'
         result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, fin_periode_essai) VALUES(NULL,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, self.fin_periode_essai))
@@ -492,14 +491,7 @@ class Inscription(object):
         self.__dict__[name] = value
         if name in ['debut', 'fin', 'mode', 'fin_periode_essai'] and self.idx:
             print 'update', name
-            sql_connection.execute('UPDATE INSCRIPTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))
-
-    def GetTotalSemaineType(self): # TODO
-        total = 0
-        for jour in self.periode_reference:
-            if jour != [0, 0, 0]:
-                total += 10
-        return total            
+            sql_connection.execute('UPDATE INSCRIPTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))   
 
 class Frere_Soeur(object):
     def __init__(self, inscrit, creation=True):
@@ -634,34 +626,35 @@ class Inscrit(object):
         else:
             return None
 
-    def getPresence(self, date):
+    def getState(self, date):
         inscription = self.getInscription(date)
         if inscription is None or date.weekday() > 4:
-            return NONINSCRIT, False
-        presence_contrat = (1 in inscription.periode_reference[date.weekday()])
+            return ABSENT
+        
+        ref_state = inscription.reference[date.weekday()].get_state()
         if date in self.journees:
             journee = self.journees[date]
             state = journee.get_state()
             if state == MALADE:
-                return MALADE, False
-            elif state == VACANCES:
-                if presence_contrat:
-                    return VACANCES, False
+                return MALADE
+            elif state in (ABSENT, VACANCES):
+                if inscription.mode == MODE_5_5 or ref_state == PRESENT:
+                    return VACANCES
                 else:
-                    return NONINSCRIT, False
+                    return ABSENT
             else: # PRESENT
-                if presence_contrat:
-                    return PRESENT, bool(state & PREVISIONNEL)
+                if inscription.mode == MODE_5_5 or ref_state == PRESENT:
+                    return state
                 else:
-                    return PRESENT+SUPPLEMENT, bool(state & PREVISIONNEL)
+                    return state+SUPPLEMENT
         else:
-            if presence_contrat:
+            if ref_state == PRESENT:
                 if creche.presences_previsionnelles or date > today:
-                    return PRESENT, True
+                    return PRESENT|PREVISIONNEL
                 else:
-                    return PRESENT, False
+                    return PRESENT
             else:
-                return NONINSCRIT, False
+                return ABSENT
             
 #    def getTotalHeuresMois(self, annee, mois, mode_accueil): # heures facturees
 #        total = 0

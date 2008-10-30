@@ -62,20 +62,34 @@ class Cotisation(object):
             errors.append(u" - Il n'y a pas d'inscription à cette date.")
             raise CotisationException(errors)
 
-        self.mode_garde = self.inscription.mode
-        jours_garde = 0
-        # TODO
-##        for jour in range(5):
-##            for tranche in range(3):
-##                if self.inscription.periode_reference[jour][tranche]:
-##                    jours_garde += 1
-##                    break
-                
-        if self.inscription.mode == 0 and jours_garde < 3:
-            errors.append(u" - La semaine type de l'enfant est incomplète pour le mode d'accueil choisi.")
+        if creche.modes_inscription == MODE_5_5:
+            self.mode_garde = MODE_5_5
+            self.jours_semaine = 5
+        else:
+            self.mode_garde = self.inscription.mode
+            self.jours_semaine = 0
+            for i in range(5):
+                if self.inscription.reference[i].get_state() == PRESENT:
+                    self.jours_semaine += 1
+        
+        if self.mode_garde == MODE_HALTE_GARDERIE:
+            self.mode_inscription = MODE_HALTE_GARDERIE
+        else:
+            self.mode_inscription = MODE_CRECHE
+            if self.jours_semaine < 3:
+                errors.append(u" - La période de référence de l'enfant est incomplète pour le mode d'accueil choisi.")
 
         if len(errors) > 0:
             raise CotisationException(errors)
+
+        self.heures_semaine = self.jours_semaine * 10
+        self.heures_mois = self.heures_semaine * 4
+        self.heures_annee = 12 * self.heures_mois
+
+        if self.jours_semaine == 5:
+            self.str_mode_garde = u'plein temps'
+        else:
+            self.str_mode_garde = u'%d/5èmes' % self.jours_semaine
 
         self.assiette_annuelle = float(self.revenus_papa.revenu) 
         if self.revenus_papa.chomage:
@@ -119,38 +133,24 @@ class Cotisation(object):
                 self.mode_taux_horaire = u'1 enfant à charge'
                 self.taux_horaire = 10.0/200 # 0.05 !
 
-        self.heures_garde = jours_garde * 40
-        if jours_garde == 5:
-            self.mode_heures_garde = u'plein temps'
-        else:
-            self.mode_heures_garde = u'%d/5èmes' % jours_garde
-
         self.montant_heure_garde = self.assiette_mensuelle * self.taux_horaire / 100
-        self.cotisation_mensuelle = self.assiette_mensuelle * self.taux_horaire * self.heures_garde * creche.mois_payes / 12 / 100
+        self.cotisation_mensuelle = self.assiette_mensuelle * self.taux_horaire * self.heures_mois * creche.mois_payes / 12 / 100
 
         self.montant_jour_maladie_deduit = self.assiette_mensuelle * self.taux_horaire / 10
 
-        if self.heures_garde < 200:
+        if self.heures_mois < 200:
             self.montant_jour_supplementaire = self.montant_jour_maladie_deduit
         else:
             self.montant_jour_supplementaire = 0
 
-        self.total_semaine = 0
-        for j in range(5):
-            if self.inscription.periode_reference[j][0] == 1: self.total_semaine += 4
-            if self.inscription.periode_reference[j][1] == 1: self.total_semaine += 2
-            if self.inscription.periode_reference[j][2] == 1: self.total_semaine += 4
-
-        self.total_mois = 4 * self.total_semaine
-        self.total_annee = 48 * self.total_semaine
         if self.inscription.mode == 0:
-            self.cout_horaire = self.cotisation_mensuelle / self.total_mois
+            self.cout_horaire = self.cotisation_mensuelle / self.heures_mois
         else:
             self.cout_horaire = 0
 
     def __cmp__(self, context2):
         return context2 == None or \
                self.cotisation_mensuelle != context2.cotisation_mensuelle or \
-               self.total_mois != context2.total_mois or \
+               self.heures_mois != context2.heures_mois or \
                self.bureau != context2.bureau or \
                self.assiette_annuelle != context2.assiette_annuelle

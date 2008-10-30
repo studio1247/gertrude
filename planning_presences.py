@@ -21,10 +21,10 @@ from facture import *
 from cotisation import Cotisation, CotisationException
 from ooffice import *
 
-# Tranches horaires
-tranches = [(creche.ouverture, 12), (12, 14), (14, creche.fermeture)]
-
 def isPresentDuringTranche(journee, tranche):
+    # Tranches horaires
+    tranches = [(creche.ouverture, 12), (12, 14), (14, creche.fermeture)]
+    
     debut, fin = tranches[tranche]
     for i in range(int(debut * 4), int(fin * 4)):
         if journee.values[i]:
@@ -63,25 +63,25 @@ class PlanningModifications(object):
         ligne_total = lignes.item(19)
 
         # Les enfants en adaptation
-        indexes = getAdaptationIndexes(self.debut, date_fin)
+        indexes = [] # TODO getAdaptationIndexes(self.debut, date_fin)
         indexes = getTriParPrenomIndexes(indexes)
         self.printPresences(template, indexes, 15)
         nb_ad = max(2, len(indexes))
 
         # Les halte-garderie
-        indexes = getHalteGarderieIndexes(self.debut, date_fin)
+        indexes = getInscritsByMode(self.debut, date_fin, MODE_HALTE_GARDERIE)
         indexes = getTriParPrenomIndexes(indexes)
         self.printPresences(template, indexes, 11)
         nb_hg = max(2, len(indexes))
 
         # Les mi-temps
-        indexes = getMiTempsIndexes(self.debut, date_fin)
+        indexes = getInscritsByMode(self.debut, date_fin, MODE_4_5|MODE_3_5)
         indexes = getTriParPrenomIndexes(indexes)
         self.printPresences(template, indexes, 7)
         nb_45 = max(2, len(indexes))
 
         # Les plein-temps
-        indexes = getPleinTempsIndexes(self.debut, date_fin)
+        indexes = getInscritsByMode(self.debut, date_fin, MODE_5_5)
         indexes = getTriParPrenomIndexes(indexes)
         self.printPresences(template, indexes, 3)
         nb_55 = max(2, len(indexes))

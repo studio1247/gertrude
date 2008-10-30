@@ -24,7 +24,7 @@ from functions import *
 from sqlobjects import *
 
 DB_FILENAME = 'gertrude.db'
-VERSION = 18
+VERSION = 19
 
 def getdate(s):
     if s is None:
@@ -428,7 +428,7 @@ class SQLConnection(object):
             cur.execute("ALTER TABLE CRECHE ADD modes_inscription INTEGER;")
             cur.execute('UPDATE CRECHE SET mois_payes=?', (12,))
             cur.execute('UPDATE CRECHE SET presences_previsionnelles=?', (True,))
-            cur.execute('UPDATE CRECHE SET modes_inscription=?', (MODE_HALTE_GARDERIE+MODE_4_5+MODE_3_5,))
+            cur.execute('UPDATE CRECHE SET modes_inscription=?', (7,))
 
         if version < 7:
             cur.execute("ALTER TABLE INSCRITS ADD sexe INTEGER;")
@@ -575,6 +575,11 @@ class SQLConnection(object):
                         for j in range(int(debut*4), int(fin*4)):
                             day.values[j] = periode_reference[weekday][i]
                     day.save()
+        
+        if version < 19:
+            cur.execute('UPDATE CRECHE SET modes_inscription=? WHERE modes_inscription=?', (1+2+4+8, 7))
+            cur.execute('UPDATE CRECHE SET modes_inscription=? WHERE modes_inscription=?', (2, 0))
+            cur.execute('UPDATE INSCRIPTIONS SET mode=? WHERE mode=?', (2, 0))
 
         if version < VERSION:
             try:

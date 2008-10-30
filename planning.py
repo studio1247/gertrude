@@ -158,7 +158,11 @@ class PlanningGridWindow(BufferedWindow):
                 else:
                     line.values[i] &= ~(1 << self.activity_combobox.activity.value)
 
-            line.save()
+            if line.get_state() == ABSENT:
+                line.set_state(VACANCES)
+            else:
+                line.save()
+                
             history.Append([Change(line, 'values', line.original_values),
                             Call(line.save)])
 

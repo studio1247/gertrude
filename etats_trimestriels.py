@@ -96,8 +96,8 @@ class EtatsTrimestrielsModifications(object):
                             except:
                                 continue
                             previsionnel[i] = facture.previsionnel
-                            heures[MODE_CRECHE][i] = facture.detail_heures_facturees[MODE_CRECHE]
-                            heures[MODE_HALTE_GARDERIE][i] = facture.detail_heures_facturees[MODE_HALTE_GARDERIE]
+                            heures[0][i] = facture.detail_heures_facturees[0]
+                            heures[1][i] = facture.detail_heures_facturees[1]
 
                         fields = [('nom', inscrit.nom),
                                   ('prenom', inscrit.prenom),
@@ -133,10 +133,10 @@ class EtatsTrimestrielsModifications(object):
                 lignes = table.getElementsByTagName("table:table-row")
 
                 # Les inscrits en creche
-                indexes = getCrecheIndexes(debut, fin)
+                indexes = getInscritsByMode(debut, fin, MODE_5_5|MODE_4_5|MODE_3_5)
                 self.Synthese(table, lignes, indexes, MODE_CRECHE, 'creche', 0)
                 # Les inscrits en halte-garderie
-                indexes = getHalteGarderieIndexes(debut, fin)
+                indexes = getInscritsByMode(debut, fin, MODE_HALTE_GARDERIE)
                 self.Synthese(table, lignes, indexes, MODE_HALTE_GARDERIE, 'halte', 6)
         else:
             spreadsheet.removeChild(table)

@@ -34,11 +34,14 @@ MODE_LIBERE_PLACE = 1
 # Granularité du planning dans la base
 BASE_GRANULARITY = 4 # au quart d'heure
 
-# Modes d'accueil
+# Modes d'inscription
 MODE_CRECHE = 0
 MODE_HALTE_GARDERIE = 1
-MODE_4_5 = 2
-MODE_3_5 = 4
+
+# Modes d'accueil
+MODE_5_5 = 2
+MODE_4_5 = 4
+MODE_3_5 = 8
 
 # Modes de déduction pour maladie
 DEDUCTION_TOTALE = 1
@@ -49,7 +52,6 @@ ABSENT = 0
 PRESENT = 1 << 0 # activité 0
 VACANCES = -1
 MALADE = -2
-NONINSCRIT = -3
 PREVISIONNEL = 1 << 30 #  flag previsionnel
 SUPPLEMENT = 512 # ne pas utiliser avec activités
 

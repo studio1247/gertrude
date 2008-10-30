@@ -36,10 +36,13 @@ def ParseHtml(filename, context):
         text = data[start:end]
         dom = xml.dom.minidom.parseString(text[:text.index('>')+1] + '</if>')
         test = dom.getElementsByTagName('if')[0].getAttribute('value')
-        if eval(test):
-            replacement = text[text.index('>')+1:-5]
-        else:
-            replacement = ''
+        try:
+            if eval(test):
+                replacement = text[text.index('>')+1:-5]
+            else:
+                replacement = ''
+        except:
+            replacement = '' # TODO la période de référence du contrat est cassée
         data = data.replace(text, replacement)
 
     # remplacement des <var>
@@ -118,7 +121,7 @@ class ContratPanel(ContextPanel):
         else:
             try:
                 context = Cotisation(self.inscrit, self.periode)
-                if context.mode_garde == 0:
+                if context.mode_inscription == MODE_CRECHE:
                     self.html = ParseHtml("./templates/contrat_accueil_creche.html", context)
                 else:
                     self.html = ParseHtml("./templates/contrat_accueil_creche.html", context)
@@ -198,7 +201,7 @@ class ForfaitPanel(ContextPanel):
         else:
             try:
                 context = Cotisation(self.inscrit, self.periode, options=NO_ADDRESS)
-                if context.mode_garde == 0:
+                if context.mode_inscription == 0:
                     self.html = ParseHtml("./templates/frais_de_garde.html", context)
                 else:
                     self.html = ParseHtml("./templates/frais_de_garde_hg.html", context)
@@ -399,7 +402,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         sizer1 = wx.FlexGridSizer(0, 2, 5, 10)
         sizer1.AddGrowableCol(1, 1)
         # TODO if creche.modes_inscription & MODE_HALTE_GARDERIE:
-        sizer1.AddMany([(wx.StaticText(self, -1, u"Mode d'accueil :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoChoiceCtrl(self, None, 'mode', items=[(u"Crèche", MODE_CRECHE), ("Halte-garderie", MODE_HALTE_GARDERIE)]), 0, wx.EXPAND)])
+        sizer1.AddMany([(wx.StaticText(self, -1, u"Mode d'accueil :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoChoiceCtrl(self, None, 'mode', items=[("Plein temps", MODE_5_5), (u"4/5èmes", MODE_4_5), (u"3/5èmes", MODE_3_5), ("Halte-garderie", MODE_HALTE_GARDERIE)]), 0, wx.EXPAND)])
         sizer1.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_essai'), 0, wx.EXPAND)])
         sizer.Add(sizer1, 0, wx.ALL|wx.EXPAND, 5)
 
