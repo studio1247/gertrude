@@ -24,6 +24,7 @@ from controls import *
 from planning import PlanningWidget
 
 class DayPlanningPanel(PlanningWidget):
+    # TODO les jours fériés !
     def UpdateContents(self):
         lines = []
         for inscrit in creche.inscrits:
@@ -49,7 +50,6 @@ class PlanningPanel(GPanel):
 
     def __init__(self, parent):
         GPanel.__init__(self, parent, u'Présences enfants')
-        self.activity = Activite(creation=False, value=0)
 
         # La combobox pour la selection de la semaine
         sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -111,8 +111,11 @@ class PlanningPanel(GPanel):
             self.activity_choice.Enable()
             for i, activity in enumerate(creche.activites.values()):
                 self.activity_choice.Append(activity.label, activity)
-                if self.activity.value == activity.value:
-                    selected = i+1
+                try:
+                    if self.activity_choice.activity.value == activity.value:
+                        selected = i+1
+                except:
+                    pass
         else:
             self.activity_choice.Disable()
         self.activity_choice.SetSelection(selected)

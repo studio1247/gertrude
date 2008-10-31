@@ -202,7 +202,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         if state == VACANCES:
             line.set_state(MALADE)
         elif state == MALADE:
-            line.copy_reference(line.reference, creche.presences_previsionnelles and (line.date > datetime.date.today()))
+            line.copy(line.reference, creche.presences_previsionnelles and (line.date > datetime.date.today()))
         elif line.date <= datetime.date.today() and state == PRESENT|PREVISIONNEL:
             line.confirm()
         else:

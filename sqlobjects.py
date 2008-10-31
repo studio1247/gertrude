@@ -88,6 +88,13 @@ class Day(object):
                 return self.values[i]
             state |= self.values[i] & (PRESENT|PREVISIONNEL)
         return state
+    
+    def copy(self, day, previsionnel=True):
+        self.values = day.values[:]
+        if previsionnel:
+            for i in range(96):
+                if self.values[i]:
+                    self.values[i] |= PREVISIONNEL
 
 class ReferenceDay(Day):
     def __init__(self, inscription, day):
@@ -114,7 +121,7 @@ class Journee(Day):
         self.date = date
         self.previsionnel = 0
         if reference:
-            self.copy_reference(reference, creche.presences_previsionnelles)
+            self.copy(reference, creche.presences_previsionnelles)
 
     def insert_activity(self, start, end, value):
         print 'nouvelle activite (%d, %d, %d)' % (start, end, value), 
@@ -127,14 +134,7 @@ class Journee(Day):
         print 'suppression activite %d' % self.activites[(start, end, value)]
         sql_connection.execute('DELETE FROM ACTIVITES WHERE idx=?', (self.activites[(start, end, value)],))
         del self.activites[(start, end, value)]
-
-    def copy_reference(self, reference, previsionnel=True):
-        self.values = reference.values[:]
-        if previsionnel:
-            for i in range(96):
-                if self.values[i]:
-                    self.values[i] |= PREVISIONNEL
-        
+       
     def confirm(self):
         for i in range(96):
             self.values[i] &= ~PREVISIONNEL

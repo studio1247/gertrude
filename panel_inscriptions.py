@@ -405,10 +405,18 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         sizer1.AddMany([(wx.StaticText(self, -1, u"Mode d'accueil :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.mode_accueil_choice, 0, wx.EXPAND)])
         sizer1.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_essai'), 0, wx.EXPAND)])
         sizer.Add(sizer1, 0, wx.ALL|wx.EXPAND, 5)
-
-        self.activity = Activite(creation=False, value=0)
-        self.activity_choice = ActivityComboBox(self)
-        sizer.Add(self.activity_choice)
+       
+        sizer2 = wx.BoxSizer(wx.HORIZONTAL)
+        self.button_5_5 = wx.Button(self, -1, "Plein temps")
+        sizer2.Add(self.button_5_5)
+        self.Bind(wx.EVT_BUTTON, self.OnMode_5_5, self.button_5_5)
+        self.button_copy = wx.Button(self, -1, "Recopier lundi sur toute la semaine")
+        sizer2.Add(self.button_copy)
+        self.Bind(wx.EVT_BUTTON, self.OnMondayCopy, self.button_copy)
+        
+        self.activity_choice = ActivityComboBox(self)        
+        sizer2.Add(self.activity_choice, 0, wx.ALIGN_RIGHT)
+        sizer.Add(sizer2, 0, wx.EXPAND)
         
         self.planning_panel = ReferencePlanningPanel(self, self.activity_choice)
         sizer.Add(self.planning_panel, 1, wx.EXPAND)
@@ -423,11 +431,19 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.SetInstance(inscrit)
         self.UpdateContents()
     
-##    def EvtButton55e(self, event): TODO
-##        if self.inscrit.inscriptions[self.periode].periode_reference != 5 * [[1, 1, 1]]:
-##            self.inscrit.inscriptions[self.periode].periode_reference = 5 * [[1, 1, 1]]
-####            self.week_ctrl.SetSemaine(self.inscrit.inscriptions[self.periode].periode_reference)
+    def OnMode_5_5(self, event):
+        inscription = self.inscrit.inscriptions[self.periode]
+        inscription.mode = MODE_5_5
+        for day in inscription.reference:
+            day.set_state(PRESENT)
+        self.UpdateContents()
     
+    def OnMondayCopy(self, event):
+        inscription = self.inscrit.inscriptions[self.periode]
+        for day in inscription.reference[1:]:
+            day.copy(inscription.reference[0], False)
+        self.UpdateContents()
+            
     def UpdateContents(self):
         InscriptionsTab.UpdateContents(self)
         self.mode_accueil_choice.Enable(creche.modes_inscription != MODE_5_5)
@@ -446,8 +462,11 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
             self.activity_choice.Enable()
             for i, activity in enumerate(creche.activites.values()):
                 self.activity_choice.Append(activity.label, activity)
-                if self.activity.value == activity.value:
-                    selected = i+1
+                try:
+                    if self.activity_choice.activity.value == activity.value:
+                        selected = i+1
+                except:
+                    pass
         else:
             self.activity_choice.Disable()
         self.activity_choice.SetSelection(selected)
