@@ -24,20 +24,22 @@ from controls import *
 from planning import PlanningWidget
 
 class DayPlanningPanel(PlanningWidget):
-    # TODO les jours fériés !
     def UpdateContents(self):
-        lines = []
-        for inscrit in creche.inscrits:
-            if inscrit.getInscription(self.date) is not None:
-                #print inscrit.prenom
-                if self.date in inscrit.journees:
-                    line = inscrit.journees[self.date]
-                else:
-                    line = inscrit.getJourneeFromSemaineType(self.date)
-                line.label = GetInscritId(inscrit, creche.inscrits)
-                line.reference = inscrit.getReferenceDay(self.date)
-                lines.append(line)
-        self.SetLines(lines)
+        if self.date in creche.jours_fermeture:
+            self.Disable(u"Crèche fermée")
+        else:
+            lines = []
+            for inscrit in creche.inscrits:
+                if inscrit.getInscription(self.date) is not None:
+                    #print inscrit.prenom
+                    if self.date in inscrit.journees:
+                        line = inscrit.journees[self.date]
+                    else:
+                        line = inscrit.getJourneeFromSemaineType(self.date)
+                    line.label = GetInscritId(inscrit, creche.inscrits)
+                    line.reference = inscrit.getReferenceDay(self.date)
+                    lines.append(line)
+            self.SetLines(lines)
 
     def SetDate(self, date):
         self.date = date
@@ -95,8 +97,6 @@ class PlanningPanel(GPanel):
             note = self.notebook.GetPage(week_day)
             self.notebook.SetPageText(week_day, days[week_day] + " " + str(day.day) + " " + months[day.month - 1] + " " + str(day.year))
             note = self.notebook.GetPage(week_day)
-            if day in creche.jours_fermeture:
-                print "TODO"
             note.SetDate(day)
             self.notebook.SetSelection(0)
         self.sizer.Layout()

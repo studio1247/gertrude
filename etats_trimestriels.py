@@ -21,6 +21,10 @@ from facture import *
 from cotisation import Cotisation, CotisationException
 from ooffice import *
 
+template_total_lines_count = 19
+template_first_line = 4
+template_lines_count = 8
+
 class EtatsTrimestrielsModifications(object):
     def __init__(self, annee):
         self.annee = annee
@@ -37,11 +41,6 @@ class EtatsTrimestrielsModifications(object):
                      ]
             ReplaceTextFields(dom, fields)
             return []
-        
-        nb_cellules = 13
-        premiere_ligne = 4
-        nb_lignes = 8
-        nb_pages = 3
 
         global_indexes = getTriParCommuneEtNomIndexes(range(len(creche.inscrits)))
 
@@ -61,27 +60,36 @@ class EtatsTrimestrielsModifications(object):
             else:
                 fin = datetime.date(self.annee, trimestre * 3 + 4, 1) - datetime.timedelta(1)
 
-	    # On retire ceux qui ne sont pas inscrits pendant la periode qui nous interesse
+            # On retire ceux qui ne sont pas inscrits pendant la periode qui nous interesse
             indexes = getPresentsIndexes(global_indexes, (debut, fin))
 
             table = template.cloneNode(1)
             spreadsheet.appendChild(table)
             table.setAttribute("table:name", "%s tr %d" % (trimestres[trimestre], self.annee))
-            lignes = table.getElementsByTagName("table:table-row")
+            lines = table.getElementsByTagName("table:table-row")
+            page_template = lines[:template_total_lines_count]
+            last_line = lines[template_total_lines_count]
+            for line in page_template:
+                table.removeChild(line)
 
-            # Les titres des pages
-            ReplaceFields(lignes.item(0), [('annee', self.annee),
-                                           ('trimestre', trimestres[trimestre].upper())])
-            # Les mois
-            ReplaceFields(lignes.item(2), [('mois(1)', months[trimestre * 3].upper()),
-                                           ('mois(2)', months[(trimestre * 3) + 1].upper()),
-                                           ('mois(3)', months[(trimestre * 3) + 2].upper())])
-
+            nb_pages = (len(indexes) / template_lines_count) + (len(indexes) % template_lines_count > 0)
             for page in range(nb_pages):
-                for i in range(nb_lignes):
-                    ligne = lignes.item(premiere_ligne + i)
-                    cellules = ligne.getElementsByTagName("table:table-cell")
-                    index = page * nb_lignes + i
+                lines = []
+                for l, line in enumerate(page_template):
+                    clone = line.cloneNode(1)
+                    lines.append(clone)
+                    table.insertBefore(clone, last_line)
+                
+                # Le titre de la page
+                ReplaceFields(lines[0], [('annee', self.annee),
+                                         ('trimestre', trimestres[trimestre].upper())])
+                # Les mois
+                ReplaceFields(lines[2], [('mois(1)', months[trimestre * 3].upper()),
+                                         ('mois(2)', months[(trimestre * 3) + 1].upper()),
+                                         ('mois(3)', months[(trimestre * 3) + 2].upper())])
+                
+                for l, line in enumerate(lines[template_first_line:template_first_line+template_lines_count]):
+                    index = page * template_lines_count + l
                     heures = [[0] * 3, [0] * 3]
                     previsionnel = [0] * 3
 
@@ -122,7 +130,7 @@ class EtatsTrimestrielsModifications(object):
                             for i in range(3):
                                 fields.append(('%s(%d)' % (mode, i+1), ''))
 
-                    ReplaceFields(cellules[page * nb_cellules : (page + 1) * nb_cellules], fields)
+                    ReplaceFields(line, fields)
 
         # LA SYNTHESE ANNUELLE
         table = tables.item(0)
