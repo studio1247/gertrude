@@ -23,7 +23,7 @@ import glob
 
 setup(
 	windows = [{"script" : "gertrude.pyw", "icon_resources" : [(1000, "bitmaps\\gertrude.ico")]}],
-	data_files=[(".", glob.glob("*.dist") + glob.glob("panel_*.py") + ["facture.py", "cotisation.py"]),
+	data_files=[(".", glob.glob("*.dist") + glob.glob("*.py")),
 	            ("bitmaps", glob.glob("bitmaps\\*.png") + glob.glob("bitmaps\\*.ico")),
                 ("templates", glob.glob("templates\\*.html") + glob.glob("templates\\*.ods")  + glob.glob("templates\\*.odt"))],
 	options = {"py2exe": {"packages": ["encodings"]}},
