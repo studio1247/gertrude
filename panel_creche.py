@@ -173,7 +173,7 @@ class ActivitesTab(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, 'Label :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, 'activites[%d].label' % activity.value), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, 'Mode :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoChoiceCtrl(self, creche, 'activites[%d].mode' % activity.value, items=activity_modes), 1, wx.EXPAND)])
         color_cb = ActivityComboBox(self)
-        color_cb.activity = activity
+        color_cb.reference = activity
         for color in range(1, 10):
             color_cb.Append("", color)
         if activity.color is not None:
@@ -214,7 +214,7 @@ class ActivitesTab(AutoTab):
 
     def changeColor(self, event):
         obj = event.GetEventObject()
-        obj.activity.color = obj.GetSelection() + 1
+        obj.reference.color = obj.GetSelection() + 1
 
 class CafTab(AutoTab, PeriodeMixin):
     def __init__(self, parent):

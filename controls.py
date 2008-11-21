@@ -704,3 +704,4 @@ class ActivityComboBox(wx.combo.OwnerDrawnComboBox):
     
     def OnChangeActivity(self, evt):
         self.activity = self.GetClientData(self.GetSelection())
+        evt.Skip()
