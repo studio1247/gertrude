@@ -21,7 +21,7 @@ import wx, wx.lib, wx.lib.newevent
 from config import LoadConfig
 from constants import *
 from functions import *
-from data import Backup, Load, Save
+from data import Load, Save
 
 class StartDialog(wx.Dialog):
     def __init__(self, frame):
@@ -102,8 +102,7 @@ class StartDialog(wx.Dialog):
     def Load(self):
         try:
             LoadConfig(ProgressHandler(self.info.AppendText, self.gauge, 5))
-            Backup(ProgressHandler(self.info.AppendText, self.gauge, 5))
-            result = Load(ProgressHandler(self.info.AppendText, self.gauge, 90))
+            result = Load(ProgressHandler(self.info.AppendText, self.gauge, 95))
         except Exception, e:
             try:
                 self.info.AppendText(e.message + u'\n')

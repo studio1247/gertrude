@@ -165,6 +165,8 @@ class GertrudeFrame(wx.Frame):
             return
         elif result == wx.ID_YES:
             Save(ProgressHandler(self.SetStatusText))
+        else:
+            Restore(ProgressHandler(self.SetStatusText))
         Exit(ProgressHandler(self.SetStatusText))
         self.Destroy()
 

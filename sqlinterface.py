@@ -40,7 +40,8 @@ class SQLConnection(object):
         self.con = sqlite3.connect(DB_FILENAME)
 
     def commit(self):
-        self.con.commit()
+        if self.con:
+            self.con.commit()
 
     def close(self):
         if self.con:

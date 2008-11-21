@@ -23,13 +23,6 @@ import sqlinterface
 from functions import *
 
 BACKUPS_DIRECTORY = './backups'
-def Backup(progress_handler=default_progress_handler):
-    progress_handler.display('Sauvegarde ...')
-    if os.path.isfile(sqlinterface.DB_FILENAME):
-        if not os.path.isdir(BACKUPS_DIRECTORY):
-            os.mkdir(BACKUPS_DIRECTORY)
-        backup_filename = 'backup_%d.db' % time.time()
-        shutil.copyfile(sqlinterface.DB_FILENAME, BACKUPS_DIRECTORY + '/' + backup_filename)
 
 TOKEN_FILENAME = '.token'
 
@@ -194,6 +187,10 @@ class HttpConnection(object):
         self.progress_handler = progress_handler
         return FileConnection().Save() and self.upload()
 
+    def Restore(self, progress_handler=default_progress_handler):
+        self.progress_handler = progress_handler
+        return FileConnection().Restore()
+    
     def Exit(self, progress_handler=default_progress_handler):
         self.progress_handler = progress_handler
         return FileConnection().Save() and self.rel_token()
@@ -201,9 +198,18 @@ class HttpConnection(object):
 
 class FileConnection(object):
     def __init__(self):
-        pass
-    
+        self.backup = None
+
+    def Backup(self, progress_handler=default_progress_handler):
+        progress_handler.display('Sauvegarde ...')
+        if os.path.isfile(sqlinterface.DB_FILENAME):
+            if not os.path.isdir(BACKUPS_DIRECTORY):
+                os.mkdir(BACKUPS_DIRECTORY)
+            self.backup = 'backup_%d.db' % time.time()
+            shutil.copyfile(sqlinterface.DB_FILENAME, BACKUPS_DIRECTORY + '/' + self.backup)
+                    
     def Load(self, progress_handler=default_progress_handler):
+        self.Backup(progress_handler)
         if not os.path.isfile(sqlinterface.DB_FILENAME):
             sql_connection.create(progress_handler)
         creche = sql_connection.load(progress_handler)
@@ -212,8 +218,18 @@ class FileConnection(object):
     def Save(self, progress_handler=default_progress_handler):
         sql_connection.commit()
         return True
+    
+    def Restore(self, progress_handler=default_progress_handler):
+        sql_connection.commit()
+        sql_connection.close()
+        backup = self.backup
+        self.Backup(progress_handler)
+        if backup:
+            shutil.copyfile(BACKUPS_DIRECTORY + '/' + backup, sqlinterface.DB_FILENAME)
+        return True
 
     def Exit(self, progress_handler=default_progress_handler):
+        sql_connection.commit()
         sql_connection.close()
         return True        
 
@@ -224,6 +240,9 @@ def Load(progress_handler=default_progress_handler):
 
 def Save(progress_handler=default_progress_handler):
     return config.connection.Save(progress_handler)
+
+def Restore(progress_handler=default_progress_handler):
+    return config.connection.Restore(progress_handler)
 
 def Exit(progress_handler=default_progress_handler):
     return config.connection.Exit(progress_handler)
