@@ -377,7 +377,7 @@ class ParentsPanel(InscriptionsTab):
 
 class ReferencePlanningPanel(PlanningWidget):
     def __init__(self, parent, activity_choice):
-        PlanningWidget.__init__(self, parent, activity_choice, options=NO_ICONS)
+        PlanningWidget.__init__(self, parent, activity_choice, options=NO_ICONS|PRESENCES_ONLY)
         
     def UpdateContents(self):
         lines = []

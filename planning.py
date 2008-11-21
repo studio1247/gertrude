@@ -25,6 +25,7 @@ from history import *
 # PlanningWidget options
 NO_ICONS = 1
 READ_ONLY = 2
+PRESENCES_ONLY = 4
 
 # Elements size
 LABEL_WIDTH = 80 # px
@@ -33,6 +34,7 @@ COLUMN_WIDTH = 12 # px
 LINE_HEIGHT = 30 # px
 
 BUTTON_BITMAPS = { ABSENT: wx.Bitmap("./bitmaps/icone_vacances.png", wx.BITMAP_TYPE_PNG),
+                   ABSENT+PREVISIONNEL: wx.Bitmap("./bitmaps/icone_vacances.png", wx.BITMAP_TYPE_PNG),
                    PRESENT: wx.Bitmap("./bitmaps/icone_presence.png", wx.BITMAP_TYPE_PNG),
                    PRESENT+PREVISIONNEL: wx.Bitmap("./bitmaps/icone_presence_prev.png", wx.BITMAP_TYPE_PNG),
                    VACANCES: wx.Bitmap("./bitmaps/icone_vacances.png", wx.BITMAP_TYPE_PNG),
@@ -172,7 +174,7 @@ class PlanningGridWindow(BufferedWindow):
                 else:
                     line.values[i] &= ~(1 << self.activity_combobox.activity.value)
 
-            if line.get_state() == ABSENT:
+            if not (self.GetParent().GetParent().options & PRESENCES_ONLY) and line.get_state() == ABSENT:
                 line.set_state(VACANCES)
             else:
                 line.save()
