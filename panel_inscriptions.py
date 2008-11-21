@@ -442,6 +442,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         inscription = self.inscrit.inscriptions[self.periode]
         for day in inscription.reference[1:]:
             day.copy(inscription.reference[0], False)
+            day.save()
         self.UpdateContents()
             
     def UpdateContents(self):
