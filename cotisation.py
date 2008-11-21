@@ -69,7 +69,7 @@ class Cotisation(object):
             self.mode_garde = self.inscription.mode
             self.jours_semaine = 0
             for i in range(5):
-                if self.inscription.reference[i].get_state() == PRESENT:
+                if self.inscription.reference[i].get_state() & PRESENT:
                     self.jours_semaine += 1
         
         if self.mode_garde == MODE_HALTE_GARDERIE:

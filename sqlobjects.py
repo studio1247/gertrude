@@ -86,8 +86,16 @@ class Day(object):
         for i in range(96):
             if self.values[i] < 0:
                 return self.values[i]
-            state |= self.values[i] & (PRESENT|PREVISIONNEL)
-        return state
+            else:
+                state |= self.values[i]
+#        activities_state = state & ~(PRESENT|PREVISIONNEL)
+#        if activities_state:
+#            state &= ~activities_state
+#            state |= PRESENT
+        if state == PREVISIONNEL:
+            return ABSENT
+        else:
+            return state
     
     def copy(self, day, previsionnel=True):
         self.values = day.values[:]
@@ -638,17 +646,17 @@ class Inscrit(object):
             if state == MALADE:
                 return MALADE
             elif state in (ABSENT, VACANCES):
-                if inscription.mode == MODE_5_5 or ref_state == PRESENT:
+                if inscription.mode == MODE_5_5 or ref_state:
                     return VACANCES
                 else:
                     return ABSENT
             else: # PRESENT
-                if inscription.mode == MODE_5_5 or ref_state == PRESENT:
+                if inscription.mode == MODE_5_5 or ref_state:
                     return state
                 else:
                     return state+SUPPLEMENT
         else:
-            if ref_state == PRESENT:
+            if ref_state:
                 if creche.presences_previsionnelles or date > today:
                     return PRESENT|PREVISIONNEL
                 else:

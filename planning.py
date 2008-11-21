@@ -164,15 +164,27 @@ class PlanningGridWindow(BufferedWindow):
                     line.values = [PREVISIONNEL] * 96
                 else:
                     line.values = [0] * 96
-            clear_values = [1 << activity.value for activity in creche.activites.values() if (activity.mode & MODE_LIBERE_PLACE)]
+            if self.state:
+                value = 1 << self.activity_combobox.activity.value
+                clear_values = [1 << activity.value for activity in creche.activites.values() if (activity.mode & MODE_LIBERE_PLACE)]
+            else:
+                value = ~(1 << self.activity_combobox.activity.value)
+                clear_values = [1 << activity.value for activity in creche.activites.values() if not (activity.mode & MODE_LIBERE_PLACE)]
+                clear_values = ~(1 + sum(clear_values))
+            
             for i in range(start, end+BASE_GRANULARITY/creche.granularite):
                 if self.state:
-                    if self.activity_combobox.activity.mode & MODE_LIBERE_PLACE or line.values[i] in clear_values:
-                        line.values[i] = 1 << self.activity_combobox.activity.value
+                    if self.activity_combobox.activity.mode & MODE_LIBERE_PLACE:
+                        line.values[i] = value
+                    elif line.values[i] in clear_values:
+                        line.values[i] = (value | 1)
                     else:
-                        line.values[i] |= 1 << self.activity_combobox.activity.value
+                        line.values[i] |= (value | 1)
                 else:
-                    line.values[i] &= ~(1 << self.activity_combobox.activity.value)
+                    if self.activity_combobox.activity.value == 0:
+                        line.values[i] &= clear_values
+                    else:
+                        line.values[i] &= value
 
             if not (self.GetParent().GetParent().options & PRESENCES_ONLY) and line.get_state() == ABSENT:
                 line.set_state(VACANCES)
@@ -218,7 +230,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             line.set_state(MALADE)
         elif state == MALADE:
             line.copy(line.reference, creche.presences_previsionnelles and (line.date > datetime.date.today()))
-        elif line.date <= datetime.date.today() and state == PRESENT|PREVISIONNEL:
+        elif line.date <= datetime.date.today() and state & PREVISIONNEL:
             line.confirm()
         else:
             line.set_state(VACANCES)
@@ -232,7 +244,13 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         self.GetParent().UpdateLine(index)
             
     def UpdateButton(self, index):
-        self.buttons_sizer.GetItem(index).GetWindow().button.SetBitmapLabel(BUTTON_BITMAPS[self.lines[index].get_state()])
+        state = self.lines[index].get_state()
+        if state > 0:
+            activities_state = state & ~(PRESENT|PREVISIONNEL)
+            if activities_state:
+                state &= ~activities_state
+                state |= PRESENT
+        self.buttons_sizer.GetItem(index).GetWindow().button.SetBitmapLabel(BUTTON_BITMAPS[state])
 
 # self.buttons_sizer.ShowItems(1)
     def Disable(self, cause):
