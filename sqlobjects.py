@@ -354,8 +354,15 @@ class Creche(object):
     def calcule_jours_fermeture(self):
         self.jours_fermeture = []
         for year in range(first_date.year, last_date.year + 1):
-            for label, func in jours_feries:
-                self.jours_fermeture.append(func(year))
+            for label, func, enable in jours_fermeture:
+                if enable:
+                    self.jours_fermeture.append(label)
+                    tmp = func(year)
+                    if isinstance(tmp, list):
+                        self.jours_fermeture.extend(tmp)
+                    else:
+                        self.jours_fermeture.append(tmp)
+                    
 
         def add_periode(debut, fin):
             date = debut
@@ -476,7 +483,7 @@ class Inscription(object):
         self.fin = None
         self.mode = MODE_5_5
         self.reference = []
-        for i in range(5):
+        for i in range(7):
             self.reference.append(ReferenceDay(self, i))
         self.fin_periode_essai = None
 
@@ -618,9 +625,6 @@ class Inscrit(object):
 
     def getReferenceDay(self, date):
         weekday = date.weekday()
-        if weekday > 4:
-            raise Exception(u'La date doit être un jour de semaine')
-
         inscription = self.getInscription(date)
         if inscription:
             return inscription.reference[weekday]

@@ -57,7 +57,7 @@ class PlanningPanel(GPanel):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.week_choice = wx.Choice(self, -1)
         sizer.Add(self.week_choice, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-        day = first_monday = getfirstmonday()
+        day = first_monday = getFirstMonday()
         semaine = getNumeroSemaine(day)
         while day < last_date:
             string = 'Semaine %d (%d %s %d)' % (semaine, day.day, months[day.month - 1], day.year)
@@ -80,7 +80,11 @@ class PlanningPanel(GPanel):
         # le notebook pour les jours de la semaine
         self.notebook = wx.Notebook(self, style=wx.LB_DEFAULT)
         self.sizer.Add(self.notebook, 1, wx.EXPAND|wx.TOP, 5)
-        for week_day in range(5):
+        if "Week-end" in creche.jours_fermeture:
+            self.count = 5
+        else:
+            self.count = 7
+        for week_day in range(self.count):
             date = first_monday + datetime.timedelta(semaine * 7 + week_day)
             title = days[week_day] + " " + str(date.day) + " " + months[date.month - 1] + " " + str(date.year)
             planning_panel = DayPlanningPanel(self.notebook, self.activity_choice)
@@ -92,7 +96,7 @@ class PlanningPanel(GPanel):
     def OnChangeWeek(self, evt):
         cb = evt.GetEventObject()
         monday = cb.GetClientData(cb.GetSelection())
-        for week_day in range(5):
+        for week_day in range(self.count):
             day = monday + datetime.timedelta(week_day)
             note = self.notebook.GetPage(week_day)
             self.notebook.SetPageText(week_day, days[week_day] + " " + str(day.day) + " " + months[day.month - 1] + " " + str(day.year))
@@ -119,7 +123,7 @@ class PlanningPanel(GPanel):
         else:
             self.activity_choice.Disable()
         self.activity_choice.SetSelection(selected)
-        for week_day in range(5):
+        for week_day in range(self.count):
             note = self.notebook.GetPage(week_day)
             note.UpdateContents()
         self.sizer.Layout()

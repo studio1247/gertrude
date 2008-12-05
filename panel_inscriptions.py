@@ -382,7 +382,11 @@ class ReferencePlanningPanel(PlanningWidget):
     def UpdateContents(self):
         lines = []
         if self.inscription:
-            for day in range(5):
+            if "Week-end" in creche.jours_fermeture:
+                count = 5
+            else:
+                count = 7
+            for day in range(count):
                 line = self.inscription.reference[day]
                 line.label = days[day]
                 line.reference = None

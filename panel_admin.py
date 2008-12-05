@@ -109,12 +109,12 @@ class UsersPanel(AutoTab):
         else:
             event.Skip(True)
 
-class CongesPanel(AutoTab):
+class JoursFermeturePanel(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)       
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        for text in [j[0] for j in jours_feries]:
+        for text in [j[0] for j in jours_fermeture]:
             textctrl = wx.TextCtrl(self, -1, text, style=wx.TE_READONLY)
             textctrl.Disable()
             self.sizer.Add(textctrl, 0, wx.EXPAND)
@@ -192,7 +192,7 @@ class AdminNotebook(wx.Notebook):
     def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
         self.AddPage(UsersPanel(self), 'Utilisateurs')
-        self.AddPage(CongesPanel(self), u'Congés')
+        self.AddPage(JoursFermeturePanel(self), u'Congés')
         self.AddPage(ParametersPanel(self), u'Paramètres')
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 

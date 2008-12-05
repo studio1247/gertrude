@@ -19,12 +19,12 @@ import datetime, binascii
 from constants import *
 from parameters import *
 
-def getfirstmonday():
+def getFirstMonday():
     first_monday = first_date
     while first_monday.weekday() != 0:
         first_monday += datetime.timedelta(1)
     return first_monday
-
+      
 def getNumeroSemaine(date):
     return int((date - datetime.date(date.year, 1, 1)).days / 7) + 1
 

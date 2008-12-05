@@ -63,7 +63,7 @@ class RelevesPanel(GPanel):
         # Les plannings de presence enfants
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Planning des présences'), wx.HORIZONTAL)
         self.weekchoice = wx.Choice(self)
-        day = getfirstmonday()
+        day = getFirstMonday()
         semaine = 1
         while day < last_date:
             string = 'Semaines %d et %d (%d %s %d)' % (semaine, semaine+1, day.day, months[day.month - 1], day.year)
@@ -73,7 +73,7 @@ class RelevesPanel(GPanel):
             else:
                 semaine = 1
             day += datetime.timedelta(14)
-        self.weekchoice.SetSelection((today - getfirstmonday()).days / 14 + 1)
+        self.weekchoice.SetSelection((today - getFirstMonday()).days / 14 + 1)
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationPlanningPresences, button)
         box_sizer.AddMany([(self.weekchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])

@@ -18,22 +18,36 @@
 import datetime
 from paques import getPaquesDate
 
+def getWeekDays(year, weekday):
+    result = []
+    date = datetime.date(year, 1, 1)
+    while date.weekday() != weekday:
+        date += datetime.timedelta(1)
+    while date <= datetime.date(year, 12, 31):
+        result.append(date)
+        date += datetime.timedelta(7)
+    return result
+
+def getWeekEnds(year):
+    return getWeekDays(year, 5) +  getWeekDays(year, 6)
+
 # Période de visualisation
 today = datetime.date.today()
 first_date = today - datetime.timedelta(12*30)
 last_date = today + datetime.timedelta(6*30)
 
 # Jours fériés
-jours_feries = []
-jours_feries.append(("1er janvier", lambda year: datetime.date(year, 1, 1)))
-jours_feries.append(("1er mai", lambda year: datetime.date(year, 5, 1)))
-jours_feries.append(("8 mai", lambda year: datetime.date(year, 5, 8)))
-jours_feries.append(("14 juillet", lambda year: datetime.date(year, 7, 14)))
-jours_feries.append((u"15 août", lambda year: datetime.date(year, 8, 15)))
-jours_feries.append(("1er novembre", lambda year: datetime.date(year, 11, 1)))
-jours_feries.append(("11 novembre", lambda year: datetime.date(year, 11, 11)))
-jours_feries.append((u"25 décembre", lambda year: datetime.date(year, 12, 25)))
-jours_feries.append((u"Lundi de Pâques", lambda year: getPaquesDate(year) + datetime.timedelta(1)))
-jours_feries.append(("Jeudi de l'Ascension", lambda year: getPaquesDate(year) + datetime.timedelta(39)))
-# jours_feries.append((u"Lundi de Pentecôte", lambda year: paques + datetime.timedelta(50)))
+jours_fermeture = []
+jours_fermeture.append(("Week-end", lambda year: getWeekEnds(year), False))
+jours_fermeture.append(("1er janvier", lambda year: datetime.date(year, 1, 1), True))
+jours_fermeture.append(("1er mai", lambda year: datetime.date(year, 5, 1), True))
+jours_fermeture.append(("8 mai", lambda year: datetime.date(year, 5, 8), True))
+jours_fermeture.append(("14 juillet", lambda year: datetime.date(year, 7, 14), True))
+jours_fermeture.append((u"15 août", lambda year: datetime.date(year, 8, 15), True))
+jours_fermeture.append(("1er novembre", lambda year: datetime.date(year, 11, 1), True))
+jours_fermeture.append(("11 novembre", lambda year: datetime.date(year, 11, 11), True))
+jours_fermeture.append((u"25 décembre", lambda year: datetime.date(year, 12, 25), True))
+jours_fermeture.append((u"Lundi de Pâques", lambda year: getPaquesDate(year) + datetime.timedelta(1), True))
+jours_fermeture.append(("Jeudi de l'Ascension", lambda year: getPaquesDate(year) + datetime.timedelta(39), True))
+jours_fermeture.append((u"Lundi de Pentecôte", lambda year: paques + datetime.timedelta(50), False))
 

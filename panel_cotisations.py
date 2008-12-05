@@ -44,7 +44,7 @@ class CotisationsPanel(GPanel):
         # Les appels de cotisations
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Edition des appels de cotisation'), wx.HORIZONTAL)
         self.appels_monthchoice = wx.Choice(self)
-        date = getfirstmonday()
+        date = getFirstMonday()
         first_date = datetime.date(year=date.year, month=date.month, day=1) 
         while date < last_date:
             string = '%s %d' % (months[date.month - 1], date.year)
@@ -87,7 +87,7 @@ class CotisationsPanel(GPanel):
     def EvtFacturesInscritChoice(self, evt):
         self.factures_monthchoice.Clear()
         inscrit = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
-        date = getfirstmonday()
+        date = getFirstMonday()
         while date < today:
             if isinstance(inscrit, list) or inscrit.getInscriptions(datetime.date(date.year, date.month, 1), getMonthEnd(date)):
                 self.factures_monthchoice.Append('%s %d' % (months[date.month - 1], date.year), date)
@@ -117,7 +117,7 @@ class CotisationsPanel(GPanel):
                 self.recus_periodechoice.Append(u"%s - %s %d" % (months[debut-1], months[today.month-1], today.year), (datetime.date(today.year, debut, 1), datetime.date(today.year, today.month, 1)))
 
         self.recus_periodechoice.Append(50 * "-", None)
-        date = getfirstmonday()
+        date = getFirstMonday()
         while date < today:
             if isinstance(inscrit, list) or inscrit.getInscriptions(datetime.date(date.year, date.month, 1), getMonthEnd(date)):
                 self.recus_periodechoice.Append('%s %d' % (months[date.month - 1], date.year), (datetime.date(date.year, date.month, 1), getMonthEnd(date)))
