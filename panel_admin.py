@@ -114,10 +114,13 @@ class JoursFermeturePanel(AutoTab):
         AutoTab.__init__(self, parent)       
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        for text in [j[0] for j in jours_fermeture]:
-            textctrl = wx.TextCtrl(self, -1, text, style=wx.TE_READONLY)
-            textctrl.Disable()
-            self.sizer.Add(textctrl, 0, wx.EXPAND)
+        labels_conges = [j[0] for j in jours_fermeture]
+        for text in labels_conges:
+            checkbox = wx.CheckBox(self, -1, text)
+            if text in creche.feries:
+                checkbox.SetValue(True)
+            self.sizer.Add(checkbox, 0, wx.EXPAND)
+            self.Bind(wx.EVT_CHECKBOX, self.feries_check, checkbox)
         self.conges_sizer = wx.BoxSizer(wx.VERTICAL)
         for i, conge in enumerate(creche.conges):
             self.line_add(i)
@@ -167,6 +170,19 @@ class JoursFermeturePanel(AutoTab):
         self.sizer.Layout()
         self.UpdateContents()
 
+    def feries_check(self, event):
+        label = event.GetEventObject().GetLabelText()
+        if event.IsChecked():
+            conge = Conge()
+            conge.debut = label
+            creche.add_conge(conge)
+        else:
+            conge = creche.feries[label]
+            conge.delete()
+            del creche.feries[label]
+            creche.calcule_jours_fermeture()
+        history.Append(None)
+            
 class ParametersPanel(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
@@ -182,7 +198,7 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, u'Granularité du planning :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'granularite', [('1/4 heure', 4), ('1/2 heure', 2), ('1 heure', 1)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Nombre de mois payés :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'mois_payes', [('12 mois', 12), ('11 mois', 11)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Présences prévisionnelles :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'presences_previsionnelles', [(u'Géré', True), (u'Non géré', False)]), 0, wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, u"Modes d'inscription :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'modes_inscription', [(u'Crèche à plein-temps uniquement', MODE_5_5), (u'Crèche (5/5 4/5 3/5) et halte-garderie', MODE_5_5+MODE_4_5+MODE_3_5+MODE_HALTE_GARDERIE)]), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u"Modes d'inscription :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'modes_inscription', [(u'Crèche à plein-temps uniquement', MODE_5_5), ('Tous modes', MODE_5_5+MODE_4_5+MODE_3_5+MODE_HALTE_GARDERIE)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Minimum de jours de maladie pour déduction :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'minimum_maladie', min=0, precision=0), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Mode de déduction pour maladie :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'mode_maladie', [('Avec carence', DEDUCTION_AVEC_CARENCE), ('Sans carence', DEDUCTION_TOTALE)]), 0, wx.EXPAND)])
         self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 5)

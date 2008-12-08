@@ -80,7 +80,7 @@ class PlanningPanel(GPanel):
         # le notebook pour les jours de la semaine
         self.notebook = wx.Notebook(self, style=wx.LB_DEFAULT)
         self.sizer.Add(self.notebook, 1, wx.EXPAND|wx.TOP, 5)
-        if "Week-end" in creche.jours_fermeture:
+        if "Week-end" in creche.feries:
             self.count = 5
         else:
             self.count = 7

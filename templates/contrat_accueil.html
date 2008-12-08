@@ -3,12 +3,12 @@
 
 <HEAD>
 	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
-	<TITLE>CONTRAT D&rsquo;ACCUEIL REGULIER</TITLE>
+	<TITLE>CONTRAT D&rsquo;ACCUEIL</TITLE>
 	<META NAME="GENERATOR" CONTENT="OpenOffice.org 2.0  (Win32)">
 </HEAD>
 
 <BODY>
-<P ALIGN=CENTER><B><FONT SIZE=4>Contrat d&rsquo;accueil r&eacute;gulier</FONT></B></P>
+<P ALIGN=CENTER><B><FONT SIZE=4>Contrat d&rsquo;accueil</FONT></B></P>
 <P ALIGN=CENTER><BR><BR>
 </P>
 <P ALIGN=LEFT>Ce contrat d&rsquo;accueil est <B>conclu au b&eacute;n&eacute;fice
@@ -41,36 +41,51 @@ halte-garderie <var value="creche.nom"/> sur les <B>horaires</B> suivants :</P>
 </tr>
 <tr>
     <td>lundi</td>
-    <td <if value="inscription.periode_reference[0][0]">bgcolor="#808080"</if>></td>
-    <td <if value="inscription.periode_reference[0][1]">bgcolor="#808080"</if>></td>
-    <td <if value="inscription.periode_reference[0][2]">bgcolor="#808080"</if>></td>
+    <td <if value="isPresentDuringTranche(inscription.reference[0], 0)">bgcolor="#808080"</if>></td>
+    <td <if value="isPresentDuringTranche(inscription.reference[0], 1)">bgcolor="#808080"</if>></td>
+    <td <if value="isPresentDuringTranche(inscription.reference[0], 2)">bgcolor="#808080"</if>></td>
 </tr>
 <tr>
     <td>mardi</td>
-    <td <if value="inscription.periode_reference[1][0]">bgcolor="#808080"</if>></td>
-    <td <if value="inscription.periode_reference[1][1]">bgcolor="#808080"</if>></td>
-    <td <if value="inscription.periode_reference[1][2]">bgcolor="#808080"</if>></td>
+    <td <if value="isPresentDuringTranche(inscription.reference[1], 0)">bgcolor="#808080"</if>></td>
+    <td <if value="isPresentDuringTranche(inscription.reference[1], 1)">bgcolor="#808080"</if>></td>
+    <td <if value="isPresentDuringTranche(inscription.reference[1], 2)">bgcolor="#808080"</if>></td>
 </tr>
 <tr>
     <td>mercredi</td>
-    <td <if value="inscription.periode_reference[2][0]">bgcolor="#808080"</if>></td>
-    <td <if value="inscription.periode_reference[2][1]">bgcolor="#808080"</if>></td>
-    <td <if value="inscription.periode_reference[2][2]">bgcolor="#808080"</if>></td>
+    <td <if value="isPresentDuringTranche(inscription.reference[2], 0)">bgcolor="#808080"</if>></td>
+    <td <if value="isPresentDuringTranche(inscription.reference[2], 1)">bgcolor="#808080"</if>></td>
+    <td <if value="isPresentDuringTranche(inscription.reference[2], 2)">bgcolor="#808080"</if>></td>
 </tr>
 <tr>
     <td>jeudi</td>
-    <td <if value="inscription.periode_reference[3][0]">bgcolor="#808080"</if>></td>
-    <td <if value="inscription.periode_reference[3][1]">bgcolor="#808080"</if>></td>
-    <td <if value="inscription.periode_reference[3][2]">bgcolor="#808080"</if>></td>
+    <td <if value="isPresentDuringTranche(inscription.reference[3], 0)">bgcolor="#808080"</if>></td>
+    <td <if value="isPresentDuringTranche(inscription.reference[3], 1)">bgcolor="#808080"</if>></td>
+    <td <if value="isPresentDuringTranche(inscription.reference[3], 2)">bgcolor="#808080"</if>></td>
+</tr>
+<tr style="visibility:hidden">
+    <td>vendredi</td>
+    <td <if value="isPresentDuringTranche(inscription.reference[4], 0)">bgcolor="#808080"</if>></td>
+    <td <if value="isPresentDuringTranche(inscription.reference[4], 1)">bgcolor="#808080"</if>></td>
+    <td <if value="isPresentDuringTranche(inscription.reference[4], 2)">bgcolor="#808080"</if>></td>
+</tr>
+<if value="'Week-end' in creche.feries"><!--</if>
+<tr>
+    <td>samedi</td>
+    <td <if value="isPresentDuringTranche(inscription.reference[5], 0)">bgcolor="#808080"</if>></td>
+    <td <if value="isPresentDuringTranche(inscription.reference[5], 1)">bgcolor="#808080"</if>></td>
+    <td <if value="isPresentDuringTranche(inscription.reference[5], 2)">bgcolor="#808080"</if>></td>
 </tr>
 <tr>
-    <td>vendredi</td>
-    <td <if value="inscription.periode_reference[4][0]">bgcolor="#808080"</if>></td>
-    <td <if value="inscription.periode_reference[4][1]">bgcolor="#808080"</if>></td>
-    <td <if value="inscription.periode_reference[4][2]">bgcolor="#808080"</if>></td>
+    <td>dimanche</td>
+    <td <if value="isPresentDuringTranche(inscription.reference[6], 0)">bgcolor="#808080"</if>></td>
+    <td <if value="isPresentDuringTranche(inscription.reference[6], 1)">bgcolor="#808080"</if>></td>
+    <td <if value="isPresentDuringTranche(inscription.reference[6], 2)">bgcolor="#808080"</if>></td>
+</tr>
+<if value="'Week-end' in creche.feries">--></if>
 </table>
-<P>soit un total de <var value="'%d' % total_semaine"/> heures
-hebdomadaires, repr&eacute;sentant un <B>nombre moyen de <var value="'%d' % total_mois"/> heures par mois</B>, soit <var value="'%d' % total_annee"/> heures annuelles.</P>
+<P>soit un total de <var value="'%d' % heures_semaine"/> heures
+hebdomadaires, repr&eacute;sentant un <B>nombre moyen de <var value="'%d' % heures_mois"/> heures par mois</B>, soit <var value="'%d' % heures_annee"/> heures annuelles.</P>
 <P><FONT SIZE=2>NB : Le matin et l&rsquo;apr&egrave;s-midi sont
 comptabilis&eacute;s comme des cr&eacute;neaux horaires de quatre
 heures, le repas de midi comme un cr&eacute;neau horaire de deux
@@ -83,7 +98,7 @@ r&eacute;vis&eacute; annuellement, ou en cas de changement
 significatif de situation. (cf. r&egrave;glement int&eacute;rieur)</P>
 <P ALIGN=JUSTIFY>Pour une pr&eacute;sence
 mensuelle de <var value="'%d' % total_mois"/> heures, votre cotisation
-mensuelle s&rsquo;&eacute;l&egrave;ve &agrave; <var value="'%.02f' % cotisation_mensuelle"/> &euro; soit <var value="'%.02f' % cout_horaire"/> &euro; de l&rsquo;heure.</P>
+mensuelle s&rsquo;&eacute;l&egrave;ve &agrave; <var value="'%.02f' % cotisation_mensuelle"/> &euro;</P>
 <P ALIGN=JUSTIFY>Dans le cas o&ugrave; l&rsquo;enfant devrait
 exceptionnellement &ecirc;tre accueilli sur un nombre d&rsquo;heures
 suppl&eacute;mentaires, celles-ci seront factur&eacute;es <B>en sus

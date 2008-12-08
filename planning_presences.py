@@ -60,13 +60,13 @@ class PlanningModifications(object):
                 cellule = cellules.item(1 + semaine * 6 + jour)
                 ReplaceFields([cellule], [('date', date)])
 
-        ligne_total = lignes.item(19)
+        ligne_total = lignes.item(15)
 
-        # Les enfants en adaptation
-        indexes = [] # TODO getAdaptationIndexes(self.debut, date_fin)
-        indexes = getTriParPrenomIndexes(indexes)
-        self.printPresences(template, indexes, 15)
-        nb_ad = max(2, len(indexes))
+#        # Les enfants en adaptation
+#        indexes = [] # TODO getAdaptationIndexes(self.debut, date_fin)
+#        indexes = getTriParPrenomIndexes(indexes)
+#        self.printPresences(template, indexes, 15)
+#        nb_ad = max(2, len(indexes))
 
         # Les halte-garderie
         indexes = getInscritsByMode(self.debut, date_fin, MODE_HALTE_GARDERIE)
@@ -91,7 +91,7 @@ class PlanningModifications(object):
             cellule = cellules.item(i)
             if (cellule.hasAttribute('table:formula')):
                 formule = cellule.getAttribute('table:formula')
-                formule = formule.replace('18', '%d' % (3+nb_55+1+nb_45+1+nb_hg+1+nb_ad))
+                formule = formule.replace('14', '%d' % (3+nb_55+1+nb_45+1+nb_hg+1))
                 cellule.setAttribute('table:formula', formule)
 
         #print dom.toprettyxml()
@@ -109,7 +109,7 @@ class PlanningModifications(object):
             nb_lignes = 2
         lignes = dom.getElementsByTagName("table:table-row")
         for i in range(nb_lignes):
-            if (i < len(indexes)):
+            if i < len(indexes):
                 inscrit = creche.inscrits[indexes[i]]
             else:
                 inscrit = None
@@ -119,20 +119,28 @@ class PlanningModifications(object):
                 # le prenom
                 cellule = cellules.item(semaine * 17)
                 if inscrit:
-                    ReplaceFields([cellule], [('prenom', inscrit.prenom)])
+                    try:
+                        age = (self.debut.year-inscrit.naissance.year) * 12 + self.debut.month - inscrit.naissance.month
+                        if age >= 24:
+                            age = '(%d ans)' % (age/12)
+                        else:
+                            age = '(%d mois)' % age
+                    except:
+                        age = '(?)'
+                    ReplaceFields([cellule], [('prenom', inscrit.prenom), ('(age)', age)])
                 else:
-                    ReplaceFields([cellule], [('prenom', '')])
+                    ReplaceFields([cellule], [('prenom', ''), ('(age)', '')])
                 # les presences
                 for jour in range(5):
                     date = self.debut + datetime.timedelta(semaine * 7 + jour)
                     if inscrit:
                         if date in inscrit.journees:
-                            journee = inscrit.presences[date]
+                            journee = inscrit.journees[date]
                         else:
                             journee = inscrit.getJourneeFromSemaineType(date)
                     for tranche in range(3):
                         cellule = cellules.item(1 + semaine * 17 + jour * 3 + tranche)
-                        if inscrit:
+                        if inscrit and journee:
                             ReplaceFields([cellule], [('p', int(isPresentDuringTranche(journee, tranche)))])
                         else:
                             ReplaceFields([cellule], [('p', '')])

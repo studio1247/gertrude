@@ -24,7 +24,7 @@ from functions import *
 from sqlobjects import *
 
 DB_FILENAME = 'gertrude.db'
-VERSION = 19
+VERSION = 20
 
 def getdate(s):
     if s is None:
@@ -229,6 +229,8 @@ class SQLConnection(object):
             fin VARCHAR
           );""")
 
+        for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", u"15 août", "1er novembre", "11 novembre", u"25 décembre", u"Lundi de Pâques", "Jeudi de l'Ascension"):
+            cur.execute("INSERT INTO CONGES (idx, debut) VALUES (NULL, ?)", (label))
         cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
         cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, mode_maladie, email, capacite) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', ("","","","",7.75,18.5,7.75,19.0,4,12,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,15,DEDUCTION_AVEC_CARENCE,"",0))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2006, 9, 1), datetime.date(2007, 8, 31), 6547.92, 51723.60))
@@ -581,6 +583,10 @@ class SQLConnection(object):
             cur.execute('UPDATE CRECHE SET modes_inscription=? WHERE modes_inscription=?', (1+2+4+8, 7))
             cur.execute('UPDATE CRECHE SET modes_inscription=? WHERE modes_inscription=?', (2, 0))
             cur.execute('UPDATE INSCRIPTIONS SET mode=? WHERE mode=?', (2, 0))
+            
+        if version < 20:
+            for label in ["Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", u"15 août", "1er novembre", "11 novembre", u"25 décembre", u"Lundi de Pâques", "Jeudi de l'Ascension"]:
+                cur.execute("INSERT INTO CONGES (idx, debut) VALUES (NULL, ?)", (label, ))
 
         if version < VERSION:
             try:

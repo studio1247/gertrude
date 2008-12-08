@@ -23,6 +23,16 @@ from controls import *
 from planning import *
 from cotisation import *
 
+def isPresentDuringTranche(journee, tranche):
+    # Tranches horaires
+    tranches = [(creche.ouverture, 12), (12, 14), (14, creche.fermeture)]
+    
+    debut, fin = tranches[tranche]
+    for i in range(int(debut * 4), int(fin * 4)):
+        if journee.values[i]:
+            return True
+    return False
+
 def ParseHtml(filename, context):
     locals().update(context.__dict__)
     data = file(filename, 'r').read()
@@ -42,6 +52,7 @@ def ParseHtml(filename, context):
             else:
                 replacement = ''
         except:
+            print 'TODO', text
             replacement = '' # TODO la période de référence du contrat est cassée
         data = data.replace(text, replacement)
 
@@ -121,10 +132,7 @@ class ContratPanel(ContextPanel):
         else:
             try:
                 context = Cotisation(self.inscrit, self.periode)
-                if context.mode_inscription == MODE_CRECHE:
-                    self.html = ParseHtml("./templates/contrat_accueil_creche.html", context)
-                else:
-                    self.html = ParseHtml("./templates/contrat_accueil_creche.html", context)
+                self.html = ParseHtml("./templates/contrat_accueil.html", context)
             except CotisationException, e:
                 error = '<br>'.join(e.errors)
                 self.html = u"<html><body><b>Le contrat d'accueil de l'enfant ne peut être édit&eacute; pour la (les) raison(s) suivante(s) :</b><br>" + error + "</body></html>"
@@ -382,7 +390,7 @@ class ReferencePlanningPanel(PlanningWidget):
     def UpdateContents(self):
         lines = []
         if self.inscription:
-            if "Week-end" in creche.jours_fermeture:
+            if "Week-end" in creche.feries:
                 count = 5
             else:
                 count = 7
@@ -478,7 +486,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
 
     def SetPeriode(self, periode):
         PeriodeMixin.SetPeriode(self, periode)
-        if self.inscrit:
+        if self.inscrit and self.periode < len(self.inscrit.inscriptions):
             self.planning_panel.SetInscription(self.inscrit.inscriptions[self.periode])
         else:
             self.planning_panel.SetInscription(None)
