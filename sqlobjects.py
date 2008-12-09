@@ -255,6 +255,8 @@ class Conge(object):
         if name in ['debut', 'fin'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE CONGES SET %s=? WHERE idx=?' % name, (value, self.idx))
+            if self.creche:
+                self.creche.calcule_jours_fermeture()
 
 class Activite(object):
     last_value = 0
@@ -391,7 +393,7 @@ class Creche(object):
 
     def add_conge(self, conge):
         conge.creche = self
-        if '/' in conge.debut:
+        if '/' in conge.debut or conge.debut not in [tmp[0] for tmp in jours_fermeture]:
             self.conges.append(conge)
         else:
             self.feries[conge.debut] = conge

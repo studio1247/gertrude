@@ -173,8 +173,9 @@ class JoursFermeturePanel(AutoTab):
     def feries_check(self, event):
         label = event.GetEventObject().GetLabelText()
         if event.IsChecked():
-            conge = Conge()
+            conge = Conge(creation=False)
             conge.debut = label
+            conge.create()
             creche.add_conge(conge)
         else:
             conge = creche.feries[label]
