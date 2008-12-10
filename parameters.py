@@ -49,5 +49,5 @@ jours_fermeture.append(("11 novembre", lambda year: datetime.date(year, 11, 11),
 jours_fermeture.append((u"25 décembre", lambda year: datetime.date(year, 12, 25), True))
 jours_fermeture.append((u"Lundi de Pâques", lambda year: getPaquesDate(year) + datetime.timedelta(1), True))
 jours_fermeture.append(("Jeudi de l'Ascension", lambda year: getPaquesDate(year) + datetime.timedelta(39), True))
-jours_fermeture.append((u"Lundi de Pentecôte", lambda year: paques + datetime.timedelta(50), False))
+jours_fermeture.append((u"Lundi de Pentecôte", lambda year: getPaquesDate(year) + datetime.timedelta(50), False))
 
