@@ -27,8 +27,8 @@ class StartDialog(wx.Dialog):
     def __init__(self, frame):
         self.loaded = False
         self.frame = frame
-        wx.Dialog.__init__(self, None, -1, "Gertrude", wx.DefaultPosition, wx.DefaultSize)
-
+        wx.Dialog.__init__(self, None, -1, "Gertrude")
+        
         icon = wx.Icon('./bitmaps/gertrude.ico', wx.BITMAP_TYPE_ICO )
         self.SetIcon(icon)
 
@@ -66,6 +66,10 @@ class StartDialog(wx.Dialog):
 
         self.SetSizer(self.sizer)
         self.sizer.Fit(self)
+        
+        W, H = wx.ScreenDC().GetSizeTuple()
+        w, h = self.sizer.GetSize()
+        self.SetPosition(((W-w)/2, (H-h)/2))
 
         self.LoadedEvent, EVT_PROGRESS_EVENT = wx.lib.newevent.NewEvent()
         self.Bind(EVT_PROGRESS_EVENT, self.OnLoaded)
