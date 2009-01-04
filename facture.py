@@ -83,7 +83,7 @@ class Facture(object):
                                 self.jours_maladie_deduits.append(date)
                                 cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)][1] += 1
                                 self.raison_deduction = u'(maladie > %dj consécutifs)' % creche.minimum_maladie
-                        else:
+                        elif presence > 0:
                             if presence & PREVISIONNEL:
                                 self.previsionnel = True
                             if presence & SUPPLEMENT:
