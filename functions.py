@@ -108,11 +108,10 @@ def GetInscritId(inscrit, inscrits):
 def getInscritsByMode(start, end, mode): # TODO pourquoi retourner les index
     result = []
     for i, inscrit in enumerate(creche.inscrits):
-        inscriptions = inscrit.getInscriptions(start, end)
-        if len(inscriptions) > 0:
-            inscription = inscriptions[0]
+        for inscription in inscrit.getInscriptions(start, end):
             if inscription.mode & mode:
                 result.append(i)
+                break
     return result
 
 def getTriParCommuneEtNomIndexes(indexes):
