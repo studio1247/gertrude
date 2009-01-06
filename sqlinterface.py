@@ -505,9 +505,8 @@ class SQLConnection(object):
             cur.execute('SELECT inscrit, date, value, previsionnel, details FROM PRESENCES')
             for inscrit_idx, date, value, previsionnel, val_details in cur.fetchall():
                 if value == 0:
-                    value = 1
                     if previsionnel:
-                        value += PREVISIONNEL
+                        value += (1 << 30) # PREVISIONNEL
                     if isinstance(val_details, basestring):
                         val_details = eval(val_details)
                     details = 64 * [0]
