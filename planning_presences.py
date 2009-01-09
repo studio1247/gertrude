@@ -127,9 +127,9 @@ class PlanningModifications(object):
                             age = '(%d mois)' % age
                     except:
                         age = '(?)'
-                    ReplaceFields([cellule], [('prenom', inscrit.prenom), ('(age)', age)])
+                    ReplaceFields([cellule], [('prenom', inscrit.prenom), ('nom', inscrit.nom), ('(age)', age)])
                 else:
-                    ReplaceFields([cellule], [('prenom', ''), ('(age)', '')])
+                    ReplaceFields([cellule], [('prenom', ''), ('nom', ''), ('(age)', '')])
                 # les presences
                 for jour in range(5):
                     date = self.debut + datetime.timedelta(semaine * 7 + jour)
