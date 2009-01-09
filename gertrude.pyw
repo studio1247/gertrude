@@ -151,6 +151,7 @@ class GertrudeFrame(wx.Frame):
     def OnSave(self, evt):
         self.SetStatusText("Enregistrement en cours ...")
         Save(ProgressHandler(self.SetStatusText))
+        self.SetStatusText("")
 
     def OnExit(self, evt):
         self.SetStatusText("Fermeture en cours ...")
@@ -162,6 +163,7 @@ class GertrudeFrame(wx.Frame):
             result = wx.ID_NO
 
         if result == wx.ID_CANCEL:
+            self.SetStatusText("")
             return
         elif result == wx.ID_YES:
             Save(ProgressHandler(self.SetStatusText))
