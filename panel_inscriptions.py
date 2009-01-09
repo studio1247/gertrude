@@ -396,6 +396,7 @@ class ReferencePlanningPanel(PlanningWidget):
                 count = 7
             for day in range(count):
                 line = self.inscription.reference[day]
+                line.insert = None
                 line.label = days[day]
                 line.reference = None
                 lines.append(line)

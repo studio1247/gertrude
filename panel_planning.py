@@ -31,11 +31,14 @@ class DayPlanningPanel(PlanningWidget):
             lines = []
             for inscrit in creche.inscrits:
                 if inscrit.getInscription(self.date) is not None:
-                    #print inscrit.prenom
+                    # print inscrit.prenom, 
                     if self.date in inscrit.journees:
                         line = inscrit.journees[self.date]
+                        line.insert = None
                     else:
                         line = inscrit.getJourneeFromSemaineType(self.date)
+                        line.insert = inscrit.journees
+                        line.key = self.date
                     line.label = GetInscritId(inscrit, creche.inscrits)
                     line.reference = inscrit.getReferenceDay(self.date)
                     lines.append(line)

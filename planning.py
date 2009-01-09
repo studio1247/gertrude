@@ -190,7 +190,11 @@ class PlanningGridWindow(BufferedWindow):
                 line.set_state(VACANCES)
             else:
                 line.save()
-                
+
+            if line.insert:
+                line.insert[line.key] = line
+                line.insert = None
+
             history.Append([Change(line, 'values', line.original_values),
                             Call(line.save)])
 
@@ -235,6 +239,10 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             line.confirm()
         else:
             line.set_state(VACANCES)
+
+        if line.insert:
+            line.insert[line.key] = line
+            line.insert = None
 
         self.grid_panel.UpdateLine(button.line)
         self.UpdateLine(button.line)
