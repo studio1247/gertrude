@@ -260,6 +260,7 @@ class SQLConnection(object):
         for users_entry in cur.fetchall():
             user = User(creation=False)
             user.login, user.password, user.profile, user.idx = users_entry
+            # print user.login, user.password
             creche.users.append(user)
 
         cur.execute('SELECT debut, fin, idx FROM CONGES')

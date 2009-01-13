@@ -69,7 +69,7 @@ class StartDialog(wx.Dialog):
         
         W, H = wx.ScreenDC().GetSizeTuple()
         w, h = self.sizer.GetSize()
-        self.SetPosition(((W-w)/2, (H-h)/2))
+        self.SetPosition(((W-w)/2, (H-h)/2 - 50))
 
         self.LoadedEvent, EVT_PROGRESS_EVENT = wx.lib.newevent.NewEvent()
         self.Bind(EVT_PROGRESS_EVENT, self.OnLoaded)
@@ -99,9 +99,9 @@ class StartDialog(wx.Dialog):
             self.info.AppendText("Identification ...\n")
             self.sizer.Show(self.fields_sizer)
             self.sizer.Show(self.btnsizer)
-
             self.sizer.Layout()
             self.sizer.Fit(self)
+            
 
     def Load(self):
         try:
