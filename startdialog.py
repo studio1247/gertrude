@@ -101,6 +101,7 @@ class StartDialog(wx.Dialog):
             self.info.AppendText("Identification ...\n")
             self.sizer.Show(self.fields_sizer)
             self.sizer.Show(self.btnsizer)
+            self.login_ctrl.SetFocus()
             self.sizer.Layout()
             self.sizer.Fit(self)
             
