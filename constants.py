@@ -43,9 +43,9 @@ MODE_5_5 = 2
 MODE_4_5 = 4
 MODE_3_5 = 8
 
-# Modes de déduction pour maladie
-DEDUCTION_TOTALE = 1
-DEDUCTION_AVEC_CARENCE = 2
+# Options pour le mode de calcul des cotisations
+ARRONDI_JOURNEE = 1
+DEDUCTION_MALADIE_AVEC_CARENCE = 2
 
 # Valeurs de présence
 ABSENT = 0

@@ -344,7 +344,7 @@ class Creche(object):
         self.granularite = 4
         self.mois_payes = 12
         self.minimum_maladie = 15
-        self.mode_maladie = DEDUCTION_AVEC_CARENCE
+        self.mode_facturation = ARRONDI_JOURNEE|DEDUCTION_MALADIE_AVEC_CARENCE
         self.presences_previsionnelles = True
         self.modes_inscription = MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5
         self.email = ''
@@ -401,7 +401,7 @@ class Creche(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'presences_previsionnelles', 'modes_inscription', 'minimum_maladie', 'mode_maladie', 'email', 'capacite'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'presences_previsionnelles', 'modes_inscription', 'minimum_maladie', 'email', 'capacite', 'mode_facturation'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 

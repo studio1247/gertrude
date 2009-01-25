@@ -419,14 +419,21 @@ class AutoChoiceCtrl(wx.Choice, AutoMixin):
             self.Append(item, clientData)
 
 class AutoCheckBox(wx.CheckBox, AutoMixin):
-    def __init__(self, parent, instance, member, label, *args, **kwargs):
-        wx.CheckBox.__init__(self, parent, -1, label, *args, **kwargs)
+    def __init__(self, parent, instance, member, label, value=1, **kwargs):
+        wx.CheckBox.__init__(self, parent, -1, label, **kwargs)
+        self.value = value
         AutoMixin.__init__(self, parent, instance, member)
         parent.Bind(wx.EVT_CHECKBOX, self.EvtCheckbox, self)
 
     def EvtCheckbox(self, event):
-        box = event.GetEventObject()
-        self.AutoChange(event.Checked())
+        previous_value = eval('self.instance.%s' % self.member)
+        if event.Checked():
+            self.AutoChange(previous_value | self.value)
+        else:
+            self.AutoChange(previous_value & ~self.value)
+            
+    def SetValue(self, value):
+        wx.CheckBox.SetValue(self, value & self.value)
         
 class AutoRadioBox(wx.RadioBox, AutoMixin):
     def __init__(self, parent, instance, member, label, choices, *args, **kwargs):

@@ -201,7 +201,10 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, u'Présences prévisionnelles :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'presences_previsionnelles', [(u'Géré', True), (u'Non géré', False)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u"Modes d'inscription :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'modes_inscription', [(u'Crèche à plein-temps uniquement', MODE_5_5), ('Tous modes', MODE_5_5+MODE_4_5+MODE_3_5+MODE_HALTE_GARDERIE)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Minimum de jours de maladie pour déduction :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'minimum_maladie', min=0, precision=0), 0, wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Mode de déduction pour maladie :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'mode_maladie', [('Avec carence', DEDUCTION_AVEC_CARENCE), ('Sans carence', DEDUCTION_TOTALE)]), 0, wx.EXPAND)])
+        facturation_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        facturation_sizer.Add(AutoCheckBox(self, creche, 'mode_facturation', u'présence arrondie à la journée', ARRONDI_JOURNEE), 0, wx.EXPAND|wx.RIGHT, 5)
+        facturation_sizer.Add(AutoCheckBox(self, creche, 'mode_facturation', u'Déduction de jours pour maladie avec carence', DEDUCTION_MALADIE_AVEC_CARENCE), 0, wx.EXPAND)
+        sizer.AddMany([(wx.StaticText(self, -1, u'Mode de facturation :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (facturation_sizer, 0, wx.EXPAND)])
         self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(self.sizer)
 

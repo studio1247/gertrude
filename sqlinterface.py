@@ -24,7 +24,7 @@ from functions import *
 from sqlobjects import *
 
 DB_FILENAME = 'gertrude.db'
-VERSION = 20
+VERSION = 21
 
 def getdate(s):
     if s is None:
@@ -80,9 +80,9 @@ class SQLConnection(object):
             presences_previsionnelles BOOLEAN,
             modes_inscription INTEGER,
             minimum_maladie INTEGER,
-            mode_maladie INTEGER,
             email VARCHAR,
-            capacite INTEGER
+            capacite INTEGER,
+            mode_facturation INTEGER
           );""")
 
         cur.execute("""
@@ -232,7 +232,7 @@ class SQLConnection(object):
         for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", u"15 août", "1er novembre", "11 novembre", u"25 décembre", u"Lundi de Pâques", "Jeudi de l'Ascension"):
             cur.execute("INSERT INTO CONGES (idx, debut) VALUES (NULL, ?)", (label, ))
         cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
-        cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, mode_maladie, email, capacite) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', ("","","","",7.75,18.5,7.75,19.0,4,12,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,15,DEDUCTION_AVEC_CARENCE,"",0))
+        cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, email, capacite, mode_facturation) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', ("","","","",7.75,18.5,7.75,19.0,4,12,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,15,"",0,ARRONDI_JOURNEE|DEDUCTION_MALADIE_AVEC_CARENCE))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2006, 9, 1), datetime.date(2007, 8, 31), 6547.92, 51723.60))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2007, 9, 1), datetime.date(2008, 12, 31), 6660.00, 52608.00))
         self.con.commit()
@@ -248,14 +248,14 @@ class SQLConnection(object):
 
         cur = self.cursor()
 
-        cur.execute('SELECT nom, adresse, code_postal, ville, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, mode_maladie, email, capacite, idx FROM CRECHE')
+        cur.execute('SELECT nom, adresse, code_postal, ville, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, email, capacite, mode_facturation, idx FROM CRECHE')
         creche_entry = cur.fetchall()
         if len(creche_entry) > 0:
             creche = Creche()
-            creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.ouverture, creche.fermeture, creche.affichage_min, creche.affichage_max, creche.granularite, creche.mois_payes, creche.presences_previsionnelles, creche.modes_inscription, creche.minimum_maladie, creche.mode_maladie, creche.email, creche.capacite, creche.idx = creche_entry[0]
+            creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.ouverture, creche.fermeture, creche.affichage_min, creche.affichage_max, creche.granularite, creche.mois_payes, creche.presences_previsionnelles, creche.modes_inscription, creche.minimum_maladie, creche.email, creche.capacite, creche.mode_facturation, creche.idx = creche_entry[0]
         else:
             creche = Creche()
-
+            
         cur.execute('SELECT login, password, profile, idx FROM USERS')
         for users_entry in cur.fetchall():
             user = User(creation=False)
@@ -458,9 +458,7 @@ class SQLConnection(object):
 
         if version < 10:
             cur.execute("ALTER TABLE CRECHE ADD minimum_maladie INTEGER;")
-            cur.execute("ALTER TABLE CRECHE ADD mode_maladie INTEGER;")
             cur.execute('UPDATE CRECHE SET minimum_maladie=?', (15,))
-            cur.execute('UPDATE CRECHE SET mode_maladie=?', (DEDUCTION_AVEC_CARENCE,))
 
         if version < 11:
             cur.execute("ALTER TABLE CRECHE ADD email VARCHAR;")
@@ -588,6 +586,18 @@ class SQLConnection(object):
             for label in ["Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", u"15 août", "1er novembre", "11 novembre", u"25 décembre", u"Lundi de Pâques", "Jeudi de l'Ascension"]:
                 cur.execute("INSERT INTO CONGES (idx, debut) VALUES (NULL, ?)", (label, ))
 
+        if version < 21:
+            if version >= 10:
+                cur.execute('SELECT mode_maladie FROM CRECHE')
+                mode_maladie = cur.fetchall()[0][0]
+                mode_facturation = 1
+                if mode_maladie == 2:
+                    mode_facturation += 2
+            else:
+                mode_facturation = 3 # ARRONDI_JOURNEE|DEDUCTION_MALADIE_AVEC_CARENCE
+            cur.execute("ALTER TABLE CRECHE ADD mode_facturation INTEGER;")
+            cur.execute('UPDATE CRECHE SET mode_facturation=?', (mode_facturation,))
+            
         if version < VERSION:
             try:
                 cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))
