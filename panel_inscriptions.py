@@ -132,7 +132,10 @@ class ContratPanel(ContextPanel):
         else:
             try:
                 context = Cotisation(self.inscrit, self.periode)
-                self.html = ParseHtml("./templates/contrat_accueil.html", context)
+                if os.path.exists("./templates/contrat_accueil.html"):
+                    self.html = ParseHtml("./templates/contrat_accueil.html", context)
+                else:
+                    self.html = ParseHtml("./templates_dist/contrat_accueil.html", context)
             except CotisationException, e:
                 error = '<br>'.join(e.errors)
                 self.html = u"<html><body><b>Le contrat d'accueil de l'enfant ne peut être édit&eacute; pour la (les) raison(s) suivante(s) :</b><br>" + error + "</body></html>"
@@ -210,9 +213,15 @@ class ForfaitPanel(ContextPanel):
             try:
                 context = Cotisation(self.inscrit, self.periode, options=NO_ADDRESS)
                 if context.mode_inscription == 0:
-                    self.html = ParseHtml("./templates/frais_de_garde.html", context)
+                    if os.path.exists("./templates/frais_de_garde.html"):
+                        self.html = ParseHtml("./templates/frais_de_garde.html", context)
+                    else:
+                        self.html = ParseHtml("./templates_dist/frais_de_garde.html", context)
                 else:
-                    self.html = ParseHtml("./templates/frais_de_garde_hg.html", context)
+                    if os.path.exists("./templates/frais_de_garde.html"):
+                        self.html = ParseHtml("./templates/frais_de_garde_hg.html", context)
+                    else:
+                        self.html = ParseHtml("./templates_dist/frais_de_garde_hg.html", context)
             except CotisationException, e:
                 error = '<br>'.join(e.errors)
                 self.html = u"<html><body><b>Les frais de garde mensuels ne peuvent être calcul&eacute;s pour la (les) raison(s) suivante(s) :</b><br>" + error  + "</body></html>"

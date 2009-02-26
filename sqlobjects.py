@@ -96,6 +96,15 @@ class Day(object):
             return ABSENT
         else:
             return state
+        
+    def get_heures(self):
+        heures = 0.0
+        for i in range(96):
+            if self.values[i] < 0:
+                return 0.0
+            elif self.values[i] > 0:
+                heures += 0.25
+        return heures
     
     def copy(self, day, previsionnel=True):
         self.values = day.values[:]
@@ -329,6 +338,7 @@ class Creche(object):
         self.adresse = ''
         self.code_postal = ''
         self.ville = ''
+        self.telephone = ''
         self.users = []
         self.activites = {}
         self.employes = []
@@ -348,6 +358,7 @@ class Creche(object):
         self.presences_previsionnelles = True
         self.modes_inscription = MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5
         self.email = ''
+        self.type = TYPE_PARENTAL
         self.capacite = 0
 
         self.calcule_jours_fermeture()
@@ -401,7 +412,7 @@ class Creche(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'presences_previsionnelles', 'modes_inscription', 'minimum_maladie', 'email', 'capacite', 'mode_facturation'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'presences_previsionnelles', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 

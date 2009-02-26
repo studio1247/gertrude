@@ -25,6 +25,6 @@ setup(
 	windows = [{"script" : "gertrude.pyw", "icon_resources" : [(1000, "bitmaps\\gertrude.ico")]}],
 	data_files=[(".", glob.glob("*.dist") + glob.glob("*.py")),
 	            ("bitmaps", glob.glob("bitmaps\\*.png") + glob.glob("bitmaps\\*.ico")),
-                ("templates", glob.glob("templates\\*.html") + glob.glob("templates\\*.ods")  + glob.glob("templates\\*.odt"))],
+                ("templates_dist", glob.glob("templates_dist\\*.html") + glob.glob("templates_dist\\*.ods")  + glob.glob("templates_dist\\*.odt"))],
 	options = {"py2exe": {"packages": ["encodings"]}},
 )

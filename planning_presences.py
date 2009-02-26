@@ -146,4 +146,4 @@ class PlanningModifications(object):
                             ReplaceFields([cellule], [('p', '')])
 
 def GenerePlanningPresences(date, oofilename):
-    return GenerateDocument('./templates/Planning presences.ods', oofilename, PlanningModifications(date))
+    return GenerateDocument('Planning presences.ods', oofilename, PlanningModifications(date))

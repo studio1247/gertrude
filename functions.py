@@ -43,11 +43,15 @@ def getNextMonthStart(date):
     else:
         return datetime.date(date.year, date.month+1, 1)
 
-def getDateStr(date):
+def getDateStr(date, weekday=True):
     if date.day == 1:
-        return "1er %s %d" % (months[date.month-1].lower(), date.year)
+        date_str = "1er %s %d" % (months[date.month-1].lower(), date.year)
     else:
-        return "%d %s %d" % (date.day, months[date.month-1].lower(), date.year)
+        date_str = "%d %s %d" % (date.day, months[date.month-1].lower(), date.year)
+    if weekday:
+        return days[date.weekday()].lower() + " " + date_str
+    else:
+        return date_str
 
 def getInitialesPrenom(person):
     for char in ('-', ' '):
@@ -162,6 +166,22 @@ def getPresentsIndexes(indexes, (debut, fin)):
 def getInscrits(debut, fin):
     indexes = getPresentsIndexes(None, (debut, fin))
     return [creche.inscrits[i] for i in indexes]
+
+def getLines(date, inscrits):
+    lines = []
+    for inscrit in inscrits:
+        if inscrit.getInscription(date) is not None:
+            # print inscrit.prenom, 
+            if date in inscrit.journees:
+                line = inscrit.journees[date]
+            else:
+                line = inscrit.getJourneeFromSemaineType(date)
+            line.nom = inscrit.nom
+            line.prenom = inscrit.prenom
+            line.label = GetInscritId(inscrit, inscrits)
+            line.reference = inscrit.getReferenceDay(date)
+            lines.append(line)
+    return lines
 
 def decodeErrors(errors):
     message = ""

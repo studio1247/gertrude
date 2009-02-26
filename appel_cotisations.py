@@ -63,4 +63,4 @@ class AppelCotisationsModifications(object):
         return errors
 
 def GenereAppelCotisations(oofilename, date, options=0):
-    return GenerateDocument('./templates/Appel cotisations.ods', oofilename, AppelCotisationsModifications(date, options))
+    return GenerateDocument('Appel cotisations.ods', oofilename, AppelCotisationsModifications(date, options))

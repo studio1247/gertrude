@@ -53,6 +53,8 @@ class AttestationModifications(object):
                 ('adresse-creche', creche.adresse),
                 ('code-postal-creche', str(creche.code_postal)),
                 ('ville-creche', creche.ville),
+                ('telephone-creche', creche.telephone),
+                ('email-creche', creche.email),
                 ('de-debut', '%s %d' % (getDeMoisStr(facture_debut.month - 1), facture_debut.year)),
                 ('de-fin', '%s %d' % (getDeMoisStr(facture_fin.month - 1), facture_fin.year)),
                 ('prenom', self.inscrit.prenom),
@@ -74,5 +76,5 @@ class AttestationModifications(object):
         return []
 
 def GenereAttestationPaiement(oofilename, inscrit, debut, fin):
-    return GenerateDocument('./templates/Attestation paiement.odt', oofilename, AttestationModifications(inscrit, debut, fin))
+    return GenerateDocument('Attestation paiement.odt', oofilename, AttestationModifications(inscrit, debut, fin))
 

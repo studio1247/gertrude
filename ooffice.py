@@ -16,7 +16,7 @@
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import datetime
-import zipfile
+import os, zipfile
 import xml.dom.minidom
 import re
 
@@ -121,6 +121,10 @@ def IncrementFormulas(cellules, inc=1):
             
 
 def GenerateDocument(src, dest, modifications):
+    if os.path.exists("./templates/%s" % src):
+        src = "./templates/%s" % src
+    else:
+        src = "./templates_dist/%s" % src
     errors = []
     template = zipfile.ZipFile(src, 'r')
     files = []

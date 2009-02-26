@@ -37,6 +37,8 @@ class CoordonneesModifications:
                   ('adresse-creche', creche.adresse),
                   ('code-postal-creche', str(creche.code_postal)),
                   ('ville-creche', creche.ville),
+                  ('telephone-creche', creche.telephone),
+                  ('email-creche', creche.email),
                   ('date', '%.2d/%.2d/%d' % (self.date.day, self.date.month, self.date.year))
                  ]
         ReplaceTextFields(dom, fields)
@@ -97,5 +99,5 @@ class CoordonneesModifications:
         return []
 
 def GenereCoordonneesParents(date, oofilename):
-    return GenerateDocument('./templates/Coordonnees parents.odt', oofilename, CoordonneesModifications(date))
+    return GenerateDocument('Coordonnees parents.odt', oofilename, CoordonneesModifications(date))
 

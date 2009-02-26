@@ -86,6 +86,8 @@ class FactureModifications(object):
                 ('adresse-creche', creche.adresse),
                 ('code-postal-creche', str(creche.code_postal)),
                 ('ville-creche', creche.ville),
+                ('telephone-creche', creche.telephone),
+                ('email-creche', creche.email),
                 ('adresse', self.inscrit.adresse),
                 ('code-postal', str(self.inscrit.code_postal)),
                 ('ville', self.inscrit.ville),
@@ -106,4 +108,4 @@ class FactureModifications(object):
         return []
 
 def GenereFactureMensuelle(oofilename, inscrit, periode):
-    return GenerateDocument('./templates/Facture mensuelle.odt', oofilename, FactureModifications(inscrit, periode))
+    return GenerateDocument('Facture mensuelle.odt', oofilename, FactureModifications(inscrit, periode))

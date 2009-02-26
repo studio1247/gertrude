@@ -51,9 +51,12 @@ class Cotisation(object):
         self.revenus_maman = Select(inscrit.maman.revenus, revenus_debut)
         if not options & NO_REVENUS and (self.revenus_maman is None or self.revenus_maman.revenu == ''):
             errors.append(u" - Les déclarations de revenus de la maman sont incomplètes.")
-        self.bureau = Select(creche.bureaux, self.debut)
-        if self.bureau is None:
-            errors.append(u" - Il n'y a pas de bureau à cette date.")
+        if creche.type == TYPE_MUNICIPAL:
+            self.bureau = None
+        else:
+            self.bureau = Select(creche.bureaux, self.debut)
+            if self.bureau is None:
+                errors.append(u" - Il n'y a pas de bureau à cette date.")
         self.bareme_caf = Select(creche.baremes_caf, self.debut)
         if self.bareme_caf is None:
             errors.append(u" - Il n'y a pas de barème CAF à cette date.")
@@ -65,12 +68,15 @@ class Cotisation(object):
         if creche.modes_inscription == MODE_5_5:
             self.mode_garde = MODE_5_5
             self.jours_semaine = 5
+            self.heures_reelles_semaine = 50.0
         else:
             self.mode_garde = self.inscription.mode
             self.jours_semaine = 0
+            self.heures_reelles_semaine = 0.0
             for i in range(5):
                 if self.inscription.reference[i].get_state() & PRESENT:
                     self.jours_semaine += 1
+                    self.heures_reelles_semaine += self.inscription.reference[i].get_heures()
         
         if self.mode_garde == MODE_HALTE_GARDERIE:
             self.mode_inscription = MODE_HALTE_GARDERIE
@@ -82,7 +88,11 @@ class Cotisation(object):
         if len(errors) > 0:
             raise CotisationException(errors)
 
-        self.heures_semaine = self.jours_semaine * 10
+        if creche.mode_facturation & ARRONDI_JOURNEE:
+            self.heures_semaine = self.jours_semaine * 10
+        else:
+            self.heures_semaine = self.heures_reelles_semaine
+            
         self.heures_mois = self.heures_semaine * 4
         self.heures_annee = 12 * self.heures_mois
 

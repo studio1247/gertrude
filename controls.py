@@ -172,7 +172,7 @@ class PhoneCtrl(wx.TextCtrl):
         self.SetMaxLength(14)
 
         wx.EVT_CHAR(self, self.onChar)
-#        wx.EVT_TEXT(self, -1, self.onText)
+        wx.EVT_TEXT(self, -1, self.onText)
         wx.EVT_LEFT_DOWN(self, self.OnLeftDown)
        
     def onChar(self, event):
@@ -192,10 +192,19 @@ class PhoneCtrl(wx.TextCtrl):
             return
 
         # 4. allow digits, but not other characters
-        if (chr(key) in self.__digits):
+        if chr(key) in self.__digits:
             event.Skip()
             wx.CallAfter(self.Arrange, key)
 
+    def onText(self, event=None):
+        value = self.GetValue()
+        if value != "" and len(value) != 14:
+            self.SetBackgroundColour(wx.RED)
+        else:
+            self.SetBackgroundColour(wx.WHITE)
+        self.Refresh()
+        event.Skip()
+        
     def Arrange(self, key):
         ip = self.GetInsertionPoint()
         lp = self.GetLastPosition()
@@ -212,10 +221,10 @@ class PhoneCtrl(wx.TextCtrl):
             else:
                 ip -= 1
                 
-        if (arranged != value):
+        if arranged != value:
             self.SetValue(arranged)
 
-        if (sel == (ip, ip) or arranged != value):
+        if sel == (ip, ip) or arranged != value:
             if (ip == len(arranged) or arranged[ip] != " "):
                 self.SetInsertionPoint(ip)
             elif key == wx.WXK_LEFT:
@@ -253,7 +262,7 @@ class DateCtrl(wx.TextCtrl):
         #self.SetValue(self.__val)
               
         #wx.EVT_CHAR(self, self.onChar)
-        #wx.EVT_TEXT(self, -1,self.onText)
+        wx.EVT_TEXT(self, -1, self.onText)
         #wx.EVT_SET_FOCUS(self, self.onSetFocus)
         #wx.EVT_KILL_FOCUS(self, self.onKillFocus)
         #wx.EVT_SIZE(self, self.onResize)
@@ -289,7 +298,13 @@ class DateCtrl(wx.TextCtrl):
 #            event.Skip()
 #            return
 
-##    def onText(self, event=None):
+    def onText(self, event=None):
+        if wx.TextCtrl.GetValue(self) != "" and self.GetValue() is None:
+            self.SetBackgroundColour(wx.RED)
+        else:
+            self.SetBackgroundColour(wx.WHITE)
+        self.Refresh()
+        event.Skip()
 ##        try:
 ##            if event.GetString() != '':
 ##                self.__CheckValid(event.GetString())
@@ -298,7 +313,7 @@ class DateCtrl(wx.TextCtrl):
 ##        event.Skip()
 
     def GetValue(self):
-        if (wx.TextCtrl.GetValue(self) == ""):
+        if wx.TextCtrl.GetValue(self) == "":
             return None
         else:
             return str2date(wx.TextCtrl.GetValue(self))

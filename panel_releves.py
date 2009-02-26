@@ -28,6 +28,7 @@ from cotisation import CotisationException
 from planning_presences import GenerePlanningPresences
 from coordonnees_parents import GenereCoordonneesParents
 from etats_trimestriels import GenereEtatsTrimestriels
+#from planning_detaille import GenerePlanningDetaille
 
 class RelevesPanel(GPanel):
     bitmap = './bitmaps/releves.png'
@@ -79,6 +80,16 @@ class RelevesPanel(GPanel):
         box_sizer.AddMany([(self.weekchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
+        # Les plannings détaillés
+#        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Planning détaillé'), wx.HORIZONTAL)
+#        self.detail_start_date = DateCtrl(self)
+#        self.detail_end_date = DateCtrl(self)
+#        self.detail_start_date.SetValue(today)
+#        button = wx.Button(self, -1, u'Génération')
+#        self.Bind(wx.EVT_BUTTON, self.EvtGenerationPlanningDetaille, button)
+#        box_sizer.AddMany([(self.detail_start_date, 1, wx.ALL|wx.EXPAND, 5), (wx.StaticText(self, -1, "-"), 0, wx.ALL|wx.EXPAND, 5), (self.detail_end_date, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+#        sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+        
         self.sizer.Add(sizer, 1, wx.EXPAND)
 
     def EvtGenerationCoordonnees(self, evt):
@@ -86,7 +97,7 @@ class RelevesPanel(GPanel):
         if not date:
             date = today
         wildcard = "OpenDocument (*.ods)|*.ods"
-        oodefaultfilename = u"Coordonnées parents %s.ods" % getDateStr(date)
+        oodefaultfilename = u"Coordonnées parents %s.ods" % getDateStr(date, weekday=False)
         old_path = os.getcwd()
         dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE | wx.CHANGE_DIR)
         response = dlg.ShowModal()
@@ -138,6 +149,27 @@ class RelevesPanel(GPanel):
         if response == wx.ID_OK:
             oofilename = dlg.GetPath()
             GenerePlanningPresences(date, oofilename)
+            dlg = wx.MessageDialog(self, u"Document %s généré" % oofilename, 'Message', wx.OK)
+            dlg.ShowModal()
+            dlg.Destroy()
+            
+    def EvtGenerationPlanningDetaille(self, evt):
+        start = self.detail_start_date.GetValue()
+        end = self.detail_end_date.GetValue()
+        if end is None:
+            end = start
+            oodefaultfilename = "Planning presences %s.odg" % getDateStr(start, weekday=False)
+        else:
+            oodefaultfilename = "Planning presences %s-%s.odg" % (getDateStr(start, weekday=False), getDateStr(end, weekday=False))
+        wildcard = "OpenDocument (*.odg)|*.odg"
+        old_path = os.getcwd()
+        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE | wx.CHANGE_DIR)
+        response = dlg.ShowModal()
+        os.chdir(old_path)
+
+        if response == wx.ID_OK:
+            oofilename = dlg.GetPath()
+            GenerePlanningDetaille((start, end), oofilename)
             dlg = wx.MessageDialog(self, u"Document %s généré" % oofilename, 'Message', wx.OK)
             dlg.ShowModal()
             dlg.Destroy()

@@ -89,10 +89,9 @@ class PlanningPanel(GPanel):
             self.count = 7
         for week_day in range(self.count):
             date = first_monday + datetime.timedelta(semaine * 7 + week_day)
-            title = days[week_day] + " " + str(date.day) + " " + months[date.month - 1] + " " + str(date.year)
             planning_panel = DayPlanningPanel(self.notebook, self.activity_choice)
             planning_panel.SetDate(date)
-            self.notebook.AddPage(planning_panel, title)
+            self.notebook.AddPage(planning_panel, getDateStr(date))
 
         self.sizer.Layout()
 
@@ -102,7 +101,7 @@ class PlanningPanel(GPanel):
         for week_day in range(self.count):
             day = monday + datetime.timedelta(week_day)
             note = self.notebook.GetPage(week_day)
-            self.notebook.SetPageText(week_day, days[week_day] + " " + str(day.day) + " " + months[day.month - 1] + " " + str(day.year))
+            self.notebook.SetPageText(week_day, getDateStr(day))
             note = self.notebook.GetPage(week_day)
             note.SetDate(day)
             self.notebook.SetSelection(0)

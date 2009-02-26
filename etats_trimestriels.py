@@ -239,4 +239,4 @@ class EtatsTrimestrielsModifications(object):
 
 
 def GenereEtatsTrimestriels(annee, oofilename):
-    return GenerateDocument('./templates/Etats trimestriels.ods', oofilename, EtatsTrimestrielsModifications(annee))
+    return GenerateDocument('Etats trimestriels.ods', oofilename, EtatsTrimestrielsModifications(annee))
