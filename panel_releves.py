@@ -81,14 +81,14 @@ class RelevesPanel(GPanel):
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
         # Les plannings détaillés
-#        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Planning détaillé'), wx.HORIZONTAL)
-#        self.detail_start_date = DateCtrl(self)
-#        self.detail_end_date = DateCtrl(self)
-#        self.detail_start_date.SetValue(today)
-#        button = wx.Button(self, -1, u'Génération')
-#        self.Bind(wx.EVT_BUTTON, self.EvtGenerationPlanningDetaille, button)
-#        box_sizer.AddMany([(self.detail_start_date, 1, wx.ALL|wx.EXPAND, 5), (wx.StaticText(self, -1, "-"), 0, wx.ALL|wx.EXPAND, 5), (self.detail_end_date, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
-#        sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Planning détaillé'), wx.HORIZONTAL)
+        self.detail_start_date = DateCtrl(self)
+        self.detail_end_date = DateCtrl(self)
+        self.detail_start_date.SetValue(today)
+        button = wx.Button(self, -1, u'Génération')
+        self.Bind(wx.EVT_BUTTON, self.EvtGenerationPlanningDetaille, button)
+        box_sizer.AddMany([(self.detail_start_date, 1, wx.ALL|wx.EXPAND, 5), (wx.StaticText(self, -1, "-"), 0, wx.ALL|wx.EXPAND, 5), (self.detail_end_date, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
         
         self.sizer.Add(sizer, 1, wx.EXPAND)
 
