@@ -28,7 +28,7 @@ from cotisation import CotisationException
 from planning_presences import GenerePlanningPresences
 from coordonnees_parents import GenereCoordonneesParents
 from etats_trimestriels import GenereEtatsTrimestriels
-#from planning_detaille import GenerePlanningDetaille
+from planning_detaille import GenerePlanningDetaille
 
 class RelevesPanel(GPanel):
     bitmap = './bitmaps/releves.png'

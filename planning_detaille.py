@@ -97,14 +97,15 @@ class PlanningDetailleModifications(object):
                 ReplaceTextFields(node, fields)
                 page.appendChild(node)
                 for a, b, v in line.get_activities():
-                    a = float(a) / 4
-                    b = float(b) / 4
-                    # print a,b,v
-                    node = shape_templates[v].cloneNode(1)
-                    node.setAttribute('svg:x', '%fcm' % (left + labels_width + (float(a)-creche.affichage_min) * step))
-                    node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
-                    node.setAttribute('svg:width', '%fcm' % ((b-a)*step))
-                    page.appendChild(node)
+                    if v >= 0:
+                        a = float(a) / 4
+                        b = float(b) / 4
+                        # print a,b,v
+                        node = shape_templates[v].cloneNode(1)
+                        node.setAttribute('svg:x', '%fcm' % (left + labels_width + (float(a)-creche.affichage_min) * step))
+                        node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
+                        node.setAttribute('svg:width', '%fcm' % ((b-a)*step))
+                        page.appendChild(node)
             
             fields = [('nom-creche', creche.nom),
                       ('date', getDateStr(day))]
