@@ -100,6 +100,7 @@ class PlanningDetailleModifications(object):
                     if v >= 0:
                         a = float(a) / 4
                         b = float(b) / 4
+                        v = v & (~PREVISIONNEL)
                         # print a,b,v
                         node = shape_templates[v].cloneNode(1)
                         node.setAttribute('svg:x', '%fcm' % (left + labels_width + (float(a)-creche.affichage_min) * step))

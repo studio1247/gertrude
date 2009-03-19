@@ -75,10 +75,11 @@ class Facture(object):
                                 if inscrit.getState(tmp) == MALADE:
                                     dernier_jour_maladie = tmp
 
-                            if creche.mode_maladie == DEDUCTION_TOTALE:
-                                nb_jours_maladie = dernier_jour_maladie - premier_jour_maladie + datetime.timedelta(1)
-                            else:
+                            if creche.mode_facturation & DEDUCTION_MALADIE_AVEC_CARENCE:
                                 nb_jours_maladie = date - premier_jour_maladie + datetime.timedelta(1)
+                            else:
+                                nb_jours_maladie = dernier_jour_maladie - premier_jour_maladie + datetime.timedelta(1)
+                                
                             if nb_jours_maladie > datetime.timedelta(creche.minimum_maladie):
                                 self.jours_maladie_deduits.append(date)
                                 cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)][1] += 1
