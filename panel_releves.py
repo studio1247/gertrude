@@ -15,6 +15,7 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+import __builtin__
 import os.path
 import sys
 import string
@@ -98,13 +99,14 @@ class RelevesPanel(GPanel):
             date = today
         wildcard = "OpenDocument (*.ods)|*.ods"
         oodefaultfilename = u"Coordonnées parents %s.ods" % getDateStr(date, weekday=False)
-        old_path = os.getcwd()
-        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE | wx.CHANGE_DIR)
+        old_path = os.getcwd()        
+        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=documents_directory, defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE | wx.CHANGE_DIR)
         response = dlg.ShowModal()
         os.chdir(old_path)
 
         if response == wx.ID_OK:
             oofilename = dlg.GetPath()
+            __builtin__.documents_directory = os.path.dirname(oofilename)
             try:
                 GenereCoordonneesParents(date, oofilename)
                 dlg = wx.MessageDialog(self, u"Document %s généré" % oofilename, 'Message', wx.OK)
@@ -119,12 +121,13 @@ class RelevesPanel(GPanel):
         wildcard = "OpenDocument (*.ods)|*.ods"
         oodefaultfilename = "Etats trimestriels %d.ods" % annee
         old_path = os.getcwd()
-        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE | wx.CHANGE_DIR)
+        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=documents_directory, defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE | wx.CHANGE_DIR)
         response = dlg.ShowModal()
         os.chdir(old_path)
 
         if response == wx.ID_OK:
             oofilename = dlg.GetPath()
+            __builtin__.documents_directory = os.path.dirname(oofilename)
             try:
                 GenereEtatsTrimestriels(annee, oofilename)
                 dlg = wx.MessageDialog(self, u"Document %s généré" % oofilename, 'Message', wx.OK)
@@ -142,12 +145,13 @@ class RelevesPanel(GPanel):
         wildcard = "OpenDocument (*.ods)|*.ods"
         oodefaultfilename = "Planning presences %s.ods" % str(date)
         old_path = os.getcwd()
-        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE | wx.CHANGE_DIR)
+        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=documents_directory, defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE | wx.CHANGE_DIR)
         response = dlg.ShowModal()
         os.chdir(old_path)
 
         if response == wx.ID_OK:
             oofilename = dlg.GetPath()
+            __builtin__.documents_directory = os.path.dirname(oofilename)
             GenerePlanningPresences(date, oofilename)
             dlg = wx.MessageDialog(self, u"Document %s généré" % oofilename, 'Message', wx.OK)
             dlg.ShowModal()
@@ -163,12 +167,14 @@ class RelevesPanel(GPanel):
             oodefaultfilename = "Planning presences %s-%s.odg" % (getDateStr(start, weekday=False), getDateStr(end, weekday=False))
         wildcard = "OpenDocument (*.odg)|*.odg"
         old_path = os.getcwd()
-        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=os.getcwd(), defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE | wx.CHANGE_DIR)
+        
+        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=documents_directory, defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE | wx.CHANGE_DIR)
         response = dlg.ShowModal()
         os.chdir(old_path)
 
         if response == wx.ID_OK:
             oofilename = dlg.GetPath()
+            __builtin__.documents_directory = os.path.dirname(oofilename)
             GenerePlanningDetaille((start, end), oofilename)
             dlg = wx.MessageDialog(self, u"Document %s généré" % oofilename, 'Message', wx.OK)
             dlg.ShowModal()

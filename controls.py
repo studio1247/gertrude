@@ -405,6 +405,50 @@ class AutoCheckBox(wx.CheckBox, AutoMixin):
     def SetValue(self, value):
         wx.CheckBox.SetValue(self, value & self.value)
         
+class AutoBinaryChoiceCtrl(wx.Choice, AutoMixin):
+    def __init__(self, parent, instance, member, items=None, *args, **kwargs):
+        wx.Choice.__init__(self, parent, -1, *args, **kwargs)
+        self.values = {} 
+        if items:
+            self.SetItems(items)
+        AutoMixin.__init__(self, parent, instance, member)
+        parent.Bind(wx.EVT_CHOICE, self.onChoice, self)
+    
+    def Append(self, item, clientData):
+        index = wx.Choice.Append(self, item, clientData)
+        self.values[clientData] = index
+        
+    def onChoice(self, event):
+        previous_value = eval('self.instance.%s' % self.member)
+        value = event.GetClientData()
+        if value:
+            self.AutoChange(previous_value | self.value)
+        else:
+            self.AutoChange(previous_value & ~self.value)
+        event.Skip()
+    
+    def SetValue(self, value):
+        self.UpdateContents()
+    
+    def UpdateContents(self):
+        if not self.instance:
+            self.Disable()
+        else:
+            value = eval('self.instance.%s & self.value' % self.member)
+            if value in self.values:
+                self.SetSelection(self.values[value])
+            else:
+                self.SetSelection(-1)
+            self.Enable(not readonly)
+
+    def SetItems(self, items):
+        wx.Choice.Clear(self)
+        self.values.clear()
+        for item, clientData in items:
+            self.Append(item, clientData)
+            if clientData:
+                self.value = clientData
+        
 class AutoRadioBox(wx.RadioBox, AutoMixin):
     def __init__(self, parent, instance, member, label, choices, *args, **kwargs):
         wx.RadioBox.__init__(self, parent, -1, label=label, choices=choices, *args, **kwargs)
