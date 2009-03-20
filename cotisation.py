@@ -88,12 +88,13 @@ class Cotisation(object):
         if len(errors) > 0:
             raise CotisationException(errors)
 
-        if creche.mode_facturation & ARRONDI_JOURNEE:
-            self.heures_semaine = self.jours_semaine * 10
-        else:
+        if creche.mode_facturation & FACTURATION_PSU:
             self.heures_semaine = self.heures_reelles_semaine
-            
-        self.heures_mois = self.heures_semaine * 4
+            self.heures_mois = (self.heures_semaine * 45) / 12
+        else:
+            self.heures_semaine = self.jours_semaine * 10
+            self.heures_mois = self.heures_semaine * 4
+
         self.heures_annee = 12 * self.heures_mois
 
         if self.jours_semaine == 5:
@@ -118,8 +119,6 @@ class Cotisation(object):
 
         self.assiette_mensuelle = self.assiette_annuelle / 12
 
-        self.taux_horaire = 10.0/200 # 0.05 !
-
         self.enfants_a_charge = 1
         self.enfants_en_creche = 1
         for frere_soeur in inscrit.freres_soeurs:
@@ -130,21 +129,38 @@ class Cotisation(object):
 
         if self.enfants_en_creche > 1:
             self.mode_taux_horaire = u'%d enfants en crèche' % self.enfants_en_creche
-            self.taux_horaire = 5.55/200 # 0.02 !
+            self.taux_effort = 5.55
         else:
-            self.mode_taux_horaire = u'%d enfants à charge' % self.enfants_a_charge
-            if self.enfants_a_charge > 3:
-                self.taux_horaire = 5.55/200 # 0.02 !
-            elif self.enfants_a_charge == 3:
-                self.taux_horaire = 6.25/200 # 0.03 !
-            elif self.enfants_a_charge == 2:
-                self.taux_horaire = 8.33/200 # 0.04 !
+            if self.enfants_a_charge > 1:
+                self.mode_taux_horaire = u'%d enfants à charge' % self.enfants_a_charge
             else:
                 self.mode_taux_horaire = u'1 enfant à charge'
-                self.taux_horaire = 10.0/200 # 0.05 !
+
+            if creche.type == TYPE_MUNICIPAL:
+                if self.enfants_a_charge > 3:
+                    self.taux_effort = 6.25
+                elif self.enfants_a_charge == 3:
+                    self.taux_effort = 8.33
+                elif self.enfants_a_charge == 2:
+                    self.taux_effort = 10.0
+                else:
+                    self.taux_effort = 12.0
+            else:
+                if self.enfants_a_charge > 3:
+                    self.taux_effort = 5.55
+                elif self.enfants_a_charge == 3:
+                    self.taux_effort = 6.25
+                elif self.enfants_a_charge == 2:
+                    self.taux_effort = 8.33
+                else:
+                    self.taux_effort = 10.0
+        self.taux_horaire = self.taux_effort / 200;
 
         self.montant_heure_garde = self.assiette_mensuelle * self.taux_horaire / 100
-        self.cotisation_mensuelle = self.assiette_mensuelle * self.taux_horaire * self.heures_mois * creche.mois_payes / 12 / 100
+        if self.mode_facturation & FACTURATION_PSU:
+            self.cotisation_mensuelle = self.heures_mois *  self.montant_heure_garde
+        else:
+            self.cotisation_mensuelle = self.assiette_mensuelle * self.taux_horaire * self.heures_mois * creche.mois_payes / 12 / 100
 
         self.montant_jour_maladie_deduit = self.assiette_mensuelle * self.taux_horaire / 10
 

@@ -354,7 +354,7 @@ class Creche(object):
         self.granularite = 4
         self.mois_payes = 12
         self.minimum_maladie = 15
-        self.mode_facturation = ARRONDI_JOURNEE|DEDUCTION_MALADIE_AVEC_CARENCE
+        self.mode_facturation = DEDUCTION_MALADIE_AVEC_CARENCE
         self.presences_previsionnelles = True
         self.modes_inscription = MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5
         self.email = ''

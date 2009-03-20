@@ -19,7 +19,8 @@
 
 import __builtin__
 import os, sys, imp, time, shutil, glob
-import wx, wx.lib.wordwrap
+import wx
+#, wx.lib.wordwrap
 from data import *
 from startdialog import StartDialog
 try:

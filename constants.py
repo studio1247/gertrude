@@ -49,7 +49,7 @@ MODE_4_5 = 4
 MODE_3_5 = 8
 
 # Options pour le mode de calcul des cotisations
-ARRONDI_JOURNEE = 1
+FACTURATION_PSU = 1
 DEDUCTION_MALADIE_AVEC_CARENCE = 2
 
 # Valeurs de présence

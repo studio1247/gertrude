@@ -24,7 +24,7 @@ from functions import *
 from sqlobjects import *
 
 DB_FILENAME = 'gertrude.db'
-VERSION = 22
+VERSION = 23
 
 def getdate(s):
     if s is None:
@@ -234,7 +234,7 @@ class SQLConnection(object):
         for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", u"15 août", "1er novembre", "11 novembre", u"25 décembre", u"Lundi de Pâques", "Jeudi de l'Ascension"):
             cur.execute("INSERT INTO CONGES (idx, debut) VALUES (NULL, ?)", (label, ))
         cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
-        cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, email, type, capacite, mode_facturation) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', ("","","","","",7.75,18.5,7.75,19.0,4,12,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,15,"",TYPE_PARENTAL,0,ARRONDI_JOURNEE|DEDUCTION_MALADIE_AVEC_CARENCE))
+        cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, email, type, capacite, mode_facturation) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', ("","","","","",7.75,18.5,7.75,19.0,4,12,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,15,"",TYPE_PARENTAL,0,DEDUCTION_MALADIE_AVEC_CARENCE))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2006, 9, 1), datetime.date(2007, 8, 31), 6547.92, 51723.60))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2007, 9, 1), datetime.date(2008, 12, 31), 6660.00, 52608.00))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2009, 1, 1), datetime.date(2009, 12, 31), 6876.00, 53400.00))
@@ -593,20 +593,30 @@ class SQLConnection(object):
             if version >= 10:
                 cur.execute('SELECT mode_maladie FROM CRECHE')
                 mode_maladie = cur.fetchall()[0][0]
-                mode_facturation = 1
                 if mode_maladie == 2:
-                    mode_facturation += 2
+                    mode_facturation = 2 # DEDUCTION_MALADIE_AVEC_CARENCE
+                else:
+                    mode_facturation = 0
             else:
-                mode_facturation = 3 # ARRONDI_JOURNEE|DEDUCTION_MALADIE_AVEC_CARENCE
+                mode_facturation = 2 # DEDUCTION_MALADIE_AVEC_CARENCE
             cur.execute("ALTER TABLE CRECHE ADD mode_facturation INTEGER;")
             cur.execute('UPDATE CRECHE SET mode_facturation=?', (mode_facturation,))
-            
+
         if version < 22:
             cur.execute("ALTER TABLE CRECHE ADD type INTEGER;")
             cur.execute('UPDATE CRECHE SET type=?', (0,))
             cur.execute("ALTER TABLE CRECHE ADD telephone VARCHAR;")
             cur.execute('UPDATE CRECHE SET telephone=?', ("",))           
-            
+
+        if version < 23 and version >= 21:
+            cur.execute('SELECT mode_facturation FROM CRECHE')
+            mode_facturation = cur.fetchall()[0][0]
+            if mode_facturation & 1:
+                mode_facturation -= 1
+            else:
+                mode_facturation += 1
+            cur.execute('UPDATE CRECHE SET mode_facturation=?', (mode_facturation,))
+
         if version < VERSION:
             try:
                 cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))

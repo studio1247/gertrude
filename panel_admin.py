@@ -48,10 +48,10 @@ class UsersPanel(AutoTab):
         for i in range(len(self.users_sizer.GetChildren()), len(creche.users)):
             self.line_add(i)
         for i in range(len(creche.users), len(self.users_sizer.GetChildren())):
-            self.line_del()                       
+            self.line_del()
         self.sizer.Layout()
         AutoTab.UpdateContents(self)
-        
+
     def line_add(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, 'Login :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, creche, 'users[%d].login' % index), 0, wx.ALIGN_CENTER_VERTICAL)])
@@ -76,7 +76,7 @@ class UsersPanel(AutoTab):
         history.Append(Delete(creche.users, -1))
         creche.users.append(User())
         self.line_add(len(creche.users) - 1)
-        self.sizer.Layout()        
+        self.sizer.Layout()
 
     def user_del(self, event):
         index = event.GetEventObject().index
@@ -111,7 +111,7 @@ class UsersPanel(AutoTab):
 
 class JoursFermeturePanel(AutoTab):
     def __init__(self, parent):
-        AutoTab.__init__(self, parent)       
+        AutoTab.__init__(self, parent)
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         labels_conges = [j[0] for j in jours_fermeture]
@@ -135,7 +135,7 @@ class JoursFermeturePanel(AutoTab):
         for i in range(len(self.conges_sizer.GetChildren()), len(creche.conges)):
             self.line_add(i)
         for i in range(len(creche.conges), len(self.conges_sizer.GetChildren())):
-            self.line_del()                       
+            self.line_del()
         self.sizer.Layout()
         AutoTab.UpdateContents(self)
 
@@ -154,7 +154,7 @@ class JoursFermeturePanel(AutoTab):
         sizer = self.conges_sizer.GetItem(index)
         sizer.DeleteWindows()
         self.conges_sizer.Detach(index)
-        
+
     def conges_add(self, event):
         history.Append(Delete(creche.conges, -1))
         creche.add_conge(Conge())
@@ -183,7 +183,7 @@ class JoursFermeturePanel(AutoTab):
             del creche.feries[label]
             creche.calcule_jours_fermeture()
         history.Append(None)
-            
+
 class ParametersPanel(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
@@ -202,7 +202,7 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, u"Modes d'inscription :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'modes_inscription', [(u'Crèche à plein-temps uniquement', MODE_5_5), ('Tous modes', MODE_5_5+MODE_4_5+MODE_3_5+MODE_HALTE_GARDERIE)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Minimum de jours de maladie pour déduction :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'minimum_maladie', min=0, precision=0), 0, wx.EXPAND)])
         facturation_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        facturation_sizer.Add(AutoCheckBox(self, creche, 'mode_facturation', u'présence arrondie à la journée', ARRONDI_JOURNEE), 0, wx.EXPAND|wx.RIGHT, 5)
+        facturation_sizer.Add(AutoCheckBox(self, creche, 'mode_facturation', u'PSU', FACTURATION_PSU), 0, wx.EXPAND|wx.RIGHT, 5)
         facturation_sizer.Add(AutoCheckBox(self, creche, 'mode_facturation', u'Déduction de jours pour maladie avec carence', DEDUCTION_MALADIE_AVEC_CARENCE), 0, wx.EXPAND)
         sizer.AddMany([(wx.StaticText(self, -1, u'Mode de facturation :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (facturation_sizer, 0, wx.EXPAND)])
         self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 5)
