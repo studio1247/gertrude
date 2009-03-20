@@ -55,9 +55,17 @@ class PlanningPanel(GPanel):
 
     def __init__(self, parent):
         GPanel.__init__(self, parent, u'Plannings')
-
-        # La combobox pour la selection de la semaine
         sizer = wx.BoxSizer(wx.HORIZONTAL)
+        
+        # Les raccourcis pour semaine précédente / suivante
+        self.previous_button = wx.Button(self, -1, '<', size=(20,0), style=wx.NO_BORDER)
+        self.next_button = wx.Button(self, -1, '>', size=(20,0), style=wx.NO_BORDER)
+        self.Bind(wx.EVT_BUTTON, self.onPreviousWeek, self.previous_button)
+        self.Bind(wx.EVT_BUTTON, self.onNextWeek, self.next_button)
+        sizer.Add(self.previous_button, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+        sizer.Add(self.next_button, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+        
+        # La combobox pour la selection de la semaine
         self.week_choice = wx.Choice(self, -1)
         sizer.Add(self.week_choice, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
         day = first_monday = getFirstMonday()
@@ -73,7 +81,7 @@ class PlanningPanel(GPanel):
         delta = datetime.date.today() - first_monday
         semaine = int(delta.days / 7)
         self.week_choice.SetSelection(semaine)
-        self.Bind(wx.EVT_CHOICE, self.OnChangeWeek, self.week_choice)
+        self.Bind(wx.EVT_CHOICE, self.onChangeWeek, self.week_choice)
         
         # La combobox pour la selection de l'outil (si activités)
         self.activity_choice = ActivityComboBox(self)
@@ -95,9 +103,11 @@ class PlanningPanel(GPanel):
 
         self.sizer.Layout()
 
-    def OnChangeWeek(self, evt):
-        cb = evt.GetEventObject()
-        monday = cb.GetClientData(cb.GetSelection())
+    def onChangeWeek(self, evt=None):
+        selection = self.week_choice.GetSelection()
+        self.previous_button.Enable(selection is not 0)
+        self.next_button.Enable(selection is not self.week_choice.GetCount() - 1)
+        monday = self.week_choice.GetClientData(selection)
         for week_day in range(self.count):
             day = monday + datetime.timedelta(week_day)
             note = self.notebook.GetPage(week_day)
@@ -106,6 +116,14 @@ class PlanningPanel(GPanel):
             note.SetDate(day)
             self.notebook.SetSelection(0)
         self.sizer.Layout()
+        
+    def onPreviousWeek(self, evt):
+        self.week_choice.SetSelection(self.week_choice.GetSelection() - 1)
+        self.onChangeWeek()
+    
+    def onNextWeek(self, evt):
+        self.week_choice.SetSelection(self.week_choice.GetSelection() + 1)
+        self.onChangeWeek()
 
     def UpdateContents(self):
         self.activity_choice.Clear()
