@@ -257,60 +257,15 @@ class PhoneCtrl(wx.TextCtrl):
 class DateCtrl(wx.TextCtrl):
     def __init__(self, parent, id=-1, value=None, *args, **kwargs):
         wx.TextCtrl.__init__(self, parent, id=-1, *args, **kwargs)
-        
-        #self.__CheckValid(self.__val)
-        #self.SetValue(self.__val)
-              
-        #wx.EVT_CHAR(self, self.onChar)
-        wx.EVT_TEXT(self, -1, self.onText)
-        #wx.EVT_SET_FOCUS(self, self.onSetFocus)
-        #wx.EVT_KILL_FOCUS(self, self.onKillFocus)
-        #wx.EVT_SIZE(self, self.onResize)
-        #self.__GetMark()
+        wx.EVT_TEXT(self, -1, self.checkSyntax)
 
-        
-        
-#    def onChar(self, event):
-#        """ on Character event"""
-#        key   = event.KeyCode()
-#        entry = wx.TextCtrl.GetValue(self).strip()
-#        # really, the order here is important:
-#        # 1. return sends to ValidateEntry
-###        if (key == wx.WXK_RETURN):
-###            self.SetValue(entry)
-###            return
-#
-#        # 2. other non-text characters are passed without change
-#        if (key < wx.WXK_SPACE or key == wx.WXK_DELETE or key > 255):
-#            event.Skip()
-#            return
-#        
-#        # 3. check for multiple '.' and out of place '-' signs and ignore these
-#        #    note that chr(key) will now work due to return at #2
-#        pos = wx.TextCtrl.GetSelection(self)[0]
-#        has_minus = '-' in entry
-#        if ((chr(key) == '.' and (self.__prec == 0 or '.' in entry)) or
-#            (chr(key) == '-' and (has_minus or  pos != 0 or min >= 0)) or
-#            (chr(key) != '-' and  has_minus and pos == 0)):
-#            return
-#        # 4. allow digits, but not other characters
-#        if (chr(key) in self.__digits):
-#            event.Skip()
-#            return
-
-    def onText(self, event=None):
+    def checkSyntax(self, event=None):
         if wx.TextCtrl.GetValue(self) != "" and self.GetValue() is None:
             self.SetBackgroundColour(wx.RED)
         else:
             self.SetBackgroundColour(wx.WHITE)
         self.Refresh()
         event.Skip()
-##        try:
-##            if event.GetString() != '':
-##                self.__CheckValid(event.GetString())
-##        except:
-##            pass
-##        event.Skip()
 
     def GetValue(self):
         if wx.TextCtrl.GetValue(self) == "":
