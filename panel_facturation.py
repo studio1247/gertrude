@@ -32,12 +32,12 @@ from facture_mensuelle import GenereFactureMensuelle
 from attestation_paiement import GenereAttestationPaiement
 from appel_cotisations import GenereAppelCotisations
 
-class CotisationsPanel(GPanel):
+class FacturationPanel(GPanel):
     bitmap = './bitmaps/facturation.png'
     index = 30
     profil = PROFIL_TRESORIER
     def __init__(self, parent):
-        GPanel.__init__(self, parent, "Cotisations")
+        GPanel.__init__(self, parent, "Facturation")
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.inscrits_choice = {}
         
@@ -290,7 +290,7 @@ class CotisationsPanel(GPanel):
         dlg.ShowModal()
         dlg.Destroy()
 
-panels = [CotisationsPanel]
+panels = [FacturationPanel]
 
 if __name__ == '__main__':
     import sys, os

@@ -157,7 +157,7 @@ class Cotisation(object):
         self.taux_horaire = self.taux_effort / 200;
 
         self.montant_heure_garde = self.assiette_mensuelle * self.taux_horaire / 100
-        if self.mode_facturation & FACTURATION_PSU:
+        if creche.mode_facturation & FACTURATION_PSU:
             self.cotisation_mensuelle = self.heures_mois *  self.montant_heure_garde
         else:
             self.cotisation_mensuelle = self.assiette_mensuelle * self.taux_horaire * self.heures_mois * creche.mois_payes / 12 / 100

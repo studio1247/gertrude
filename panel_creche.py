@@ -237,6 +237,105 @@ class CafTab(AutoTab, PeriodeMixin):
 
     def UpdateContents(self):
         self.SetInstance(creche)
+        
+class JoursFermeturePanel(AutoTab):
+    def __init__(self, parent):
+        AutoTab.__init__(self, parent)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        labels_conges = [j[0] for j in jours_fermeture]
+        for text in labels_conges:
+            checkbox = wx.CheckBox(self, -1, text)
+            if text in creche.feries:
+                checkbox.SetValue(True)
+            self.sizer.Add(checkbox, 0, wx.EXPAND)
+            self.Bind(wx.EVT_CHECKBOX, self.feries_check, checkbox)
+        self.conges_sizer = wx.BoxSizer(wx.VERTICAL)
+        for i, conge in enumerate(creche.conges):
+            self.line_add(i)
+        self.sizer.Add(self.conges_sizer, 0, wx.ALL, 5)
+        button_add = wx.Button(self, -1, u'Nouvelle période de congés')
+        self.sizer.Add(button_add, 0, wx.EXPAND+wx.TOP, 5)
+        self.Bind(wx.EVT_BUTTON, self.conges_add, button_add)
+        sizer.Add(self.sizer, 0, wx.EXPAND+wx.ALL, 5)
+        self.SetSizer(sizer)
+
+    def UpdateContents(self):
+        for i in range(len(self.conges_sizer.GetChildren()), len(creche.conges)):
+            self.line_add(i)
+        for i in range(len(creche.conges), len(self.conges_sizer.GetChildren())):
+            self.line_del()
+        self.sizer.Layout()
+        AutoTab.UpdateContents(self)
+
+    def line_add(self, index):
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.AddMany([(wx.StaticText(self, -1, 'Debut :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, creche, 'conges[%d].debut' % index)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Fin :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, creche, 'conges[%d].fin' % index)])
+        delbutton = wx.BitmapButton(self, -1, delbmp)
+        delbutton.index = index
+        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
+        self.Bind(wx.EVT_BUTTON, self.conges_del, delbutton)
+        self.conges_sizer.Add(sizer)
+
+    def line_del(self):
+        index = len(self.conges_sizer.GetChildren()) - 1
+        sizer = self.conges_sizer.GetItem(index)
+        sizer.DeleteWindows()
+        self.conges_sizer.Detach(index)
+
+    def conges_add(self, event):
+        history.Append(Delete(creche.conges, -1))
+        creche.add_conge(Conge())
+        self.line_add(len(creche.conges) - 1)
+        self.sizer.Layout()
+
+    def conges_del(self, event):
+        index = event.GetEventObject().index
+        history.Append(Insert(creche.conges, index, creche.conges[index]))
+        self.line_del()
+        creche.conges[index].delete()
+        del creche.conges[index]
+        self.sizer.Layout()
+        self.UpdateContents()
+
+    def feries_check(self, event):
+        label = event.GetEventObject().GetLabelText()
+        if event.IsChecked():
+            conge = Conge(creation=False)
+            conge.debut = label
+            conge.create()
+            creche.add_conge(conge)
+        else:
+            conge = creche.feries[label]
+            conge.delete()
+            del creche.feries[label]
+            creche.calcule_jours_fermeture()
+        history.Append(None)
+
+class ParametersPanel(AutoTab):
+    def __init__(self, parent):
+        AutoTab.__init__(self, parent)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer = wx.FlexGridSizer(0, 2, 5, 5)
+        sizer.AddGrowableCol(1, 1)
+        sizer2 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer2.AddMany([(AutoChoiceCtrl(self, creche, 'ouverture', [('7h30', 7.5), ('7h45', 7.75), ('8h', 8), ('8h30', 8.5), ('9h', 9)]), 0, wx.EXPAND), (wx.StaticText(self, -1, '-'), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'fermeture', [('18h', 18), ('18h30', 18.5), ('18h45', 18.75), ('19h', 19)]), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Heures d\'ouverture :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (sizer2, 0, wx.EXPAND)])
+        sizer2 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer2.AddMany([(AutoChoiceCtrl(self, creche, 'affichage_min', [('7h30', 7.5), ('7h45', 7.75), ('8h', 8), ('8h30', 8.5), ('9h', 9)]), 0, wx.EXPAND), (wx.StaticText(self, -1, '-'), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'affichage_max', [('18h', 18), ('18h30', 18.5), ('18h45', 18.75), ('19h', 19)]), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Heures affichées sur le planning :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (sizer2, 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Granularité du planning :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'granularite', [('1/4 heure', 4), ('1/2 heure', 2), ('1 heure', 1)]), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Nombre de mois payés :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'mois_payes', [('12 mois', 12), ('11 mois', 11)]), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Présences prévisionnelles :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'presences_previsionnelles', [(u'Géré', True), (u'Non géré', False)]), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u"Modes d'inscription :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'modes_inscription', [(u'Crèche à plein-temps uniquement', MODE_5_5), ('Tous modes', MODE_5_5+MODE_4_5+MODE_3_5+MODE_HALTE_GARDERIE)]), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Minimum de jours de maladie pour déduction :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'minimum_maladie', min=0, precision=0), 0, wx.EXPAND)])
+        facturation_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        facturation_sizer.Add(AutoCheckBox(self, creche, 'mode_facturation', u'PSU', FACTURATION_PSU), 0, wx.EXPAND|wx.RIGHT, 5)
+        facturation_sizer.Add(AutoCheckBox(self, creche, 'mode_facturation', u'Déduction de jours pour maladie avec carence', DEDUCTION_MALADIE_AVEC_CARENCE), 0, wx.EXPAND)
+        sizer.AddMany([(wx.StaticText(self, -1, u'Mode de facturation :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (facturation_sizer, 0, wx.EXPAND)])
+        self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 5)
+        self.SetSizer(self.sizer)
 
 class CrecheNotebook(wx.Notebook):
     def __init__(self, parent):
@@ -244,8 +343,10 @@ class CrecheNotebook(wx.Notebook):
         self.AddPage(CrecheTab(self), u'Crèche')
         self.AddPage(EmployesTab(self), u'Employés')
         self.AddPage(ResponsabilitesTab(self), u'Responsabilités')
-        self.AddPage(ActivitesTab(self), u'Activités')
         self.AddPage(CafTab(self), 'C.A.F.')
+        self.AddPage(JoursFermeturePanel(self), u'Congés')
+        self.AddPage(ActivitesTab(self), u'Activités')
+        self.AddPage(ParametersPanel(self), u'Paramètres')
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
     def OnPageChanged(self, event):
