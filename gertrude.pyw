@@ -19,8 +19,7 @@
 
 import __builtin__
 import os, sys, imp, time, shutil, glob
-import wx
-#, wx.lib.wordwrap
+import wx, wx.lib.wordwrap
 from data import *
 from startdialog import StartDialog
 try:
@@ -195,10 +194,10 @@ class GertrudeFrame(wx.Frame):
         info = wx.AboutDialogInfo()
         info.Name = "Gertrude"
         info.Version = VERSION
-        info.Copyright = "(C) 2005-2008 Bertrand Songis"
+        info.Copyright = "(C) 2005-2009 Bertrand Songis"
         info.Description = wx.lib.wordwrap.wordwrap(
             u"Gertrude est un logiciel libre adapté aux besoins de gestion des crèches et haltes-garderies en France.\n\n"
-            u"Développé pour une crèche parentale rennaise début 2005, il a été adapté en 2007 et 2008 pour d’autres crèches ; il est désormais accessible à tous.\n\n"
+            u"Développé pour une crèche parentale rennaise début 2005, il a été adapté de 2007 à 2009 pour d’autres crèches ; il est désormais accessible à tous.\n\n"
             u"Il permet l'édition de contrats, la gestion de planning, la facturation, les appels de cotisations, les attestations de paiement, les rapports de fréquentation, la synthèse des contributions familiales.\n\n",
             350, wx.ClientDC(self))
         info.WebSite = ("http://gertrude.creches.free.fr", "Gertrude")
