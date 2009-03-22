@@ -85,7 +85,10 @@ class RelevesPanel(GPanel):
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Planning détaillé'), wx.HORIZONTAL)
         self.detail_start_date = DateCtrl(self)
         self.detail_end_date = DateCtrl(self)
-        self.detail_start_date.SetValue(today)
+        day = today
+        while day in creche.jours_fermeture:
+            day += datetime.timedelta(1)
+        self.detail_start_date.SetValue(day)
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationPlanningDetaille, button)
         box_sizer.AddMany([(self.detail_start_date, 1, wx.ALL|wx.EXPAND, 5), (wx.StaticText(self, -1, "-"), 0, wx.ALL|wx.EXPAND, 5), (self.detail_end_date, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])

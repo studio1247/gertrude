@@ -183,6 +183,18 @@ def getLines(date, inscrits):
             lines.append(line)
     return lines
 
+def getActivitiesSummary(creche, lines):
+    summary = {}
+    for activity in [0] + creche.activites.keys():
+        summary[activity] = [0] * 96
+        for i in range(96):
+            for line in lines:
+                if not isinstance(line, list):
+                    line = line.values
+                if line[i] > 0 and line[i] & (1 << activity):
+                    summary[activity][i] += 1
+    return summary
+
 def decodeErrors(errors):
     message = ""
     for error in errors:

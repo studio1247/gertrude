@@ -105,7 +105,6 @@ class StartDialog(wx.Dialog):
             self.sizer.Layout()
             self.sizer.Fit(self)
             
-
     def Load(self):
         try:
             LoadConfig(ProgressHandler(self.info.AppendText, self.gauge, 5))

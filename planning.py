@@ -20,6 +20,7 @@ from buffered_window import BufferedWindow
 import datetime
 from constants import *
 from controls import getActivityColor
+from functions import getActivitiesSummary
 from history import *
 
 # PlanningWidget options
@@ -336,13 +337,7 @@ class PlanningSummaryPanel(BufferedWindow):
             self.GetParent().sizer.Layout()
             
         lines = self.GetParent().GetSummaryLines()
-        self.summary = {}
-        for activity in [0] + creche.activites.keys():
-            self.summary[activity] = [0] * 96
-            for i in range(96):
-                for line in lines:
-                    if line[i] > 0 and line[i] & (1 << activity):
-                        self.summary[activity][i] += 1
+        self.summary = getActivitiesSummary(creche, lines)
         self.UpdateDrawing()
 
     def Draw(self, dc):

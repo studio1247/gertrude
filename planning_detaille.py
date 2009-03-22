@@ -41,16 +41,18 @@ class PlanningDetailleModifications(object):
         
         drawing = dom.getElementsByTagName('office:drawing').item(0)
         template = drawing.getElementsByTagName("draw:page").item(0)
-        # print template.toprettyxml()
+        print template.toprettyxml()
         line1_template = template.getElementsByTagName("draw:line").item(0)
         line2_template = template.getElementsByTagName("draw:line").item(1)
         frame_template = template.getElementsByTagName("draw:frame").item(0)
         shape_templates = template.getElementsByTagName("draw:custom-shape")
         label_template = template.getElementsByTagName("draw:frame").item(1)
+        separator_template = template.getElementsByTagName("draw:line").item(2)
         template.removeChild(line1_template)
         template.removeChild(line2_template)
         template.removeChild(frame_template)
         template.removeChild(label_template)
+        template.removeChild(separator_template)
         for t in shape_templates:
             template.removeChild(t)
         drawing.removeChild(template)     
@@ -106,8 +108,59 @@ class PlanningDetailleModifications(object):
                         node.setAttribute('svg:x', '%fcm' % (left + labels_width + (float(a)-creche.affichage_min) * step))
                         node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
                         node.setAttribute('svg:width', '%fcm' % ((b-a)*step))
+                        ReplaceTextFields(node, [('texte', '')])
                         page.appendChild(node)
+                        
+            # ligne séparatrice
+            i = len(lines)
+            node = separator_template.cloneNode(1)
+            node.setAttribute('svg:x1', '%fcm' % left)
+            node.setAttribute('svg:y1', '%fcm' % (0.25 + top + line_height * i))
+            node.setAttribute('svg:x2', '%fcm' % (21.0-right))
+            node.setAttribute('svg:y2', '%fcm' % (0.25 + top + line_height * i))
+            page.appendChild(node)
             
+            # le récapitulatif par activité
+            summary = getActivitiesSummary(creche, lines)
+            debut = int(creche.affichage_min*4)
+            fin = int(creche.affichage_max*4)
+            for activity in summary.keys():
+                i += 1
+                if activity == 0:
+                    label = u"Présences"
+                else:
+                    label = creche.activites[activity].label
+                node = label_template.cloneNode(1)
+                node.setAttribute('svg:x', '%fcm' % left)
+                node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
+                node.setAttribute('svg:width', '%fcm' % labels_width)
+                fields = [('nom', ''),
+                          ('prenom', label),
+                          ('label', label)]
+                ReplaceTextFields(node, fields)
+                page.appendChild(node)
+                line = summary[activity]
+                x = debut
+                v = 0
+                a = 0
+                while x <= fin:
+                    if x == fin:
+                        nv = 0
+                    else:
+                        nv = line[x]
+                    if nv != v:
+                        if v != 0:
+                            # print a, x, v
+                            node = shape_templates[activity].cloneNode(1)
+                            node.setAttribute('svg:x', '%fcm' % (left + labels_width + (float(a)/4-creche.affichage_min) * step))
+                            node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
+                            node.setAttribute('svg:width', '%fcm' % (float(x-a)*step/4))
+                            ReplaceTextFields(node, [('texte', '%d' % v)])
+                            page.appendChild(node)
+                        a = x    
+                        v = nv
+                    x += 1
+
             fields = [('nom-creche', creche.nom),
                       ('date', getDateStr(day))]
             ReplaceTextFields(page, fields)
