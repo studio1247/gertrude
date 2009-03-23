@@ -159,20 +159,14 @@ class Cotisation(object):
         self.montant_heure_garde = self.assiette_mensuelle * self.taux_horaire / 100
         if creche.mode_facturation & FACTURATION_PSU:
             self.cotisation_mensuelle = self.heures_mois *  self.montant_heure_garde
-        else:
-            self.cotisation_mensuelle = self.assiette_mensuelle * self.taux_horaire * self.heures_mois * creche.mois_payes / 12 / 100
-
-        self.montant_jour_maladie_deduit = self.assiette_mensuelle * self.taux_horaire / 10
-
-        if self.heures_mois < 200:
-            self.montant_jour_supplementaire = self.montant_jour_maladie_deduit
-        else:
             self.montant_jour_supplementaire = 0
-
-        if self.inscription.mode == 0:
-            self.cout_horaire = self.cotisation_mensuelle / self.heures_mois
         else:
-            self.cout_horaire = 0
+            self.montant_jour_garde = self.montant_heure_garde * 10
+            self.cotisation_mensuelle = self.assiette_mensuelle * self.taux_horaire * self.heures_mois * creche.mois_payes / 12 / 100
+            if self.heures_mois < 200:
+                self.montant_jour_supplementaire = self.montant_jour_garde
+            else:
+                self.montant_jour_supplementaire = 0
 
     def __cmp__(self, context2):
         return context2 == None or \

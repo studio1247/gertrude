@@ -653,34 +653,41 @@ class Inscrit(object):
             return None
 
     def getState(self, date):
+        if date in creche.jours_fermeture:
+            return ABSENT, 0
         inscription = self.getInscription(date)
-        if inscription is None or date.weekday() > 4:
-            return ABSENT
+        if inscription is None:
+            return ABSENT, 0
         
-        ref_state = inscription.reference[date.weekday()].get_state()
+        reference = self.getReferenceDay(date)
+        ref_state = reference.get_state()
         if date in self.journees:
             journee = self.journees[date]
             state = journee.get_state()
             if state == MALADE:
-                return MALADE
+                return MALADE, 0
             elif state in (ABSENT, VACANCES):
                 if inscription.mode == MODE_5_5 or ref_state:
-                    return VACANCES
+                    return VACANCES, 0
                 else:
-                    return ABSENT
+                    return ABSENT, 0
             else: # PRESENT
+                supplement = 0.0
+                for i in range(96):
+                    if journee.values[i] and not reference.values[i]:
+                        supplement += 0.25
                 if inscription.mode == MODE_5_5 or ref_state:
-                    return state
+                    return PRESENT, supplement
                 else:
-                    return state+SUPPLEMENT
+                    return PRESENT|SUPPLEMENT, supplement
         else:
             if ref_state:
-                if creche.presences_previsionnelles or date > today:
-                    return PRESENT|PREVISIONNEL
+                if creche.presences_previsionnelles and date > today:
+                    return PRESENT|PREVISIONNEL, 0
                 else:
-                    return PRESENT
+                    return PRESENT, 0
             else:
-                return ABSENT
+                return ABSENT, 0
             
 #    def getTotalHeuresMois(self, annee, mois, mode_accueil): # heures facturees
 #        total = 0

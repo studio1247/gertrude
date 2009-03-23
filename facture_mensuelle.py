@@ -72,7 +72,7 @@ class FactureModifications(object):
                         text_node.firstChild.replaceWholeText('%d' % date.day)
                         if not date in creche.jours_fermeture:
                             # changement de la couleur de la cellule
-                            state = self.inscrit.getState(date)
+                            state = self.inscrit.getState(date)[0]
                             if state > 0:
                                 state = state % PREVISIONNEL
                             cell.setAttribute('table:style-name', 'Presences.%s' % couleurs[state])
@@ -98,6 +98,7 @@ class FactureModifications(object):
                 ('date', '%.2d/%.2d/%d' % (debut.day, debut.month, debut.year)),
                 ('numfact', '%.2d%.4d%.2d%.4d' % (inscriptions[0].mode + 1, debut.year, debut.month, inscriptions[0].idx)),
                 ('cotisation-mensuelle', '%.2f' % facture.cotisation_mensuelle),
+                ('heures-supplementaires', '%.2f' % facture.heures_supplementaires),
                 ('supplement', '%.2f' % facture.supplement),
                 ('deduction', '- %.2f' % facture.deduction),
                 ('raison-deduction', facture.raison_deduction),
