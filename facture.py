@@ -45,9 +45,7 @@ class Facture(object):
 
         date = datetime.date(annee, mois, 1)
         while date.month == mois:
-            if date in creche.jours_fermeture:
-                jours_fermeture += 1
-            else:
+            if not date in creche.jours_fermeture:
                 jours_ouvres += 1
                 if inscrit.getInscription(date):
                     cotisation = Cotisation(inscrit, (date, date), options=NO_ADDRESS|self.options)
@@ -106,7 +104,10 @@ class Facture(object):
             self.cotisation_mensuelle += pro_rata
             self.detail_cotisation_mensuelle[mode_inscription] += pro_rata
 
-        self.semaines_payantes = 4 - int(jours_fermeture / 5)
+        if "Week-end" in creche.feries:
+            self.semaines_payantes = int(jours_ouvres / 5)
+        else:
+            self.semaines_payantes = int(jours_ouvres / 7)
         heures_facturees = 0.0
         detail_heures_facturees = [0.0, 0.0]
         for mode_inscription, heures in heures_hebdomadaires:
