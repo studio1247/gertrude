@@ -41,20 +41,11 @@ class PlanningDetailleModifications(object):
         
         drawing = dom.getElementsByTagName('office:drawing').item(0)
         template = drawing.getElementsByTagName("draw:page").item(0)
-        print template.toprettyxml()
-        line1_template = template.getElementsByTagName("draw:line").item(0)
-        line2_template = template.getElementsByTagName("draw:line").item(1)
-        frame_template = template.getElementsByTagName("draw:frame").item(0)
-        shape_templates = template.getElementsByTagName("draw:custom-shape")
-        label_template = template.getElementsByTagName("draw:frame").item(1)
-        separator_template = template.getElementsByTagName("draw:line").item(2)
-        template.removeChild(line1_template)
-        template.removeChild(line2_template)
-        template.removeChild(frame_template)
-        template.removeChild(label_template)
-        template.removeChild(separator_template)
-        for t in shape_templates:
-            template.removeChild(t)
+        # print template.toprettyxml()
+        shapes = getNamedShapes(template)
+        # print shapes
+        for shape in shapes:
+            template.removeChild(shapes[shape])
         drawing.removeChild(template)     
     
         day, end = self.periode
@@ -70,15 +61,15 @@ class PlanningDetailleModifications(object):
             h = creche.affichage_min
             while h <= creche.affichage_max:
                 if h == int(h):
-                    node = frame_template.cloneNode(1)
+                    node = shapes["legende-heure"].cloneNode(1)
                     node.setAttribute('svg:x', '%fcm' % (left + labels_width - 0.5 + (float(h)-creche.affichage_min) * step))
                     # node.setAttribute('svg:y', '1cm')
                     node.setAttribute('svg:width', '1cm')
                     node.firstChild.firstChild.firstChild.firstChild.replaceWholeText('%dh' % h)
                     page.appendChild(node)
-                    node = line1_template.cloneNode(1)
+                    node = shapes["ligne-heure"].cloneNode(1)
                 else:
-                    node = line2_template.cloneNode(1)
+                    node = shapes["ligne-quart-heure"].cloneNode(1)
                 node.setAttribute('svg:x1', '%fcm' % (left + labels_width + (h-creche.affichage_min) * step))
                 # node.setAttribute('svg:y1', '2cm')
                 node.setAttribute('svg:x2', '%fcm' % (left + labels_width + (h-creche.affichage_min) * step))
@@ -89,7 +80,7 @@ class PlanningDetailleModifications(object):
             # les enfants
             lines = getLines(day, creche.inscrits)
             for i, line in enumerate(lines):
-                node = label_template.cloneNode(1)
+                node = shapes["libelle"].cloneNode(1)
                 node.setAttribute('svg:x', '%fcm' % left)
                 node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
                 node.setAttribute('svg:width', '%fcm' % labels_width)
@@ -104,7 +95,7 @@ class PlanningDetailleModifications(object):
                         b = float(b) / 4
                         v = v & (~PREVISIONNEL)
                         # print a,b,v
-                        node = shape_templates[v].cloneNode(1)
+                        node = shapes["activite-%d" % v].cloneNode(1)
                         node.setAttribute('svg:x', '%fcm' % (left + labels_width + (float(a)-creche.affichage_min) * step))
                         node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
                         node.setAttribute('svg:width', '%fcm' % ((b-a)*step))
@@ -113,12 +104,13 @@ class PlanningDetailleModifications(object):
                         
             # ligne séparatrice
             i = len(lines)
-            node = separator_template.cloneNode(1)
-            node.setAttribute('svg:x1', '%fcm' % left)
-            node.setAttribute('svg:y1', '%fcm' % (0.25 + top + line_height * i))
-            node.setAttribute('svg:x2', '%fcm' % (21.0-right))
-            node.setAttribute('svg:y2', '%fcm' % (0.25 + top + line_height * i))
-            page.appendChild(node)
+            if "separateur" in shapes:
+                node = shapes["separateur"].cloneNode(1)
+                node.setAttribute('svg:x1', '%fcm' % left)
+                node.setAttribute('svg:y1', '%fcm' % (0.25 + top + line_height * i))
+                node.setAttribute('svg:x2', '%fcm' % (21.0-right))
+                node.setAttribute('svg:y2', '%fcm' % (0.25 + top + line_height * i))
+                page.appendChild(node)
             
             # le récapitulatif par activité
             summary = getActivitiesSummary(creche, lines)
@@ -130,7 +122,7 @@ class PlanningDetailleModifications(object):
                     label = u"Présences"
                 else:
                     label = creche.activites[activity].label
-                node = label_template.cloneNode(1)
+                node = shapes["libelle"].cloneNode(1)
                 node.setAttribute('svg:x', '%fcm' % left)
                 node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
                 node.setAttribute('svg:width', '%fcm' % labels_width)
@@ -151,7 +143,7 @@ class PlanningDetailleModifications(object):
                     if nv != v:
                         if v != 0:
                             # print a, x, v
-                            node = shape_templates[activity].cloneNode(1)
+                            node = shapes["activite-%d" % activity].cloneNode(1)
                             node.setAttribute('svg:x', '%fcm' % (left + labels_width + (float(a)/4-creche.affichage_min) * step))
                             node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
                             node.setAttribute('svg:width', '%fcm' % (float(x-a)*step/4))

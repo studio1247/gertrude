@@ -31,13 +31,17 @@ except:
 import controls, zipfile, xml.dom.minidom, wx.html, ooffice
 sys.path.insert(0, ".")
 
-try:
-    from win32com.shell import shell
-    df = shell.SHGetDesktopFolder()
-    pidl = df.ParseDisplayName(0, None,
-                               "::{450d8fba-ad25-11d0-98a8-0800361b1103}")[1]
-    __builtin__.documents_directory = shell.SHGetPathFromIDList(pidl)
-except:
+if sys.platform == 'win32':
+    try:
+        from win32com.shell import shell
+        df = shell.SHGetDesktopFolder()
+        pidl = df.ParseDisplayName(0, None,
+                                   "::{450d8fba-ad25-11d0-98a8-0800361b1103}")[1]
+        __builtin__.documents_directory = shell.SHGetPathFromIDList(pidl)
+    except:
+        print u"L'extension win32com pour python est recommandée (plateforme windows) !"
+        __builtin__.documents_directory = os.getcwd()
+else:
     __builtin__.documents_directory = os.getcwd()
 
 VERSION = '0.66'

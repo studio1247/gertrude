@@ -119,6 +119,15 @@ def IncrementFormulas(cellules, inc=1):
             formula = formula.replace('[_', '[').replace('_]', ']')
             cellule.setAttribute("table:formula", formula)
             
+def getNamedShapes(dom):
+    shapes = {}
+    for tag in ("draw:line", "draw:frame", "draw:custom-shape"):
+        nodes = dom.getElementsByTagName(tag)
+        for node in nodes:
+            name = node.getAttribute("draw:name")
+            if name:
+                shapes[name] = node
+    return shapes
 
 def GenerateDocument(src, dest, modifications):
     if os.path.exists("./templates/%s" % src):
