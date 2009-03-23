@@ -233,22 +233,3 @@ class FileConnection(object):
         sql_connection.close()
         return True        
 
-
-def Load(progress_handler=default_progress_handler):
-    __builtin__.creche, __builtin__.readonly = config.connection.Load(progress_handler)
-    return creche is not None
-
-def Save(progress_handler=default_progress_handler):
-    return config.connection.Save(progress_handler)
-
-def Restore(progress_handler=default_progress_handler):
-    return config.connection.Restore(progress_handler)
-
-def Exit(progress_handler=default_progress_handler):
-    return config.connection.Exit(progress_handler)
-
-if __name__ == '__main__':    
-    loaded = Load()
-    if loaded and not readonly:
-        Save()
-    Exit()

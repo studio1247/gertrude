@@ -20,7 +20,7 @@
 import __builtin__
 import os, sys, imp, time, shutil, glob
 import wx, wx.lib.wordwrap
-from data import *
+from config import *
 from startdialog import StartDialog
 try:
   import winsound
@@ -30,19 +30,6 @@ except:
 # Don't remove these 2 lines (mandatory for py2exe)
 import controls, zipfile, xml.dom.minidom, wx.html, ooffice
 sys.path.insert(0, ".")
-
-if sys.platform == 'win32':
-    try:
-        from win32com.shell import shell
-        df = shell.SHGetDesktopFolder()
-        pidl = df.ParseDisplayName(0, None,
-                                   "::{450d8fba-ad25-11d0-98a8-0800361b1103}")[1]
-        __builtin__.documents_directory = shell.SHGetPathFromIDList(pidl)
-    except:
-        print u"L'extension win32com pour python est recommandée (plateforme windows) !"
-        __builtin__.documents_directory = os.getcwd()
-else:
-    __builtin__.documents_directory = os.getcwd()
 
 VERSION = '0.66'
 

@@ -172,12 +172,12 @@ class FacturationPanel(GPanel):
         periode = self.appels_monthchoice.GetClientData(self.appels_monthchoice.GetSelection())
         wildcard = "OpenDocument (*.ods)|*.ods"
         oodefaultfilename = u"Appel cotisations %s %d.ods" % (months[periode.month - 1], periode.year)
-        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=documents_directory, defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
+        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=config.documents_directory, defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
         response = dlg.ShowModal()
         dlg.Destroy()
         if response == wx.ID_OK:
             oofilename = dlg.GetPath()
-            __builtin__.documents_directory = os.path.dirname(oofilename)
+            config.documents_directory = os.path.dirname(oofilename)
             options = NO_NOM
             try:
                 errors = GenereAppelCotisations(oofilename, periode, options)
@@ -200,17 +200,17 @@ class FacturationPanel(GPanel):
             response = dlg.ShowModal()
             dlg.Destroy()
             if response == wx.ID_OK:
-                __builtin__.documents_directory = dlg.GetPath()
+                config.documents_directory = dlg.GetPath()
                 inscrits = [inscrit for inscrit in creche.inscrits if inscrit.getInscription(periode) is not None]
-                self.GenereFactures(inscrits, periode, oopath=documents_directory)
+                self.GenereFactures(inscrits, periode, oopath=config.documents_directory)
         else:
             wildcard = "OpenDocument (*.odt)|*.odt"
             oodefaultfilename = u"Cotisation %s %s %d.odt" % (inscrit.prenom, months[periode.month - 1], periode.year)
-            dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=documents_directory, defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
+            dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=config.documents_directory, defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
             response = dlg.ShowModal()
             if response == wx.ID_OK:
                 oofilename = dlg.GetPath()
-                __builtin__.documents_directory = os.path.dirname(oofilename)
+                config.documents_directory = os.path.dirname(oofilename)
                 self.GenereFactures([inscrit], periode, oofilename)
 
     def EvtGenerationRecu(self, evt):
@@ -219,22 +219,22 @@ class FacturationPanel(GPanel):
         if self.recus_endchoice.IsEnabled():
             fin = self.recus_endchoice.GetClientData(self.recus_endchoice.GetSelection())[1]
         if isinstance(inscrit, list):
-            dlg = wx.DirDialog(self, u'Générer des documents OpenOffice', defaultPath=documents_directory, style=wx.DD_DEFAULT_STYLE|wx.DD_NEW_DIR_BUTTON)
+            dlg = wx.DirDialog(self, u'Générer des documents OpenOffice', defaultPath=config.documents_directory, style=wx.DD_DEFAULT_STYLE|wx.DD_NEW_DIR_BUTTON)
             response = dlg.ShowModal()
             dlg.Destroy()
             if response == wx.ID_OK:
-                __builtin__.documents_directory = dlg.GetPath()
+                config.documents_directory = dlg.GetPath()
                 inscrits = [inscrit for inscrit in creche.inscrits if inscrit.getInscriptions(debut, fin)]
-                self.GenereAttestationsPaiement(inscrits, debut, fin, oopath=documents_directory)
+                self.GenereAttestationsPaiement(inscrits, debut, fin, oopath=config.documents_directory)
         else:
             wildcard = "OpenDocument (*.odt)|*.odt"
             oodefaultfilename = u"Attestation de paiement %s %s-%s %d.odt" % (inscrit.prenom, months[debut.month - 1], months[fin.month - 1], debut.year)
-            dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=documents_directory, defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
+            dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=config.documents_directory, defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
             response = dlg.ShowModal()
             dlg.Destroy()
             if response == wx.ID_OK:
                 oofilename = dlg.GetPath()
-                __builtin__.documents_directory = os.path.dirname(oofilename)
+                config.documents_directory = os.path.dirname(oofilename)
                 self.GenereAttestationsPaiement([inscrit], debut, fin, oofilename)
 
     def GenereFactures(self, inscrits, periode, oofilename=None, oopath=None):
