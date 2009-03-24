@@ -192,7 +192,7 @@ class PlanningGridWindow(BufferedWindow):
             else:
                 line.save()
 
-            if line.insert:
+            if line.insert is not None:
                 line.insert[line.key] = line
                 line.insert = None
 
