@@ -426,15 +426,20 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.mode_accueil_choice = AutoChoiceCtrl(self, None, 'mode', items=[("Plein temps", MODE_5_5), (u"4/5èmes", MODE_4_5), (u"3/5èmes", MODE_3_5), ("Halte-garderie", MODE_HALTE_GARDERIE)])
         sizer1.AddMany([(wx.StaticText(self, -1, u"Mode d'accueil :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.mode_accueil_choice, 0, wx.EXPAND)])
         sizer1.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_essai'), 0, wx.EXPAND)])
+        self.duree_reference_choice = wx.Choice(self)
+        for item, data in [("1 semaine", 7), (u"2 semaines", 14), (u"3 semaines", 21), ("4 semaines", 28)]:
+            self.duree_reference_choice.Append(item, data)
+        self.Bind(wx.EVT_CHOICE, self.onDureeReferenceChoice, self.duree_reference_choice)
+        sizer1.AddMany([(wx.StaticText(self, -1, u"Durée de la période de référence :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.duree_reference_choice, 0, wx.EXPAND)])
         sizer.Add(sizer1, 0, wx.ALL|wx.EXPAND, 5)
        
         sizer2 = wx.BoxSizer(wx.HORIZONTAL)
         self.button_5_5 = wx.Button(self, -1, "Plein temps")
         sizer2.Add(self.button_5_5)
-        self.Bind(wx.EVT_BUTTON, self.OnMode_5_5, self.button_5_5)
+        self.Bind(wx.EVT_BUTTON, self.onMode_5_5, self.button_5_5)
         self.button_copy = wx.Button(self, -1, "Recopier lundi sur toute la semaine")
         sizer2.Add(self.button_copy)
-        self.Bind(wx.EVT_BUTTON, self.OnMondayCopy, self.button_copy)
+        self.Bind(wx.EVT_BUTTON, self.onMondayCopy, self.button_copy)
         
         self.activity_choice = ActivityComboBox(self)        
         sizer2.Add(self.activity_choice, 0, wx.ALIGN_RIGHT)
@@ -453,14 +458,18 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.SetInstance(inscrit)
         self.UpdateContents()
     
-    def OnMode_5_5(self, event):
+    def onDureeReferenceChoice(self, event):
+        duration = self.duree_reference_choice.GetClientData(self.duree_reference_choice.GetSelection())
+        #self.inscrit.inscriptions[self.periode].setReferenceDuration(duration)
+        
+    def onMode_5_5(self, event):
         inscription = self.inscrit.inscriptions[self.periode]
         inscription.mode = MODE_5_5
         for day in inscription.reference:
             day.set_state(PRESENT)
         self.UpdateContents()
     
-    def OnMondayCopy(self, event):
+    def onMondayCopy(self, event):
         inscription = self.inscrit.inscriptions[self.periode]
         for day in inscription.reference[1:]:
             day.copy(inscription.reference[0], False)
@@ -472,10 +481,13 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.mode_accueil_choice.Enable(creche.modes_inscription != MODE_5_5)
         
         if self.inscrit:
+            self.duree_reference_choice.Enable()
+            self.duree_reference_choice.SetSelection(self.inscrit.inscriptions[self.periode].referenceDuration / 7 - 1)
             self.planning_panel.SetInscription(self.inscrit.inscriptions[self.periode])
         else:
+            self.duree_reference_choice.Disable()
             self.planning_panel.SetInscription(None)
-        
+            
         self.activity_choice.Clear()
         tmp = Activite(creation=False)
         tmp.value = 0
@@ -519,12 +531,12 @@ class InscriptionsNotebook(wx.Notebook):
         else:
             self.contrat_panel = self.forfait_panel = None
 
-        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)  
+        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.onPageChanged)  
             
     def EvtChangementPrenom(self, event):
         self.parent.ChangePrenom(self.inscrit)
 
-    def OnPageChanged(self, event):
+    def onPageChanged(self, event):
         page = self.GetPage(event.GetSelection())
         page.UpdateContents()
         event.Skip()

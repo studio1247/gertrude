@@ -496,6 +496,7 @@ class Inscription(object):
         self.debut = None
         self.fin = None
         self.mode = MODE_5_5
+        self.reference_duration = 7
         self.reference = []
         for i in range(7):
             self.reference.append(ReferenceDay(self, i))
@@ -506,7 +507,15 @@ class Inscription(object):
             if creche.modes_inscription == MODE_5_5:
                 for i in range(5):
                     self.reference[i].set_state(PRESENT)
-                   
+    
+    def setReferenceDuration(self, duration):
+        if duration > self.reference_duration:
+            for i in range(self.reference_duration, duration):
+                self.reference.append(ReferenceDay(self, i))
+        else:
+            self.reference = self.reference[0:duration]
+        self.reference_duration = duration
+    
     def create(self):
         print 'nouvelle inscription'
         result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, fin_periode_essai) VALUES(NULL,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, self.fin_periode_essai))
@@ -518,7 +527,7 @@ class Inscription(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['debut', 'fin', 'mode', 'fin_periode_essai'] and self.idx:
+        if name in ['debut', 'fin', 'mode', 'fin_periode_essai', 'reference_duration'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE INSCRIPTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))   
 
