@@ -172,7 +172,7 @@ class PhoneCtrl(wx.TextCtrl):
         self.SetMaxLength(14)
 
         wx.EVT_CHAR(self, self.onChar)
-        wx.EVT_TEXT(self, -1, self.onText)
+        wx.EVT_TEXT(self, -1, self.checkSyntax)
         wx.EVT_LEFT_DOWN(self, self.OnLeftDown)
        
     def onChar(self, event):
@@ -196,7 +196,7 @@ class PhoneCtrl(wx.TextCtrl):
             event.Skip()
             wx.CallAfter(self.Arrange, key)
 
-    def onText(self, event=None):
+    def checkSyntax(self, event=None):
         value = self.GetValue()
         if value != "" and len(value) != 14:
             self.SetBackgroundColour(wx.RED)
