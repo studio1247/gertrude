@@ -399,16 +399,13 @@ class ReferencePlanningPanel(PlanningWidget):
     def UpdateContents(self):
         lines = []
         if self.inscription:
-            if "Week-end" in creche.feries:
-                count = 5
-            else:
-                count = 7
-            for day in range(count):
-                line = self.inscription.reference[day]
-                line.insert = None
-                line.label = days[day]
-                line.reference = None
-                lines.append(line)
+            for day in range(self.inscription.duree_reference):
+                if day % 7 < 5 or not "Week-end" in creche.feries:
+                    line = self.inscription.reference[day]
+                    line.insert = None
+                    line.label = days[day % 7]
+                    line.reference = None
+                    lines.append(line)
         self.SetLines(lines)
 
     def SetInscription(self, inscription):
@@ -437,7 +434,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.button_5_5 = wx.Button(self, -1, "Plein temps")
         sizer2.Add(self.button_5_5)
         self.Bind(wx.EVT_BUTTON, self.onMode_5_5, self.button_5_5)
-        self.button_copy = wx.Button(self, -1, "Recopier lundi sur toute la semaine")
+        self.button_copy = wx.Button(self, -1, u"Recopier lundi sur toute la période")
         sizer2.Add(self.button_copy)
         self.Bind(wx.EVT_BUTTON, self.onMondayCopy, self.button_copy)
         
@@ -460,20 +457,23 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
     
     def onDureeReferenceChoice(self, event):
         duration = self.duree_reference_choice.GetClientData(self.duree_reference_choice.GetSelection())
-        #self.inscrit.inscriptions[self.periode].setReferenceDuration(duration)
+        self.inscrit.inscriptions[self.periode].setReferenceDuration(duration)
+        self.UpdateContents()
         
     def onMode_5_5(self, event):
         inscription = self.inscrit.inscriptions[self.periode]
         inscription.mode = MODE_5_5
-        for day in inscription.reference:
-            day.set_state(PRESENT)
+        for i, day in enumerate(inscription.reference):
+            if (i % 7 < 5) or "Week-end" not in creche.feries:
+                day.set_state(PRESENT)
         self.UpdateContents()
     
     def onMondayCopy(self, event):
         inscription = self.inscrit.inscriptions[self.periode]
-        for day in inscription.reference[1:]:
-            day.copy(inscription.reference[0], False)
-            day.save()
+        for i, day in enumerate(inscription.reference):
+            if i > 0 and ((i % 7 < 5) or "Week-end" not in creche.feries):
+                day.copy(inscription.reference[0], False)
+                day.save()
         self.UpdateContents()
             
     def UpdateContents(self):
@@ -482,7 +482,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         
         if self.inscrit:
             self.duree_reference_choice.Enable()
-            self.duree_reference_choice.SetSelection(self.inscrit.inscriptions[self.periode].referenceDuration / 7 - 1)
+            self.duree_reference_choice.SetSelection(self.inscrit.inscriptions[self.periode].duree_reference / 7 - 1)
             self.planning_panel.SetInscription(self.inscrit.inscriptions[self.periode])
         else:
             self.duree_reference_choice.Disable()
@@ -508,7 +508,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
 
     def SetPeriode(self, periode):
         PeriodeMixin.SetPeriode(self, periode)
-        if self.inscrit and self.periode < len(self.inscrit.inscriptions):
+        if self.inscrit and self.periode != -1 and self.periode < len(self.inscrit.inscriptions):
             self.planning_panel.SetInscription(self.inscrit.inscriptions[self.periode])
         else:
             self.planning_panel.SetInscription(None)

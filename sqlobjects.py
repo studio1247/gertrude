@@ -130,6 +130,12 @@ class ReferenceDay(Day):
         print 'suppression activite de reference %d' % self.activites[(start, end, value)]
         sql_connection.execute('DELETE FROM REF_ACTIVITIES WHERE idx=?', (self.activites[(start, end, value)],))
         del self.activites[(start, end, value)]
+        
+    def delete(self):
+        print 'suppression jour de reference %d' % self.day
+        for start, end, value in self.activites.keys():
+            self.remove_activity(start, end, value)
+        
        
 class Journee(Day):
     def __init__(self, inscrit, date, reference=None):
@@ -490,35 +496,38 @@ class Parent(object):
             sql_connection.execute('UPDATE PARENTS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 class Inscription(object):
-    def __init__(self, inscrit, creation=True):
+    def __init__(self, inscrit, duree_reference=7, creation=True):
         self.inscrit = inscrit
         self.idx = None
         self.debut = None
         self.fin = None
         self.mode = MODE_5_5
-        self.reference_duration = 7
+        self.duree_reference = duree_reference
         self.reference = []
-        for i in range(7):
+        for i in range(duree_reference):
             self.reference.append(ReferenceDay(self, i))
         self.fin_periode_essai = None
 
         if creation:
             self.create()
             if creche.modes_inscription == MODE_5_5:
-                for i in range(5):
-                    self.reference[i].set_state(PRESENT)
+                for i in range(duree_reference):
+                    if i % 7 < 5:
+                        self.reference[i].set_state(PRESENT)
     
     def setReferenceDuration(self, duration):
-        if duration > self.reference_duration:
-            for i in range(self.reference_duration, duration):
+        if duration > self.duree_reference:
+            for i in range(self.duree_reference, duration):
                 self.reference.append(ReferenceDay(self, i))
         else:
+            for i in range(duration, self.duree_reference):
+                self.reference[i].delete()
             self.reference = self.reference[0:duration]
-        self.reference_duration = duration
+        self.duree_reference = duration
     
     def create(self):
         print 'nouvelle inscription'
-        result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, fin_periode_essai) VALUES(NULL,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, self.fin_periode_essai))
+        result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, fin_periode_essai, duree_reference) VALUES(NULL,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, self.fin_periode_essai, self.duree_reference))
         self.idx = result.lastrowid
         
     def delete(self):
@@ -527,7 +536,7 @@ class Inscription(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['debut', 'fin', 'mode', 'fin_periode_essai', 'reference_duration'] and self.idx:
+        if name in ['debut', 'fin', 'mode', 'fin_periode_essai', 'duree_reference'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE INSCRIPTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))   
 
@@ -647,14 +656,16 @@ class Inscrit(object):
         return result
 
     def getReferenceDay(self, date):
-        weekday = date.weekday()
         inscription = self.getInscription(date)
         if inscription:
-            return inscription.reference[weekday]
+            if inscription.duree_reference > 7:
+                return inscription.reference[((date - inscription.debut).days + inscription.debut.weekday()) % inscription.duree_reference]
+            else:
+                return inscription.reference[date.weekday()]
         else:
             return None
         
-    def getJourneeFromSemaineType(self, date): # TODO supprimer
+    def getReferenceDayCopy(self, date):
         reference = self.getReferenceDay(date)
         if reference:
             return Journee(self, date, reference)

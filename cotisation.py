@@ -73,10 +73,13 @@ class Cotisation(object):
             self.mode_garde = self.inscription.mode
             self.jours_semaine = 0
             self.heures_reelles_semaine = 0.0
-            for i in range(5):
+            for i in range(self.inscription.duree_reference):
                 if self.inscription.reference[i].get_state() & PRESENT:
                     self.jours_semaine += 1
                     self.heures_reelles_semaine += self.inscription.reference[i].get_heures()
+            self.semaines_reference = self.inscription.duree_reference / 7
+            self.jours_semaine /= self.semaines_reference
+            self.heures_reelles_semaine /= self.semaines_reference
         
         if self.mode_garde == MODE_HALTE_GARDERIE:
             self.mode_inscription = MODE_HALTE_GARDERIE

@@ -93,7 +93,8 @@ class StartDialog(wx.Dialog):
 
         self.loaded = True
         sql_connection.open()
-        if len(creche.users) == 0:
+        if 1:
+#        if len(creche.users) == 0:
             __builtin__.profil = PROFIL_ALL
             self.StartFrame()
         else:
@@ -111,7 +112,7 @@ class StartDialog(wx.Dialog):
             result = Load(ProgressHandler(self.info.AppendText, self.gauge, 95))
         except Exception, e:
             try:
-                self.info.AppendText(e.message + u'\n')
+                self.info.AppendText(str(e) + u'\n')
             except:
                 self.info.AppendText('Erreur : ' + str(e) + u'\n')
             result = False

@@ -24,7 +24,7 @@ from functions import *
 from sqlobjects import *
 
 DB_FILENAME = 'gertrude.db'
-VERSION = 23
+VERSION = 24
 
 def getdate(s):
     if s is None:
@@ -176,7 +176,8 @@ class SQLConnection(object):
             debut DATE,
             fin DATE,
             mode, INTEGER,
-            fin_periode_essai DATE
+            fin_periode_essai DATE,
+            duree_reference INTEGER
           );""")
 
         cur.execute("""
@@ -306,9 +307,9 @@ class SQLConnection(object):
                 frere.prenom, frere.naissance, frere.entree, frere.sortie, idx = frere_entry
                 frere.naissance, frere.entree, frere.sortie, frere.idx = getdate(frere.naissance), getdate(frere.entree), getdate(frere.sortie), idx
                 inscrit.freres_soeurs.append(frere)
-            cur.execute('SELECT idx, debut, fin, mode, fin_periode_essai FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
-            for idx, debut, fin, mode, fin_periode_essai in cur.fetchall():
-                inscription = Inscription(inscrit, creation=False)
+            cur.execute('SELECT idx, debut, fin, mode, fin_periode_essai, duree_reference FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
+            for idx, debut, fin, mode, fin_periode_essai, duree_reference in cur.fetchall():
+                inscription = Inscription(inscrit, duree_reference, creation=False)
                 inscription.debut, inscription.fin, inscription.mode, inscription.fin_periode_essai, inscription.idx = getdate(debut), getdate(fin), mode, getdate(fin_periode_essai), idx
                 inscrit.inscriptions.append(inscription)
             for inscription in inscrit.inscriptions:
@@ -617,6 +618,10 @@ class SQLConnection(object):
                 mode_facturation += 1
             cur.execute('UPDATE CRECHE SET mode_facturation=?', (mode_facturation,))
 
+        if version < 24:
+            cur.execute("ALTER TABLE INSCRIPTIONS ADD duree_reference INTEGER;")
+            cur.execute('UPDATE INSCRIPTIONS SET duree_reference=?', (7,))
+            
         if version < VERSION:
             try:
                 cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))

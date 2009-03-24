@@ -137,7 +137,7 @@ class PlanningModifications(object):
                         if date in inscrit.journees:
                             journee = inscrit.journees[date]
                         else:
-                            journee = inscrit.getJourneeFromSemaineType(date)
+                            journee = inscrit.getReferenceDayCopy(date)
                     for tranche in range(3):
                         cellule = cellules.item(1 + semaine * 17 + jour * 3 + tranche)
                         if inscrit and journee:

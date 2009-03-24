@@ -36,7 +36,7 @@ class DayPlanningPanel(PlanningWidget):
                         line = inscrit.journees[self.date]
                         line.insert = None
                     else:
-                        line = inscrit.getJourneeFromSemaineType(self.date)
+                        line = inscrit.getReferenceDayCopy(self.date)
                         line.insert = inscrit.journees
                         line.key = self.date
                     line.label = GetInscritId(inscrit, creche.inscrits)
@@ -69,14 +69,9 @@ class PlanningPanel(GPanel):
         self.week_choice = wx.Choice(self, -1)
         sizer.Add(self.week_choice, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
         day = first_monday = getFirstMonday()
-        semaine = getNumeroSemaine(day)
         while day < last_date:
-            string = 'Semaine %d (%d %s %d)' % (semaine, day.day, months[day.month - 1], day.year)
+            string = 'Semaine %d (%d %s %d)' % (day.isocalendar()[1], day.day, months[day.month - 1], day.year)
             self.week_choice.Append(string, day)
-            if day.year == (day + datetime.timedelta(7)).year:
-                semaine += 1
-            else:
-                semaine = 1
             day += datetime.timedelta(7)
         delta = datetime.date.today() - first_monday
         semaine = int(delta.days / 7)

@@ -24,9 +24,6 @@ def getFirstMonday():
     while first_monday.weekday() != 0:
         first_monday += datetime.timedelta(1)
     return first_monday
-      
-def getNumeroSemaine(date):
-    return int((date - datetime.date(date.year, 1, 1)).days / 7) + 1
 
 def getMonthStart(date):
     return datetime.date(date.year, date.month, 1)
@@ -175,7 +172,7 @@ def getLines(date, inscrits):
             if date in inscrit.journees:
                 line = inscrit.journees[date]
             else:
-                line = inscrit.getJourneeFromSemaineType(date)
+                line = inscrit.getReferenceDayCopy(date)
             line.nom = inscrit.nom
             line.prenom = inscrit.prenom
             line.label = GetInscritId(inscrit, inscrits)
@@ -216,6 +213,7 @@ class ProgressHandler:
         if self.gauge: self.gauge.SetValue(self.min + (self.max-self.min)*value/100)
 
     def display(self, s):
+        print s
         if self.display_fn:
             self.display_fn(s+"\n")
         else:

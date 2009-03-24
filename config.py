@@ -23,7 +23,6 @@ from functions import *
 from data import FileConnection, HttpConnection
 
 CONFIG_FILENAME = "./gertrude.ini"
-DOCUMENTS_DIRECTORY_FILENAME = "./.gertrude-docs"
 
 class Config(object):
     def __init__(self):
@@ -31,54 +30,30 @@ class Config(object):
 
 __builtin__.config = Config()
 
-def LoadDocumentsDirectory():
-    if os.path.isfile(DOCUMENTS_DIRECTORY_FILENAME):
-        try:
-            path = file(DOCUMENTS_DIRECTORY_FILENAME).read()
-            if os.path.isdir(path):
-                return path
-        except:
-            print "Problème d'interprétation du fichier %s" % DOCUMENTS_DIRECTORY_FILENAME
-    
-    if sys.platform == 'win32':
-        try:
-            from win32com.shell import shell
-            df = shell.SHGetDesktopFolder()
-            pidl = df.ParseDisplayName(0, None,
+def getDocumentsDirectory(parser, progress_handler):
+    try:
+        return parser.get("gertrude", "documents-directory")
+    except:
+        if sys.platform == 'win32':
+            try:
+                from win32com.shell import shell
+                df = shell.SHGetDesktopFolder()
+                pidl = df.ParseDisplayName(0, None,
                                        "::{450d8fba-ad25-11d0-98a8-0800361b1103}")[1]
-            return shell.SHGetPathFromIDList(pidl)
-        except:
-            print u"L'extension win32com pour python est recommandée (plateforme windows) !"
-            
-    return os.getcwd()
+                return shell.SHGetPathFromIDList(pidl)
+            except:
+                print u"L'extension win32com pour python est recommandée (plateforme windows) !"
+        return os.getcwd()
 
-def SaveDocumentsDirectory(documents_directory):
-    try:
-        file(DOCUMENTS_DIRECTORY_FILENAME, "w").write(documents_directory)
-    except:
-        pass
+def getNetworkConnection(parser, progress_handler):
+    if not parser:
+        return None
     
-def LoadConfig(progress_handler=default_progress_handler):
-    progress_handler.display(u"Chargement de la configuration ...")
-
-    config.documents_directory = LoadDocumentsDirectory()
-    
-    if not os.path.isfile(CONFIG_FILENAME):
-        progress_handler.display(u"Pas de fichier gertrude.ini. Utilisation de la configuration par défaut.")
-        return
-
-    try:
-        parser = ConfigParser.SafeConfigParser()
-        parser.read(CONFIG_FILENAME)
-    except:
-        progress_handler.display(u"Fichier gertrude.ini erroné. Utilisation de la configuration par défaut.")
-        return
-
     try:
         url = parser.get("gertrude", "url")
     except:
         progress_handler.display(u"Pas d'url définie. Utilisation de la configuration par défaut.")
-        return
+        return None
 
     if url.startswith("http://"):
         try:
@@ -97,7 +72,37 @@ def LoadConfig(progress_handler=default_progress_handler):
                          }
         except:
             proxy_info = None
-        config.connection = HttpConnection(url, identity, auth_info, proxy_info)
+        return HttpConnection(url, identity, auth_info, proxy_info)
+    
+def LoadConfig(progress_handler=default_progress_handler):
+    progress_handler.display(u"Chargement de la configuration ...")
+    
+    parser = None
+    if os.path.isfile(CONFIG_FILENAME):
+        try:
+            parser = ConfigParser.SafeConfigParser()
+            parser.read(CONFIG_FILENAME)
+        except:
+            progress_handler.display(u"Fichier gertrude.ini erroné. Utilisation de la configuration par défaut.")
+    else:
+        progress_handler.display(u"Pas de fichier gertrude.ini. Utilisation de la configuration par défaut.")
+
+    config.documents_directory = getDocumentsDirectory(parser, progress_handler)
+    network_connection = getNetworkConnection(parser, progress_handler)
+    if network_connection:
+        config.connection = network_connection
+        
+def SaveConfig(progress_handler):
+    try:
+        parser = ConfigParser.SafeConfigParser()
+        parser.read(CONFIG_FILENAME)
+        if not parser.has_section("gertrude"):
+            parser.add_section("gertrude")
+        parser.set("gertrude", "documents-directory", config.documents_directory)
+        parser.write(file(CONFIG_FILENAME, "w"))
+    except Exception, e:
+        print e
+        progress_handler.display(u"Impossible d'enregistrer le répertoire de destination des documents !")    
 
 def Load(progress_handler=default_progress_handler):
     __builtin__.creche, __builtin__.readonly = config.connection.Load(progress_handler)
@@ -110,7 +115,7 @@ def Restore(progress_handler=default_progress_handler):
     return config.connection.Restore(progress_handler)
 
 def Exit(progress_handler=default_progress_handler):
-    SaveDocumentsDirectory(config.documents_directory)
+    SaveConfig(progress_handler)
     return config.connection.Exit(progress_handler)
 
 if __name__ == '__main__':    
