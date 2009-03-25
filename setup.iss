@@ -16,6 +16,11 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Languages]
 Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 
+[InstallDelete]
+Type: files; Name: "{app}\*.py"
+Type: files; Name: "{app}\*.pyc"
+Type: files; Name: "{app}\*.log"
+
 [Files]
 Source: "dist\*"; DestDir: "{app}"; Flags: ignoreversion
 Source: "dist\bitmaps\*"; DestDir: "{app}\bitmaps"; Flags: ignoreversion recursesubdirs createallsubdirs
