@@ -97,27 +97,37 @@ class FacturationPanel(GPanel):
 
     def EvtRecusInscritChoice(self, evt):
         self.recus_periodechoice.Clear()
+        need_separator = False
         inscrit = self.inscrits_choice["recus"].GetClientData(self.inscrits_choice["recus"].GetSelection())
-        if isinstance(inscrit, list) or inscrit.getInscriptions(datetime.date(today.year-1, 1, 1), datetime.date(today.year-1, 12, 31)):
-            self.recus_periodechoice.Append(u"Année %d" % (today.year-1), (datetime.date(today.year-1, 1, 1), datetime.date(today.year-1, 12, 31)))
         if isinstance(inscrit, list):
+            need_separator = True
+            self.recus_periodechoice.Append(u"Année %d" % (today.year-1), (datetime.date(today.year-1, 1, 1), datetime.date(today.year-1, 12, 31)))
             if today.month == 1:
                 self.recus_periodechoice.Append("Janvier %d" % today.year, (datetime.date(today.year, 1, 1), datetime.date(today.year, 1, 31)))
             else:
                 self.recus_periodechoice.Append(u"Janvier - %s %d" % (months[today.month-1], today.year), (datetime.date(today.year, 1, 1), datetime.date(today.year, today.month, 1)))
-        elif inscrit.getInscriptions(datetime.date(today.year, 1, 1), getMonthEnd(today)):
-            debut = 1
-            while not inscrit.getInscriptions(datetime.date(today.year, debut, 1), getMonthEnd(datetime.date(today.year, debut, 1))) and debut < today.month:
-                debut += 1
-            if debut == today.month:
-                self.recus_periodechoice.Append("%s %d" % (months[debut-1], today.year), (datetime.date(today.year, debut, 1), getMonthEnd(datetime.date(today.year, debut, 1))))
-            else:
-                self.recus_periodechoice.Append(u"%s - %s %d" % (months[debut-1], months[today.month-1], today.year), (datetime.date(today.year, debut, 1), datetime.date(today.year, today.month, 1)))
+        else:
+            for year in range(today.year-10, today.year-1):
+                if inscrit.getInscriptions(datetime.date(year, 1, 1), datetime.date(year, 12, 31)):
+                    need_separator = True
+                    self.recus_periodechoice.Append(u"Année %d" % year, (datetime.date(year, 1, 1), datetime.date(year, 12, 31)))
+            if inscrit.getInscriptions(datetime.date(today.year, 1, 1), getMonthEnd(today)):
+                need_separator = True
+                debut = 1
+                while not inscrit.getInscriptions(datetime.date(today.year, debut, 1), getMonthEnd(datetime.date(today.year, debut, 1))) and debut < today.month:
+                    debut += 1
+                if debut == today.month:
+                    self.recus_periodechoice.Append("%s %d" % (months[debut-1], today.year), (datetime.date(today.year, debut, 1), getMonthEnd(datetime.date(today.year, debut, 1))))
+                else:
+                    self.recus_periodechoice.Append(u"%s - %s %d" % (months[debut-1], months[today.month-1], today.year), (datetime.date(today.year, debut, 1), datetime.date(today.year, today.month, 1)))
 
-        self.recus_periodechoice.Append(50 * "-", None)
+        
         date = getFirstMonday()
         while date < today:
             if isinstance(inscrit, list) or inscrit.getInscriptions(datetime.date(date.year, date.month, 1), getMonthEnd(date)):
+                if need_separator:
+                    self.recus_periodechoice.Append(50 * "-", None)
+                    need_separator = False
                 self.recus_periodechoice.Append('%s %d' % (months[date.month - 1], date.year), (datetime.date(date.year, date.month, 1), getMonthEnd(date)))
             date = getNextMonthStart(date)
         self.recus_periodechoice.SetSelection(0)
