@@ -170,8 +170,8 @@ def MakePropertyValues(oServiceManager, values):
     return [MakePropertyValue(oServiceManager, value[0], value[1]) for value in values]
 
 def convert_to_pdf(filename, pdffilename):
-    filename = ''.join(["file:",urllib.pathname2url(filename)])
-    pdffilename = ''.join(["file:",urllib.pathname2url(pdffilename)])
+    filename = ''.join(["file:",urllib.pathname2url(os.path.abspath(filename))])
+    pdffilename = ''.join(["file:",urllib.pathname2url(os.path.abspath(pdffilename))])
     StarDesktop, objServiceManager, corereflection = getOOoContext()
     document = StarDesktop.LoadComponentFromURL(filename, "_blank", 0,
         MakePropertyValues(objServiceManager,
@@ -184,7 +184,8 @@ def convert_to_pdf(filename, pdffilename):
     document.close(False)
 
 def oo_open(filename):
-    filename = ''.join(["file:",urllib.pathname2url(filename)])
+    filename = ''.join(["file:",urllib.pathname2url(os.path.abspath(filename))])
+    print filename
     StarDesktop, objServiceManager, corereflection = getOOoContext()
     document = StarDesktop.LoadComponentFromURL(filename, "_blank", 0,
         MakePropertyValues(objServiceManager,
@@ -192,8 +193,7 @@ def oo_open(filename):
                     ["Hidden", False]]))
 
 if __name__ == '__main__':
-    for filename in ["D:\Perso\essai.odt"]:
-        if os.path.exists(filename):
-            pdffilename = ''.join([os.path.splitext(filename)[0], ".pdf"])
-            convert_to_pdf(filename, pdffilename)
-        oo_open(filename)
+    filename = '.\\templates_dist\\Appel cotisations.ods'
+    pdffilename = ''.join([os.path.splitext(filename)[0], ".pdf"])
+    convert_to_pdf(filename, pdffilename)
+    oo_open(filename)
