@@ -25,6 +25,7 @@ class AppelCotisationsModifications(object):
     def __init__(self, debut, options=0):
         self.debut, self.fin = debut, getMonthEnd(debut)
         self.options = options
+        self.gauge = None
         
     def execute(self, filename, dom):
         if filename != 'content.xml':
@@ -42,6 +43,8 @@ class AppelCotisationsModifications(object):
         # Les cotisations
         inscrits = getInscrits(self.debut, self.fin)
         for i, inscrit in enumerate(inscrits):
+            if self.gauge:
+                self.gauge.SetValue(10+int(80.0*i/len(inscrits)))
             line = template[i % 2].cloneNode(1)
             try:
                 facture = Facture(inscrit, self.debut.year, self.debut.month, self.options)
@@ -60,7 +63,9 @@ class AppelCotisationsModifications(object):
 
         table.removeChild(template[0])
         table.removeChild(template[1])
+        if self.gauge:
+            self.gauge.SetValue(90)
         return errors
 
-def GenereAppelCotisations(oofilename, date, options=0):
-    return GenerateDocument('Appel cotisations.ods', oofilename, AppelCotisationsModifications(date, options))
+def GenereAppelCotisations(oofilename, date, options=0, gauge=None):
+    return GenerateDocument('Appel cotisations.ods', oofilename, AppelCotisationsModifications(date, options), gauge)

@@ -25,6 +25,7 @@ import wx.lib.scrolledpanel
 import wx.html
 from constants import *
 from controls import *
+from ooffice import *
 from cotisation import CotisationException
 from planning_presences import GenerePlanningPresences
 from coordonnees_parents import GenereCoordonneesParents
@@ -165,24 +166,11 @@ class RelevesPanel(GPanel):
         end = self.detail_end_date.GetValue()
         if end is None:
             end = start
-            oodefaultfilename = "Planning presences %s.odg" % getDateStr(start, weekday=False)
+            defaultfilename = "Planning presences %s.odg" % getDateStr(start, weekday=False)
         else:
-            oodefaultfilename = "Planning presences %s-%s.odg" % (getDateStr(start, weekday=False), getDateStr(end, weekday=False))
-        wildcard = "OpenDocument (*.odg)|*.odg"
-        old_path = os.getcwd()
+            defaultfilename = "Planning presences %s-%s.odg" % (getDateStr(start, weekday=False), getDateStr(end, weekday=False))
+        DocumentDialog(self, defaultfilename, GenerePlanningDetaille, (start, end)).ShowModal()
         
-        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=config.documents_directory, defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE | wx.CHANGE_DIR)
-        response = dlg.ShowModal()
-        os.chdir(old_path)
-
-        if response == wx.ID_OK:
-            oofilename = dlg.GetPath()
-            config.documents_directory = os.path.dirname(oofilename)
-            GenerePlanningDetaille((start, end), oofilename)
-            dlg = wx.MessageDialog(self, u"Document %s généré" % oofilename, 'Message', wx.OK)
-            dlg.ShowModal()
-            dlg.Destroy()
-
 panels = [RelevesPanel]
 
 if __name__ == '__main__':

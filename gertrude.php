@@ -7,7 +7,7 @@ $token = $_GET["token"];
 
 // pour free.fr
 function wa_flock($f, $mode) {
-  // sur serveur free => décommenter la ligne suivante
+  // sur serveur free => decommenter la ligne suivante
   // return true;
   return flock($f, $mode);
 }
@@ -29,10 +29,10 @@ function check_token() {
   return 1;
 }
 
-function get_token() {
+function get_token($force=0) {
   global $token_filename;
 
-  if (file_exists($token_filename))
+  if (!$force && file_exists($token_filename))
     return 0;
 
   $f = fopen($token_filename, "w");
@@ -107,7 +107,9 @@ function execute($action) {
     case "has_token":
       return check_token();
     case "get_token":
-      return get_token();
+      return get_token(0);
+    case "force_token":
+      return get_token(1);
     case "rel_token":
       return rel_token();
     case "upload":

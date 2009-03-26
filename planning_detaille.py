@@ -161,8 +161,8 @@ class PlanningDetailleModifications(object):
         return []
 
 
-def GenerePlanningDetaille(periode, oofilename):
-    return GenerateDocument('Planning detaille.odg', oofilename, PlanningDetailleModifications(periode))
+def GenerePlanningDetaille(filename, periode, gauge=None):
+    return GenerateDocument('Planning detaille.odg', filename, PlanningDetailleModifications(periode), gauge)
 
 if __name__ == '__main__':
     import os

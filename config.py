@@ -98,8 +98,9 @@ def SaveConfig(progress_handler):
         parser.read(CONFIG_FILENAME)
         if not parser.has_section("gertrude"):
             parser.add_section("gertrude")
-        parser.set("gertrude", "documents-directory", config.documents_directory)
-        parser.write(file(CONFIG_FILENAME, "w"))
+        if parser.get("gertrude", "documents-directory") != config.documents_directory:
+            parser.set("gertrude", "documents-directory", config.documents_directory)
+            parser.write(file(CONFIG_FILENAME, "w"))
     except Exception, e:
         print e
         progress_handler.display(u"Impossible d'enregistrer le répertoire de destination des documents !")    

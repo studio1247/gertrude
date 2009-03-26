@@ -19,6 +19,7 @@ import datetime
 import sys, os, zipfile
 import xml.dom.minidom
 import re, urllib
+import wx, wx.lib.filebrowsebutton
 
 def evalFields(fields):
     for i, field in enumerate(fields[:]):
@@ -129,7 +130,9 @@ def getNamedShapes(dom):
                 shapes[name] = node
     return shapes
 
-def GenerateDocument(src, dest, modifications):
+def GenerateDocument(src, dest, modifications, gauge=None):
+    if gauge:
+        gauge.SetValue(0)
     if os.path.exists("./templates/%s" % src):
         src = "./templates/%s" % src
     else:
@@ -137,6 +140,9 @@ def GenerateDocument(src, dest, modifications):
     errors = []
     template = zipfile.ZipFile(src, 'r')
     files = []
+    if gauge:
+        modifications.gauge = gauge
+        gauge.SetValue(5)
     for filename in template.namelist():
         data = template.read(filename)
         if filename in ('content.xml', 'styles.xml'):
@@ -147,9 +153,13 @@ def GenerateDocument(src, dest, modifications):
         files.append((filename, data))
     template.close()
     oofile = zipfile.ZipFile(dest, 'w')
+    if gauge:
+        gauge.SetValue(95)
     for filename, data in files:
         oofile.writestr(filename, data)
     oofile.close()
+    if gauge:
+        gauge.SetValue(100)
     return errors
 
 def getOOoContext():
@@ -185,13 +195,93 @@ def convert_to_pdf(filename, pdffilename):
 
 def oo_open(filename):
     filename = ''.join(["file:",urllib.pathname2url(os.path.abspath(filename))])
-    print filename
     StarDesktop, objServiceManager, corereflection = getOOoContext()
     document = StarDesktop.LoadComponentFromURL(filename, "_blank", 0,
         MakePropertyValues(objServiceManager,
                     [["ReadOnly", False],
                     ["Hidden", False]]))
 
+class DocumentDialog(wx.Dialog):
+    def __init__(self, parent, defaultfilename, function, *args, **kwargs):
+        self.function = function
+        self.args = args
+        self.kwargs = kwargs
+        # Instead of calling wx.Dialog.__init__ we precreate the dialog
+        # so we can set an extra style that must be set before
+        # creation, and then we create the GUI object using the Create
+        # method.
+        pre = wx.PreDialog()
+        pre.SetExtraStyle(wx.DIALOG_EX_CONTEXTHELP)
+        pre.Create(parent, -1, u"Génération de document")
+
+        # This next step is the most important, it turns this Python
+        # object into the real wrapper of the dialog (instead of pre)
+        # as far as the wxPython extension is concerned.
+        self.PostCreate(pre)
+
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+
+        extension = os.path.splitext(defaultfilename)[-1]
+        wildcard = "OpenDocument (*%s)|*%s" % (extension, extension)
+        self.fbb = wx.lib.filebrowsebutton.FileBrowseButton(self, -1,
+                                                            size=(500, -1),
+                                                            labelText="Nom de fichier :",
+                                                            startDirectory=config.documents_directory,
+                                                            initialValue=defaultfilename,
+                                                            fileMask=wildcard,
+                                                            fileMode=wx.SAVE)
+        self.sizer.Add(self.fbb, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+        
+        self.gauge = wx.Gauge(self, -1, size=(-1,10))
+        self.gauge.SetRange(100)
+        self.sizer.Add(self.gauge, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.RIGHT|wx.LEFT|wx.TOP, 5)
+        
+        line = wx.StaticLine(self, -1, size=(20,-1), style=wx.LI_HORIZONTAL)
+        self.sizer.Add(line, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.RIGHT|wx.TOP, 5)
+        
+        self.btnsizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.generer = wx.Button(self, -1, u"Générer le document")
+        self.generer.SetDefault()
+        self.Bind(wx.EVT_BUTTON, self.onGeneration, self.generer)
+        self.btnsizer.Add(self.generer)
+#        self.ok = wx.Button(self, wx.ID_OK)
+        self.ouvrir = wx.Button(self, -1, u"Ouvrir le document")
+        self.ouvrir.Disable()
+        self.Bind(wx.EVT_BUTTON, self.onOuverture, self.ouvrir)
+        self.btnsizer.Add(self.ouvrir)
+        #btnsizer.Add(self.ok)
+        btn = wx.Button(self, wx.ID_CANCEL)
+        self.btnsizer.Add(btn)
+        self.sizer.Add(self.btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+
+        self.SetSizer(self.sizer)
+        self.sizer.Fit(self)
+        self.CenterOnScreen()
+    
+    def onGeneration(self, event):
+        self.fbb.Disable()
+        self.generer.Disable()
+        self.filename = self.fbb.GetValue()
+        config.documents_directory = os.path.dirname(self.filename)
+        dlg = None
+        try:
+            errors = self.function(self.filename, gauge=self.gauge, *self.args, **self.kwargs)
+            if errors:
+                message = u"Document %s généré" % self.filename
+                message += ' avec des erreurs :\n' + decodeErrors(errors)
+                dlg = wx.MessageDialog(self, message, 'Message', wx.OK|wx.ICON_WARNING)
+            else:
+                self.ouvrir.Enable()
+        except Exception, e:
+            dlg = wx.MessageDialog(self, str(e), 'Erreur', wx.OK|wx.ICON_WARNING)
+        if dlg:
+            dlg.ShowModal()
+            dlg.Destroy()
+        
+    def onOuverture(self, event):
+        oo_open(self.filename)
+        self.Destroy()
+    
 if __name__ == '__main__':
     filename = '.\\templates_dist\\Appel cotisations.ods'
     pdffilename = ''.join([os.path.splitext(filename)[0], ".pdf"])

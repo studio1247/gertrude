@@ -180,27 +180,8 @@ class FacturationPanel(GPanel):
 
     def EvtGenerationAppelCotisations(self, evt):
         periode = self.appels_monthchoice.GetClientData(self.appels_monthchoice.GetSelection())
-        wildcard = "OpenDocument (*.ods)|*.ods"
-        oodefaultfilename = u"Appel cotisations %s %d.ods" % (months[periode.month - 1], periode.year)
-        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=config.documents_directory, defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE)
-        response = dlg.ShowModal()
-        dlg.Destroy()
-        if response == wx.ID_OK:
-            oofilename = dlg.GetPath()
-            config.documents_directory = os.path.dirname(oofilename)
-            options = NO_NOM
-            try:
-                errors = GenereAppelCotisations(oofilename, periode, options)
-                message = u"Document %s généré" % oofilename
-                if errors:
-                    message += ' avec des erreurs :\n' + decodeErrors(errors)
-                    dlg = wx.MessageDialog(self, message, 'Message', wx.OK|wx.ICON_WARNING)
-                else:
-                    dlg = wx.MessageDialog(self, message, 'Message', wx.OK)
-            except Exception, e:
-                dlg = wx.MessageDialog(self, str(e), 'Erreur', wx.OK|wx.ICON_WARNING)
-            dlg.ShowModal()
-            dlg.Destroy()
+        defaultfilename = u"Appel cotisations %s %d.ods" % (months[periode.month - 1], periode.year)
+        DocumentDialog(self, defaultfilename, GenereAppelCotisations, date=periode, options=NO_NOM).ShowModal()
 
     def EvtGenerationFacture(self, evt):
         inscrit = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
