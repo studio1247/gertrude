@@ -16,9 +16,9 @@
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import datetime
-import os, zipfile
+import sys, os, zipfile
 import xml.dom.minidom
-import re
+import re, urllib
 
 def evalFields(fields):
     for i, field in enumerate(fields[:]):
@@ -151,3 +151,49 @@ def GenerateDocument(src, dest, modifications):
         oofile.writestr(filename, data)
     oofile.close()
     return errors
+
+def getOOoContext():
+    import win32com.client
+    objServiceManager = win32com.client.dynamic.Dispatch("com.sun.star.ServiceManager")
+    objServiceManager._FlagAsMethod("CreateInstance")
+    objServiceManager._FlagAsMethod("Bridge_GetStruct")
+    corereflection = objServiceManager.CreateInstance("com.sun.star.reflection.CoreReflection")
+    return objServiceManager.createInstance("com.sun.star.frame.Desktop"), objServiceManager, corereflection
+
+def MakePropertyValue(oServiceManager, Name, Value):
+    oStruct = oServiceManager.Bridge_GetStruct("com.sun.star.beans.PropertyValue")
+    oStruct.Name = Name
+    oStruct.Value = Value
+    return oStruct
+
+def MakePropertyValues(oServiceManager, values):
+    return [MakePropertyValue(oServiceManager, value[0], value[1]) for value in values]
+
+def convert_to_pdf(filename, pdffilename):
+    filename = ''.join(["file:",urllib.pathname2url(filename)])
+    pdffilename = ''.join(["file:",urllib.pathname2url(pdffilename)])
+    StarDesktop, objServiceManager, corereflection = getOOoContext()
+    document = StarDesktop.LoadComponentFromURL(filename, "_blank", 0,
+        MakePropertyValues(objServiceManager,
+                    [["ReadOnly", True],
+                    ["Hidden", True]]))
+    document.storeToUrl( pdffilename,
+        MakePropertyValues(objServiceManager,
+                    [["CompressMode", 1],
+                    ["FilterName", "writer_pdf_Export"]]))
+    document.close(False)
+
+def oo_open(filename):
+    filename = ''.join(["file:",urllib.pathname2url(filename)])
+    StarDesktop, objServiceManager, corereflection = getOOoContext()
+    document = StarDesktop.LoadComponentFromURL(filename, "_blank", 0,
+        MakePropertyValues(objServiceManager,
+                    [["ReadOnly", False],
+                    ["Hidden", False]]))
+
+if __name__ == '__main__':
+    for filename in ["D:\Perso\essai.odt"]:
+        if os.path.exists(filename):
+            pdffilename = ''.join([os.path.splitext(filename)[0], ".pdf"])
+            convert_to_pdf(filename, pdffilename)
+        oo_open(filename)

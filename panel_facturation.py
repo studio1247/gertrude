@@ -206,7 +206,7 @@ class FacturationPanel(GPanel):
         inscrit = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
         periode = self.factures_monthchoice.GetClientData(self.factures_monthchoice.GetSelection())
         if isinstance(inscrit, list):
-            dlg = wx.DirDialog(self, u'Générer des documents OpenOffice', defaultPath=documents_directory, style=wx.DD_DEFAULT_STYLE|wx.DD_NEW_DIR_BUTTON)
+            dlg = wx.DirDialog(self, u'Générer des documents OpenOffice', defaultPath=config.documents_directory, style=wx.DD_DEFAULT_STYLE|wx.DD_NEW_DIR_BUTTON)
             response = dlg.ShowModal()
             dlg.Destroy()
             if response == wx.ID_OK:
