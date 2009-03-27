@@ -29,13 +29,18 @@ line_height = 0.75
     
 class PlanningDetailleModifications(object):
     def __init__(self, periode):
-        self.periode = periode
+        self.template = 'Planning detaille.odg'
+        self.start, self.end = periode
+        if self.start == self.end:
+            self.default_output = "Planning presences %s.odg" % getDateStr(self.start, weekday=False)
+        else:
+            self.default_output = "Planning presences %s-%s.odg" % (getDateStr(self.start, weekday=False), getDateStr(self.end, weekday=False))
         self.errors = {}
 
     def execute(self, filename, dom):
         if filename == 'styles.xml':
             # ReplaceTextFields(dom, fields)
-            return []
+            return None
         
         step = (21.0-left-right-labels_width) / (creche.affichage_max - creche.affichage_min)
         
@@ -44,12 +49,13 @@ class PlanningDetailleModifications(object):
         # print template.toprettyxml()
         shapes = getNamedShapes(template)
         # print shapes
-        for shape in shapes:
-            template.removeChild(shapes[shape])
-        drawing.removeChild(template)     
+        for shape in shapes.keys():
+            if shape in ["legende-heure", "ligne-heure", "ligne-quart-heure", "libelle", "separateur"] or shape.startswith("activite-"):
+                template.removeChild(shapes[shape])
+        drawing.removeChild(template)
     
-        day, end = self.periode
-        while day <= end:
+        day = self.start
+        while day <= self.end:
             if day in creche.jours_fermeture:
                 day += datetime.timedelta(1)
                 continue
@@ -158,11 +164,7 @@ class PlanningDetailleModifications(object):
             ReplaceTextFields(page, fields)
             day += datetime.timedelta(1)
             
-        return []
-
-
-def GenerePlanningDetaille(filename, periode, gauge=None):
-    return GenerateDocument('Planning detaille.odg', filename, PlanningDetailleModifications(periode), gauge)
+        return None
 
 if __name__ == '__main__':
     import os
@@ -173,11 +175,9 @@ if __name__ == '__main__':
             
     today = datetime.date.today()
 
-    #GenereCoordonneesParents("coordonnees.odt")
-    #sys.exit(0)    
     filename = 'planning-details-1.odg'
     try:
-        GenerePlanningDetaille((datetime.date(2009, 2, 16), datetime.date(2009, 2, 20)), filename)
+        GenerateDocument(PlanningDetailleModifications((datetime.date(2009, 2, 16), datetime.date(2009, 2, 20))), filename)
         print u'Fichier %s généré' % filename
     except CotisationException, e:
         print e.errors

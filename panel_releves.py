@@ -26,11 +26,10 @@ import wx.html
 from constants import *
 from controls import *
 from ooffice import *
-from cotisation import CotisationException
-from planning_presences import GenerePlanningPresences
-from coordonnees_parents import GenereCoordonneesParents
-from etats_trimestriels import GenereEtatsTrimestriels
-from planning_detaille import GenerePlanningDetaille
+from planning_presences import PlanningModifications
+from coordonnees_parents import CoordonneesModifications
+from etats_trimestriels import EtatsTrimestrielsModifications
+from planning_detaille import PlanningDetailleModifications
 
 class RelevesPanel(GPanel):
     bitmap = './bitmaps/releves.png'
@@ -99,98 +98,21 @@ class RelevesPanel(GPanel):
 
     def EvtGenerationCoordonnees(self, evt):
         date = str2date(self.coords_date.GetValue())
-        if not date:
-            date = today
-        wildcard = "OpenDocument (*.ods)|*.ods"
-        oodefaultfilename = u"Coordonnées parents %s.ods" % getDateStr(date, weekday=False)
-        old_path = os.getcwd()        
-        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=config.documents_directory, defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE | wx.CHANGE_DIR)
-        response = dlg.ShowModal()
-        os.chdir(old_path)
-
-        if response == wx.ID_OK:
-            oofilename = dlg.GetPath()
-            config.documents_directory = os.path.dirname(oofilename)
-            try:
-                GenereCoordonneesParents(date, oofilename)
-                dlg = wx.MessageDialog(self, u"Document %s généré" % oofilename, 'Message', wx.OK)
-            except Exception, e:
-                dlg = wx.MessageDialog(self, str(e), 'Erreur', wx.OK | wx.ICON_WARNING)
-            dlg.ShowModal()
-            dlg.Destroy()
+        DocumentDialog(self, CoordonneesModifications(date)).ShowModal()
 
     def EvtGenerationEtatsTrimestriels(self, evt):
         annee = self.choice.GetClientData(self.choice.GetSelection())
-
-        wildcard = "OpenDocument (*.ods)|*.ods"
-        oodefaultfilename = "Etats trimestriels %d.ods" % annee
-        old_path = os.getcwd()
-        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=config.documents_directory, defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE | wx.CHANGE_DIR)
-        response = dlg.ShowModal()
-        os.chdir(old_path)
-
-        if response == wx.ID_OK:
-            oofilename = dlg.GetPath()
-            config.documents_directory = os.path.dirname(oofilename)
-            try:
-                GenereEtatsTrimestriels(annee, oofilename)
-                dlg = wx.MessageDialog(self, u"Document %s généré" % oofilename, 'Message', wx.OK)
-            except CotisationException, e:
-                message = '\n'.join(['%s %s :\n%s' % (tmp[0], tmp[1], '\n'.join(list(e.errors[tmp]))) for tmp in e.errors])
-                dlg = wx.MessageDialog(self, message, 'Erreur', wx.OK | wx.ICON_WARNING)
-            except Exception, e:
-                dlg = wx.MessageDialog(self, str(e), 'Exception', wx.OK | wx.ICON_WARNING)
-            dlg.ShowModal()
-            dlg.Destroy()
+        DocumentDialog(self, EtatsTrimestrielsModifications(annee)).ShowModal()
 
     def EvtGenerationPlanningPresences(self, evt):
         date = self.weekchoice.GetClientData(self.weekchoice.GetSelection())
-
-        wildcard = "OpenDocument (*.ods)|*.ods"
-        oodefaultfilename = "Planning presences %s.ods" % str(date)
-        old_path = os.getcwd()
-        dlg = wx.FileDialog(self, message=u'Générer un document OpenOffice', defaultDir=config.documents_directory, defaultFile=oodefaultfilename, wildcard=wildcard, style=wx.SAVE | wx.CHANGE_DIR)
-        response = dlg.ShowModal()
-        os.chdir(old_path)
-
-        if response == wx.ID_OK:
-            oofilename = dlg.GetPath()
-            config.documents_directory = os.path.dirname(oofilename)
-            GenerePlanningPresences(date, oofilename)
-            dlg = wx.MessageDialog(self, u"Document %s généré" % oofilename, 'Message', wx.OK)
-            dlg.ShowModal()
-            dlg.Destroy()
+        DocumentDialog(self, PlanningModifications(date)).ShowModal()
             
     def EvtGenerationPlanningDetaille(self, evt):
         start = self.detail_start_date.GetValue()
         end = self.detail_end_date.GetValue()
         if end is None:
             end = start
-            defaultfilename = "Planning presences %s.odg" % getDateStr(start, weekday=False)
-        else:
-            defaultfilename = "Planning presences %s-%s.odg" % (getDateStr(start, weekday=False), getDateStr(end, weekday=False))
-        DocumentDialog(self, defaultfilename, GenerePlanningDetaille, (start, end)).ShowModal()
+        DocumentDialog(self, PlanningDetailleModifications((start, end))).ShowModal()
         
 panels = [RelevesPanel]
-
-if __name__ == '__main__':
-    import os
-    from config import *
-    from data import *
-    LoadConfig()
-    Load()
-            
-    today = datetime.date.today()
-
-    #GenereCoordonneesParents("coordonnees.odt")
-    #sys.exit(0)    
-    filename = 'etats_trimestriels_%d.ods' % (today.year - 1)
-    try:
-        GenereEtatsTrimestriels(today.year - 1, filename)
-        print u'Fichier %s généré' % filename
-    except CotisationException, e:
-        print e.errors
-
-    #filename = 'planning_presences_%s.ods' % first_date
-    #GenerePlanningPresences(getfirstmonday(), filename)
-    #print u'Fichier %s généré' % filename

@@ -87,20 +87,23 @@ def LoadConfig(progress_handler=default_progress_handler):
     else:
         progress_handler.display(u"Pas de fichier gertrude.ini. Utilisation de la configuration par défaut.")
 
-    config.documents_directory = getDocumentsDirectory(parser, progress_handler)
+    config.original_documents_directory = getDocumentsDirectory(parser, progress_handler)
+    config.documents_directory = config.original_documents_directory
     network_connection = getNetworkConnection(parser, progress_handler)
     if network_connection:
         config.connection = network_connection
         
 def SaveConfig(progress_handler):
+    if config.documents_directory == config.original_documents_directory:
+        return
+    
     try:
         parser = ConfigParser.SafeConfigParser()
         parser.read(CONFIG_FILENAME)
         if not parser.has_section("gertrude"):
             parser.add_section("gertrude")
-        if parser.get("gertrude", "documents-directory") != config.documents_directory:
-            parser.set("gertrude", "documents-directory", config.documents_directory)
-            parser.write(file(CONFIG_FILENAME, "w"))
+        parser.set("gertrude", "documents-directory", config.documents_directory)
+        parser.write(file(CONFIG_FILENAME, "w"))
     except Exception, e:
         print e
         progress_handler.display(u"Impossible d'enregistrer le répertoire de destination des documents !")    

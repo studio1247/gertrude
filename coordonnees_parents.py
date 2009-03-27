@@ -21,17 +21,19 @@ from facture import *
 from cotisation import Cotisation, CotisationException
 from ooffice import *
 
-class CoordonneesModifications:
+class CoordonneesModifications(object):
     def __init__(self, date):
-        if date:
-            self.date = date
-        else:
+        self.template = 'Coordonnees parents.odt'
+        if date is None:
             self.date = today
+        else:
+            self.date = date
+        self.default_output = u"Coordonnees parents %s.ods" % getDateStr(self.date, weekday=False)
         
     def execute(self, filename, dom):
         # print dom.toprettyxml()
         if filename != 'content.xml':
-            return []
+            return None
 
         fields = [('nom-creche', creche.nom),
                   ('adresse-creche', creche.adresse),
@@ -96,8 +98,6 @@ class CoordonneesModifications:
                         table.insertBefore(line, template)
                 table.removeChild(template)
 
-        return []
+        return None
 
-def GenereCoordonneesParents(date, oofilename):
-    return GenerateDocument('Coordonnees parents.odt', oofilename, CoordonneesModifications(date))
 

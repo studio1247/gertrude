@@ -22,59 +22,74 @@ from cotisation import Cotisation, CotisationException
 from ooffice import *
 
 class AttestationModifications(object):
-    def __init__(self, inscrit, debut, fin):
-        self.inscrit = inscrit
+    def __init__(self, who, debut, fin):
+        self.template = 'Attestation paiement.odt'
+        if isinstance(who, list):
+            self.default_output = u"Attestations de paiement %s-%s %d.odt" % (months[debut.month - 1], months[fin.month - 1], debut.year)
+            self.inscrits = [inscrit for inscrit in creche.inscrits if inscrit.getInscriptions(debut, fin)]
+        else:
+            self.default_output = u"Attestation de paiement %s %s %s-%s %d.odt" % (who.prenom, who.nom, months[debut.month - 1], months[fin.month - 1], debut.year)
+            self.inscrits = [who]
         self.debut, self.fin = debut, fin
+        self.default_output = self.default_output.replace("é", "e") 
 
     def execute(self, filename, dom):
         if filename != 'content.xml':
-            return []
+            return None
         
-        facture_debut = facture_fin = None
-        date = self.debut
-        total = 0.0
-        while date <= self.fin:
-            try:
-                facture = Facture(self.inscrit, date.year, date.month)
-                if facture.total != 0:
-		    if facture_debut is None:
-		        facture_debut = date
-	            facture_fin = getMonthEnd(date)
-                    total += facture.total
-            except CotisationException, e:
-                return [(self.inscrit, e.errors)]
-
-            date = getNextMonthStart(date)
-        
+        errors = {}
         tresorier = Select(creche.bureaux, today).tresorier
-
-        # Les champs du recu
-        fields = [('nom-creche', creche.nom),
-                ('adresse-creche', creche.adresse),
-                ('code-postal-creche', str(creche.code_postal)),
-                ('ville-creche', creche.ville),
-                ('telephone-creche', creche.telephone),
-                ('email-creche', creche.email),
-                ('de-debut', '%s %d' % (getDeMoisStr(facture_debut.month - 1), facture_debut.year)),
-                ('de-fin', '%s %d' % (getDeMoisStr(facture_fin.month - 1), facture_fin.year)),
-                ('prenom', self.inscrit.prenom),
-                ('parents', getParentsStr(self.inscrit)),
-                ('naissance', self.inscrit.naissance),
-                ('nom', self.inscrit.nom),
-                ('tresorier', "%s %s" % (tresorier.prenom, tresorier.nom)),
-                ('date', '%.2d/%.2d/%d' % (today.day, today.month, today.year)),
-                ('total', '%.2f' % total)
-                ]
-
-        if self.inscrit.sexe == 1:
-            fields.append(('ne-e', u"né"))
-        else:
-            fields.append(('ne-e', u"née"))
-
-        #print fields
-        ReplaceTextFields(dom, fields)
-        return []
-
-def GenereAttestationPaiement(oofilename, inscrit, debut, fin):
-    return GenerateDocument('Attestation paiement.odt', oofilename, AttestationModifications(inscrit, debut, fin))
+        
+        # print dom.toprettyxml()
+        doc = dom.getElementsByTagName("office:text")[0]
+        templates = doc.getElementsByTagName('text:section')
+        for template in templates:
+            doc.removeChild(template)
+        
+        for inscrit in self.inscrits:
+            facture_debut = facture_fin = None
+            date = self.debut
+            total = 0.0
+            try:
+                while date <= self.fin:
+                    facture = Facture(inscrit, date.year, date.month)
+                    if facture.total != 0:
+                        if facture_debut is None:
+                            facture_debut = date
+                        facture_fin = getMonthEnd(date)
+                        total += facture.total
+                    date = getNextMonthStart(date)
+            except CotisationException, e:
+                errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
+                continue
+            
+            # Les champs du recu
+            fields = [('nom-creche', creche.nom),
+                    ('adresse-creche', creche.adresse),
+                    ('code-postal-creche', str(creche.code_postal)),
+                    ('ville-creche', creche.ville),
+                    ('telephone-creche', creche.telephone),
+                    ('email-creche', creche.email),
+                    ('de-debut', '%s %d' % (getDeMoisStr(facture_debut.month - 1), facture_debut.year)),
+                    ('de-fin', '%s %d' % (getDeMoisStr(facture_fin.month - 1), facture_fin.year)),
+                    ('prenom', inscrit.prenom),
+                    ('parents', getParentsStr(inscrit)),
+                    ('naissance', inscrit.naissance),
+                    ('nom', inscrit.nom),
+                    ('tresorier', "%s %s" % (tresorier.prenom, tresorier.nom)),
+                    ('date', '%.2d/%.2d/%d' % (today.day, today.month, today.year)),
+                    ('total', '%.2f' % total)
+                    ]
+    
+            if inscrit.sexe == 1:
+                fields.append(('ne-e', u"né"))
+            else:
+                fields.append(('ne-e', u"née"))
+            
+            for template in templates:
+                section = template.cloneNode(1)
+                doc.appendChild(section)
+                ReplaceTextFields(section, fields)
+                
+        return errors
 

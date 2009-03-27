@@ -192,13 +192,6 @@ def getActivitiesSummary(creche, lines):
                     summary[activity][i] += 1
     return summary
 
-def decodeErrors(errors):
-    message = ""
-    for error in errors:
-        message += '\n'+error[0].prenom+' :\n  '
-        message += '\n  '.join(error[1])
-    return message
-
 class ProgressHandler:
     def __init__(self, display_fn=None, gauge=None, max=None):
         self.display_fn = display_fn

@@ -33,11 +33,13 @@ def isPresentDuringTranche(journee, tranche):
 
 class PlanningModifications(object):
     def __init__(self, debut):
+        self.template = 'Planning presences.ods'
+        self.default_output = "Planning presences %s.ods" % str(debut)
         self.debut = debut
 
     def execute(self, filename, dom):
         if filename != 'content.xml':
-            return []
+            return None
         
         date_fin = self.debut + datetime.timedelta(11)
         spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
@@ -95,7 +97,7 @@ class PlanningModifications(object):
                 cellule.setAttribute('table:formula', formule)
 
         #print dom.toprettyxml()
-        return []
+        return None
 
     def printPresences(self, dom, indexes, ligne_depart):
         lignes = dom.getElementsByTagName("table:table-row")
@@ -145,5 +147,3 @@ class PlanningModifications(object):
                         else:
                             ReplaceFields([cellule], [('p', '')])
 
-def GenerePlanningPresences(date, oofilename):
-    return GenerateDocument('Planning presences.ods', oofilename, PlanningModifications(date))

@@ -22,16 +22,18 @@ from cotisation import Cotisation, CotisationException
 from ooffice import *
 
 class AppelCotisationsModifications(object):
-    def __init__(self, debut, options=0):
-        self.debut, self.fin = debut, getMonthEnd(debut)
+    def __init__(self, date, options=0):
+        self.template = 'Appel cotisations.ods'
+        self.default_output = u"Appel cotisations %s %d.ods" % (months[date.month - 1], date.year)
+        self.debut, self.fin = date, getMonthEnd(date)
         self.options = options
         self.gauge = None
         
     def execute(self, filename, dom):
         if filename != 'content.xml':
-            return []
+            return None
         
-        errors = []
+        errors = {}
         spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
         table = spreadsheet.getElementsByTagName("table:table").item(0)
         lignes = table.getElementsByTagName("table:table-row")
@@ -53,7 +55,7 @@ class AppelCotisationsModifications(object):
             except CotisationException, e:
                 cotisation, supplement = '?', None
                 commentaire = '\n'.join(e.errors)
-                errors.append((inscrit, e.errors))
+                errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
             ReplaceFields(line, [('prenom', inscrit.prenom),
                                  ('cotisation', cotisation),
                                  ('supplement', supplement),
@@ -66,6 +68,3 @@ class AppelCotisationsModifications(object):
         if self.gauge:
             self.gauge.SetValue(90)
         return errors
-
-def GenereAppelCotisations(oofilename, date, options=0, gauge=None):
-    return GenerateDocument('Appel cotisations.ods', oofilename, AppelCotisationsModifications(date, options), gauge)

@@ -27,6 +27,8 @@ template_lines_count = 8
 
 class EtatsTrimestrielsModifications(object):
     def __init__(self, annee):
+        self.template = 'Etats trimestriels.ods'
+        self.default_output = "Etats trimestriels %d.ods" % annee
         self.annee = annee
         self.factures = {}
         self.errors = {}
@@ -149,20 +151,18 @@ class EtatsTrimestrielsModifications(object):
         else:
             spreadsheet.removeChild(table)
 
-        if len(self.errors) > 0:
-            raise CotisationException(self.errors)
-
-        return []
+        return self.errors
 
     def get_facture(self, inscrit, mois):
         if (inscrit.idx, mois) not in self.factures:
             try:
                 self.factures[inscrit.idx, mois] = Facture(inscrit, self.annee, mois, options=NO_REVENUS)
             except CotisationException, e:
-                if not (inscrit.prenom, inscrit.nom) in self.errors:
-                    self.errors[(inscrit.prenom, inscrit.nom)] = set(e.errors)
+                label = "%s %s" % (inscrit.prenom, inscrit.nom)
+                if not label in self.errors:
+                    self.errors[label] = set(e.errors)
                 else:
-                    self.errors[(inscrit.prenom, inscrit.nom)].update(e.errors)
+                    self.errors[label].update(e.errors)
                 raise
         return self.factures[inscrit.idx, mois]
 
@@ -237,6 +237,15 @@ class EtatsTrimestrielsModifications(object):
                 fields.append(('total', sum(total)))
         ReplaceFields(ligne, fields)
 
+if __name__ == '__main__':
+    import os
+    from config import *
+    from data import *
+    LoadConfig()
+    Load()
+            
+    today = datetime.date.today()
 
-def GenereEtatsTrimestriels(annee, oofilename):
-    return GenerateDocument('Etats trimestriels.ods', oofilename, EtatsTrimestrielsModifications(annee))
+    filename = 'etats_trimestriels_%d.ods' % (today.year - 1)
+    print GenerateDocument(EtatsTrimestrielsModifications(today.year - 1), filename)
+    print u'Fichier %s généré' % filename

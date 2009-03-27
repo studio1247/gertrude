@@ -130,34 +130,38 @@ def getNamedShapes(dom):
                 shapes[name] = node
     return shapes
 
-def GenerateDocument(src, dest, modifications, gauge=None):
+def GenerateDocument(modifications, filename=None, gauge=None):
     if gauge:
         gauge.SetValue(0)
-    if os.path.exists("./templates/%s" % src):
-        src = "./templates/%s" % src
+    if not filename:
+        filename = modification.default_output
+    if os.path.exists("./templates/%s" % modifications.template):
+        template = "./templates/%s" % modifications.template
     else:
-        src = "./templates_dist/%s" % src
-    errors = []
-    template = zipfile.ZipFile(src, 'r')
+        template = "./templates_dist/%s" % modifications.template
+    errors = {}
+    zip = zipfile.ZipFile(template, 'r')
     files = []
     if gauge:
         modifications.gauge = gauge
         gauge.SetValue(5)
-    for filename in template.namelist():
-        data = template.read(filename)
-        if filename in ('content.xml', 'styles.xml'):
+    for f in zip.namelist():
+        data = zip.read(f)
+        if f in ('content.xml', 'styles.xml'):
             dom = xml.dom.minidom.parseString(data)
             #print dom.toprettyxml()
-            errors.extend(modifications.execute(filename, dom))
+            new_errors = modifications.execute(f, dom)
+            if new_errors:
+                errors.update(new_errors)
             data = dom.toxml('UTF-8')
-        files.append((filename, data))
-    template.close()
-    oofile = zipfile.ZipFile(dest, 'w')
+        files.append((f, data))
+    zip.close()
+    zip = zipfile.ZipFile(filename, 'w')
     if gauge:
         gauge.SetValue(95)
-    for filename, data in files:
-        oofile.writestr(filename, data)
-    oofile.close()
+    for f, data in files:
+        zip.writestr(f, data)
+    zip.close()
     if gauge:
         gauge.SetValue(100)
     return errors
@@ -194,7 +198,8 @@ def convert_to_pdf(filename, pdffilename):
     document.close(False)
 
 def oo_open(filename):
-    filename = ''.join(["file:",urllib.pathname2url(os.path.abspath(filename))])
+    filename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(filename)).encode("latin-1"))])
+    # print filename
     StarDesktop, objServiceManager, corereflection = getOOoContext()
     document = StarDesktop.LoadComponentFromURL(filename, "_blank", 0,
         MakePropertyValues(objServiceManager,
@@ -202,10 +207,9 @@ def oo_open(filename):
                     ["Hidden", False]]))
 
 class DocumentDialog(wx.Dialog):
-    def __init__(self, parent, defaultfilename, function, *args, **kwargs):
-        self.function = function
-        self.args = args
-        self.kwargs = kwargs
+    def __init__(self, parent, modifications):
+        self.modifications = modifications
+
         # Instead of calling wx.Dialog.__init__ we precreate the dialog
         # so we can set an extra style that must be set before
         # creation, and then we create the GUI object using the Create
@@ -221,13 +225,13 @@ class DocumentDialog(wx.Dialog):
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
-        extension = os.path.splitext(defaultfilename)[-1]
+        extension = os.path.splitext(modifications.default_output)[-1]
         wildcard = "OpenDocument (*%s)|*%s" % (extension, extension)
         self.fbb = wx.lib.filebrowsebutton.FileBrowseButton(self, -1,
-                                                            size=(500, -1),
+                                                            size=(600, -1),
                                                             labelText="Nom de fichier :",
                                                             startDirectory=config.documents_directory,
-                                                            initialValue=defaultfilename,
+                                                            initialValue=os.path.join(config.documents_directory, modifications.default_output),
                                                             fileMask=wildcard,
                                                             fileMode=wx.SAVE)
         self.sizer.Add(self.fbb, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
@@ -237,21 +241,21 @@ class DocumentDialog(wx.Dialog):
         self.sizer.Add(self.gauge, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.RIGHT|wx.LEFT|wx.TOP, 5)
         
         line = wx.StaticLine(self, -1, size=(20,-1), style=wx.LI_HORIZONTAL)
-        self.sizer.Add(line, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.RIGHT|wx.TOP, 5)
+        self.sizer.Add(line, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.TOP|wx.BOTTOM, 5)
         
         self.btnsizer = wx.BoxSizer(wx.HORIZONTAL)
         self.generer = wx.Button(self, -1, u"Générer le document")
         self.generer.SetDefault()
         self.Bind(wx.EVT_BUTTON, self.onGeneration, self.generer)
-        self.btnsizer.Add(self.generer)
+        self.btnsizer.Add(self.generer, 0, wx.LEFT|wx.RIGHT, 5)
 #        self.ok = wx.Button(self, wx.ID_OK)
         self.ouvrir = wx.Button(self, -1, u"Ouvrir le document")
         self.ouvrir.Disable()
         self.Bind(wx.EVT_BUTTON, self.onOuverture, self.ouvrir)
-        self.btnsizer.Add(self.ouvrir)
+        self.btnsizer.Add(self.ouvrir, 0, wx.RIGHT, 5)
         #btnsizer.Add(self.ok)
         btn = wx.Button(self, wx.ID_CANCEL)
-        self.btnsizer.Add(btn)
+        self.btnsizer.Add(btn, 0, wx.RIGHT, 5)
         self.sizer.Add(self.btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
 
         self.SetSizer(self.sizer)
@@ -265,13 +269,14 @@ class DocumentDialog(wx.Dialog):
         config.documents_directory = os.path.dirname(self.filename)
         dlg = None
         try:
-            errors = self.function(self.filename, gauge=self.gauge, *self.args, **self.kwargs)
+            errors = GenerateDocument(self.modifications, filename=self.filename, gauge=self.gauge)
             if errors:
-                message = u"Document %s généré" % self.filename
-                message += ' avec des erreurs :\n' + decodeErrors(errors)
+                message = u"Document %s généré avec des erreurs :\n" % self.filename
+                for label in errors.keys():
+                    message += '\n' + label + ' :\n  '
+                    message += '\n  '.join(errors[label])
                 dlg = wx.MessageDialog(self, message, 'Message', wx.OK|wx.ICON_WARNING)
-            else:
-                self.ouvrir.Enable()
+            self.ouvrir.Enable()
         except Exception, e:
             dlg = wx.MessageDialog(self, str(e), 'Erreur', wx.OK|wx.ICON_WARNING)
         if dlg:
