@@ -15,7 +15,7 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import datetime
+import datetime, time
 import sys, os, zipfile
 import xml.dom.minidom
 import re, urllib
@@ -183,9 +183,18 @@ def MakePropertyValue(oServiceManager, Name, Value):
 def MakePropertyValues(oServiceManager, values):
     return [MakePropertyValue(oServiceManager, value[0], value[1]) for value in values]
 
+def oo_open(filename):
+    filename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(filename)).encode("latin-1"))])
+    # print filename
+    StarDesktop, objServiceManager, corereflection = getOOoContext()
+    document = StarDesktop.LoadComponentFromURL(filename, "_blank", 0,
+        MakePropertyValues(objServiceManager,
+                    [["ReadOnly", False],
+                    ["Hidden", False]]))
+    
 def convert_to_pdf(filename, pdffilename):
-    filename = ''.join(["file:",urllib.pathname2url(os.path.abspath(filename))])
-    pdffilename = ''.join(["file:",urllib.pathname2url(os.path.abspath(pdffilename))])
+    filename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(filename)).encode("latin-1"))])
+    pdffilename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(pdffilename)).encode("latin-1"))])
     StarDesktop, objServiceManager, corereflection = getOOoContext()
     document = StarDesktop.LoadComponentFromURL(filename, "_blank", 0,
         MakePropertyValues(objServiceManager,
@@ -197,14 +206,21 @@ def convert_to_pdf(filename, pdffilename):
                     ["FilterName", "writer_pdf_Export"]]))
     document.close(False)
 
-def oo_open(filename):
-    filename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(filename)).encode("latin-1"))])
-    # print filename
-    StarDesktop, objServiceManager, corereflection = getOOoContext()
-    document = StarDesktop.LoadComponentFromURL(filename, "_blank", 0,
-        MakePropertyValues(objServiceManager,
-                    [["ReadOnly", False],
-                    ["Hidden", False]]))
+def pdf_open(filename):    
+    import win32ui, win32api
+    import dde, time
+    from os import spawnl,P_NOWAIT,startfile
+    
+    filename = unicode(os.path.abspath(filename))
+    path, name = os.path.split(filename)
+    readerexe = win32api.FindExecutable(name, path)
+    os.spawnl(os.P_NOWAIT, readerexe[1], " ")
+    time.sleep(2)
+    s = dde.CreateServer()
+    s.Create('')
+    c = dde.CreateConversation(s)
+    c.ConnectTo('acroview', 'control')
+    c.Exec('[DocOpen("%s")]' % (filename,))
 
 class DocumentDialog(wx.Dialog):
     def __init__(self, parent, modifications):
@@ -225,8 +241,14 @@ class DocumentDialog(wx.Dialog):
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
-        extension = os.path.splitext(modifications.default_output)[-1]
-        wildcard = "OpenDocument (*%s)|*%s" % (extension, extension)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.Add(wx.StaticText(self, -1, "Format :"), 0, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 5)
+        self.format = wx.Choice(self, -1, choices=["OpenOffice", "PDF"])
+        self.format.SetSelection(0)
+        self.Bind(wx.EVT_CHOICE, self.onFormat, self.format)
+        sizer.Add(self.format, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 5)
+        self.extension = os.path.splitext(modifications.default_output)[-1]
+        wildcard = "OpenDocument (*%s)|*%s|PDF files (*.pdf)|*.pdf" % (self.extension, self.extension)
         self.fbb = wx.lib.filebrowsebutton.FileBrowseButton(self, -1,
                                                             size=(600, -1),
                                                             labelText="Nom de fichier :",
@@ -234,7 +256,8 @@ class DocumentDialog(wx.Dialog):
                                                             initialValue=os.path.join(config.documents_directory, modifications.default_output),
                                                             fileMask=wildcard,
                                                             fileMode=wx.SAVE)
-        self.sizer.Add(self.fbb, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+        sizer.Add(self.fbb, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
+        self.sizer.Add(sizer, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
         
         self.gauge = wx.Gauge(self, -1, size=(-1,10))
         self.gauge.SetRange(100)
@@ -243,33 +266,50 @@ class DocumentDialog(wx.Dialog):
         line = wx.StaticLine(self, -1, size=(20,-1), style=wx.LI_HORIZONTAL)
         self.sizer.Add(line, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.TOP|wx.BOTTOM, 5)
         
-        self.btnsizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.generer = wx.Button(self, -1, u"Générer le document")
         self.generer.SetDefault()
         self.Bind(wx.EVT_BUTTON, self.onGeneration, self.generer)
-        self.btnsizer.Add(self.generer, 0, wx.LEFT|wx.RIGHT, 5)
+        sizer.Add(self.generer, 0, wx.LEFT|wx.RIGHT, 5)
 #        self.ok = wx.Button(self, wx.ID_OK)
         self.ouvrir = wx.Button(self, -1, u"Ouvrir le document")
         self.ouvrir.Disable()
         self.Bind(wx.EVT_BUTTON, self.onOuverture, self.ouvrir)
-        self.btnsizer.Add(self.ouvrir, 0, wx.RIGHT, 5)
+        sizer.Add(self.ouvrir, 0, wx.RIGHT, 5)
         #btnsizer.Add(self.ok)
         btn = wx.Button(self, wx.ID_CANCEL)
-        self.btnsizer.Add(btn, 0, wx.RIGHT, 5)
-        self.sizer.Add(self.btnsizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+        sizer.Add(btn, 0, wx.RIGHT, 5)
+        self.sizer.Add(sizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
 
         self.SetSizer(self.sizer)
         self.sizer.Fit(self)
         self.CenterOnScreen()
     
+    def onFormat(self, event):
+        filename = os.path.splitext(self.fbb.GetValue())[0]
+        if self.format.GetSelection() == 0:
+            self.fbb.SetValue(filename+self.extension, None)
+        else:
+            self.fbb.SetValue(filename+".pdf", None)
+            
     def onGeneration(self, event):
         self.fbb.Disable()
         self.generer.Disable()
         self.filename = self.fbb.GetValue()
+        f, e = os.path.splitext(self.fbb.GetValue())
+        if e == ".pdf":
+            pdf = True
+            self.oo_filename = f + self.extension
+        else:
+            pdf = False
+            self.oo_filename = self.filename
+            
         config.documents_directory = os.path.dirname(self.filename)
         dlg = None
         try:
-            errors = GenerateDocument(self.modifications, filename=self.filename, gauge=self.gauge)
+            errors = GenerateDocument(self.modifications, filename=self.oo_filename, gauge=self.gauge)
+            if pdf:
+                convert_to_pdf(self.oo_filename, self.filename)
             if errors:
                 message = u"Document %s généré avec des erreurs :\n" % self.filename
                 for label in errors.keys():
@@ -284,11 +324,16 @@ class DocumentDialog(wx.Dialog):
             dlg.Destroy()
         
     def onOuverture(self, event):
-        oo_open(self.filename)
+        if self.filename.endswith("pdf"):
+            pdf_open(self.filename)
+        else:
+            oo_open(self.filename)
         self.Destroy()
     
-if __name__ == '__main__':
+if __name__ == '__main__':   
     filename = '.\\templates_dist\\Appel cotisations.ods'
+    oo_open(filename)
+    
     pdffilename = ''.join([os.path.splitext(filename)[0], ".pdf"])
     convert_to_pdf(filename, pdffilename)
-    oo_open(filename)
+    pdf_open(pdffilename)
