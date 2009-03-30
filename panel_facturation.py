@@ -74,10 +74,10 @@ class FacturationPanel(GPanel):
         self.Bind(wx.EVT_CHOICE, self.EvtRecusPeriodeChoice, self.recus_periodechoice)
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationRecu, button)
-        box_sizer.AddMany([(self.inscrits_choice["recus"], 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL|wx.EXPAND, 5),
-                           (self.recus_periodechoice, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL|wx.EXPAND, 5),
+        box_sizer.AddMany([(self.inscrits_choice["recus"], 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5),
+                           (self.recus_periodechoice, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5),
                            (wx.StaticText(self, -1, '-'), 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5),
-                           (self.recus_endchoice, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL|wx.EXPAND, 5),
+                           (self.recus_endchoice, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5),
                            (button, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)])
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
         self.sizer.Add(sizer, 1, wx.EXPAND)

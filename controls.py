@@ -254,7 +254,7 @@ class PhoneCtrl(wx.TextCtrl):
         if (ip < 14 and ip % 3 == 2):
             self.SetInsertionPoint(ip + 1)
 
-class DateCtrl(wx.TextCtrl):
+class LinuxDateCtrl(wx.TextCtrl):
     def __init__(self, parent, id=-1, value=None, *args, **kwargs):
         wx.TextCtrl.__init__(self, parent, id=-1, *args, **kwargs)
         wx.EVT_TEXT(self, -1, self.checkSyntax)
@@ -279,6 +279,24 @@ class DateCtrl(wx.TextCtrl):
         else:
             wx.TextCtrl.SetValue(self, '%.02d/%.02d/%.04d' % (value.day, value.month, value.year))
         self.Refresh()
+        
+class DateCtrl(wx.GenericDatePickerCtrl):
+    def SetValue(self, date):
+        if date is None:
+            date = wx.DefaultDateTime
+        if isinstance(date, (datetime.datetime, datetime.date)):
+            tt = date.timetuple()
+            dmy = (tt[2], tt[1]-1, tt[0])
+            date = wx.DateTimeFromDMY(*dmy)
+        wx.GenericDatePickerCtrl.SetValue(self, date)
+    
+    def GetValue(self):
+        date = wx.GenericDatePickerCtrl.GetValue(self)
+        if date.IsValid():
+            ymd = map(int, date.FormatISODate().split('-'))
+            return datetime.date(*ymd)
+        else:
+            return None
 
 class AutoMixin:
     def __init__(self, parent, instance, member):
@@ -329,14 +347,15 @@ class AutoMixin:
 class AutoTextCtrl(wx.TextCtrl, AutoMixin):
     def __init__(self, parent, instance, member, *args, **kwargs):
         wx.TextCtrl.__init__(self, parent, -1, *args, **kwargs)
-        AutoMixin.__init__(self, parent, instance, member)        
+        AutoMixin.__init__(self, parent, instance, member)
 
 class AutoDateCtrl(DateCtrl, AutoMixin):
     def __init__(self, parent, instance, member, *args, **kwargs):
-        DateCtrl.__init__(self, parent, -1, *args, **kwargs)
+        DateCtrl.__init__(self, parent, id=-1, style=wx.DP_DEFAULT|wx.DP_DROPDOWN|wx.DP_SHOWCENTURY|wx.DP_ALLOWNONE, *args, **kwargs)
         AutoMixin.__init__(self, parent, instance, member)
-        #ctrl = DatePickerCtrl(parent, -1, pos=(xpos + xspace, ypos), size=(xsize, -1), style=wx.DP_DROPDOWN | wx.DP_ALLOWNONE | style)
-        #self.Bind(wx.EVT_DATE_CHANGED, self.onText, ctrl)
+        self.Bind(wx.EVT_DATE_CHANGED, self.onText, self)
+        # DateCtrl.__init__(self, parent, -1, *args, **kwargs)
+        # AutoMixin.__init__(self, parent, instance, member)
 
 class AutoNumericCtrl(NumericCtrl, AutoMixin):
     def __init__(self, parent, instance, member, *args, **kwargs):

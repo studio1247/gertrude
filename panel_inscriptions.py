@@ -509,8 +509,12 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
     def SetPeriode(self, periode):
         PeriodeMixin.SetPeriode(self, periode)
         if self.inscrit and self.periode != -1 and self.periode < len(self.inscrit.inscriptions):
-            self.planning_panel.SetInscription(self.inscrit.inscriptions[self.periode])
+            inscription = self.inscrit.inscriptions[self.periode]
+            self.planning_panel.SetInscription(inscription)
+            self.duree_reference_choice.Enable()
+            self.duree_reference_choice.SetSelection(inscription.duree_reference / 7 - 1)
         else:
+            self.duree_reference_choice.Disable()
             self.planning_panel.SetInscription(None)
     
 class InscriptionsNotebook(wx.Notebook):

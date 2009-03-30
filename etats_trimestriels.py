@@ -106,8 +106,8 @@ class EtatsTrimestrielsModifications(object):
                             except:
                                 continue
                             previsionnel[i] = facture.previsionnel
-                            heures[0][i] = facture.detail_heures_facturees[0]
-                            heures[1][i] = facture.detail_heures_facturees[1]
+                            heures[0][i] = facture.heures_facturees[0]
+                            heures[1][i] = facture.heures_facturees[1]
 
                         fields = [('nom', inscrit.nom),
                                   ('prenom', inscrit.prenom),
@@ -195,7 +195,7 @@ class EtatsTrimestrielsModifications(object):
                     facture = self.get_facture(inscrit, mois+1)
                 except:
                     continue
-                heures[mois], previsionnel[mois] = facture.detail_heures_facturees[mode], facture.previsionnel
+                heures[mois], previsionnel[mois] = facture.heures_facturees[mode], facture.previsionnel
                 total[mois] += heures[mois]
                 total_previsionnel[mois] += previsionnel[mois]
 

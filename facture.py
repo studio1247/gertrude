@@ -24,14 +24,15 @@ class Facture(object):
         self.inscrit = inscrit
         self.annee = annee
         self.mois = mois
+        self.debut = datetime.date(annee, mois, 1)
+        self.fin = getMonthEnd(self.debut)
         self.options = options
         self.cotisation_mensuelle = 0.0
-        self.detail_cotisation_mensuelle = [0.0, 0.0]
-        self.heures_facturees = 0
-        self.detail_heures_facturees = [0, 0]
+        self.heures_facturees = [0.0, 0.0]
         self.supplement = 0
         self.deduction = 0
         self.jours_supplementaires = []
+        self.heures_mensuelles = 0.0
         self.heures_supplementaires = 0.0
         self.jours_maladie = []
         self.jours_maladie_deduits = []
@@ -49,10 +50,14 @@ class Facture(object):
                 jours_ouvres += 1
                 if inscrit.getInscription(date):
                     cotisation = Cotisation(inscrit, (date, date), options=NO_ADDRESS|self.options)
+                    heures_presence = cotisation.inscription.getReferenceDay(date).get_heures()
                     if (cotisation.mode_inscription, cotisation.cotisation_mensuelle) in cotisations_mensuelles:
-                        cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)][0] += 1
+                        cotisation = cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)]
+                        cotisation.heures_presence += heures_presence
                     else:
-                        cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)] = [1, 0]
+                        cotisation.heures_presence = heures_presence
+                        cotisation.heures_maladie = 0.0
+                        cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)] = cotisation
                     if (cotisation.mode_inscription, cotisation.heures_semaine) in heures_hebdomadaires:
                         heures_hebdomadaires[(cotisation.mode_inscription, cotisation.heures_semaine)] += 1
                     else:
@@ -81,10 +86,10 @@ class Facture(object):
                         if nb_jours_maladie > datetime.timedelta(creche.minimum_maladie):
                             self.jours_maladie_deduits.append(date)
                             if creche.mode_facturation & FACTURATION_PSU:
-                                self.deduction += cotisation.montant_heure_garde * inscrit.getReferenceDay(date).get_heures()
+                                self.deduction += cotisation.montant_heure_garde * heures_presence
                             else:
                                 self.deduction += cotisation.montant_jour_garde
-                            cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)][1] += 1
+                            cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)].heures_maladie += heures
                             self.raison_deduction = u'(maladie > %dj consécutifs)' % creche.minimum_maladie
                     elif presence > 0:
                         if presence & PREVISIONNEL:
@@ -99,22 +104,22 @@ class Facture(object):
 
             date += datetime.timedelta(1)
 
-        for mode_inscription, cotisation in cotisations_mensuelles:
-            pro_rata = cotisation * cotisations_mensuelles[mode_inscription, cotisation][0] / jours_ouvres
-            self.cotisation_mensuelle += pro_rata
-            self.detail_cotisation_mensuelle[mode_inscription] += pro_rata
-
-        if "Week-end" in creche.feries:
-            self.semaines_payantes = int(jours_ouvres / 5)
-        else:
-            self.semaines_payantes = int(jours_ouvres / 7)
-        heures_facturees = 0.0
-        detail_heures_facturees = [0.0, 0.0]
-        for mode_inscription, heures in heures_hebdomadaires:
-            pro_rata = self.semaines_payantes * heures * float(heures_hebdomadaires[mode_inscription, heures]) / jours_ouvres
-            heures_facturees += pro_rata
-            detail_heures_facturees[mode_inscription] += pro_rata
-        self.heures_facturees = int(heures_facturees)
-        self.detail_heures_facturees = [int(h) for h in detail_heures_facturees]
+        for mode_inscription, montant in cotisations_mensuelles:
+            cotisation = cotisations_mensuelles[mode_inscription, montant]
+            cotisation.heures_mensuelles = 0.0
+            date = datetime.date(annee, mois, 1)
+            while date.month == mois:
+                if date not in creche.jours_fermeture:
+                    cotisation.heures_mensuelles += cotisation.inscription.getReferenceDay(date).get_heures()
+                date += datetime.timedelta(1)
+            self.heures_mensuelles += cotisation.heures_mensuelles
+            prorata = montant * cotisation.heures_presence / cotisation.heures_mensuelles
+            self.cotisation_mensuelle += prorata
+            
+            if creche.mode_facturation & FACTURATION_PSU:
+                self.heures_facturees[mode_inscription] += cotisation.heures_mensuelles + self.heures_supplementaires
+            else:
+                prorata_heures = cotisation.heures_mois * cotisation.heures_presence / cotisation.heures_mensuelles
+                self.heures_facturees[mode_inscription] += prorata_heures
 
         self.total = self.cotisation_mensuelle + self.supplement - self.deduction

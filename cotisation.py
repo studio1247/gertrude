@@ -173,6 +173,12 @@ class Cotisation(object):
                 self.montant_jour_supplementaire = self.montant_jour_garde
             else:
                 self.montant_jour_supplementaire = 0
+                
+        if 0:
+            print inscrit.prenom
+            for var in ["debut", "fin", "revenus_papa.revenu", "revenus_maman.revenu", "assiette_annuelle", "jours_semaine", "heures_reelles_semaine", "heures_semaine", "heures_mois", "taux_effort", "enfants_a_charge", "taux_horaire"]:
+                print " ", var, eval("self.%s" % var)
+        
 
     def __cmp__(self, context2):
         return context2 == None or \

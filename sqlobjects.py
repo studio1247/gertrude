@@ -525,6 +525,12 @@ class Inscription(object):
             self.reference = self.reference[0:duration]
         self.duree_reference = duration
     
+    def getReferenceDay(self, date):
+        if self.duree_reference > 7:
+            return self.reference[((date - self.debut).days + self.debut.weekday()) % self.duree_reference]
+        else:
+            return self.reference[date.weekday()]
+    
     def create(self):
         print 'nouvelle inscription'
         result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, fin_periode_essai, duree_reference) VALUES(NULL,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, self.fin_periode_essai, self.duree_reference))
@@ -658,10 +664,7 @@ class Inscrit(object):
     def getReferenceDay(self, date):
         inscription = self.getInscription(date)
         if inscription:
-            if inscription.duree_reference > 7:
-                return inscription.reference[((date - inscription.debut).days + inscription.debut.weekday()) % inscription.duree_reference]
-            else:
-                return inscription.reference[date.weekday()]
+            return inscription.getReferenceDay(date)
         else:
             return None
         
