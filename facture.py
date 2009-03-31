@@ -113,13 +113,19 @@ class Facture(object):
                     cotisation.heures_mensuelles += cotisation.inscription.getReferenceDay(date).get_heures()
                 date += datetime.timedelta(1)
             self.heures_mensuelles += cotisation.heures_mensuelles
-            prorata = montant * cotisation.heures_presence / cotisation.heures_mensuelles
+            if cotisation.heures_mensuelles == 0:
+                prorata = 0
+            else:
+                prorata = montant * cotisation.heures_presence / cotisation.heures_mensuelles
             self.cotisation_mensuelle += prorata
             
             if creche.mode_facturation & FACTURATION_PSU:
                 self.heures_facturees[mode_inscription] += cotisation.heures_mensuelles + self.heures_supplementaires
             else:
-                prorata_heures = cotisation.heures_mois * cotisation.heures_presence / cotisation.heures_mensuelles
+                if cotisation.heures_mensuelles == 0:
+                    prorata_heures = 0
+                else:
+                    prorata_heures = cotisation.heures_mois * cotisation.heures_presence / cotisation.heures_mensuelles
                 self.heures_facturees[mode_inscription] += prorata_heures
 
         self.total = self.cotisation_mensuelle + self.supplement - self.deduction
