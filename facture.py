@@ -32,7 +32,7 @@ class Facture(object):
         self.supplement = 0
         self.deduction = 0
         self.jours_supplementaires = []
-        self.heures_mensuelles = 0.0
+        self.heures_contrat = 0.0
         self.heures_supplementaires = 0.0
         self.jours_maladie = []
         self.jours_maladie_deduits = []
@@ -112,20 +112,22 @@ class Facture(object):
                 if date not in creche.jours_fermeture:
                     cotisation.heures_mensuelles += cotisation.inscription.getReferenceDay(date).get_heures()
                 date += datetime.timedelta(1)
-            self.heures_mensuelles += cotisation.heures_mensuelles
-            if cotisation.heures_mensuelles == 0:
-                prorata = 0
-            else:
-                prorata = montant * cotisation.heures_presence / cotisation.heures_mensuelles
-            self.cotisation_mensuelle += prorata
-            
+            if cotisation.heures_mensuelles > 0:
+                self.cotisation_mensuelle += montant * cotisation.heures_presence / cotisation.heures_mensuelles
+                self.heures_contrat += cotisation.heures_mois * cotisation.heures_presence / cotisation.heures_mensuelles
+                
             if creche.mode_facturation & FACTURATION_PSU:
                 self.heures_facturees[mode_inscription] += cotisation.heures_mensuelles + self.heures_supplementaires
             else:
-                if cotisation.heures_mensuelles == 0:
-                    prorata_heures = 0
-                else:
-                    prorata_heures = cotisation.heures_mois * cotisation.heures_presence / cotisation.heures_mensuelles
-                self.heures_facturees[mode_inscription] += prorata_heures
-
+                if cotisation.heures_mensuelles > 0:
+                    self.heures_facturees[mode_inscription] += cotisation.heures_mois * cotisation.heures_presence / cotisation.heures_mensuelles
+        
+        self.tarif_horaire = self.cotisation_mensuelle / self.heures_contrat
         self.total = self.cotisation_mensuelle + self.supplement - self.deduction
+        
+        if 0:
+            print inscrit.prenom
+            for var in ["heures_contrat", "heures_facturees", "heures_supplementaires", "tarif_horaire", "cotisation_mensuelle", "supplement", "deduction", "total"]:
+                print " ", var, eval("self.%s" % var)
+                
+
