@@ -20,6 +20,7 @@ import sys, os, zipfile
 import xml.dom.minidom
 import re, urllib
 import wx, wx.lib.filebrowsebutton
+import traceback
 
 def evalFields(fields):
     for i, field in enumerate(fields[:]):
@@ -215,7 +216,7 @@ def pdf_open(filename):
     path, name = os.path.split(filename)
     readerexe = win32api.FindExecutable(name, path)
     os.spawnl(os.P_NOWAIT, readerexe[1], " ")
-    time.sleep(2)
+    time.sleep(5)
     s = dde.CreateServer()
     s.Create('')
     c = dde.CreateConversation(s)
@@ -268,17 +269,19 @@ class DocumentDialog(wx.Dialog):
         self.sizer.Add(line, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.TOP|wx.BOTTOM, 5)
         
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.generer = wx.Button(self, -1, u"Générer le document")
-        self.generer.SetDefault()
-        self.Bind(wx.EVT_BUTTON, self.onGeneration, self.generer)
-        sizer.Add(self.generer, 0, wx.LEFT|wx.RIGHT, 5)
+        if sys.platform == 'win32':
+            self.sauver_ouvrir = wx.Button(self, -1, u"Sauver et ouvrir")
+            self.sauver_ouvrir.SetDefault()
+            self.Bind(wx.EVT_BUTTON, self.onSauverOuvrir, self.sauver_ouvrir)
+            sizer.Add(self.sauver_ouvrir, 0, wx.LEFT|wx.RIGHT, 5)
+        else:
+            self.sauver_ouvrir = None
 #        self.ok = wx.Button(self, wx.ID_OK)
-        self.ouvrir = wx.Button(self, -1, u"Ouvrir le document")
-        self.ouvrir.Disable()
-        self.Bind(wx.EVT_BUTTON, self.onOuverture, self.ouvrir)
-        sizer.Add(self.ouvrir, 0, wx.RIGHT, 5)
+        self.sauver = wx.Button(self, -1, u"Sauver")
+        self.Bind(wx.EVT_BUTTON, self.onSauver, self.sauver)
+        sizer.Add(self.sauver, 0, wx.RIGHT, 5)
         #btnsizer.Add(self.ok)
-        btn = wx.Button(self, wx.ID_CANCEL, "Fermer")
+        btn = wx.Button(self, wx.ID_CANCEL)
         sizer.Add(btn, 0, wx.RIGHT, 5)
         self.sizer.Add(sizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
 
@@ -293,9 +296,11 @@ class DocumentDialog(wx.Dialog):
         else:
             self.fbb.SetValue(filename+".pdf", None)
             
-    def onGeneration(self, event):
+    def onSauver(self, event):
         self.fbb.Disable()
-        self.generer.Disable()
+        self.sauver.Disable()
+        if self.sauver_ouvrir:
+            self.sauver_ouvrir.Disable()
         self.filename = self.fbb.GetValue()
         f, e = os.path.splitext(self.fbb.GetValue())
         if e == ".pdf":
@@ -311,26 +316,30 @@ class DocumentDialog(wx.Dialog):
             errors = GenerateDocument(self.modifications, filename=self.oo_filename, gauge=self.gauge)
             if pdf:
                 convert_to_pdf(self.oo_filename, self.filename)
+                os.remove(self.oo_filename)
+            self.document_generated = True
             if errors:
                 message = u"Document %s généré avec des erreurs :\n" % self.filename
                 for label in errors.keys():
                     message += '\n' + label + ' :\n  '
                     message += '\n  '.join(errors[label])
                 dlg = wx.MessageDialog(self, message, 'Message', wx.OK|wx.ICON_WARNING)
-            if sys.platform == 'win32':
-                self.ouvrir.Enable()
         except Exception, e:
-            dlg = wx.MessageDialog(self, str(e), 'Erreur', wx.OK|wx.ICON_WARNING)
+            info = sys.exc_info()
+            message = ' [type: %s value: %s traceback: %s]' % (info[0], info[1], traceback.extract_tb(info[2]))
+            dlg = wx.MessageDialog(self, message, 'Erreur', wx.OK|wx.ICON_WARNING)
         if dlg:
             dlg.ShowModal()
             dlg.Destroy()
-        
-    def onOuverture(self, event):
-        if self.filename.endswith("pdf"):
-            pdf_open(self.filename)
-        else:
-            oo_open(self.filename)
         self.Destroy()
+        
+    def onSauverOuvrir(self, event):
+        self.onSauver(event)
+        if self.document_generated:
+            if self.filename.endswith("pdf"):
+                pdf_open(self.filename)
+            else:
+                oo_open(self.filename)
     
 if __name__ == '__main__':   
     filename = '.\\templates_dist\\Appel cotisations.ods'
