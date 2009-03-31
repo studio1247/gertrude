@@ -89,7 +89,7 @@ class Facture(object):
                                 self.deduction += cotisation.montant_heure_garde * heures_presence
                             else:
                                 self.deduction += cotisation.montant_jour_garde
-                            cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)].heures_maladie += heures
+                            cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)].heures_maladie += heures_presence
                             self.raison_deduction = u'(maladie > %dj consécutifs)' % creche.minimum_maladie
                     elif presence > 0:
                         if presence & PREVISIONNEL:
