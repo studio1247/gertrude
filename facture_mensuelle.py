@@ -37,7 +37,6 @@ class FactureModifications(object):
         else:
             self.default_output = u"Facture %s %s %s %d.odt" % (who.prenom, who.nom, months[periode.month - 1], periode.year)
             self.inscrits = [who]
-        self.default_output = self.default_output.replace("é", "e") 
 
     def execute(self, filename, dom):
         if filename != 'content.xml':

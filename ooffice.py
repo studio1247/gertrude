@@ -134,7 +134,7 @@ def GenerateDocument(modifications, filename=None, gauge=None):
     if gauge:
         gauge.SetValue(0)
     if not filename:
-        filename = modification.default_output
+        filename = modification.default_output.replace(u"é", "e")
     if os.path.exists("./templates/%s" % modifications.template):
         template = "./templates/%s" % modifications.template
     else:
@@ -247,13 +247,14 @@ class DocumentDialog(wx.Dialog):
         self.format.SetSelection(0)
         self.Bind(wx.EVT_CHOICE, self.onFormat, self.format)
         sizer.Add(self.format, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 5)
-        self.extension = os.path.splitext(modifications.default_output)[-1]
+        default_output = modifications.default_output.replace(u"é", "e")
+        self.extension = os.path.splitext(default_output)[-1]
         wildcard = "OpenDocument (*%s)|*%s|PDF files (*.pdf)|*.pdf" % (self.extension, self.extension)
         self.fbb = wx.lib.filebrowsebutton.FileBrowseButton(self, -1,
                                                             size=(600, -1),
                                                             labelText="Nom de fichier :",
                                                             startDirectory=config.documents_directory,
-                                                            initialValue=os.path.join(config.documents_directory, modifications.default_output),
+                                                            initialValue=os.path.join(config.documents_directory, default_output),
                                                             fileMask=wildcard,
                                                             fileMode=wx.SAVE)
         sizer.Add(self.fbb, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
@@ -277,7 +278,7 @@ class DocumentDialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.onOuverture, self.ouvrir)
         sizer.Add(self.ouvrir, 0, wx.RIGHT, 5)
         #btnsizer.Add(self.ok)
-        btn = wx.Button(self, wx.ID_CANCEL)
+        btn = wx.Button(self, wx.ID_CANCEL, "Fermer")
         sizer.Add(btn, 0, wx.RIGHT, 5)
         self.sizer.Add(sizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
 
@@ -316,7 +317,8 @@ class DocumentDialog(wx.Dialog):
                     message += '\n' + label + ' :\n  '
                     message += '\n  '.join(errors[label])
                 dlg = wx.MessageDialog(self, message, 'Message', wx.OK|wx.ICON_WARNING)
-            self.ouvrir.Enable()
+            if sys.platform == 'win32':
+                self.ouvrir.Enable()
         except Exception, e:
             dlg = wx.MessageDialog(self, str(e), 'Erreur', wx.OK|wx.ICON_WARNING)
         if dlg:

@@ -254,7 +254,26 @@ class PhoneCtrl(wx.TextCtrl):
         if (ip < 14 and ip % 3 == 2):
             self.SetInsertionPoint(ip + 1)
 
-class LinuxDateCtrl(wx.TextCtrl):
+if sys.platform == 'win32':
+  class DateCtrl(wx.GenericDatePickerCtrl):
+    def SetValue(self, date):
+        if date is None:
+            date = wx.DefaultDateTime
+        if isinstance(date, (datetime.datetime, datetime.date)):
+            tt = date.timetuple()
+            dmy = (tt[2], tt[1]-1, tt[0])
+            date = wx.DateTimeFromDMY(*dmy)
+        wx.GenericDatePickerCtrl.SetValue(self, date)
+    
+    def GetValue(self):
+        date = wx.GenericDatePickerCtrl.GetValue(self)
+        if date.IsValid():
+            ymd = map(int, date.FormatISODate().split('-'))
+            return datetime.date(*ymd)
+        else:
+            return None
+else:
+  class DateCtrl(wx.TextCtrl):
     def __init__(self, parent, id=-1, value=None, *args, **kwargs):
         wx.TextCtrl.__init__(self, parent, id=-1, *args, **kwargs)
         wx.EVT_TEXT(self, -1, self.checkSyntax)
@@ -279,24 +298,6 @@ class LinuxDateCtrl(wx.TextCtrl):
         else:
             wx.TextCtrl.SetValue(self, '%.02d/%.02d/%.04d' % (value.day, value.month, value.year))
         self.Refresh()
-        
-class DateCtrl(wx.GenericDatePickerCtrl):
-    def SetValue(self, date):
-        if date is None:
-            date = wx.DefaultDateTime
-        if isinstance(date, (datetime.datetime, datetime.date)):
-            tt = date.timetuple()
-            dmy = (tt[2], tt[1]-1, tt[0])
-            date = wx.DateTimeFromDMY(*dmy)
-        wx.GenericDatePickerCtrl.SetValue(self, date)
-    
-    def GetValue(self):
-        date = wx.GenericDatePickerCtrl.GetValue(self)
-        if date.IsValid():
-            ymd = map(int, date.FormatISODate().split('-'))
-            return datetime.date(*ymd)
-        else:
-            return None
 
 class AutoMixin:
     def __init__(self, parent, instance, member):

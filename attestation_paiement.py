@@ -31,7 +31,6 @@ class AttestationModifications(object):
             self.default_output = u"Attestation de paiement %s %s %s-%s %d.odt" % (who.prenom, who.nom, months[debut.month - 1], months[fin.month - 1], debut.year)
             self.inscrits = [who]
         self.debut, self.fin = debut, fin
-        self.default_output = self.default_output.replace("é", "e") 
 
     def execute(self, filename, dom):
         if filename != 'content.xml':
