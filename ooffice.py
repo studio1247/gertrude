@@ -192,6 +192,7 @@ def oo_open(filename):
         MakePropertyValues(objServiceManager,
                     [["ReadOnly", False],
                     ["Hidden", False]]))
+    return 1
     
 def convert_to_pdf(filename, pdffilename):
     filename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(filename)).encode("latin-1"))])
@@ -216,16 +217,23 @@ def pdf_open(filename):
     path, name = os.path.split(filename)
     readerexe = win32api.FindExecutable(name, path)
     os.spawnl(os.P_NOWAIT, readerexe[1], " ")
-    time.sleep(5)
-    s = dde.CreateServer()
-    s.Create('')
-    c = dde.CreateConversation(s)
-    c.ConnectTo('acroview', 'control')
-    c.Exec('[DocOpen("%s")]' % (filename,))
+    for t in range(10):
+        try:
+            time.sleep(2)
+            s = dde.CreateServer()
+            s.Create('')
+            c = dde.CreateConversation(s)
+            c.ConnectTo('acroview', 'control')
+            c.Exec('[DocOpen("%s")]' % (filename,))
+            return 1
+        except:
+            print "prochain essai dans 2s ..."
+    return 0
 
 class DocumentDialog(wx.Dialog):
     def __init__(self, parent, modifications):
         self.modifications = modifications
+        self.document_generated = False
 
         # Instead of calling wx.Dialog.__init__ we precreate the dialog
         # so we can set an extra style that must be set before
@@ -324,6 +332,11 @@ class DocumentDialog(wx.Dialog):
                     message += '\n' + label + ' :\n  '
                     message += '\n  '.join(errors[label])
                 dlg = wx.MessageDialog(self, message, 'Message', wx.OK|wx.ICON_WARNING)
+        except IOError:
+            dlg = wx.MessageDialog(self, u"Impossible de sauver le document. Peut-être est-il déjà ouvert ?", 'Erreur', wx.OK|wx.ICON_WARNING)
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
         except Exception, e:
             info = sys.exc_info()
             message = ' [type: %s value: %s traceback: %s]' % (info[0], info[1], traceback.extract_tb(info[2]))
@@ -337,9 +350,13 @@ class DocumentDialog(wx.Dialog):
         self.onSauver(event)
         if self.document_generated:
             if self.filename.endswith("pdf"):
-                pdf_open(self.filename)
+                result = pdf_open(self.filename)
             else:
-                oo_open(self.filename)
+                result = oo_open(self.filename)
+            if not result:
+                dlg = wx.MessageDialog(self, "Impossible d'ouvrir le document", 'Erreur', wx.OK|wx.ICON_WARNING)
+                dlg.ShowModal()
+                dlg.Destroy()
     
 if __name__ == '__main__':   
     filename = '.\\templates_dist\\Appel cotisations.ods'
