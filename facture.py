@@ -123,7 +123,13 @@ class Facture(object):
                     self.heures_facturees[mode_inscription] += cotisation.heures_mois * cotisation.heures_presence / cotisation.heures_mensuelles
         
         self.tarif_horaire = self.cotisation_mensuelle / self.heures_contrat
-        self.total = self.cotisation_mensuelle + self.supplement - self.deduction
+        
+        if options & ARRONDI:
+            self.cotisation_mensuelle = eval(str("%.2f" % self.cotisation_mensuelle))
+            self.supplement = eval(str("%.2f" % self.supplement))
+            self.deduction = eval(str("%.2f" % self.deduction))
+            
+        self.total = self.cotisation_mensuelle + self.supplement - self.deduction                                                 
         
         if 0:
             print inscrit.prenom

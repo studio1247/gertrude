@@ -52,7 +52,7 @@ class FactureModifications(object):
         
         for inscrit in self.inscrits:
             try:
-                facture = Facture(inscrit, self.periode.year, self.periode.month)
+                facture = Facture(inscrit, self.periode.year, self.periode.month, options=ARRONDI)
             except CotisationException, e:
                 errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
                 continue

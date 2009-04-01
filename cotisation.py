@@ -28,6 +28,7 @@ class CotisationException(Exception):
 NO_ADDRESS = 1
 NO_NOM = 2
 NO_REVENUS = 4
+ARRONDI = 8
 
 class Cotisation(object):
     def __init__(self, inscrit, periode, options=0):
