@@ -22,9 +22,10 @@ except:
     from pysqlite2 import dbapi2 as sqlite3
 from functions import *
 from sqlobjects import *
+import wx
 
 DB_FILENAME = 'gertrude.db'
-VERSION = 24
+VERSION = 25
 
 def getdate(s):
     if s is None:
@@ -79,6 +80,7 @@ class SQLConnection(object):
             granularite INTEGER,
             mois_payes INTEGER,
             presences_previsionnelles BOOLEAN,
+            presences_supplementaires BOOLEAN,
             modes_inscription INTEGER,
             minimum_maladie INTEGER,
             email VARCHAR,
@@ -113,7 +115,9 @@ class SQLConnection(object):
             label VARCHAR,
             value INTEGER,
             mode INTEGER,
-            color INTEGER
+            couleur VARCHAR,
+            couleur_supplement VARCHAR,
+            couleur_previsionnel VARCHAR
           );""")
 
         cur.execute("""
@@ -235,10 +239,14 @@ class SQLConnection(object):
         for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", u"15 août", "1er novembre", "11 novembre", u"25 décembre", u"Lundi de Pâques", "Jeudi de l'Ascension"):
             cur.execute("INSERT INTO CONGES (idx, debut) VALUES (NULL, ?)", (label, ))
         cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
-        cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, email, type, capacite, mode_facturation) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', ("","","","","",7.75,18.5,7.75,19.0,4,12,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,15,"",TYPE_PARENTAL,0,DEDUCTION_MALADIE_AVEC_CARENCE))
+        cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, presences_supplementaires, modes_inscription, minimum_maladie, email, type, capacite, mode_facturation) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', ("","","","","",7.75,18.5,7.75,19.0,4,12,False,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,15,"",TYPE_PARENTAL,0,DEDUCTION_MALADIE_AVEC_CARENCE))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2006, 9, 1), datetime.date(2007, 8, 31), 6547.92, 51723.60))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2007, 9, 1), datetime.date(2008, 12, 31), 6660.00, 52608.00))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2009, 1, 1), datetime.date(2009, 12, 31), 6876.00, 53400.00))
+        couleur = [5, 203, 28, 150, wx.SOLID]
+        couleur_supplement = [5, 203, 28, 250, wx.SOLID]
+        couleur_previsionnel = [5, 203, 28, 50, wx.SOLID]
+        cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel) VALUES(NULL,?,?,?,?,?,?)', (u"Présences", 0, 0, str(couleur), str(couleur_supplement), str(couleur_previsionnel)))
         self.con.commit()
 
     def load(self, progress_handler=default_progress_handler):
@@ -252,11 +260,11 @@ class SQLConnection(object):
 
         cur = self.cursor()
 
-        cur.execute('SELECT nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, modes_inscription, minimum_maladie, email, type, capacite, mode_facturation, idx FROM CRECHE')
+        cur.execute('SELECT nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, presences_supplementaires, modes_inscription, minimum_maladie, email, type, capacite, mode_facturation, idx FROM CRECHE')
         creche_entry = cur.fetchall()
         if len(creche_entry) > 0:
             creche = Creche()
-            creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.telephone, creche.ouverture, creche.fermeture, creche.affichage_min, creche.affichage_max, creche.granularite, creche.mois_payes, creche.presences_previsionnelles, creche.modes_inscription, creche.minimum_maladie, creche.email, creche.type, creche.capacite, creche.mode_facturation, creche.idx = creche_entry[0]
+            creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.telephone, creche.ouverture, creche.fermeture, creche.affichage_min, creche.affichage_max, creche.granularite, creche.mois_payes, creche.presences_previsionnelles, creche.presences_supplementaires, creche.modes_inscription, creche.minimum_maladie, creche.email, creche.type, creche.capacite, creche.mode_facturation, creche.idx = creche_entry[0]
         else:
             creche = Creche()
             
@@ -280,12 +288,12 @@ class SQLConnection(object):
             bareme.debut, bareme.fin, bareme.idx = getdate(bareme.debut), getdate(bareme.fin), idx
             creche.baremes_caf.append(bareme)
 
-        cur.execute('SELECT label, value, mode, color, idx FROM ACTIVITIES')
+        cur.execute('SELECT label, value, mode, couleur, couleur_supplement, couleur_previsionnel, idx FROM ACTIVITIES')
         for entry in cur.fetchall():
             activity = Activite(creation=False)
-            activity.label, activity.value, activity.mode, activity.color, activity.idx = entry
+            activity.label, activity.value, activity.mode, activity.couleur, activity.couleur_supplement, activity.couleur_previsionnel, activity.idx = entry
             creche.activites[activity.value] = activity
-        
+                
         cur.execute('SELECT date_embauche, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, email, idx FROM EMPLOYES')
         for employe_entry in cur.fetchall():
             employe = Employe(creation=False)
@@ -435,7 +443,7 @@ class SQLConnection(object):
             cur.execute("ALTER TABLE CRECHE ADD presences_previsionnelles BOOLEAN;")
             cur.execute("ALTER TABLE CRECHE ADD modes_inscription INTEGER;")
             cur.execute('UPDATE CRECHE SET mois_payes=?', (12,))
-            cur.execute('UPDATE CRECHE SET presences_previsionnelles=?', (True,))
+            cur.execute('UPDATE CRECHE SET presences_previsionnelles=?', (False,))
             cur.execute('UPDATE CRECHE SET modes_inscription=?', (7,))
 
         if version < 7:
@@ -621,7 +629,33 @@ class SQLConnection(object):
         if version < 24:
             cur.execute("ALTER TABLE INSCRIPTIONS ADD duree_reference INTEGER;")
             cur.execute('UPDATE INSCRIPTIONS SET duree_reference=?', (7,))
-            
+        
+        if version < 25:
+            couleurs = [[5, 203, 28, 150, wx.SOLID],
+                        [250, 0, 0, 150, wx.BDIAGONAL_HATCH],
+                        [0, 0, 255, 150, wx.FDIAGONAL_HATCH],
+                        [255, 0, 255, 150, wx.FDIAGONAL_HATCH],
+                        [255, 255, 0, 150, wx.FDIAGONAL_HATCH]]
+            couleurs_supplement = [[5, 203, 28, 250, wx.SOLID],
+                        [250, 0, 0, 250, wx.BDIAGONAL_HATCH],
+                        [0, 0, 255, 250, wx.FDIAGONAL_HATCH],
+                        [255, 0, 255, 250, wx.FDIAGONAL_HATCH],
+                        [255, 255, 0, 250, wx.FDIAGONAL_HATCH]]
+            couleurs_previsionnel = [[5, 203, 28, 50, wx.SOLID],
+                        [250, 0, 0, 50, wx.BDIAGONAL_HATCH],
+                        [0, 0, 255, 50, wx.FDIAGONAL_HATCH],
+                        [255, 0, 255, 50, wx.FDIAGONAL_HATCH],
+                        [255, 255, 0, 50, wx.FDIAGONAL_HATCH]]
+            cur.execute("ALTER TABLE CRECHE ADD presences_supplementaires BOOLEAN;")
+            cur.execute("ALTER TABLE ACTIVITIES ADD couleur VARCHAR;")
+            cur.execute("ALTER TABLE ACTIVITIES ADD couleur_supplement VARCHAR;")
+            cur.execute("ALTER TABLE ACTIVITIES ADD couleur_previsionnel VARCHAR;")
+            cur.execute('UPDATE CRECHE SET presences_supplementaires=?', (True,))
+            cur.execute('SELECT idx, color FROM ACTIVITIES')
+            for idx, couleur in cur.fetchall():
+                cur.execute('UPDATE ACTIVITIES SET couleur=?, couleur_supplement=?, couleur_previsionnel=? WHERE idx=?', (str(couleurs[couleur]), str(couleurs_supplement[couleur]), str(couleurs_previsionnel[couleur]), idx))
+            cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel) VALUES(NULL,?,?,?,?,?,?)', (u"Présences", 0, 0, str(couleurs[0]), str(couleurs_supplement[0]), str(couleurs_previsionnel[0])))
+
         if version < VERSION:
             try:
                 cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))

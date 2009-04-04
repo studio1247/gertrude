@@ -675,37 +675,9 @@ class PeriodePanel(wx.Panel, PeriodeMixin):
         PeriodeMixin.__init__(self, member)
         parent.ctrls.append(self)
 
-activity_colors = [(0, 0, 0, 150, wx.SOLID), # ERREUR
-                   (250, 0, 0, 150, wx.BDIAGONAL_HATCH),
-                   (0, 0, 255, 150, wx.FDIAGONAL_HATCH),
-                   (255, 0, 255, 150, wx.FDIAGONAL_HATCH),
-                   (255, 255, 0, 150, wx.FDIAGONAL_HATCH),
-                   ]
-
-def getActivityColor(value, color=None):
-    t = 150
-    s = wx.SOLID
-    if value == MALADE:
-        return 190, 35, 29, t, s
-    elif value == VACANCES:
-        return 0, 0, 255, t, s
-    elif value % PREVISIONNEL == 0:
-        r, g, b = 5, 203, 28
-        if value & PREVISIONNEL:
-            t = 75
-        return r, g, b, t, s
-    else:
-        try:
-            if color is None:
-                color = creche.activites[value % PREVISIONNEL].color
-            return activity_colors[color]
-        except:
-            return activity_colors[0]
-    
-class ActivityComboBox(wx.combo.OwnerDrawnComboBox):
+class HashComboBox(wx.combo.OwnerDrawnComboBox):
     def __init__(self, parent, id=-1):
         wx.combo.OwnerDrawnComboBox.__init__(self, parent, id, style=wx.CB_READONLY, size=(100, -1))
-        self.Bind(wx.EVT_COMBOBOX, self.OnChangeActivity, self)
         
     def OnDrawItem(self, dc, rect, item, flags):
         if item == wx.NOT_FOUND:
@@ -715,10 +687,11 @@ class ActivityComboBox(wx.combo.OwnerDrawnComboBox):
         rr.Deflate(3, 5)
 
         data = self.GetClientData(item)
-        if isinstance(data, int):
-            r, g, b, t, s = getActivityColor(data, data)
+        if isinstance(data, tuple):
+            r, g, b, t, s = data
         else:
-            r, g, b, t, s = getActivityColor(self.GetClientData(item).value)
+            r, g, b, t, s = data.couleur
+            
         dc = wx.GCDC(dc)
         dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
         dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
@@ -731,17 +704,22 @@ class ActivityComboBox(wx.combo.OwnerDrawnComboBox):
 
     def OnMeasureItem(self, item):
         return 24
-
-    def SetSelection(self, item):
-        wx.combo.OwnerDrawnComboBox.SetSelection(self, item)
-        self.activity = self.GetClientData(item)
-
+    
     def OnDrawBackground(self, dc, rect, item, flags):
         if flags & wx.combo.ODCB_PAINTING_SELECTED:
             bgCol = wx.Colour(160, 160, 160)
             dc.SetBrush(wx.Brush(bgCol))
             dc.SetPen(wx.Pen(bgCol))
             dc.DrawRectangleRect(rect);
+            
+class ActivityComboBox(HashComboBox):
+    def __init__(self, parent, id=-1):
+        HashComboBox.__init__(self, parent, id)
+        self.Bind(wx.EVT_COMBOBOX, self.OnChangeActivity, self)
+
+    def SetSelection(self, item):
+        wx.combo.OwnerDrawnComboBox.SetSelection(self, item)
+        self.activity = self.GetClientData(item)
     
     def OnChangeActivity(self, evt):
         self.activity = self.GetClientData(self.GetSelection())

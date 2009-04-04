@@ -57,8 +57,8 @@ ABSENT = 0
 PRESENT = 1 << 0 # activité 0
 VACANCES = -1
 MALADE = -2
-PREVISIONNEL = 1 << 30 #  flag previsionnel
-SUPPLEMENT = 512 # ne pas utiliser avec activités
+SUPPLEMENT = 1 << 29 # pas d'activité > 28 !
+PREVISIONNEL = 1 << 30 # flag previsionnel
 
 #IDs de boutons
 ID_SYNCHRO = 10001

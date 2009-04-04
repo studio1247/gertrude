@@ -107,17 +107,17 @@ class PlanningGridWindow(BufferedWindow):
         dc.EndDrawing()
 
     def DrawLine(self, dc, index, line):
-        for start, end, activity in line.get_activities():
-            # print debut, fin, valeur
-            r, g, b, t, s = getActivityColor(activity)
-            try:
-              dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
-              dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
-            except:
-              dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
-              dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
-            rect = wx.Rect(1+(start-int(creche.affichage_min*4))*COLUMN_WIDTH, 1 + index*LINE_HEIGHT, (end-start)*COLUMN_WIDTH-1, LINE_HEIGHT-1)
-            dc.DrawRoundedRectangleRect(rect, 4)
+        for start, end, activity in line.get_activities(reference=line.reference):
+            if activity >= 0:
+                r, g, b, t, s = getActivityColor(activity)
+                try:
+                  dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
+                  dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
+                except:
+                  dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
+                  dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
+                rect = wx.Rect(1+(start-int(creche.affichage_min*4))*COLUMN_WIDTH, 1 + index*LINE_HEIGHT, (end-start)*COLUMN_WIDTH-1, LINE_HEIGHT-1)
+                dc.DrawRoundedRectangleRect(rect, 4)
         
     def __get_pos(self, x, y):
         l = int(creche.affichage_min * BASE_GRANULARITY + (x / COLUMN_WIDTH))
@@ -143,12 +143,14 @@ class PlanningGridWindow(BufferedWindow):
             start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX)
             line = self.lines[self.curStartY]
             line.values = line.original_values[:]
+            
             for i in range(start, end+BASE_GRANULARITY/creche.granularite):
                 if line.values[i] < 0:
-                    if creche.presences_previsionnelles and line.date > datetime.date.today():
-                        line.values[i] = PREVISIONNEL
-                    else:
-                        line.values[i] = 0
+                    line.values[i] = 0
+                if creche.presences_previsionnelles and line.reference and line.date > datetime.date.today():
+                    line.values[i] |= PREVISIONNEL
+                else:
+                    line.values[i] &= ~PREVISIONNEL
                 if self.state:
                     line.values[i] |= 1 << self.activity_combobox.activity.value
                 else:
@@ -161,17 +163,14 @@ class PlanningGridWindow(BufferedWindow):
             line = self.lines[self.curStartY]
             line.values = line.original_values[:]
             if line.get_state() < 0:
-                if creche.presences_previsionnelles and line.date > datetime.date.today():
-                    line.values = [PREVISIONNEL] * 96
-                else:
-                    line.values = [0] * 96
+                line.values = [0] * 96
             if self.state:
                 value = 1 << self.activity_combobox.activity.value
                 clear_values = [1 << activity.value for activity in creche.activites.values() if (activity.mode & MODE_LIBERE_PLACE)]
             else:
                 value = ~(1 << self.activity_combobox.activity.value)
                 clear_values = [1 << activity.value for activity in creche.activites.values() if not (activity.mode & MODE_LIBERE_PLACE)]
-                clear_values = ~(1 + sum(clear_values))
+                clear_values = ~sum(clear_values)
             
             for i in range(start, end+BASE_GRANULARITY/creche.granularite):
                 if self.state:
@@ -186,8 +185,12 @@ class PlanningGridWindow(BufferedWindow):
                         line.values[i] &= clear_values
                     else:
                         line.values[i] &= value
+                if creche.presences_previsionnelles and line.reference and line.date > datetime.date.today():
+                    line.values[i] |= PREVISIONNEL
+                else:
+                    line.values[i] &= ~PREVISIONNEL
 
-            if not (self.GetParent().GetParent().options & PRESENCES_ONLY) and line.get_state() == ABSENT:
+            if not (self.GetParent().GetParent().options & PRESENCES_ONLY) and line.get_state() == ABSENT and line.reference.get_state() != ABSENT:
                 line.set_state(VACANCES)
             else:
                 line.save()
@@ -239,7 +242,10 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         elif line.date <= datetime.date.today() and state & PREVISIONNEL:
             line.confirm()
         else:
-            line.set_state(VACANCES)
+            if line.reference.get_state() == ABSENT:
+                line.set_state(MALADE)
+            else:
+                line.set_state(VACANCES)
 
         if line.insert:
             line.insert[line.key] = line
@@ -328,12 +334,12 @@ class PlanningSummaryPanel(BufferedWindow):
     def __init__(self, parent):
         self.activities_count = len(creche.activites)
         self.summary = {}
-        BufferedWindow.__init__(self, parent, size=(-1, 22+20*self.activities_count))
+        BufferedWindow.__init__(self, parent, size=(-1, 2+20*self.activities_count))
 
     def UpdateContents(self):
         if self.activities_count != len(creche.activites):
             self.activities_count = len(creche.activites)
-            self.SetMinSize((-1, 22+20*self.activities_count))
+            self.SetMinSize((-1, 2+20*self.activities_count))
             self.GetParent().sizer.Layout()
             
         lines = self.GetParent().GetSummaryLines()
@@ -351,10 +357,7 @@ class PlanningSummaryPanel(BufferedWindow):
             pass
         
         for i, activity in enumerate(self.summary.keys()):
-            if activity == 0:
-                dc.DrawText(u"Présences", 5, 6 + i * 20)
-            else:
-                dc.DrawText(creche.activites[i].label, 5, 6 + i * 20)
+            dc.DrawText(self.summary[activity].label, 5, 6 + i * 20)
             self.DrawLine(dc, i, activity)
 
         dc.EndDrawing()

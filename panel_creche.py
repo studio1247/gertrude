@@ -20,6 +20,7 @@ import datetime
 from constants import *
 from controls import *
 from sqlobjects import *
+import wx
 
 types_creche = [("Parental", TYPE_PARENTAL),
                 ("Associatif", TYPE_ASSOCIATIF),
@@ -156,14 +157,40 @@ class ActivitesTab(AutoTab):
         global delbmp
         delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
         AutoTab.__init__(self, parent)
+        self.color_buttons = {}
         self.sizer = wx.BoxSizer(wx.VERTICAL)
+
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, "Couleurs"), wx.VERTICAL)
+        flex_sizer = wx.FlexGridSizer(0, 3, 3, 2)
+        flex_sizer.AddGrowableCol(1, 1)
+        for label, field in ((u"présences", "couleur"), (u"présences supplémentaires", "couleur_supplement"), (u"présences prévisionnelles", "couleur_previsionnel")):
+            color_button = wx.Button(self, -1, "", size=(20, 20))
+            r, g, b, a, h = couleur = getattr(creche.activites[0], field)
+            color_button.SetBackgroundColour(wx.Color(r, g, b))
+            self.Bind(wx.EVT_BUTTON, self.onColorButton, color_button)
+            color_button.hash_cb = HashComboBox(self)
+            color_button.activite = color_button.hash_cb.activite = creche.activites[0]
+            color_button.field = color_button.hash_cb.field = field
+            self.color_buttons[field] = color_button
+            self.UpdateHash(color_button.hash_cb, couleur)
+            self.Bind(wx.EVT_COMBOBOX, self.onHashChange, color_button.hash_cb)
+            flex_sizer.AddMany([(wx.StaticText(self, -1, u'Couleur des %s :' % label), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (color_button, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (color_button.hash_cb, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5)])
+        box_sizer.Add(flex_sizer, 0, wx.BOTTOM, 5)
+        button = wx.Button(self, -1, u'Rétablir les couleurs par défaut')
+        self.Bind(wx.EVT_BUTTON, self.couleursDefaut, button)
+        box_sizer.Add(button, 0, wx.ALL, 5)
+        self.sizer.Add(box_sizer, 0, wx.ALL|wx.EXPAND, 5)
+
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Activités'), wx.VERTICAL)
         self.activites_sizer = wx.BoxSizer(wx.VERTICAL)
         for activity in creche.activites.values():
-            self.line_add(activity)
-        self.sizer.Add(self.activites_sizer, 0, wx.EXPAND|wx.ALL, 5)
+            if activity.value > 0:
+                self.line_add(activity)
+        box_sizer.Add(self.activites_sizer, 0, wx.EXPAND|wx.ALL, 5)
         button_add = wx.Button(self, -1, u'Nouvelle activité')
-        self.sizer.Add(button_add, 0, wx.ALL, 5)
+        box_sizer.Add(button_add, 0, wx.ALL, 5)
         self.Bind(wx.EVT_BUTTON, self.activite_add, button_add)
+        self.sizer.Add(box_sizer, 0, wx.ALL|wx.EXPAND, 5)
         self.SetSizer(self.sizer)
         self.sizer.Layout()
         AutoTab.UpdateContents(self)
@@ -171,22 +198,33 @@ class ActivitesTab(AutoTab):
     def UpdateContents(self):
         self.activites_sizer.Clear(True)
         for activity in creche.activites.values():
-            self.line_add(activity)
+            if activity.value > 0:
+                self.line_add(activity)
         self.sizer.Layout()
+        
+    def couleursDefaut(self, event):
+        creche.activites[0].couleur = [5, 203, 28, 150, wx.SOLID]
+        creche.activites[0].couleur_supplement = [5, 203, 28, 250, wx.SOLID]
+        creche.activites[0].couleur_previsionnel = [5, 203, 28, 50, wx.SOLID]
+        for field in ("couleur", "couleur_supplement", "couleur_previsionnel"):
+            r, g, b, a, h = color = getattr(creche.activites[0], field)
+            self.color_buttons[field].SetBackgroundColour(wx.Color(r, g, b))
+            self.UpdateHash(self.color_buttons[field].hash_cb, color)        
 
     def line_add(self, activity):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddMany([(wx.StaticText(self, -1, 'Label :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, 'activites[%d].label' % activity.value), 1, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Libellé :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, 'activites[%d].label' % activity.value), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, 'Mode :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoChoiceCtrl(self, creche, 'activites[%d].mode' % activity.value, items=activity_modes), 1, wx.EXPAND)])
-        color_cb = ActivityComboBox(self)
-        color_cb.reference = activity
-        for color in range(1, 10):
-            color_cb.Append("", color)
-        if activity.color is not None:
-            color_cb.SetSelection(activity.color-1)
-        self.Bind(wx.EVT_COMBOBOX, self.changeColor, color_cb)
-        sizer.AddMany([(wx.StaticText(self, -1, 'Couleur :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (color_cb, 1, wx.EXPAND)])
-        
+        color_button = wx.Button(self, -1, "", size=(20, 20))
+        r, g, b, a, h = activity.couleur
+        color_button.SetBackgroundColour(wx.Color(r, g, b))
+        self.Bind(wx.EVT_BUTTON, self.onColorButton, color_button)
+        color_button.hash_cb = HashComboBox(self)
+        color_button.activite = color_button.hash_cb.activite = activity
+        color_button.field = color_button.hash_cb.field = "couleur"
+        self.UpdateHash(color_button.hash_cb, activity.couleur)
+        self.Bind(wx.EVT_COMBOBOX, self.onHashChange, color_button.hash_cb)
+        sizer.AddMany([(wx.StaticText(self, -1, 'Couleur :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (color_button, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (color_button.hash_cb, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5)])
         delbutton = wx.BitmapButton(self, -1, delbmp)
         delbutton.index = activity.value
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
@@ -195,11 +233,21 @@ class ActivitesTab(AutoTab):
 
     def activite_add(self, event):
         activity = Activite()
-        colors = [tmp.color for tmp in creche.activites.values()]
-        for color in range(1, 10):
-            if color not in colors:
-                activity.color = color
+        colors = [tmp.couleur for tmp in creche.activites.values()]
+        for h in (wx.BDIAGONAL_HATCH, wx.CROSSDIAG_HATCH, wx.FDIAGONAL_HATCH, wx.CROSS_HATCH, wx.HORIZONTAL_HATCH, wx.VERTICAL_HATCH, wx.TRANSPARENT, wx.SOLID):
+            for color in (wx.RED, wx.BLUE, wx.CYAN, wx.GREEN, wx.LIGHT_GREY):
+                r, g, b = color.Get()
+                if (r, g, b, 150, h) not in colors:
+                    activity.couleur = (r, g, b, 150, h)
+                    activity.couleur_supplement = (r, g, b, 250, h)
+                    activity.couleur_previsionnel = (r, g, b, 50, h)
+                    break
+            if activity.couleur:
                 break
+        else:
+            activity.couleur = 0, 0, 0, 150, wx.SOLID
+            activity.couleur_supplement = 0, 0, 0, 250, wx.SOLID
+            activity.couleur_previsionnel = 0, 0, 0, 50, wx.SOLID
         creche.activites[activity.value] = activity
         history.Append(Delete(creche.activites, activity.value))
         self.line_add(activity)
@@ -207,10 +255,31 @@ class ActivitesTab(AutoTab):
 
     def activite_del(self, event):
         index = event.GetEventObject().index
+        entrees = []
+        for inscrit in creche.inscrits:
+            for date in inscrit.journees:
+                journee = inscrit.journees[date]
+                for start, end, activity in journee.activites:
+                    if activity == index:
+                        entrees.append((inscrit, date))
+                        break
+        if len(entrees) > 0:
+            message = 'Cette activité est utilisée par :\n'
+            for inscrit, date in entrees:
+                message += '%s %s le %s, ' % (inscrit.prenom, inscrit.nom, getDateStr(date))
+            message += '\nVoulez-vous vraiment la supprimer ?'
+            dlg = wx.MessageDialog(self, message, 'Confirmation', wx.OK|wx.CANCEL|wx.ICON_WARNING)
+            reponse = dlg.ShowModal()
+            dlg.Destroy()
+            if reponse != wx.ID_OK:
+                return
+        for inscrit, date in entrees:
+            journee = inscrit.journees[date]
+            journee.remove_all_activities(index)
         history.Append(Insert(creche.activites, index, creche.activites[index]))
         for i, child in enumerate(self.activites_sizer.GetChildren()):
             sizer = child.GetSizer()
-            if index == sizer.GetItem(6).GetWindow().index:
+            if index == sizer.GetItem(7).GetWindow().index:
                 sizer.DeleteWindows()
                 self.activites_sizer.Detach(i)
         creche.activites[index].delete()
@@ -218,9 +287,42 @@ class ActivitesTab(AutoTab):
         self.sizer.Layout()
         self.UpdateContents()
 
-    def changeColor(self, event):
+    def UpdateHash(self, hash_cb, color):
+        r, g, b, a, h = color
+        hash_cb.Clear()
+        for i, hash in enumerate((wx.SOLID, wx.TRANSPARENT, wx.BDIAGONAL_HATCH, wx.CROSSDIAG_HATCH, wx.FDIAGONAL_HATCH, wx.CROSS_HATCH, wx.HORIZONTAL_HATCH, wx.VERTICAL_HATCH)):
+            hash_cb.Append("", (r, g, b, a, hash))
+            if hash == h:
+                hash_cb.SetSelection(i)
+            
+    def onColorButton(self, event):
         obj = event.GetEventObject()
-        obj.reference.color = obj.GetSelection() + 1
+        r, g, b, a, h = couleur = getattr(obj.activite, obj.field)
+        data = wx.ColourData()
+        data.SetColour((r, g, b, a))
+        try:
+            from agw import cubecolourdialog as CCD
+        except ImportError: # if it's not there locally, try the wxPython lib.
+            import wx.lib.agw.cubecolourdialog as CCD
+        dlg = CCD.CubeColourDialog(self, data)
+        #dlg = wx.ColourDialog(self, data)
+        dlg.GetColourData().SetChooseFull(True)
+        if dlg.ShowModal() == wx.ID_OK:
+            data = dlg.GetColourData()
+            colour = data.GetColour()
+#            self.log.WriteText('You selected: %s: %d, %s: %d, %s: %d, %s: %d\n' % ("Red", colour.Red(),
+#                                                                                   "Green", colour.Green(),
+#                                                                                   "Blue", colour.Blue(),
+#                                                                                   "Alpha", colour.Alpha()))
+            r, g, b, a = colour.Red(), colour.Green(), colour.Blue(), colour.Alpha()
+            couleur = r, g, b, a, h
+            setattr(obj.activite, obj.field, couleur) 
+            obj.SetBackgroundColour(wx.Color(r, g, b))
+            self.UpdateHash(obj.hash_cb, couleur)
+    
+    def onHashChange(self, event):
+        obj = event.GetEventObject()
+        setattr(obj.activite, obj.field, obj.GetClientData(obj.GetSelection()))
 
 class CafTab(AutoTab, PeriodeMixin):
     def __init__(self, parent):
@@ -328,6 +430,7 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, u'Granularité du planning :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'granularite', [('1/4 heure', 4), ('1/2 heure', 2), ('1 heure', 1)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Nombre de mois payés :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'mois_payes', [('12 mois', 12), ('11 mois', 11)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Présences prévisionnelles :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'presences_previsionnelles', [(u'Géré', True), (u'Non géré', False)]), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Présences supplémentaires :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'presences_supplementaires', [(u'Géré', True), (u'Non géré', False)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u"Modes d'inscription :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'modes_inscription', [(u'Crèche à plein-temps uniquement', MODE_5_5), ('Tous modes', MODE_5_5+MODE_4_5+MODE_3_5+MODE_HALTE_GARDERIE)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Mode de facturation :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoBinaryChoiceCtrl(self, creche, 'mode_facturation', [(u"PSU (horaires réels)", FACTURATION_PSU), ("Forfait 10h / jour", 0)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Traitement des absences pour maladie :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoBinaryChoiceCtrl(self, creche, 'mode_facturation', [(u"Avec carence", DEDUCTION_MALADIE_AVEC_CARENCE), ("Sans carence", 0)]), 0, wx.EXPAND)])
@@ -343,7 +446,7 @@ class CrecheNotebook(wx.Notebook):
         self.AddPage(ResponsabilitesTab(self), u'Responsabilités')
         self.AddPage(CafTab(self), 'C.A.F.')
         self.AddPage(JoursFermeturePanel(self), u'Congés')
-        self.AddPage(ActivitesTab(self), u'Activités')
+        self.AddPage(ActivitesTab(self), u'Couleurs / Activités')
         self.AddPage(ParametersPanel(self), u'Paramètres')
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 

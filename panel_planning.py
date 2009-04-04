@@ -122,21 +122,19 @@ class PlanningPanel(GPanel):
 
     def UpdateContents(self):
         self.activity_choice.Clear()
-        tmp = Activite(creation=False)
-        tmp.value = 0
-        self.activity_choice.Append(u'Présences', tmp)
         selected = 0
-        if len(creche.activites) > 0:
+        if len(creche.activites) > 1:
             self.activity_choice.Enable()
             for i, activity in enumerate(creche.activites.values()):
                 self.activity_choice.Append(activity.label, activity)
                 try:
                     if self.activity_choice.activity.value == activity.value:
-                        selected = i+1
+                        selected = i
                 except:
                     pass
         else:
             self.activity_choice.Disable()
+            self.activity_choice.Append(creche.activites[0].label, creche.activites[0])
         self.activity_choice.SetSelection(selected)
         for week_day in range(self.count):
             note = self.notebook.GetPage(week_day)

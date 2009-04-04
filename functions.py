@@ -18,6 +18,7 @@
 import datetime, binascii
 from constants import *
 from parameters import *
+import wx
 
 def getFirstMonday():
     first_monday = first_date
@@ -180,10 +181,29 @@ def getLines(date, inscrits):
             lines.append(line)
     return lines
 
+def getActivityColor(value):
+    if value < 0:
+        return 0, 0, 0, 0, 100
+    activity = value & ~(PREVISIONNEL|SUPPLEMENT)
+    if activity in creche.activites:
+        if value & PREVISIONNEL:
+            return creche.activites[activity].couleur_previsionnel
+        if value & SUPPLEMENT:
+            return creche.activites[activity].couleur_supplement
+        else:
+            return creche.activites[activity].couleur
+    else:
+        return 0, 0, 0, 0, 100
+        
 def getActivitiesSummary(creche, lines):
+    class Summary(list):
+        def __init__(self, label):
+            self.label = label
+            self.extend([0] * 96)
+            
     summary = {}
-    for activity in [0] + creche.activites.keys():
-        summary[activity] = [0] * 96
+    for activity in creche.activites:
+        summary[activity] = Summary(creche.activites[activity].label)
         for i in range(96):
             for line in lines:
                 if not isinstance(line, list):

@@ -211,7 +211,12 @@ class FileConnection(object):
     def Load(self, progress_handler=default_progress_handler):
         self.Backup(progress_handler)
         if not os.path.isfile(sqlinterface.DB_FILENAME):
-            sql_connection.create(progress_handler)
+            try:
+                sql_connection.create(progress_handler)
+            except:
+                sql_connection.close()
+                os.remove(sqlinterface.DB_FILENAME)
+                raise
         creche = sql_connection.load(progress_handler)
         return creche, 0
 
