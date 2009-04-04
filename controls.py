@@ -254,7 +254,7 @@ class PhoneCtrl(wx.TextCtrl):
         if (ip < 14 and ip % 3 == 2):
             self.SetInsertionPoint(ip + 1)
 
-if sys.platform == 'win32':
+if 0: #sys.platform == 'win32':
   class DateCtrl(wx.GenericDatePickerCtrl):
     def SetValue(self, date):
         if date is None:
@@ -354,7 +354,7 @@ class AutoDateCtrl(DateCtrl, AutoMixin):
     def __init__(self, parent, instance, member, *args, **kwargs):
         DateCtrl.__init__(self, parent, id=-1, style=wx.DP_DEFAULT|wx.DP_DROPDOWN|wx.DP_SHOWCENTURY|wx.DP_ALLOWNONE, *args, **kwargs)
         AutoMixin.__init__(self, parent, instance, member)
-        self.Bind(wx.EVT_DATE_CHANGED, self.onText, self)
+        # self.Bind(wx.EVT_DATE_CHANGED, self.onText, self)
         # DateCtrl.__init__(self, parent, -1, *args, **kwargs)
         # AutoMixin.__init__(self, parent, instance, member)
 
