@@ -109,7 +109,10 @@ class HttpConnection(object):
 
     def get_token(self):
         self.progress_handler.display(u"Récupération du jeton ...")
-        self.token = self.urlopen('get_token')
+        if force_token:
+            self.token = self.urlopen('force_token')
+        else:
+            self.token = self.urlopen('get_token')
         if not self.token:
             return 0
         else:
@@ -137,10 +140,9 @@ class HttpConnection(object):
             f.close()
             self.progress_handler.display(u'%d octets transférés.' % len(data))
         else:
-            self.progress_handler.display(u'Pas de base présente sur le serveur')
+            self.progress_handler.display(u'Pas de base présente sur le serveur.')
             if os.path.isfile(sqlinterface.DB_FILENAME):
-                self.progress_handler.display("Suppression de la base locale ...")
-                os.remove(sqlinterface.DB_FILENAME)
+                self.progress_handler.display("Utilisation de la base locale ...")
         return 1
 
     def download(self):       
@@ -194,7 +196,6 @@ class HttpConnection(object):
     def Exit(self, progress_handler=default_progress_handler):
         self.progress_handler = progress_handler
         return FileConnection().Save() and self.rel_token()
-
 
 class FileConnection(object):
     def __init__(self):

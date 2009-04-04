@@ -73,6 +73,7 @@ class StartDialog(wx.Dialog):
         w, h = self.sizer.GetSize()
         self.SetPosition(((W-w)/2, (H-h)/2 - 50))
 
+        __builtin__.force_token = False
         self.LoadedEvent, EVT_PROGRESS_EVENT = wx.lib.newevent.NewEvent()
         self.Bind(EVT_PROGRESS_EVENT, self.OnLoaded)
         thread.start_new_thread(self.Load, ())
@@ -85,11 +86,15 @@ class StartDialog(wx.Dialog):
 
         if readonly:
             dlg = wx.MessageDialog(self,
-                                   u"Le jeton n'a pas pu être pris. Gertrude sera accessible en lecture seule",
+                                   u"Le jeton n'a pas pu être pris. Gertrude sera accessible en lecture seule. Voulez-vous forcer la prise du jeton ?",
                                    'Gertrude',
-                                   wx.OK | wx.ICON_EXCLAMATION )
-            dlg.ShowModal()
+                                   wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
+            result = dlg.ShowModal()
             dlg.Destroy()
+            if result == wx.ID_YES:
+                __builtin__.force_token = True
+                thread.start_new_thread(self.Load, ())
+                return
 
         self.loaded = True
         sql_connection.open()
