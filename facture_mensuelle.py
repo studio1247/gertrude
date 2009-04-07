@@ -46,11 +46,9 @@ class FactureModifications(object):
         
         #print dom.toprettyxml()
         doc = dom.getElementsByTagName("office:text")[0]
-        templates = doc.getElementsByTagName('text:section')
-        for template in templates:
-            doc.removeChild(template)
+        templates = doc.childNodes[:]
         
-        for inscrit in self.inscrits:
+        for index, inscrit in enumerate(self.inscrits):
             try:
                 facture = Facture(inscrit, self.periode.year, self.periode.month, options=ARRONDI)
             except CotisationException, e:
@@ -62,7 +60,12 @@ class FactureModifications(object):
             
             for template in templates:
                 section = template.cloneNode(1)
-                doc.appendChild(section)
+                if section.nodeName in ("draw:frame", "draw:custom-shape"):
+                    doc.insertBefore(section, template)
+                else:
+                    doc.appendChild(section)
+                if section.hasAttribute("text:anchor-page-number"):
+                    section.setAttribute("text:anchor-page-number", str(index+1))
             
                 # D'abord le tableau des presences du mois
                 empty_cells = debut.weekday()
@@ -128,4 +131,9 @@ class FactureModifications(object):
                         ]
         
                 ReplaceTextFields(section, fields)
+
+        for template in templates:
+            doc.removeChild(template)
+        
+        #print doc.toprettyxml() 
         return errors
