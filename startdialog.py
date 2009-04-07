@@ -21,7 +21,7 @@ import wx, wx.lib, wx.lib.newevent
 from config import LoadConfig
 from constants import *
 from functions import *
-from config import Load, Save
+from config import Load, Exit
 
 class StartDialog(wx.Dialog):
     def __init__(self, frame):
@@ -150,5 +150,5 @@ class StartDialog(wx.Dialog):
     def OnExit(self, evt):
         self.info.AppendText("\nFermeture ...\n")
         if self.loaded:
-            Save(ProgressHandler(self.info.AppendText, self.gauge, 100))
+            Exit(ProgressHandler(self.info.AppendText, self.gauge, 100))
         self.Destroy()
