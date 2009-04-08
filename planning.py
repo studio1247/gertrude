@@ -219,6 +219,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         self.sizer.Add(self.labels_panel, 0, wx.EXPAND)
         if not parent.options & NO_ICONS:
             self.buttons_sizer = wx.BoxSizer(wx.VERTICAL)
+            self.buttons_sizer.SetMinSize((ICONS_WIDTH-2, -1))
             self.sizer.Add(self.buttons_sizer, 0, wx.EXPAND|wx.RIGHT, 2)
         self.grid_panel = PlanningGridWindow(self, activity_combobox)
         self.sizer.Add(self.grid_panel, 0, wx.EXPAND)
@@ -268,7 +269,6 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                 state |= PRESENT
         self.buttons_sizer.GetItem(index).GetWindow().button.SetBitmapLabel(BUTTON_BITMAPS[state])
 
-# self.buttons_sizer.ShowItems(1)
     def Disable(self, cause):
         self.lines = []
         self.SetScrollPos(wx.VERTICAL, 0)
@@ -317,6 +317,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
 
         self.grid_panel.UpdateDrawing()
         self.labels_panel.Refresh()
+        self.Layout()
             
     def OnPaint(self, event):
         dc = wx.PaintDC(self.labels_panel)

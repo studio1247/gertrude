@@ -422,10 +422,20 @@ class ParametersPanel(AutoTab):
         sizer = wx.FlexGridSizer(0, 2, 5, 5)
         sizer.AddGrowableCol(1, 1)
         sizer2 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer2.AddMany([(AutoChoiceCtrl(self, creche, 'ouverture', [('7h30', 7.5), ('7h45', 7.75), ('8h', 8), ('8h30', 8.5), ('9h', 9)]), 0, wx.EXPAND), (wx.StaticText(self, -1, '-'), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'fermeture', [('18h', 18), ('18h30', 18.5), ('18h45', 18.75), ('19h', 19)]), 0, wx.EXPAND)])
+        self.ouverture_cb = AutoChoiceCtrl(self, creche, 'ouverture', [('7h30', 7.5), ('7h45', 7.75), ('8h', 8), ('8h30', 8.5), ('9h', 9)])
+        self.fermeture_cb = AutoChoiceCtrl(self, creche, 'fermeture', [('18h', 18), ('18h30', 18.5), ('18h45', 18.75), ('19h', 19)])
+        self.ouverture_cb.check_function = self.ouverture_check
+        self.fermeture_cb.check_function = self.fermeture_check
+        self.Bind(wx.EVT_CHOICE, self.onOuverture, self.ouverture_cb)
+        self.Bind(wx.EVT_CHOICE, self.onOuverture, self.fermeture_cb)
+        sizer2.AddMany([(self.ouverture_cb, 0, wx.EXPAND), (wx.StaticText(self, -1, '-'), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10), (self.fermeture_cb, 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Heures d\'ouverture :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (sizer2, 0, wx.EXPAND)])
         sizer2 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer2.AddMany([(AutoChoiceCtrl(self, creche, 'affichage_min', [('7h30', 7.5), ('7h45', 7.75), ('8h', 8), ('8h30', 8.5), ('9h', 9)]), 0, wx.EXPAND), (wx.StaticText(self, -1, '-'), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'affichage_max', [('18h', 18), ('18h30', 18.5), ('18h45', 18.75), ('19h', 19)]), 0, wx.EXPAND)])
+        self.affichage_min_cb = AutoChoiceCtrl(self, creche, 'affichage_min', [('7h30', 7.5), ('7h45', 7.75), ('8h', 8), ('8h30', 8.5), ('9h', 9)])
+        self.affichage_max_cb = AutoChoiceCtrl(self, creche, 'affichage_max', [('18h', 18), ('18h30', 18.5), ('18h45', 18.75), ('19h', 19)])
+        self.Bind(wx.EVT_CHOICE, self.onAffichage, self.affichage_min_cb)
+        self.Bind(wx.EVT_CHOICE, self.onAffichage, self.affichage_max_cb)
+        sizer2.AddMany([(self.affichage_min_cb, 0, wx.EXPAND), (wx.StaticText(self, -1, '-'), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10), (self.affichage_max_cb, 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Heures affichées sur le planning :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (sizer2, 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Granularité du planning :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'granularite', [('1/4 heure', 4), ('1/2 heure', 2), ('1 heure', 1)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Nombre de mois payés :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'mois_payes', [('12 mois', 12), ('11 mois', 11)]), 0, wx.EXPAND)])
@@ -437,6 +447,69 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, u"Durée minimale d'absence pour déduction / Durée de la carence :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'minimum_maladie', min=0, precision=0), 0, 0)])
         self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(self.sizer)
+    
+    def ouverture_check(self, ouverture, a, b):
+        return a >= ouverture * 4
+    
+    def fermeture_check(self, fermeture, a, b):
+        return b <= fermeture * 4
+    
+    def onOuverture(self, event):
+        errors = []
+        obj = event.GetEventObject()
+        value = event.GetClientData()
+        for inscrit in creche.inscrits:
+            for inscription in inscrit.inscriptions:
+                for j, jour in enumerate(inscription.reference):
+                    for a, b, v in jour.activites.keys():
+                        if not obj.check_function(value, a, b):
+                            errors.append((inscrit, jour, " (%s)" % periodestr(inscription), days[j%7].lower()))
+            for j in inscrit.journees.keys():
+                jour = inscrit.journees[j]
+                for a, b, v in jour.activites.keys():
+                    if not obj.check_function(value, a, b):
+                        errors.append((inscrit, jour, "", date2str(j)))
+                
+        if errors:
+            message = u"Diminuer la période d'ouverture changera les plannings des enfants suivants :\n"
+            for inscrit, jour, info, date in errors:
+                message += '  %s %s%s le %s\n' % (inscrit.prenom, inscrit.nom, info, date)
+            message += 'Confirmer ?'
+            dlg = wx.MessageDialog(self, message, 'Confirmation', wx.OK|wx.CANCEL|wx.ICON_WARNING)
+            reponse = dlg.ShowModal()
+            dlg.Destroy()
+            if reponse != wx.ID_OK:
+                obj.UpdateContents()
+                return
+        obj.AutoChange(value)
+        for inscrit, jour, info, date in errors:
+            for i in range(0, int(creche.ouverture*4)) + range(int(creche.fermeture*4), 96):
+                jour.values[i] = 0
+            jour.save()
+        if creche.affichage_min > creche.ouverture:
+            creche.affichage_min = creche.ouverture
+            self.affichage_min_cb.UpdateContents()
+        if creche.affichage_max < creche.fermeture:
+            creche.affichage_max = creche.fermeture
+            self.affichage_max_cb.UpdateContents()
+            
+    def onAffichage(self, event):
+        obj = event.GetEventObject()
+        value = event.GetClientData()
+        error = False
+        if obj is self.affichage_min_cb:
+            if value > creche.ouverture:
+                error = True
+        else:
+            if value < creche.fermeture:
+                error = True
+        if error:
+            dlg = wx.MessageDialog(self, u"La période d'affichage doit couvrir au moins l'amplitude horaire de la crèche !", "Erreur", wx.OK)
+            dlg.ShowModal()
+            dlg.Destroy()
+            obj.UpdateContents()
+        else:
+            obj.AutoChange(value)
 
 class CrecheNotebook(wx.Notebook):
     def __init__(self, parent):
