@@ -58,7 +58,7 @@ class StartDialog(wx.Dialog):
         btn = wx.Button(self, wx.ID_OK)
         self.Bind(wx.EVT_BUTTON, self.OnOk, btn)
         self.btnsizer.AddButton(btn)
-        btn = wx.Button(self, wx.ID_CANCEL)
+        btn = wx.Button(self, wx.ID_CANCEL, "Annuler")
         self.btnsizer.AddButton(btn)
         self.Bind(wx.EVT_BUTTON, self.OnExit, btn)
         self.btnsizer.Realize()       
