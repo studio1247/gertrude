@@ -108,16 +108,15 @@ class PlanningGridWindow(BufferedWindow):
 
     def DrawLine(self, dc, index, line):
         for start, end, activity in line.get_activities(reference=line.reference):
-            if activity >= 0:
-                r, g, b, t, s = getActivityColor(activity)
-                try:
-                  dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
-                  dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
-                except:
-                  dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
-                  dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
-                rect = wx.Rect(1+(start-int(creche.affichage_min*4))*COLUMN_WIDTH, 1 + index*LINE_HEIGHT, (end-start)*COLUMN_WIDTH-1, LINE_HEIGHT-1)
-                dc.DrawRoundedRectangleRect(rect, 4)
+            r, g, b, t, s = getActivityColor(activity)
+            try:
+              dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
+              dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
+            except:
+              dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
+              dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
+            rect = wx.Rect(1+(start-int(creche.affichage_min*4))*COLUMN_WIDTH, 1 + index*LINE_HEIGHT, (end-start)*COLUMN_WIDTH-1, LINE_HEIGHT-1)
+            dc.DrawRoundedRectangleRect(rect, 4)
         
     def __get_pos(self, x, y):
         l = int(creche.affichage_min * BASE_GRANULARITY + (x / COLUMN_WIDTH))
@@ -248,7 +247,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             else:
                 line.set_state(VACANCES)
 
-        if line.insert:
+        if line.insert is not None:
             line.insert[line.key] = line
             line.insert = None
 

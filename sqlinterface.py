@@ -25,7 +25,7 @@ from sqlobjects import *
 import wx
 
 DB_FILENAME = 'gertrude.db'
-VERSION = 25
+VERSION = 26
 
 def getdate(s):
     if s is None:
@@ -247,6 +247,11 @@ class SQLConnection(object):
         couleur_supplement = [5, 203, 28, 250, wx.SOLID]
         couleur_previsionnel = [5, 203, 28, 50, wx.SOLID]
         cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel) VALUES(NULL,?,?,?,?,?,?)', (u"Présences", 0, 0, str(couleur), str(couleur_supplement), str(couleur_previsionnel)))
+        vacances = (0, 0, 255, 150, wx.SOLID)
+        malade = (190, 35, 29, 150, wx.SOLID)
+        cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel) VALUES(NULL,?,?,?,?,?,?)', (u"Vacances", -1, 0, str(vacances), str(vacances), str(vacances)))
+        cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel) VALUES(NULL,?,?,?,?,?,?)', (u"Malade", -2, 0, str(malade), str(malade), str(malade)))
+
         self.con.commit()
 
     def load(self, progress_handler=default_progress_handler):
@@ -292,7 +297,10 @@ class SQLConnection(object):
         for entry in cur.fetchall():
             activity = Activite(creation=False)
             activity.label, activity.value, activity.mode, activity.couleur, activity.couleur_supplement, activity.couleur_previsionnel, activity.idx = entry
-            creche.activites[activity.value] = activity
+            if activity.value < 0:
+                creche.couleurs[activity.value] = activity
+            else:
+                creche.activites[activity.value] = activity
                 
         cur.execute('SELECT date_embauche, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, email, idx FROM EMPLOYES')
         for employe_entry in cur.fetchall():
@@ -655,6 +663,12 @@ class SQLConnection(object):
             for idx, couleur in cur.fetchall():
                 cur.execute('UPDATE ACTIVITIES SET couleur=?, couleur_supplement=?, couleur_previsionnel=? WHERE idx=?', (str(couleurs[couleur]), str(couleurs_supplement[couleur]), str(couleurs_previsionnel[couleur]), idx))
             cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel) VALUES(NULL,?,?,?,?,?,?)', (u"Présences", 0, 0, str(couleurs[0]), str(couleurs_supplement[0]), str(couleurs_previsionnel[0])))
+            
+        if version < 26:
+            vacances = (0, 0, 255, 150, wx.SOLID)
+            malade = (190, 35, 29, 150, wx.SOLID)
+            cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel) VALUES(NULL,?,?,?,?,?,?)', (u"Vacances", -1, 0, str(vacances), str(vacances), str(vacances)))
+            cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel) VALUES(NULL,?,?,?,?,?,?)', (u"Malade", -2, 0, str(malade), str(malade), str(malade)))
 
         if version < VERSION:
             try:

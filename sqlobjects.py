@@ -360,6 +360,7 @@ class Creche(object):
         self.ville = ''
         self.telephone = ''
         self.users = []
+        self.couleurs = {}
         self.activites = {}
         self.employes = []
         self.feries = {}

@@ -163,15 +163,15 @@ class ActivitesTab(AutoTab):
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, "Couleurs"), wx.VERTICAL)
         flex_sizer = wx.FlexGridSizer(0, 3, 3, 2)
         flex_sizer.AddGrowableCol(1, 1)
-        for label, field in ((u"présences", "couleur"), (u"présences supplémentaires", "couleur_supplement"), (u"présences prévisionnelles", "couleur_previsionnel")):
+        for label, activite, field in ((u"présences", creche.activites[0], "couleur"), (u"présences supplémentaires", creche.activites[0], "couleur_supplement"), (u"présences prévisionnelles", creche.activites[0], "couleur_previsionnel"), (u"absences pour congés", creche.couleurs[VACANCES], "couleur"), (u"absences pour maladie", creche.couleurs[MALADE], "couleur")):
             color_button = wx.Button(self, -1, "", size=(20, 20))
-            r, g, b, a, h = couleur = getattr(creche.activites[0], field)
+            r, g, b, a, h = couleur = getattr(activite, field)
             color_button.SetBackgroundColour(wx.Color(r, g, b))
             self.Bind(wx.EVT_BUTTON, self.onColorButton, color_button)
             color_button.hash_cb = HashComboBox(self)
-            color_button.activite = color_button.hash_cb.activite = creche.activites[0]
+            color_button.activite = color_button.hash_cb.activite = activite
             color_button.field = color_button.hash_cb.field = field
-            self.color_buttons[field] = color_button
+            self.color_buttons[(activite.value, field)] = color_button
             self.UpdateHash(color_button.hash_cb, couleur)
             self.Bind(wx.EVT_COMBOBOX, self.onHashChange, color_button.hash_cb)
             flex_sizer.AddMany([(wx.StaticText(self, -1, u'Couleur des %s :' % label), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (color_button, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (color_button.hash_cb, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5)])
@@ -206,10 +206,12 @@ class ActivitesTab(AutoTab):
         creche.activites[0].couleur = [5, 203, 28, 150, wx.SOLID]
         creche.activites[0].couleur_supplement = [5, 203, 28, 250, wx.SOLID]
         creche.activites[0].couleur_previsionnel = [5, 203, 28, 50, wx.SOLID]
-        for field in ("couleur", "couleur_supplement", "couleur_previsionnel"):
-            r, g, b, a, h = color = getattr(creche.activites[0], field)
-            self.color_buttons[field].SetBackgroundColour(wx.Color(r, g, b))
-            self.UpdateHash(self.color_buttons[field].hash_cb, color)        
+        creche.couleurs[VACANCES].couleur = [0, 0, 255, 150, wx.SOLID]
+        creche.couleurs[MALADE].couleur = [190, 35, 29, 150, wx.SOLID]
+        for activite, field in [(creche.activites[0], "couleur"), (creche.activites[0], "couleur_supplement"), (creche.activites[0], "couleur_previsionnel")]:
+            r, g, b, a, h = color = getattr(activite, field)
+            self.color_buttons[(0, field)].SetBackgroundColour(wx.Color(r, g, b))
+            self.UpdateHash(self.color_buttons[(0, field)].hash_cb, color)        
 
     def line_add(self, activity):
         sizer = wx.BoxSizer(wx.HORIZONTAL)

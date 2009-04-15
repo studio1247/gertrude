@@ -183,7 +183,7 @@ def getLines(date, inscrits):
 
 def getActivityColor(value):
     if value < 0:
-        return 0, 0, 0, 0, 100
+        return creche.couleurs[value].couleur
     activity = value & ~(PREVISIONNEL|SUPPLEMENT)
     if activity in creche.activites:
         if value & PREVISIONNEL:
