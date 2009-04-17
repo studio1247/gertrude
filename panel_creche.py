@@ -193,9 +193,13 @@ class ActivitesTab(AutoTab):
         self.sizer.Add(box_sizer, 0, wx.ALL|wx.EXPAND, 5)
         self.SetSizer(self.sizer)
         self.sizer.Layout()
-        AutoTab.UpdateContents(self)
+        self.UpdateContents()
 
     def UpdateContents(self):
+        self.color_buttons[(0, "couleur_supplement")].Enable(creche.presences_supplementaires)
+        self.color_buttons[(0, "couleur_supplement")].hash_cb.Enable(creche.presences_supplementaires)
+        self.color_buttons[(0, "couleur_previsionnel")].Enable(creche.presences_previsionnelles)
+        self.color_buttons[(0, "couleur_previsionnel")].hash_cb.Enable(creche.presences_previsionnelles)
         self.activites_sizer.Clear(True)
         for activity in creche.activites.values():
             if activity.value > 0:
@@ -303,24 +307,22 @@ class ActivitesTab(AutoTab):
         data = wx.ColourData()
         data.SetColour((r, g, b, a))
         try:
-            from agw import cubecolourdialog as CCD
-        except ImportError: # if it's not there locally, try the wxPython lib.
             import wx.lib.agw.cubecolourdialog as CCD
-        dlg = CCD.CubeColourDialog(self, data)
-        #dlg = wx.ColourDialog(self, data)
-        dlg.GetColourData().SetChooseFull(True)
-        if dlg.ShowModal() == wx.ID_OK:
-            data = dlg.GetColourData()
-            colour = data.GetColour()
-#            self.log.WriteText('You selected: %s: %d, %s: %d, %s: %d, %s: %d\n' % ("Red", colour.Red(),
-#                                                                                   "Green", colour.Green(),
-#                                                                                   "Blue", colour.Blue(),
-#                                                                                   "Alpha", colour.Alpha()))
-            r, g, b, a = colour.Red(), colour.Green(), colour.Blue(), colour.Alpha()
-            couleur = r, g, b, a, h
-            setattr(obj.activite, obj.field, couleur) 
-            obj.SetBackgroundColour(wx.Color(r, g, b))
-            self.UpdateHash(obj.hash_cb, couleur)
+            dlg = CCD.CubeColourDialog(self, data)
+            dlg.GetColourData().SetChooseFull(True)
+            if dlg.ShowModal() == wx.ID_OK:
+                data = dlg.GetColourData()
+                colour = data.GetColour()
+                r, g, b, a = colour.Red(), colour.Green(), colour.Blue(), colour.Alpha()
+        except ImportError:
+            dlg = wx.ColourDialog(self, data)
+            if dlg.ShowModal() == wx.ID_OK:
+                data = dlg.GetColourData()
+                r, g, b = data.GetColour()
+        couleur = r, g, b, a, h
+        setattr(obj.activite, obj.field, couleur) 
+        obj.SetBackgroundColour(wx.Color(r, g, b))
+        self.UpdateHash(obj.hash_cb, couleur)
     
     def onHashChange(self, event):
         obj = event.GetEventObject()

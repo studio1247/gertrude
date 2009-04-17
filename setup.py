@@ -26,5 +26,5 @@ setup(
 	data_files=[(".", glob.glob("*.dist") + glob.glob("*.py")),
 	            ("bitmaps", glob.glob("bitmaps\\*.png") + glob.glob("bitmaps\\*.ico")),
                 ("templates_dist", glob.glob("templates_dist\\*.html") + glob.glob("templates_dist\\*.od?"))],
-	options = {"py2exe": {"packages": ["encodings"]}},
+	options = {"py2exe": {"packages": ["encodings", "wx.lib.agw.cubecolourdialog"]}},
 )
