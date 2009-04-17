@@ -25,6 +25,7 @@ Type: files; Name: "{app}\*.log"
 Source: "dist\*"; DestDir: "{app}"; Flags: ignoreversion
 Source: "dist\bitmaps\*"; DestDir: "{app}\bitmaps"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dist\templates_dist\*"; DestDir: "{app}\templates_dist"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dist\doc\*"; DestDir: "{app}\doc"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
