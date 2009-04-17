@@ -1,0 +1,35 @@
+Gertrude TODO list :
+-------------------
+
+Fonctions manquantes :
+--------------------
+- gestion des permanences des parents (crèches parentales) et des 
+  plannings du personnel.
+- en crèche municipale, utilisation d'un champ "responsable" plutôt que "tresorier"
+- impression de contrats (OpenOffice)
+- aide intégrée : ouverture du PDF de la documentation utilisateur
+- ajout de l'identité dans le jeton (+ n° de téléphone)
+- mises à jour automatiques par internet
+- mises à jour des templates par internet
+- options dans l'onglet « administration » : 
+  * sauvegarde systématique en sortie de l'application
+  * sauvegarde à chaque commit
+  * sauvegarde à intervalles réguliers
+- chiffrage des données de la base
+- familles monoparentales
+
+Améliorations :
+-------------
+- création de boutons-flèches pour les jours et regroupement de 
+  tous les boutons dans une même zone pour contrôler le planning en ne bougeant 
+  quasiment plus la souris, pourvu que le jour courant soit conservé en 
+  déplacement de semaine et la semaine courante en déplacement de jours.
+- systématiser l'apparition d'un calendrier pour toutes les zones 
+  de saisies de dates
+- nombre de places restantes dans la crèche en bas des plannings
+- simplification des droits d'accès
+- ré-essai en cas d'échec de résolution de DNS
+
+Refactoring :
+-----------
+- consistance du code : une seule langue pour les identifiants
