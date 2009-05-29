@@ -125,9 +125,10 @@ class Facture(object):
         self.tarif_horaire = self.cotisation_mensuelle / self.heures_contrat
         
         if options & ARRONDI:
-            self.cotisation_mensuelle = eval(str("%.2f" % self.cotisation_mensuelle))
-            self.supplement = eval(str("%.2f" % self.supplement))
-            self.deduction = eval(str("%.2f" % self.deduction))
+            self.tarif_horaire = round(self.tarif_horaire, 2)
+            self.cotisation_mensuelle = self.tarif_horaire * self.heures_contrat
+            self.supplement = round(self.supplement, 2) # normalement pas necessaire
+            self.deduction = round(self.deduction, 2) # normalement pas necessaire
             
         self.total = self.cotisation_mensuelle + self.supplement - self.deduction                                                 
         
