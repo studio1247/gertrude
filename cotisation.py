@@ -165,6 +165,7 @@ class Cotisation(object):
 
         self.montant_heure_garde = self.assiette_mensuelle * self.taux_horaire / 100
         if creche.mode_facturation & FACTURATION_PSU:
+            self.montant_heure_garde = round(self.montant_heure_garde, 2)
             self.cotisation_mensuelle = self.heures_mois *  self.montant_heure_garde
             self.montant_jour_supplementaire = 0
         else:
