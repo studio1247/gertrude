@@ -195,7 +195,7 @@ class ForfaitPanel(ContextPanel):
             addseparator(frere_soeur.naissance)
             addseparator(frere_soeur.entree)
             addseparator(frere_soeur.sortie, 1)
-        for year in range(debut.year, fin.year):
+        for year in range(debut.year, fin.year+1):
             addseparator(datetime.date(day=1, month=9, year=year))
             addseparator(datetime.date(day=1, month=1, year=year))
 
