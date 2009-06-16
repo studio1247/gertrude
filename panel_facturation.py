@@ -107,7 +107,7 @@ class FacturationPanel(GPanel):
             else:
                 self.recus_periodechoice.Append(u"Janvier - %s %d" % (months[today.month-1], today.year), (datetime.date(today.year, 1, 1), datetime.date(today.year, today.month, 1)))
         else:
-            for year in range(today.year-10, today.year-1):
+            for year in range(today.year-10, today.year):
                 if inscrit.getInscriptions(datetime.date(year, 1, 1), datetime.date(year, 12, 31)):
                     need_separator = True
                     self.recus_periodechoice.Append(u"Année %d" % year, (datetime.date(year, 1, 1), datetime.date(year, 12, 31)))
