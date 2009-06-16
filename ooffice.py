@@ -21,6 +21,7 @@ import xml.dom.minidom
 import re, urllib
 import wx, wx.lib.filebrowsebutton
 import traceback
+import unicodedata
 
 def evalFields(fields):
     for i, field in enumerate(fields[:]):
@@ -135,7 +136,7 @@ def GenerateDocument(modifications, filename=None, gauge=None):
     if gauge:
         gauge.SetValue(0)
     if not filename:
-        filename = modification.default_output.replace(u"é", "e")
+        filename = unicodedata.normalize("NFKD", modification.default_output).encode('ascii', 'ignore')
     if os.path.exists("./templates/%s" % modifications.template):
         template = "./templates/%s" % modifications.template
     else:
@@ -229,7 +230,7 @@ def pdf_open(filename):
         except:
             print "prochain essai dans 2s ..."
     return 0
-
+   
 class DocumentDialog(wx.Dialog):
     def __init__(self, parent, modifications):
         self.modifications = modifications
@@ -256,7 +257,8 @@ class DocumentDialog(wx.Dialog):
         self.format.SetSelection(0)
         self.Bind(wx.EVT_CHOICE, self.onFormat, self.format)
         sizer.Add(self.format, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 5)
-        default_output = modifications.default_output.replace(u"é", "e")
+        default_output = unicodedata.normalize("NFKD", modifications.default_output).encode('ascii', 'ignore')
+
         self.extension = os.path.splitext(default_output)[-1]
         wildcard = "OpenDocument (*%s)|*%s|PDF files (*.pdf)|*.pdf" % (self.extension, self.extension)
         self.fbb = wx.lib.filebrowsebutton.FileBrowseButton(self, -1,
