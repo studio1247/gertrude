@@ -480,13 +480,15 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         InscriptionsTab.UpdateContents(self)
         self.mode_accueil_choice.Enable(creche.modes_inscription != MODE_5_5)
         
-        if self.inscrit:
-            self.duree_reference_choice.Enable()
+        if self.inscrit and self.periode is not None:
+            for obj in [self.duree_reference_choice, self.mode_accueil_choice, self.button_5_5, self.button_copy]:
+		obj.Enable()
             self.duree_reference_choice.SetSelection(self.inscrit.inscriptions[self.periode].duree_reference / 7 - 1)
             self.planning_panel.SetInscription(self.inscrit.inscriptions[self.periode])
         else:
-            self.duree_reference_choice.Disable()
             self.planning_panel.SetInscription(None)
+            for obj in [self.duree_reference_choice, self.mode_accueil_choice, self.button_5_5, self.button_copy]:
+		obj.Disable()
             
         self.activity_choice.Clear()
         selected = 0
@@ -506,14 +508,15 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
 
     def SetPeriode(self, periode):
         PeriodeMixin.SetPeriode(self, periode)
-        if self.inscrit and self.periode != -1 and self.periode < len(self.inscrit.inscriptions):
+        if self.inscrit and self.periode is not None and self.periode < len(self.inscrit.inscriptions):
             inscription = self.inscrit.inscriptions[self.periode]
             self.planning_panel.SetInscription(inscription)
-            self.duree_reference_choice.Enable()
+	    for obj in [self.duree_reference_choice, self.mode_accueil_choice, self.button_5_5, self.button_copy]:
+		obj.Enable()
             self.duree_reference_choice.SetSelection(inscription.duree_reference / 7 - 1)
         else:
-            self.duree_reference_choice.Disable()
-            self.planning_panel.SetInscription(None)
+            for obj in [self.duree_reference_choice, self.mode_accueil_choice, self.button_5_5, self.button_copy]:
+		obj.Disable()
     
 class InscriptionsNotebook(wx.Notebook):
     def __init__(self, parent, *args, **kwargs):
