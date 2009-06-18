@@ -78,7 +78,8 @@ class Cotisation(object):
             self.jours_semaine = 0
             self.heures_reelles_semaine = 0.0
             for i in range(self.inscription.duree_reference):
-                if self.inscription.reference[i].get_state() & PRESENT:
+                if i % 7 < 5 or not "Week-end" in creche.feries:
+                  if self.inscription.reference[i].get_state() & PRESENT:
                     self.jours_semaine += 1
                     self.heures_reelles_semaine += self.inscription.reference[i].get_heures()
             self.semaines_reference = self.inscription.duree_reference / 7
