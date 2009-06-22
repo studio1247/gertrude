@@ -257,7 +257,7 @@ class DocumentDialog(wx.Dialog):
         self.format.SetSelection(0)
         self.Bind(wx.EVT_CHOICE, self.onFormat, self.format)
         sizer.Add(self.format, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 5)
-        default_output = unicodedata.normalize("NFKD", modifications.default_output).encode('ascii', 'ignore')
+        default_output = unicodedata.normalize("NFKD", unicode(modifications.default_output)).encode('ascii', 'ignore')
 
         self.extension = os.path.splitext(default_output)[-1]
         wildcard = "OpenDocument (*%s)|*%s|PDF files (*.pdf)|*.pdf" % (self.extension, self.extension)
