@@ -122,7 +122,10 @@ class Facture(object):
                 if cotisation.heures_mensuelles > 0:
                     self.heures_facturees[mode_inscription] += cotisation.heures_mois * cotisation.heures_presence / cotisation.heures_mensuelles
         
-        self.tarif_horaire = self.cotisation_mensuelle / self.heures_contrat
+        if self.heures_contrat > 0:
+            self.tarif_horaire = self.cotisation_mensuelle / self.heures_contrat
+        else:
+            self.tarif_horaire = 0
         
         if options & ARRONDI:
             self.tarif_horaire = round(self.tarif_horaire, 2)
