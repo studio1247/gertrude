@@ -203,11 +203,14 @@ class FileConnection(object):
 
     def Backup(self, progress_handler=default_progress_handler):
         progress_handler.display('Sauvegarde ...')
-        if os.path.isfile(sqlinterface.DB_FILENAME):
-            if not os.path.isdir(BACKUPS_DIRECTORY):
-                os.mkdir(BACKUPS_DIRECTORY)
-            self.backup = 'backup_%d.db' % time.time()
-            shutil.copyfile(sqlinterface.DB_FILENAME, BACKUPS_DIRECTORY + '/' + self.backup)
+        try:
+            if os.path.isfile(sqlinterface.DB_FILENAME):
+                if not os.path.isdir(BACKUPS_DIRECTORY):
+                    os.mkdir(BACKUPS_DIRECTORY)
+                self.backup = 'backup_%d.db' % time.time()
+                shutil.copyfile(sqlinterface.DB_FILENAME, BACKUPS_DIRECTORY + '/' + self.backup)
+        except Exception, e:
+            progress_handler.display('Impossible de faire la sauvegarde' + e)
                     
     def Load(self, progress_handler=default_progress_handler):
         self.Backup(progress_handler)
