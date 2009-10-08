@@ -78,14 +78,14 @@ class Facture(object):
                             if inscrit.getState(tmp)[0] == MALADE:
                                 dernier_jour_maladie = tmp
 
-                        if creche.mode_facturation & DEDUCTION_MALADIE_AVEC_CARENCE:
+                        if creche.traitement_maladie == DEDUCTION_MALADIE_AVEC_CARENCE:
                             nb_jours_maladie = date - premier_jour_maladie + datetime.timedelta(1)
                         else:
                             nb_jours_maladie = dernier_jour_maladie - premier_jour_maladie + datetime.timedelta(1)
                             
                         if nb_jours_maladie > datetime.timedelta(creche.minimum_maladie):
                             self.jours_maladie_deduits.append(date)
-                            if creche.mode_facturation & FACTURATION_PSU:
+                            if creche.mode_facturation == FACTURATION_PSU:
                                 self.deduction += cotisation.montant_heure_garde * heures_presence
                             else:
                                 self.deduction += cotisation.montant_jour_garde
@@ -96,9 +96,9 @@ class Facture(object):
                             self.previsionnel = True
                         if presence & SUPPLEMENT:
                             self.jours_supplementaires.append(date)
-                            if not creche.mode_facturation & FACTURATION_PSU:
+                            if not creche.mode_facturation == FACTURATION_PSU:
                                 self.supplement += cotisation.montant_jour_garde
-                        if creche.mode_facturation & FACTURATION_PSU:
+                        if creche.mode_facturation == FACTURATION_PSU:
                             self.heures_supplementaires += supplement
                             self.supplement += cotisation.montant_heure_garde * supplement
 
@@ -116,7 +116,7 @@ class Facture(object):
                 self.cotisation_mensuelle += montant * cotisation.heures_presence / cotisation.heures_mensuelles
                 self.heures_contrat += cotisation.heures_mois * cotisation.heures_presence / cotisation.heures_mensuelles
                 
-            if creche.mode_facturation & FACTURATION_PSU:
+            if creche.mode_facturation == FACTURATION_PSU:
                 self.heures_facturees[mode_inscription] += cotisation.heures_mensuelles + self.heures_supplementaires
             else:
                 if cotisation.heures_mensuelles > 0:

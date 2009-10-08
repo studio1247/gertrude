@@ -48,8 +48,14 @@ MODE_5_5 = 2
 MODE_4_5 = 4
 MODE_3_5 = 8
 
-# Options pour le mode de calcul des cotisations
+# Modes de facturation
+FACTURATION_FORFAIT_10H = 0
 FACTURATION_PSU = 1
+FACTURATION_PAJE = 2
+
+# Modes de traitement des absences pour maladie
+DEDUCTION_MALADIE_SANS_CARENCE = 0
+# valeur 1 libre
 DEDUCTION_MALADIE_AVEC_CARENCE = 2
 
 # Valeurs de présence

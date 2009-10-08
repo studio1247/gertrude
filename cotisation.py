@@ -96,7 +96,7 @@ class Cotisation(object):
         if len(errors) > 0:
             raise CotisationException(errors)
 
-        if creche.mode_facturation & FACTURATION_PSU:
+        if creche.mode_facturation == FACTURATION_PSU:
             self.heures_semaine = self.heures_reelles_semaine
             self.heures_mois = (self.heures_semaine * 45) / 12
         else:
@@ -165,7 +165,7 @@ class Cotisation(object):
         self.taux_horaire = self.taux_effort / 200;
 
         self.montant_heure_garde = self.assiette_mensuelle * self.taux_horaire / 100
-        if creche.mode_facturation & FACTURATION_PSU:
+        if creche.mode_facturation == FACTURATION_PSU:
             self.montant_heure_garde = round(self.montant_heure_garde, 2)
             self.cotisation_mensuelle = self.heures_mois *  self.montant_heure_garde
             self.montant_jour_supplementaire = 0

@@ -291,6 +291,7 @@ class Activite(object):
         self.couleur = None
         self.couleur_supplement = None
         self.couleur_previsionnel = None
+        self.tarif = 0
         if creation:
             self.create()
 
@@ -303,7 +304,7 @@ class Activite(object):
                 value += 1
             Activite.last_value = self.value = value
         print self.value
-        result = sql_connection.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel) VALUES(NULL,?,?,?,?,?,?)', (self.label, self.value, self.mode, str(self.couleur), str(self.couleur_supplement), str(self.couleur_previsionnel)))
+        result = sql_connection.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel, tarif) VALUES(NULL,?,?,?,?,?,?,?)', (self.label, self.value, self.mode, str(self.couleur), str(self.couleur_supplement), str(self.couleur_previsionnel), self.tarif))
         self.idx = result.lastrowid
 
     def delete(self):
@@ -315,7 +316,7 @@ class Activite(object):
             self.__dict__[name] = eval(value)
         else:
             self.__dict__[name] = value
-        if name in ['label', 'value', 'mode', 'couleur', "couleur_supplement", "couleur_previsionnel"] and self.idx:
+        if name in ['label', 'value', 'mode', 'couleur', "couleur_supplement", "couleur_previsionnel", "tarif"] and self.idx:
             print 'update', name, value
             if name in ("couleur", "couleur_supplement", "couleur_previsionnel") and not isinstance(value, basestring):
                 value = str(value)
@@ -375,7 +376,10 @@ class Creche(object):
         self.granularite = 4
         self.mois_payes = 12
         self.minimum_maladie = 15
-        self.mode_facturation = DEDUCTION_MALADIE_AVEC_CARENCE
+        self.mode_facturation = FACTURATION_FORFAIT_10H
+        # self.forfait_horaire = 0.0
+        self.tarification_activites = 0
+        self.traitement_maladie = DEDUCTION_MALADIE_AVEC_CARENCE
         self.presences_previsionnelles = False
         self.presences_supplementaires = True
         self.modes_inscription = MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5
@@ -434,7 +438,7 @@ class Creche(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'forfait_horaire', 'tarification_activites', 'traitement_maladie'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
