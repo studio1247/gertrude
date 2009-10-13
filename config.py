@@ -32,7 +32,8 @@ __builtin__.config = Config()
 
 def getDocumentsDirectory(parser, progress_handler):
     try:
-        return parser.get("gertrude", "documents-directory")
+	directory = parser.get("gertrude", "documents-directory")
+        assert os.path.isdir(directory)
     except:
         if sys.platform == 'win32':
             try:
