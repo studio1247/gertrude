@@ -377,7 +377,6 @@ class Creche(object):
         self.mois_payes = 12
         self.minimum_maladie = 15
         self.mode_facturation = FACTURATION_FORFAIT_10H
-        # self.forfait_horaire = 0.0
         self.tarification_activites = 0
         self.traitement_maladie = DEDUCTION_MALADIE_AVEC_CARENCE
         self.presences_previsionnelles = False
@@ -386,7 +385,8 @@ class Creche(object):
         self.email = ''
         self.type = TYPE_PARENTAL
         self.capacite = 0
-
+        self.forfait_horaire = 0.0
+        self.majoration_localite = 0.0
         self.calcule_jours_fermeture()
 
     def calcule_jours_fermeture(self):
@@ -438,7 +438,7 @@ class Creche(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'forfait_horaire', 'tarification_activites', 'traitement_maladie'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'forfait_horaire', 'tarification_activites', 'traitement_maladie', 'forfait_horaire', 'majoration_localite'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
@@ -523,6 +523,7 @@ class Inscription(object):
         self.fin = None
         self.mode = MODE_5_5
         self.duree_reference = duree_reference
+        self.semaines_conges = 0
         self.reference = []
         for i in range(duree_reference):
             self.reference.append(ReferenceDay(self, i))
@@ -553,7 +554,7 @@ class Inscription(object):
     
     def create(self):
         print 'nouvelle inscription'
-        result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, fin_periode_essai, duree_reference) VALUES(NULL,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, self.fin_periode_essai, self.duree_reference))
+        result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, fin_periode_essai, duree_reference, semaines_conges) VALUES(NULL,?,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, self.fin_periode_essai, self.duree_reference, self.semaines_conges))
         self.idx = result.lastrowid
         
     def delete(self):
@@ -562,8 +563,8 @@ class Inscription(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['debut', 'fin', 'mode', 'fin_periode_essai', 'duree_reference'] and self.idx:
-            print 'update', name
+        if name in ['debut', 'fin', 'mode', 'fin_periode_essai', 'duree_reference', 'semaines_conges'] and self.idx:
+            print 'update', name, value
             sql_connection.execute('UPDATE INSCRIPTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))   
 
 class Frere_Soeur(object):
@@ -604,6 +605,7 @@ class Inscrit(object):
         self.adresse = ""
         self.code_postal = ""
         self.ville = ""
+        self.majoration = False
         self.marche = None
         self.photo = None
         self.freres_soeurs = []
@@ -637,7 +639,7 @@ class Inscrit(object):
 
     def create(self):
         print 'nouvel inscrit'
-        result = sql_connection.execute('INSERT INTO INSCRITS (idx, prenom, nom, naissance, adresse, code_postal, ville, marche, photo) VALUES(NULL,?,?,?,?,?,?,?,?)', (self.prenom, self.nom, self.naissance, self.adresse, self.code_postal, self.ville, self.marche, self.photo))
+        result = sql_connection.execute('INSERT INTO INSCRITS (idx, prenom, nom, naissance, adresse, code_postal, ville, majoration, marche, photo) VALUES(NULL,?,?,?,?,?,?,?,?,?)', (self.prenom, self.nom, self.naissance, self.adresse, self.code_postal, self.ville, self.majoration, self.marche, self.photo))
         self.idx = result.lastrowid
         for obj in [self.papa, self.maman] + self.freres_soeurs + self.inscriptions: # TODO + self.presences.values():
             if obj: obj.create()
@@ -656,7 +658,7 @@ class Inscrit(object):
         self.__dict__[name] = value
         if name == 'photo' and value:
             value = binascii.b2a_base64(value)
-        if name in ['prenom', 'nom', 'sexe', 'naissance', 'adresse', 'code_postal', 'ville', 'marche', 'photo'] and self.idx:
+        if name in ['prenom', 'nom', 'sexe', 'naissance', 'adresse', 'code_postal', 'ville', 'majoration', 'marche', 'photo'] and self.idx:
             print 'update', name, (old_value, value)
             sql_connection.execute('UPDATE INSCRITS SET %s=? WHERE idx=?' % name, (value, self.idx))
 

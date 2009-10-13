@@ -132,10 +132,14 @@ class ContratPanel(ContextPanel):
         else:
             try:
                 context = Cotisation(self.inscrit, self.periode)
-                if os.path.exists("./templates/contrat_accueil.html"):
-                    self.html = ParseHtml("./templates/contrat_accueil.html", context)
+                if creche.mode_facturation == FACTURATION_PAJE:
+                    str_facturation = "_paje"
                 else:
-                    self.html = ParseHtml("./templates_dist/contrat_accueil.html", context)
+                    str_facturation = ""
+                if os.path.exists("./templates/contrat_accueil%s.html" % str_facturation):
+                    self.html = ParseHtml("./templates/contrat_accueil%s.html" % str_facturation, context)
+                else:
+                    self.html = ParseHtml("./templates_dist/contrat_accueil%s.html" % str_facturation, context)
             except CotisationException, e:
                 error = '<br>'.join(e.errors)
                 self.html = u"<html><body><b>Le contrat d'accueil de l'enfant ne peut être édit&eacute; pour la (les) raison(s) suivante(s) :</b><br>" + error + "</body></html>"
@@ -212,16 +216,18 @@ class ForfaitPanel(ContextPanel):
         else:
             try:
                 context = Cotisation(self.inscrit, self.periode, options=NO_ADDRESS)
-                if context.mode_inscription == 0:
-                    if os.path.exists("./templates/frais_de_garde.html"):
-                        self.html = ParseHtml("./templates/frais_de_garde.html", context)
-                    else:
-                        self.html = ParseHtml("./templates_dist/frais_de_garde.html", context)
+                if context.mode_inscription == MODE_CRECHE:
+                    str_inscription = "_creche"
                 else:
-                    if os.path.exists("./templates/frais_de_garde.html"):
-                        self.html = ParseHtml("./templates/frais_de_garde_hg.html", context)
-                    else:
-                        self.html = ParseHtml("./templates_dist/frais_de_garde_hg.html", context)
+                    str_inscription = "_hg"
+                if creche.mode_facturation == FACTURATION_PAJE:
+                    str_facturation = "_paje"
+                else:
+                    str_facturation = ""
+                if os.path.exists("./templates/frais_de_garde%s%s.html" % (str_inscription, str_facturation)):
+                    self.html = ParseHtml("./templates/frais_de_garde%s%s.html" % (str_inscription, str_facturation), context)
+                else:
+                    self.html = ParseHtml("./templates_dist/frais_de_garde%s%s.html" % (str_inscription, str_facturation), context)
             except CotisationException, e:
                 error = '<br>'.join(e.errors)
                 self.html = u"<html><body><b>Les frais de garde mensuels ne peuvent être calcul&eacute;s pour la (les) raison(s) suivante(s) :</b><br>" + error  + "</body></html>"
@@ -367,12 +373,16 @@ class ParentsPanel(InscriptionsTab):
             
             if profil & PROFIL_TRESORIER:
                 panel = PeriodePanel(self, parent+'.revenus')
-                revenus_sizer = wx.StaticBoxSizer(wx.StaticBox(panel, -1, "Revenus"), wx.VERTICAL)
+                if creche.mode_facturation == FACTURATION_PAJE:
+                    revenus_sizer = wx.StaticBoxSizer(wx.StaticBox(panel, -1, u"Régime d'appartenance"), wx.VERTICAL)
+                else:
+                    revenus_sizer = wx.StaticBoxSizer(wx.StaticBox(panel, -1, u"Revenus et régime d'appartenance"), wx.VERTICAL)
                 revenus_sizer.Add(PeriodeChoice(panel, eval('self.nouveau_revenu_%s' % parent)), 0, wx.EXPAND|wx.ALL, 5)
                 revenus_gridsizer = wx.FlexGridSizer(0, 2, 5, 10)
                 revenus_gridsizer.AddGrowableCol(1, 1)
-                revenus_gridsizer.AddMany([(wx.StaticText(panel, -1, 'Revenus annuels bruts :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(panel, None, 'revenu', precision=2), 0, wx.EXPAND)])
-                revenus_gridsizer.AddMany([(0, 0), (AutoCheckBox(panel, None, 'chomage', u'Chômage'), 0, wx.EXPAND)])
+                if creche.mode_facturation != FACTURATION_PAJE:
+                  revenus_gridsizer.AddMany([(wx.StaticText(panel, -1, 'Revenus annuels bruts :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(panel, None, 'revenu', precision=2), 0, wx.EXPAND)])
+                  revenus_gridsizer.AddMany([(0, 0), (AutoCheckBox(panel, None, 'chomage', u'Chômage'), 0, wx.EXPAND)])
                 choice = AutoChoiceCtrl(panel, None, 'regime')
                 self.regimes_choices.append(choice)
                 for i, regime in enumerate([u'Pas de sélection', u'Régime général', u'Régime de la fonction publique', u'Régime MSA', u'Régime EDF-GDF', u'Régime RATP', u'Régime Pêche maritime', u'Régime Marins du Commerce']):
@@ -422,6 +432,8 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         sizer1.AddGrowableCol(1, 1)
         self.mode_accueil_choice = AutoChoiceCtrl(self, None, 'mode', items=[("Plein temps", MODE_5_5), (u"4/5èmes", MODE_4_5), (u"3/5èmes", MODE_3_5), ("Halte-garderie", MODE_HALTE_GARDERIE)])
         sizer1.AddMany([(wx.StaticText(self, -1, u"Mode d'accueil :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.mode_accueil_choice, 0, wx.EXPAND)])
+        if creche.mode_facturation == FACTURATION_PAJE:
+            sizer1.AddMany([(wx.StaticText(self, -1, u"Nombre de semaines de congés :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'semaines_conges', min=0, precision=0), 0, wx.EXPAND)])
         sizer1.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_essai'), 0, wx.EXPAND)])
         self.duree_reference_choice = wx.Choice(self)
         for item, data in [("1 semaine", 7), (u"2 semaines", 14), (u"3 semaines", 21), ("4 semaines", 28)]:
