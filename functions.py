@@ -55,7 +55,7 @@ def getInitialesPrenom(person):
     for char in ('-', ' '):
         if char in person.prenom:
             parts = person.prenom.split(char)
-            return ''.join([part[0] for part in parts])
+            return ''.join([part[0] for part in parts if len(part) > 0])
     return person.prenom[0]   
 
 def str2date(str, year=None):
