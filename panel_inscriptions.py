@@ -669,7 +669,7 @@ class InscriptionsPanel(GPanel):
             dlg.Destroy()
         
     def ChangePrenom(self, inscrit):
-        if inscrit:
+        if creche and inscrit:
             inscritId = GetInscritId(inscrit, creche.inscrits)
             if inscritId == '':
                 inscritId = 'Nouvelle inscription'

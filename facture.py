@@ -85,10 +85,10 @@ class Facture(object):
                             
                         if nb_jours_maladie > datetime.timedelta(creche.minimum_maladie):
                             self.jours_maladie_deduits.append(date)
-                            if creche.mode_facturation == FACTURATION_PSU:
-                                self.deduction += cotisation.montant_heure_garde * heures_presence
-                            else:
+                            if creche.mode_facturation == FACTURATION_FORFAIT_10H:
                                 self.deduction += cotisation.montant_jour_garde
+                            else:
+                                self.deduction += cotisation.montant_heure_garde * heures_presence
                             cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)].heures_maladie += heures_presence
                             self.raison_deduction = u'(maladie > %dj consécutifs)' % creche.minimum_maladie
                     elif presence > 0:
@@ -96,9 +96,9 @@ class Facture(object):
                             self.previsionnel = True
                         if presence & SUPPLEMENT:
                             self.jours_supplementaires.append(date)
-                            if not creche.mode_facturation == FACTURATION_PSU:
+                            if creche.mode_facturation == FACTURATION_FORFAIT_10H:
                                 self.supplement += cotisation.montant_jour_garde
-                        if creche.mode_facturation == FACTURATION_PSU:
+                        if creche.mode_facturation != FACTURATION_FORFAIT_10H:
                             self.heures_supplementaires += supplement
                             self.supplement += cotisation.montant_heure_garde * supplement
 
