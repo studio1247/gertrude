@@ -111,6 +111,7 @@ class StartDialog(wx.Dialog):
             self.sizer.Fit(self)
             
     def Load(self):
+        time.sleep(0.5)
         try:
             LoadConfig(ProgressHandler(self.info.AppendText, self.gauge, 5))
             result = Load(ProgressHandler(self.info.AppendText, self.gauge, 95))
