@@ -201,7 +201,7 @@ class Cotisation(object):
     def __cmp__(self, context2):
         return context2 == None or \
             (creche.mode_facturation == FACTURATION_PAJE and self.heures_semaine != context2.heures_semaine) or \
-            (creche.mode_facturation != FACTURATION_PAJE and self.self.cotisation_mensuelle != context2.cotisation_mensuelle) or \
+            (creche.mode_facturation != FACTURATION_PAJE and self.cotisation_mensuelle != context2.cotisation_mensuelle) or \
             self.heures_mois != context2.heures_mois or \
             self.bureau != context2.bureau or \
             self.assiette_annuelle != context2.assiette_annuelle
