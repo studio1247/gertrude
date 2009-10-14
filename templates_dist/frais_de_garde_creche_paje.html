@@ -3,35 +3,51 @@
  <meta http-equiv=Content-Type content="text/html; charset=windows-1252">
  <title>FRAIS DE GARDE MENSUELS</title>
 </head>
-<body>
+
+<body lang=FR style='tab-interval:35.4pt'>
  <p class=MsoNormal align=center>
   <b><span style='font-size:14.0pt;mso-bidi-font-size:12.0pt;text-transform:uppercase'>Frais de garde mensuels de <var value="inscrit.prenom"/> <var value="inscrit.nom"/><o:p></o:p></span></b>
  </p>
+
  <br>
  <br>
  <br>
  <br>
- <table cellspacing="0" cellpadding="4" border="0">  <tr>
-   <td>Taux horaire appliqu&eacute;</td>
-   <td>= <var value="'%.02f' % taux_horaire"/> % (B)</td>
+ 
+ <table cellspacing="0" cellpadding="4" border="0">
+  <tr>
+   <td>Tarif horaire appliqu&eacute; (A)</td>
+   <td>= <var value="'%.02f' % montant_heure_garde"/> &euro;</td>
   </tr>
   <tr>
-   <td>Nombre d'heures de garde mensuelles (<var value="str_mode_garde"/>)</td>
-   <td>= <var value="'%d' % heures_mois"/> (C)</td>
+   <td>Heures de garde hebdomadaires (B)</td>
+   <td>= <var value="'%.02f' % heures_semaine"/>h</td>
+  </tr>
+  <tr>
+   <td>Nombre de semaines de la p&eacute;riode (C)</td>
+   <td>= <var value="'%d' % semaines_periode"/> semaines</td>
+  </tr>
+  <tr>
+   <td>Nombre de semaines de cong&eacute;s (D)</td>
+   <td>= <var value="'%d' % semaines_conges"/> semaines</td>
   </tr>
   <tr>
    <td>&nbsp</td>
   </tr>
   <tr>
-   <td><b>Montant de la cotisation mensuelle (A*B*C)</b></td>
-   <td><b>= <var value="'%.02f' % cotisation_mensuelle"/> &euro;</b></td>
+   <td><b>Montant total pour la p&eacute;riode = A * B * (C - D)</b></td>
+   <td><b>= <var value="'%.02f' % cotisation_periode"/> &euro;</b></td>
   </tr>
-  <if value="montant_jour_supplementaire">
+  <if value="majoration_mensuelle">
   <tr>
-   <td><b>Montant journalier par jour de garde suppl&eacute;mentaire</b></td>
-   <td><b>= <var value="'%.02f' % montant_jour_supplementaire"/> &euro;</b></td>
+   <td>Majoration (hors communaut&eacute; de communes) </td>
+   <td>= <var value="'%.02f' % majoration_mensuelle"/> &euro;</td>
   </tr>
   </if>
- </table>  
+  <tr>
+   <td><b>Montant mensuel (<var value="'%d' % mois_periode"/> mois)</b></td>
+   <td><b>= <var value="'%.02f' % cotisation_mensuelle"/> &euro;</b></td>
+  </tr>
+ </table>
 </body>
 </html>

@@ -28,6 +28,7 @@ class CotisationException(Exception):
 NO_ADDRESS = 1
 NO_NOM = 2
 NO_REVENUS = 4
+NO_PARENTS = 8
 
 class Cotisation(object):
     def __init__(self, inscrit, periode, options=0):
@@ -37,9 +38,9 @@ class Cotisation(object):
         errors = []
         if not inscrit.prenom or (not options & NO_NOM and not inscrit.nom):
             errors.append(u" - L'état civil de l'enfant est incomplet.")
-        if not options & NO_ADDRESS and (not inscrit.code_postal or not inscrit.ville):
+        if not (options & NO_ADDRESS) and (not inscrit.code_postal or not inscrit.ville):
             errors.append(u" - L'adresse de l'enfant est incomplète.")
-        if not inscrit.papa.prenom or not inscrit.maman.prenom or not inscrit.papa.nom or not inscrit.maman.nom:
+        if not (options & NO_PARENTS) and (not inscrit.papa.prenom or not inscrit.maman.prenom or not inscrit.papa.nom or not inscrit.maman.nom):
             errors.append(u" - L'état civil des parents est incomplet.")
         if self.debut is None:
             errors.append(u" - La date de début de la période n'est pas renseignée.")
@@ -91,8 +92,6 @@ class Cotisation(object):
             self.mode_inscription = MODE_HALTE_GARDERIE
         else:
             self.mode_inscription = MODE_CRECHE
-            if self.jours_semaine < 3:
-                errors.append(u" - La période de référence de l'enfant est incomplète pour le mode d'accueil choisi.")
 
         if len(errors) > 0:
             raise CotisationException(errors)
@@ -100,7 +99,7 @@ class Cotisation(object):
         if creche.mode_facturation == FACTURATION_FORFAIT_10H:
             self.heures_semaine = self.jours_semaine * 10
             self.heures_mois = self.heures_semaine * 4
-	else:
+        else:
             self.heures_semaine = self.heures_reelles_semaine
             self.heures_mois = (self.heures_semaine * 45) / 12
 
@@ -111,6 +110,11 @@ class Cotisation(object):
         else:
             self.str_mode_garde = u'%d/5èmes' % self.jours_semaine
 
+        if creche.majoration_localite and self.inscrit.majoration:
+            self.majoration_mensuelle = creche.majoration_localite
+        else:
+            self.majoration_mensuelle = 0.0
+            
         if creche.mode_facturation == FACTURATION_PAJE:
             self.assiette_annuelle = None
             self.taux_horaire = creche.forfait_horaire
@@ -118,9 +122,9 @@ class Cotisation(object):
             self.montant_jour_supplementaire = 0
             self.semaines_periode = min(52, ((self.inscription.fin - self.inscription.debut).days + 6) / 7)
             self.semaines_conges = self.inscription.semaines_conges
-            self.mois_periode = self.inscription.fin.month + (self.inscription.fin.year*12) - self.inscription.debut.month - (self.inscription.debut.year*12) + 1
+            self.mois_periode = min(12, self.inscription.fin.month + (self.inscription.fin.year*12) - self.inscription.debut.month - (self.inscription.debut.year*12) + 1)
             self.cotisation_periode = self.taux_horaire * self.heures_semaine * (self.semaines_periode - self.semaines_conges)
-            self.cotisation_mensuelle = self.cotisation_periode / self.mois_periode
+            self.cotisation_mensuelle = (self.cotisation_periode / self.mois_periode) + self.majoration_mensuelle
         else:
             self.assiette_annuelle = float(self.revenus_papa.revenu) 
             if self.revenus_papa.chomage:
@@ -178,11 +182,11 @@ class Cotisation(object):
             self.montant_heure_garde = self.assiette_mensuelle * self.taux_horaire / 100
             if creche.mode_facturation == FACTURATION_PSU:
                 self.montant_heure_garde = round(self.montant_heure_garde, 2)
-                self.cotisation_mensuelle = self.heures_mois *  self.montant_heure_garde
+                self.cotisation_mensuelle = (self.heures_mois *  self.montant_heure_garde) + self.majoration_mensuelle
                 self.montant_jour_supplementaire = 0
             else:
                 self.montant_jour_garde = self.montant_heure_garde * 10
-                self.cotisation_mensuelle = self.assiette_mensuelle * self.taux_horaire * self.heures_mois * creche.mois_payes / 12 / 100
+                self.cotisation_mensuelle = (self.assiette_mensuelle * self.taux_horaire * self.heures_mois * creche.mois_payes / 12 / 100) +  self.majoration_mensuelle
                 if self.heures_mois < 200:
                     self.montant_jour_supplementaire = self.montant_jour_garde
                 else: 
@@ -196,8 +200,8 @@ class Cotisation(object):
 
     def __cmp__(self, context2):
         return context2 == None or \
-               (creche.mode_facturation == FACTURATION_PAJE and self.heures_semaine != context2.heures_semaine) or \
-               (creche.mode_facturation != FACTURATION_PAJE and self.self.cotisation_mensuelle != context2.cotisation_mensuelle) or \
-               self.heures_mois != context2.heures_mois or \
-               self.bureau != context2.bureau or \
-               self.assiette_annuelle != context2.assiette_annuelle
+            (creche.mode_facturation == FACTURATION_PAJE and self.heures_semaine != context2.heures_semaine) or \
+            (creche.mode_facturation != FACTURATION_PAJE and self.self.cotisation_mensuelle != context2.cotisation_mensuelle) or \
+            self.heures_mois != context2.heures_mois or \
+            self.bureau != context2.bureau or \
+            self.assiette_annuelle != context2.assiette_annuelle

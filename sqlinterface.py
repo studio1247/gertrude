@@ -87,7 +87,7 @@ class SQLConnection(object):
             type INTEGER,
             capacite INTEGER,
             mode_facturation INTEGER,
-	    tarification_activites INTEGER,
+            tarification_activites INTEGER,
             traitement_maladie INTEGER,
             forfait_horaire FLOAT,
             majoration_localite FLOAT

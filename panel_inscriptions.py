@@ -159,7 +159,7 @@ class ForfaitPanel(ContextPanel):
             previous_periode = None
             for periode in all_periodes:
                 try:
-                    context = Cotisation(self.inscrit, periode)                    
+                    context = Cotisation(self.inscrit, periode, options=NO_ADDRESS+NO_PARENTS)                    
                     if not previous_periode or context != previous_context:
                         periodes.append(periode)           
                         previous_periode = periode
@@ -215,7 +215,7 @@ class ForfaitPanel(ContextPanel):
             self.periodechoice.Disable()
         else:
             try:
-                context = Cotisation(self.inscrit, self.periode, options=NO_ADDRESS)
+                context = Cotisation(self.inscrit, self.periode, options=NO_ADDRESS+NO_PARENTS)
                 if context.mode_inscription == MODE_CRECHE:
                     str_inscription = "_creche"
                 else:
@@ -269,6 +269,7 @@ class IdentitePanel(InscriptionsTab):
         self.Bind(wx.EVT_TEXT, self.EvtChangementCodePostal, self.code_postal_ctrl)
         sizer2.AddMany([(wx.StaticText(self, -1, 'Code Postal :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.code_postal_ctrl, 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, 'Ville :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.ville_ctrl, 0, wx.EXPAND)])
+        sizer2.AddMany([(wx.StaticText(self, -1, u'Majoration (enfant hors localité) :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoCheckBox(self, None, 'majoration', ''), 0, wx.EXPAND)])
 ##        sizer2.AddMany([(wx.StaticText(self, -1, 'Date de marche :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'marche'), 0, wx.EXPAND)])
         sizer3 = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Frères et soeurs'), wx.VERTICAL)
         self.fratries_sizer = wx.BoxSizer(wx.VERTICAL)
