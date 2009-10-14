@@ -170,7 +170,7 @@ class ActivitesTab(AutoTab):
             self.Bind(wx.EVT_BUTTON, self.onColorButton, color_button)
             color_button.hash_cb = HashComboBox(self)
             color_button.activite = color_button.hash_cb.activite = activite
-            color_button.field = color_button.hash_cb.field = field
+            color_button.field = color_button.hash_cb.field = [field]
             self.color_buttons[(activite.value, field)] = color_button
             self.UpdateHash(color_button.hash_cb, couleur)
             self.Bind(wx.EVT_COMBOBOX, self.onHashChange, color_button.hash_cb)
@@ -227,11 +227,11 @@ class ActivitesTab(AutoTab):
         self.Bind(wx.EVT_BUTTON, self.onColorButton, color_button)
         color_button.hash_cb = HashComboBox(self)
         color_button.activite = color_button.hash_cb.activite = activity
-        color_button.field = color_button.hash_cb.field = "couleur"
+        color_button.field = color_button.hash_cb.field = ["couleur", "couleur_supplement", "couleur_previsionnel"]
         self.UpdateHash(color_button.hash_cb, activity.couleur)
         self.Bind(wx.EVT_COMBOBOX, self.onHashChange, color_button.hash_cb)
         sizer.AddMany([(wx.StaticText(self, -1, 'Couleur :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (color_button, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (color_button.hash_cb, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5)])
-	if creche.tarification_activites:
+        if creche.tarification_activites:
             sizer.AddMany([(wx.StaticText(self, -1, 'Tarif :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoNumericCtrl(self, creche, 'activites[%d].tarif' % activity.value, precision=2), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5)])
         delbutton = wx.BitmapButton(self, -1, delbmp)
         delbutton.index = activity.value
@@ -287,7 +287,7 @@ class ActivitesTab(AutoTab):
         history.Append(Insert(creche.activites, index, creche.activites[index]))
         for i, child in enumerate(self.activites_sizer.GetChildren()):
             sizer = child.GetSizer()
-            if index == sizer.GetItem(7).GetWindow().index:
+            if index == sizer.GetItem(len(sizer.Children)-1).GetWindow().index:
                 sizer.DeleteWindows()
                 self.activites_sizer.Detach(i)
         creche.activites[index].delete()
@@ -305,7 +305,7 @@ class ActivitesTab(AutoTab):
             
     def onColorButton(self, event):
         obj = event.GetEventObject()
-        r, g, b, a, h = couleur = getattr(obj.activite, obj.field)
+        r, g, b, a, h = couleur = getattr(obj.activite, obj.field[0])
         data = wx.ColourData()
         data.SetColour((r, g, b, a))
         try:
@@ -322,13 +322,15 @@ class ActivitesTab(AutoTab):
                 data = dlg.GetColourData()
                 r, g, b = data.GetColour()
         couleur = r, g, b, a, h
-        setattr(obj.activite, obj.field, couleur) 
+        for field in obj.field:
+            setattr(obj.activite, field, couleur) 
         obj.SetBackgroundColour(wx.Color(r, g, b))
         self.UpdateHash(obj.hash_cb, couleur)
     
     def onHashChange(self, event):
         obj = event.GetEventObject()
-        setattr(obj.activite, obj.field, obj.GetClientData(obj.GetSelection()))
+        for field in obj.field:
+            setattr(obj.activite, field, obj.GetClientData(obj.GetSelection()))
 
 class CafTab(AutoTab, PeriodeMixin):
     def __init__(self, parent):
