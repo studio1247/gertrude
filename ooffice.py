@@ -230,8 +230,8 @@ def pdf_open(filename):
             c.ConnectTo('acroview', 'control')
             c.Exec('[DocOpen("%s")]' % (filename,))
             return 1
-        except:
-            print "prochain essai dans 2s ..."
+        except Exception, e:
+            print "Impossible de lancer acrobat reader ; prochain essai dans 2s ..."
     return 0
    
 class DocumentDialog(wx.Dialog):
