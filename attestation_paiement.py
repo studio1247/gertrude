@@ -18,6 +18,7 @@
 from constants import *
 from functions import *
 from facture import *
+from sqlobjects import Parent
 from cotisation import Cotisation, CotisationException
 from ooffice import *
 
@@ -38,6 +39,8 @@ class AttestationModifications(object):
         
         errors = {}
         tresorier = Select(creche.bureaux, today).tresorier
+        if not tresorier:
+            tresorier = Parent(None, creation=False)
         
         # print dom.toprettyxml()
         doc = dom.getElementsByTagName("office:text")[0]
