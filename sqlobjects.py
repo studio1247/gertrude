@@ -120,6 +120,17 @@ class Day(object):
             for i in range(96):
                 if self.values[i]:
                     self.values[i] |= PREVISIONNEL
+                    
+    def get_extra_activities(self):
+        result = set()
+        for value in creche.activites.keys():
+            mask = (1 << value)
+            for h in range(96):
+                if self.values[h] > 0 and self.values[h] & mask:
+                    result.add(value)
+                    break
+        return result        
+        
 
 class ReferenceDay(Day):
     def __init__(self, inscription, day):
@@ -377,7 +388,7 @@ class Creche(object):
         self.mois_payes = 12
         self.minimum_maladie = 15
         self.mode_facturation = FACTURATION_FORFAIT_10H
-        self.tarification_activites = 0
+        self.tarification_activites = ACTIVITES_NON_FACTUREES
         self.traitement_maladie = DEDUCTION_MALADIE_AVEC_CARENCE
         self.presences_previsionnelles = False
         self.presences_supplementaires = True
@@ -734,32 +745,22 @@ class Inscrit(object):
             else:
                 return ABSENT, 0
             
-#    def getTotalHeuresMois(self, annee, mois, mode_accueil): # heures facturees
-#        total = 0
-#        previsionnel = 0
-#        
-#        date = datetime.date(annee, mois, 1)
-#        while (date.month == mois):
-#          if (date.weekday() < 5):
-#            inscription = self.getInscription(date)
-#            if (inscription != None and inscription.mode == mode_accueil):
-#              presence_st = self.getPresenceFromSemaineType(date)
-#              total_jour = presence_st.Total()              
-#              total += total_jour
-#              if date in self.presences:
-#                presence = self.presences[date]
-#                if total_jour == 0 and presence.value == 1:
-#                    total += presence.Total() 
-#                if presence.previsionnel == 1 and presence.value == 0:
-#                    previsionnel = 1
-#              else:
-#                if (presence_st.value == 0):
-#                  previsionnel = 1              
-#            
-#          date += datetime.timedelta(1)
-#        return total, previsionnel
+    def getActivites(self, date):
+        if date in creche.jours_fermeture:
+            return []
+        inscription = self.getInscription(date)
+        if inscription is None:
+            return []
+        
+        reference = self.getReferenceDay(date)
+        result = reference.get_extra_activities()
+        if date in self.journees:
+            journee = self.journees[date]
+            result.update(journee.get_extra_activities())
+        result.discard(0)
+        return result
 
     def __cmp__(self, other):
         if other is self: return 0
-	if other is None: return 1
+        if other is None: return 1
         return cmp("%s %s" % (self.prenom, self.nom), "%s %s" % (other.prenom, other.nom))

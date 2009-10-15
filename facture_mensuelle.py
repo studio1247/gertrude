@@ -127,6 +127,7 @@ class FactureModifications(object):
                         ('supplement', '%.2f' % facture.supplement),
                         ('deduction', '- %.2f' % facture.deduction),
                         ('raison-deduction', facture.raison_deduction),
+                        ('supplement-activites', '%.2f' % facture.supplement_activites),
                         ('total', '%.2f' % facture.total)
                         ]
         

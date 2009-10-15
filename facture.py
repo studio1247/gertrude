@@ -37,6 +37,7 @@ class Facture(object):
         self.jours_maladie = []
         self.jours_maladie_deduits = []
         self.raison_deduction = ""
+        self.supplement_activites = 0.0
         self.previsionnel = False
 
         jours_ouvres = 0
@@ -48,7 +49,8 @@ class Facture(object):
         while date.month == mois:
             if not date in creche.jours_fermeture:
                 jours_ouvres += 1
-                if inscrit.getInscription(date):
+                inscription = inscrit.getInscription(date)
+                if inscription:
                     cotisation = Cotisation(inscrit, (date, date), options=NO_ADDRESS|self.options)
                     heures_presence = cotisation.inscription.getReferenceDay(date).get_heures()
                     if (cotisation.mode_inscription, cotisation.cotisation_mensuelle) in cotisations_mensuelles:
@@ -101,6 +103,11 @@ class Facture(object):
                         if creche.mode_facturation != FACTURATION_FORFAIT_10H:
                             self.heures_supplementaires += supplement
                             self.supplement += cotisation.montant_heure_garde * supplement
+                        if creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE or (creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE_PERIODE_ESSAI and inscription.fin_periode_essai and date >= inscription.debut and date < inscription.fin_periode_essai):
+                            activites = inscrit.getActivites(date)
+                            for index in activites:
+                                activite = creche.activites[index]
+                                self.supplement_activites += activite.tarif
 
             date += datetime.timedelta(1)
 
@@ -133,7 +140,7 @@ class Facture(object):
             self.supplement = round(self.supplement, 2) # normalement pas necessaire
             self.deduction = round(self.deduction, 2) # normalement pas necessaire
             
-        self.total = self.cotisation_mensuelle + self.supplement - self.deduction                                                 
+        self.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction                                            
         
         if 0:
             print inscrit.prenom

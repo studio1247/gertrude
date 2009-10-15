@@ -186,13 +186,16 @@ def MakePropertyValues(oServiceManager, values):
     return [MakePropertyValue(oServiceManager, value[0], value[1]) for value in values]
 
 def oo_open(filename):
-    filename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(filename)).encode("latin-1"))])
-    # print filename
-    StarDesktop, objServiceManager, corereflection = getOOoContext()
-    document = StarDesktop.LoadComponentFromURL(filename, "_blank", 0,
-        MakePropertyValues(objServiceManager,
-                    [["ReadOnly", False],
-                    ["Hidden", False]]))
+    if sys.platform == 'win32':
+        filename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(filename)).encode("latin-1"))])
+        # print filename
+        StarDesktop, objServiceManager, corereflection = getOOoContext()
+        document = StarDesktop.LoadComponentFromURL(filename, "_blank", 0,
+            MakePropertyValues(objServiceManager,
+                        [["ReadOnly", False],
+                        ["Hidden", False]]))
+    else:
+        os.system("ooffice %s" % filename.replace(" ", "\ "))
     return 1
     
 def convert_to_pdf(filename, pdffilename):
@@ -253,7 +256,10 @@ class DocumentDialog(wx.Dialog):
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.Add(wx.StaticText(self, -1, "Format :"), 0, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 5)
-        self.format = wx.Choice(self, -1, choices=["OpenOffice", "PDF"])
+        if sys.platform == 'win32':
+            self.format = wx.Choice(self, -1, choices=["OpenOffice", "PDF"])
+        else:
+            self.format = wx.Choice(self, -1, choices=["OpenOffice"])
         self.format.SetSelection(0)
         self.Bind(wx.EVT_CHOICE, self.onFormat, self.format)
         sizer.Add(self.format, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 5)
@@ -279,7 +285,7 @@ class DocumentDialog(wx.Dialog):
         self.sizer.Add(line, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.TOP|wx.BOTTOM, 5)
         
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        if sys.platform == 'win32':
+        if 1: #sys.platform == 'win32':
             self.sauver_ouvrir = wx.Button(self, -1, u"Sauver et ouvrir")
             self.sauver_ouvrir.SetDefault()
             self.Bind(wx.EVT_BUTTON, self.onSauverOuvrir, self.sauver_ouvrir)

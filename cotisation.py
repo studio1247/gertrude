@@ -191,7 +191,7 @@ class Cotisation(object):
             self.majoration_mensuelle = creche.majoration_localite
         else:
             self.majoration_mensuelle = 0.0
-        self.facture_mensuelle = self.cotisation_mensuelle + self.majoration_mensuelle
+        self.cotisation_mensuelle += self.majoration_mensuelle
              
         if 0:
             print inscrit.prenom
