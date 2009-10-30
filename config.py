@@ -32,8 +32,9 @@ __builtin__.config = Config()
 
 def getDocumentsDirectory(parser, progress_handler):
     try:
-	directory = parser.get("gertrude", "documents-directory")
+        directory = parser.get("gertrude", "documents-directory")
         assert os.path.isdir(directory)
+        return directory
     except:
         if sys.platform == 'win32':
             try:
@@ -41,6 +42,7 @@ def getDocumentsDirectory(parser, progress_handler):
                 df = shell.SHGetDesktopFolder()
                 pidl = df.ParseDisplayName(0, None,
                                        "::{450d8fba-ad25-11d0-98a8-0800361b1103}")[1]
+                print shell.SHGetPathFromIDList(pidl)
                 return shell.SHGetPathFromIDList(pidl)
             except:
                 print u"L'extension win32com pour python est recommandée (plateforme windows) !"

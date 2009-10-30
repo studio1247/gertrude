@@ -110,13 +110,16 @@ class Cotisation(object):
         else:
             self.str_mode_garde = u'%d/5èmes' % self.jours_semaine
             
-        if creche.mode_facturation == FACTURATION_PAJE:
+        if creche.mode_facturation == FACTURATION_PAJE:       
             self.assiette_annuelle = None
             self.taux_horaire = creche.forfait_horaire
             self.montant_heure_garde = creche.forfait_horaire
             self.montant_jour_supplementaire = 0
             self.semaines_periode = min(52, ((self.inscription.fin - self.inscription.debut).days + 6) / 7)
-            self.semaines_conges = self.inscription.semaines_conges
+            if self.inscription.semaines_conges == int:
+                self.semaines_conges = self.inscription.semaines_conges
+            else:                
+                self.semaines_conges = 0
             self.mois_periode = min(12, self.inscription.fin.month + (self.inscription.fin.year*12) - self.inscription.debut.month - (self.inscription.debut.year*12) + 1)
             self.cotisation_periode = self.taux_horaire * self.heures_semaine * (self.semaines_periode - self.semaines_conges)
             self.cotisation_mensuelle = self.cotisation_periode / self.mois_periode
