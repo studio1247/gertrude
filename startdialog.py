@@ -119,7 +119,7 @@ class StartDialog(wx.Dialog):
             try:
                 self.info.AppendText(str(e) + u'\n')
             except:
-                self.info.AppendText(u'Erreur : %s\n' % str(e).decode('latin-1'))
+                self.info.AppendText(u'Erreur : %s\n' % unicode(e))
             result = False
         # we close database since it's opened from an other thread
         try:
