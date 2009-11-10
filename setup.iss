@@ -24,9 +24,9 @@ Compression=lzma
 SolidCompression=yes
 
 WizardImageBackColor=clWhite
-SetupIconFile=setup_gertrude.ico
-WizardImageFile=setup_gertrude.bmp
-WizardSmallImageFile=setup_gertrude_mini.bmp
+SetupIconFile=bitmaps\setup_gertrude.ico
+WizardImageFile=bitmaps\setup_gertrude.bmp
+WizardSmallImageFile=bitmaps\setup_gertrude_mini.bmp
 UninstallDisplayIcon={app}\gertrude.exe
 
 [Messages]
@@ -44,10 +44,10 @@ Type: files; Name: "{app}\*.pyc"
 Type: files; Name: "{app}\*.log"
 
 [Files]
-;Source: "dist\*";                 DestDir: "{app}";                 Flags: ignoreversion
-;Source: "dist\bitmaps\*";         DestDir: "{app}\bitmaps";         Flags: ignoreversion recursesubdirs createallsubdirs
-;Source: "dist\templates_dist\*";  DestDir: "{app}\templates_dist";  Flags: ignoreversion recursesubdirs createallsubdirs
-;Source: "dist\doc\*";             DestDir: "{app}\doc";             Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dist\*";                 DestDir: "{app}";                 Flags: ignoreversion
+Source: "dist\bitmaps\*";         DestDir: "{app}\bitmaps";         Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dist\templates_dist\*";  DestDir: "{app}\templates_dist";  Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dist\doc\*";             DestDir: "{app}\doc";             Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
@@ -56,7 +56,6 @@ Name: "{userdesktop}\Gertrude"; Filename: "{app}\gertrude.exe"; WorkingDir: "{ap
 
 [Run]
 Filename: "{app}\gertrude.exe"; Description: "{cm:LaunchProgram,Gertrude}"; Flags: nowait postinstall skipifsilent
-
 
 
 
