@@ -19,13 +19,26 @@
 
 from distutils.core import setup
 import py2exe
-import glob
+import glob, shutil, os
+from gertrude import VERSION
+
+shutil.rmtree("./dist")
 
 setup(
-	windows = [{"script" : "gertrude.pyw", "icon_resources" : [(1000, "bitmaps\\gertrude.ico")]}],
+	name="Gertrude",
+    version=VERSION,
+    description=u"Logiciel pour les crèches",
+    author="Bertrand Songis",
+	windows=[{"script" : "gertrude.pyw", "icon_resources" : [(1000, "bitmaps\\gertrude.ico")]}],
 	data_files=[(".", glob.glob("*.dist") + glob.glob("*.py")),
 	            ("bitmaps", glob.glob("bitmaps\\*.png") + glob.glob("bitmaps\\*.ico")),
                 ("templates_dist", glob.glob("templates_dist\\*.html") + glob.glob("templates_dist\\*.od?")),
                 ("doc", glob.glob("doc\\*"))],
-	options = {"py2exe": {"packages": ["encodings", "wx.lib.agw.cubecolourdialog"]}},
+	options={"py2exe": {"packages": ["encodings", "wx.lib.agw.cubecolourdialog", "win32com.client", "win32ui", "win32api"]}},
 )
+
+chemin='\"C:/Program Files/Inno Setup 5/ISCC.exe\" setup.iss'
+os.system(chemin)
+
+os.rename("./Output/setup.exe", "./Output/setup_%s.exe" % VERSION)
+
