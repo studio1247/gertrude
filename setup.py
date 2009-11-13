@@ -17,9 +17,9 @@
 
 # a executer avec le parametre "py2exe"
 
-from distutils.core import setup
-import py2exe
 import glob, shutil, os
+from distutils.core import setup
+import py2exe, win32api
 from gertrude import VERSION
 
 shutil.rmtree("./dist")
@@ -37,8 +37,10 @@ setup(
 	options={"py2exe": {"packages": ["encodings", "wx.lib.agw.cubecolourdialog", "win32com.client", "win32ui", "win32api"]}},
 )
 
-chemin='\"C:/Program Files/Inno Setup 5/ISCC.exe\" setup.iss'
-os.system(chemin)
+issfile = "setup.iss"
+path, name = os.path.split(issfile)
+isspath = os.path.split(win32api.FindExecutable(name, path)[-1])[0]
+os.system('\"%s\ISCC.exe\" %s' % (isspath, issfile))
 
 os.rename("./Output/setup.exe", "./Output/setup_%s.exe" % VERSION)
 
