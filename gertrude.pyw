@@ -31,7 +31,7 @@ except:
 import controls, zipfile, xml.dom.minidom, wx.html, ooffice
 sys.path.insert(0, ".")
 
-VERSION = '0.72'
+VERSION = '0.73.2'
 
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):
