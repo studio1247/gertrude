@@ -22,7 +22,8 @@ from distutils.core import setup
 import py2exe, win32api
 from gertrude import VERSION
 
-shutil.rmtree("./dist")
+if os.path.isdir("./dist"):
+	shutil.rmtree("./dist")
 
 setup(
 	name="Gertrude",
@@ -34,7 +35,7 @@ setup(
 	            ("bitmaps", glob.glob("bitmaps\\*.png") + glob.glob("bitmaps\\*.ico")),
                 ("templates_dist", glob.glob("templates_dist\\*.html") + glob.glob("templates_dist\\*.od?")),
                 ("doc", glob.glob("doc\\*"))],
-	options={"py2exe": {"packages": ["encodings", "wx.lib.agw.cubecolourdialog", "win32com.client", "win32ui", "win32api"]}},
+	options={"py2exe": {"packages": ["encodings", "wx.lib.agw.cubecolourdialog", "win32com.client", "os", "win32ui", "win32api"]}},
 )
 
 issfile = "setup.iss"
@@ -42,5 +43,7 @@ path, name = os.path.split(issfile)
 isspath = os.path.split(win32api.FindExecutable(name, path)[-1])[0]
 os.system('\"%s\ISCC.exe\" %s' % (isspath, issfile))
 
+if os.path.isfile("./Output/setup_%s.exe" % VERSION):
+	os.remove("./Output/setup_%s.exe" % VERSION)
 os.rename("./Output/setup.exe", "./Output/setup_%s.exe" % VERSION)
 
