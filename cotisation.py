@@ -116,7 +116,7 @@ class Cotisation(object):
             self.montant_heure_garde = creche.forfait_horaire
             self.montant_jour_supplementaire = 0
             self.semaines_periode = min(52, ((self.inscription.fin - self.inscription.debut).days + 6) / 7)
-            if self.inscription.semaines_conges == int:
+            if type(self.inscription.semaines_conges) == int:
                 self.semaines_conges = self.inscription.semaines_conges
             else:                
                 self.semaines_conges = 0
