@@ -152,6 +152,8 @@ def getPresentsIndexes(indexes, (debut, fin)):
     if indexes is None:
         indexes = range(len(creche.inscrits))
     result = []
+    if debut is None:
+        return result
     for i in range(len(indexes)):
         inscrit = creche.inscrits[indexes[i]]
         #print inscrit.prenom
