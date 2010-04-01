@@ -384,7 +384,7 @@ class Creche(object):
         self.fermeture = 18.5
         self.affichage_min = 7.75
         self.affichage_max = 19.0
-        self.granularite = 4
+        self.granularite = 15
         self.mois_payes = 12
         self.minimum_maladie = 15
         self.mode_facturation = FACTURATION_FORFAIT_10H

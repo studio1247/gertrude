@@ -87,7 +87,7 @@ class PlanningGridWindow(BufferedWindow):
             else:
                 dc.SetPen(wx.LIGHT_GREY_PEN)
             dc.DrawLine(x, 0,  x, height)
-            heure += (60/creche.granularite) / BASE_GRANULARITY
+            heure += creche.granularite / BASE_GRANULARITY
 
         if self.disable_cause:
             dc.SetTextForeground("LIGHT GREY")
@@ -125,7 +125,7 @@ class PlanningGridWindow(BufferedWindow):
 
     def OnLeftButtonDown(self, event):
         posX, self.curStartY = self.__get_pos(event.GetX(), event.GetY())
-        self.curStartX = (posX / ((60 / BASE_GRANULARITY) / creche.granularite)) * ((60 / BASE_GRANULARITY) / creche.granularite)
+        self.curStartX = (posX / (creche.granularite/BASE_GRANULARITY)) * (creche.granularite/BASE_GRANULARITY)
         if self.curStartY < len(self.lines):
             line = self.lines[self.curStartY]
             line.original_values = line.values[:]
@@ -138,12 +138,12 @@ class PlanningGridWindow(BufferedWindow):
     def OnLeftButtonDragging(self, event):
         if self.state != -1:
             posX, self.curEndY = self.__get_pos(event.GetX(), event.GetY())
-            self.curEndX = (posX / ((60 / BASE_GRANULARITY) / creche.granularite)) * ((60 / BASE_GRANULARITY) / creche.granularite)
+            self.curEndX = (posX / (creche.granularite/BASE_GRANULARITY)) * (creche.granularite/BASE_GRANULARITY)
             start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX)
             line = self.lines[self.curStartY]
             line.values = line.original_values[:]
             
-            for i in range(start, end+60/BASE_GRANULARITY/creche.granularite):
+            for i in range(start, end + creche.granularite/BASE_GRANULARITY):
                 if line.values[i] < 0:
                     line.values[i] = 0
                 if creche.presences_previsionnelles and line.reference and line.date > datetime.date.today():
@@ -157,7 +157,7 @@ class PlanningGridWindow(BufferedWindow):
             self.UpdateLine(self.curStartY)
 
     def OnLeftButtonUp(self, event):
-         if self.state != -1:
+        if self.state != -1:
             start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX)
             line = self.lines[self.curStartY]
             line.values = line.original_values[:]
@@ -171,7 +171,7 @@ class PlanningGridWindow(BufferedWindow):
                 clear_values = [1 << activity.value for activity in creche.activites.values() if not (activity.mode & MODE_LIBERE_PLACE)]
                 clear_values = ~sum(clear_values)
             
-            for i in range(start, end+60/BASE_GRANULARITY/creche.granularite):
+            for i in range(start, end + creche.granularite/BASE_GRANULARITY):
                 if self.state:
                     if self.activity_combobox.activity.mode & MODE_LIBERE_PLACE:
                         line.values[i] = value
@@ -464,5 +464,5 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
                 dc.DrawText(str(int(round(heure/(60 / BASE_GRANULARITY))))+"h", x - 3, 0)
             else:
                 dc.DrawLine(x, 20, x, 15)
-            heure += (60 / creche.granularite) / BASE_GRANULARITY
+            heure += creche.granularite / BASE_GRANULARITY
         dc.EndDrawing()

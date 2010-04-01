@@ -25,7 +25,7 @@ from sqlobjects import *
 import wx
 
 DB_FILENAME = 'gertrude.db'
-VERSION = 29
+VERSION = 30
 
 def getdate(s):
     if s is None:
@@ -247,7 +247,7 @@ class SQLConnection(object):
             cur.execute("INSERT INTO CONGES (idx, debut) VALUES (NULL, ?)", (label, ))
         cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
         cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, presences_supplementaires, modes_inscription, minimum_maladie, email, type, capacite, mode_facturation, tarification_activites, traitement_maladie, forfait_horaire, majoration_localite) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-                     ("","","","","",7.75,18.5,7.75,19.0,4,12,False,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,15,"",TYPE_PARENTAL,0,FACTURATION_FORFAIT_10H,0,DEDUCTION_MALADIE_AVEC_CARENCE,0.0,0.0))
+                     ("","","","","",7.75,18.5,7.75,19.0,15,12,False,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,15,"",TYPE_PARENTAL,0,FACTURATION_FORFAIT_10H,0,DEDUCTION_MALADIE_AVEC_CARENCE,0.0,0.0))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2006, 9, 1), datetime.date(2007, 8, 31), 6547.92, 51723.60))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2007, 9, 1), datetime.date(2008, 12, 31), 6660.00, 52608.00))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2009, 1, 1), datetime.date(2009, 12, 31), 6876.00, 53400.00))
@@ -340,8 +340,6 @@ class SQLConnection(object):
                 cur.execute('SELECT day, value, debut, fin, idx FROM REF_ACTIVITIES WHERE reference=?', (inscription.idx,))
                 for day, value, debut, fin, idx in cur.fetchall():
                     reference_day = inscription.reference[day]
-                    #debut = debut * 3
-                    #fin = fin * 3
                     reference_day.add_activity(debut, fin, value, idx)
                     # print inscrit.prenom, day, debut, fin, value
             cur.execute('SELECT absent, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email, idx FROM PARENTS WHERE inscrit=?', (inscrit.idx,))
@@ -680,10 +678,10 @@ class SQLConnection(object):
             cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel) VALUES(NULL,?,?,?,?,?,?)', (u"Vacances", -1, 0, str(vacances), str(vacances), str(vacances)))
             cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel) VALUES(NULL,?,?,?,?,?,?)', (u"Malade", -2, 0, str(malade), str(malade), str(malade)))
 
-	if version < 27:
-	    cur.execute("ALTER TABLE CRECHE ADD tarification_activites INTEGER;")
+        if version < 27:
+            cur.execute("ALTER TABLE CRECHE ADD tarification_activites INTEGER;")
             cur.execute('UPDATE CRECHE SET tarification_activites=?', (0,))
-	    cur.execute("ALTER TABLE ACTIVITIES ADD tarif FLOAT;")
+            cur.execute("ALTER TABLE ACTIVITIES ADD tarif FLOAT;")
             cur.execute('SELECT idx FROM ACTIVITIES')
             for (idx, ) in cur.fetchall():
                 cur.execute('UPDATE ACTIVITIES SET tarif=? WHERE idx=?', (.0, idx))
@@ -693,10 +691,10 @@ class SQLConnection(object):
             cur.execute('SELECT mode_facturation FROM CRECHE')
             mode_facturation = cur.fetchall()[0][0]
             if mode_facturation & 2: # DEDUCTION_MALADIE_AVEC_CARENCE
-              cur.execute('UPDATE CRECHE SET traitement_maladie=?', (2,)) # DEDUCTION_MALADIE_AVEC_CARENCE
-              cur.execute('UPDATE CRECHE SET mode_facturation=?', (mode_facturation-2,))
+                cur.execute('UPDATE CRECHE SET traitement_maladie=?', (2,)) # DEDUCTION_MALADIE_AVEC_CARENCE
+                cur.execute('UPDATE CRECHE SET mode_facturation=?', (mode_facturation-2,))
             else:
-              cur.execute('UPDATE CRECHE SET traitement_maladie=?', (0,)) # DEDUCTION_MALADIE_SANS_CARENCE
+                cur.execute('UPDATE CRECHE SET traitement_maladie=?', (0,)) # DEDUCTION_MALADIE_SANS_CARENCE
 
         if version < 29:
             cur.execute('ALTER TABLE CRECHE ADD forfait_horaire FLOAT')
@@ -708,6 +706,17 @@ class SQLConnection(object):
             cur.execute('ALTER TABLE INSCRIPTIONS ADD semaines_conges INTEGER')
             cur.execute('UPDATE INSCRIPTIONS SET semaines_conges=0')  
 
+        if version < 30:
+            cur.execute('SELECT debut, fin, idx FROM ACTIVITES')
+            for debut, fin, idx in cur.fetchall():
+                cur.execute('UPDATE ACTIVITES SET debut=?, fin=? WHERE idx=?', (debut*3, fin*3, idx))
+            cur.execute('SELECT debut, fin, idx FROM REF_ACTIVITIES')
+            for debut, fin, idx in cur.fetchall():
+                cur.execute('UPDATE REF_ACTIVITIES SET debut=?, fin=? WHERE idx=?', (debut*3, fin*3, idx))
+            cur.execute('SELECT granularite FROM CRECHE')
+            granularite = 60 / cur.fetchall()[0][0] 
+            cur.execute('UPDATE CRECHE SET granularite=?', (granularite,))
+            
         if version < VERSION:
             try:
                 cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))
