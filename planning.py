@@ -119,7 +119,7 @@ class PlanningGridWindow(BufferedWindow):
             dc.DrawRoundedRectangleRect(rect, 4)
         
     def __get_pos(self, x, y):
-        l = int(creche.affichage_min * BASE_GRANULARITY + (x / COLUMN_WIDTH))
+        l = int(creche.affichage_min * (60 / BASE_GRANULARITY) + (x / COLUMN_WIDTH))
         c = int(y / LINE_HEIGHT)
         return l, c
 
@@ -143,7 +143,7 @@ class PlanningGridWindow(BufferedWindow):
             line = self.lines[self.curStartY]
             line.values = line.original_values[:]
             
-            for i in range(start, end+BASE_GRANULARITY/creche.granularite):
+            for i in range(start, end+60/BASE_GRANULARITY/creche.granularite):
                 if line.values[i] < 0:
                     line.values[i] = 0
                 if creche.presences_previsionnelles and line.reference and line.date > datetime.date.today():
@@ -171,7 +171,7 @@ class PlanningGridWindow(BufferedWindow):
                 clear_values = [1 << activity.value for activity in creche.activites.values() if not (activity.mode & MODE_LIBERE_PLACE)]
                 clear_values = ~sum(clear_values)
             
-            for i in range(start, end+BASE_GRANULARITY/creche.granularite):
+            for i in range(start, end+60/BASE_GRANULARITY/creche.granularite):
                 if self.state:
                     if self.activity_combobox.activity.mode & MODE_LIBERE_PLACE:
                         line.values[i] = value
