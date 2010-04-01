@@ -31,7 +31,7 @@ PRESENCES_ONLY = 4
 # Elements size
 LABEL_WIDTH = 80 # px
 ICONS_WIDTH = 33 # px
-COLUMN_WIDTH = 12 # px
+COLUMN_WIDTH = 48 / (60 / BASE_GRANULARITY) # px
 LINE_HEIGHT = 30 # px
 
 BUTTON_BITMAPS = { ABSENT: wx.Bitmap("./bitmaps/icone_vacances.png", wx.BITMAP_TYPE_PNG),
@@ -59,12 +59,12 @@ class PlanningGridWindow(BufferedWindow):
     def Disable(self, cause):
         self.disable_cause = cause
         self.lines = []
-        self.SetMinSize((int((creche.affichage_max-creche.affichage_min) * 4 * COLUMN_WIDTH + 1), 400))
+        self.SetMinSize((int((creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH + 1), 400))
         
     def SetLines(self, lines):
         self.disable_cause = None
         self.lines = lines
-        self.SetMinSize((int((creche.affichage_max-creche.affichage_min) * 4 * COLUMN_WIDTH + 1), LINE_HEIGHT * len(self.lines) - 1))
+        self.SetMinSize((int((creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH + 1), LINE_HEIGHT * len(self.lines) - 1))
        
     def UpdateLine(self, index):
         self.UpdateDrawing()
@@ -76,18 +76,18 @@ class PlanningGridWindow(BufferedWindow):
         # le quadrillage
         dc.SetPen(wx.GREY_PEN)
         dc.SetBrush(wx.WHITE_BRUSH)
-        affichage_min = int(creche.affichage_min * 4)
-        affichage_max = int(creche.affichage_max * 4)
+        affichage_min = int(creche.affichage_min * 60 / BASE_GRANULARITY)
+        affichage_max = int(creche.affichage_max * 60 / BASE_GRANULARITY)
         heure = affichage_min
         height = dc.GetSize()[1]
         while heure <= affichage_max:
             x = (heure - affichage_min) * COLUMN_WIDTH
-            if heure % 4 == 0:
+            if heure % (60 / BASE_GRANULARITY) == 0:
                 dc.SetPen(wx.GREY_PEN)
             else:
                 dc.SetPen(wx.LIGHT_GREY_PEN)
             dc.DrawLine(x, 0,  x, height)
-            heure += 1
+            heure += (60/creche.granularite) / BASE_GRANULARITY
 
         if self.disable_cause:
             dc.SetTextForeground("LIGHT GREY")
@@ -115,7 +115,7 @@ class PlanningGridWindow(BufferedWindow):
             except:
               dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
               dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
-            rect = wx.Rect(1+(start-int(creche.affichage_min*4))*COLUMN_WIDTH, 1 + index*LINE_HEIGHT, (end-start)*COLUMN_WIDTH-1, LINE_HEIGHT-1)
+            rect = wx.Rect(1+(start-int(creche.affichage_min*(60 / BASE_GRANULARITY)))*COLUMN_WIDTH, 1 + index*LINE_HEIGHT, (end-start)*COLUMN_WIDTH-1, LINE_HEIGHT-1)
             dc.DrawRoundedRectangleRect(rect, 4)
         
     def __get_pos(self, x, y):
@@ -125,7 +125,7 @@ class PlanningGridWindow(BufferedWindow):
 
     def OnLeftButtonDown(self, event):
         posX, self.curStartY = self.__get_pos(event.GetX(), event.GetY())
-        self.curStartX = (posX / (4 / creche.granularite)) * (4 / creche.granularite)
+        self.curStartX = (posX / ((60 / BASE_GRANULARITY) / creche.granularite)) * ((60 / BASE_GRANULARITY) / creche.granularite)
         if self.curStartY < len(self.lines):
             line = self.lines[self.curStartY]
             line.original_values = line.values[:]
@@ -138,7 +138,7 @@ class PlanningGridWindow(BufferedWindow):
     def OnLeftButtonDragging(self, event):
         if self.state != -1:
             posX, self.curEndY = self.__get_pos(event.GetX(), event.GetY())
-            self.curEndX = (posX / (4 / creche.granularite)) * (4 / creche.granularite)
+            self.curEndX = (posX / ((60 / BASE_GRANULARITY) / creche.granularite)) * ((60 / BASE_GRANULARITY) / creche.granularite)
             start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX)
             line = self.lines[self.curStartY]
             line.values = line.original_values[:]
@@ -162,7 +162,7 @@ class PlanningGridWindow(BufferedWindow):
             line = self.lines[self.curStartY]
             line.values = line.original_values[:]
             if line.get_state() < 0:
-                line.values = [0] * 96
+                line.values = [0] * 24 * (60 / BASE_GRANULARITY)
             if self.state:
                 value = 1 << self.activity_combobox.activity.value
                 clear_values = [1 << activity.value for activity in creche.activites.values() if (activity.mode & MODE_LIBERE_PLACE)]
@@ -207,7 +207,7 @@ class PlanningGridWindow(BufferedWindow):
 
 class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, activity_combobox):
-        width = (creche.affichage_max-creche.affichage_min) * 4 * COLUMN_WIDTH + LABEL_WIDTH + 27
+        width = (creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH + LABEL_WIDTH + 27
         if not parent.options & NO_ICONS:
             width += ICONS_WIDTH
         wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, -1, size=(width, -1), style=wx.SUNKEN_BORDER)
@@ -375,8 +375,8 @@ class PlanningSummaryPanel(BufferedWindow):
         pos = LABEL_WIDTH
         if not self.GetParent().options & NO_ICONS:
             pos += ICONS_WIDTH
-        debut = int(creche.affichage_min*4)
-        fin = int(creche.affichage_max*4)
+        debut = int(creche.affichage_min * (60 / BASE_GRANULARITY))
+        fin = int(creche.affichage_max * (60 / BASE_GRANULARITY))
         x = debut
         v = 0
         holes = []
@@ -452,17 +452,17 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
         font = wx.Font(7, wx.SWISS, wx.NORMAL, wx.NORMAL)
         dc.SetFont(font)
         dc.SetTextForeground("WHITE")
-        affichage_min = int(creche.affichage_min * 4)
-        affichage_max = int(creche.affichage_max * 4)
+        affichage_min = int(creche.affichage_min * (60 / BASE_GRANULARITY))
+        affichage_max = int(creche.affichage_max * (60 / BASE_GRANULARITY))
         heure = affichage_min
         while heure <= affichage_max:
             x = 2 + LABEL_WIDTH + (heure - affichage_min) * COLUMN_WIDTH
             if not self.options & NO_ICONS:
                 x += ICONS_WIDTH
-            if heure % 4 == 0:
+            if heure % (60 / BASE_GRANULARITY) == 0:
                 dc.DrawLine(x, 20, x, 12)
-                dc.DrawText(str(int(round(heure/4)))+"h", x - 3, 0)
+                dc.DrawText(str(int(round(heure/(60 / BASE_GRANULARITY))))+"h", x - 3, 0)
             else:
                 dc.DrawLine(x, 20, x, 15)
-            heure += 1
+            heure += (60 / creche.granularite) / BASE_GRANULARITY
         dc.EndDrawing()

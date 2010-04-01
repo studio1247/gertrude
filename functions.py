@@ -201,12 +201,12 @@ def getActivitiesSummary(creche, lines):
     class Summary(list):
         def __init__(self, label):
             self.label = label
-            self.extend([0] * 96)
+            self.extend([0] * 24 * (60 / BASE_GRANULARITY))
             
     summary = {}
     for activity in creche.activites:
         summary[activity] = Summary(creche.activites[activity].label)
-        for i in range(96):
+        for i in range(24 * 60 / BASE_GRANULARITY):
             for line in lines:
                 if not isinstance(line, list):
                     line = line.values

@@ -23,7 +23,7 @@ from functions import *
 class Day(object):
     def __init__(self):
         self.activites = {}
-        self.values = [0] * 96 # une valeur par 1/4h
+        self.values = [0] * 24 * (60 / BASE_GRANULARITY)
 
     def save(self):            
         old_activities = self.activites.keys()
@@ -42,8 +42,8 @@ class Day(object):
         for value in creche.activites.keys():
             mask = (1 << value)
             a = v = h = 0
-            while h <= 96:
-                if h == 96:
+            while h <= 24 * 60 / BASE_GRANULARITY:
+                if h == 24 * 60 / BASE_GRANULARITY:
                     nv = 0
                 elif self.values[h] < 0:
                     if value == 0:
@@ -77,7 +77,7 @@ class Day(object):
         
     def remove_all_activities(self, value):
         mask = ~(1 << value)
-        for i in range(96):
+        for i in range(24 * 60 / BASE_GRANULARITY):
             if self.values[i] > 0:
                 self.values[i] &= mask
                 if self.values[i] == PREVISIONNEL:
@@ -85,13 +85,13 @@ class Day(object):
         self.save()
             
     def set_state(self, state):
-        start, end = int(creche.ouverture*4), int(creche.fermeture*4)
+        start, end = int(creche.ouverture*(60 / BASE_GRANULARITY)), int(creche.fermeture*(60 / BASE_GRANULARITY))
         self.values[start:end] = [state] * (end-start)
         self.save()
         
     def get_state(self):
         state = ABSENT
-        for i in range(96):
+        for i in range(24 * 60 / BASE_GRANULARITY):
             if self.values[i] < 0:
                 return self.values[i]
             else:
@@ -107,7 +107,7 @@ class Day(object):
         
     def get_heures(self):
         heures = 0.0
-        for i in range(96):
+        for i in range(24 * 60 / BASE_GRANULARITY):
             if self.values[i] < 0:
                 return 0.0
             elif self.values[i] > 0:
@@ -117,7 +117,7 @@ class Day(object):
     def copy(self, day, previsionnel=True):
         self.values = day.values[:]
         if previsionnel:
-            for i in range(96):
+            for i in range(24 * 60 / BASE_GRANULARITY):
                 if self.values[i]:
                     self.values[i] |= PREVISIONNEL
                     
@@ -125,7 +125,7 @@ class Day(object):
         result = set()
         for value in creche.activites.keys():
             mask = (1 << value)
-            for h in range(96):
+            for h in range(24 * 60 / BASE_GRANULARITY):
                 if self.values[h] > 0 and self.values[h] & mask:
                     result.add(value)
                     break
@@ -178,7 +178,7 @@ class Journee(Day):
         del self.activites[(start, end, value)]
        
     def confirm(self):
-        for i in range(96):
+        for i in range(24 * 60 / BASE_GRANULARITY):
             self.values[i] &= ~PREVISIONNEL
         self.save()
         
@@ -729,7 +729,7 @@ class Inscrit(object):
                     return ABSENT, 0
             else: # PRESENT
                 supplement = 0.0
-                for i in range(96):
+                for i in range(24 * 60 / BASE_GRANULARITY):
                     if journee.values[i] and not reference.values[i]:
                         supplement += 0.25
                 if inscription.mode == MODE_5_5 or ref_state:

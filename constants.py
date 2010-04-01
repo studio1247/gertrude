@@ -37,7 +37,7 @@ TYPE_MUNICIPAL = 2
 MODE_LIBERE_PLACE = 1
 
 # Granularité du planning dans la base
-BASE_GRANULARITY = 15 # au quart d'heure
+BASE_GRANULARITY = 15 # granularite de 15 minutes
 
 # Modes d'inscription
 MODE_CRECHE = 0

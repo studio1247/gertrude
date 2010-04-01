@@ -340,6 +340,8 @@ class SQLConnection(object):
                 cur.execute('SELECT day, value, debut, fin, idx FROM REF_ACTIVITIES WHERE reference=?', (inscription.idx,))
                 for day, value, debut, fin, idx in cur.fetchall():
                     reference_day = inscription.reference[day]
+                    #debut = debut * 3
+                    #fin = fin * 3
                     reference_day.add_activity(debut, fin, value, idx)
                     # print inscrit.prenom, day, debut, fin, value
             cur.execute('SELECT absent, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email, idx FROM PARENTS WHERE inscrit=?', (inscrit.idx,))

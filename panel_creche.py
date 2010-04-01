@@ -494,7 +494,7 @@ class ParametersPanel(AutoTab):
                 return
         obj.AutoChange(value)
         for inscrit, jour, info, date in errors:
-            for i in range(0, int(creche.ouverture*4)) + range(int(creche.fermeture*4), 96):
+            for i in range(0, int(creche.ouverture*4)) + range(int(creche.fermeture*4), 24 * 60 / BASE_GRANULARITY):
                 jour.values[i] = 0
             jour.save()
         if creche.affichage_min > creche.ouverture:
