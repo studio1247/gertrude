@@ -16,7 +16,8 @@
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import sys
-import wx, wx.lib, wx.lib.scrolledpanel, wx.lib.stattext, wx.combo
+import wx, wx.lib, wx.lib.scrolledpanel, wx.lib.masked, wx.lib.stattext, wx.combo
+from wx.lib.masked import Field
 import fpformat
 import datetime
 from functions import *
@@ -298,6 +299,32 @@ else:
         else:
             wx.TextCtrl.SetValue(self, '%.02d/%.02d/%.04d' % (value.day, value.month, value.year))
         self.Refresh()
+        
+class TimeCtrl(wx.lib.masked.TimeCtrl):
+    def __init__(self, parent):
+        self.spin = wx.SpinButton(parent, -1, wx.DefaultPosition, (-1, 10), wx.SP_VERTICAL)
+        wx.lib.masked.TimeCtrl.__init__(self, parent, id=-1, fmt24hr=True, display_seconds=False, spinButton=self.spin)
+        #hourfield = Field(formatcodes='0r<SV', validRegex='0\d|1\d|2[0123]', validRequired=True)
+        #minutefield = Field(formatcodes='0r<SV', validRegex='[0-5]\d', validRequired=True)
+        #maskededit_kwargs['fields'] = [ hourfield, minutefield ]
+        
+    def __IncrementValue(self, key, pos):
+        text = self.GetValue()
+        start, end = 3, 5
+        slice = text[start:end]
+        if key == wx.WXK_UP: 
+            increment = 5
+        else:
+            increment = -5
+
+        newslice = "%02d" % ((int(slice) + increment) % 60)
+        newvalue = text[:start] + newslice + text[end:]
+
+        try:
+            self.SetValue(newvalue)
+        except ValueError:  # must not be in bounds:
+            if not wx.Validator_IsSilent():
+                wx.Bell()
 
 class AutoMixin:
     def __init__(self, parent, instance, member):
@@ -354,6 +381,25 @@ class AutoDateCtrl(DateCtrl, AutoMixin):
     def __init__(self, parent, instance, member, *args, **kwargs):
         DateCtrl.__init__(self, parent, id=-1, style=wx.DP_DEFAULT|wx.DP_DROPDOWN|wx.DP_SHOWCENTURY|wx.DP_ALLOWNONE, *args, **kwargs)
         AutoMixin.__init__(self, parent, instance, member)
+        # self.Bind(wx.EVT_DATE_CHANGED, self.onText, self)
+        # DateCtrl.__init__(self, parent, -1, *args, **kwargs)
+        # AutoMixin.__init__(self, parent, instance, member)
+        
+class AutoTimeCtrl(TimeCtrl, AutoMixin):
+    def __init__(self, parent, instance, member, *args, **kwargs):
+        TimeCtrl.__init__(self, parent)
+        AutoMixin.__init__(self, parent, instance, member)
+        
+    def SetValue(self, value):
+        if isinstance(value, float):
+            wx.lib.masked.TimeCtrl.SetValue(self, "%02d:%02d" % (int(value), (value - int(value)) * 60))
+        else:
+            wx.lib.masked.TimeCtrl.SetValue(self, value)
+                    
+    def onText(self, event):
+        value = self.GetValue()
+        self.AutoChange(float(value[:2]) + float(value[3:5]) / 60)
+        event.Skip()
         # self.Bind(wx.EVT_DATE_CHANGED, self.onText, self)
         # DateCtrl.__init__(self, parent, -1, *args, **kwargs)
         # AutoMixin.__init__(self, parent, instance, member)
