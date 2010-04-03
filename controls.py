@@ -304,27 +304,171 @@ class TimeCtrl(wx.lib.masked.TimeCtrl):
     def __init__(self, parent):
         self.spin = wx.SpinButton(parent, -1, wx.DefaultPosition, (-1, 10), wx.SP_VERTICAL)
         wx.lib.masked.TimeCtrl.__init__(self, parent, id=-1, fmt24hr=True, display_seconds=False, spinButton=self.spin)
-        #hourfield = Field(formatcodes='0r<SV', validRegex='0\d|1\d|2[0123]', validRequired=True)
-        #minutefield = Field(formatcodes='0r<SV', validRegex='[0-5]\d', validRequired=True)
-        #maskededit_kwargs['fields'] = [ hourfield, minutefield ]
         
-    def __IncrementValue(self, key, pos):
-        text = self.GetValue()
-        start, end = 3, 5
-        slice = text[start:end]
-        if key == wx.WXK_UP: 
-            increment = 5
-        else:
-            increment = -5
+    def SetParameters(self, **kwargs):
+        """
+        Function providing access to the parameters governing TimeCtrl display and bounds.
+        """
+##        dbg('TimeCtrl::SetParameters(%s)' % repr(kwargs), indent=1)
+        maskededit_kwargs = {}
+        reset_format = False
 
-        newslice = "%02d" % ((int(slice) + increment) % 60)
-        newvalue = text[:start] + newslice + text[end:]
+        if kwargs.has_key('display_seconds'):
+            kwargs['displaySeconds'] = kwargs['display_seconds']
+            del kwargs['display_seconds']
+        if kwargs.has_key('format') and kwargs.has_key('displaySeconds'):
+            del kwargs['displaySeconds']    # always apply format if specified
+
+        # assign keyword args as appropriate:
+        for key, param_value in kwargs.items():
+            if key not in TimeCtrl.valid_ctrl_params.keys():
+                raise AttributeError('invalid keyword argument "%s"' % key)
+
+            if key == 'format':
+                wxdt = wx.DateTimeFromDMY(1, 0, 1970)
+                try:
+                    if wxdt.Format('%p') != 'AM':
+                        require24hr = True
+                    else:
+                        require24hr = False
+                except:
+                    require24hr = True
+
+                # handle both local or generic 'maskededit' autoformat codes:
+                if param_value == 'HHMMSS' or param_value == 'TIMEHHMMSS':
+                    self.__displaySeconds = True
+                    self.__fmt24hr = False
+                elif param_value == 'HHMM' or param_value == 'TIMEHHMM':
+                    self.__displaySeconds = False
+                    self.__fmt24hr = False
+                elif param_value == '24HHMMSS' or param_value == '24HRTIMEHHMMSS':
+                    self.__displaySeconds = True
+                    self.__fmt24hr = True
+                elif param_value == '24HHMM' or param_value == '24HRTIMEHHMM':
+                    self.__displaySeconds = False
+                    self.__fmt24hr = True
+                else:
+                    raise AttributeError('"%s" is not a valid format' % param_value)
+
+                if require24hr and not self.__fmt24hr:
+                    raise AttributeError('"%s" is an unsupported time format for the current locale' % param_value)
+
+                reset_format = True
+
+            elif key in ("displaySeconds",  "display_seconds") and not kwargs.has_key('format'):
+                self.__displaySeconds = param_value
+                reset_format = True
+
+            elif key == "min":      min = param_value
+            elif key == "max":      max = param_value
+            elif key == "limited":  limited = param_value
+
+            elif key == "useFixedWidthFont":
+                maskededit_kwargs[key] = param_value
+
+            elif key == "oob_color":
+                maskededit_kwargs['invalidBackgroundColor'] = param_value
+
+        if reset_format:
+            if self.__fmt24hr:
+                if self.__displaySeconds:  maskededit_kwargs['autoformat'] = '24HRTIMEHHMMSS'
+                else:                      maskededit_kwargs['autoformat'] = '24HRTIMEHHMM'
+
+                # Set hour field to zero-pad, right-insert, require explicit field change,
+                # select entire field on entry, and require a resultant valid entry
+                # to allow character entry:
+                hourfield = Field(formatcodes='0r<SV', validRegex='0\d|1\d|2[0123]', validRequired=True)
+            else:
+                if self.__displaySeconds:  maskededit_kwargs['autoformat'] = 'TIMEHHMMSS'
+                else:                      maskededit_kwargs['autoformat'] = 'TIMEHHMM'
+
+                # Set hour field to allow spaces (at start), right-insert,
+                # require explicit field change, select entire field on entry,
+                # and require a resultant valid entry to allow character entry:
+                hourfield = Field(formatcodes='_0<rSV', validRegex='0[1-9]| [1-9]|1[012]', validRequired=True)
+                ampmfield = Field(formatcodes='S', emptyInvalid = True, validRequired = True)
+
+            # Field 1 is always a zero-padded right-insert minute field,
+            # similarly configured as above:
+            minutefield = Field(formatcodes='0r<SV', validRegex='[0-5][0|5]', validRequired=True)
+
+            fields = [ hourfield, minutefield ]
+            if self.__displaySeconds:
+                fields.append(copy.copy(minutefield))    # second field has same constraints as field 1
+
+            if not self.__fmt24hr:
+                fields.append(ampmfield)
+
+            # set fields argument:
+            maskededit_kwargs['fields'] = fields
+
+            # This allows range validation if set
+            maskededit_kwargs['validFunc'] = self.IsInBounds
+
+            # This allows range limits to affect insertion into control or not
+            # dynamically without affecting individual field constraint validation
+            maskededit_kwargs['retainFieldValidation'] = True
+
+        
+        if hasattr(self, 'controlInitialized') and self.controlInitialized:
+            self.SetCtrlParameters(**maskededit_kwargs)   # set appropriate parameters
+            # self.SetBounds("00:00", "23:55")
+            # Validate initial value and set if appropriate
+            try:
+                self.SetBounds(min, max)
+                self.SetLimited(limited)
+                self.SetValue(value)
+            except:
+                self.SetValue('00:00:00')
+##            dbg(indent=0)
+            return {}   # no arguments to return
+        else:
+##            dbg(indent=0)
+            return maskededit_kwargs
+
+    def __IncrementValue(self, key, pos):
+##        dbg('TimeCtrl::IncrementValue', key, pos, indent=1)
+        text = self.GetValue()
+        field = self._FindField(pos)
+##        dbg('field: ', field._index)
+        start, end = field._extent
+        slice = text[start:end]
+        if key == wx.WXK_UP: increment = 1
+        else:             increment = -1
+
+        if slice in ('A', 'P'):
+            if slice == 'A': newslice = 'P'
+            elif slice == 'P': newslice = 'A'
+            newvalue = text[:start] + newslice + text[end:]
+
+        elif field._index == 0:
+            # adjusting this field is trickier, as its value can affect the
+            # am/pm setting.  So, we use wxDateTime to generate a new value for us:
+            # (Use a fixed date not subject to DST variations:)
+            converter = wx.DateTimeFromDMY(1, 0, 1970)
+##            dbg('text: "%s"' % text)
+            converter.ParseTime(text.strip())
+            currenthour = converter.GetHour()
+##            dbg('current hour:', currenthour)
+            newhour = (currenthour + increment) % 24
+##            dbg('newhour:', newhour)
+            converter.SetHour(newhour)
+##            dbg('converter.GetHour():', converter.GetHour())
+            newvalue = converter     # take advantage of auto-conversion for am/pm in .SetValue()
+
+        else:   # minute or second field; handled the same way:
+            increment *= 5
+            newslice = "%02d" % ((int(slice) + increment) % 60)
+            newvalue = text[:start] + newslice + text[end:]
 
         try:
             self.SetValue(newvalue)
+
         except ValueError:  # must not be in bounds:
             if not wx.Validator_IsSilent():
                 wx.Bell()
+##        dbg(indent=0)
+
 
 class AutoMixin:
     def __init__(self, parent, instance, member):
@@ -398,7 +542,10 @@ class AutoTimeCtrl(TimeCtrl, AutoMixin):
                     
     def onText(self, event):
         value = self.GetValue()
-        self.AutoChange(float(value[:2]) + float(value[3:5]) / 60)
+        try:
+          self.AutoChange(float(value[:2]) + float(value[3:5]) / 60)
+        except:
+          pass
         event.Skip()
         # self.Bind(wx.EVT_DATE_CHANGED, self.onText, self)
         # DateCtrl.__init__(self, parent, -1, *args, **kwargs)
