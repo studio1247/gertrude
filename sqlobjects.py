@@ -111,7 +111,7 @@ class Day(object):
             if self.values[i] < 0:
                 return 0.0
             elif self.values[i] > 0:
-                heures += 0.25
+                heures += 5.0 / 60
         return heures
     
     def copy(self, day, previsionnel=True):
@@ -731,7 +731,7 @@ class Inscrit(object):
                 supplement = 0.0
                 for i in range(24 * 60 / BASE_GRANULARITY):
                     if journee.values[i] and not reference.values[i]:
-                        supplement += 0.25
+                        supplement += 5.0 / 60
                 if inscription.mode == MODE_5_5 or ref_state:
                     return PRESENT, supplement
                 else:
