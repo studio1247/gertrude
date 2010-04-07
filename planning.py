@@ -78,7 +78,10 @@ class PlanningGridWindow(BufferedWindow):
         dc.SetBrush(wx.WHITE_BRUSH)
         affichage_min = int(creche.affichage_min * 60 / BASE_GRANULARITY)
         affichage_max = int(creche.affichage_max * 60 / BASE_GRANULARITY)
-        heure = affichage_min
+        if affichage_min % (creche.granularite / BASE_GRANULARITY):
+            heure = affichage_min + (creche.granularite / BASE_GRANULARITY) - affichage_min % (creche.granularite / BASE_GRANULARITY)
+        else:
+            heure = affichage_min
         height = dc.GetSize()[1]
         while heure <= affichage_max:
             x = (heure - affichage_min) * COLUMN_WIDTH
@@ -452,13 +455,18 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
         font = wx.Font(7, wx.SWISS, wx.NORMAL, wx.NORMAL)
         dc.SetFont(font)
         dc.SetTextForeground("WHITE")
+        
         affichage_min = int(creche.affichage_min * (60 / BASE_GRANULARITY))
         affichage_max = int(creche.affichage_max * (60 / BASE_GRANULARITY))
-        heure = affichage_min
+        if affichage_min % (creche.granularite / BASE_GRANULARITY):
+            heure = affichage_min + (creche.granularite / BASE_GRANULARITY) - affichage_min % (creche.granularite / BASE_GRANULARITY)
+        else:
+            heure = affichage_min
         while heure <= affichage_max:
             x = 2 + LABEL_WIDTH + (heure - affichage_min) * COLUMN_WIDTH
             if not self.options & NO_ICONS:
                 x += ICONS_WIDTH
+            print heure, heure % (60 / BASE_GRANULARITY)
             if heure % (60 / BASE_GRANULARITY) == 0:
                 dc.DrawLine(x, 20, x, 12)
                 dc.DrawText(str(int(round(heure/(60 / BASE_GRANULARITY))))+"h", x - 3, 0)
