@@ -466,7 +466,6 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
             x = 2 + LABEL_WIDTH + (heure - affichage_min) * COLUMN_WIDTH
             if not self.options & NO_ICONS:
                 x += ICONS_WIDTH
-            print heure, heure % (60 / BASE_GRANULARITY)
             if heure % (60 / BASE_GRANULARITY) == 0:
                 dc.DrawLine(x, 20, x, 12)
                 dc.DrawText(str(int(round(heure/(60 / BASE_GRANULARITY))))+"h", x - 3, 0)
