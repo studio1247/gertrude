@@ -108,7 +108,7 @@ class Facture(object):
                             for index in activites:
                                 activite = creche.activites[index]
                                 self.supplement_activites += activite.tarif
-
+                    
             date += datetime.timedelta(1)
 
         for mode_inscription, montant in cotisations_mensuelles:

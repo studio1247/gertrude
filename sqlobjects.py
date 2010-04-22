@@ -398,10 +398,13 @@ class Creche(object):
         self.capacite = 0
         self.forfait_horaire = 0.0
         self.majoration_localite = 0.0
+        self.facturation_jours_feries = JOURS_FERIES_NON_DEDUITS
+        self.calcul_taux_effort = TAUX_EFFORT_AUTO
         self.calcule_jours_fermeture()
 
     def calcule_jours_fermeture(self):
         self.jours_fermeture = []
+        # TODO il faudrait pouvoir ajouter des jours feries / des vacances / jours nettoyage
         for year in range(first_date.year, last_date.year + 1):
             for label, func, enable in jours_fermeture:
                 if label in self.feries:
@@ -410,7 +413,7 @@ class Creche(object):
                         self.jours_fermeture.extend(tmp)
                     else:
                         self.jours_fermeture.append(tmp)
-                    
+        self.jours_feries = self.jours_fermeture[:]                   
 
         def add_periode(debut, fin):
             date = debut
@@ -449,7 +452,7 @@ class Creche(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'forfait_horaire', 'tarification_activites', 'traitement_maladie', 'forfait_horaire', 'majoration_localite'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'forfait_horaire', 'tarification_activites', 'traitement_maladie', 'forfait_horaire', 'majoration_localite', 'facturation_jours_feries', 'calcul_taux_effort'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
@@ -535,6 +538,7 @@ class Inscription(object):
         self.mode = MODE_5_5
         self.duree_reference = duree_reference
         self.semaines_conges = 0
+        self.taux_effort = .0
         self.reference = []
         for i in range(duree_reference):
             self.reference.append(ReferenceDay(self, i))
@@ -565,7 +569,7 @@ class Inscription(object):
     
     def create(self):
         print 'nouvelle inscription'
-        result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, fin_periode_essai, duree_reference, semaines_conges) VALUES(NULL,?,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, self.fin_periode_essai, self.duree_reference, self.semaines_conges))
+        result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, fin_periode_essai, duree_reference, semaines_conges) VALUES(NULL,?,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, self.fin_periode_essai, self.duree_reference, self.semaines_conges, self.taux_effort))
         self.idx = result.lastrowid
         
     def delete(self):
@@ -574,7 +578,7 @@ class Inscription(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['debut', 'fin', 'mode', 'fin_periode_essai', 'duree_reference', 'semaines_conges'] and self.idx:
+        if name in ['debut', 'fin', 'mode', 'fin_periode_essai', 'duree_reference', 'semaines_conges', 'taux_effort'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE INSCRIPTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))   
 

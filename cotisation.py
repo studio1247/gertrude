@@ -93,17 +93,34 @@ class Cotisation(object):
         else:
             self.mode_inscription = MODE_CRECHE
 
+        if creche.calcul_taux_effort == TAUX_EFFORT_A_RENSEIGNER:
+            if self.inscription.taux_effort:
+                self.taux_effort = self.inscription.taux_effort
+                self.mode_taux_horaire = ''
+            else:
+                errors.append(u" - Le taux d'effort n'est pas renseigné.")
+
         if len(errors) > 0:
             raise CotisationException(errors)
 
         if creche.mode_facturation == FACTURATION_FORFAIT_10H:
             self.heures_semaine = self.jours_semaine * 10
             self.heures_mois = self.heures_semaine * 4
+            self.heures_annee = 12 * self.heures_mois
         else:
             self.heures_semaine = self.heures_reelles_semaine
-            self.heures_mois = (self.heures_semaine * 45) / 12
-
-        self.heures_annee = 12 * self.heures_mois
+            self.heures_annee = 47 * self.heures_semaine
+            self.heures_mois = self.heures_annee / 12
+            # TODO c'etait 45 au lieu de 46 pour Oleron, 47 pour Bois le roi
+            # Il faudrait pouvoir saisir le nombre de samaines de vacances qq part
+            
+        if creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
+            for date in creche.jours_feries:
+                if date.year == self.debut.year:
+                    inscription = inscrit.getInscription(date)
+                    if inscription:
+                        self.heures_annee -= inscription.getReferenceDay(date).get_heures()
+            self.heures_mois = self.heures_annee / 12
 
         if self.jours_semaine == 5:
             self.str_mode_garde = u'plein temps'
@@ -148,33 +165,34 @@ class Cotisation(object):
                     if frere_soeur.entree and frere_soeur.entree <= self.debut and (frere_soeur.sortie is None or frere_soeur.sortie > self.debut):
                         self.enfants_en_creche += 1
 
-            if self.enfants_en_creche > 1:
-                self.mode_taux_horaire = u'%d enfants en crèche' % self.enfants_en_creche
-                self.taux_effort = 5.55
-            else:
-                if self.enfants_a_charge > 1:
-                    self.mode_taux_horaire = u'%d enfants à charge' % self.enfants_a_charge
+            if creche.calcul_taux_effort == TAUX_EFFORT_AUTO:
+                if self.enfants_en_creche > 1:
+                    self.mode_taux_horaire = u'%d enfants en crèche' % self.enfants_en_creche
+                    self.taux_effort = 5.55
                 else:
-                    self.mode_taux_horaire = u'1 enfant à charge'
-
-                if creche.type == TYPE_MUNICIPAL:
-                    if self.enfants_a_charge > 3:
-                        self.taux_effort = 6.25
-                    elif self.enfants_a_charge == 3:
-                        self.taux_effort = 8.33
-                    elif self.enfants_a_charge == 2:
-                        self.taux_effort = 10.0
+                    if self.enfants_a_charge > 1:
+                        self.mode_taux_horaire = u'%d enfants à charge' % self.enfants_a_charge
                     else:
-                        self.taux_effort = 12.0
-                else:
-                    if self.enfants_a_charge > 3:
-                        self.taux_effort = 5.55
-                    elif self.enfants_a_charge == 3:
-                        self.taux_effort = 6.25
-                    elif self.enfants_a_charge == 2:
-                        self.taux_effort = 8.33
+                        self.mode_taux_horaire = u'1 enfant à charge'
+    
+                    if creche.type == TYPE_MUNICIPAL:
+                        if self.enfants_a_charge > 3:
+                            self.taux_effort = 6.25
+                        elif self.enfants_a_charge == 3:
+                            self.taux_effort = 8.33
+                        elif self.enfants_a_charge == 2:
+                            self.taux_effort = 10.0
+                        else:
+                            self.taux_effort = 12.0
                     else:
-                        self.taux_effort = 10.0
+                        if self.enfants_a_charge > 3:
+                            self.taux_effort = 5.55
+                        elif self.enfants_a_charge == 3:
+                            self.taux_effort = 6.25
+                        elif self.enfants_a_charge == 2:
+                            self.taux_effort = 8.33
+                        else:
+                            self.taux_effort = 10.0
             self.taux_horaire = self.taux_effort / 200;
 
             self.montant_heure_garde = self.assiette_mensuelle * self.taux_horaire / 100
