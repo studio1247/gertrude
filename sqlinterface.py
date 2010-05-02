@@ -92,7 +92,7 @@ class SQLConnection(object):
             forfait_horaire FLOAT,
             majoration_localite FLOAT,
             facturation_jours_feries INTEGER,
-            calcul_taux_effort FLOAT,
+            calcul_taux_effort FLOAT
           );""")
 
         cur.execute("""
