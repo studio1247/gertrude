@@ -536,7 +536,7 @@ class AutoTimeCtrl(TimeCtrl, AutoMixin):
         
     def SetValue(self, value):
         if isinstance(value, float):
-            wx.lib.masked.TimeCtrl.SetValue(self, "%02d:%02d" % (int(value), (value - int(value)) * 60))
+            wx.lib.masked.TimeCtrl.SetValue(self, "%02d:%02d" % (int(value), round((value - int(value)) * 60)))
         else:
             wx.lib.masked.TimeCtrl.SetValue(self, value)
                     
