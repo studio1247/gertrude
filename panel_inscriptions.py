@@ -437,7 +437,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         if creche.mode_facturation == FACTURATION_PAJE:
             sizer1.AddMany([(wx.StaticText(self, -1, u"Nombre de semaines de congés :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'semaines_conges', min=0, precision=0), 0, wx.EXPAND)])
         if creche.calcul_taux_effort == TAUX_EFFORT_A_RENSEIGNER:
-            sizer1.AddMany([(wx.StaticText(self, -1, u"Taux d'effort :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'taux_effort', min=0, precision=2), 0, wx.EXPAND)])
+            sizer1.AddMany([(wx.StaticText(self, -1, u"Taux d'effort :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'taux_effort', min=0, precision=3), 0, wx.EXPAND)])
         sizer1.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_essai'), 0, wx.EXPAND)])
         self.duree_reference_choice = wx.Choice(self)
         for item, data in [("1 semaine", 7), (u"2 semaines", 14), (u"3 semaines", 21), ("4 semaines", 28)]:
