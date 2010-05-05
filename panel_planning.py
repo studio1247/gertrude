@@ -26,23 +26,31 @@ from planning import PlanningWidget
 class DayPlanningPanel(PlanningWidget):
     def UpdateContents(self):
         if self.date in creche.jours_fermeture:
-            self.Disable(u"Crèche fermée")
-        else:
-            lines = []
-            for inscrit in creche.inscrits:
-                if inscrit.getInscription(self.date) is not None:
-                    # print inscrit.prenom, 
-                    if self.date in inscrit.journees:
-                        line = inscrit.journees[self.date]
-                        line.insert = None
-                    else:
-                        line = inscrit.getReferenceDayCopy(self.date)
-                        line.insert = inscrit.journees
-                        line.key = self.date
-                    line.label = GetInscritId(inscrit, creche.inscrits)
-                    line.reference = inscrit.getReferenceDay(self.date)
-                    lines.append(line)
-            self.SetLines(lines)
+            conge = creche.jours_fermeture[self.date]
+            if conge.options == ACCUEIL_NON_FACTURE:
+                self.SetInfo(conge.label)
+            else:
+                if conge.label:
+                    self.Disable(conge.label)
+                else:
+                    self.Disable(u"Crèche fermée")
+                return
+        
+        lines = []
+        for inscrit in creche.inscrits:
+            if inscrit.getInscription(self.date) is not None:
+                # print inscrit.prenom, 
+                if self.date in inscrit.journees:
+                    line = inscrit.journees[self.date]
+                    line.insert = None
+                else:
+                    line = inscrit.getReferenceDayCopy(self.date)
+                    line.insert = inscrit.journees
+                    line.key = self.date
+                line.label = GetInscritId(inscrit, creche.inscrits)
+                line.reference = inscrit.getReferenceDay(self.date)
+                lines.append(line)
+        self.SetLines(lines)
 
     def SetDate(self, date):
         self.date = date

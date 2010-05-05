@@ -71,6 +71,10 @@ ACTIVITES_NON_FACTUREES = 0
 ACTIVITES_FACTUREES_JOURNEE = 1
 ACTIVITES_FACTUREES_JOURNEE_PERIODE_ESSAI = 3
 
+# Options des conges
+ACCUEIL_NON_FACTURE = 1 #  jours de nettoyage par exemple
+MOIS_SANS_FACTURE = 2 # si présence dans cette periode (mois d'août par exemple), elle est répartie sur les autres mois de l'année 
+
 # Valeurs de présence
 ABSENT = 0
 PRESENT = 1 << 0 # activité 0

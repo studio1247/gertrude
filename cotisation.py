@@ -114,6 +114,22 @@ class Cotisation(object):
         if len(errors) > 0:
             raise CotisationException(errors)
 
+        self.mois_sans_facture = []
+        for conge in creche.conges:
+            if conge.options == MOIS_SANS_FACTURE:
+                if conge.debut in months:
+                    mois = months.index(conge.debut) + 1
+                    if mois not in self.mois_sans_facture:
+                        self.mois_sans_facture.append(mois)
+                else:
+                    try:
+                        mois = int(conge.debut)
+                        if mois not in self.mois_sans_facture:
+                            self.mois_sans_facture.append(mois)
+                    except:
+                        pass
+        self.nombre_factures = 12 - len(self.mois_sans_facture)
+        
         if creche.mode_facturation == FACTURATION_FORFAIT_10H:
             self.heures_semaine = self.jours_semaine * 10
             self.heures_mois = self.heures_semaine * 4
@@ -126,15 +142,15 @@ class Cotisation(object):
             # TODO c'etait 45 au lieu de 46 pour Oleron, 47 pour Bois le roi
             # Il faudrait pouvoir saisir le nombre de samaines de vacances qq part
             
+            
         if creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
-            for date in creche.jours_feries:
-                if date.year == self.debut.year:
+            for date in creche.jours_feries + [j for j in creche.jours_fermeture if creche.jours_fermeture[j].options == ACCUEIL_NON_FACTURE]:
+                iso = date.isocalendar()
+                if iso[0] == self.debut.year:
                     inscription = inscrit.getInscription(date)
                     if inscription:
                         self.heures_annee -= inscription.getReferenceDay(date).get_heures()
-                        # if inscription.getReferenceDay(date).get_heures():
-                        #    print "- %dh (%r)" % (inscription.getReferenceDay(date).get_heures(), date)
-            self.heures_mois = self.heures_annee / 12
+            self.heures_mois = int(self.heures_annee / self.nombre_factures)
 
         if self.jours_semaine == 5:
             self.str_mode_garde = u'plein temps'

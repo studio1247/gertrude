@@ -44,7 +44,7 @@ BUTTON_BITMAPS = { ABSENT: wx.Bitmap("./bitmaps/icone_vacances.png", wx.BITMAP_T
 
 class PlanningGridWindow(BufferedWindow):
     def __init__(self, parent, activity_combobox):
-        self.disable_cause = None
+        self.info = ""
         self.lines = []
         BufferedWindow.__init__(self, parent, size=((creche.affichage_max-creche.affichage_min) * 4 * COLUMN_WIDTH + 1, -1))
         self.SetBackgroundColour(wx.WHITE)
@@ -56,13 +56,15 @@ class PlanningGridWindow(BufferedWindow):
         self.Bind(wx.EVT_LEFT_UP, self.OnLeftButtonUp)
         self.Bind(wx.EVT_MOTION, self.OnLeftButtonDragging)
 
-    def Disable(self, cause):
-        self.disable_cause = cause
+    def SetInfo(self, info):
+        self.info = info
+        
+    def Disable(self, info):
+        self.SetInfo(info)
         self.lines = []
         self.SetMinSize((int((creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH + 1), 400))
         
     def SetLines(self, lines):
-        self.disable_cause = None
         self.lines = lines
         self.SetMinSize((int((creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH + 1), LINE_HEIGHT * len(self.lines) - 1))
        
@@ -92,20 +94,20 @@ class PlanningGridWindow(BufferedWindow):
             dc.DrawLine(x, 0,  x, height)
             heure += creche.granularite / BASE_GRANULARITY
 
-        if self.disable_cause:
+        if self.info:
             dc.SetTextForeground("LIGHT GREY")
             font = wx.Font(56, wx.SWISS, wx.NORMAL, wx.BOLD)
             dc.SetFont(font)
-            dc.DrawRotatedText(self.disable_cause, 50, 340, 45)
-        else: 
-            # les présences
-            try:
-                dc = wx.GCDC(dc)
-            except:
-                pass
+            dc.DrawRotatedText(self.info, 50, 340, 45)
+        
+        # les présences
+        try:
+            dc = wx.GCDC(dc)
+        except:
+            pass
 
-            for i, line in enumerate(self.lines):
-                self.DrawLine(dc, i, line)
+        for i, line in enumerate(self.lines):
+            self.DrawLine(dc, i, line)
         
         dc.EndDrawing()
 
@@ -271,14 +273,17 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                 state |= PRESENT
         self.buttons_sizer.GetItem(index).GetWindow().button.SetBitmapLabel(BUTTON_BITMAPS[state])
 
-    def Disable(self, cause):
+    def SetInfo(self, info):
+        self.grid_panel.SetInfo(info)
+        
+    def Disable(self, info):
         self.lines = []
         self.SetScrollPos(wx.VERTICAL, 0)
         if not self.GetParent().options & NO_ICONS:
             self.buttons_sizer.Clear(True)
             self.buttons_sizer.Layout()
         self.labels_panel.SetMinSize((LABEL_WIDTH, 1))
-        self.grid_panel.Disable(cause)
+        self.grid_panel.Disable(info)
         self.sizer.Layout()
         self.SetupScrolling(scroll_x=False)
         self.GetParent().sizer.Layout()
@@ -425,9 +430,12 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
         self.sizer.Layout()
         self.scale_window.Bind(wx.EVT_PAINT, self.OnPaint)
 
-    def Disable(self, cause):
+    def SetInfo(self, info):
+        self.internal_panel.SetInfo(info)
+        
+    def Disable(self, info):
         self.lines = []
-        self.internal_panel.Disable(cause)
+        self.internal_panel.Disable(info)
         self.summary_panel.UpdateContents()
         
     def SetLines(self, lines):

@@ -25,7 +25,7 @@ from sqlobjects import *
 import wx
 
 DB_FILENAME = 'gertrude.db'
-VERSION = 31
+VERSION = 32
 
 def getdate(s):
     if s is None:
@@ -243,7 +243,9 @@ class SQLConnection(object):
           CREATE TABLE CONGES(
             idx INTEGER PRIMARY KEY,
             debut VARCHAR,
-            fin VARCHAR
+            fin VARCHAR,
+            label VARCHAR,
+            options INTEGER
           );""")
 
         for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", u"15 août", "1er novembre", "11 novembre", u"25 décembre", u"Lundi de Pâques", "Jeudi de l'Ascension"):
@@ -291,10 +293,10 @@ class SQLConnection(object):
             # print user.login, user.password
             creche.users.append(user)
 
-        cur.execute('SELECT debut, fin, idx FROM CONGES')
+        cur.execute('SELECT debut, fin, label, options, idx FROM CONGES')
         for conges_entry in cur.fetchall():
             conge = Conge(creation=False)
-            conge.debut, conge.fin, conge.idx = conges_entry
+            conge.debut, conge.fin, conge.label, conge.options, conge.idx = conges_entry
             creche.add_conge(conge)
 
         cur.execute('SELECT debut, fin, plancher, plafond, idx FROM BAREMESCAF')
@@ -727,6 +729,11 @@ class SQLConnection(object):
             cur.execute('UPDATE CRECHE SET calcul_taux_effort=?', (0,))
             cur.execute('ALTER TABLE INSCRIPTIONS ADD taux_effort FLOAT')
             cur.execute('UPDATE INSCRIPTIONS SET taux_effort=?', (.0,))
+            
+        if version < 32:
+            cur.execute("ALTER TABLE CONGES ADD label VARCHAR")
+            cur.execute("ALTER TABLE CONGES ADD options INTEGER")
+            cur.execute('UPDATE CONGES SET label=?, options=?', ("", 0))
            
         if version < VERSION:
             try:

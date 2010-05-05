@@ -268,6 +268,8 @@ class Conge(object):
         self.idx = None
         self.debut = ""
         self.fin = ""
+        self.label = ""
+        self.options = 0
         self.creche = None
 
         if creation:
@@ -286,7 +288,7 @@ class Conge(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['debut', 'fin'] and self.idx:
+        if name in ['debut', 'fin', 'label', 'options'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE CONGES SET %s=? WHERE idx=?' % name, (value, self.idx))
             if self.creche:
@@ -403,44 +405,45 @@ class Creche(object):
         self.calcule_jours_fermeture()
 
     def calcule_jours_fermeture(self):
-        self.jours_fermeture = []
-        # TODO il faudrait pouvoir ajouter des jours feries / des vacances / jours nettoyage
+        self.jours_fermeture = {}        
         for year in range(first_date.year, last_date.year + 1):
             for label, func, enable in jours_fermeture:
                 if label in self.feries:
                     tmp = func(year)
                     if isinstance(tmp, list):
-                        self.jours_fermeture.extend(tmp)
+                        for j in tmp:
+                            self.jours_fermeture[j] = self.feries[label]
                     else:
-                        self.jours_fermeture.append(tmp)
-        self.jours_feries = self.jours_fermeture[:]                   
+                        self.jours_fermeture[tmp] = self.feries[label]
+        self.jours_feries = self.jours_fermeture.keys()
 
-        def add_periode(debut, fin):
+        def add_periode(debut, fin, conge):
             date = debut
             while date <= fin:
-                self.jours_fermeture.append(date)
+                self.jours_fermeture[date] = conge
                 date += datetime.timedelta(1)
 
         for conge in self.conges:
-            try:
-                count = conge.debut.count('/')
-                if count == 2:
-                    debut = str2date(conge.debut)
-                    if conge.fin.strip() == "":
-                        fin = debut
-                    else:
-                        fin = str2date(conge.fin)
-                    add_periode(debut, fin)
-                elif count == 1:
-                    for year in range(first_date.year, last_date.year + 1):
-                        debut = str2date(conge.debut, year)
+            if conge.options != MOIS_SANS_FACTURE:
+                try:
+                    count = conge.debut.count('/')
+                    if count == 2:
+                        debut = str2date(conge.debut)
                         if conge.fin.strip() == "":
                             fin = debut
                         else:
-                            fin = str2date(conge.fin, year)
-                        add_periode(debut, fin)
-            except:
-                pass
+                            fin = str2date(conge.fin)
+                        add_periode(debut, fin, conge)
+                    elif count == 1:
+                        for year in range(first_date.year, last_date.year + 1):
+                            debut = str2date(conge.debut, year)
+                            if conge.fin.strip() == "":
+                                fin = debut
+                            else:
+                                fin = str2date(conge.fin, year)
+                            add_periode(debut, fin, conge)
+                except:
+                    pass
 
     def add_conge(self, conge):
         conge.creche = self
