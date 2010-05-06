@@ -46,9 +46,11 @@ if sys.platform == 'win32':
     isspath = os.path.split(win32api.FindExecutable(name, path)[-1])[0]
     os.system('\"%s\ISCC.exe\" %s' % (isspath, issfile))
 
-    if os.path.isfile("./Output/setup_%s.exe" % VERSION):
-        os.remove("./Output/setup_%s.exe" % VERSION)
-    os.rename("./Output/setup.exe", "./Output/setup_%s.exe" % VERSION)
+    exe = "./Output/setup_%s.exe" % VERSION
+    if os.path.isfile(exe):
+        os.remove(exe)
+    os.rename("./Output/setup.exe", exe)
+    print u"Fichier %s créé" % exe
 elif "linux" in sys.platform:
     if not os.path.exists("./gertrude.py"):
         os.symlink("./gertrude.pyw", "./gertrude.py")
