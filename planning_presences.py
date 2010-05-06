@@ -26,7 +26,7 @@ def isPresentDuringTranche(journee, tranche):
     tranches = [(creche.ouverture, 12), (12, 14), (14, creche.fermeture)]
     
     debut, fin = tranches[tranche]
-    for i in range(int(debut * 4), int(fin * 4)):
+    for i in range(int(debut * (60 / BASE_GRANULARITY)), int(fin * (60 / BASE_GRANULARITY))):
         if journee.values[i]:
             return True
     return False
