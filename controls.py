@@ -275,12 +275,16 @@ if 0: #sys.platform == 'win32':
             return None
 else:
   class DateCtrl(wx.TextCtrl):
-    def __init__(self, parent, id=-1, value=None, *args, **kwargs):
+    def __init__(self, parent, id=-1, value=None, mois=False, *args, **kwargs):
+        self.mois = mois
         wx.TextCtrl.__init__(self, parent, id=-1, *args, **kwargs)
         wx.EVT_TEXT(self, -1, self.checkSyntax)
 
     def checkSyntax(self, event=None):
-        if wx.TextCtrl.GetValue(self) != "" and self.GetValue() is None:
+        str = wx.TextCtrl.GetValue(self)
+        if self.mois and str.lower() in [m.lower() for m in months]:
+            self.SetBackgroundColour(wx.WHITE)
+        elif str != "" and str2date(str) is None:
             self.SetBackgroundColour(wx.RED)
         else:
             self.SetBackgroundColour(wx.WHITE)
@@ -288,13 +292,17 @@ else:
         event.Skip()
 
     def GetValue(self):
-        if wx.TextCtrl.GetValue(self) == "":
+        if self.mois:
+            return wx.TextCtrl.GetValue(self)
+        elif wx.TextCtrl.GetValue(self) == "":
             return None
         else:
             return str2date(wx.TextCtrl.GetValue(self))
 
     def SetValue(self, value):
-        if value is None:
+        if self.mois:
+            wx.TextCtrl.SetValue(self, value)
+        elif value is None:
             wx.TextCtrl.SetValue(self, '')
         else:
             wx.TextCtrl.SetValue(self, '%.02d/%.02d/%.04d' % (value.day, value.month, value.year))
