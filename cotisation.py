@@ -137,7 +137,7 @@ class Cotisation(object):
         else:
             self.heures_semaine = self.heures_reelles_semaine
             self.heures_annee = 47 * self.heures_semaine
-            # print 'heures annee', self.heures_annee
+#            print 'heures annee', self.heures_annee
             self.heures_mois = self.heures_annee / 12
             # TODO c'etait 45 au lieu de 46 pour Oleron, 47 pour Bois le roi
             # Il faudrait pouvoir saisir le nombre de samaines de vacances qq part
@@ -150,6 +150,8 @@ class Cotisation(object):
                     inscription = inscrit.getInscription(date)
                     if inscription:
                         self.heures_annee -= inscription.getReferenceDay(date).get_heures()
+#                        if inscription.getReferenceDay(date).get_heures():
+#                            print date, inscription.getReferenceDay(date).get_heures()
             self.heures_mois = int(self.heures_annee / self.nombre_factures)
 
         if self.jours_semaine == 5:
