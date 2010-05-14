@@ -434,10 +434,16 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         sizer1.AddGrowableCol(1, 1)
         self.mode_accueil_choice = AutoChoiceCtrl(self, None, 'mode', items=[("Plein temps", MODE_5_5), (u"4/5èmes", MODE_4_5), (u"3/5èmes", MODE_3_5), ("Halte-garderie", MODE_HALTE_GARDERIE)])
         sizer1.AddMany([(wx.StaticText(self, -1, u"Mode d'accueil :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.mode_accueil_choice, 0, wx.EXPAND)])
-        if creche.mode_facturation == FACTURATION_PAJE:
-            sizer1.AddMany([(wx.StaticText(self, -1, u"Nombre de semaines de congés :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'semaines_conges', min=0, precision=0), 0, wx.EXPAND)])
-        if creche.calcul_taux_effort == TAUX_EFFORT_A_RENSEIGNER:
-            sizer1.AddMany([(wx.StaticText(self, -1, u"Taux d'effort :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'taux_effort', min=0, precision=3), 0, wx.EXPAND)])
+        sizer1.AddMany([(wx.StaticText(self, -1, u"Nombre de semaines de congés :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'semaines_conges', min=0, precision=0), 0, wx.EXPAND)])
+        self.semaines_conges_items = sizer1.GetItem(2), sizer1.GetItem(3)
+        if creche.mode_facturation != FACTURATION_PAJE:
+            for item in self.semaines_conges_items:
+                item.Show(False)
+        sizer1.AddMany([(wx.StaticText(self, -1, u"Taux d'effort :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'taux_effort', min=0, precision=3), 0, wx.EXPAND)])
+        self.taux_effort_items = sizer1.GetItem(4), sizer1.GetItem(5)
+        if creche.calcul_taux_effort != TAUX_EFFORT_A_RENSEIGNER:
+            for item in self.taux_effort_items:
+                item.Show(False)
         sizer1.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_essai'), 0, wx.EXPAND)])
         self.duree_reference_choice = wx.Choice(self)
         for item, data in [("1 semaine", 7), (u"2 semaines", 14), (u"3 semaines", 21), ("4 semaines", 28)]:
@@ -521,6 +527,12 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
             self.activity_choice.Disable()
             self.activity_choice.Append(creche.activites[0].label, creche.activites[0])
         self.activity_choice.SetSelection(selected)
+        
+        for item in self.semaines_conges_items:
+            item.Show(creche.mode_facturation == FACTURATION_PAJE)
+        for item in self.taux_effort_items:
+            item.Show(creche.calcul_taux_effort == TAUX_EFFORT_A_RENSEIGNER)
+        self.Layout()
 
     def SetPeriode(self, periode):
         PeriodeMixin.SetPeriode(self, periode)
