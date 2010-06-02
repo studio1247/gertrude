@@ -212,8 +212,11 @@ def convert_to_pdf(filename, pdffilename):
                     ["FilterName", "writer_pdf_Export"]]))
     document.close(False)
 
-def pdf_open(filename):    
-    import win32ui, win32api
+dde_server = None
+def pdf_open(filename):
+    global dde_server
+    import win32ui
+    import win32api
     import dde, time
     from os import spawnl,P_NOWAIT,startfile
     
@@ -224,14 +227,15 @@ def pdf_open(filename):
     for t in range(10):
         try:
             time.sleep(2)
-            s = dde.CreateServer()
-            s.Create('')
-            c = dde.CreateConversation(s)
+            if not dde_server:
+                dde_server = dde.CreateServer()
+                dde_server.Create('Gertrude')
+            c = dde.CreateConversation(dde_server)
             c.ConnectTo('acroview', 'control')
             c.Exec('[DocOpen("%s")]' % (filename,))
             return 1
         except Exception, e:
-            print "Impossible de lancer acrobat reader ; prochain essai dans 2s ..."
+            print "Impossible de lancer acrobat reader ; prochain essai dans 2s ...", e
     return 0
    
 class DocumentDialog(wx.Dialog):

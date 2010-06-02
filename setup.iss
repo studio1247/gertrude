@@ -40,6 +40,9 @@ Type: files; Name: "{app}\*.py"
 Type: files; Name: "{app}\*.pyc"
 Type: files; Name: "{app}\*.log"
 
+[Dirs]
+Name: "{app}"; Permissions:users-modify   
+
 [Files]
 ; ---> Gertrude directory
 Source: "dist\*.py";                  DestDir: "{app}";                 Flags: ignoreversion
