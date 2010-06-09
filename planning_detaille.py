@@ -120,8 +120,6 @@ class PlanningDetailleModifications(object):
             
             # le récapitulatif par activité
             summary = getActivitiesSummary(creche, lines)
-            debut = int(creche.affichage_min*4)
-            fin = int(creche.affichage_max*4)
             for activity in summary.keys():
                 i += 1
                 if activity == 0:
@@ -138,11 +136,11 @@ class PlanningDetailleModifications(object):
                 ReplaceTextFields(node, fields)
                 page.appendChild(node)
                 line = summary[activity]
-                x = debut
+                x = affichage_min
                 v = 0
                 a = 0
-                while x <= fin:
-                    if x == fin:
+                while x <= affichage_max:
+                    if x == affichage_max:
                         nv = 0
                     else:
                         nv = line[x]
@@ -150,14 +148,14 @@ class PlanningDetailleModifications(object):
                         if v != 0:
                             # print a, x, v
                             node = shapes["activite-%d" % activity].cloneNode(1)
-                            node.setAttribute('svg:x', '%fcm' % (left + labels_width + (float(a)/4-creche.affichage_min) * step))
+                            node.setAttribute('svg:x', '%fcm' % (left + labels_width + (float(a-affichage_min) * step)))
                             node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
-                            node.setAttribute('svg:width', '%fcm' % (float(x-a)*step/4))
+                            node.setAttribute('svg:width', '%fcm' % (float(x-a)*step))
                             ReplaceTextFields(node, [('texte', '%d' % v)])
                             page.appendChild(node)
                         a = x    
                         v = nv
-                    x += 1
+                    x += creche.granularite / BASE_GRANULARITY
 
             fields = [('nom-creche', creche.nom),
                       ('date', getDateStr(day))]
