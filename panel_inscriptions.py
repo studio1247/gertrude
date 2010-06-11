@@ -33,6 +33,17 @@ def isPresentDuringTranche(journee, tranche):
             return True
     return False
 
+def HeuresTranche(journee, tranche):
+    # Tranches horaires
+    tranches = [(creche.ouverture, 12), (12, 14), (14, creche.fermeture)]
+    
+    debut, fin = tranches[tranche]
+    result = 0
+    for i in range(int(debut * (60 / BASE_GRANULARITY)), int(fin * (60 / BASE_GRANULARITY))):
+        if journee.values[i]:
+            result += BASE_GRANULARITY
+    return float(result) / 60
+
 def ParseHtml(filename, context):
     locals().update(context.__dict__)
     data = file(filename, 'r').read()
