@@ -440,10 +440,10 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
             for item in self.semaines_conges_items:
                 item.Show(False)
         sizer1.AddMany([(wx.StaticText(self, -1, u"Taux d'effort :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'taux_effort', min=0, precision=3), 0, wx.EXPAND)])
-        self.taux_effort_items = sizer1.GetItem(4), sizer1.GetItem(5)
-        if creche.calcul_taux_effort != TAUX_EFFORT_A_RENSEIGNER:
-            for item in self.taux_effort_items:
-                item.Show(False)
+#        self.taux_effort_items = sizer1.GetItem(4), sizer1.GetItem(5)
+#        if creche.calcul_taux_effort != TAUX_EFFORT_A_RENSEIGNER:
+#            for item in self.taux_effort_items:
+#                item.Show(False)
         sizer1.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_essai'), 0, wx.EXPAND)])
         self.duree_reference_choice = wx.Choice(self)
         for item, data in [("1 semaine", 7), (u"2 semaines", 14), (u"3 semaines", 21), ("4 semaines", 28)]:
@@ -530,8 +530,8 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         
         for item in self.semaines_conges_items:
             item.Show(creche.mode_facturation == FACTURATION_PAJE)
-        for item in self.taux_effort_items:
-            item.Show(creche.calcul_taux_effort == TAUX_EFFORT_A_RENSEIGNER)
+#        for item in self.taux_effort_items:
+#            item.Show(creche.calcul_taux_effort == TAUX_EFFORT_A_RENSEIGNER)
         self.Layout()
 
     def SetPeriode(self, periode):
