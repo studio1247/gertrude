@@ -16,6 +16,7 @@
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import datetime
+import math
 from functions import *
 
 class CotisationException(Exception):
@@ -152,7 +153,7 @@ class Cotisation(object):
                         self.heures_annee -= inscription.getReferenceDay(date).get_heures()
 #                        if inscription.getReferenceDay(date).get_heures():
 #                            print date, inscription.getReferenceDay(date).get_heures()
-            self.heures_mois = int(self.heures_annee / self.nombre_factures)
+            self.heures_mois = math.ceil(self.heures_annee / self.nombre_factures)
 
         if self.jours_semaine == 5:
             self.str_mode_garde = u'plein temps'
