@@ -25,7 +25,7 @@ from sqlobjects import *
 import wx
 
 DB_FILENAME = 'gertrude.db'
-VERSION = 32
+VERSION = 33
 
 def getdate(s):
     if s is None:
@@ -179,6 +179,15 @@ class SQLConnection(object):
             naissance DATE,
             entree DATE,
             sortie DATE
+          );""")
+
+        cur.execute("""  
+          CREATE TABLE REFERENTS (
+            idx INTEGER PRIMARY KEY,
+            inscrit INTEGER REFERENCES INSCRITS(idx),
+            prenom VARCHAR,
+            nom VARCHAR,
+            telephone VARCHAR
           );""")
 
         cur.execute("""  
@@ -336,6 +345,11 @@ class SQLConnection(object):
                 frere.prenom, frere.naissance, frere.entree, frere.sortie, idx = frere_entry
                 frere.naissance, frere.entree, frere.sortie, frere.idx = getdate(frere.naissance), getdate(frere.entree), getdate(frere.sortie), idx
                 inscrit.freres_soeurs.append(frere)
+            cur.execute('SELECT prenom, nom, telephone, idx FROM REFERENTS WHERE inscrit=?', (inscrit.idx,))
+            for referent_entry in cur.fetchall():
+                referent = Referent(inscrit, creation=False)
+                referent.prenom, referent.nom, referent.telephone, referent.idx = referent_entry
+                inscrit.referents.append(referent)
             cur.execute('SELECT idx, debut, fin, mode, fin_periode_essai, duree_reference, semaines_conges, taux_effort FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
             for idx, debut, fin, mode, fin_periode_essai, duree_reference, semaines_conges, taux_effort in cur.fetchall():
                 inscription = Inscription(inscrit, duree_reference, creation=False)
@@ -734,7 +748,17 @@ class SQLConnection(object):
             cur.execute("ALTER TABLE CONGES ADD label VARCHAR")
             cur.execute("ALTER TABLE CONGES ADD options INTEGER")
             cur.execute('UPDATE CONGES SET label=?, options=?', ("", 0))
-           
+
+        if version < 33:
+            cur.execute("""  
+              CREATE TABLE REFERENTS (
+                idx INTEGER PRIMARY KEY,
+                inscrit INTEGER REFERENCES INSCRITS(idx),
+                prenom VARCHAR,
+                nom VARCHAR,
+                telephone VARCHAR
+              );""")
+                       
         if version < VERSION:
             try:
                 cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))

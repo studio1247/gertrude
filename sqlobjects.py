@@ -532,6 +532,32 @@ class Parent(object):
             print 'update', name
             sql_connection.execute('UPDATE PARENTS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
+class Referent(object):
+    def __init__(self, inscrit, creation=True):
+        self.inscrit = inscrit
+        self.idx = None
+        self.prenom = ""
+        self.nom = ""
+        self.telephone = ""
+        
+        if creation:
+            self.create()
+
+    def create(self):
+        print 'nouveau referent'
+        result = sql_connection.execute('INSERT INTO REFERENTS (idx, inscrit, prenom, nom, telephone) VALUES(NULL,?,?,?,?)', (self.inscrit.idx, self.prenom, self.nom, self.telephone))
+        self.idx = result.lastrowid
+
+    def delete(self):
+        print 'suppression referent'
+        sql_connection.execute('DELETE FROM REFERENTS WHERE idx=?', (self.idx,))
+
+    def __setattr__(self, name, value):
+        self.__dict__[name] = value
+        if name in ['prenom', 'nom', 'telephone'] and self.idx:
+            print 'update', name
+            sql_connection.execute('UPDATE REFERENTS SET %s=? WHERE idx=?' % name, (value, self.idx))
+
 class Inscription(object):
     def __init__(self, inscrit, duree_reference=7, creation=True):
         self.inscrit = inscrit
@@ -629,6 +655,7 @@ class Inscrit(object):
         self.freres_soeurs = []
         self.papa = None
         self.maman = None
+        self.referents = []
         self.inscriptions = []
         self.journees = { }
 
@@ -659,13 +686,13 @@ class Inscrit(object):
         print 'nouvel inscrit'
         result = sql_connection.execute('INSERT INTO INSCRITS (idx, prenom, nom, naissance, adresse, code_postal, ville, majoration, marche, photo) VALUES(NULL,?,?,?,?,?,?,?,?,?)', (self.prenom, self.nom, self.naissance, self.adresse, self.code_postal, self.ville, self.majoration, self.marche, self.photo))
         self.idx = result.lastrowid
-        for obj in [self.papa, self.maman] + self.freres_soeurs + self.inscriptions: # TODO + self.presences.values():
+        for obj in [self.papa, self.maman] + self.freres_soeurs + self.referents + self.inscriptions: # TODO + self.presences.values():
             if obj: obj.create()
         
     def delete(self):
         print 'suppression inscrit'
         sql_connection.execute('DELETE FROM INSCRITS WHERE idx=?', (self.idx,))
-        for obj in [self.papa, self.maman] + self.freres_soeurs + self.inscriptions + self.journees.values():
+        for obj in [self.papa, self.maman] + self.freres_soeurs + self.referents + self.inscriptions + self.journees.values():
             obj.delete()
 
     def __setattr__(self, name, value):

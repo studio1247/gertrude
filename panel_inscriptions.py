@@ -290,11 +290,13 @@ class IdentitePanel(InscriptionsTab):
         self.nouveau_frere.Disable()
         sizer3.Add(self.nouveau_frere, 0, wx.RIGHT+wx.LEFT+wx.BOTTOM, 10)
         self.Bind(wx.EVT_BUTTON, self.EvtNouveauFrere, self.nouveau_frere)
+        
         self.sizer.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
         self.sizer.Add(sizer3, 0, wx.EXPAND|wx.ALL, 5)
+
         self.SetSizer(self.sizer)
 
-    def line_add(self, index):
+    def frere_line_add(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, self.inscrit, 'freres_soeurs[%d].prenom' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
         sizer.AddMany([(wx.StaticText(self, -1, 'Naissance :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoDateCtrl(self, self.inscrit, 'freres_soeurs[%d].naissance' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
@@ -307,12 +309,12 @@ class IdentitePanel(InscriptionsTab):
         self.fratries_sizer.Add(sizer, 0, wx.EXPAND|wx.BOTTOM, 5)
         self.sizer.Layout()
 
-    def line_del(self):
+    def frere_line_del(self):
         index = len(self.fratries_sizer.GetChildren()) - 1
         sizer = self.fratries_sizer.GetItem(index)
         sizer.DeleteWindows()
         self.fratries_sizer.Detach(index)
-
+        
     def EvtChangementPrenom(self, event):
         event.GetEventObject().onText(event)
         self.parent.EvtChangementPrenom(event)
@@ -328,27 +330,27 @@ class IdentitePanel(InscriptionsTab):
     def EvtNouveauFrere(self, event):
         history.Append(Delete(self.inscrit.freres_soeurs, -1))
         self.inscrit.freres_soeurs.append(Frere_Soeur(self.inscrit))
-        self.line_add(len(self.inscrit.freres_soeurs) - 1)
+        self.frere_line_add(len(self.inscrit.freres_soeurs) - 1)
         self.sizer.Layout()
 
     def EvtSuppressionFrere(self, event):
         index = event.GetEventObject().index
         history.Append(Insert(self.inscrit.freres_soeurs, index, self.inscrit.freres_soeurs[index]))
-        self.line_del()
+        self.frere_line_del()
         self.inscrit.freres_soeurs[index].delete()
         del self.inscrit.freres_soeurs[index]
         self.sizer.Layout()
         self.UpdateContents()
-
+        
     def UpdateContents(self):
         if self.inscrit:
-            count = len(self.inscrit.freres_soeurs)
-            for i in range(len(self.fratries_sizer.GetChildren()), count):
-                self.line_add(i)
+            freres_count = len(self.inscrit.freres_soeurs)
+            for i in range(len(self.fratries_sizer.GetChildren()), freres_count):
+                self.frere_line_add(i)
         else:
-            count = 0
-        for i in range(count, len(self.fratries_sizer.GetChildren())):
-            self.line_del()
+            freres_count = 0
+        for i in range(freres_count, len(self.fratries_sizer.GetChildren())):
+            self.frere_line_del()
         self.sizer.Layout()
         AutoTab.UpdateContents(self)
         
@@ -361,9 +363,10 @@ class IdentitePanel(InscriptionsTab):
 class ParentsPanel(InscriptionsTab):
     def __init__(self, parent):
         InscriptionsTab.__init__(self, parent)
+        self.delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
         self.regimes_choices = []
         
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
         for parent in ['papa', 'maman']:
             sizer1 = wx.StaticBoxSizer(wx.StaticBox(self, -1, parent.capitalize()), wx.VERTICAL)
             sizer11 = wx.BoxSizer(wx.VERTICAL)
@@ -405,15 +408,77 @@ class ParentsPanel(InscriptionsTab):
                 panel.SetSizer(revenus_sizer)
                 sizer11.Add(panel, 0, wx.ALL|wx.EXPAND, 5)
 
-            sizer.Add(sizer1, 1, wx.EXPAND|wx.ALL, 5)
+            self.sizer.Add(sizer1, 1, wx.EXPAND|wx.ALL, 5)
 
-        self.SetSizer(sizer)
+        sizer4 = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Référents'), wx.VERTICAL)
+        self.referents_sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer4.Add(self.referents_sizer, 0, wx.EXPAND+wx.RIGHT+wx.LEFT+wx.TOP, 10)
+        self.nouveau_referent = wx.Button(self, -1, u'Nouveau référent')
+        self.nouveau_referent.Disable()
+        sizer4.Add(self.nouveau_referent, 0, wx.RIGHT+wx.LEFT+wx.BOTTOM, 10)
+        self.Bind(wx.EVT_BUTTON, self.EvtNouveauReferent, self.nouveau_referent)
+        self.sizer.Add(sizer4, 0, wx.EXPAND|wx.ALL, 5)
+
+        self.SetSizer(self.sizer)
 
     def nouveau_revenu_papa(self):
         return Revenu(self.inscrit.papa)
     
     def nouveau_revenu_maman(self):
         return Revenu(self.inscrit.maman)
+
+    def UpdateContents(self):
+        if self.inscrit:
+            referents_count = len(self.inscrit.referents)
+            for i in range(len(self.referents_sizer.GetChildren()), referents_count):
+                self.referent_line_add(i)
+        else:
+            referents_count = 0
+        for i in range(referents_count, len(self.referents_sizer.GetChildren())):
+            self.referent_line_del()
+        self.sizer.Layout()
+        AutoTab.UpdateContents(self)
+
+    def SetInscrit(self, inscrit):
+        self.inscrit = inscrit
+        self.UpdateContents()
+        InscriptionsTab.SetInscrit(self, inscrit)
+        self.nouveau_referent.Enable(self.inscrit is not None)
+
+    def referent_line_add(self, index):
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, self.inscrit, 'referents[%d].prenom' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Nom :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, self.inscrit, 'referents[%d].nom' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Téléphone :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoPhoneCtrl(self, self.inscrit, 'referents[%d].telephone' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
+        delbutton = wx.BitmapButton(self, -1, self.delbmp)
+        delbutton.index = index
+        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
+        self.Bind(wx.EVT_BUTTON, self.EvtSuppressionReferent, delbutton)
+        self.referents_sizer.Add(sizer, 0, wx.EXPAND|wx.BOTTOM, 5)
+        self.sizer.FitInside(self)
+
+    def referent_line_del(self):
+        index = len(self.referents_sizer.GetChildren()) - 1
+        sizer = self.referents_sizer.GetItem(index)
+        sizer.DeleteWindows()
+        self.referents_sizer.Detach(index)
+        self.sizer.FitInside(self)
+    
+    def EvtNouveauReferent(self, event):
+        history.Append(Delete(self.inscrit.referents, -1))
+        self.inscrit.referents.append(Referent(self.inscrit))
+        self.referent_line_add(len(self.inscrit.referents) - 1)
+        self.sizer.Layout()
+
+    def EvtSuppressionReferent(self, event):
+        index = event.GetEventObject().index
+        history.Append(Insert(self.inscrit.referents, index, self.inscrit.referents[index]))
+        self.referent_line_del()
+        self.inscrit.referents[index].delete()
+        del self.inscrit.referents[index]
+        self.sizer.Layout()
+        self.UpdateContents()
+
 
 class ReferencePlanningPanel(PlanningWidget):
     def __init__(self, parent, activity_choice):
@@ -564,7 +629,7 @@ class InscriptionsNotebook(wx.Notebook):
         self.inscrit = None
 
         self.AddPage(IdentitePanel(self), u'Identité')
-        self.AddPage(ParentsPanel(self), 'Parents')
+        self.AddPage(ParentsPanel(self), u'Parents et référents')
         self.AddPage(ModeAccueilPanel(self), "Mode d'accueil")
 
         if profil & PROFIL_TRESORIER:
