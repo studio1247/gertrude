@@ -126,7 +126,6 @@ class AdminNotebook(wx.Notebook):
      
 class AdminPanel(GPanel):
     bitmap = './bitmaps/administration.png'
-    index = 60
     profil = PROFIL_ADMIN
     def __init__(self, parent):
         GPanel.__init__(self, parent, 'Administration')
@@ -136,4 +135,3 @@ class AdminPanel(GPanel):
     def UpdateContents(self):
         self.notebook.UpdateContents()
 
-panels = [AdminPanel]

@@ -32,7 +32,6 @@ from appel_cotisations import AppelCotisationsModifications
 
 class FacturationPanel(GPanel):
     bitmap = './bitmaps/facturation.png'
-    index = 30
     profil = PROFIL_TRESORIER
     def __init__(self, parent):
         GPanel.__init__(self, parent, "Facturation")
@@ -194,9 +193,6 @@ class FacturationPanel(GPanel):
             fin = self.recus_endchoice.GetClientData(self.recus_endchoice.GetSelection())[1]
         DocumentDialog(self, AttestationModifications(inscrits, debut, fin)).ShowModal()
         
-        
-panels = [FacturationPanel]
-
 if __name__ == '__main__':
     import sys, os
     import config

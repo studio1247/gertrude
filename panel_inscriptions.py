@@ -662,7 +662,6 @@ class InscriptionsNotebook(wx.Notebook):
             
 class InscriptionsPanel(GPanel):
     bitmap = './bitmaps/inscriptions.png'
-    index = 10
     profil = PROFIL_ALL
     def __init__(self, parent):
         GPanel.__init__(self, parent, "Inscriptions")
@@ -768,4 +767,3 @@ class InscriptionsPanel(GPanel):
             self.choice.SetString(self.choice.GetSelection(), inscritId)
             self.choice.SetStringSelection(inscritId)
                                 
-panels = [InscriptionsPanel]

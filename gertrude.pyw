@@ -31,7 +31,7 @@ except:
 import controls, zipfile, xml.dom.minidom, wx.html, ooffice
 sys.path.insert(0, ".")
 
-VERSION = '0.78'
+VERSION = '0.79b'
 
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):
@@ -83,16 +83,35 @@ class Listbook(wx.Panel):
         return self.panels[n]
 
 class GertrudeListbook(Listbook):
-    def __init__(self, parent, id=-1):
+    def __init__(self, parent, info_ctrl):
         Listbook.__init__(self, parent, id=-1, style=wx.LB_DEFAULT, pos=(10, 10))
         panels = []
-        for filename in glob.glob('panel_*.py'):
-            module_name = os.path.split(filename)[1][:-3]
-            print 'Import de %s.py' % module_name
-            f, filename, description = imp.find_module(module_name, [os.getcwd()])
-            module = imp.load_module(module_name, f, filename, description)
-            panels.extend([tmp(self) for tmp in module.panels])
-        panels.sort(lambda a, b: a.index-b.index)
+        info_ctrl.AppendText("Chargement de l'outil Inscriptions ...\n")
+        import panel_inscriptions
+        panels.append(panel_inscriptions.InscriptionsPanel(self))
+        info_ctrl.AppendText("Chargement de l'outil Planning ...\n")
+        import panel_planning
+        panels.append(panel_planning.PlanningPanel(self))
+        info_ctrl.AppendText("Chargement de l'outil Facturation ...\n")
+        import panel_facturation
+        panels.append(panel_facturation.FacturationPanel(self))
+        info_ctrl.AppendText(u"Chargement de l'outil Relevés ...\n")
+        import panel_releves
+        panels.append(panel_releves.RelevesPanel(self))
+        info_ctrl.AppendText(u"Chargement de l'outil Paramètres ...\n")
+        import panel_creche
+        panels.append(panel_creche.CrechePanel(self))
+        info_ctrl.AppendText("Chargement de l'outil Administration ...\n")
+        import panel_admin
+        panels.append(panel_admin.AdminPanel(self))
+        
+#        for filename in glob.glob('panel_*.py'):
+#            module_name = os.path.split(filename)[1][:-3]
+#            print 'Import de %s.py' % module_name
+#            f, filename, description = imp.find_module(module_name, [os.getcwd()])
+#            module = imp.load_module(module_name, f, filename, description)
+#            panels.extend([tmp(self) for tmp in module.panels])
+#        panels.sort(lambda a, b: a.index-b.index)
         for panel in panels:
             if panel.profil & profil:
                 self.AddPage(panel, panel.bitmap)
@@ -107,7 +126,7 @@ class GertrudeListbook(Listbook):
         self.GetPage(self.list_box.GetSelection()).UpdateContents()
 
 class GertrudeFrame(wx.Frame):
-    def __init__(self):
+    def __init__(self, info_ctrl):
         wx.Frame.__init__(self, None, -1, "Gertrude v%s" % VERSION, wx.DefaultPosition, (920, 600))
 
         # Icon
@@ -142,7 +161,7 @@ class GertrudeFrame(wx.Frame):
         self.SetSizer(sizer)
 
         sizer2 = wx.BoxSizer(wx.HORIZONTAL)
-        self.listbook = GertrudeListbook(panel)
+        self.listbook = GertrudeListbook(panel, info_ctrl)
         sizer2.Add(self.listbook, 1, wx.EXPAND)
         panel.SetSizer(sizer2)
 

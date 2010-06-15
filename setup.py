@@ -21,36 +21,42 @@
 import glob, shutil, os, sys
 
 if sys.platform == 'win32':
-    from distutils.core import setup
-    import py2exe, win32api
     from gertrude import VERSION
+    import win32api
+    
+    for directory in ("./dist", "./build"):
+        if os.path.isdir(directory):
+            shutil.rmtree(directory)
+            
+    os.system("c:\Python26\python.exe c:\Python26\pyinstaller\Build.py gertrude.spec")
 
-    if os.path.isdir("./dist"):
-        shutil.rmtree("./dist")
+#    from distutils.core import setup
+#    import py2exe
+#
+#    setup(
+#        name="Gertrude",
+#        version=VERSION,
+#        description=u"Logiciel pour les crèches",
+#        author="Bertrand Songis",
+#        windows=[{"script" : "gertrude.pyw", "icon_resources" : [(0, "bitmaps\\setup_gertrude.ico")]}],
+#        data_files=[(".", glob.glob("*.dist") + glob.glob("*.py")),
+#               ("bitmaps", glob.glob("bitmaps\\*.png") + glob.glob("bitmaps\\*.ico")),
+#               ("templates_dist", glob.glob("templates_dist\\*.html") + glob.glob("templates_dist\\*.od?")),
+#               ("doc", glob.glob("doc\\*"))],
+#        options={"py2exe": {"packages": ["encodings", "wx.lib.agw.cubecolourdialog", "win32com.client", "os", "win32ui", "win32api"]}},
+#    )
 
-    setup(
-        name="Gertrude",
-        version=VERSION,
-        description=u"Logiciel pour les crèches",
-        author="Bertrand Songis",
-        windows=[{"script" : "gertrude.pyw", "icon_resources" : [(1000, "bitmaps\\gertrude.ico")]}],
-        data_files=[(".", glob.glob("*.dist") + glob.glob("*.py")),
-               ("bitmaps", glob.glob("bitmaps\\*.png") + glob.glob("bitmaps\\*.ico")),
-               ("templates_dist", glob.glob("templates_dist\\*.html") + glob.glob("templates_dist\\*.od?")),
-               ("doc", glob.glob("doc\\*"))],
-        options={"py2exe": {"packages": ["encodings", "wx.lib.agw.cubecolourdialog", "win32com.client", "os", "win32ui", "win32api"]}},
-    )
-
+    
     issfile = "setup.iss"
     path, name = os.path.split(issfile)
     isspath = os.path.split(win32api.FindExecutable(name, path)[-1])[0]
-    os.system('\"%s\ISCC.exe\" %s' % (isspath, issfile))
-
-    exe = "./Output/setup_%s.exe" % VERSION
-    if os.path.isfile(exe):
-        os.remove(exe)
-    os.rename("./Output/setup.exe", exe)
-    print u"Fichier %s créé" % exe
+    if not os.system('\"%s\ISCC.exe\" %s' % (isspath, issfile)):
+        exe = "./Output/setup_%s.exe" % VERSION
+        if os.path.isfile(exe):
+            os.remove(exe)
+        os.rename("./Output/setup.exe", exe)
+        print u"Fichier %s créé" % exe
+        
 elif "linux" in sys.platform:
     if not os.path.exists("./gertrude.py"):
         os.symlink("./gertrude.pyw", "./gertrude.py")

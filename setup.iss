@@ -21,7 +21,7 @@ Compression=lzma
 SolidCompression=yes
 
 WizardImageBackColor=clWhite
-SetupIconFile=bitmaps\setup_gertrude.ico
+SetupIconFile=bitmaps\gertrude.ico
 WizardImageFile=bitmaps\setup_gertrude.bmp
 WizardSmallImageFile=bitmaps\setup_gertrude_mini.bmp
 UninstallDisplayIcon={app}\gertrude.exe
@@ -45,26 +45,16 @@ Name: "{app}"; Permissions:users-modify
 
 [Files]
 ; ---> Gertrude directory
-Source: "dist\*.py";                  DestDir: "{app}";                 Flags: ignoreversion
-Source: "dist\*.pyd";                 DestDir: "{app}";                 Flags: ignoreversion
-Source: "dist\*.exe";                 DestDir: "{app}";                 Flags: ignoreversion
-Source: "dist\*.dist";                DestDir: "{app}";                 Flags: ignoreversion
-Source: "dist\*.zip";                 DestDir: "{app}";                 Flags: ignoreversion
-;      separate dll's, in order to not copy the POWRPROF.DLL
-Source: "dist\python26.dll";          DestDir: "{app}";                 Flags: ignoreversion
-Source: "dist\pythoncom26.dll";       DestDir: "{app}";                 Flags: ignoreversion
-Source: "dist\pywintypes26.dll";      DestDir: "{app}";                 Flags: ignoreversion
-Source: "dist\sqlite3.dll";           DestDir: "{app}";                 Flags: ignoreversion
-Source: "dist\wxbase28uh_net_vc.dll"; DestDir: "{app}";                 Flags: ignoreversion
-Source: "dist\wxbase28uh_vc.dll";     DestDir: "{app}";                 Flags: ignoreversion
-Source: "dist\wxmsw28uh_adv_vc.dll";  DestDir: "{app}";                 Flags: ignoreversion
-Source: "dist\wxmsw28uh_core_vc.dll"; DestDir: "{app}";                 Flags: ignoreversion
-Source: "dist\wxmsw28uh_html_vc.dll"; DestDir: "{app}";                 Flags: ignoreversion
+Source: "dist\gertrude\*.exe";                   DestDir: "{app}";                     Flags: ignoreversion
+Source: "dist\gertrude\*.dll";                   DestDir: "{app}";                     Flags: ignoreversion
+Source: "dist\gertrude\*.pyd";                   DestDir: "{app}";                     Flags: ignoreversion
+Source: "dist\gertrude\Microsoft.VC90.CRT\*.*";  DestDir: "{app}\Microsoft.VC90.CRT";  Flags: ignoreversion
+Source: "dist\gertrude\Microsoft.VC90.MFC\*.*";  DestDir: "{app}\Microsoft.VC90.CRT";  Flags: ignoreversion
 
 ; ---> Subdirectories
-Source: "dist\bitmaps\*";             DestDir: "{app}\bitmaps";         Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "dist\doc\*";                 DestDir: "{app}\doc";             Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "dist\templates_dist\*";      DestDir: "{app}\templates_dist";  Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dist\gertrude\bitmaps\*";               DestDir: "{app}\bitmaps";             Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dist\gertrude\doc\*";                   DestDir: "{app}\doc";                 Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dist\gertrude\templates_dist\*";        DestDir: "{app}\templates_dist";      Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\Gertrude";       Filename: "{app}\gertrude.exe"; WorkingDir: "{app}"

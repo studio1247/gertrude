@@ -33,7 +33,6 @@ from planning_detaille import PlanningDetailleModifications
 
 class RelevesPanel(GPanel):
     bitmap = './bitmaps/releves.png'
-    index = 40
     profil = PROFIL_ALL
     def __init__(self, parent):
         GPanel.__init__(self, parent, u'Relevés')
@@ -115,4 +114,3 @@ class RelevesPanel(GPanel):
             end = start
         DocumentDialog(self, PlanningDetailleModifications((start, end))).ShowModal()
         
-panels = [RelevesPanel]

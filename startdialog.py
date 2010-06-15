@@ -131,7 +131,7 @@ class StartDialog(wx.Dialog):
         wx.PostEvent(self, self.LoadedEvent(result=result))
 
     def StartFrame(self):
-        self.frame().Show()
+        self.frame(self.info).Show()
         self.Destroy()
 
     def OnOk(self, evt):

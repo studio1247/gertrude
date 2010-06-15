@@ -551,7 +551,6 @@ class CrecheNotebook(wx.Notebook):
 
 class CrechePanel(GPanel):
     bitmap = './bitmaps/creche.png'
-    index = 50
     profil = PROFIL_BUREAU
     def __init__(self, parent):
         GPanel.__init__(self, parent, u'Crèche')
@@ -561,4 +560,3 @@ class CrechePanel(GPanel):
     def UpdateContents(self):
         self.notebook.UpdateContents()
 
-panels = [CrechePanel]

@@ -58,7 +58,6 @@ class DayPlanningPanel(PlanningWidget):
 
 class PlanningPanel(GPanel):
     bitmap = './bitmaps/presences.png'
-    index = 20
     profil = PROFIL_ALL
 
     def __init__(self, parent):
@@ -149,4 +148,3 @@ class PlanningPanel(GPanel):
             note.UpdateContents()
         self.sizer.Layout()
 
-panels = [PlanningPanel]
