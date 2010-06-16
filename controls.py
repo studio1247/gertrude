@@ -311,6 +311,8 @@ else:
 class TimeCtrl(wx.lib.masked.TimeCtrl):
     def __init__(self, parent):
         self.spin = wx.SpinButton(parent, -1, wx.DefaultPosition, (-1, 10), wx.SP_VERTICAL)
+        self.spin.SetRange(-100000, +100000)
+        self.spin.SetValue(0)
         wx.lib.masked.TimeCtrl.__init__(self, parent, id=-1, fmt24hr=True, display_seconds=False, spinButton=self.spin)
         
     def SetParameters(self, **kwargs):
@@ -541,20 +543,22 @@ class AutoTimeCtrl(TimeCtrl, AutoMixin):
     def __init__(self, parent, instance, member, *args, **kwargs):
         TimeCtrl.__init__(self, parent)
         AutoMixin.__init__(self, parent, instance, member)
+        self.SetMin("05:00")
         
     def SetValue(self, value):
         if isinstance(value, float):
             wx.lib.masked.TimeCtrl.SetValue(self, "%02d:%02d" % (int(value), round((value - int(value)) * 60)))
         else:
-            wx.lib.masked.TimeCtrl.SetValue(self, value)
-                    
-    def onText(self, event):
-        value = self.GetValue()
-        try:
-          self.AutoChange(float(value[:2]) + float(value[3:5]) / 60)
-        except:
-          pass
-        event.Skip()
+            wx.lib.masked.TimeCtrl.SetValue(self, value)   
+    
+       
+#    def onText(self, event):
+#        value = self.GetValue()
+#        try:
+#          self.AutoChange(float(value[:2]) + float(value[3:5]) / 60)
+#        except:
+#          pass
+#        event.Skip()
         # self.Bind(wx.EVT_DATE_CHANGED, self.onText, self)
         # DateCtrl.__init__(self, parent, -1, *args, **kwargs)
         # AutoMixin.__init__(self, parent, instance, member)
