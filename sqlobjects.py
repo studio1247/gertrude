@@ -401,7 +401,6 @@ class Creche(object):
         self.forfait_horaire = 0.0
         self.majoration_localite = 0.0
         self.facturation_jours_feries = JOURS_FERIES_NON_DEDUITS
-        self.calcul_taux_effort = TAUX_EFFORT_AUTO
         self.calcule_jours_fermeture()
 
     def calcule_jours_fermeture(self):
@@ -455,7 +454,7 @@ class Creche(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'forfait_horaire', 'tarification_activites', 'traitement_maladie', 'forfait_horaire', 'majoration_localite', 'facturation_jours_feries', 'calcul_taux_effort'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'forfait_horaire', 'tarification_activites', 'traitement_maladie', 'forfait_horaire', 'majoration_localite', 'facturation_jours_feries'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
@@ -567,7 +566,6 @@ class Inscription(object):
         self.mode = MODE_5_5
         self.duree_reference = duree_reference
         self.semaines_conges = 0
-        self.taux_effort = .0
         self.reference = []
         for i in range(duree_reference):
             self.reference.append(ReferenceDay(self, i))
@@ -598,7 +596,7 @@ class Inscription(object):
     
     def create(self):
         print 'nouvelle inscription'
-        result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, fin_periode_essai, duree_reference, semaines_conges, taux_effort) VALUES(NULL,?,?,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, self.fin_periode_essai, self.duree_reference, self.semaines_conges, self.taux_effort))
+        result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, fin_periode_essai, duree_reference, semaines_conges) VALUES(NULL,?,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, self.fin_periode_essai, self.duree_reference, self.semaines_conges))
         self.idx = result.lastrowid
         
     def delete(self):
@@ -607,7 +605,7 @@ class Inscription(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['debut', 'fin', 'mode', 'fin_periode_essai', 'duree_reference', 'semaines_conges', 'taux_effort'] and self.idx:
+        if name in ['debut', 'fin', 'mode', 'fin_periode_essai', 'duree_reference', 'semaines_conges'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE INSCRIPTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))   
 
