@@ -231,8 +231,6 @@ class ProgressHandler:
         print s
         if self.display_fn:
             self.display_fn(s+"\n")
-        else:
-            print s
 
     def new(self, value):
         if self.gauge:
