@@ -307,7 +307,6 @@ class IdentitePanel(InscriptionsTab):
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
         self.Bind(wx.EVT_BUTTON, self.EvtSuppressionFrere, delbutton)
         self.fratries_sizer.Add(sizer, 0, wx.EXPAND|wx.BOTTOM, 5)
-        self.sizer.Layout()
 
     def frere_line_del(self):
         index = len(self.fratries_sizer.GetChildren()) - 1
@@ -331,7 +330,7 @@ class IdentitePanel(InscriptionsTab):
         history.Append(Delete(self.inscrit.freres_soeurs, -1))
         self.inscrit.freres_soeurs.append(Frere_Soeur(self.inscrit))
         self.frere_line_add(len(self.inscrit.freres_soeurs) - 1)
-        self.sizer.Layout()
+        self.sizer.FitInside(self)
 
     def EvtSuppressionFrere(self, event):
         index = event.GetEventObject().index
@@ -339,8 +338,8 @@ class IdentitePanel(InscriptionsTab):
         self.frere_line_del()
         self.inscrit.freres_soeurs[index].delete()
         del self.inscrit.freres_soeurs[index]
-        self.sizer.Layout()
         self.UpdateContents()
+        self.sizer.FitInside(self)
         
     def UpdateContents(self):
         if self.inscrit:
@@ -351,8 +350,8 @@ class IdentitePanel(InscriptionsTab):
             freres_count = 0
         for i in range(freres_count, len(self.fratries_sizer.GetChildren())):
             self.frere_line_del()
-        self.sizer.Layout()
         AutoTab.UpdateContents(self)
+        self.sizer.FitInside(self)
         
     def SetInscrit(self, inscrit):
         self.inscrit = inscrit
@@ -365,6 +364,7 @@ class ParentsPanel(InscriptionsTab):
         InscriptionsTab.__init__(self, parent)
         self.delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
         self.regimes_choices = []
+        self.revenus_items = []
         
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         for parent in ['papa', 'maman']:
@@ -396,9 +396,12 @@ class ParentsPanel(InscriptionsTab):
                 revenus_sizer.Add(PeriodeChoice(panel, eval('self.nouveau_revenu_%s' % parent)), 0, wx.EXPAND|wx.ALL, 5)
                 revenus_gridsizer = wx.FlexGridSizer(0, 2, 5, 10)
                 revenus_gridsizer.AddGrowableCol(1, 1)
-                if creche.mode_facturation != FACTURATION_PAJE:
-                  revenus_gridsizer.AddMany([(wx.StaticText(panel, -1, 'Revenus annuels bruts :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(panel, None, 'revenu', precision=2), 0, wx.EXPAND)])
-                  revenus_gridsizer.AddMany([(0, 0), (AutoCheckBox(panel, None, 'chomage', u'Chômage'), 0, wx.EXPAND)])
+                revenus_gridsizer.AddMany([(wx.StaticText(panel, -1, 'Revenus annuels bruts :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(panel, None, 'revenu', precision=2), 0, wx.EXPAND)])
+                revenus_gridsizer.AddMany([(0, 0), (AutoCheckBox(panel, None, 'chomage', u'Chômage'), 0, wx.EXPAND)])
+                self.revenus_items.extend([revenus_gridsizer.GetItem(0), revenus_gridsizer.GetItem(1), revenus_gridsizer.GetItem(2), revenus_gridsizer.GetItem(3)])
+                if creche.mode_facturation == FACTURATION_PAJE:
+                    for item in self.revenus_items:
+                        item.Show(False)
                 choice = AutoChoiceCtrl(panel, None, 'regime')
                 self.regimes_choices.append(choice)
                 for i, regime in enumerate([u'Pas de sélection', u'Régime général', u'Régime de la fonction publique', u'Régime MSA', u'Régime EDF-GDF', u'Régime RATP', u'Régime Pêche maritime', u'Régime Marins du Commerce']):
@@ -436,8 +439,10 @@ class ParentsPanel(InscriptionsTab):
             referents_count = 0
         for i in range(referents_count, len(self.referents_sizer.GetChildren())):
             self.referent_line_del()
-        self.sizer.Layout()
+        for item in self.revenus_items:
+            item.Show(creche.mode_facturation != FACTURATION_PAJE)
         AutoTab.UpdateContents(self)
+        self.sizer.FitInside(self)
 
     def SetInscrit(self, inscrit):
         self.inscrit = inscrit
@@ -454,21 +459,19 @@ class ParentsPanel(InscriptionsTab):
         delbutton.index = index
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
         self.Bind(wx.EVT_BUTTON, self.EvtSuppressionReferent, delbutton)
-        self.referents_sizer.Add(sizer, 0, wx.EXPAND|wx.BOTTOM, 5)
-        self.sizer.FitInside(self)
+        self.referents_sizer.Add(sizer, 0, wx.EXPAND|wx.BOTTOM, 5)            
 
     def referent_line_del(self):
         index = len(self.referents_sizer.GetChildren()) - 1
         sizer = self.referents_sizer.GetItem(index)
         sizer.DeleteWindows()
         self.referents_sizer.Detach(index)
-        self.sizer.FitInside(self)
     
     def EvtNouveauReferent(self, event):
         history.Append(Delete(self.inscrit.referents, -1))
         self.inscrit.referents.append(Referent(self.inscrit))
         self.referent_line_add(len(self.inscrit.referents) - 1)
-        self.sizer.Layout()
+        self.sizer.FitInside(self)
 
     def EvtSuppressionReferent(self, event):
         index = event.GetEventObject().index
@@ -476,9 +479,8 @@ class ParentsPanel(InscriptionsTab):
         self.referent_line_del()
         self.inscrit.referents[index].delete()
         del self.inscrit.referents[index]
-        self.sizer.Layout()
         self.UpdateContents()
-
+        self.sizer.FitInside(self)
 
 class ReferencePlanningPanel(PlanningWidget):
     def __init__(self, parent, activity_choice):
