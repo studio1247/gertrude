@@ -197,6 +197,15 @@ def oo_open(filename):
     else:
         os.system("ooffice %s" % filename.replace(" ", "\ "))
     return 1
+
+def save_current_document(filename):
+    if sys.platform == 'win32':
+        filename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(filename)).encode("latin-1"))])
+        # print filename
+        StarDesktop, objServiceManager, corereflection = getOOoContext()
+        document = StarDesktop.CurrentComponent
+        document.storeToUrl(filename, MakePropertyValues(objServiceManager, []))        
+    return 1
     
 def convert_to_pdf(filename, pdffilename):
     filename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(filename)).encode("latin-1"))])
@@ -370,10 +379,12 @@ class DocumentDialog(wx.Dialog):
                 dlg.ShowModal()
                 dlg.Destroy()
     
-if __name__ == '__main__':   
-    filename = '.\\templates_dist\\Appel cotisations.ods'
-    oo_open(filename)
+if __name__ == '__main__':
+    save_current_document('./document.odt')
     
-    pdffilename = ''.join([os.path.splitext(filename)[0], ".pdf"])
-    convert_to_pdf(filename, pdffilename)
-    pdf_open(pdffilename)
+#    filename = '.\\templates_dist\\Appel cotisations.ods'
+#    oo_open(filename)
+#    
+#    pdffilename = ''.join([os.path.splitext(filename)[0], ".pdf"])
+#    convert_to_pdf(filename, pdffilename)
+#    pdf_open(pdffilename)
