@@ -130,7 +130,7 @@ class AdminPanel(GPanel):
     def __init__(self, parent):
         GPanel.__init__(self, parent, 'Administration')
         self.notebook = AdminNotebook(self)
-	self.sizer.Add(self.notebook, 1, wx.EXPAND)
+        self.sizer.Add(self.notebook, 1, wx.EXPAND)
             
     def UpdateContents(self):
         self.notebook.UpdateContents()

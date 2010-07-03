@@ -18,10 +18,11 @@
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import __builtin__
-import os, sys, imp, time, shutil, glob
+import os, sys, imp, time, shutil, glob, thread, urllib2
 import wx, wx.lib.wordwrap
-from config import *
+from wx.lib import masked
 from startdialog import StartDialog
+from config import Liste, Load, Save, Restore, Exit, ProgressHandler
 try:
   import winsound
 except:
@@ -31,7 +32,7 @@ except:
 import controls, zipfile, xml.dom.minidom, wx.html, ooffice
 sys.path.insert(0, ".")
 
-VERSION = '0.80'
+VERSION = '0.81'
 
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):
@@ -68,6 +69,17 @@ class Listbook(wx.Panel):
             self.active_panel = panel
         else:
             self.sizer.Show(panel, False)
+            
+    def ChangePage(self, position):
+        self.list_box.SetSelection(position)
+        class MyEvent(object):
+            def __init__(self, selection):
+                self.selection = selection
+            def GetSelection(self):
+                return self.selection
+            def Skip(self):
+                pass
+        self.OnPageChanged(MyEvent(position))
 
     def Draw(self):
         self.list_box.Draw()
@@ -103,15 +115,8 @@ class GertrudeListbook(Listbook):
         panels.append(panel_creche.CrechePanel(self))
         info_ctrl.AppendText("Chargement de l'outil Administration ...\n")
         import panel_admin
-        panels.append(panel_admin.AdminPanel(self))
-        
-#        for filename in glob.glob('panel_*.py'):
-#            module_name = os.path.split(filename)[1][:-3]
-#            print 'Import de %s.py' % module_name
-#            f, filename, description = imp.find_module(module_name, [os.getcwd()])
-#            module = imp.load_module(module_name, f, filename, description)
-#            panels.extend([tmp(self) for tmp in module.panels])
-#        panels.sort(lambda a, b: a.index-b.index)
+        if panel_admin.AdminPanel.profil & profil:
+            panels.append(panel_admin.AdminPanel(self))
         for panel in panels:
             if panel.profil & profil:
                 self.AddPage(panel, panel.bitmap)
@@ -139,6 +144,16 @@ class GertrudeFrame(wx.Frame):
         # MenuBar
         menuBar = wx.MenuBar()
         menu = wx.Menu()
+        if len(config.databases) > 1:
+            self.db_menu = wx.Menu()
+            for i, key in enumerate(config.databases.keys()):
+                self.db_menu.Append(1001+i, key)
+                self.Bind(wx.EVT_MENU, self.OnChangementDatabase, id=1001+i)
+            self.db_menu.FindItemByPosition(config.databases.keys().index(config.default_database)).Enable(False)
+            self.db_menu.AppendSeparator()
+            self.db_menu.Append(1099, "Rechercher...")
+            self.Bind(wx.EVT_MENU, self.OnRechercher, id=1099)
+            menu.AppendMenu(1000, "Changer de structure", self.db_menu)
         menu.Append(101, "&Enregistrer\tCtrl+S", u"Enregistre")
         self.Bind(wx.EVT_MENU, self.OnSave, id=101)
         menu.Append(102, "&Fermer\tAlt+F4", u"Ferme la fenêtre")
@@ -149,7 +164,7 @@ class GertrudeFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnUndo, id=201)
         menuBar.Append(menu, "&Edition")
         menu = wx.Menu()
-        menu.Append(301, "A &propos de Gertrude", u"A propos de Gertrude")
+        menu.Append(401, "A &propos de Gertrude", u"A propos de Gertrude")
         self.Bind(wx.EVT_MENU, self.OnAbout, id=301)
         menuBar.Append(menu, "&?")
         self.SetMenuBar(menuBar)
@@ -164,8 +179,114 @@ class GertrudeFrame(wx.Frame):
         self.listbook = GertrudeListbook(panel, info_ctrl)
         sizer2.Add(self.listbook, 1, wx.EXPAND)
         panel.SetSizer(sizer2)
+        
+        self.UpdateEvent, EVT_UPDATE_AVAILABLE_EVENT = wx.lib.newevent.NewEvent()
+        self.Bind(EVT_UPDATE_AVAILABLE_EVENT, self.OnUpdateAvailable)
+        thread.start_new_thread(self.CheckForUpdates, ())
 
         self.Bind(wx.EVT_CLOSE, self.OnExit)
+        
+    def CheckForUpdates(self):
+        try:
+            url = u'http://gertrude.creches.free.fr/checkupdate.php?binary=%s&version=%s&creche=%s&ville=%s' % (os.path.splitext(os.path.basename(sys.argv[0]))[0], VERSION, urllib2.quote(creche.nom.encode("utf-8")), urllib2.quote(creche.ville.encode("utf-8")))
+            req = urllib2.Request(url)
+            result = urllib2.urlopen(req).read()
+            if result:
+                version, location = result.split()
+                wx.PostEvent(self, self.UpdateEvent(version=version, location=location))
+        except Exception, e:
+            return None
+    
+    def OnChangementDatabase(self, event):
+        self.ChangeDatabase(config.databases.keys()[event.GetId()-1001])
+        
+    def ChangeDatabase(self, database):
+        self.SetStatusText("Changement en cours ...")
+        if len(history) > 0:
+            dlg = wx.MessageDialog(self, "Voulez-vous enregistrer les changements ?", "Gertrude", wx.YES_NO|wx.YES_DEFAULT|wx.CANCEL|wx.ICON_QUESTION)
+            result = dlg.ShowModal()
+            dlg.Destroy()
+        else:
+            result = wx.ID_NO
+
+        if result == wx.ID_CANCEL:
+            self.SetStatusText("")
+            return
+        elif result == wx.ID_YES:
+            Save(ProgressHandler(self.SetStatusText))
+        else:
+            Restore(ProgressHandler(self.SetStatusText))
+        
+        self.db_menu.FindItemByPosition(config.databases.keys().index(database)).Enable(False)
+        self.db_menu.FindItemByPosition(config.databases.keys().index(config.default_database)).Enable(True)
+        config.default_database = database
+        config.connection = config.databases[database].connection
+        history.Clear()
+        Load(ProgressHandler(self.SetStatusText))
+        self.listbook.UpdateContents() 
+        self.SetStatusText("")
+    
+    def OnRechercher(self, event):
+        class RechercherDialog(wx.Dialog):
+            def __init__(self, parent):
+                wx.Dialog.__init__(self, parent, -1, u"Rechercher un enfant", wx.DefaultPosition, wx.DefaultSize)
+                self.sizer = wx.BoxSizer(wx.VERTICAL)
+                self.fields_sizer = wx.FlexGridSizer(0, 2, 5, 10)
+                self.fields_sizer.AddGrowableCol(1, 1)
+                self.liste = Liste()
+                self.choices = sorted(self.liste.keys())
+                self.text = wx.TextCtrl(self)
+                self.combo = wx.ListBox(self)
+                self.combo.SetItems(self.choices)
+                self.text.Bind(wx.EVT_TEXT, self.OnText)
+                self.combo.Bind(wx.EVT_LEFT_DCLICK, self.OnOK)
+                self.fields_sizer.AddMany([(wx.StaticText(self, -1, u"Recherche :"), 0, wx.ALIGN_CENTRE_VERTICAL|wx.ALL-wx.BOTTOM, 5), (self.text, 0, wx.EXPAND|wx.ALIGN_CENTRE_VERTICAL|wx.ALL-wx.BOTTOM, 5)])
+                self.sizer.Add(self.fields_sizer, 0, wx.EXPAND|wx.ALL, 5)
+                self.sizer.Add(self.combo, 0, wx.EXPAND|wx.ALL, 5)
+                self.btnsizer = wx.StdDialogButtonSizer()
+                self.ok = wx.Button(self, wx.ID_OK)
+                self.btnsizer.AddButton(self.ok)
+                btn = wx.Button(self, wx.ID_CANCEL)
+                self.btnsizer.AddButton(btn)
+                self.btnsizer.Realize()       
+                self.sizer.Add(self.btnsizer, 0, wx.ALL, 5)
+                self.SetSizer(self.sizer)
+                self.sizer.Fit(self)
+                
+            def OnOK(self, event):
+                self.EndModal(wx.ID_OK)
+                
+            def OnText(self, event):
+                value = event.GetString().lower()
+                items = [tmp for tmp in self.choices if value in tmp.lower()]
+                self.combo.SetItems(items)
+                if items:
+                    self.combo.SetSelection(0)
+                self.ok.Enable(len(items) > 0)
+
+        dlg = RechercherDialog(self)
+        result = dlg.ShowModal()
+        dlg.Destroy()
+        if result == wx.ID_OK:
+            selection = dlg.combo.GetStringSelection()
+            db = dlg.liste[dlg.combo.GetStringSelection()]
+            if db.section != config.default_database:
+                self.ChangeDatabase(db.section)
+            self.listbook.ChangePage(0)
+            for inscrit in creche.inscrits:
+                if selection == "%s %s" % (inscrit.prenom, inscrit.nom):
+                    self.listbook.GetPage(0).SelectInscrit(inscrit)             
+        
+    def OnUpdateAvailable(self, event):
+        if sys.platform == 'win32' and sys.argv[0].endswith("exe"):
+            dlg = wx.MessageDialog(self, u'La version %s est disponible. Voulez-vous la télécharger maintenant ?' % event.version,
+                                   'Nouvelle version disponible',
+                                   wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
+            result = dlg.ShowModal()
+            dlg.Destroy()
+            if result == wx.ID_YES:
+                import webbrowser
+                webbrowser.open(event.location)
 
     def OnSave(self, evt):
         self.SetStatusText("Enregistrement en cours ...")

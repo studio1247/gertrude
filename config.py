@@ -22,60 +22,86 @@ import ConfigParser
 from functions import *
 from data import FileConnection, HttpConnection
 
-CONFIG_FILENAME = "./gertrude.ini"
+CONFIG_FILENAME = "gertrude.ini"
+DEFAULT_SECTION = "gertrude"
+DEFAULT_DATABASE = "gertrude.db"
 
+class Database(object):
+    def __init__(self, section=None, filename=DEFAULT_DATABASE):
+        self.section = section
+        self.filename = filename
+        self.connection = FileConnection(filename)
+        
 class Config(object):
     def __init__(self):
-        self.connection = FileConnection()
+        self.databases = {}
+        self.connection = None
 
 __builtin__.config = Config()
 
-def getDocumentsDirectory(parser, progress_handler):
+def getDefaultDocumentsDirectory():
+    if sys.platform == 'win32':
+        try:
+            from win32com.shell import shell
+            df = shell.SHGetDesktopFolder()
+            pidl = df.ParseDisplayName(0, None,
+                                   "::{450d8fba-ad25-11d0-98a8-0800361b1103}")[1]
+            return shell.SHGetPathFromIDList(pidl)
+        except:
+            print u"L'extension win32com pour python est recommandée (plateforme windows) !"
+            return os.getcwd()
+    else:
+        return os.getcwd()
+    
+def getDocumentsDirectory(parser):
     try:
-        directory = parser.get("gertrude", "documents-directory")
+        directory = parser.get(DEFAULT_SECTION, "documents-directory")
         assert os.path.isdir(directory)
         return directory
     except:
-        if sys.platform == 'win32':
-            try:
-                from win32com.shell import shell
-                df = shell.SHGetDesktopFolder()
-                pidl = df.ParseDisplayName(0, None,
-                                       "::{450d8fba-ad25-11d0-98a8-0800361b1103}")[1]
-                print shell.SHGetPathFromIDList(pidl)
-                return shell.SHGetPathFromIDList(pidl)
-            except:
-                print u"L'extension win32com pour python est recommandée (plateforme windows) !"
-        return os.getcwd()
-
-def getNetworkConnection(parser, progress_handler):
-    if not parser:
+        return getDefaultDocumentsDirectory()
+    
+def getDefaultDatabase(parser):
+    try:
+        return parser.get(DEFAULT_SECTION, "default-database")
+    except:
         return None
+
+def getDatabase(parser, section):
+    try:
+        filename = parser.get(section, "database")
+    except:
+        if section == DEFAULT_SECTION:
+            return None
+        else:
+            filename = DEFAULT_DATABASE
+
+    database = Database(section, filename)
     
     try:
-        url = parser.get("gertrude", "url")
+        url = parser.get(section, "url")
     except:
-        progress_handler.display(u"Pas d'url définie. Utilisation de la configuration par défaut.")
-        return None
+        return database
 
     if url.startswith("http://"):
         try:
-            auth_info = (parser.get("gertrude", "login"), parser.get("gertrude", "password"))
+            auth_info = (parser.get(section, "login"), parser.get(section, "password"))
         except:
             auth_info = None
         try:
-            identity = parser.get("gertrude", "identity")
+            identity = parser.get(section, "identity")
         except:
             identity = ""
         try:
-            proxy_info = { 'host' : parser.get("gertrude", "proxy-host"),
-                           'port' : int(parser.get("gertrude", "proxy-port")),
-                           'user' : parser.get("gertrude", "proxy-user"),
-                           'pass' : parser.get("gertrude", "proxy-pass")
+            proxy_info = { 'host' : parser.get(DEFAULT_SECTION, "proxy-host"),
+                           'port' : int(parser.get(DEFAULT_SECTION, "proxy-port")),
+                           'user' : parser.get(DEFAULT_SECTION, "proxy-user"),
+                           'pass' : parser.get(DEFAULT_SECTION, "proxy-pass")
                          }
         except:
             proxy_info = None
-        return HttpConnection(url, identity, auth_info, proxy_info)
+        database.connection = HttpConnection(url, filename, identity, auth_info, proxy_info)
+    return database
     
 def LoadConfig(progress_handler=default_progress_handler):
     progress_handler.display(u"Chargement de la configuration ...")
@@ -86,30 +112,44 @@ def LoadConfig(progress_handler=default_progress_handler):
             parser = ConfigParser.SafeConfigParser()
             parser.read(CONFIG_FILENAME)
         except:
-            progress_handler.display(u"Fichier gertrude.ini erroné. Utilisation de la configuration par défaut.")
+            progress_handler.display(u"Fichier %s erroné. Utilisation de la configuration par défaut." % CONFIG_FILENAME)
     else:
-        progress_handler.display(u"Pas de fichier gertrude.ini. Utilisation de la configuration par défaut.")
+        progress_handler.display(u"Pas de fichier %s. Utilisation de la configuration par défaut." % CONFIG_FILENAME)
 
-    config.original_documents_directory = getDocumentsDirectory(parser, progress_handler)
+    config.original_documents_directory = getDocumentsDirectory(parser)
     config.documents_directory = config.original_documents_directory
-    network_connection = getNetworkConnection(parser, progress_handler)
-    if network_connection:
-        config.connection = network_connection
+    
+    config.original_default_database = getDefaultDatabase(parser)
+    config.default_database = config.original_default_database
+    
+    if parser:
+        for section in parser.sections():
+            database = getDatabase(parser, section)
+            if database:
+                config.databases[section] = database
+    if not config.databases:
+        config.databases[None] = Database()
+    if len(config.databases) == 1:
+        config.connection = config.databases[config.databases.keys()[0]].connection
         
 def SaveConfig(progress_handler):
-    if config.documents_directory == config.original_documents_directory:
-        return
-    
-    try:
-        parser = ConfigParser.SafeConfigParser()
-        parser.read(CONFIG_FILENAME)
-        if not parser.has_section("gertrude"):
-            parser.add_section("gertrude")
-        parser.set("gertrude", "documents-directory", config.documents_directory)
-        parser.write(file(CONFIG_FILENAME, "w"))
-    except Exception, e:
-        print e
-        progress_handler.display(u"Impossible d'enregistrer le répertoire de destination des documents !")    
+    parameters = {}
+    if config.documents_directory != config.original_documents_directory:
+        parameters["documents-directory"] = config.documents_directory
+    if config.default_database != config.original_default_database:
+        parameters["default-database"] = config.default_database
+    if parameters:
+        try:
+            parser = ConfigParser.SafeConfigParser()
+            parser.read(CONFIG_FILENAME)
+            if not parser.has_section(DEFAULT_SECTION):
+                parser.add_section(DEFAULT_SECTION)
+            for key in parameters.keys():
+                parser.set(DEFAULT_SECTION, key, parameters[key])
+            parser.write(file(CONFIG_FILENAME, "w"))
+        except Exception, e:
+            print e
+            progress_handler.display(u"Impossible d'enregistrer le répertoire de destination des documents !")    
 
 def Load(progress_handler=default_progress_handler):
     __builtin__.creche, __builtin__.readonly = config.connection.Load(progress_handler)
@@ -125,8 +165,24 @@ def Exit(progress_handler=default_progress_handler):
     SaveConfig(progress_handler)
     return config.connection.Exit(progress_handler)
 
-if __name__ == '__main__':    
-    loaded = Load()
-    if loaded and not readonly:
-        Save()
-    Exit()
+def Liste(progress_handler=default_progress_handler):
+    result = {}
+    try:
+        c = creche
+    except:
+        c = None
+    for database in config.databases.values():
+        if database.section == config.default_database and c:
+            for inscrit in c.inscrits:
+                result["%s %s" % (inscrit.prenom, inscrit.nom)] = database
+        else:
+            for entry in database.connection.Liste(progress_handler):
+                result[entry] = database
+    return result
+        
+if __name__ == '__main__':
+    LoadConfig()
+    print config.databases
+    l = Liste().keys()
+    print l
+    print 'tri :', sorted(l)

@@ -8,10 +8,11 @@ from cotisation import *
 class GertrudeTests(unittest.TestCase):
 
     def test_creation_bdd(self):
-        if os.path.isfile(sqlinterface.DB_FILENAME):
-            os.remove(sqlinterface.DB_FILENAME)
-        con = sqlinterface.SQLConnection()
-        con.create()
+        filename = "gertrude.db"
+        if os.path.isfile(filename):
+            os.remove(filename)
+        con = sqlinterface.SQLConnection(filename)
+        con.Create()
         
 class PAJETests(unittest.TestCase):
 

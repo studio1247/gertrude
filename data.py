@@ -19,16 +19,16 @@ import __builtin__
 import os.path, shutil, time
 import urllib2, mimetypes
 import ConfigParser
-import sqlinterface
+from sqlinterface import SQLConnection
 from functions import *
 
 BACKUPS_DIRECTORY = './backups'
-
 TOKEN_FILENAME = '.token'
 
 class HttpConnection(object):
-    def __init__(self, url, identity, auth_info=None, proxy_info=None):
+    def __init__(self, url, filename, identity, auth_info=None, proxy_info=None):
         self.url = url
+        self.filename = filename
         self.identity = identity
         opener = urllib2.build_opener()
         if auth_info:
@@ -135,13 +135,13 @@ class HttpConnection(object):
         self.progress_handler.display(u"Téléchargement de la base ...")
         data = self.urlopen('download')
         if data:
-            f = file(sqlinterface.DB_FILENAME, 'wb')
+            f = file(self.filename, 'wb')
             f.write(data)
             f.close()
             self.progress_handler.display(u'%d octets transférés.' % len(data))
         else:
             self.progress_handler.display(u'Pas de base présente sur le serveur.')
-            if os.path.isfile(sqlinterface.DB_FILENAME):
+            if os.path.isfile(self.filename):
                 self.progress_handler.display("Utilisation de la base locale ...")
         return 1
 
@@ -175,53 +175,69 @@ class HttpConnection(object):
             return 0
         return self.do_upload()
 
+    def Liste(self, progress_handler=default_progress_handler):
+        self.progress_handler = progress_handler
+        if self.do_download():
+            return FileConnection(self.filename).Liste(progress_handler)
+        else:
+            return []
+        
     def Load(self, progress_handler=default_progress_handler):
         self.progress_handler = progress_handler
         if self.download():
-            result = FileConnection().Load(progress_handler)
+            result = FileConnection(self.filename).Load(progress_handler)
         elif self.do_download():
-            result = FileConnection().Load(progress_handler)[0], 1
+            result = FileConnection(self.filename).Load(progress_handler)[0], 1
         else:
             result = None, 0
         return result
 
     def Save(self, progress_handler=default_progress_handler):
         self.progress_handler = progress_handler
-        return FileConnection().Save() and self.upload()
+        return FileConnection(self.filename).Save() and self.upload()
 
     def Restore(self, progress_handler=default_progress_handler):
         self.progress_handler = progress_handler
-        return FileConnection().Restore()
+        return FileConnection(self.filename).Restore()
     
     def Exit(self, progress_handler=default_progress_handler):
         self.progress_handler = progress_handler
-        return FileConnection().Save() and self.rel_token()
+        return FileConnection(self.filename).Save() and self.rel_token()
 
 class FileConnection(object):
-    def __init__(self):
+    def __init__(self, filename):
+        self.filename = filename
         self.backup = None
 
     def Backup(self, progress_handler=default_progress_handler):
         progress_handler.display('Sauvegarde ...')
         try:
-            if os.path.isfile(sqlinterface.DB_FILENAME):
+            if os.path.isfile(self.filename):
                 if not os.path.isdir(BACKUPS_DIRECTORY):
                     os.mkdir(BACKUPS_DIRECTORY)
-                self.backup = 'backup_%d.db' % time.time()
-                shutil.copyfile(sqlinterface.DB_FILENAME, BACKUPS_DIRECTORY + '/' + self.backup)
+                self.backup = 'backup_%s_%d.db' % (self.filename, time.time())
+                shutil.copyfile(self.filename, BACKUPS_DIRECTORY + '/' + self.backup)
         except Exception, e:
             progress_handler.display('Impossible de faire la sauvegarde' + e)
-                    
+    
+    def Liste(self, progress_handler=default_progress_handler):
+        try:
+            connection = SQLConnection(self.filename)
+            return connection.Liste()
+        except:
+            return []
+        
     def Load(self, progress_handler=default_progress_handler):
         self.Backup(progress_handler)
-        if not os.path.isfile(sqlinterface.DB_FILENAME):
+        __builtin__.sql_connection = SQLConnection(self.filename)
+        if not os.path.isfile(self.filename):
             try:
-                sql_connection.create(progress_handler)
+                sql_connection.Create(progress_handler)
             except:
                 sql_connection.close()
-                os.remove(sqlinterface.DB_FILENAME)
+                os.remove(self.filename)
                 raise
-        creche = sql_connection.load(progress_handler)
+        creche = sql_connection.Load(progress_handler)
         return creche, 0
 
     def Save(self, progress_handler=default_progress_handler):
@@ -234,7 +250,7 @@ class FileConnection(object):
         backup = self.backup
         self.Backup(progress_handler)
         if backup:
-            shutil.copyfile(BACKUPS_DIRECTORY + '/' + backup, sqlinterface.DB_FILENAME)
+            shutil.copyfile(BACKUPS_DIRECTORY + '/' + backup, self.filename)
         return True
 
     def Exit(self, progress_handler=default_progress_handler):

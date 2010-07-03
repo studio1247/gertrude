@@ -49,7 +49,7 @@ class Call:
 
     def Undo(self):
         self.function()
-        
+       
 class History(list):
     def __init__(self):
         list.__init__(self)
@@ -73,5 +73,8 @@ class History(list):
             return self[-1]
         else:
             return None
+        
+    def Clear(self):
+        del self[:]
 
 __builtin__.history = History()

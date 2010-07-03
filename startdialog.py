@@ -18,10 +18,9 @@
 import __builtin__
 import time, thread
 import wx, wx.lib, wx.lib.newevent
-from config import LoadConfig
 from constants import *
 from functions import *
-from config import Load, Exit
+from config import LoadConfig, Load, Exit
 
 class StartDialog(wx.Dialog):
     def __init__(self, frame):
@@ -40,6 +39,14 @@ class StartDialog(wx.Dialog):
         self.sizer.Add(self.info, 0, wx.EXPAND|wx.ALL, 5)
         self.gauge = wx.Gauge(self, -1, 100, style=wx.GA_SMOOTH)
         self.sizer.Add(self.gauge, 0, wx.EXPAND|wx.ALL, 5)
+        
+        self.creche_sizer = wx.FlexGridSizer(0, 2, 5, 10)
+        self.creche_sizer.AddGrowableCol(1, 1)
+        self.creche_ctrl = wx.Choice(self)
+        self.creche_sizer.AddMany([(wx.StaticText(self, -1, "Structure :"), 0, wx.ALIGN_CENTRE_VERTICAL|wx.ALL-wx.BOTTOM, 5), (self.creche_ctrl, 0, wx.EXPAND|wx.ALIGN_CENTRE_VERTICAL|wx.ALL-wx.BOTTOM, 5)])
+        self.Bind(wx.EVT_TEXT_ENTER, self.OnOk, self.creche_ctrl)
+        self.sizer.Add(self.creche_sizer, 0, wx.EXPAND|wx.ALL, 5)
+        self.sizer.Hide(self.creche_sizer)
         
         self.fields_sizer = wx.FlexGridSizer(0, 2, 5, 10)
         self.fields_sizer.AddGrowableCol(1, 1)
@@ -79,9 +86,25 @@ class StartDialog(wx.Dialog):
         thread.start_new_thread(self.Load, ())
 
     def OnLoaded(self, event):
-        if not event.result:
+        if event.result is False:
             self.info.AppendText("Erreur lors du chargement !\n")
             self.gauge.SetValue(100)
+            return
+        
+        if event.result is None:
+            self.sizer.Hide(self.gauge)
+            self.info.AppendText("Choix de la structure ...\n")
+            self.sizer.Show(self.creche_sizer)
+            for section in config.databases.keys():
+                self.creche_ctrl.Append(section)
+            if config.default_database:
+                self.creche_ctrl.SetStringSelection(config.default_database)
+            else:
+                self.creche_ctrl.SetSelection(0)
+            self.sizer.Show(self.btnsizer)
+            self.creche_ctrl.SetFocus()
+            self.sizer.Layout()
+            self.sizer.Fit(self)
             return
 
         if readonly:
@@ -109,11 +132,15 @@ class StartDialog(wx.Dialog):
             self.login_ctrl.SetFocus()
             self.sizer.Layout()
             self.sizer.Fit(self)
-            
-    def Load(self):
-        time.sleep(0.5)
+    
+    def Load(self, section=None):
+        time.sleep(1)
         try:
-            LoadConfig(ProgressHandler(self.info.AppendText, self.gauge, 5))
+            if section is None:
+                LoadConfig(ProgressHandler(self.info.AppendText, self.gauge, 5))
+                if config.connection is None:
+                    wx.PostEvent(self, self.LoadedEvent(result=None))
+                    return
             result = Load(ProgressHandler(self.info.AppendText, self.gauge, 95))
         except Exception, e:
             try:
@@ -135,6 +162,20 @@ class StartDialog(wx.Dialog):
         self.Destroy()
 
     def OnOk(self, evt):
+        if config.connection is None:
+            self.sizer.Hide(self.creche_sizer)
+            self.sizer.Hide(self.btnsizer)
+            self.sizer.Show(self.gauge)
+            self.sizer.Layout()
+            self.sizer.Fit(self)
+            section = self.creche_ctrl.GetStringSelection()
+            self.info.AppendText(u"Structure %s sélectionnée...\n" % section)
+            config.default_database = section
+            
+            config.connection = config.databases[section].connection
+            thread.start_new_thread(self.Load, (section, ))
+            return
+            
         login = self.login_ctrl.GetValue()
         password = self.passwd_ctrl.GetValue()
 

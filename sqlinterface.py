@@ -24,7 +24,6 @@ from functions import *
 from sqlobjects import *
 import wx
 
-DB_FILENAME = 'gertrude.db'
 VERSION = 33
 
 def getdate(s):
@@ -34,11 +33,12 @@ def getdate(s):
     return datetime.date(annee, mois, jour)
 
 class SQLConnection(object):
-    def __init__(self):
+    def __init__(self, filename):
+        self.filename = filename
         self.con = None
 
     def open(self):
-        self.con = sqlite3.connect(DB_FILENAME)
+        self.con = sqlite3.connect(self.filename)
 
     def commit(self):
         if self.con:
@@ -58,7 +58,7 @@ class SQLConnection(object):
     def execute(self, cmd, *args):
         return self.con.execute(cmd, *args)
 
-    def create(self, progress_handler=default_progress_handler):
+    def Create(self, progress_handler=default_progress_handler):
         if not self.con:
             self.open()
 
@@ -274,7 +274,13 @@ class SQLConnection(object):
 
         self.con.commit()
 
-    def load(self, progress_handler=default_progress_handler):
+    def Liste(self):
+        con = sqlite3.connect(self.filename)
+        cur = con.cursor()
+        cur.execute('SELECT prenom, nom FROM INSCRITS')
+        return ["%s %s" % entry for entry in cur.fetchall()]
+        
+    def Load(self, progress_handler=default_progress_handler):
         if not self.con:
             self.open()
 
@@ -765,5 +771,3 @@ class SQLConnection(object):
             self.commit()
 
         return True
-
-__builtin__.sql_connection = SQLConnection()
