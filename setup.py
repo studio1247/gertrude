@@ -29,24 +29,7 @@ if sys.platform == 'win32':
             shutil.rmtree(directory)
             
     os.system("c:\Python26\python.exe c:\Python26\pyinstaller\Build.py gertrude.spec")
-
-#    from distutils.core import setup
-#    import py2exe
-#
-#    setup(
-#        name="Gertrude",
-#        version=VERSION,
-#        description=u"Logiciel pour les crèches",
-#        author="Bertrand Songis",
-#        windows=[{"script" : "gertrude.pyw", "icon_resources" : [(0, "bitmaps\\setup_gertrude.ico")]}],
-#        data_files=[(".", glob.glob("*.dist") + glob.glob("*.py")),
-#               ("bitmaps", glob.glob("bitmaps\\*.png") + glob.glob("bitmaps\\*.ico")),
-#               ("templates_dist", glob.glob("templates_dist\\*.html") + glob.glob("templates_dist\\*.od?")),
-#               ("doc", glob.glob("doc\\*"))],
-#        options={"py2exe": {"packages": ["encodings", "wx.lib.agw.cubecolourdialog", "win32com.client", "os", "win32ui", "win32api"]}},
-#    )
-
-    
+   
     issfile = "setup.iss"
     path, name = os.path.split(issfile)
     isspath = os.path.split(win32api.FindExecutable(name, path)[-1])[0]
