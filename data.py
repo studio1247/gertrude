@@ -221,6 +221,8 @@ class FileConnection(object):
             progress_handler.display('Impossible de faire la sauvegarde' + e)
     
     def Liste(self, progress_handler=default_progress_handler):
+        if not os.path.isfile(self.filename):
+            return []
         try:
             connection = SQLConnection(self.filename)
             return connection.Liste()
