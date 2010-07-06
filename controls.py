@@ -549,19 +549,15 @@ class AutoTimeCtrl(TimeCtrl, AutoMixin):
         if isinstance(value, float):
             wx.lib.masked.TimeCtrl.SetValue(self, "%02d:%02d" % (int(value), round((value - int(value)) * 60)))
         else:
-            wx.lib.masked.TimeCtrl.SetValue(self, value)   
-    
-       
-#    def onText(self, event):
-#        value = self.GetValue()
-#        try:
-#          self.AutoChange(float(value[:2]) + float(value[3:5]) / 60)
-#        except:
-#          pass
-#        event.Skip()
-        # self.Bind(wx.EVT_DATE_CHANGED, self.onText, self)
-        # DateCtrl.__init__(self, parent, -1, *args, **kwargs)
-        # AutoMixin.__init__(self, parent, instance, member)
+            wx.lib.masked.TimeCtrl.SetValue(self, value)
+                    
+    def onText(self, event):
+        value = self.GetValue()
+        try:
+          self.AutoChange(float(value[:2]) + float(value[3:5]) / 60)
+        except:
+          pass
+        event.Skip()
 
 class AutoNumericCtrl(NumericCtrl, AutoMixin):
     def __init__(self, parent, instance, member, *args, **kwargs):
