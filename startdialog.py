@@ -62,9 +62,9 @@ class StartDialog(wx.Dialog):
         self.sizer.Hide(self.fields_sizer)
         
         self.btnsizer = wx.StdDialogButtonSizer()
-        btn = wx.Button(self, wx.ID_OK)
-        self.Bind(wx.EVT_BUTTON, self.OnOk, btn)
-        self.btnsizer.AddButton(btn)
+        self.ok_button = wx.Button(self, wx.ID_OK)
+        self.Bind(wx.EVT_BUTTON, self.OnOk, self.ok_button)
+        self.btnsizer.AddButton(self.ok_button)
         btn = wx.Button(self, wx.ID_CANCEL, "Annuler")
         self.btnsizer.AddButton(btn)
         self.Bind(wx.EVT_BUTTON, self.OnExit, btn)
@@ -102,7 +102,7 @@ class StartDialog(wx.Dialog):
             else:
                 self.creche_ctrl.SetSelection(0)
             self.sizer.Show(self.btnsizer)
-            self.creche_ctrl.SetFocus()
+            self.ok_button.SetFocus()
             self.sizer.Layout()
             self.sizer.Fit(self)
             return

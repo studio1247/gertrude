@@ -28,11 +28,14 @@ types_creche = [("Parental", TYPE_PARENTAL),
 
 class CrecheTab(AutoTab):
     def __init__(self, parent):
+        global delbmp
+        delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
+
         AutoTab.__init__(self, parent)
-        sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
         sizer2 = wx.FlexGridSizer(0, 2, 5, 5)
         sizer2.AddGrowableCol(1, 1)
-        sizer2.AddMany([wx.StaticText(self, -1, u'Nom de la crèche :'), (AutoTextCtrl(self, creche, 'nom'), 0, wx.EXPAND)])
+        sizer2.AddMany([wx.StaticText(self, -1, u'Nom de la structure :'), (AutoTextCtrl(self, creche, 'nom'), 0, wx.EXPAND)])
         sizer2.AddMany([wx.StaticText(self, -1, 'Adresse :'), (AutoTextCtrl(self, creche, 'adresse'), 0, wx.EXPAND)])
         sizer2.AddMany([wx.StaticText(self, -1, 'Code Postal :'), (AutoNumericCtrl(self, creche, 'code_postal', precision=0), 0, wx.EXPAND)])
         sizer2.AddMany([wx.StaticText(self, -1, 'Ville :'), (AutoTextCtrl(self, creche, 'ville'), 0, wx.EXPAND)])
@@ -40,8 +43,56 @@ class CrecheTab(AutoTab):
         sizer2.AddMany([wx.StaticText(self, -1, 'E-mail :'), (AutoTextCtrl(self, creche, 'email'), 0, wx.EXPAND)])
         sizer2.AddMany([wx.StaticText(self, -1, 'Type :'), (AutoChoiceCtrl(self, creche, 'type', items=types_creche), 0, wx.EXPAND)])
         sizer2.AddMany([wx.StaticText(self, -1, u'Capacité :'), (AutoNumericCtrl(self, creche, 'capacite', precision=0), 0, wx.EXPAND)])
-        sizer.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
-        self.SetSizer(sizer)
+        self.sizer.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
+        
+        self.sites_box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, "Multi-sites"), wx.VERTICAL)
+        self.sites_sizer = wx.BoxSizer(wx.VERTICAL)
+        for i, site in enumerate(creche.sites):
+            self.line_add(i)
+        self.sites_box_sizer.Add(self.sites_sizer, 0, wx.EXPAND|wx.ALL, 5)
+        button_add = wx.Button(self, -1, u'Nouveau site')
+        self.sites_box_sizer.Add(button_add, 0, wx.ALL, 5)
+        self.Bind(wx.EVT_BUTTON, self.add, button_add)
+        self.sizer.Add(self.sites_box_sizer, 0, wx.EXPAND|wx.ALL, 5)
+        self.SetSizer(self.sizer)
+
+    def UpdateContents(self):
+        for i in range(len(self.sites_sizer.GetChildren()), len(creche.sites)):
+            self.line_add(i)
+        for i in range(len(creche.sites), len(self.sites_sizer.GetChildren())):
+            self.line_del()
+        self.sizer.Layout()
+        AutoTab.UpdateContents(self)
+
+    def line_add(self, index):
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.AddMany([(wx.StaticText(self, -1, u'Nom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, 'sites[%d].nom' % index), 1, wx.EXPAND)])
+        delbutton = wx.BitmapButton(self, -1, delbmp)
+        delbutton.index = index
+        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
+        self.Bind(wx.EVT_BUTTON, self.remove, delbutton)
+        self.sites_sizer.Add(sizer, 0, wx.EXPAND|wx.BOTTOM, 5)
+
+    def line_del(self):
+        index = len(self.sites_sizer.GetChildren()) - 1
+        sizer = self.sites_sizer.GetItem(index)
+        sizer.DeleteWindows()
+        self.sites_sizer.Detach(index)
+
+    def add(self, event):
+        history.Append(Delete(creche.sites, -1))
+        creche.sites.append(Site())
+        self.line_add(len(creche.sites) - 1)
+        self.sizer.Layout()
+
+    def remove(self, event):
+        index = event.GetEventObject().index
+        history.Append(Insert(creche.sites, index, creche.sites[index]))
+        self.line_del()
+        creche.sites[index].delete()
+        del creche.sites[index]
+        self.sizer.Layout()
+        self.UpdateContents()
 
 class EmployesTab(AutoTab):
     def __init__(self, parent):
@@ -55,7 +106,7 @@ class EmployesTab(AutoTab):
         self.sizer.Add(self.employes_sizer, 0, wx.EXPAND|wx.ALL, 5)
         button_add = wx.Button(self, -1, u'Nouvel employé')
         self.sizer.Add(button_add, 0, wx.ALL, 5)
-        self.Bind(wx.EVT_BUTTON, self.employe_add, button_add)
+        self.Bind(wx.EVT_BUTTON, self.add, button_add)
         self.SetSizer(self.sizer)
 
     def UpdateContents(self):
@@ -76,7 +127,7 @@ class EmployesTab(AutoTab):
         delbutton = wx.BitmapButton(self, -1, delbmp)
         delbutton.index = index
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
-        self.Bind(wx.EVT_BUTTON, self.employe_del, delbutton)
+        self.Bind(wx.EVT_BUTTON, self.remove, delbutton)
         self.employes_sizer.Add(sizer, 0, wx.EXPAND|wx.BOTTOM, 5)
 
     def line_del(self):
@@ -85,13 +136,13 @@ class EmployesTab(AutoTab):
         sizer.DeleteWindows()
         self.employes_sizer.Detach(index)
 
-    def employe_add(self, event):
+    def add(self, event):
         history.Append(Delete(creche.employes, -1))
         creche.employes.append(Employe())
         self.line_add(len(creche.employes) - 1)
         self.sizer.Layout()
 
-    def employe_del(self, event):
+    def remove(self, event):
         index = event.GetEventObject().index
         history.Append(Insert(creche.employes, index, creche.employes[index]))
         self.line_del()
@@ -99,7 +150,7 @@ class EmployesTab(AutoTab):
         del creche.employes[index]
         self.sizer.Layout()
         self.UpdateContents()
-
+        
 class ResponsabilitesTab(AutoTab, PeriodeMixin):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
@@ -520,7 +571,7 @@ class ParametersPanel(AutoTab):
             if value < creche.fermeture:
                 error = True
         if error:
-            dlg = wx.MessageDialog(self, u"La période d'affichage doit couvrir au moins l'amplitude horaire de la crèche !", "Erreur", wx.OK)
+            dlg = wx.MessageDialog(self, u"La période d'affichage doit couvrir au moins l'amplitude horaire de la structure !", "Erreur", wx.OK)
             dlg.ShowModal()
             dlg.Destroy()
             obj.UpdateContents()
@@ -530,7 +581,7 @@ class ParametersPanel(AutoTab):
 class CrecheNotebook(wx.Notebook):
     def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
-        self.AddPage(CrecheTab(self), u'Crèche')
+        self.AddPage(CrecheTab(self), 'Structure')
         self.AddPage(EmployesTab(self), u'Employés')
         self.AddPage(ResponsabilitesTab(self), u'Responsabilités')
         self.AddPage(CafTab(self), 'C.A.F.')

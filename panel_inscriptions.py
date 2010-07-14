@@ -510,10 +510,18 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         sizer.Add(PeriodeChoice(self, self.nouvelleInscription), 0, wx.TOP|wx.BOTTOM, 5)               
         sizer1 = wx.FlexGridSizer(0, 2, 5, 10)
         sizer1.AddGrowableCol(1, 1)
+        self.sites_items = wx.StaticText(self, -1, u"Site :"), AutoChoiceCtrl(self, None, 'site')
+        if len(creche.sites) > 1:
+            items = [(site.nom, site) for site in creche.sites]
+            self.sites_items[1].SetItems(items)
+        else:
+            for item in self.sites_items:
+                item.Show(False)
+        sizer1.AddMany([(self.sites_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.sites_items[1], 0, wx.EXPAND)])
         self.mode_accueil_choice = AutoChoiceCtrl(self, None, 'mode', items=[("Plein temps", MODE_5_5), (u"4/5èmes", MODE_4_5), (u"3/5èmes", MODE_3_5), ("Halte-garderie", MODE_HALTE_GARDERIE)])
         sizer1.AddMany([(wx.StaticText(self, -1, u"Mode d'accueil :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.mode_accueil_choice, 0, wx.EXPAND)])
-        sizer1.AddMany([(wx.StaticText(self, -1, u"Nombre de semaines de congés :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'semaines_conges', min=0, precision=0), 0, wx.EXPAND)])
-        self.semaines_conges_items = sizer1.GetItem(2), sizer1.GetItem(3)
+        self.semaines_conges_items = wx.StaticText(self, -1, u"Nombre de semaines de congés :"), AutoNumericCtrl(self, None, 'semaines_conges', min=0, precision=0)
+        sizer1.AddMany([(self.semaines_conges_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.semaines_conges_items[1], 0, wx.EXPAND)])
         if creche.mode_facturation != FACTURATION_PAJE:
             for item in self.semaines_conges_items:
                 item.Show(False)
@@ -572,23 +580,32 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.UpdateContents()
             
     def UpdateContents(self):
+        if len(creche.sites) > 1:
+            items = [(site.nom, site) for site in creche.sites]
+            self.sites_items[1].SetItems(items)
+            for item in self.sites_items:
+                item.Show(True)
+        else:
+            for item in self.sites_items:
+                item.Show(False)
+
         InscriptionsTab.UpdateContents(self)
         self.mode_accueil_choice.Enable(creche.modes_inscription != MODE_5_5)
         
         if self.inscrit and self.periode is not None and self.periode != -1 and self.periode < len(self.inscrit.inscriptions):
             for obj in [self.duree_reference_choice, self.mode_accueil_choice, self.button_5_5, self.button_copy]:
-		obj.Enable()
+                obj.Enable()
             self.duree_reference_choice.SetSelection(self.inscrit.inscriptions[self.periode].duree_reference / 7 - 1)
             self.planning_panel.SetInscription(self.inscrit.inscriptions[self.periode])
         else:
             self.planning_panel.SetInscription(None)
             for obj in [self.duree_reference_choice, self.mode_accueil_choice, self.button_5_5, self.button_copy]:
-		obj.Disable()
+                obj.Disable()
             
         self.activity_choice.Clear()
         selected = 0
         if len(creche.activites) > 1:
-            self.activity_choice.Enable()
+            self.activity_choice.Show(True)
             for i, activity in enumerate(creche.activites.values()):
                 self.activity_choice.Append(activity.label, activity)
                 try:
@@ -597,12 +614,13 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
                 except:
                     pass
         else:
-            self.activity_choice.Disable()
+            self.activity_choice.Show(False)
             self.activity_choice.Append(creche.activites[0].label, creche.activites[0])
         self.activity_choice.SetSelection(selected)
         
         for item in self.semaines_conges_items:
             item.Show(creche.mode_facturation == FACTURATION_PAJE)
+                            
         self.Layout()
 
     def SetPeriode(self, periode):
@@ -610,12 +628,12 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         if self.inscrit and self.periode is not None and self.periode != -1 and self.periode < len(self.inscrit.inscriptions):
             inscription = self.inscrit.inscriptions[self.periode]
             self.planning_panel.SetInscription(inscription)
-	    for obj in [self.duree_reference_choice, self.mode_accueil_choice, self.button_5_5, self.button_copy]:
-		obj.Enable()
+            for obj in [self.duree_reference_choice, self.mode_accueil_choice, self.button_5_5, self.button_copy]:
+                obj.Enable()
             self.duree_reference_choice.SetSelection(inscription.duree_reference / 7 - 1)
         else:
             for obj in [self.duree_reference_choice, self.mode_accueil_choice, self.button_5_5, self.button_copy]:
-		obj.Disable()
+                obj.Disable()
     
 class InscriptionsNotebook(wx.Notebook):
     def __init__(self, parent, *args, **kwargs):

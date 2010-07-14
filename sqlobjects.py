@@ -365,6 +365,28 @@ class Employe(object):
             print 'update', name
             sql_connection.execute('UPDATE EMPLOYES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
+class Site(object):
+    def __init__(self, creation=True):
+        self.idx = None
+        self.nom = ""
+        if creation:
+            self.create()
+
+    def create(self):
+        print 'nouveau site'
+        result = sql_connection.execute('INSERT INTO SITES (idx, nom) VALUES(NULL,?)', (self.nom, ))
+        self.idx = result.lastrowid
+
+    def delete(self):
+        print 'suppression site'
+        sql_connection.execute('DELETE FROM SITES WHERE idx=?', (self.idx,))
+
+    def __setattr__(self, name, value):
+        self.__dict__[name] = value
+        if name in ['nom'] and self.idx:
+            print 'update', name
+            sql_connection.execute('UPDATE SITES SET %s=? WHERE idx=?' % name, (value, self.idx))
+
 class Creche(object): 
     def __init__(self):
         self.idx = None
@@ -373,6 +395,7 @@ class Creche(object):
         self.code_postal = ''
         self.ville = ''
         self.telephone = ''
+        self.sites = []
         self.users = []
         self.couleurs = {}
         self.activites = {}
@@ -559,8 +582,9 @@ class Referent(object):
 
 class Inscription(object):
     def __init__(self, inscrit, duree_reference=7, creation=True):
-        self.inscrit = inscrit
         self.idx = None
+        self.inscrit = inscrit
+        self.site = None
         self.debut = None
         self.fin = None
         self.mode = MODE_5_5
@@ -605,7 +629,9 @@ class Inscription(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['debut', 'fin', 'mode', 'fin_periode_essai', 'duree_reference', 'semaines_conges'] and self.idx:
+        if name == 'site' and self.idx:
+            value = value.idx
+        if name in ['debut', 'fin', 'mode', 'fin_periode_essai', 'duree_reference', 'semaines_conges', 'site'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE INSCRIPTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))   
 

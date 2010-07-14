@@ -24,7 +24,7 @@ from functions import *
 from sqlobjects import *
 import wx
 
-VERSION = 33
+VERSION = 34
 
 def getdate(s):
     if s is None:
@@ -92,6 +92,12 @@ class SQLConnection(object):
             forfait_horaire FLOAT,
             majoration_localite FLOAT,
             facturation_jours_feries INTEGER
+          );""")
+        
+        cur.execute("""
+          CREATE TABLE SITES(
+            idx INTEGER PRIMARY KEY,
+            nom VARCHAR
           );""")
 
         cur.execute("""
@@ -193,6 +199,7 @@ class SQLConnection(object):
           CREATE TABLE INSCRIPTIONS(
             idx INTEGER PRIMARY KEY,
             inscrit INTEGER REFERENCES INSCRITS(idx),
+            site INTEGER REFERENCES SITES(idx),
             debut DATE,
             fin DATE,
             mode, INTEGER,
@@ -298,7 +305,13 @@ class SQLConnection(object):
             creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.telephone, creche.ouverture, creche.fermeture, creche.affichage_min, creche.affichage_max, creche.granularite, creche.mois_payes, creche.presences_previsionnelles, creche.presences_supplementaires, creche.modes_inscription, creche.minimum_maladie, creche.email, creche.type, creche.capacite, creche.mode_facturation, creche.tarification_activites, creche.traitement_maladie, creche.forfait_horaire, creche.majoration_localite, creche.facturation_jours_feries, creche.idx = creche_entry[0]
         else:
             creche = Creche()
-            
+        
+        cur.execute('SELECT nom, idx FROM SITES')
+        for site_entry in cur.fetchall():
+            site = Site(creation=False)
+            site.nom, site.idx = site_entry
+            creche.sites.append(site)
+                
         cur.execute('SELECT login, password, profile, idx FROM USERS')
         for users_entry in cur.fetchall():
             user = User(creation=False)
@@ -354,9 +367,12 @@ class SQLConnection(object):
                 referent = Referent(inscrit, creation=False)
                 referent.prenom, referent.nom, referent.telephone, referent.idx = referent_entry
                 inscrit.referents.append(referent)
-            cur.execute('SELECT idx, debut, fin, mode, fin_periode_essai, duree_reference, semaines_conges FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
-            for idx, debut, fin, mode, fin_periode_essai, duree_reference, semaines_conges in cur.fetchall():
+            cur.execute('SELECT idx, debut, fin, mode, fin_periode_essai, duree_reference, semaines_conges, site FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
+            for idx, debut, fin, mode, fin_periode_essai, duree_reference, semaines_conges, site in cur.fetchall():
                 inscription = Inscription(inscrit, duree_reference, creation=False)
+                for tmp in creche.sites:
+                    if site == tmp.idx:
+                        inscription.site = tmp 
                 inscription.debut, inscription.fin, inscription.mode, inscription.fin_periode_essai, inscription.semaines_conges, inscription.idx = getdate(debut), getdate(fin), mode, getdate(fin_periode_essai), semaines_conges, idx
                 inscrit.inscriptions.append(inscription)
             for inscription in inscrit.inscriptions:
@@ -758,6 +774,15 @@ class SQLConnection(object):
                 nom VARCHAR,
                 telephone VARCHAR
               );""")
+            
+
+        if version < 34:
+            cur.execute("""
+              CREATE TABLE SITES(
+                idx INTEGER PRIMARY KEY,
+                nom VARCHAR
+              );""")
+            cur.execute("ALTER TABLE INSCRIPTIONS ADD site INTEGER REFERENCES SITES(idx)")
                        
         if version < VERSION:
             try:

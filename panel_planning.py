@@ -38,7 +38,8 @@ class DayPlanningPanel(PlanningWidget):
         
         lines = []
         for inscrit in creche.inscrits:
-            if inscrit.getInscription(self.date) is not None:
+            inscription = inscrit.getInscription(self.date)
+            if inscription is not None and (len(creche.sites) <= 1 or inscription.site is self.site):
                 # print inscrit.prenom, 
                 if self.date in inscrit.journees:
                     line = inscrit.journees[self.date]
@@ -52,9 +53,11 @@ class DayPlanningPanel(PlanningWidget):
                 lines.append(line)
         self.SetLines(lines)
 
-    def SetDate(self, date):
+    def SetData(self, site, date):
+        self.site = site
         self.date = date
         self.UpdateContents()
+        
 
 class PlanningPanel(GPanel):
     bitmap = './bitmaps/presences.png'
@@ -63,6 +66,17 @@ class PlanningPanel(GPanel):
     def __init__(self, parent):
         GPanel.__init__(self, parent, u'Plannings')
         sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.current_site = 0
+        
+        # La combobox pour la selection du site
+        self.site_choice = wx.Choice(self, -1)
+        for site in creche.sites:
+            self.site_choice.Append(site.nom, site)
+        sizer.Add(self.site_choice, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+        if len(creche.sites) < 2:
+            self.site_choice.Show(False)
+        self.site_choice.SetSelection(0)
+        self.Bind(wx.EVT_CHOICE, self.onChangeWeek, self.site_choice)
         
         # Les raccourcis pour semaine précédente / suivante
         self.previous_button = wx.Button(self, -1, '<', size=(20,0), style=wx.NO_BORDER)
@@ -100,22 +114,30 @@ class PlanningPanel(GPanel):
         for week_day in range(self.count):
             date = first_monday + datetime.timedelta(semaine * 7 + week_day)
             planning_panel = DayPlanningPanel(self.notebook, self.activity_choice)
-            planning_panel.SetDate(date)
+            if len(creche.sites) > 1:
+                planning_panel.SetData(creche.sites[0], date)
+            else:
+                planning_panel.SetData(None, date)
             self.notebook.AddPage(planning_panel, getDateStr(date))
 
         self.sizer.Layout()
 
     def onChangeWeek(self, evt=None):
-        selection = self.week_choice.GetSelection()
-        self.previous_button.Enable(selection is not 0)
-        self.next_button.Enable(selection is not self.week_choice.GetCount() - 1)
-        monday = self.week_choice.GetClientData(selection)
+        if len(creche.sites) > 1:
+            self.current_site = self.site_choice.GetSelection()
+            site = self.site_choice.GetClientData(self.current_site)
+        else:
+            site = None        
+        week_selection = self.week_choice.GetSelection()
+        self.previous_button.Enable(week_selection is not 0)
+        self.next_button.Enable(week_selection is not self.week_choice.GetCount() - 1)
+        monday = self.week_choice.GetClientData(week_selection)
         for week_day in range(self.count):
             day = monday + datetime.timedelta(week_day)
             note = self.notebook.GetPage(week_day)
             self.notebook.SetPageText(week_day, getDateStr(day))
             note = self.notebook.GetPage(week_day)
-            note.SetDate(day)
+            note.SetData(site, day)
             self.notebook.SetSelection(0)
         self.sizer.Layout()
         
@@ -126,12 +148,21 @@ class PlanningPanel(GPanel):
     def onNextWeek(self, evt):
         self.week_choice.SetSelection(self.week_choice.GetSelection() + 1)
         self.onChangeWeek()
-
+        
     def UpdateContents(self):
+        if len(creche.sites) > 1:
+            self.site_choice.Show(True)
+            self.site_choice.Clear()
+            for site in creche.sites:
+                self.site_choice.Append(site.nom, site)
+            self.site_choice.SetSelection(self.current_site)
+        else:
+            self.site_choice.Show(False)
+            
         self.activity_choice.Clear()
         selected = 0
         if len(creche.activites) > 1:
-            self.activity_choice.Enable()
+            self.activity_choice.Show(True)
             for i, activity in enumerate(creche.activites.values()):
                 self.activity_choice.Append(activity.label, activity)
                 try:
@@ -140,7 +171,7 @@ class PlanningPanel(GPanel):
                 except:
                     pass
         else:
-            self.activity_choice.Disable()
+            self.activity_choice.Show(False)
             self.activity_choice.Append(creche.activites[0].label, creche.activites[0])
         self.activity_choice.SetSelection(selected)
         for week_day in range(self.count):
