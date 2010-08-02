@@ -24,7 +24,7 @@ from functions import *
 from sqlobjects import *
 import wx
 
-VERSION = 34
+VERSION = 35
 
 def getdate(s):
     if s is None:
@@ -97,7 +97,11 @@ class SQLConnection(object):
         cur.execute("""
           CREATE TABLE SITES(
             idx INTEGER PRIMARY KEY,
-            nom VARCHAR
+            nom VARCHAR,
+            adresse VARCHAR,
+            code_postal INTEGER,
+            ville VARCHAR,
+            telephone VARCHAR
           );""")
 
         cur.execute("""
@@ -131,18 +135,28 @@ class SQLConnection(object):
             couleur_previsionnel VARCHAR,
             tarif INTEGER
           );""")
+        
+        cur.execute("""  
+          CREATE TABLE CONTRATS(
+            idx INTEGER PRIMARY KEY,
+            employe INTEGER REFERENCES EMPLOYES(idx),
+            site INTEGER REFERENCES SITES(idx),
+            debut DATE,
+            fin DATE,
+            fonction VARCHAR,
+          );""")
 
         cur.execute("""
           CREATE TABLE EMPLOYES(
             idx INTEGER PRIMARY KEY,
-            date_embauche DATE,
             prenom VARCHAR,
             nom VARCHAR,
             telephone_domicile VARCHAR,
             telephone_domicile_notes VARCHAR,
             telephone_portable VARCHAR,
             telephone_portable_notes VARCHAR,
-            email VARCHAR
+            email VARCHAR,
+            diplomes VARCHAR
           );""")
 
         cur.execute("""
@@ -306,10 +320,10 @@ class SQLConnection(object):
         else:
             creche = Creche()
         
-        cur.execute('SELECT nom, idx FROM SITES')
+        cur.execute('SELECT nom, adresse, code_postal, ville, telephone, idx FROM SITES')
         for site_entry in cur.fetchall():
             site = Site(creation=False)
-            site.nom, site.idx = site_entry
+            site.nom, site.adresse, site.code_postal, site.ville, site.telephone, site.idx = site_entry
             creche.sites.append(site)
                 
         cur.execute('SELECT login, password, profile, idx FROM USERS')
@@ -341,12 +355,21 @@ class SQLConnection(object):
             else:
                 creche.activites[activity.value] = activity
                 
-        cur.execute('SELECT date_embauche, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, email, idx FROM EMPLOYES')
+        cur.execute('SELECT prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, email, diplomes, idx FROM EMPLOYES')
         for employe_entry in cur.fetchall():
             employe = Employe(creation=False)
-            employe.date_embauche = getdate(employe_entry[0])
-            employe.prenom, employe.nom, employe.telephone_domicile, employe.telephone_domicile_notes, employe.telephone_portable, employe.telephone_portable_notes, employe.email, employe.idx = employe_entry[1:]
+            employe.prenom, employe.nom, employe.telephone_domicile, employe.telephone_domicile_notes, employe.telephone_portable, employe.telephone_portable_notes, employe.email, employe.diplomes, employe.idx = employe_entry
             creche.employes.append(employe)
+            cur.execute('SELECT debut, fin, site, fonction, idx FROM CONTRATS WHERE employe=?', (employe.idx,))
+            for debut, fin, site_idx, fonction, idx in cur.fetchall():
+                contrat = Contrat(employe, creation=False)
+                site = None
+                for s in creche.sites:
+                    if s.idx == site_idx:
+                        site = s
+                        break
+                contrat.debut, contrat.fin, contrat.site, contrat.fonction, contrat.idx = getdate(debut), getdate(fin), site, fonction, idx
+                employe.contrats.append(contrat)
 
         parents = {None: None}
         cur.execute('SELECT idx, prenom, nom, sexe, naissance, adresse, code_postal, ville, majoration, marche, photo FROM INSCRITS')
@@ -509,7 +532,6 @@ class SQLConnection(object):
             cur.execute("""
               CREATE TABLE EMPLOYES(
                 idx INTEGER PRIMARY KEY,
-                date_embauche DATE,
                 prenom VARCHAR,
                 nom VARCHAR,
                 telephone_domicile VARCHAR,
@@ -775,7 +797,6 @@ class SQLConnection(object):
                 telephone VARCHAR
               );""")
             
-
         if version < 34:
             cur.execute("""
               CREATE TABLE SITES(
@@ -783,6 +804,24 @@ class SQLConnection(object):
                 nom VARCHAR
               );""")
             cur.execute("ALTER TABLE INSCRIPTIONS ADD site INTEGER REFERENCES SITES(idx)")
+            
+        if version < 35:
+            cur.execute("ALTER TABLE SITES ADD adresse VARCHAR;")
+            cur.execute("ALTER TABLE SITES ADD code_postal INTEGER;")
+            cur.execute("ALTER TABLE SITES ADD ville VARCHAR;")
+            cur.execute("ALTER TABLE SITES ADD telephone VARCHAR;")
+            cur.execute('UPDATE SITES SET adresse=?, code_postal=?, ville=?, telephone=?', ('','','',''))
+            cur.execute("""  
+              CREATE TABLE CONTRATS(
+                idx INTEGER PRIMARY KEY,
+                employe INTEGER REFERENCES EMPLOYES(idx),
+                site INTEGER REFERENCES SITES(idx),
+                debut DATE,
+                fin DATE,
+                fonction VARCHAR
+              );""")
+            cur.execute("ALTER TABLE EMPLOYES ADD diplomes VARCHAR;")
+            cur.execute('UPDATE EMPLOYES SET diplomes=?', ('',))
                        
         if version < VERSION:
             try:

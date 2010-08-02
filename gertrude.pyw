@@ -95,28 +95,34 @@ class Listbook(wx.Panel):
         return self.panels[n]
 
 class GertrudeListbook(Listbook):
-    def __init__(self, parent, info_ctrl):
+    def __init__(self, parent, progress_handler):
         Listbook.__init__(self, parent, id=-1, style=wx.LB_DEFAULT, pos=(10, 10))
         panels = []
-        info_ctrl.AppendText("Chargement de l'outil Inscriptions ...\n")
+        progress_handler.display("Chargement de l'outil Inscriptions ...")
         import panel_inscriptions
         panels.append(panel_inscriptions.InscriptionsPanel(self))
-        info_ctrl.AppendText("Chargement de l'outil Planning ...\n")
+        progress_handler.set(15)
+        progress_handler.display("Chargement de l'outil Planning ...")
         import panel_planning
         panels.append(panel_planning.PlanningPanel(self))
-        info_ctrl.AppendText("Chargement de l'outil Facturation ...\n")
+        progress_handler.set(30)
+        progress_handler.display("Chargement de l'outil Facturation ...")
         import panel_facturation
         panels.append(panel_facturation.FacturationPanel(self))
-        info_ctrl.AppendText(u"Chargement de l'outil Relevés ...\n")
+        progress_handler.set(45)
+        progress_handler.display(u"Chargement de l'outil Relevés ...")
         import panel_releves
         panels.append(panel_releves.RelevesPanel(self))
-        info_ctrl.AppendText(u"Chargement de l'outil Paramètres ...\n")
+        progress_handler.set(60)
+        progress_handler.display(u"Chargement de l'outil Paramètres ...")
         import panel_creche
         panels.append(panel_creche.CrechePanel(self))
-        info_ctrl.AppendText("Chargement de l'outil Administration ...\n")
+        progress_handler.set(75)
+        progress_handler.display("Chargement de l'outil Administration ...")
         import panel_admin
         if panel_admin.AdminPanel.profil & profil:
             panels.append(panel_admin.AdminPanel(self))
+        progress_handler.set(90)
         for panel in panels:
             if panel.profil & profil:
                 self.AddPage(panel, panel.bitmap)
@@ -131,7 +137,7 @@ class GertrudeListbook(Listbook):
         self.GetPage(self.list_box.GetSelection()).UpdateContents()
 
 class GertrudeFrame(wx.Frame):
-    def __init__(self, info_ctrl):
+    def __init__(self, progress_handler):
         wx.Frame.__init__(self, None, -1, "Gertrude v%s" % VERSION, wx.DefaultPosition, (920, 600))
 
         # Icon
@@ -176,7 +182,7 @@ class GertrudeFrame(wx.Frame):
         self.SetSizer(sizer)
 
         sizer2 = wx.BoxSizer(wx.HORIZONTAL)
-        self.listbook = GertrudeListbook(panel, info_ctrl)
+        self.listbook = GertrudeListbook(panel, progress_handler)
         sizer2.Add(self.listbook, 1, wx.EXPAND)
         panel.SetSizer(sizer2)
         

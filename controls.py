@@ -300,10 +300,10 @@ else:
             return str2date(wx.TextCtrl.GetValue(self))
 
     def SetValue(self, value):
-        if self.mois:
-            wx.TextCtrl.SetValue(self, value)
-        elif value is None:
+        if value is None:
             wx.TextCtrl.SetValue(self, '')
+        elif self.mois:
+            wx.TextCtrl.SetValue(self, value)
         else:
             wx.TextCtrl.SetValue(self, '%.02d/%.02d/%.04d' % (value.day, value.month, value.year))
         self.Refresh()
@@ -531,6 +531,11 @@ class AutoTextCtrl(wx.TextCtrl, AutoMixin):
         wx.TextCtrl.__init__(self, parent, -1, *args, **kwargs)
         AutoMixin.__init__(self, parent, instance, member)
 
+class AutoComboBox(wx.ComboBox, AutoMixin):
+    def __init__(self, parent, instance, member, *args, **kwargs):
+        wx.ComboBox.__init__(self, parent, -1, *args, **kwargs)
+        AutoMixin.__init__(self, parent, instance, member)
+        
 class AutoDateCtrl(DateCtrl, AutoMixin):
     def __init__(self, parent, instance, member, *args, **kwargs):
         DateCtrl.__init__(self, parent, id=-1, style=wx.DP_DEFAULT|wx.DP_DROPDOWN|wx.DP_SHOWCENTURY|wx.DP_ALLOWNONE, *args, **kwargs)
@@ -608,6 +613,10 @@ class AutoChoiceCtrl(wx.Choice, AutoMixin):
         self.values.clear()
         for item, clientData in items:
             self.Append(item, clientData)
+        try:
+            self.UpdateContents()
+        except:
+            pass
 
 class AutoCheckBox(wx.CheckBox, AutoMixin):
     def __init__(self, parent, instance, member, label, value=1, **kwargs):

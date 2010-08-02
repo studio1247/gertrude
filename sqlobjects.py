@@ -335,10 +335,37 @@ class Activite(object):
                 value = str(value)
             sql_connection.execute('UPDATE ACTIVITIES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
+class Contrat(object):
+    def __init__(self, employe, creation=True):
+        self.idx = None
+        self.employe = employe
+        self.debut = None
+        self.fin = None
+        self.site = None
+        self.fonction = ''
+        if creation:
+            self.create()
+
+    def create(self):
+        print 'nouveau contrat'
+        result = sql_connection.execute('INSERT INTO CONTRATS (idx, employe, debut, fin, site, fonction) VALUES (NULL,?,?,?,?,?)', (self.employe.idx, self.debut, self.fin, self.site, self.fonction))
+        self.idx = result.lastrowid
+
+    def delete(self):
+        print 'suppression contrat'
+        sql_connection.execute('DELETE FROM CONTRATS WHERE idx=?', (self.idx,))
+
+    def __setattr__(self, name, value):
+        self.__dict__[name] = value
+        if name in ['debut', 'fin', 'site', 'fonction'] and self.idx:
+            if name == 'site':
+                value = value.idx
+            print 'update', name
+            sql_connection.execute('UPDATE CONTRATS SET %s=? WHERE idx=?' % name, (value, self.idx))
+
 class Employe(object):
     def __init__(self, creation=True):
         self.idx = None
-        self.date_embauche = None
         self.prenom = ""
         self.nom = ""
         self.telephone_domicile = ""
@@ -346,13 +373,14 @@ class Employe(object):
         self.telephone_portable = ""
         self.telephone_portable_notes = ""
         self.email = ""
-
+        self.diplomes = ''
+        self.contrats = []
         if creation:
             self.create()
 
     def create(self):
         print 'nouvel employe'
-        result = sql_connection.execute('INSERT INTO EMPLOYES (idx, date_embauche, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, email) VALUES(NULL,?,?,?,?,?,?,?,?)', (self.date_embauche, self.prenom, self.nom, self.telephone_domicile, self.telephone_domicile_notes, self.telephone_portable, self.telephone_portable_notes, self.email))
+        result = sql_connection.execute('INSERT INTO EMPLOYES (idx, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, email, diplomes) VALUES(NULL,?,?,?,?,?,?,?,?)', (self.prenom, self.nom, self.telephone_domicile, self.telephone_domicile_notes, self.telephone_portable, self.telephone_portable_notes, self.email, self.diplomes))
         self.idx = result.lastrowid
 
     def delete(self):
@@ -361,20 +389,24 @@ class Employe(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['date_embauche', 'prenom', 'nom', 'telephone_domicile', 'telephone_domicile_notes', 'telephone_portable', 'telephone_portable_notes', 'email'] and self.idx:
+        if name in ['prenom', 'nom', 'telephone_domicile', 'telephone_domicile_notes', 'telephone_portable', 'telephone_portable_notes', 'email', 'diplomes'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE EMPLOYES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 class Site(object):
     def __init__(self, creation=True):
         self.idx = None
-        self.nom = ""
+        self.nom = ''
+        self.adresse = ''
+        self.code_postal = ''
+        self.ville = ''
+        self.telephone = ''
         if creation:
             self.create()
 
     def create(self):
         print 'nouveau site'
-        result = sql_connection.execute('INSERT INTO SITES (idx, nom) VALUES(NULL,?)', (self.nom, ))
+        result = sql_connection.execute('INSERT INTO SITES (idx, nom, adresse, code_postal, ville, telephone) VALUES(NULL,?,?,?,?,?)', (self.nom, self.adresse, self.code_postal, self.ville, self.telephone))
         self.idx = result.lastrowid
 
     def delete(self):
@@ -383,7 +415,7 @@ class Site(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE SITES SET %s=? WHERE idx=?' % name, (value, self.idx))
 

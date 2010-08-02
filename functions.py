@@ -219,13 +219,16 @@ class ProgressHandler:
         self.display_fn = display_fn
         self.gauge = gauge
         self.max = max
-        if self.gauge: self.min = self.gauge.GetValue()
+        if self.gauge:
+            self.min = self.gauge.GetValue()
         
     def __del__(self):
-        if self.gauge: self.gauge.SetValue(self.max)
+        if self.gauge:
+            self.gauge.SetValue(self.max)
 
     def set(self, value):
-        if self.gauge: self.gauge.SetValue(self.min + (self.max-self.min)*value/100)
+        if self.gauge:
+            self.gauge.SetValue(self.min + (self.max-self.min)*value/100)
 
     def display(self, s):
         print s

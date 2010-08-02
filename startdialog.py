@@ -16,7 +16,7 @@
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import __builtin__
-import time, thread
+import time, thread, traceback
 import wx, wx.lib, wx.lib.newevent
 from constants import *
 from functions import *
@@ -141,8 +141,9 @@ class StartDialog(wx.Dialog):
                 if config.connection is None:
                     wx.PostEvent(self, self.LoadedEvent(result=None))
                     return
-            result = Load(ProgressHandler(self.info.AppendText, self.gauge, 95))
+            result = Load(ProgressHandler(self.info.AppendText, self.gauge, 75))
         except Exception, e:
+            traceback.print_exc()
             try:
                 self.info.AppendText(str(e) + u'\n')
             except:
@@ -153,12 +154,11 @@ class StartDialog(wx.Dialog):
             sql_connection.close()
         except:
             pass
-        time.sleep(1)
-        self.gauge.SetValue(100)
         wx.PostEvent(self, self.LoadedEvent(result=result))
 
     def StartFrame(self):
-        self.frame(self.info).Show()
+        self.frame(ProgressHandler(self.info.AppendText, self.gauge, 100)).Show()
+        self.gauge.SetValue(100)
         self.Destroy()
 
     def OnOk(self, evt):
@@ -171,7 +171,6 @@ class StartDialog(wx.Dialog):
             section = self.creche_ctrl.GetStringSelection()
             self.info.AppendText(u"Structure %s sélectionnée...\n" % section)
             config.default_database = section
-            
             config.connection = config.databases[section].connection
             thread.start_new_thread(self.Load, (section, ))
             return
