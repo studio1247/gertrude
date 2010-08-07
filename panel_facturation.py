@@ -82,6 +82,7 @@ class FacturationPanel(GPanel):
         self.sizer.Add(sizer, 1, wx.EXPAND)
 
     def EvtFacturesInscritChoice(self, evt):
+        selection = self.factures_monthchoice.GetStringSelection()
         self.factures_monthchoice.Clear()
         inscrit = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
         date = getFirstMonday()
@@ -89,10 +90,11 @@ class FacturationPanel(GPanel):
             if isinstance(inscrit, list) or inscrit.getInscriptions(datetime.date(date.year, date.month, 1), getMonthEnd(date)):
                 self.factures_monthchoice.Append('%s %d' % (months[date.month - 1], date.year), date)
             date = getNextMonthStart(date)
-        if today.month == 1:
-            self.factures_monthchoice.SetStringSelection('%s %d' % (months[11], today.year - 1))
-        else:
-            self.factures_monthchoice.SetStringSelection('%s %d' % (months[today.month - 2], today.year))
+        if not self.factures_monthchoice.SetStringSelection(selection):
+            if today.month == 1:
+                self.factures_monthchoice.SetStringSelection('%s %d' % (months[11], today.year - 1))
+            else:
+                self.factures_monthchoice.SetStringSelection('%s %d' % (months[today.month - 2], today.year))
 
     def EvtRecusInscritChoice(self, evt):
         self.recus_periodechoice.Clear()
