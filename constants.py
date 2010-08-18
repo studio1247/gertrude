@@ -53,6 +53,10 @@ FACTURATION_FORFAIT_10H = 0
 FACTURATION_PSU = 1
 FACTURATION_PAJE = 2
 
+# Facturation début/fin de mois
+FACTURATION_FIN_MOIS = 0
+FACTURATION_DEBUT_MOIS = 1
+
 # Modes de traitement des absences pour maladie
 DEDUCTION_MALADIE_SANS_CARENCE = 0
 # valeur 1 libre
