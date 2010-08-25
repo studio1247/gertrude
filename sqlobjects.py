@@ -473,7 +473,6 @@ class Creche(object):
                             self.jours_fermeture[j] = self.feries[label]
                     else:
                         self.jours_fermeture[tmp] = self.feries[label]
-        print self.jours_fermeture
         self.jours_feries = self.jours_fermeture.keys()
 
         def add_periode(debut, fin, conge):
