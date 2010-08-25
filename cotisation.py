@@ -133,19 +133,24 @@ class Cotisation(object):
             # TODO c'etait 45 au lieu de 46 pour Oleron, 47 pour Bois le roi
             # Il faudrait pouvoir saisir le nombre de samaines de vacances qq part
             
-            
-        if creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
-#            print self.heures_annee
-            for date in creche.jours_feries + [j for j in creche.jours_fermeture if creche.jours_fermeture[j].options == ACCUEIL_NON_FACTURE]:
-                iso = date.isocalendar()
-                if iso[0] == self.debut.year:
-                    inscription = inscrit.getInscription(date)
-                    if inscription:
-                        self.heures_annee -= inscription.getReferenceDay(date).get_heures()
-#                        if inscription.getReferenceDay(date).get_heures():
-#                            print date, inscription.getReferenceDay(date).get_heures()
-#            print self.heures_annee
-            self.heures_mois = math.ceil(self.heures_annee / self.nombre_factures)
+            if creche.conges_inscription:
+                for date in creche.jours_fermeture.keys() + inscrit.jours_conges.keys():
+                    if date.isocalendar()[0] == self.debut.year:
+                        inscription = inscrit.getInscription(date)
+                        if inscription:
+                            self.heures_annee -= inscription.getReferenceDay(date).get_heures()
+                self.heures_mois = math.ceil(self.heures_annee / self.nombre_factures)
+            elif creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
+        #            print self.heures_annee
+                for date in creche.jours_feries + [j for j in creche.jours_fermeture if creche.jours_fermeture[j].options == ACCUEIL_NON_FACTURE]:
+                    if date.isocalendar()[0] == self.debut.year:
+                        inscription = inscrit.getInscription(date)
+                        if inscription:
+                            self.heures_annee -= inscription.getReferenceDay(date).get_heures()
+        #                        if inscription.getReferenceDay(date).get_heures():
+        #                            print date, inscription.getReferenceDay(date).get_heures()
+        #            print self.heures_annee
+                self.heures_mois = math.ceil(self.heures_annee / self.nombre_factures)
 
         if self.jours_semaine == 5:
             self.str_mode_garde = u'plein temps'
@@ -214,11 +219,13 @@ class Cotisation(object):
             self.montant_heure_garde = self.assiette_mensuelle * self.taux_horaire / 100
             if creche.mode_facturation == FACTURATION_PSU:
                 self.montant_heure_garde = round(self.montant_heure_garde, 2)
-                self.cotisation_mensuelle = self.heures_mois *  self.montant_heure_garde
+                self.cotisation_mensuelle = self.heures_mois * self.montant_heure_garde
+                self.montant_heure_supplementaire = self.montant_heure_garde
                 self.montant_jour_supplementaire = 0
             else:
                 self.montant_jour_garde = self.montant_heure_garde * 10
                 self.cotisation_mensuelle = self.assiette_mensuelle * self.taux_horaire * self.heures_mois * creche.mois_payes / 12 / 100
+                self.montant_heure_supplementaire = 0
                 if self.heures_mois < 200:
                     self.montant_jour_supplementaire = self.montant_jour_garde
                 else: 

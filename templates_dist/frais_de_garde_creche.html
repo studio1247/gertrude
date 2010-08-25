@@ -61,8 +61,14 @@
   </tr>
   <if value="montant_jour_supplementaire">
   <tr>
-   <td><b>Montant journalier par jour de garde suppl&eacute;mentaire</b></td>
+   <td><b>Montant par jour de garde suppl&eacute;mentaire</b></td>
    <td><b>= <var value="'%.02f' % montant_jour_supplementaire"/> &euro;</b></td>
+  </tr>
+  </if>
+  <if value="montant_heure_supplementaire">
+  <tr>
+   <td><b>Montant par heure de garde suppl&eacute;mentaire</b></td>
+   <td><b>= <var value="'%.02f' % montant_heure_supplementaire"/> &euro;</b></td>
   </tr>
   </if>
  </table>  

@@ -634,7 +634,105 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         else:
             for obj in [self.duree_reference_choice, self.mode_accueil_choice, self.button_5_5, self.button_copy]:
                 obj.Disable()
-    
+                
+class CongesPanel(InscriptionsTab):
+    def __init__(self, parent):
+        global delbmp
+        delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
+        self.last_creche_observer = 0
+        
+        InscriptionsTab.__init__(self, parent)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        
+        self.conges_creche_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.affiche_conges_creche()
+        self.sizer.Add(self.conges_creche_sizer, 0, wx.ALL, 5)
+        
+        self.conges_inscrit_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer.Add(self.conges_inscrit_sizer, 0, wx.ALL, 5)
+        
+        self.nouveau_conge_button = wx.Button(self, -1, u'Nouvelle période de congés')
+        self.sizer.Add(self.nouveau_conge_button, 0, wx.EXPAND+wx.TOP, 5)
+        self.Bind(wx.EVT_BUTTON, self.evt_conge_add, self.nouveau_conge_button)
+
+#        sizer2 = wx.BoxSizer(wx.HORIZONTAL)
+#        sizer2.AddMany([(wx.StaticText(self, -1, u'Nombre de semaines de congés déduites :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'semaines_conges', min=0, precision=0), 0, wx.EXPAND)])
+#        self.sizer.Add(sizer2, 0, wx.EXPAND+wx.TOP, 5)
+
+        self.SetSizer(self.sizer)
+
+    def UpdateContents(self):
+        if 'conges' in observers and observers['conges'] > self.last_creche_observer:
+            self.affiche_conges_creche()
+        if self.inscrit:
+            for i in range(len(self.conges_inscrit_sizer.GetChildren()), len(self.inscrit.conges)):
+                self.line_add(i)
+            for i in range(len(self.inscrit.conges), len(self.conges_inscrit_sizer.GetChildren())):
+                self.line_del()
+        else:
+            for i in range(len(self.conges_inscrit_sizer.GetChildren())):
+                self.line_del()
+        self.sizer.Layout()
+        AutoTab.UpdateContents(self)
+        
+    def SetInscrit(self, inscrit):
+        self.inscrit = inscrit
+        self.UpdateContents()
+        InscriptionsTab.SetInscrit(self, inscrit)
+        self.nouveau_conge_button.Enable(self.inscrit is not None)
+
+    def affiche_conges_creche(self):
+        self.conges_creche_sizer.DeleteWindows()
+        labels_conges = [j[0] for j in jours_fermeture]
+        for text in labels_conges:
+            checkbox = wx.CheckBox(self, -1, text)
+            checkbox.Disable()
+            if text in creche.feries:
+                checkbox.SetValue(True)
+            self.conges_creche_sizer.Add(checkbox, 0, wx.EXPAND)
+        for conge in creche.conges:
+            sizer = wx.BoxSizer(wx.HORIZONTAL)
+            sizer.AddMany([(wx.StaticText(self, -1, 'Debut :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, conge, 'debut', mois=True, fixed_instance=True)])
+            sizer.AddMany([(wx.StaticText(self, -1, 'Fin :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, conge, 'fin', mois=True, fixed_instance=True)])
+            sizer.AddMany([(wx.StaticText(self, -1, u'Libellé :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, conge, 'label', fixed_instance=True)])
+            for child in sizer.GetChildren():
+                child.GetWindow().Disable()
+            self.conges_creche_sizer.Add(sizer)
+        if 'conges' in observers:
+            self.last_creche_observer = observers['conges']
+
+    def line_add(self, index):
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.AddMany([(wx.StaticText(self, -1, 'Debut :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, self.inscrit, 'conges[%d].debut' % index, mois=True)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Fin :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, self.inscrit, 'conges[%d].fin' % index, mois=True)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Libellé :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, self.inscrit, 'conges[%d].label' % index)])
+        delbutton = wx.BitmapButton(self, -1, delbmp)
+        delbutton.index = index
+        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
+        self.Bind(wx.EVT_BUTTON, self.evt_conge_del, delbutton)
+        self.conges_inscrit_sizer.Add(sizer)
+        
+    def line_del(self):
+        index = len(self.conges_inscrit_sizer.GetChildren()) - 1
+        sizer = self.conges_inscrit_sizer.GetItem(index)
+        sizer.DeleteWindows()
+        self.conges_inscrit_sizer.Detach(index)
+
+    def evt_conge_add(self, event):
+        history.Append(Delete(self.inscrit.conges, -1))
+        self.inscrit.add_conge(CongeInscrit(self.inscrit))
+        self.line_add(len(self.inscrit.conges) - 1)
+        self.sizer.Layout()
+
+    def evt_conge_del(self, event):
+        index = event.GetEventObject().index
+        history.Append(Insert(self.inscrit.conges, index, self.inscrit.conges[index]))
+        self.line_del()
+        self.inscrit.conges[index].delete()
+        del self.inscrit.conges[index]
+        self.sizer.Layout()
+        self.UpdateContents()
+        
 class InscriptionsNotebook(wx.Notebook):
     def __init__(self, parent, *args, **kwargs):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT, *args, **kwargs)      
@@ -644,6 +742,11 @@ class InscriptionsNotebook(wx.Notebook):
         self.AddPage(IdentitePanel(self), u'Identité')
         self.AddPage(ParentsPanel(self), u'Parents et référents')
         self.AddPage(ModeAccueilPanel(self), "Mode d'accueil")
+        if creche.conges_inscription:
+            self.conges_panel = CongesPanel(self)
+            self.AddPage(self.conges_panel, u"Congés")
+        else:
+            self.conges_panel = None
 
         if profil & PROFIL_TRESORIER:
             self.contrat_panel = ContratPanel(self)
@@ -659,8 +762,7 @@ class InscriptionsNotebook(wx.Notebook):
         self.parent.ChangePrenom(self.inscrit)
 
     def onPageChanged(self, event):
-        page = self.GetPage(event.GetSelection())
-        page.UpdateContents()
+        self.GetPage(event.GetSelection()).UpdateContents()
         event.Skip()
 
     def SetInscrit(self, inscrit):
@@ -670,8 +772,14 @@ class InscriptionsNotebook(wx.Notebook):
             page.SetInscrit(inscrit)
             
     def UpdateContents(self):
-        page = self.GetCurrentPage()
-        page.Update()
+        if creche.conges_inscription and not self.conges_panel:
+            self.conges_panel = CongesPanel(self)
+            self.InsertPage(3, self.conges_panel, u"Congés")
+        elif self.conges_panel and not creche.conges_inscription:
+            self.RemovePage(3)
+            self.conges_panel.Destroy()
+            self.conges_panel = None
+        self.GetCurrentPage().UpdateContents()
             
 class InscriptionsPanel(GPanel):
     bitmap = './bitmaps/inscriptions.png'
@@ -699,7 +807,7 @@ class InscriptionsPanel(GPanel):
         self.InitInscrits()
 
     def UpdateContents(self):
-        self.InitInscrits()
+        self.notebook.UpdateContents()
 
     def InitInscrits(self, selected=None):
         self.choice.Clear()
@@ -718,7 +826,7 @@ class InscriptionsPanel(GPanel):
 
         if len(creche.inscrits) > 0 and selected != None and selected in creche.inscrits:
             self.SelectInscrit(selected)
-        elif (len(creche.inscrits) > 0):
+        elif len(creche.inscrits) > 0:
             self.SelectInscrit(self.choice.GetClientData(0))
         else:
             self.SelectInscrit(None)

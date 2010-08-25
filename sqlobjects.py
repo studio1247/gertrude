@@ -264,35 +264,37 @@ class User(object):
             sql_connection.execute('UPDATE USERS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 class Conge(object):
-    def __init__(self, creation=True):
+    __table__ = "CONGES"
+    
+    def __init__(self, parent, creation=True):
         self.idx = None
         self.debut = ""
         self.fin = ""
         self.label = ""
         self.options = 0
-        self.creche = None
-
+        self.parent = parent
         if creation:
             self.create()
 
     def create(self):
         print 'nouveau conge'
-        result = sql_connection.execute('INSERT INTO CONGES (idx, debut, fin) VALUES (NULL,?,?)', (self.debut, self.fin))
+        result = sql_connection.execute('INSERT INTO %s (idx, debut, fin) VALUES (NULL,?,?)' % self.__table__, (self.debut, self.fin))
         self.idx = result.lastrowid
 
     def delete(self):
         print 'suppression conge'
-        sql_connection.execute('DELETE FROM CONGES WHERE idx=?', (self.idx,))
-        if self.creche:
-            self.creche.calcule_jours_fermeture()
+        sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.__table__, (self.idx,))
+        self.parent.calcule_jours_conges()
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['debut', 'fin', 'label', 'options'] and self.idx:
             print 'update', name
-            sql_connection.execute('UPDATE CONGES SET %s=? WHERE idx=?' % name, (value, self.idx))
-            if self.creche:
-                self.creche.calcule_jours_fermeture()
+            sql_connection.execute('UPDATE %s SET %s=? WHERE idx=?' % (self.__table__, name), (value, self.idx))
+            self.parent.calcule_jours_conges()
+                
+class CongeInscrit(Conge):
+    __table__ = "CONGES_INSCRITS"
 
 class Activite(object):
     last_value = 0
@@ -445,6 +447,8 @@ class Creche(object):
         self.mois_payes = 12
         self.minimum_maladie = 15
         self.mode_facturation = FACTURATION_FORFAIT_10H
+        self.temps_facturation = FACTURATION_FIN_MOIS
+        self.conges_inscription = 0
         self.tarification_activites = ACTIVITES_NON_FACTUREES
         self.traitement_maladie = DEDUCTION_MALADIE_AVEC_CARENCE
         self.presences_previsionnelles = False
@@ -456,9 +460,9 @@ class Creche(object):
         self.forfait_horaire = 0.0
         self.majoration_localite = 0.0
         self.facturation_jours_feries = JOURS_FERIES_NON_DEDUITS
-        self.calcule_jours_fermeture()
+        self.calcule_jours_conges()
 
-    def calcule_jours_fermeture(self):
+    def calcule_jours_conges(self):
         self.jours_fermeture = {}        
         for year in range(first_date.year, last_date.year + 1):
             for label, func, enable in jours_fermeture:
@@ -469,6 +473,7 @@ class Creche(object):
                             self.jours_fermeture[j] = self.feries[label]
                     else:
                         self.jours_fermeture[tmp] = self.feries[label]
+        print self.jours_fermeture
         self.jours_feries = self.jours_fermeture.keys()
 
         def add_periode(debut, fin, conge):
@@ -499,17 +504,18 @@ class Creche(object):
                 except:
                     pass
 
-    def add_conge(self, conge):
+    def add_conge(self, conge, calcule=True):
         conge.creche = self
         if '/' in conge.debut or conge.debut not in [tmp[0] for tmp in jours_fermeture]:
             self.conges.append(conge)
         else:
             self.feries[conge.debut] = conge
-        self.calcule_jours_fermeture()
+        if calcule:
+            self.calcule_jours_conges()
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'forfait_horaire', 'tarification_activites', 'traitement_maladie', 'forfait_horaire', 'majoration_localite', 'facturation_jours_feries'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'forfait_horaire', 'tarification_activites', 'traitement_maladie', 'forfait_horaire', 'majoration_localite', 'facturation_jours_feries'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
@@ -713,7 +719,8 @@ class Inscrit(object):
         self.maman = None
         self.referents = []
         self.inscriptions = []
-        self.journees = { }
+        self.conges = []
+        self.journees = {}
 
         if creation:
             self.create()
@@ -763,6 +770,41 @@ class Inscrit(object):
             print 'update', name, (old_value, value)
             sql_connection.execute('UPDATE INSCRITS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
+    def add_conge(self, conge, calcule=True):
+        self.conges.append(conge)
+        if calcule:
+            self.calcule_jours_conges()
+            
+    def calcule_jours_conges(self):
+        self.jours_conges = {}
+
+        def add_periode(debut, fin, conge):
+            date = debut
+            while date <= fin:
+                self.jours_conges[date] = conge
+                date += datetime.timedelta(1)
+
+        for conge in self.conges:
+            try:
+                count = conge.debut.count('/')
+                if count == 2:
+                    debut = str2date(conge.debut)
+                    if conge.fin.strip() == "":
+                        fin = debut
+                    else:
+                        fin = str2date(conge.fin)
+                    add_periode(debut, fin, conge)
+                elif count == 1:
+                    for year in range(first_date.year, last_date.year + 1):
+                        debut = str2date(conge.debut, year)
+                        if conge.fin.strip() == "":
+                            fin = debut
+                        else:
+                            fin = str2date(conge.fin, year)
+                        add_periode(debut, fin, conge)
+            except:
+                pass
+            
     def getInscription(self, date):
         return Select(self.inscriptions, date)
 

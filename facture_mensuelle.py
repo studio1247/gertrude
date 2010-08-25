@@ -55,8 +55,7 @@ class FactureModifications(object):
                 errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
                 continue
 
-            debut, fin = getMonthStart(self.periode), getMonthEnd(self.periode)
-            inscriptions = inscrit.getInscriptions(debut, fin)
+            inscriptions = inscrit.getInscriptions(facture.debut_recap, facture.fin_recap)
             
             for template in templates:
                 section = template.cloneNode(1)
@@ -68,7 +67,7 @@ class FactureModifications(object):
                     section.setAttribute("text:anchor-page-number", str(index+1))
             
                 # D'abord le tableau des presences du mois
-                empty_cells = debut.weekday()
+                empty_cells = facture.debut_recap.weekday()
                 if empty_cells > 4:
                     empty_cells -= 7
         
@@ -84,8 +83,8 @@ class FactureModifications(object):
                                 text_node = cell.getElementsByTagName('text:p')[0]
                                 text_node.firstChild.replaceWholeText(' ')
         
-                        date = debut
-                        while date.month == debut.month:
+                        date = facture.debut_recap
+                        while date.month == facture.debut_recap.month:
                             col = date.weekday()
                             if col < 5:
                                 row = (date.day + empty_cells) / 7
@@ -114,12 +113,13 @@ class FactureModifications(object):
                         ('adresse', inscrit.adresse),
                         ('code-postal', str(inscrit.code_postal)),
                         ('ville', inscrit.ville),
-                        ('mois', '%s %d' % (months[debut.month - 1], debut.year)),
-                        ('de-mois', '%s %d' % (getDeMoisStr(debut.month - 1), debut.year)),
+                        ('mois', '%s %d' % (months[facture.mois - 1], facture.annee)),
+                        ('de-mois', '%s %d' % (getDeMoisStr(facture.mois - 1), facture.annee)),
+                        ('de-mois-recap', '%s %d' % (getDeMoisStr(facture.debut_recap.month - 1), facture.debut_recap.year)),
                         ('prenom', inscrit.prenom),
                         ('parents', getParentsStr(inscrit)),
-                        ('date', '%.2d/%.2d/%d' % (debut.day, debut.month, debut.year)),
-                        ('numfact', '%.2d%.4d%.2d%.4d' % (inscriptions[0].mode + 1, debut.year, debut.month, inscriptions[0].idx)),
+                        ('date', '01/%.2d/%d' % (facture.mois, facture.annee)),
+                        ('numfact', '%.2d%.4d%.2d%.4d' % (inscriptions[0].mode + 1, facture.annee, facture.mois, inscriptions[0].idx)),
                         ('cotisation-mensuelle', '%.2f' % facture.cotisation_mensuelle),
                         ('tarif-horaire', '%.2f' % facture.tarif_horaire),
                         ('heures-contrat', '%.2f' % facture.heures_contrat),

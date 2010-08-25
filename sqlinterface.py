@@ -24,7 +24,7 @@ from functions import *
 from sqlobjects import *
 import wx
 
-VERSION = 36
+VERSION = 37
 
 def getdate(s):
     if s is None:
@@ -88,6 +88,7 @@ class SQLConnection(object):
             capacite INTEGER,
             mode_facturation INTEGER,
             temps_facturation INTEGER,
+            conges_inscription INTEGER,
             tarification_activites INTEGER,
             traitement_maladie INTEGER,
             forfait_horaire FLOAT,
@@ -276,12 +277,21 @@ class SQLConnection(object):
             label VARCHAR,
             options INTEGER
           );""")
+        
+        cur.execute("""
+          CREATE TABLE CONGES_INSCRITS(
+            idx INTEGER PRIMARY KEY,
+            inscrit INTEGER REFERENCES INSCRITS(idx),
+            debut VARCHAR,
+            fin VARCHAR,
+            label VARCHAR
+          );""")
 
         for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", u"15 août", "1er novembre", "11 novembre", u"25 décembre", u"Lundi de Pâques", "Jeudi de l'Ascension"):
             cur.execute("INSERT INTO CONGES (idx, debut) VALUES (NULL, ?)", (label, ))
         cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
-        cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, presences_supplementaires, modes_inscription, minimum_maladie, email, type, capacite, mode_facturation, temps_facturation, tarification_activites, traitement_maladie, forfait_horaire, majoration_localite, facturation_jours_feries) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-                     ("","","","","",7.75,18.5,7.75,19.0,15,12,False,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,15,"",TYPE_PARENTAL,0,FACTURATION_FORFAIT_10H,FACTURATION_FIN_MOIS,0,DEDUCTION_MALADIE_AVEC_CARENCE,0.0,0.0,JOURS_FERIES_NON_DEDUITS))
+        cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, presences_supplementaires, modes_inscription, minimum_maladie, email, type, capacite, mode_facturation, temps_facturation, conges_inscription, tarification_activites, traitement_maladie, forfait_horaire, majoration_localite, facturation_jours_feries) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                     ("","","","","",7.75,18.5,7.75,19.0,15,12,False,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,15,"",TYPE_PARENTAL,0,FACTURATION_FORFAIT_10H,FACTURATION_FIN_MOIS,0,0,DEDUCTION_MALADIE_AVEC_CARENCE,0.0,0.0,JOURS_FERIES_NON_DEDUITS))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2006, 9, 1), datetime.date(2007, 8, 31), 6547.92, 51723.60))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2007, 9, 1), datetime.date(2008, 12, 31), 6660.00, 52608.00))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2009, 1, 1), datetime.date(2009, 12, 31), 6876.00, 53400.00))
@@ -313,11 +323,11 @@ class SQLConnection(object):
 
         cur = self.cursor()
 
-        cur.execute('SELECT nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, presences_supplementaires, modes_inscription, minimum_maladie, email, type, capacite, mode_facturation, temps_facturation, tarification_activites, traitement_maladie, forfait_horaire, majoration_localite, facturation_jours_feries, idx FROM CRECHE')
+        cur.execute('SELECT nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, presences_supplementaires, modes_inscription, minimum_maladie, email, type, capacite, mode_facturation, temps_facturation, conges_inscription, tarification_activites, traitement_maladie, forfait_horaire, majoration_localite, facturation_jours_feries, idx FROM CRECHE')
         creche_entry = cur.fetchall()
         if len(creche_entry) > 0:
             creche = Creche()
-            creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.telephone, creche.ouverture, creche.fermeture, creche.affichage_min, creche.affichage_max, creche.granularite, creche.mois_payes, creche.presences_previsionnelles, creche.presences_supplementaires, creche.modes_inscription, creche.minimum_maladie, creche.email, creche.type, creche.capacite, creche.mode_facturation, creche.temps_facturation, creche.tarification_activites, creche.traitement_maladie, creche.forfait_horaire, creche.majoration_localite, creche.facturation_jours_feries, creche.idx = creche_entry[0]
+            creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.telephone, creche.ouverture, creche.fermeture, creche.affichage_min, creche.affichage_max, creche.granularite, creche.mois_payes, creche.presences_previsionnelles, creche.presences_supplementaires, creche.modes_inscription, creche.minimum_maladie, creche.email, creche.type, creche.capacite, creche.mode_facturation, creche.temps_facturation, creche.conges_inscription, creche.tarification_activites, creche.traitement_maladie, creche.forfait_horaire, creche.majoration_localite, creche.facturation_jours_feries, creche.idx = creche_entry[0]
         else:
             creche = Creche()
         
@@ -336,9 +346,10 @@ class SQLConnection(object):
 
         cur.execute('SELECT debut, fin, label, options, idx FROM CONGES')
         for conges_entry in cur.fetchall():
-            conge = Conge(creation=False)
+            conge = Conge(creche, creation=False)
             conge.debut, conge.fin, conge.label, conge.options, conge.idx = conges_entry
-            creche.add_conge(conge)
+            creche.add_conge(conge, calcule=False)
+        creche.calcule_jours_conges()
 
         cur.execute('SELECT debut, fin, plancher, plafond, idx FROM BAREMESCAF')
         for bareme_entry in cur.fetchall():
@@ -405,6 +416,13 @@ class SQLConnection(object):
                     reference_day = inscription.reference[day]
                     reference_day.add_activity(debut, fin, value, idx)
                     # print inscrit.prenom, day, debut, fin, value
+            cur.execute('SELECT debut, fin, label, idx FROM CONGES_INSCRITS WHERE inscrit=?', (inscrit.idx,))
+            for conges_entry in cur.fetchall():
+                conge = CongeInscrit(creation=False)
+                conge.debut, conge.fin, conge.label, conge.idx = conges_entry
+                inscrit.conges.append(conge)
+            inscrit.calcule_jours_conges()
+            
             cur.execute('SELECT absent, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email, idx FROM PARENTS WHERE inscrit=?', (inscrit.idx,))
             for parent_entry in cur.fetchall():
                 parent = Parent(inscrit, creation=False)
@@ -827,6 +845,18 @@ class SQLConnection(object):
         if version < 36:
             cur.execute("ALTER TABLE CRECHE ADD temps_facturation INTEGER;")
             cur.execute("UPDATE CRECHE SET temps_facturation=?;", (0,))
+            
+        if version < 37:
+            cur.execute("ALTER TABLE CRECHE ADD conges_inscription INTEGER;")
+            cur.execute("UPDATE CRECHE SET conges_inscription=?;", (0,))
+            cur.execute("""
+              CREATE TABLE CONGES_INSCRITS(
+                idx INTEGER PRIMARY KEY,
+                inscrit INTEGER REFERENCES INSCRITS(idx),
+                debut VARCHAR,
+                fin VARCHAR,
+                label VARCHAR
+              );""")
                        
         if version < VERSION:
             try:

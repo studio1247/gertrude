@@ -510,10 +510,10 @@ class JoursFermeturePanel(AutoTab):
 
     def line_add(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddMany([(wx.StaticText(self, -1, 'Debut :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, creche, 'conges[%d].debut' % index, mois=True)])
-        sizer.AddMany([(wx.StaticText(self, -1, 'Fin :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, creche, 'conges[%d].fin' % index, mois=True)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Libellé :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, creche, 'conges[%d].label' % index)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Options :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'conges[%d].options' % index, [(u'Congé', 0), (u'Accueil non facturé', ACCUEIL_NON_FACTURE), (u'Pas de facture pendant ce mois', MOIS_SANS_FACTURE)]), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Debut :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, creche, 'conges[%d].debut' % index, mois=True, observers=['conges'])])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Fin :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, creche, 'conges[%d].fin' % index, mois=True, observers=['conges'])])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Libellé :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, creche, 'conges[%d].label' % index, observers=['conges'])])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Options :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'conges[%d].options' % index, [(u'Congé', 0), (u'Accueil non facturé', ACCUEIL_NON_FACTURE), (u'Pas de facture pendant ce mois', MOIS_SANS_FACTURE)], observers=['conges']), 0, wx.EXPAND)])
         delbutton = wx.BitmapButton(self, -1, delbmp)
         delbutton.index = index
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
@@ -527,12 +527,14 @@ class JoursFermeturePanel(AutoTab):
         self.conges_sizer.Detach(index)
 
     def conges_add(self, event):
+        observers['conges'] += 1
         history.Append(Delete(creche.conges, -1))
-        creche.add_conge(Conge())
+        creche.add_conge(Conge(creche))
         self.line_add(len(creche.conges) - 1)
         self.sizer.Layout()
 
     def conges_del(self, event):
+        observers['conges'] += 1
         index = event.GetEventObject().index
         history.Append(Insert(creche.conges, index, creche.conges[index]))
         self.line_del()
@@ -544,7 +546,7 @@ class JoursFermeturePanel(AutoTab):
     def feries_check(self, event):
         label = event.GetEventObject().GetLabelText()
         if event.IsChecked():
-            conge = Conge(creation=False)
+            conge = Conge(creche, creation=False)
             conge.debut = label
             conge.create()
             creche.add_conge(conge)
@@ -552,7 +554,7 @@ class JoursFermeturePanel(AutoTab):
             conge = creche.feries[label]
             conge.delete()
             del creche.feries[label]
-            creche.calcule_jours_fermeture()
+            
         history.Append(None)
 
 class ParametersPanel(AutoTab):
@@ -578,12 +580,18 @@ class ParametersPanel(AutoTab):
         sizer2.AddMany([(self.affichage_min_cb, 0, wx.EXPAND), (self.affichage_min_cb.spin, 0, wx.EXPAND), (wx.StaticText(self, -1, '-'), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10), (self.affichage_max_cb, 0, wx.EXPAND), (self.affichage_max_cb.spin, 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Heures affichées sur le planning :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (sizer2, 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Granularité du planning :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'granularite', [('10min', 10), ('1/4 heure', 15), ('1/2 heure', 30), ('1 heure', 60)]), 0, wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Facturation des jours fériés :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'facturation_jours_feries', [(u'Pas de déduction', JOURS_FERIES_NON_DEDUITS), (u"Déduits, répartis sur l'année", JOURS_FERIES_DEDUITS_ANNUELLEMENT)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Présences prévisionnelles :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'presences_previsionnelles', [(u'Géré', True), (u'Non géré', False)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Présences supplémentaires :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'presences_supplementaires', [(u'Géré', True), (u'Non géré', False)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u"Modes d'inscription :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'modes_inscription', [(u'Crèche à plein-temps uniquement', MODE_5_5), ('Tous modes', MODE_5_5+MODE_4_5+MODE_3_5+MODE_HALTE_GARDERIE)]), 0, wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Mode de facturation :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'mode_facturation', [("Forfait 10h / jour", FACTURATION_FORFAIT_10H), (u"PSU (horaires réels)", FACTURATION_PSU), (u"PAJE (taux horaire fixe)", FACTURATION_PAJE)]), 0, wx.EXPAND)])
+        tmp = wx.BoxSizer(wx.HORIZONTAL)
+        tmp.AddMany([(AutoChoiceCtrl(self, creche, 'mode_facturation', [("Forfait 10h / jour", FACTURATION_FORFAIT_10H), (u"PSU (horaires réels)", FACTURATION_PSU), (u"PAJE (taux horaire fixe)", FACTURATION_PAJE)]), 1, wx.EXPAND), (AutoChoiceCtrl(self, creche, 'temps_facturation', [("Facturation fin de mois", FACTURATION_FIN_MOIS), (u"Facturation début de mois", FACTURATION_DEBUT_MOIS)]), 1, wx.EXPAND|wx.LEFT, 5)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Modes de facturation :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (tmp, 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Forfait horaire (PAJE):'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'forfait_horaire', precision=2), 0, wx.EXPAND)])
+        # TODO n'afficher que si PAJE est choisi
+        sizer.AddMany([(wx.StaticText(self, -1, u'Facturation des jours fériés :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'facturation_jours_feries', [(u'Pas de déduction', JOURS_FERIES_NON_DEDUITS), (u"Déduits, répartis sur l'année", JOURS_FERIES_DEDUITS_ANNUELLEMENT)]), 0, wx.EXPAND)])
+        # TODO n'afficher que si PSU/PAJE est choisi
+        sizer.AddMany([(wx.StaticText(self, -1, u"Gestion de périodes de congés non facturées lors de l'inscription :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'conges_inscription', [('Non', 0), ('Oui', 1)]), 0, wx.EXPAND)])
+        # TODO n'afficher que si PSU/PAJE est choisi
         sizer.AddMany([(wx.StaticText(self, -1, u'Tarification des activités :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'tarification_activites', [(u'Non géré', ACTIVITES_NON_FACTUREES), (u'A la journée', ACTIVITES_FACTUREES_JOURNEE), (u"Période d'adaptation, à la journée", ACTIVITES_FACTUREES_JOURNEE_PERIODE_ESSAI)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Majoration mensuelle pour enfants hors commune:'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'majoration_localite', precision=2), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Traitement des absences pour maladie :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'traitement_maladie', [(u"Avec carence", DEDUCTION_MALADIE_AVEC_CARENCE), ("Sans carence", DEDUCTION_MALADIE_SANS_CARENCE)]), 0, wx.EXPAND)])

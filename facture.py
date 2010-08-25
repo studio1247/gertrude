@@ -19,13 +19,13 @@ import datetime
 from constants import *
 from cotisation import *
 
-class Facture(object):
+class FactureFinMois(object):
     def __init__(self, inscrit, annee, mois, options=0):
         self.inscrit = inscrit
         self.annee = annee
         self.mois = mois
-        self.debut = datetime.date(annee, mois, 1)
-        self.fin = getMonthEnd(self.debut)
+        self.debut_recap = datetime.date(annee, mois, 1)
+        self.fin_recap = getMonthEnd(self.debut_recap)
         self.options = options
         self.cotisation_mensuelle = 0.0
         self.heures_facturees = [0.0, 0.0]
@@ -126,7 +126,7 @@ class Facture(object):
             if creche.mode_facturation == FACTURATION_FORFAIT_10H:
                 if cotisation.heures_mensuelles > 0:
                     self.heures_facturees[mode_inscription] += cotisation.heures_mois * cotisation.heures_presence / cotisation.heures_mensuelles
-	    else:
+            else:
                 self.heures_facturees[mode_inscription] += cotisation.heures_mensuelles + self.heures_supplementaires
         
         if self.heures_contrat > 0:
@@ -140,11 +140,38 @@ class Facture(object):
             self.supplement = round(self.supplement, 2) # normalement pas necessaire
             self.deduction = round(self.deduction, 2) # normalement pas necessaire
             
-        self.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction                                            
+        self.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction
         
         if 0:
             print inscrit.prenom
             for var in ["heures_contrat", "heures_facturees", "heures_supplementaires", "tarif_horaire", "cotisation_mensuelle", "supplement", "deduction", "total"]:
                 print " ", var, eval("self.%s" % var)
                 
+class FactureDebutMois(FactureFinMois):
+    def __init__(self, inscrit, annee, mois, options=0):
+        FactureFinMois.__init__(self, inscrit, annee, mois, options)
+        if mois == 1:
+            facture_precedente = FactureFinMois(inscrit, annee-1, 12, options)
+        else:
+            facture_precedente = FactureFinMois(inscrit, annee, mois-1, options)
+        self.debut_recap = facture_precedente.debut_recap
+        self.fin_recap = facture_precedente.fin_recap
+        # self.heures_facturees = [0.0, 0.0]
+        self.supplement = facture_precedente.supplement
+        self.deduction = facture_precedente.deduction
+        self.jours_supplementaires = facture_precedente.jours_supplementaires
+        # self.heures_contrat = 0.0
+        self.heures_supplementaires = facture_precedente.heures_supplementaires
+        self.jours_maladie = facture_precedente.jours_maladie
+        self.jours_maladie_deduits = facture_precedente.jours_maladie_deduits
+        self.raison_deduction = facture_precedente.raison_deduction
+        self.supplement_activites = facture_precedente.supplement_activites
+        self.previsionnel |= facture_precedente.previsionnel
+        self.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction
+        
+def Facture(inscrit, annee, mois, options=0):      
+    if creche.temps_facturation == FACTURATION_FIN_MOIS:
+        return FactureFinMois(inscrit, annee, mois, options)
+    else:
+        return FactureDebutMois(inscrit, annee, mois, options)           
 

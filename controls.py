@@ -15,11 +15,10 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import sys
+import sys, __builtin__
 import wx, wx.lib, wx.lib.scrolledpanel, wx.lib.masked, wx.lib.stattext, wx.combo
 from wx.lib.masked import Field
-import fpformat
-import datetime
+import fpformat, datetime
 from functions import *
 from history import Change, Delete, Insert
 
@@ -282,12 +281,19 @@ else:
 
     def checkSyntax(self, event=None):
         str = wx.TextCtrl.GetValue(self)
-        if self.mois and str.lower() in [m.lower() for m in months]:
+        if str == "":
             self.SetBackgroundColour(wx.WHITE)
-        elif str != "" and str2date(str) is None:
-            self.SetBackgroundColour(wx.RED)
+        elif self.mois and (str.lower() in [m.lower() for m in months] or (str.isdigit() and int(str) in range(1, 13))):
+            self.SetBackgroundColour(wx.WHITE)
         else:
-            self.SetBackgroundColour(wx.WHITE)
+            if self.mois:
+                r = str2date(str, today.year)
+            else:
+                r = str2date(str)
+            if r:
+                self.SetBackgroundColour(wx.WHITE)
+            else:
+                self.SetBackgroundColour(wx.RED)
         self.Refresh()
         event.Skip()
 
@@ -481,15 +487,22 @@ class TimeCtrl(wx.lib.masked.TimeCtrl):
 
 
 class AutoMixin:
-    def __init__(self, parent, instance, member):
+    def __init__(self, parent, instance, member, fixed_instance=False, observers=[]):
         self.__ontext = True
         self.parent = parent
-        parent.ctrls.append(self)
+        self.fixed_instance = fixed_instance
+        self.observers = observers
+        for o in observers:
+            if not o in __builtin__.observers.keys():
+                __builtin__.observers[o] = 0                 
+        if not fixed_instance:            
+            parent.ctrls.append(self)
         self.SetInstance(instance, member) 
         self.Bind(wx.EVT_TEXT, self.onText)
 
     def __del__(self):
-        self.parent.ctrls.remove(self)
+        if not self.fixed_instance:
+            self.parent.ctrls.remove(self)
         
     def SetInstance(self, instance, member=None):
         self.instance = instance
@@ -525,29 +538,31 @@ class AutoMixin:
             else:
                 history.Append(Change(self.instance, self.member, old_value))
             exec('self.instance.%s = new_value' % self.member)
+            for o in self.observers:
+                observers[o] += 1
         
 class AutoTextCtrl(wx.TextCtrl, AutoMixin):
-    def __init__(self, parent, instance, member, *args, **kwargs):
+    def __init__(self, parent, instance, member, fixed_instance=False, observers=[], *args, **kwargs):
         wx.TextCtrl.__init__(self, parent, -1, *args, **kwargs)
-        AutoMixin.__init__(self, parent, instance, member)
+        AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
 
 class AutoComboBox(wx.ComboBox, AutoMixin):
-    def __init__(self, parent, instance, member, *args, **kwargs):
+    def __init__(self, parent, instance, member, fixed_instance=False, observers=[], *args, **kwargs):
         wx.ComboBox.__init__(self, parent, -1, *args, **kwargs)
-        AutoMixin.__init__(self, parent, instance, member)
+        AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
         
 class AutoDateCtrl(DateCtrl, AutoMixin):
-    def __init__(self, parent, instance, member, *args, **kwargs):
+    def __init__(self, parent, instance, member, fixed_instance=False, observers=[], *args, **kwargs):
         DateCtrl.__init__(self, parent, id=-1, style=wx.DP_DEFAULT|wx.DP_DROPDOWN|wx.DP_SHOWCENTURY|wx.DP_ALLOWNONE, *args, **kwargs)
-        AutoMixin.__init__(self, parent, instance, member)
+        AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
         # self.Bind(wx.EVT_DATE_CHANGED, self.onText, self)
         # DateCtrl.__init__(self, parent, -1, *args, **kwargs)
         # AutoMixin.__init__(self, parent, instance, member)
         
 class AutoTimeCtrl(TimeCtrl, AutoMixin):
-    def __init__(self, parent, instance, member, *args, **kwargs):
+    def __init__(self, parent, instance, member, fixed_instance=False, observers=[], *args, **kwargs):
         TimeCtrl.__init__(self, parent)
-        AutoMixin.__init__(self, parent, instance, member)
+        AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
         self.SetMin("05:00")
         
     def SetValue(self, value):
@@ -565,22 +580,22 @@ class AutoTimeCtrl(TimeCtrl, AutoMixin):
         event.Skip()
 
 class AutoNumericCtrl(NumericCtrl, AutoMixin):
-    def __init__(self, parent, instance, member, *args, **kwargs):
+    def __init__(self, parent, instance, member, fixed_instance=False, observers=[], *args, **kwargs):
         NumericCtrl.__init__(self, parent, *args, **kwargs)
-        AutoMixin.__init__(self, parent, instance, member)
+        AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
 
 class AutoPhoneCtrl(PhoneCtrl, AutoMixin):
-    def __init__(self, parent, instance, member, *args, **kwargs):
+    def __init__(self, parent, instance, member, fixed_instance=False, observers=[], *args, **kwargs):
         PhoneCtrl.__init__(self, parent, -1, *args, **kwargs)
-        AutoMixin.__init__(self, parent, instance, member)
+        AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
 
 class AutoChoiceCtrl(wx.Choice, AutoMixin):
-    def __init__(self, parent, instance, member, items=None, *args, **kwargs):
+    def __init__(self, parent, instance, member, items=None, fixed_instance=False, observers=[], *args, **kwargs):
         wx.Choice.__init__(self, parent, -1, *args, **kwargs) 
         self.values = {}
         if items:
             self.SetItems(items)
-        AutoMixin.__init__(self, parent, instance, member)
+        AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
         parent.Bind(wx.EVT_CHOICE, self.onChoice, self)
 
     def Append(self, item, clientData):
@@ -619,10 +634,10 @@ class AutoChoiceCtrl(wx.Choice, AutoMixin):
             pass
 
 class AutoCheckBox(wx.CheckBox, AutoMixin):
-    def __init__(self, parent, instance, member, label, value=1, **kwargs):
-        wx.CheckBox.__init__(self, parent, -1, label, **kwargs)
+    def __init__(self, parent, instance, member, label, value=1, fixed_instance=False, observers=[], *args, **kwargs):
+        wx.CheckBox.__init__(self, parent, -1, label, *args, **kwargs)
         self.value = value
-        AutoMixin.__init__(self, parent, instance, member)
+        AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
         parent.Bind(wx.EVT_CHECKBOX, self.EvtCheckbox, self)
 
     def EvtCheckbox(self, event):
@@ -636,12 +651,12 @@ class AutoCheckBox(wx.CheckBox, AutoMixin):
         wx.CheckBox.SetValue(self, value & self.value)
         
 class AutoBinaryChoiceCtrl(wx.Choice, AutoMixin):
-    def __init__(self, parent, instance, member, items=None, *args, **kwargs):
+    def __init__(self, parent, instance, member, items=None, fixed_instance=False, observers=[], *args, **kwargs):
         wx.Choice.__init__(self, parent, -1, *args, **kwargs)
         self.values = {} 
         if items:
             self.SetItems(items)
-        AutoMixin.__init__(self, parent, instance, member)
+        AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
         parent.Bind(wx.EVT_CHOICE, self.onChoice, self)
     
     def Append(self, item, clientData):
@@ -680,9 +695,9 @@ class AutoBinaryChoiceCtrl(wx.Choice, AutoMixin):
                 self.value = clientData
         
 class AutoRadioBox(wx.RadioBox, AutoMixin):
-    def __init__(self, parent, instance, member, label, choices, *args, **kwargs):
+    def __init__(self, parent, instance, member, label, choices, fixed_instance=False, observers=[], *args, **kwargs):
         wx.RadioBox.__init__(self, parent, -1, label=label, choices=choices, *args, **kwargs)
-        AutoMixin.__init__(self, parent, instance, member)
+        AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
         parent.Bind(wx.EVT_RADIOBOX, self.EvtRadiobox, self)
 
     def EvtRadiobox(self, event):
@@ -934,3 +949,5 @@ class ActivityComboBox(HashComboBox):
     def OnChangeActivity(self, evt):
         self.activity = self.GetClientData(self.GetSelection())
         evt.Skip()
+
+__builtin__.observers = {}
