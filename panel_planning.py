@@ -35,6 +35,8 @@ class DayPlanningPanel(PlanningWidget):
                 else:
                     self.Disable(u"Crèche fermée")
                 return
+        else:
+            self.SetInfo("")
         
         lines = []
         for inscrit in creche.inscrits:
