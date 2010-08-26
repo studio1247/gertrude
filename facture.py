@@ -29,6 +29,8 @@ class FactureFinMois(object):
         self.options = options
         self.cotisation_mensuelle = 0.0
         self.heures_facturees = [0.0, 0.0]
+        self.heures_contractualisees = 0.0
+        self.heures_realisees = 0.0
         self.supplement = 0
         self.deduction = 0
         self.jours_supplementaires = []
@@ -52,12 +54,16 @@ class FactureFinMois(object):
                 inscription = inscrit.getInscription(date)
                 if inscription:
                     cotisation = Cotisation(inscrit, (date, date), options=NO_ADDRESS|self.options)
-                    heures_presence = cotisation.inscription.getReferenceDay(date).get_heures()
+                    state, heures_reference, heures_realisees, heures_supplementaires = inscrit.getState(date)
+                    
+                    self.heures_contractualisees += heures_reference
+                    self.heures_realisees += heures_realisees
+                    
                     if (cotisation.mode_inscription, cotisation.cotisation_mensuelle) in cotisations_mensuelles:
                         cotisation = cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)]
-                        cotisation.heures_presence += heures_presence
+                        cotisation.heures_reference += heures_reference
                     else:
-                        cotisation.heures_presence = heures_presence
+                        cotisation.heures_reference = heures_reference
                         cotisation.heures_maladie = 0.0
                         cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)] = cotisation
                     if (cotisation.mode_inscription, cotisation.heures_semaine) in heures_hebdomadaires:
@@ -65,8 +71,7 @@ class FactureFinMois(object):
                     else:
                         heures_hebdomadaires[(cotisation.mode_inscription, cotisation.heures_semaine)] = 1
 
-                    presence, supplement = inscrit.getState(date)
-                    if presence == MALADE:
+                    if state == MALADE:
                         self.jours_maladie.append(date)
                         # recherche du premier et du dernier jour
                         premier_jour_maladie = tmp = date
@@ -90,19 +95,19 @@ class FactureFinMois(object):
                             if creche.mode_facturation == FACTURATION_FORFAIT_10H:
                                 self.deduction += cotisation.montant_jour_garde
                             else:
-                                self.deduction += cotisation.montant_heure_garde * heures_presence
-                            cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)].heures_maladie += heures_presence
+                                self.deduction += cotisation.montant_heure_garde * heures_reference
+                            cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)].heures_maladie += heures_reference
                             self.raison_deduction = u'(maladie > %dj consécutifs)' % creche.minimum_maladie
-                    elif presence > 0:
-                        if presence & PREVISIONNEL:
+                    elif state > 0:
+                        if state & PREVISIONNEL:
                             self.previsionnel = True
-                        if presence & SUPPLEMENT:
+                        if state & SUPPLEMENT:
                             self.jours_supplementaires.append(date)
                             if creche.mode_facturation == FACTURATION_FORFAIT_10H:
                                 self.supplement += cotisation.montant_jour_garde
                         if creche.mode_facturation != FACTURATION_FORFAIT_10H:
-                            self.heures_supplementaires += supplement
-                            self.supplement += cotisation.montant_heure_garde * supplement
+                            self.heures_supplementaires += heures_supplementaires
+                            self.supplement += cotisation.montant_heure_garde * heures_supplementaires
                         if creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE or (creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE_PERIODE_ESSAI and inscription.fin_periode_essai and date >= inscription.debut and date < inscription.fin_periode_essai):
                             activites = inscrit.getActivites(date)
                             for index in activites:
@@ -120,12 +125,12 @@ class FactureFinMois(object):
                     cotisation.heures_mensuelles += cotisation.inscription.getReferenceDay(date).get_heures()
                 date += datetime.timedelta(1)
             if cotisation.heures_mensuelles > 0:
-                self.cotisation_mensuelle += montant * cotisation.heures_presence / cotisation.heures_mensuelles
-                self.heures_contrat += cotisation.heures_mois * cotisation.heures_presence / cotisation.heures_mensuelles
+                self.cotisation_mensuelle += montant * cotisation.heures_reference / cotisation.heures_mensuelles
+                self.heures_contrat += cotisation.heures_mois * cotisation.heures_reference / cotisation.heures_mensuelles
                 
             if creche.mode_facturation == FACTURATION_FORFAIT_10H:
                 if cotisation.heures_mensuelles > 0:
-                    self.heures_facturees[mode_inscription] += cotisation.heures_mois * cotisation.heures_presence / cotisation.heures_mensuelles
+                    self.heures_facturees[mode_inscription] += cotisation.heures_mois * cotisation.heures_reference / cotisation.heures_mensuelles
             else:
                 self.heures_facturees[mode_inscription] += cotisation.heures_mensuelles + self.heures_supplementaires
         

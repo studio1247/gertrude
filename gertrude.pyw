@@ -101,28 +101,23 @@ class GertrudeListbook(Listbook):
         progress_handler.display("Chargement de l'outil Inscriptions ...")
         import panel_inscriptions
         panels.append(panel_inscriptions.InscriptionsPanel(self))
-        progress_handler.set(15)
+        progress_handler.set(16)
         progress_handler.display("Chargement de l'outil Planning ...")
         import panel_planning
         panels.append(panel_planning.PlanningPanel(self))
-        progress_handler.set(30)
+        progress_handler.set(32)
         progress_handler.display("Chargement de l'outil Facturation ...")
         import panel_facturation
         panels.append(panel_facturation.FacturationPanel(self))
-        progress_handler.set(45)
+        progress_handler.set(48)
         progress_handler.display(u"Chargement de l'outil Relevés ...")
         import panel_releves
         panels.append(panel_releves.RelevesPanel(self))
-        progress_handler.set(60)
-        progress_handler.display(u"Chargement de l'outil Paramètres ...")
-        import panel_creche
-        panels.append(panel_creche.CrechePanel(self))
-        progress_handler.set(75)
-        progress_handler.display("Chargement de l'outil Administration ...")
-        import panel_admin
-        if panel_admin.AdminPanel.profil & profil:
-            panels.append(panel_admin.AdminPanel(self))
-        progress_handler.set(90)
+        progress_handler.set(64)
+        progress_handler.display(u"Chargement de l'outil Configuration ...")
+        import panel_configuration
+        panels.append(panel_configuration.ConfigurationPanel(self))
+        progress_handler.set(80)
         for panel in panels:
             if panel.profil & profil:
                 self.AddPage(panel, panel.bitmap)

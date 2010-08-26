@@ -662,7 +662,94 @@ class ParametersPanel(AutoTab):
         else:
             obj.AutoChange(value)
 
-class CrecheNotebook(wx.Notebook):
+profiles = [("Administrateur", PROFIL_ALL),
+            ("Bureau", PROFIL_BUREAU),
+            (u"Trésorier", PROFIL_TRESORIER),
+            ("Inscriptions", PROFIL_INSCRIPTIONS),
+            (u"Saisie présences", PROFIL_SAISIE_PRESENCES),
+            ]
+
+class UsersPanel(AutoTab):
+    def __init__(self, parent):
+        global delbmp
+        delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
+        AutoTab.__init__(self, parent)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.users_sizer = wx.BoxSizer(wx.VERTICAL)
+        for i, user in enumerate(creche.users):
+            self.line_add(i)
+        self.sizer.Add(self.users_sizer, 0, wx.EXPAND|wx.ALL, 5)
+        button_add = wx.Button(self, -1, 'Nouvel utilisateur')
+        self.sizer.Add(button_add, 0, wx.ALL, 5)
+        self.Bind(wx.EVT_BUTTON, self.user_add, button_add)
+        self.SetSizer(self.sizer)
+
+    def UpdateContents(self):
+        for i in range(len(self.users_sizer.GetChildren()), len(creche.users)):
+            self.line_add(i)
+        for i in range(len(creche.users), len(self.users_sizer.GetChildren())):
+            self.line_del()
+        self.sizer.Layout()
+        AutoTab.UpdateContents(self)
+
+    def line_add(self, index):
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.AddMany([(wx.StaticText(self, -1, 'Login :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, creche, 'users[%d].login' % index), 0, wx.ALIGN_CENTER_VERTICAL)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Mot de passe :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, creche, 'users[%d].password' % index), 0, wx.ALIGN_CENTER_VERTICAL)])
+        profile_choice = AutoChoiceCtrl(self, creche, 'users[%d].profile' % index, items=profiles)
+        profile_choice.index = index
+        self.Bind(wx.EVT_CHOICE, self.user_modify_profile, profile_choice)
+        sizer.AddMany([(wx.StaticText(self, -1, 'Profil :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), profile_choice])
+        delbutton = wx.BitmapButton(self, -1, delbmp, style=wx.NO_BORDER)
+        delbutton.index = index
+        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
+        self.Bind(wx.EVT_BUTTON, self.user_del, delbutton)
+        self.users_sizer.Add(sizer)
+
+    def line_del(self):
+        index = len(self.users_sizer.GetChildren()) - 1
+        sizer = self.users_sizer.GetItem(index)
+        sizer.DeleteWindows()
+        self.users_sizer.Detach(index)
+
+    def user_add(self, event):
+        history.Append(Delete(creche.users, -1))
+        creche.users.append(User())
+        self.line_add(len(creche.users) - 1)
+        self.sizer.Layout()
+
+    def user_del(self, event):
+        index = event.GetEventObject().index
+        nb_admins = len([user for i, user in enumerate(creche.users) if (i != index and user.profile == PROFIL_ALL)])
+        if len(creche.users) == 1 or nb_admins > 0:
+            history.Append(Insert(creche.users, index, creche.users[index]))
+            self.line_del()
+            creche.users[index].delete()
+            del creche.users[index]
+            self.sizer.Layout()
+            self.UpdateContents()
+        else:
+            dlg = wx.MessageDialog(self, "Il faut au moins un administrateur", 'Message', wx.ICON_INFORMATION)
+            dlg.ShowModal()
+            dlg.Destroy()
+
+    def user_modify_profile(self, event):
+        obj = event.GetEventObject()
+        index = obj.index
+        if creche.users[index].profile == PROFIL_ALL and event.GetClientData() != PROFIL_ALL:
+            nb_admins = len([user for i, user in enumerate(creche.users) if (i != index and user.profile == PROFIL_ALL)])
+            if nb_admins == 0:
+                dlg = wx.MessageDialog(self, "Il faut au moins un administrateur", "Message", wx.ICON_INFORMATION)
+                dlg.ShowModal()
+                dlg.Destroy()
+                event.Skip(False)
+                obj.SetSelection(0) # PROFIL_ALL
+            else:
+                event.Skip(True)
+        else:
+            event.Skip(True)
+            
+class ParametresNotebook(wx.Notebook):
     def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
         self.AddPage(CrecheTab(self), 'Structure')
@@ -672,6 +759,7 @@ class CrecheNotebook(wx.Notebook):
         self.AddPage(JoursFermeturePanel(self), u'Congés')
         self.AddPage(ActivitesTab(self), u'Couleurs / Activités')
         self.AddPage(ParametersPanel(self), u'Paramètres')
+        self.AddPage(UsersPanel(self), u'Utilisateurs et mots de passe')
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
     def OnPageChanged(self, event):
@@ -683,12 +771,12 @@ class CrecheNotebook(wx.Notebook):
         page = self.GetCurrentPage()
         page.UpdateContents()
 
-class CrechePanel(GPanel):
+class ConfigurationPanel(GPanel):
     bitmap = './bitmaps/creche.png'
     profil = PROFIL_BUREAU
     def __init__(self, parent):
-        GPanel.__init__(self, parent, u'Crèche')
-        self.notebook = CrecheNotebook(self)
+        GPanel.__init__(self, parent, 'Configuration')
+        self.notebook = ParametresNotebook(self)
         self.sizer.Add(self.notebook, 1, wx.EXPAND)
 
     def UpdateContents(self):

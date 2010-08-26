@@ -24,6 +24,8 @@ class Day(object):
     def __init__(self):
         self.activites = {}
         self.values = [0] * 24 * (60 / BASE_GRANULARITY)
+        self.last_heures = None
+        self.values_used_for_last_heures = []
 
     def save(self):            
         old_activities = self.activites.keys()
@@ -106,12 +108,18 @@ class Day(object):
             return state
         
     def get_heures(self):
+        if self.values_used_for_last_heures == self.values:
+            return self.last_heures
+        
+        self.values_used_for_last_heures = self.values[:]
         heures = 0.0
         for i in range(24 * 60 / BASE_GRANULARITY):
             if self.values[i] < 0:
+                self.last_heures = 0.0
                 return 0.0
             elif self.values[i] > 0:
                 heures += 5.0 / 60
+        self.last_heures = heures
         return heures
     
     def copy(self, day, previsionnel=True):
@@ -840,41 +848,48 @@ class Inscrit(object):
             return None
 
     def getState(self, date):
+        """Retourne les infos sur une journée
+
+        \param date la journée
+        \return (état, heures contractualisées, heures realisées, heures supplémentaires)
+        """
         if date in creche.jours_fermeture:
-            return ABSENT, 0
+            return ABSENT, 0, 0, 0
         inscription = self.getInscription(date)
         if inscription is None:
-            return ABSENT, 0
+            return ABSENT, 0, 0, 0
         
         reference = self.getReferenceDay(date)
+        heures_reference = reference.get_heures()
         ref_state = reference.get_state()
         if date in self.journees:
             journee = self.journees[date]
             state = journee.get_state()
             if state == MALADE:
-                return MALADE, 0
+                return MALADE, heures_reference, 0, 0
             elif state in (ABSENT, VACANCES):
                 if inscription.mode == MODE_5_5 or ref_state:
-                    return VACANCES, 0
+                    return VACANCES, heures_reference, 0, 0
                 else:
-                    return ABSENT, 0
+                    return ABSENT, heures_reference, 0, 0
             else: # PRESENT
-                supplement = 0.0
+                heures_supplementaires = 0.0
+                tranche = 5.0 / 60
+                heures_realisees = 0.0
                 for i in range(24 * 60 / BASE_GRANULARITY):
-                    if journee.values[i] and not reference.values[i]:
-                        supplement += 5.0 / 60
-                if inscription.mode == MODE_5_5 or ref_state:
-                    return PRESENT, supplement
-                else:
-                    return PRESENT|SUPPLEMENT, supplement
+                    if journee.values[i]:
+                        heures_realisees += tranche
+                        if not reference.values[i]:
+                            heures_supplementaires += tranche
+                return PRESENT, heures_reference, heures_realisees, heures_supplementaires
         else:
             if ref_state:
                 if creche.presences_previsionnelles and date > today:
-                    return PRESENT|PREVISIONNEL, 0
+                    return PRESENT|PREVISIONNEL, heures_reference, heures_reference, 0
                 else:
-                    return PRESENT, 0
+                    return PRESENT, heures_reference, heures_reference, 0
             else:
-                return ABSENT, 0
+                return ABSENT, 0, 0, 0
             
     def getActivites(self, date):
         if date in creche.jours_fermeture:

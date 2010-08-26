@@ -94,9 +94,11 @@ class FactureModifications(object):
                                 text_node.firstChild.replaceWholeText('%d' % date.day)
                                 if not date in creche.jours_fermeture:
                                     # changement de la couleur de la cellule
-                                    state = inscrit.getState(date)[0]
+                                    state, foo1, foo2, supplement = inscrit.getState(date)
                                     if state > 0:
                                         state = state % PREVISIONNEL
+                                        if supplement > 0:
+                                            state += SUPPLEMENT
                                     cell.setAttribute('table:style-name', 'Presences.%s' % couleurs[state])
                             date += datetime.timedelta(1)
         
