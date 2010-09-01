@@ -774,6 +774,7 @@ class InscriptionsNotebook(wx.Notebook):
     def UpdateContents(self):
         if creche.conges_inscription and not self.conges_panel:
             self.conges_panel = CongesPanel(self)
+            self.conges_panel.SetInscrit(self.inscrit)
             self.InsertPage(3, self.conges_panel, u"Congés")
         elif self.conges_panel and not creche.conges_inscription:
             self.RemovePage(3)
