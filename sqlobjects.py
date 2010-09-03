@@ -524,14 +524,17 @@ class Creche(object):
     def update_formule_taux_horaire(self, changed=True):
         print 'update formule_taux_horaire', self.formule_taux_horaire
         sql_connection.execute('UPDATE CRECHE SET formule_taux_horaire=?', (str(self.formule_taux_horaire),))
-        self.conversion_formule_taux_horaire = []
-        for cas in self.formule_taux_horaire:
-            condition = cas[0].strip()
-            if condition == "":
-                condition = "True"
-            else:
-                condition = condition.lower().replace(" et ", " and ").replace(" ou ", " or ").replace("=", "==")
-            self.conversion_formule_taux_horaire.append([condition, cas[1]])
+        if self.formule_taux_horaire:
+            self.conversion_formule_taux_horaire = []
+            for cas in self.formule_taux_horaire:
+                condition = cas[0].strip()
+                if condition == "":
+                    condition = "True"
+                else:
+                    condition = condition.lower().replace(" et ", " and ").replace(" ou ", " or ").replace("=", "==")
+                self.conversion_formule_taux_horaire.append([condition, cas[1]])
+        else:
+            self.conversion_formule_taux_horaire = None
     
     def eval_taux_horaire(self, revenus, enfants, jours):
         try:

@@ -870,7 +870,7 @@ class SQLConnection(object):
             if forfait_horaire == 0.0:
                 cur.execute('UPDATE CRECHE SET formule_taux_horaire="None"')
             else:
-                cur.execute("UPDATE CRECHE SET formule_taux_horaire=?;", (str(forfait_horaire),))
+                cur.execute("UPDATE CRECHE SET formule_taux_horaire=?;", ([["", str(forfait_horaire)]],))
 
         if version < VERSION:
             try:
