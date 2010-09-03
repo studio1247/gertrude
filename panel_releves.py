@@ -20,10 +20,9 @@ import os.path
 import sys
 import string
 import datetime
-import wx
-import wx.lib.scrolledpanel
-import wx.html
+import wx, wx.lib.scrolledpanel, wx.html, wx.grid 
 from constants import *
+from functions import *
 from controls import *
 from ooffice import *
 from planning_presences import PlanningModifications
@@ -31,6 +30,409 @@ from coordonnees_parents import CoordonneesModifications
 from etats_trimestriels import EtatsTrimestrielsModifications
 from planning_detaille import PlanningDetailleModifications
 from facture import FactureFinMois
+from planning import *
+from sqlobjects import Day
+
+class SitesPlanningPanel(PlanningWidget):
+    def UpdateContents(self):
+        if "Week-end" in creche.feries:
+            self.count = 5
+        else:
+            self.count = 7
+            
+        first_monday = getFirstMonday()
+        
+        lines = []
+        for week_day in range(self.count):
+            date = first_monday + datetime.timedelta(self.semaine * 7 + week_day)
+            if date in creche.jours_fermeture:
+                continue
+            
+            day_lines = {}
+            if len(creche.sites) > 1:
+                lines.append(days[week_day])
+                for site in creche.sites:
+                    line = Day()
+                    line.values = [creche.capacite] * 24 * (60 / BASE_GRANULARITY)
+                    line.label = site.nom
+                    day_lines[site] = line
+                    lines.append(line)
+            else:
+                site_line = Day()
+                site_line.values = [creche.capacite] * 24 * (60 / BASE_GRANULARITY)
+                site_line.reference = None
+                site_line.label = days[week_day]
+                lines.append(site_line)
+            
+            for inscrit in creche.inscrits:
+                inscription = inscrit.getInscription(date)
+                if inscription is not None:
+                    # print inscrit.prenom, 
+                    if date in inscrit.journees:
+                        line = inscrit.journees[date]
+                    else:
+                        line = inscrit.getReferenceDayCopy(date)
+                    if len(creche.sites) > 1:
+                        if inscription.site and inscription.site.nom in day_lines:
+                            site_line = day_lines[inscription.site.nom]
+                        else:
+                            continue
+                    for i, value in enumerate(line.values):
+                        site_line.values[i] -= value
+
+        self.SetLines(lines)
+
+    def SetData(self, semaine):
+        self.semaine = semaine
+        self.UpdateContents()
+        
+
+class AideInscriptionTab(AutoTab):
+    def __init__(self, parent):
+        AutoTab.__init__(self, parent)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.current_site = 0
+        
+        # Les raccourcis pour semaine précédente / suivante
+        self.previous_button = wx.Button(self, -1, '<', size=(20,0), style=wx.NO_BORDER)
+        self.next_button = wx.Button(self, -1, '>', size=(20,0), style=wx.NO_BORDER)
+        self.Bind(wx.EVT_BUTTON, self.onPreviousWeek, self.previous_button)
+        self.Bind(wx.EVT_BUTTON, self.onNextWeek, self.next_button)
+        sizer.Add(self.previous_button, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+        sizer.Add(self.next_button, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+        
+        # La combobox pour la selection de la semaine
+        self.week_choice = wx.Choice(self, -1)
+        sizer.Add(self.week_choice, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+        day = first_monday = getFirstMonday()
+        while day < last_date:
+            string = 'Semaine %d (%d %s %d)' % (day.isocalendar()[1], day.day, months[day.month - 1], day.year)
+            self.week_choice.Append(string, day)
+            day += datetime.timedelta(7)
+        delta = datetime.date.today() - first_monday
+        semaine = int(delta.days / 7)
+        self.week_choice.SetSelection(semaine)
+        self.Bind(wx.EVT_CHOICE, self.onChangeWeek, self.week_choice)
+        self.sizer.Add(sizer, 0, wx.EXPAND)
+                
+        self.planning_panel = SitesPlanningPanel(self, options=DRAW_NUMBERS|NO_ICONS|NO_BOTTOM_LINE|READ_ONLY)
+        self.planning_panel.SetData(semaine)
+            
+        self.sizer.Add(self.planning_panel, 1, wx.EXPAND)
+        self.sizer.Layout()
+        self.SetSizer(self.sizer)
+
+    def onChangeWeek(self, evt=None):   
+        week_selection = self.week_choice.GetSelection()
+        self.previous_button.Enable(week_selection is not 0)
+        self.next_button.Enable(week_selection is not self.week_choice.GetCount() - 1)
+        monday = self.week_choice.GetClientData(week_selection)
+        self.planning_panel.SetData(week_selection)
+        self.sizer.Layout()
+        
+    def onPreviousWeek(self, evt):
+        self.week_choice.SetSelection(self.week_choice.GetSelection() - 1)
+        self.onChangeWeek()
+    
+    def onNextWeek(self, evt):
+        self.week_choice.SetSelection(self.week_choice.GetSelection() + 1)
+        self.onChangeWeek()
+        
+    def UpdateContents(self):            
+#        for week_day in range(self.count):
+#            note = self.notebook.GetPage(week_day)
+#            note.UpdateContents()
+        self.sizer.Layout()
+
+
+class EtatsPresenceTab(AutoTab):
+    def __init__(self, parent):
+        AutoTab.__init__(self, parent)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.search_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.debut_control = DateCtrl(self)
+        wx.EVT_TEXT(self.debut_control, -1, self.onPeriodeChange)
+        self.search_sizer.AddMany([(wx.StaticText(self, -1, u'Début :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.debut_control, 0, wx.ALIGN_CENTER_VERTICAL)])
+        self.fin_control = DateCtrl(self)
+        wx.EVT_TEXT(self.fin_control, -1, self.onPeriodeChange)
+        self.search_sizer.AddMany([(wx.StaticText(self, -1, u'Fin :'), 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5), (self.fin_control, 0, wx.ALIGN_CENTER_VERTICAL)])
+        
+        self.ordered_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.unordered_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.sites_choice = wx.Choice(self)
+        self.sites_choice.fill_function = self.FillSites
+        self.sites_choice.parameter = "site"
+
+        self.inscrits_choice = wx.Choice(self)
+        self.inscrits_choice.fill_function = self.FillInscrits
+        self.inscrits_choice.parameter = "inscrit"
+
+        self.unordered_sizer.AddMany([(self.sites_choice, 0, wx.LEFT, 5), (self.inscrits_choice, 0, wx.LEFT, 5)])
+        self.search_sizer.AddMany([(self.ordered_sizer, 0, wx.ALIGN_CENTER_VERTICAL), (self.unordered_sizer, 0, wx.ALIGN_CENTER_VERTICAL)])
+        
+        ok = wx.Button(self, wx.ID_OK)
+        self.search_sizer.AddSpacer(10, -1, wx.EXPAND, 0)
+        self.search_sizer.Add(ok, 0, wx.ALIGN_CENTER_VERTICAL)
+        self.Bind(wx.EVT_BUTTON, self.onOk, ok)
+        
+        self.sizer.Add(self.search_sizer, 0, wx.EXPAND|wx.ALL|wx.ALIGN_CENTER_VERTICAL, 10)
+        self.ordered = []
+        self.unordered = [self.sites_choice, self.inscrits_choice]
+        self.debut_value = None
+        self.fin_value = None
+        
+        self.grid = wx.grid.Grid(self)
+        self.grid.CreateGrid(0, 4)
+        # self.grid.EnableScrolling(False, False)
+        self.grid.SetRowLabelSize(1)
+        self.grid.SetDefaultColSize(155)
+        self.grid.SetColLabelValue(0, "Date")
+        self.grid.SetColLabelValue(1, "Site")
+        self.grid.SetColLabelValue(2, "Inscrit")
+        self.grid.SetColLabelValue(3, "Heures")
+
+        self.sizer.Add(self.grid, -1, wx.EXPAND|wx.ALL, 5)
+        
+        self.SetSizer(self.sizer)
+        
+        self.UpdateContents()
+        
+        self.Bind(wx.EVT_CHOICE, self.onChoice, self.sites_choice)
+        self.Bind(wx.EVT_CHOICE, self.onChoice, self.inscrits_choice)
+
+    def FillSites(self, debut=None, fin=None, inscrit=None):
+        if len(creche.sites) < 2:
+            self.sites_choice.Show(False)
+            return
+        
+        if debut is None and fin is None and inscrit is None:
+            sites = creche.sites
+        else:
+            sites = set()
+            if inscrit:
+                inscrits = [inscrit]
+            else:
+                inscrits = creche.inscrits
+            for inscrit in inscrits:
+                for inscription in inscrit.getInscriptions(debut, fin):
+                    if inscription.site and inscription.site not in sites:
+                        sites.add(inscription.site)
+        self.sites_choice.Show(True)
+        self.sites_choice.Clear()
+        self.sites_choice.Append("Tous les sites", None)
+        for site in sites:
+            self.sites_choice.Append(site.nom, site)
+        self.sites_choice.Select(0)
+    
+    def FillInscrits(self, debut=None, fin=None, site=None):
+        self.inscrits_choice.Clear()
+        self.inscrits_choice.Append("Tous les inscrits", None)
+        if debut is None and fin is None and site is None:
+            inscrits = creche.inscrits
+        else:
+            inscrits = set()
+            for inscrit in creche.inscrits:
+                for inscription in inscrit.getInscriptions(debut, fin):
+                    if site is None or inscription.site == site:
+                        inscrits.add(inscrit)
+
+        self.inscrits_choice.Clear()
+        self.inscrits_choice.Append("Tous les inscrits", None)
+        for inscrit in inscrits:
+            self.inscrits_choice.Append(GetInscritId(inscrit, creche.inscrits), inscrit)
+        self.inscrits_choice.Select(0)
+        
+    def UpdateContents(self):
+        if self.grid.GetNumberRows() > 0:
+            self.grid.DeleteRows(0, self.grid.GetNumberRows())                   
+        self.grid.ForceRefresh()
+        self.FillSites()
+        self.FillInscrits()
+    
+    def onPeriodeChange(self, event):
+        debut_value = self.debut_control.GetValue()
+        fin_value = self.fin_control.GetValue()
+        if debut_value != self.debut_value or fin_value != self.fin_value:
+            self.debut_value = debut_value
+            self.fin_value = fin_value
+            kwargs = {"debut": debut_value, "fin": fin_value}
+            for ctrl in self.ordered:
+                selection = ctrl.GetStringSelection()
+                ctrl.fill_function(**kwargs)
+                ctrl.SetStringSelection(selection)
+                if ctrl.GetSelection() == 0:
+                    self.move_to_unordered(ctrl)
+                else:
+                    kwargs[ctrl.parameter] = ctrl.GetClientData(ctrl.GetSelection())
+            for ctrl in self.unordered:
+                ctrl.fill_function(**kwargs)
+    
+    def move_to_unordered(self, object):
+        kwargs = {"debut": self.debut_control.GetValue(), "fin": self.fin_control.GetValue()}
+        index = self.ordered.index(object)
+        self.ordered.remove(object)
+        self.ordered_sizer.Detach(object)
+        self.unordered.insert(0, object)
+        self.unordered_sizer.Insert(0, object, 0, wx.LEFT, 5)
+        for ctrl in self.ordered[:index]:
+            kwargs[ctrl.parameter] = ctrl.GetClientData(ctrl.GetSelection())
+        for ctrl in self.ordered[index:]:
+            selection = ctrl.GetStringSelection()
+            ctrl.fill_function(**kwargs)
+            ctrl.SetStringSelection(selection)
+            kwargs[ctrl.parameter] = ctrl.GetClientData(ctrl.GetSelection())
+        for ctrl in self.unordered:
+            ctrl.fill_function(**kwargs)
+        self.sizer.Layout()
+            
+    def onChoice(self, event):
+        object = event.GetEventObject()
+        selection = object.GetSelection()
+        value = object.GetClientData(selection)
+        if value is None:
+            if object in self.ordered:
+                self.move_to_unordered(object)
+        else:
+            kwargs = {"debut": self.debut_control.GetValue(), "fin": self.fin_control.GetValue()}
+            if object in self.unordered:
+                self.unordered.remove(object)
+                self.unordered_sizer.Detach(object)
+                self.ordered.append(object)
+                self.ordered_sizer.Add(object, 0, wx.LEFT, 5)
+                self.sizer.Layout()
+                for ctrl in self.ordered:
+                    kwargs[ctrl.parameter] = ctrl.GetClientData(ctrl.GetSelection())
+                for ctrl in self.unordered:
+                    ctrl.fill_function(**kwargs)
+            else:
+                index = self.ordered.index(object)
+                for ctrl in self.ordered[:index]:
+                    kwargs[ctrl.parameter] = ctrl.GetClientData(ctrl.GetSelection())
+                for ctrl in self.ordered[index:]:
+                    selection = ctrl.GetStringSelection()
+                    ctrl.fill_function(**kwargs)
+                    ctrl.SetStringSelection(selection)
+                    kwargs[ctrl.parameter] = ctrl.GetClientData(ctrl.GetSelection())
+                for ctrl in self.unordered:
+                    ctrl.fill_function(**kwargs)
+                    
+        event.Skip()
+        
+    def onOk(self, event):
+        debut = self.debut_control.GetValue()
+        fin = self.fin_control.GetValue()
+        site = self.sites_choice.GetClientData(self.sites_choice.GetSelection())
+        inscrit = self.inscrits_choice.GetClientData(self.inscrits_choice.GetSelection())
+
+        if inscrit:
+            inscrits = [inscrit]
+        else:
+            inscrits = creche.inscrits
+        if not debut:
+            debut = datetime.date(2004, 1, 1)
+        if not fin:
+            fin = last_date
+        
+        result = {}
+        for inscrit in inscrits:
+            for inscription in inscrit.getInscriptions(debut, fin):
+                if site is None or inscription.site == site:
+                    date = max(debut, inscription.debut)
+                    if inscription.fin:
+                        date_fin = min(fin, inscription.fin)
+                    else:
+                        date_fin = fin
+                    while date <= date_fin:
+                        state, contrat, realise, supplementaire = inscrit.getState(date)
+                        if state & PRESENT:
+                            if date not in result:
+                                result[date] = []
+                            result[date].append((inscription.site, inscrit, contrat+supplementaire))
+                        date += datetime.timedelta(1)
+        
+        
+        if self.grid.GetNumberRows() > 0:
+            self.grid.DeleteRows(0, self.grid.GetNumberRows())
+        row = 0
+        dates = result.keys()
+        dates.sort()
+        for date in dates:
+            for site, inscrit, heures in result[date]:
+                self.grid.AppendRows(1)
+                self.grid.SetCellValue(row, 0, str(date))
+                if site:
+                    self.grid.SetCellValue(row, 1, site.nom)
+                self.grid.SetCellValue(row, 2, "%s %s" % (inscrit.prenom, inscrit.nom))
+                self.grid.SetCellValue(row, 3, str(heures))
+                row += 1                        
+        self.grid.ForceRefresh()
+        event.Skip()
+                
+class StatistiquesFrequentationTab(AutoTab):
+    def __init__(self, parent):
+        AutoTab.__init__(self, parent)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.anneechoice = wx.Choice(self)
+        for annee in range(first_date.year, last_date.year+1):
+            self.anneechoice.Append(str(annee), annee)
+        self.anneechoice.SetStringSelection(str(today.year))
+        self.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.anneechoice)
+        self.periodechoice = wx.Choice(self)
+        for index, month in enumerate(months):
+            self.periodechoice.Append(month, [index])
+        self.periodechoice.Append("----") # TODO changer ça 
+        for index, trimestre in enumerate(trimestres):
+            self.periodechoice.Append("%s trimestre" % trimestre, [3*index, 3*index+1, 3*index+2])
+        self.periodechoice.SetStringSelection(months[today.month-1])
+        self.periodechoice.Append("----") # TODO changer ça 
+        self.periodechoice.Append(u"Année complète", range(0, 12))
+        self.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.periodechoice)
+        sizer.AddMany([(self.anneechoice, 0, 0), (self.periodechoice, 0, wx.LEFT, 5)])
+        self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 10)
+        
+        sizer = wx.FlexGridSizer(0, 3, 5, 10)
+        self.presences_contrat_heures = wx.TextCtrl(self)
+        self.presences_contrat_heures.Disable()
+        self.presences_contrat_euros = wx.TextCtrl(self)
+        self.presences_contrat_euros.Disable()
+        sizer.AddMany([(wx.StaticText(self, -1, u'Présences contractualisées :'), 0, 0), (self.presences_contrat_heures, 0, wx.EXPAND), (self.presences_contrat_euros, 0, wx.EXPAND)])
+        self.presences_realisees_heures = wx.TextCtrl(self)
+        self.presences_realisees_heures.Disable()
+        self.presences_realisees_euros = wx.TextCtrl(self)
+        self.presences_realisees_euros.Disable()
+        sizer.AddMany([(wx.StaticText(self, -1, u'Présences réalisées :'), 0, 0), (self.presences_realisees_heures, 0, wx.EXPAND), (self.presences_realisees_euros, 0, wx.EXPAND)])
+        self.presences_facturees_heures = wx.TextCtrl(self)
+        self.presences_facturees_heures.Disable()
+        self.presences_facturees_euros = wx.TextCtrl(self)
+        self.presences_facturees_euros.Disable()
+        sizer.AddMany([(wx.StaticText(self, -1, u'Présences facturées :'), 0, 0), (self.presences_facturees_heures, 0, wx.EXPAND), (self.presences_facturees_euros, 0, wx.EXPAND)])       
+        self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 10)
+        
+        self.SetSizer(self.sizer)
+        
+    def EvtPeriodeChoice(self, evt):
+        annee = self.anneechoice.GetClientData(self.anneechoice.GetSelection())
+        periode = self.periodechoice.GetClientData(self.periodechoice.GetSelection())
+        heures_contractualisees = 0.0
+        heures_realisees = 0.0
+        heures_facturees = 0.0
+        for mois in periode:
+            debut = datetime.date(annee, mois+1, 1)
+            fin = getMonthEnd(debut)
+            for inscrit in creche.inscrits:
+                if inscrit.getInscriptions(debut, fin):
+                    facture = FactureFinMois(inscrit, annee, mois+1)
+                    heures_contractualisees += facture.heures_contractualisees
+                    heures_realisees += facture.heures_realisees
+                    # print inscrit.prenom, facture.heures_contrat, facture.heures_realisees
+                    heures_facturees += sum(facture.heures_facturees)
+                    
+        self.presences_contrat_heures.SetValue("%.2f heures" % heures_contractualisees)
+        self.presences_realisees_heures.SetValue("%.2f heures" % heures_realisees)
+        self.presences_facturees_heures.SetValue("%.2f heures" % heures_facturees)
 
 class RelevesTab(AutoTab):
     def __init__(self, parent):
@@ -110,87 +512,18 @@ class RelevesTab(AutoTab):
         if end is None:
             end = start
         DocumentDialog(self, PlanningDetailleModifications((start, end))).ShowModal()
-
-class EtatsPresenceTab(AutoTab):
-    def __init__(self, parent):
-        AutoTab.__init__(self, parent)
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.anneechoice = wx.Choice(self)
-        for annee in range(first_date.year, last_date.year+1):
-            self.anneechoice.Append(str(annee), annee)
-        self.anneechoice.SetStringSelection(str(today.year))
-        self.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.anneechoice)
-        self.periodechoice = wx.Choice(self)
-        for index, month in enumerate(months):
-            self.periodechoice.Append(month, [index])
-        self.periodechoice.Append("----") # TODO changer ça 
-        for index, trimestre in enumerate(trimestres):
-            self.periodechoice.Append("%s trimestre" % trimestre, [3*index, 3*index+1, 3*index+2])
-        self.periodechoice.SetStringSelection(months[today.month-1])
-        self.periodechoice.Append("----") # TODO changer ça 
-        self.periodechoice.Append(u"Année complète", range(0, 12))
-        self.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.periodechoice)
-        sizer.AddMany([(self.anneechoice, 0, 0), (self.periodechoice, 0, wx.LEFT, 5)])
-        self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 10)
-        
-        sizer = wx.FlexGridSizer(0, 3, 5, 10)
-        self.presences_contrat_heures = wx.TextCtrl(self)
-        self.presences_contrat_heures.Disable()
-        self.presences_contrat_euros = wx.TextCtrl(self)
-        self.presences_contrat_euros.Disable()
-        sizer.AddMany([(wx.StaticText(self, -1, u'Présences contractualisées :'), 0, 0), (self.presences_contrat_heures, 0, wx.EXPAND), (self.presences_contrat_euros, 0, wx.EXPAND)])
-        self.presences_realisees_heures = wx.TextCtrl(self)
-        self.presences_realisees_heures.Disable()
-        self.presences_realisees_euros = wx.TextCtrl(self)
-        self.presences_realisees_euros.Disable()
-        sizer.AddMany([(wx.StaticText(self, -1, u'Présences réalisées :'), 0, 0), (self.presences_realisees_heures, 0, wx.EXPAND), (self.presences_realisees_euros, 0, wx.EXPAND)])
-        self.presences_facturees_heures = wx.TextCtrl(self)
-        self.presences_facturees_heures.Disable()
-        self.presences_facturees_euros = wx.TextCtrl(self)
-        self.presences_facturees_euros.Disable()
-        sizer.AddMany([(wx.StaticText(self, -1, u'Présences facturées :'), 0, 0), (self.presences_facturees_heures, 0, wx.EXPAND), (self.presences_facturees_euros, 0, wx.EXPAND)])       
-        self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 10)
-        
-        self.SetSizer(self.sizer)
-        
-    def EvtPeriodeChoice(self, evt):
-        annee = self.anneechoice.GetClientData(self.anneechoice.GetSelection())
-        periode = self.periodechoice.GetClientData(self.periodechoice.GetSelection())
-        heures_contractualisees = 0.0
-        heures_realisees = 0.0
-        heures_facturees = 0.0
-        for mois in periode:
-            debut = datetime.date(annee, mois+1, 1)
-            fin = getMonthEnd(debut)
-            for inscrit in creche.inscrits:
-                if inscrit.getInscriptions(debut, fin):
-                    facture = FactureFinMois(inscrit, annee, mois+1)
-                    heures_contractualisees += facture.heures_contractualisees
-                    heures_realisees += facture.heures_realisees
-                    # print inscrit.prenom, facture.heures_contrat, facture.heures_realisees
-                    heures_facturees += sum(facture.heures_facturees)
-                    
-        self.presences_contrat_heures.SetValue("%.2f heures" % heures_contractualisees)
-        self.presences_realisees_heures.SetValue("%.2f heures" % heures_realisees)
-        self.presences_facturees_heures.SetValue("%.2f heures" % heures_facturees)
-        
         
 class RelevesNotebook(wx.Notebook):
     def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
-        self.AddPage(EtatsPresenceTab(self), u'Statistiques de fréquentation')
+        self.AddPage(AideInscriptionTab(self), u"Aide à l'inscription")
+        self.AddPage(EtatsPresenceTab(self), u"Etats de présence")
+        self.AddPage(StatistiquesFrequentationTab(self), u'Statistiques de fréquentation')
         self.AddPage(RelevesTab(self), u'Edition de relevés')
-        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
-
-    def OnPageChanged(self, event):
-        page = self.GetPage(event.GetSelection())
-        page.UpdateContents()
-        event.Skip()
 
     def UpdateContents(self):
-        page = self.GetCurrentPage()
-        page.UpdateContents()
+        for page in range(self.GetPageCount()):
+            self.GetPage(page).UpdateContents()
         
 class RelevesPanel(GPanel):
     bitmap = './bitmaps/releves.png'

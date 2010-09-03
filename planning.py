@@ -27,6 +27,8 @@ from history import *
 NO_ICONS = 1
 READ_ONLY = 2
 PRESENCES_ONLY = 4
+NO_BOTTOM_LINE = 8
+DRAW_NUMBERS = 16
 
 # Elements size
 LABEL_WIDTH = 80 # px
@@ -43,18 +45,22 @@ BUTTON_BITMAPS = { ABSENT: wx.Bitmap("./bitmaps/icone_vacances.png", wx.BITMAP_T
                    }
 
 class PlanningGridWindow(BufferedWindow):
-    def __init__(self, parent, activity_combobox):
+    def __init__(self, parent, activity_combobox, options):
         self.info = ""
         self.lines = []
         BufferedWindow.__init__(self, parent, size=((creche.affichage_max-creche.affichage_min) * 4 * COLUMN_WIDTH + 1, -1))
         self.SetBackgroundColour(wx.WHITE)
         self.activity_combobox = activity_combobox
         self.state = -1
-##        if (profil & PROFIL_SAISIE_PRESENCES) or date > datetime.date.today():
-        self.SetCursor(wx.StockCursor(wx.CURSOR_PENCIL))        
-        self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftButtonDown)
-        self.Bind(wx.EVT_LEFT_UP, self.OnLeftButtonUp)
-        self.Bind(wx.EVT_MOTION, self.OnLeftButtonDragging)
+        if options & DRAW_NUMBERS:
+            self.draw_line = self.DrawNumbersLine
+        else:
+            self.draw_line = self.DrawActivitiesLine
+        if not options & READ_ONLY:
+            self.SetCursor(wx.StockCursor(wx.CURSOR_PENCIL))        
+            self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftButtonDown)
+            self.Bind(wx.EVT_LEFT_UP, self.OnLeftButtonUp)
+            self.Bind(wx.EVT_MOTION, self.OnLeftButtonDragging)
 
     def SetInfo(self, info):
         self.info = info
@@ -107,11 +113,11 @@ class PlanningGridWindow(BufferedWindow):
             pass
 
         for i, line in enumerate(self.lines):
-            self.DrawLine(dc, i, line)
+            self.draw_line(dc, i, line)
         
         dc.EndDrawing()
 
-    def DrawLine(self, dc, index, line):
+    def DrawActivitiesLine(self, dc, index, line):
         for start, end, activity in line.get_activities(reference=line.reference):
             r, g, b, t, s = getActivityColor(activity)
             try:
@@ -122,6 +128,39 @@ class PlanningGridWindow(BufferedWindow):
               dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
             rect = wx.Rect(1+(start-int(creche.affichage_min*(60 / BASE_GRANULARITY)))*COLUMN_WIDTH, 1 + index*LINE_HEIGHT, (end-start)*COLUMN_WIDTH-1, LINE_HEIGHT-1)
             dc.DrawRoundedRectangleRect(rect, 4)
+            
+    def DrawNumbersLine(self, dc, index, line):
+        if not isinstance(line, basestring):
+            line = line.values
+            r, g, b, t, s = 5, 203, 28, 150, wx.SOLID
+    
+            pos = -2
+            if not self.GetParent().GetParent().options & NO_ICONS:
+                pos += ICONS_WIDTH
+            debut = int(creche.affichage_min * (60 / BASE_GRANULARITY))
+            fin = int(creche.affichage_max * (60 / BASE_GRANULARITY))
+            x = debut
+            v = 0
+            a = 0
+            while x <= fin:
+                if x == fin:
+                    nv = 0
+                else:
+                    nv = line[x]
+                if nv != v:
+                    if v != 0:
+                        rect = wx.Rect(pos+3+(a-debut)*COLUMN_WIDTH, 2 + index * LINE_HEIGHT, (x-a)*COLUMN_WIDTH-1, LINE_HEIGHT-1)
+                        try:
+                            dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
+                            dc.SetBrush(wx.Brush(wx.Colour(r, g, b, 10*v), s))
+                        except:
+                            dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
+                            dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
+                        dc.DrawRoundedRectangleRect(rect, 4)
+                        dc.DrawText(str(v), pos + 4 - 4*len(str(v)) + (float(x+a)/2-debut)*COLUMN_WIDTH, 7 + index * LINE_HEIGHT)
+                    a = x    
+                    v = nv
+                x += 1
         
     def __get_pos(self, x, y):
         l = int(creche.affichage_min * (60 / BASE_GRANULARITY) + (x / COLUMN_WIDTH))
@@ -211,7 +250,7 @@ class PlanningGridWindow(BufferedWindow):
             self.GetParent().UpdateLine(self.curStartY)
 
 class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
-    def __init__(self, parent, activity_combobox):
+    def __init__(self, parent, activity_combobox, options):
         width = (creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH + LABEL_WIDTH + 27
         if not parent.options & NO_ICONS:
             width += ICONS_WIDTH
@@ -221,11 +260,11 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.labels_panel = wx.Window(self, -1, size=(LABEL_WIDTH, -1))
         self.sizer.Add(self.labels_panel, 0, wx.EXPAND)
-        if not parent.options & NO_ICONS:
+        if not options & NO_ICONS:
             self.buttons_sizer = wx.BoxSizer(wx.VERTICAL)
             self.buttons_sizer.SetMinSize((ICONS_WIDTH-2, -1))
             self.sizer.Add(self.buttons_sizer, 0, wx.EXPAND|wx.RIGHT, 2)
-        self.grid_panel = PlanningGridWindow(self, activity_combobox)
+        self.grid_panel = PlanningGridWindow(self, activity_combobox, options)
         self.sizer.Add(self.grid_panel, 0, wx.EXPAND)
         self.labels_panel.Bind(wx.EVT_PAINT, self.OnPaint)
         self.SetSizer(self.sizer)
@@ -334,7 +373,18 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         font = wx.Font(8, wx.SWISS, wx.NORMAL, wx.NORMAL)
         dc.SetFont(font)
         for i, line in enumerate(self.lines):
-            dc.DrawText(line.label, 5, 5 + LINE_HEIGHT*i)
+            if isinstance(line, basestring):
+                rect = wx.Rect(0, 5 + i * LINE_HEIGHT, 75, LINE_HEIGHT-8)
+                try:
+                    dc.SetPen(wx.Pen(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE)))
+                    dc.SetBrush(wx.Brush(wx.Colour(128, 128, 128, 128), wx.SOLID))
+                except:
+                    dc.SetPen(wx.Pen(wx.Colour(0, 0, 0)))
+                    dc.SetBrush(wx.Brush(wx.Colour(128, 128, 128), wx.SOLID))
+                dc.DrawRoundedRectangleRect(rect, 4)
+                dc.DrawText(line, 5, 8 + i * LINE_HEIGHT)
+            else:
+                dc.DrawText(line.label, 5, 5 + LINE_HEIGHT*i)
         dc.EndDrawing()
 
 
@@ -415,16 +465,19 @@ class PlanningSummaryPanel(BufferedWindow):
             
         
 class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
-    def __init__(self, parent, activity_combobox, options=0):
+    def __init__(self, parent, activity_combobox=None, options=0):
         wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, id=-1, style=wx.LB_DEFAULT)
         self.options = options
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.scale_window = wx.Window(self, -1, size=(-1, 25))
         self.sizer.Add(self.scale_window, 0, wx.EXPAND)
-        self.internal_panel = PlanningInternalPanel(self, activity_combobox)
+        self.internal_panel = PlanningInternalPanel(self, activity_combobox, options)
         self.sizer.Add(self.internal_panel, 1, wx.EXPAND)
-        self.summary_panel = PlanningSummaryPanel(self)
-        self.sizer.Add(self.summary_panel, 0, wx.EXPAND)
+        if not (options & NO_BOTTOM_LINE):
+            self.summary_panel = PlanningSummaryPanel(self)
+            self.sizer.Add(self.summary_panel, 0, wx.EXPAND)
+        else:
+            self.summary_panel = None
         self.SetSizer(self.sizer)
         self.SetupScrolling(scroll_y = False)
         self.sizer.Layout()
@@ -436,15 +489,18 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
     def Disable(self, info):
         self.lines = []
         self.internal_panel.Disable(info)
-        self.summary_panel.UpdateContents()
+        if self.summary_panel:
+            self.summary_panel.UpdateContents()
         
     def SetLines(self, lines):
         self.lines = lines
         self.internal_panel.SetLines(lines)
-        self.summary_panel.UpdateContents()
+        if self.summary_panel:
+            self.summary_panel.UpdateContents()
         
     def UpdateLine(self, index):
-        self.summary_panel.UpdateContents()
+        if self.summary_panel:
+            self.summary_panel.UpdateContents()
         
     def GetSummaryLines(self):
         values = []

@@ -494,6 +494,7 @@ class JoursFermeturePanel(AutoTab):
         button_add = wx.Button(self, -1, u'Nouvelle période de congés')
         self.sizer.Add(button_add, 0, wx.EXPAND+wx.TOP, 5)
         self.Bind(wx.EVT_BUTTON, self.conges_add, button_add)
+        observers['conges'] = 0
 #        sizer2 = wx.BoxSizer(wx.HORIZONTAL)
 #        sizer2.AddMany([(wx.StaticText(self, -1, u'Nombre de semaines de congés déduites :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'semaines_conges', min=0, precision=0), 0, wx.EXPAND)])
 #        self.sizer.Add(sizer2, 0, wx.EXPAND+wx.TOP, 5)
@@ -584,10 +585,10 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, u'Présences supplémentaires :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'presences_supplementaires', [(u'Géré', True), (u'Non géré', False)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u"Modes d'inscription :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'modes_inscription', [(u'Crèche à plein-temps uniquement', MODE_5_5), ('Tous modes', MODE_5_5+MODE_4_5+MODE_3_5+MODE_HALTE_GARDERIE)]), 0, wx.EXPAND)])
         tmp = wx.BoxSizer(wx.HORIZONTAL)
-        tmp.AddMany([(AutoChoiceCtrl(self, creche, 'mode_facturation', [("Forfait 10h / jour", FACTURATION_FORFAIT_10H), (u"PSU (horaires réels)", FACTURATION_PSU), (u"PAJE (taux horaire fixe)", FACTURATION_PAJE)]), 1, wx.EXPAND), (AutoChoiceCtrl(self, creche, 'temps_facturation', [("Facturation fin de mois", FACTURATION_FIN_MOIS), (u"Facturation début de mois", FACTURATION_DEBUT_MOIS)]), 1, wx.EXPAND|wx.LEFT, 5)])
+        mode_facturation_choice = AutoChoiceCtrl(self, creche, 'mode_facturation', [("Forfait 10h / jour", FACTURATION_FORFAIT_10H), (u"PSU (horaires réels)", FACTURATION_PSU), (u"PAJE (taux horaire spécifique)", FACTURATION_PAJE)])
+        self.Bind(wx.EVT_CHOICE, self.onModeFacturationChoice, mode_facturation_choice)
+        tmp.AddMany([(mode_facturation_choice, 1, wx.EXPAND), (AutoChoiceCtrl(self, creche, 'temps_facturation', [("Facturation fin de mois", FACTURATION_FIN_MOIS), (u"Facturation début de mois", FACTURATION_DEBUT_MOIS)]), 1, wx.EXPAND|wx.LEFT, 5)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Modes de facturation :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (tmp, 1, wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Forfait horaire (PAJE):'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'forfait_horaire', precision=2), 0, wx.EXPAND)])
-        # TODO n'afficher que si PAJE est choisi
         sizer.AddMany([(wx.StaticText(self, -1, u'Facturation des jours fériés :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'facturation_jours_feries', [(u'Pas de déduction', JOURS_FERIES_NON_DEDUITS), (u"Déduits, répartis sur l'année", JOURS_FERIES_DEDUITS_ANNUELLEMENT)]), 0, wx.EXPAND)])
         # TODO n'afficher que si PSU/PAJE est choisi
         sizer.AddMany([(wx.StaticText(self, -1, u"Gestion de périodes de congés non facturées lors de l'inscription :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'conges_inscription', [('Non', 0), ('Oui', 1)]), 0, wx.EXPAND)])
@@ -599,6 +600,12 @@ class ParametersPanel(AutoTab):
         self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(self.sizer)
     
+    def onModeFacturationChoice(self, event):
+        object = event.GetEventObject()
+        value = object.GetClientData(object.GetSelection())
+        self.GetParent().DisplayTauxHorairePanel(value==FACTURATION_PAJE)
+        event.Skip()
+            
     def ouverture_check(self, ouverture, a, b):
         return a >= ouverture * 4
     
@@ -661,6 +668,99 @@ class ParametersPanel(AutoTab):
             obj.UpdateContents()
         else:
             obj.AutoChange(value)
+            
+class TauxHorairePanel(AutoTab):
+    def __init__(self, parent):
+        AutoTab.__init__(self, parent)
+        self.delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
+        addbutton = wx.Button(self, -1, "Ajouter un cas")
+        addbutton.index = 0
+        self.Bind(wx.EVT_BUTTON, self.onAdd, addbutton)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer.Add(addbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.TOP, 5)
+        self.controls = []
+        if creche.formule_taux_horaire:
+            for i, cas in enumerate(creche.formule_taux_horaire):
+                self.line_add(i, cas[0], cas[1])
+        self.SetSizer(self.sizer)
+        self.Layout()
+        
+    def line_add(self, index, condition="", taux=0.0):
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.AddSpacer(10)
+        cas = wx.StaticText(self, -1, "[Cas %d]" % (index+1))
+        cas.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.BOLD))
+        sizer1 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer1.Add(cas, 0, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 10)
+        condition_ctrl = wx.TextCtrl(self, -1, condition)
+        condition_ctrl.index = index
+        sizer1.AddMany([(wx.StaticText(self, -1, 'Condition :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (condition_ctrl, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
+        taux_ctrl = wx.TextCtrl(self, -1, str(taux))
+        taux_ctrl.index = index
+        sizer1.AddMany([(wx.StaticText(self, -1, 'Taux horaire :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (taux_ctrl, 0, wx.ALIGN_CENTER_VERTICAL, 5)])
+        delbutton = wx.BitmapButton(self, -1, self.delbmp)
+        delbutton.index = index
+        addbutton = wx.Button(self, -1, "Ajouter un cas")
+        addbutton.index = index+1
+        sizer1.Add(delbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT|wx.RIGHT, 5)
+        sizer.Add(sizer1, 0, wx.EXPAND)
+        sizer.Add(addbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.TOP, 5)
+        self.Bind(wx.EVT_TEXT, self.onConditionChange, condition_ctrl)
+        self.Bind(wx.EVT_TEXT, self.onTauxChange, taux_ctrl)
+        self.Bind(wx.EVT_BUTTON, self.onDel, delbutton)
+        self.Bind(wx.EVT_BUTTON, self.onAdd, addbutton)
+        self.controls.insert(index, (cas, condition_ctrl, taux_ctrl, delbutton, addbutton))
+        self.sizer.Insert(index+1, sizer, 0, wx.EXPAND|wx.BOTTOM, 5)         
+
+    def onAdd(self, event):
+        object = event.GetEventObject()
+        self.line_add(object.index)
+        if creche.formule_taux_horaire is None:
+            creche.formule_taux_horaire = [["", 0.0]]
+        else:
+            creche.formule_taux_horaire.insert(object.index, ["", 0.0])
+        creche.update_formule_taux_horaire()
+        for i in range(object.index+1, len(self.controls)):
+            self.controls[i][0].SetLabel("[Cas %d]" % (i+1))
+            for control in self.controls[i][1:]:
+                control.index += 1
+        self.sizer.FitInside(self)
+        history.Append([]) # TODO
+    
+    def onDel(self, event):
+        index = event.GetEventObject().index
+        sizer = self.sizer.GetItem(index+1)
+        sizer.DeleteWindows()
+        self.sizer.Detach(index+1)
+        del self.controls[index]
+        if len(creche.formule_taux_horaire) == 1:
+            creche.formule_taux_horaire = None
+        else:
+            del creche.formule_taux_horaire[index]
+        creche.update_formule_taux_horaire()
+        for i in range(index, len(self.controls)):
+            self.controls[i][0].SetLabel("[Cas %d]" % (i+1))
+            for control in self.controls[i][1:]:
+                control.index -= 1
+        self.sizer.FitInside(self)
+        history.Append([]) # TODO
+    
+    def onConditionChange(self, event):
+        object = event.GetEventObject()
+        creche.formule_taux_horaire[object.index][0] = object.GetValue()
+        creche.update_formule_taux_horaire()
+        if creche.test_formule_taux_horaire(object.index):
+            object.SetBackgroundColour(wx.WHITE)
+        else:
+            object.SetBackgroundColour(wx.RED)
+        object.Refresh()
+        history.Append([]) # TODO
+        
+    def onTauxChange(self, event):
+        object = event.GetEventObject()
+        creche.formule_taux_horaire[object.index][1] = float(object.GetValue())
+        creche.update_formule_taux_horaire()
+        history.Append([]) # TODO    
 
 profiles = [("Administrateur", PROFIL_ALL),
             ("Bureau", PROFIL_BUREAU),
@@ -759,6 +859,13 @@ class ParametresNotebook(wx.Notebook):
         self.AddPage(JoursFermeturePanel(self), u'Congés')
         self.AddPage(ActivitesTab(self), u'Couleurs / Activités')
         self.AddPage(ParametersPanel(self), u'Paramètres')
+        self.taux_horaire_panel = TauxHorairePanel(self)
+        if creche.mode_facturation == FACTURATION_PAJE:
+            self.AddPage(self.taux_horaire_panel, u'Taux horaire')
+            self.taux_horaire_panel_displayed = True
+        else:
+            self.taux_horaire_panel.Show(False)
+            self.taux_horaire_panel_displayed = False
         self.AddPage(UsersPanel(self), u'Utilisateurs et mots de passe')
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
@@ -770,6 +877,19 @@ class ParametresNotebook(wx.Notebook):
     def UpdateContents(self):
         page = self.GetCurrentPage()
         page.UpdateContents()
+        
+    def DisplayTauxHorairePanel(self, enable):
+        if enable == self.taux_horaire_panel_displayed:
+            return
+        else:
+            self.taux_horaire_panel.Show(enable)
+            if enable:
+                self.InsertPage(7, self.taux_horaire_panel, u'Taux horaire')
+            else:
+                self.RemovePage(7)
+
+        self.taux_horaire_panel_displayed = enable
+        self.Layout()
 
 class ConfigurationPanel(GPanel):
     bitmap = './bitmaps/creche.png'

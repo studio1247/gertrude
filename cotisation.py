@@ -50,13 +50,13 @@ class Cotisation(object):
             revenus_debut = datetime.date(self.debut.year-2, 1, 1)
         else:
             revenus_debut = datetime.date(self.debut.year-1, 1, 1)
-        if creche.mode_facturation != FACTURATION_PAJE:
-	    self.revenus_papa = Select(inscrit.papa.revenus, revenus_debut)
-	    if not options & NO_REVENUS and (self.revenus_papa is None or self.revenus_papa.revenu == ''):
-	        errors.append(u" - Les déclarations de revenus du papa sont incomplètes.")
-	    self.revenus_maman = Select(inscrit.maman.revenus, revenus_debut)
-	    if not options & NO_REVENUS and (self.revenus_maman is None or self.revenus_maman.revenu == ''):
-	        errors.append(u" - Les déclarations de revenus de la maman sont incomplètes.")
+        if creche.formule_taux_horaire_needs_revenus():
+            self.revenus_papa = Select(inscrit.papa.revenus, revenus_debut)
+            if not options & NO_REVENUS and (self.revenus_papa is None or self.revenus_papa.revenu == ''):
+                errors.append(u" - Les déclarations de revenus du papa sont incomplètes.")
+            self.revenus_maman = Select(inscrit.maman.revenus, revenus_debut)
+            if not options & NO_REVENUS and (self.revenus_maman is None or self.revenus_maman.revenu == ''):
+                errors.append(u" - Les déclarations de revenus de la maman sont incomplètes.")
         if creche.type == TYPE_MUNICIPAL:
             self.bureau = None
         else:
@@ -156,11 +156,12 @@ class Cotisation(object):
             self.str_mode_garde = u'plein temps'
         else:
             self.str_mode_garde = u'%d/5èmes' % self.jours_semaine
-            
+        
+        self.assiette_annuelle = float(self.revenus_papa.revenu+self.revenus_maman.revenu) 
+                
         if creche.mode_facturation == FACTURATION_PAJE:       
-            self.assiette_annuelle = None
-            self.taux_horaire = creche.forfait_horaire
-            self.montant_heure_garde = creche.forfait_horaire
+            self.taux_horaire = creche.eval_taux_horaire(self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine)
+            self.montant_heure_garde = self.taux_horaire
             self.montant_jour_supplementaire = 0
             if self.inscription.fin:
                 self.semaines_periode = min(52, ((self.inscription.fin - self.inscription.debut).days + 6) / 7)
@@ -175,15 +176,13 @@ class Cotisation(object):
             self.cotisation_periode = self.taux_horaire * self.heures_semaine * (self.semaines_periode - self.semaines_conges)
             self.cotisation_mensuelle = self.cotisation_periode / self.mois_periode
         else:
-            self.assiette_annuelle = float(self.revenus_papa.revenu) 
             if self.revenus_papa.chomage:
                 self.abattement_chomage_papa = 0.3 * float(self.revenus_papa.revenu)
                 self.assiette_annuelle -= self.abattement_chomage_papa
-            self.assiette_annuelle += float(self.revenus_maman.revenu)
             if self.revenus_maman.chomage:
                 self.abattement_chomage_maman = 0.3 * float(self.revenus_maman.revenu)
                 self.assiette_annuelle -= self.abattement_chomage_maman
-
+            
             if self.assiette_annuelle > self.bareme_caf.plafond:
                 self.assiette_annuelle = self.bareme_caf.plafond
             elif self.assiette_annuelle < self.bareme_caf.plancher:

@@ -389,17 +389,14 @@ class ParentsPanel(InscriptionsTab):
             
             if profil & PROFIL_TRESORIER:
                 panel = PeriodePanel(self, parent+'.revenus')
-                if creche.mode_facturation == FACTURATION_PAJE:
-                    revenus_sizer = wx.StaticBoxSizer(wx.StaticBox(panel, -1, u"Régime d'appartenance"), wx.VERTICAL)
-                else:
-                    revenus_sizer = wx.StaticBoxSizer(wx.StaticBox(panel, -1, u"Revenus et régime d'appartenance"), wx.VERTICAL)
+                revenus_sizer = wx.StaticBoxSizer(wx.StaticBox(panel, -1, u"Revenus et régime d'appartenance"), wx.VERTICAL)
                 revenus_sizer.Add(PeriodeChoice(panel, eval('self.nouveau_revenu_%s' % parent)), 0, wx.EXPAND|wx.ALL, 5)
                 revenus_gridsizer = wx.FlexGridSizer(0, 2, 5, 10)
                 revenus_gridsizer.AddGrowableCol(1, 1)
                 revenus_gridsizer.AddMany([(wx.StaticText(panel, -1, 'Revenus annuels bruts :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(panel, None, 'revenu', precision=2), 0, wx.EXPAND)])
                 revenus_gridsizer.AddMany([(0, 0), (AutoCheckBox(panel, None, 'chomage', u'Chômage'), 0, wx.EXPAND)])
                 self.revenus_items.extend([revenus_gridsizer.GetItem(0), revenus_gridsizer.GetItem(1), revenus_gridsizer.GetItem(2), revenus_gridsizer.GetItem(3)])
-                if creche.mode_facturation == FACTURATION_PAJE:
+                if not creche.formule_taux_horaire_needs_revenus():
                     for item in self.revenus_items:
                         item.Show(False)
                 choice = AutoChoiceCtrl(panel, None, 'regime')
@@ -440,7 +437,7 @@ class ParentsPanel(InscriptionsTab):
         for i in range(referents_count, len(self.referents_sizer.GetChildren())):
             self.referent_line_del()
         for item in self.revenus_items:
-            item.Show(creche.mode_facturation != FACTURATION_PAJE)
+            item.Show(creche.formule_taux_horaire_needs_revenus())
         AutoTab.UpdateContents(self)
         self.sizer.FitInside(self)
 

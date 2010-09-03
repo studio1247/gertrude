@@ -411,12 +411,13 @@ class Site(object):
         self.code_postal = ''
         self.ville = ''
         self.telephone = ''
+        self.capacite = 0
         if creation:
             self.create()
 
     def create(self):
         print 'nouveau site'
-        result = sql_connection.execute('INSERT INTO SITES (idx, nom, adresse, code_postal, ville, telephone) VALUES(NULL,?,?,?,?,?)', (self.nom, self.adresse, self.code_postal, self.ville, self.telephone))
+        result = sql_connection.execute('INSERT INTO SITES (idx, nom, adresse, code_postal, ville, telephone, capacite) VALUES(NULL,?,?,?,?,?,?)', (self.nom, self.adresse, self.code_postal, self.ville, self.telephone, self.capacite))
         self.idx = result.lastrowid
 
     def delete(self):
@@ -425,7 +426,7 @@ class Site(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'capacite'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE SITES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
@@ -465,9 +466,9 @@ class Creche(object):
         self.email = ''
         self.type = TYPE_PARENTAL
         self.capacite = 0
-        self.forfait_horaire = 0.0
         self.majoration_localite = 0.0
         self.facturation_jours_feries = JOURS_FERIES_NON_DEDUITS
+        self.formule_taux_horaire = None
         self.calcule_jours_conges()
 
     def calcule_jours_conges(self):
@@ -520,9 +521,50 @@ class Creche(object):
         if calcule:
             self.calcule_jours_conges()
 
+    def update_formule_taux_horaire(self, changed=True):
+        print 'update formule_taux_horaire', self.formule_taux_horaire
+        sql_connection.execute('UPDATE CRECHE SET formule_taux_horaire=?', (str(self.formule_taux_horaire),))
+        self.conversion_formule_taux_horaire = []
+        for cas in self.formule_taux_horaire:
+            condition = cas[0].strip()
+            if condition == "":
+                condition = "True"
+            else:
+                condition = condition.lower().replace(" et ", " and ").replace(" ou ", " or ").replace("=", "==")
+            self.conversion_formule_taux_horaire.append([condition, cas[1]])
+    
+    def eval_taux_horaire(self, revenus, enfants, jours):
+        try:
+            for cas in self.formule_taux_horaire:
+                if eval(cas[0]):
+                    return cas[1]
+            else:
+                return 0.0
+        except:
+            return 0.0
+    
+    def formule_taux_horaire_needs_revenus(self):
+        if self.mode_facturation != FACTURATION_PAJE:
+            return True        
+        for cas in self.formule_taux_horaire:
+            if "revenus" in cas[0]:
+                return True
+        else:
+            return False
+        
+    def test_formule_taux_horaire(self, index):
+        revenus = 20000
+        jours = 5
+        enfants = 1
+        try:
+            test = eval(self.conversion_formule_taux_horaire[index][0])
+            return True
+        except:
+            return False               
+        
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'forfait_horaire', 'tarification_activites', 'traitement_maladie', 'forfait_horaire', 'majoration_localite', 'facturation_jours_feries'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'majoration_localite', 'facturation_jours_feries'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
@@ -817,7 +859,11 @@ class Inscrit(object):
 
     def getInscriptions(self, date_debut, date_fin):
         result = []
-        for i, inscription in enumerate(self.inscriptions):
+        if not date_debut:
+            date_debut = datetime.date.min
+        if not date_fin:
+            date_fin = datetime.date.max
+        for inscription in self.inscriptions:
           if inscription.debut:
             try:
               date_debut_periode = inscription.debut

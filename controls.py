@@ -491,10 +491,7 @@ class AutoMixin:
         self.__ontext = True
         self.parent = parent
         self.fixed_instance = fixed_instance
-        self.observers = observers
-        for o in observers:
-            if not o in __builtin__.observers.keys():
-                __builtin__.observers[o] = 0                 
+        self.observers = observers             
         if not fixed_instance:            
             parent.ctrls.append(self)
         self.SetInstance(instance, member) 
