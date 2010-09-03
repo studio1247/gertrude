@@ -522,8 +522,9 @@ class Creche(object):
             self.calcule_jours_conges()
 
     def update_formule_taux_horaire(self, changed=True):
-        print 'update formule_taux_horaire', self.formule_taux_horaire
-        sql_connection.execute('UPDATE CRECHE SET formule_taux_horaire=?', (str(self.formule_taux_horaire),))
+        if changed:
+            print 'update formule_taux_horaire', self.formule_taux_horaire
+            sql_connection.execute('UPDATE CRECHE SET formule_taux_horaire=?', (str(self.formule_taux_horaire),))
         if self.formule_taux_horaire:
             self.conversion_formule_taux_horaire = []
             for cas in self.formule_taux_horaire:
@@ -548,7 +549,9 @@ class Creche(object):
     
     def formule_taux_horaire_needs_revenus(self):
         if self.mode_facturation != FACTURATION_PAJE:
-            return True        
+            return True
+        if self.formule_taux_horaire is None:
+            return False
         for cas in self.formule_taux_horaire:
             if "revenus" in cas[0]:
                 return True

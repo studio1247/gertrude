@@ -29,7 +29,11 @@ class PAJETests(unittest.TestCase):
         inscription = Inscription(inscrit, creation=False)
         inscription.debut = datetime.date(2010, 1, 1)
         inscrit.inscriptions.append(inscription)
+        self.assertRaises(CotisationException, Cotisation, inscrit, (datetime.date(2010, 1, 1), None), NO_ADDRESS|NO_PARENTS)
+        creche.formule_taux_horaire = [["", 0.0]]
+        creche.update_formule_taux_horaire(changed=False)
         cotisation = Cotisation(inscrit, (datetime.date(2010, 1, 1), None), NO_ADDRESS|NO_PARENTS)
+        
         
 
 

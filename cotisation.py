@@ -46,11 +46,12 @@ class Cotisation(object):
         if self.debut is None:
             errors.append(u" - La date de début de la période n'est pas renseignée.")
             raise CotisationException(errors)
-        if self.debut < datetime.date(self.debut.year, 9, 1) or self.debut >= datetime.date(2008, 9, 1):
-            revenus_debut = datetime.date(self.debut.year-2, 1, 1)
-        else:
-            revenus_debut = datetime.date(self.debut.year-1, 1, 1)
+        
         if creche.formule_taux_horaire_needs_revenus():
+            if self.debut < datetime.date(self.debut.year, 9, 1) or self.debut >= datetime.date(2008, 9, 1):
+                revenus_debut = datetime.date(self.debut.year-2, 1, 1)
+            else:
+                revenus_debut = datetime.date(self.debut.year-1, 1, 1)
             self.assiette_annuelle = 0.0 
             self.revenus_papa = Select(inscrit.papa.revenus, revenus_debut)
             if not options & NO_REVENUS and (self.revenus_papa is None or self.revenus_papa.revenu == ''):
@@ -64,6 +65,7 @@ class Cotisation(object):
                 self.assiette_annuelle += float(self.revenus_maman.revenu)
         else:
             self.assiette_annuelle = None
+            
         if creche.type == TYPE_MUNICIPAL:
             self.bureau = None
         else:
@@ -108,6 +110,8 @@ class Cotisation(object):
                 self.enfants_a_charge += 1
                 if frere_soeur.entree and frere_soeur.entree <= self.debut and (frere_soeur.sortie is None or frere_soeur.sortie > self.debut):
                     self.enfants_en_creche += 1
+                    
+        
 
         if len(errors) > 0:
             raise CotisationException(errors)
@@ -166,6 +170,9 @@ class Cotisation(object):
                 
         if creche.mode_facturation == FACTURATION_PAJE:       
             self.taux_horaire = creche.eval_taux_horaire(self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine)
+            if self.taux_horaire is None:
+                errors.append(u" - La formule de calcul du taux horaire n'est pas correcte.")
+                raise CotisationException(errors)
             self.montant_heure_garde = self.taux_horaire
             self.montant_jour_supplementaire = 0
             if self.inscription.fin:

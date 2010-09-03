@@ -332,7 +332,7 @@ class SQLConnection(object):
             creche.formule_taux_horaire, creche.idx = eval(formule_taux_horaire), idx
         else:
             creche = Creche()
-        creche.update_formule_taux_horaire(False)
+        creche.update_formule_taux_horaire(changed=False)
         
         cur.execute('SELECT nom, adresse, code_postal, ville, telephone, capacite, idx FROM SITES')
         for site_entry in cur.fetchall():
