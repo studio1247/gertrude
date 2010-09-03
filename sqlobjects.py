@@ -542,9 +542,9 @@ class Creche(object):
                 if eval(cas[0]):
                     return cas[1]
             else:
-                return 0.0
+                return None
         except:
-            return 0.0
+            return None
     
     def formule_taux_horaire_needs_revenus(self):
         if self.mode_facturation != FACTURATION_PAJE:
