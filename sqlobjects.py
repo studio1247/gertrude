@@ -538,7 +538,7 @@ class Creche(object):
     
     def eval_taux_horaire(self, revenus, enfants, jours):
         try:
-            for cas in self.formule_taux_horaire:
+            for cas in self.conversion_formule_taux_horaire:
                 if eval(cas[0]):
                     return cas[1]
             else:

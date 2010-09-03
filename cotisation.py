@@ -51,12 +51,19 @@ class Cotisation(object):
         else:
             revenus_debut = datetime.date(self.debut.year-1, 1, 1)
         if creche.formule_taux_horaire_needs_revenus():
+            self.assiette_annuelle = 0.0 
             self.revenus_papa = Select(inscrit.papa.revenus, revenus_debut)
             if not options & NO_REVENUS and (self.revenus_papa is None or self.revenus_papa.revenu == ''):
                 errors.append(u" - Les déclarations de revenus du papa sont incomplètes.")
+            else:
+                self.assiette_annuelle += float(self.revenus_papa.revenu)
             self.revenus_maman = Select(inscrit.maman.revenus, revenus_debut)
             if not options & NO_REVENUS and (self.revenus_maman is None or self.revenus_maman.revenu == ''):
                 errors.append(u" - Les déclarations de revenus de la maman sont incomplètes.")
+            else:
+                self.assiette_annuelle += float(self.revenus_maman.revenu)
+        else:
+            self.assiette_annuelle = None
         if creche.type == TYPE_MUNICIPAL:
             self.bureau = None
         else:
@@ -156,8 +163,6 @@ class Cotisation(object):
             self.str_mode_garde = u'plein temps'
         else:
             self.str_mode_garde = u'%d/5èmes' % self.jours_semaine
-        
-        self.assiette_annuelle = float(self.revenus_papa.revenu+self.revenus_maman.revenu) 
                 
         if creche.mode_facturation == FACTURATION_PAJE:       
             self.taux_horaire = creche.eval_taux_horaire(self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine)
