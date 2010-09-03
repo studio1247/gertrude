@@ -303,6 +303,11 @@ class Conge(object):
                 
 class CongeInscrit(Conge):
     __table__ = "CONGES_INSCRITS"
+    
+    def create(self):
+        print 'nouveau conge'
+        result = sql_connection.execute('INSERT INTO %s (idx, inscrit, debut, fin) VALUES (NULL,?,?,?)' % self.__table__, (self.parent.idx, self.debut, self.fin))
+        self.idx = result.lastrowid
 
 class Activite(object):
     last_value = 0
@@ -472,7 +477,9 @@ class Creche(object):
         self.calcule_jours_conges()
 
     def calcule_jours_conges(self):
-        self.jours_fermeture = {}        
+        self.jours_fermeture = {}
+        self.jours_fete = set()
+        self.jours_weekend = []
         for year in range(first_date.year, last_date.year + 1):
             for label, func, enable in jours_fermeture:
                 if label in self.feries:
@@ -480,14 +487,20 @@ class Creche(object):
                     if isinstance(tmp, list):
                         for j in tmp:
                             self.jours_fermeture[j] = self.feries[label]
+                            if label == "Week-end":
+                                self.jours_weekend.append(j)
                     else:
                         self.jours_fermeture[tmp] = self.feries[label]
-        self.jours_feries = self.jours_fermeture.keys()
 
+        self.jours_feries = self.jours_fermeture.keys()
+        self.jours_fete = set(self.jours_feries) - set(self.jours_weekend)
+        self.jours_conges = set()
         def add_periode(debut, fin, conge):
             date = debut
             while date <= fin:
                 self.jours_fermeture[date] = conge
+                if date not in self.jours_feries:
+                    self.jours_conges.add(date)
                 date += datetime.timedelta(1)
 
         for conge in self.conges:
@@ -511,6 +524,10 @@ class Creche(object):
                             add_periode(debut, fin, conge)
                 except:
                     pass
+        
+        self.jours_fete = list(self.jours_fete)
+        self.jours_feries = list(self.jours_feries)
+        self.jours_conges = list(self.jours_conges)
 
     def add_conge(self, conge, calcule=True):
         conge.creche = self
@@ -830,13 +847,16 @@ class Inscrit(object):
         if calcule:
             self.calcule_jours_conges()
             
-    def calcule_jours_conges(self):
+    def calcule_jours_conges(self, parent=None):
+        if parent is None:
+            parent = creche
         self.jours_conges = {}
 
         def add_periode(debut, fin, conge):
             date = debut
             while date <= fin:
-                self.jours_conges[date] = conge
+                if date not in parent.jours_fermeture:
+                    self.jours_conges[date] = conge
                 date += datetime.timedelta(1)
 
         for conge in self.conges:
@@ -859,7 +879,7 @@ class Inscrit(object):
                         add_periode(debut, fin, conge)
             except:
                 pass
-            
+        
     def getInscription(self, date):
         return Select(self.inscriptions, date)
 
@@ -884,6 +904,16 @@ class Inscrit(object):
             except:
               pass
         return result
+    
+    def hasFacture(self, date):
+        month_start = getMonthStart(date)
+        if self.getInscriptions(month_start, getMonthEnd(date)):
+            return True
+        if creche.temps_facturation == FACTURATION_DEBUT_MOIS:
+            previous_month_end = month_start - datetime.timedelta(1)
+            if self.getInscriptions(getMonthStart(previous_month_end), previous_month_end):
+                return True
+        return False
 
     def getReferenceDay(self, date):
         inscription = self.getInscription(date)

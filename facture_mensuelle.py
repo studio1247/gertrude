@@ -33,7 +33,7 @@ class FactureModifications(object):
         self.periode = periode
         if isinstance(who, list):
             self.default_output = u"Factures %s %d.odt" % (months[periode.month - 1], periode.year)
-            self.inscrits = [inscrit for inscrit in who if inscrit.getInscription(periode) is not None]
+            self.inscrits = [inscrit for inscrit in who if inscrit.hasFacture(periode)]
         else:
             self.default_output = u"Facture %s %s %s %d.odt" % (who.prenom, who.nom, months[periode.month - 1], periode.year)
             self.inscrits = [who]

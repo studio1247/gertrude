@@ -421,10 +421,10 @@ class SQLConnection(object):
                     # print inscrit.prenom, day, debut, fin, value
             cur.execute('SELECT debut, fin, label, idx FROM CONGES_INSCRITS WHERE inscrit=?', (inscrit.idx,))
             for conges_entry in cur.fetchall():
-                conge = CongeInscrit(creation=False)
+                conge = CongeInscrit(inscrit, creation=False)
                 conge.debut, conge.fin, conge.label, conge.idx = conges_entry
                 inscrit.conges.append(conge)
-            inscrit.calcule_jours_conges()
+            inscrit.calcule_jours_conges(creche)
             
             cur.execute('SELECT absent, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email, idx FROM PARENTS WHERE inscrit=?', (inscrit.idx,))
             for parent_entry in cur.fetchall():

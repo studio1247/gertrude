@@ -170,7 +170,7 @@ class ForfaitPanel(ContextPanel):
             previous_periode = None
             for periode in all_periodes:
                 try:
-                    context = Cotisation(self.inscrit, periode, options=NO_ADDRESS+NO_PARENTS)                    
+                    context = Cotisation(self.inscrit, periode, options=NO_ADDRESS+NO_PARENTS+TRACES)                    
                     if not previous_periode or context != previous_context:
                         periodes.append(periode)           
                         previous_periode = periode
