@@ -29,6 +29,7 @@ from planning_presences import PlanningModifications
 from coordonnees_parents import CoordonneesModifications
 from etats_trimestriels import EtatsTrimestrielsModifications
 from planning_detaille import PlanningDetailleModifications
+from etats_presence import EtatsPresenceModifications
 from facture import FactureFinMois
 from planning import *
 from sqlobjects import Day
@@ -54,7 +55,7 @@ class SitesPlanningPanel(PlanningWidget):
                 for site in creche.sites:
                     line = Day()
                     for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
-                        line.values[i] = creche.capacite
+                        line.values[i] = site.capacite
                     line.label = site.nom
                     day_lines[site] = line
                     lines.append(line)
@@ -174,12 +175,15 @@ class EtatsPresenceTab(AutoTab):
         self.unordered_sizer.AddMany([(self.sites_choice, 0, wx.LEFT, 5), (self.inscrits_choice, 0, wx.LEFT, 5)])
         self.search_sizer.AddMany([(self.ordered_sizer, 0, wx.ALIGN_CENTER_VERTICAL), (self.unordered_sizer, 0, wx.ALIGN_CENTER_VERTICAL)])
         
+        self.search_sizer.AddStretchSpacer()
         ok = wx.Button(self, wx.ID_OK)
-        self.search_sizer.AddSpacer(10, -1, wx.EXPAND, 0)
         self.search_sizer.Add(ok, 0, wx.ALIGN_CENTER_VERTICAL)
+        export = wx.Button(self, -1, "Export")
+        self.search_sizer.Add(export, 0, wx.ALIGN_CENTER_VERTICAL)
         self.Bind(wx.EVT_BUTTON, self.onOk, ok)
+        self.Bind(wx.EVT_BUTTON, self.onExport, export)
         
-        self.sizer.Add(self.search_sizer, 0, wx.EXPAND|wx.ALL|wx.ALIGN_CENTER_VERTICAL, 10)
+        self.sizer.Add(self.search_sizer, 0, wx.ALL|wx.EXPAND, 10)
         self.ordered = []
         self.unordered = [self.sites_choice, self.inscrits_choice]
         self.debut_value = None
@@ -328,10 +332,9 @@ class EtatsPresenceTab(AutoTab):
                     kwargs[ctrl.parameter] = ctrl.GetClientData(ctrl.GetSelection())
                 for ctrl in self.unordered:
                     ctrl.fill_function(**kwargs)
-                    
         event.Skip()
         
-    def onOk(self, event):
+    def GetSelection(self):
         debut = self.debut_control.GetValue()
         fin = self.fin_control.GetValue()
         if len(creche.sites) < 2:
@@ -349,7 +352,7 @@ class EtatsPresenceTab(AutoTab):
         if not fin:
             fin = last_date
         
-        result = {}
+        selection = {}
         for inscrit in inscrits:
             for inscription in inscrit.getInscriptions(debut, fin):
                 if site is None or inscription.site == site:
@@ -361,21 +364,23 @@ class EtatsPresenceTab(AutoTab):
                     while date <= date_fin:
                         state, contrat, realise, supplementaire = inscrit.getState(date)
                         if state > 0 and state & PRESENT:
-                            if date not in result:
-                                result[date] = []
-                            result[date].append((inscription.site, inscrit, contrat+supplementaire))
+                            if date not in selection:
+                                selection[date] = []
+                            selection[date].append((inscription.site, inscrit, contrat+supplementaire))
                         date += datetime.timedelta(1)
-        
-        
+        return selection
+    
+    def onOk(self, event):
+        selection = self.GetSelection()
         if self.grid.GetNumberRows() > 0:
             self.grid.DeleteRows(0, self.grid.GetNumberRows())
         row = 0
-        dates = result.keys()
+        dates = selection.keys()
         dates.sort()
         for date in dates:
-            for site, inscrit, heures in result[date]:
+            for site, inscrit, heures in selection[date]:
                 self.grid.AppendRows(1)
-                self.grid.SetCellValue(row, 0, str(date))
+                self.grid.SetCellValue(row, 0, date2str(date))
                 inscrit_column = 1
                 if self.site_col_displayed:
                     inscrit_column = 2
@@ -383,10 +388,21 @@ class EtatsPresenceTab(AutoTab):
                         self.grid.SetCellValue(row, 1, site.nom)
                 self.grid.SetCellValue(row, inscrit_column, "%s %s" % (inscrit.prenom, inscrit.nom))
                 self.grid.SetCellValue(row, inscrit_column+1, str(heures))
-                row += 1                        
+                row += 1
         self.grid.ForceRefresh()
-        event.Skip()
-                
+        
+    def onExport(self, event):
+        debut = self.debut_control.GetValue()
+        fin = self.fin_control.GetValue()
+        if len(creche.sites) < 2:
+            site = None
+        else:
+            site = self.sites_choice.GetClientData(self.sites_choice.GetSelection())
+        inscrit = self.inscrits_choice.GetClientData(self.inscrits_choice.GetSelection())
+        
+        selection = self.GetSelection()
+        DocumentDialog(self, EtatsPresenceModifications(debut, fin, site, inscrit, selection)).ShowModal()
+          
 class StatistiquesFrequentationTab(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
