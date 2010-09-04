@@ -53,13 +53,15 @@ class SitesPlanningPanel(PlanningWidget):
                 lines.append(days[week_day])
                 for site in creche.sites:
                     line = Day()
-                    line.values = [creche.capacite] * 24 * (60 / BASE_GRANULARITY)
+                    for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
+                        jour.values[i] = creche.capacite
                     line.label = site.nom
                     day_lines[site] = line
                     lines.append(line)
             else:
                 site_line = Day()
-                site_line.values = [creche.capacite] * 24 * (60 / BASE_GRANULARITY)
+                for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
+                    site_line.values[i] = creche.capacite
                 site_line.reference = None
                 site_line.label = days[week_day]
                 lines.append(site_line)
@@ -71,14 +73,15 @@ class SitesPlanningPanel(PlanningWidget):
                     if date in inscrit.journees:
                         line = inscrit.journees[date]
                     else:
-                        line = inscrit.getReferenceDayCopy(date)
+                        line = inscrit.getReferenceDay(date)
                     if len(creche.sites) > 1:
                         if inscription.site and inscription.site.nom in day_lines:
                             site_line = day_lines[inscription.site.nom]
                         else:
                             continue
                     for i, value in enumerate(line.values):
-                        site_line.values[i] -= value
+                        if value > 0 and value & PRESENT:
+                            site_line.values[i] -= 1
 
         self.SetLines(lines)
 
@@ -358,7 +361,7 @@ class EtatsPresenceTab(AutoTab):
                         date_fin = fin
                     while date <= date_fin:
                         state, contrat, realise, supplementaire = inscrit.getState(date)
-                        if state & PRESENT:
+                        if state > 0 and state & PRESENT:
                             if date not in result:
                                 result[date] = []
                             result[date].append((inscription.site, inscrit, contrat+supplementaire))
