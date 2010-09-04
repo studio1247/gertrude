@@ -54,7 +54,7 @@ class SitesPlanningPanel(PlanningWidget):
                 for site in creche.sites:
                     line = Day()
                     for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
-                        jour.values[i] = creche.capacite
+                        line.values[i] = creche.capacite
                     line.label = site.nom
                     day_lines[site] = line
                     lines.append(line)
@@ -69,14 +69,13 @@ class SitesPlanningPanel(PlanningWidget):
             for inscrit in creche.inscrits:
                 inscription = inscrit.getInscription(date)
                 if inscription is not None:
-                    # print inscrit.prenom, 
                     if date in inscrit.journees:
                         line = inscrit.journees[date]
                     else:
                         line = inscrit.getReferenceDay(date)
                     if len(creche.sites) > 1:
-                        if inscription.site and inscription.site.nom in day_lines:
-                            site_line = day_lines[inscription.site.nom]
+                        if inscription.site and inscription.site in day_lines:
+                            site_line = day_lines[inscription.site]
                         else:
                             continue
                     for i, value in enumerate(line.values):
@@ -431,26 +430,34 @@ class StatistiquesFrequentationTab(AutoTab):
         
         self.SetSizer(self.sizer)
         
+    def UpdateContents(self):
+        self.EvtPeriodeChoice(None)
+        
     def EvtPeriodeChoice(self, evt):
         annee = self.anneechoice.GetClientData(self.anneechoice.GetSelection())
         periode = self.periodechoice.GetClientData(self.periodechoice.GetSelection())
         heures_contractualisees = 0.0
         heures_realisees = 0.0
         heures_facturees = 0.0
-        for mois in periode:
-            debut = datetime.date(annee, mois+1, 1)
-            fin = getMonthEnd(debut)
-            for inscrit in creche.inscrits:
-                if inscrit.getInscriptions(debut, fin):
-                    facture = FactureFinMois(inscrit, annee, mois+1)
-                    heures_contractualisees += facture.heures_contractualisees
-                    heures_realisees += facture.heures_realisees
-                    # print inscrit.prenom, facture.heures_contrat, facture.heures_realisees
-                    heures_facturees += sum(facture.heures_facturees)
-                    
-        self.presences_contrat_heures.SetValue("%.2f heures" % heures_contractualisees)
-        self.presences_realisees_heures.SetValue("%.2f heures" % heures_realisees)
-        self.presences_facturees_heures.SetValue("%.2f heures" % heures_facturees)
+        try:
+            for mois in periode:
+                debut = datetime.date(annee, mois+1, 1)
+                fin = getMonthEnd(debut)
+                for inscrit in creche.inscrits:
+                    if inscrit.getInscriptions(debut, fin):
+                        facture = FactureFinMois(inscrit, annee, mois+1)
+                        heures_contractualisees += facture.heures_contractualisees
+                        heures_realisees += facture.heures_realisees
+                        # print inscrit.prenom, facture.heures_contrat, facture.heures_realisees
+                        heures_facturees += sum(facture.heures_facturees)
+                        
+            self.presences_contrat_heures.SetValue("%.2f heures" % heures_contractualisees)
+            self.presences_realisees_heures.SetValue("%.2f heures" % heures_realisees)
+            self.presences_facturees_heures.SetValue("%.2f heures" % heures_facturees)
+        except:
+            self.presences_contrat_heures.SetValue("<erreur>")
+            self.presences_realisees_heures.SetValue("<erreur>")
+            self.presences_facturees_heures.SetValue("<erreur>")
 
 class RelevesTab(AutoTab):
     def __init__(self, parent):
