@@ -46,6 +46,7 @@ class FactureFinMois(object):
         jours_fermeture = 0
         cotisations_mensuelles = {}
         heures_hebdomadaires = {}
+        last_cotisation = None
 
         date = datetime.date(annee, mois, 1)
         while date.month == mois:
@@ -53,7 +54,12 @@ class FactureFinMois(object):
                 jours_ouvres += 1
                 inscription = inscrit.getInscription(date)
                 if inscription:
-                    cotisation = Cotisation(inscrit, (date, date), options=NO_ADDRESS|self.options)
+                    if last_cotisation and last_cotisation.Include(date):
+                        cotisation = last_cotisation
+                    else:
+                        cotisation = Cotisation(inscrit, (date, date), options=NO_ADDRESS|self.options)
+                        last_cotisation = cotisation
+                        
                     state, heures_reference, heures_realisees, heures_supplementaires = inscrit.getState(date)
                     
                     self.heures_contractualisees += heures_reference

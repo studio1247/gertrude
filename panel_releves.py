@@ -182,23 +182,21 @@ class EtatsPresenceTab(AutoTab):
         self.unordered = [self.sites_choice, self.inscrits_choice]
         self.debut_value = None
         self.fin_value = None
+        self.site_col_displayed = False
         
         self.grid = wx.grid.Grid(self)
-        self.grid.CreateGrid(0, 4)
+        self.grid.CreateGrid(0, 3)
         # self.grid.EnableScrolling(False, False)
         self.grid.SetRowLabelSize(1)
-        self.grid.SetDefaultColSize(155)
         self.grid.SetColLabelValue(0, "Date")
-        self.grid.SetColLabelValue(1, "Site")
-        self.grid.SetColLabelValue(2, "Inscrit")
-        self.grid.SetColLabelValue(3, "Heures")
-
+        self.grid.SetColLabelValue(1, "Inscrit")
+        self.grid.SetColLabelValue(2, "Heures")
+        self.grid.SetColSize(0, 155)
+        self.grid.SetColSize(1, 155)
+        self.grid.SetColSize(2, 200)
         self.sizer.Add(self.grid, -1, wx.EXPAND|wx.ALL, 5)
-        
         self.SetSizer(self.sizer)
-        
-        self.UpdateContents()
-        
+        self.UpdateContents()        
         self.Bind(wx.EVT_CHOICE, self.onChoice, self.sites_choice)
         self.Bind(wx.EVT_CHOICE, self.onChoice, self.inscrits_choice)
 
@@ -246,10 +244,21 @@ class EtatsPresenceTab(AutoTab):
         
     def UpdateContents(self):
         if self.grid.GetNumberRows() > 0:
-            self.grid.DeleteRows(0, self.grid.GetNumberRows())                   
+            self.grid.DeleteRows(0, self.grid.GetNumberRows())
+        if len(creche.sites) < 2:
+            if self.site_col_displayed:
+                self.grid.DeleteCols(1)
+                self.site_col_displayed = False
+        else:
+            if not self.site_col_displayed:
+                self.grid.InsertCols(1)
+                self.grid.SetColLabelValue(1, "Site")
+                self.grid.SetColSize(1, 100)
+                self.site_col_displayed = True   
         self.grid.ForceRefresh()
         self.FillSites()
         self.FillInscrits()
+        self.sizer.FitInside(self)
     
     def onPeriodeChange(self, event):
         debut_value = self.debut_control.GetValue()
@@ -323,7 +332,10 @@ class EtatsPresenceTab(AutoTab):
     def onOk(self, event):
         debut = self.debut_control.GetValue()
         fin = self.fin_control.GetValue()
-        site = self.sites_choice.GetClientData(self.sites_choice.GetSelection())
+        if len(creche.sites) < 2:
+            site = None
+        else:
+            site = self.sites_choice.GetClientData(self.sites_choice.GetSelection())
         inscrit = self.inscrits_choice.GetClientData(self.inscrits_choice.GetSelection())
 
         if inscrit:
@@ -362,10 +374,13 @@ class EtatsPresenceTab(AutoTab):
             for site, inscrit, heures in result[date]:
                 self.grid.AppendRows(1)
                 self.grid.SetCellValue(row, 0, str(date))
-                if site:
-                    self.grid.SetCellValue(row, 1, site.nom)
-                self.grid.SetCellValue(row, 2, "%s %s" % (inscrit.prenom, inscrit.nom))
-                self.grid.SetCellValue(row, 3, str(heures))
+                inscrit_column = 1
+                if self.site_col_displayed:
+                    inscrit_column = 2
+                    if site:
+                        self.grid.SetCellValue(row, 1, site.nom)
+                self.grid.SetCellValue(row, inscrit_column, "%s %s" % (inscrit.prenom, inscrit.nom))
+                self.grid.SetCellValue(row, inscrit_column+1, str(heures))
                 row += 1                        
         self.grid.ForceRefresh()
         event.Skip()

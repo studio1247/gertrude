@@ -32,6 +32,22 @@ NO_REVENUS = 4
 NO_PARENTS = 8
 TRACES = 16
 
+def GetDateRevenus(date):
+    if date < datetime.date(date.year, 9, 1) or date >= datetime.date(2008, 9, 1):
+        return datetime.date(date.year-2, 1, 1)
+    else:
+        return datetime.date(date.year-1, 1, 1)
+    
+def GetEnfantsCount(inscrit, date):
+    enfants_a_charge = 1
+    enfants_en_creche = 1
+    for frere_soeur in inscrit.freres_soeurs:
+        if frere_soeur.naissance and frere_soeur.naissance <= date:
+            enfants_a_charge += 1
+            if frere_soeur.entree and frere_soeur.entree <= date and (frere_soeur.sortie is None or frere_soeur.sortie > date):
+                enfants_en_creche += 1
+    return enfants_a_charge, enfants_en_creche
+                
 class Cotisation(object):
     def __init__(self, inscrit, periode, options=0):
         self.inscrit = inscrit
@@ -49,17 +65,14 @@ class Cotisation(object):
             raise CotisationException(errors)
         
         if creche.formule_taux_horaire_needs_revenus():
-            if self.debut < datetime.date(self.debut.year, 9, 1) or self.debut >= datetime.date(2008, 9, 1):
-                revenus_debut = datetime.date(self.debut.year-2, 1, 1)
-            else:
-                revenus_debut = datetime.date(self.debut.year-1, 1, 1)
+            self.date_revenus = GetDateRevenus(self.debut)
             self.assiette_annuelle = 0.0 
-            self.revenus_papa = Select(inscrit.papa.revenus, revenus_debut)
+            self.revenus_papa = Select(inscrit.papa.revenus, self.date_revenus)
             if not options & NO_REVENUS and (self.revenus_papa is None or self.revenus_papa.revenu == ''):
                 errors.append(u" - Les déclarations de revenus du papa sont incomplètes.")
             else:
                 self.assiette_annuelle += float(self.revenus_papa.revenu)
-            self.revenus_maman = Select(inscrit.maman.revenus, revenus_debut)
+            self.revenus_maman = Select(inscrit.maman.revenus, self.date_revenus)
             if not options & NO_REVENUS and (self.revenus_maman is None or self.revenus_maman.revenu == ''):
                 errors.append(u" - Les déclarations de revenus de la maman sont incomplètes.")
             else:
@@ -104,13 +117,7 @@ class Cotisation(object):
         else:
             self.mode_inscription = MODE_CRECHE
 
-        self.enfants_a_charge = 1
-        self.enfants_en_creche = 1
-        for frere_soeur in inscrit.freres_soeurs:
-            if frere_soeur.naissance and frere_soeur.naissance <= self.debut:
-                self.enfants_a_charge += 1
-                if frere_soeur.entree and frere_soeur.entree <= self.debut and (frere_soeur.sortie is None or frere_soeur.sortie > self.debut):
-                    self.enfants_en_creche += 1      
+        self.enfants_a_charge, self.enfants_en_creche = GetEnfantsCount(inscrit, self.debut)
 
         if len(errors) > 0:
             raise CotisationException(errors)
@@ -269,7 +276,20 @@ class Cotisation(object):
             print inscrit.prenom
             for var in ["debut", "fin", "revenus_papa.revenu", "revenus_maman.revenu", "assiette_annuelle", "jours_semaine", "heures_reelles_semaine", "heures_semaine", "heures_mois", "taux_effort", "enfants_a_charge", "taux_horaire"]:
                 print " ", var, eval("self.%s" % var)
-        
+    
+    def Include(self, date):
+        if self.inscrit.getInscription(date) != self.inscription:
+            return False
+        elif self.date_revenus != GetDateRevenus(date):
+            return False
+        elif self.bureau != Select(creche.bureaux, date):
+            return False
+        elif creche.mode_facturation != FACTURATION_PAJE and self.bareme_caf != Select(creche.baremes_caf, date):
+            return False
+        elif (self.enfants_a_charge, self.enfants_en_creche) != GetEnfantsCount(self.inscrit, date):
+            return False
+        else:
+            return True
 
     def __cmp__(self, context2):
         return context2 == None or \
