@@ -144,10 +144,7 @@ class AideInscriptionTab(AutoTab):
         self.onChangeWeek()
         
     def UpdateContents(self):            
-#        for week_day in range(self.count):
-#            note = self.notebook.GetPage(week_day)
-#            note.UpdateContents()
-        self.sizer.Layout()
+        self.onChangeWeek()
 
 
 class EtatsPresenceTab(AutoTab):
