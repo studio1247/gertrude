@@ -90,7 +90,7 @@ class SitesPlanningPanel(PlanningWidget):
         self.UpdateContents()
         
 
-class AideInscriptionTab(AutoTab):
+class PlacesDisponiblesTab(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -580,7 +580,7 @@ class RelevesTab(AutoTab):
 class RelevesNotebook(wx.Notebook):
     def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
-        self.AddPage(AideInscriptionTab(self), u"Aide à l'inscription")
+        self.AddPage(PlacesDisponiblesTab(self), "Places disponibles")
         self.AddPage(EtatsPresenceTab(self), u"Etats de présence")
         self.AddPage(StatistiquesFrequentationTab(self), u'Statistiques de fréquentation')
         self.AddPage(RelevesTab(self), u'Edition de relevés')
