@@ -158,40 +158,35 @@ class EtatsPresenceTab(AutoTab):
         self.fin_control = DateCtrl(self)
         wx.EVT_TEXT(self.fin_control, -1, self.onPeriodeChange)
         self.search_sizer.AddMany([(wx.StaticText(self, -1, u'Fin :'), 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5), (self.fin_control, 0, wx.ALIGN_CENTER_VERTICAL)])
-        
         self.ordered_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.unordered_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.sites_choice = wx.Choice(self)
         self.sites_choice.fill_function = self.FillSites
         self.sites_choice.parameter = "site"
-
         self.inscrits_choice = wx.Choice(self)
         self.inscrits_choice.fill_function = self.FillInscrits
         self.inscrits_choice.parameter = "inscrit"
-
         self.unordered_sizer.AddMany([(self.sites_choice, 0, wx.LEFT, 5), (self.inscrits_choice, 0, wx.LEFT, 5)])
         self.search_sizer.AddMany([(self.ordered_sizer, 0, wx.ALIGN_CENTER_VERTICAL), (self.unordered_sizer, 0, wx.ALIGN_CENTER_VERTICAL)])
-        
-        self.search_sizer.AddStretchSpacer()
-        ok = wx.Button(self, wx.ID_OK)
-        self.search_sizer.Add(ok, 0, wx.ALIGN_CENTER_VERTICAL)
-        export = wx.Button(self, -1, "Export")
-        self.search_sizer.Add(export, 0, wx.ALIGN_CENTER_VERTICAL)
-        self.Bind(wx.EVT_BUTTON, self.onOk, ok)
-        self.Bind(wx.EVT_BUTTON, self.onExport, export)
-        
-        self.sizer.Add(self.search_sizer, 0, wx.ALL|wx.EXPAND, 10)
+        self.sizer.Add(self.search_sizer, 0, wx.ALL|wx.EXPAND, 5)
         self.ordered = []
         self.unordered = [self.sites_choice, self.inscrits_choice]
         self.debut_value = None
         self.fin_value = None
-        self.site_col_displayed = False
+        
+        sizer2 = wx.BoxSizer(wx.HORIZONTAL)
+        ok = wx.Button(self, wx.ID_OK)
+        sizer2.Add(ok, 0)
+        export = wx.Button(self, -1, "Export")
+        sizer2.Add(export)
+        self.sizer.Add(sizer2, 0, wx.ALL, 5)
         
         self.grid = wx.grid.Grid(self)
         self.grid.CreateGrid(0, 3)
         # self.grid.EnableScrolling(False, False)
         self.grid.SetRowLabelSize(1)
         self.grid.SetColLabelValue(0, "Date")
+        self.site_col_displayed = False
         self.grid.SetColLabelValue(1, "Inscrit")
         self.grid.SetColLabelValue(2, "Heures")
         self.grid.SetColSize(0, 155)
@@ -199,7 +194,10 @@ class EtatsPresenceTab(AutoTab):
         self.grid.SetColSize(2, 200)
         self.sizer.Add(self.grid, -1, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(self.sizer)
-        self.UpdateContents()        
+        self.UpdateContents()
+        
+        self.Bind(wx.EVT_BUTTON, self.onOk, ok)
+        self.Bind(wx.EVT_BUTTON, self.onExport, export)
         self.Bind(wx.EVT_CHOICE, self.onChoice, self.sites_choice)
         self.Bind(wx.EVT_CHOICE, self.onChoice, self.inscrits_choice)
 
