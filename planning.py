@@ -131,9 +131,7 @@ class PlanningGridWindow(BufferedWindow):
             
     def DrawNumbersLine(self, dc, index, line):
         if not isinstance(line, basestring):
-            line = line.values
-            r, g, b, t, s = 5, 203, 28, 150, wx.SOLID
-    
+            line = line.values    
             pos = -2
             if not self.GetParent().GetParent().options & NO_ICONS:
                 pos += ICONS_WIDTH
@@ -150,9 +148,15 @@ class PlanningGridWindow(BufferedWindow):
                 if nv != v:
                     if v != 0:
                         rect = wx.Rect(pos+3+(a-debut)*COLUMN_WIDTH, 2 + index * LINE_HEIGHT, (x-a)*COLUMN_WIDTH-1, LINE_HEIGHT-1)
+                        if v > 5:
+                            r, g, b, t, s = 5, 203, 28, 150, wx.SOLID
+                        elif v > 0:
+                            r, g, b, t, s = 5, 203, 28, 30*v, wx.SOLID
+                        else:
+                            r, g, b, t, s = 190, 35, 29, 50, wx.SOLID
                         try:
                             dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
-                            dc.SetBrush(wx.Brush(wx.Colour(r, g, b, 10*v), s))
+                            dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
                         except:
                             dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
                             dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
