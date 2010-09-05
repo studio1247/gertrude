@@ -20,7 +20,7 @@ import os.path
 import sys
 import string
 import datetime
-import wx, wx.lib.scrolledpanel, wx.html, wx.grid 
+import wx, wx.lib.scrolledpanel, wx.html, wx.grid, wx.lib.expando
 from constants import *
 from functions import *
 from controls import *
@@ -421,25 +421,31 @@ class StatistiquesFrequentationTab(AutoTab):
         sizer.AddMany([(self.anneechoice, 0, 0), (self.periodechoice, 0, wx.LEFT, 5)])
         self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 10)
         
-        sizer = wx.FlexGridSizer(0, 3, 5, 10)
+        self.message = wx.lib.expando.ExpandoTextCtrl(self)
+        self.message.Disable()
+        self.message.SetValue("")
+        self.message.Show(False)
+        self.sizer.Add(self.message, 0, wx.EXPAND|wx.ALL, 10)
+        
+        self.result_sizer = wx.FlexGridSizer(0, 3, 5, 10)
         self.presences_contrat_heures = wx.TextCtrl(self)
         self.presences_contrat_heures.Disable()
         self.presences_contrat_euros = wx.TextCtrl(self)
         self.presences_contrat_euros.Disable()
-        sizer.AddMany([(wx.StaticText(self, -1, u'Présences contractualisées :'), 0, 0), (self.presences_contrat_heures, 0, wx.EXPAND), (self.presences_contrat_euros, 0, wx.EXPAND)])
+        self.result_sizer.AddMany([(wx.StaticText(self, -1, u'Présences contractualisées :'), 0, 0), (self.presences_contrat_heures, 0, wx.EXPAND), (self.presences_contrat_euros, 0, wx.EXPAND)])
         self.presences_realisees_heures = wx.TextCtrl(self)
         self.presences_realisees_heures.Disable()
         self.presences_realisees_euros = wx.TextCtrl(self)
         self.presences_realisees_euros.Disable()
-        sizer.AddMany([(wx.StaticText(self, -1, u'Présences réalisées :'), 0, 0), (self.presences_realisees_heures, 0, wx.EXPAND), (self.presences_realisees_euros, 0, wx.EXPAND)])
+        self.result_sizer.AddMany([(wx.StaticText(self, -1, u'Présences réalisées :'), 0, 0), (self.presences_realisees_heures, 0, wx.EXPAND), (self.presences_realisees_euros, 0, wx.EXPAND)])
         self.presences_facturees_heures = wx.TextCtrl(self)
         self.presences_facturees_heures.Disable()
         self.presences_facturees_euros = wx.TextCtrl(self)
         self.presences_facturees_euros.Disable()
-        sizer.AddMany([(wx.StaticText(self, -1, u'Présences facturées :'), 0, 0), (self.presences_facturees_heures, 0, wx.EXPAND), (self.presences_facturees_euros, 0, wx.EXPAND)])       
-        self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 10)
-        
+        self.result_sizer.AddMany([(wx.StaticText(self, -1, u'Présences facturées :'), 0, 0), (self.presences_facturees_heures, 0, wx.EXPAND), (self.presences_facturees_euros, 0, wx.EXPAND)])       
+        self.sizer.Add(self.result_sizer, 0, wx.EXPAND|wx.ALL, 10)
         self.SetSizer(self.sizer)
+        self.Layout()
         
     def UpdateContents(self):
         self.EvtPeriodeChoice(None)
@@ -450,25 +456,47 @@ class StatistiquesFrequentationTab(AutoTab):
         heures_contractualisees = 0.0
         heures_realisees = 0.0
         heures_facturees = 0.0
-        try:
-            for mois in periode:
-                debut = datetime.date(annee, mois+1, 1)
-                fin = getMonthEnd(debut)
-                for inscrit in creche.inscrits:
+        cotisations_contractualisees = 0.0
+        cotisations_realisees = 0.0
+        cotisations_facturees = 0.0
+        erreurs = []
+        for mois in periode:
+            debut = datetime.date(annee, mois+1, 1)
+            fin = getMonthEnd(debut)
+            for inscrit in creche.inscrits:
+                try:
                     if inscrit.getInscriptions(debut, fin):
                         facture = FactureFinMois(inscrit, annee, mois+1)
+                        # print inscrit.prenom, mois, facture.heures_contrat, facture.heures_realisees
                         heures_contractualisees += facture.heures_contractualisees
-                        heures_realisees += facture.heures_realisees
-                        # print inscrit.prenom, facture.heures_contrat, facture.heures_realisees
+                        heures_realisees += facture.heures_realisees                       
                         heures_facturees += sum(facture.heures_facturees)
-                        
+                        cotisations_contractualisees += facture.cotisation_mensuelle
+                        cotisations_realisees += facture.total_realise
+                        cotisations_facturees += facture.total
+                except Exception, e:
+                    erreurs.append((inscrit, e))
+                              
+        if erreurs:
+            msg = "\n\n".join([u"%s %s:\n%s" % (inscrit.prenom, inscrit.nom, str(erreur)) for inscrit, erreur in erreurs])
+            self.message.SetValue(msg)
+            self.message.Show(True)
+            self.presences_contrat_heures.SetValue("-")
+            self.presences_realisees_heures.SetValue("-")
+            self.presences_facturees_heures.SetValue("-")
+            self.presences_contrat_euros.SetValue("-")
+            self.presences_realisees_euros.SetValue("-")
+            self.presences_facturees_euros.SetValue("-")
+        else:
+            self.message.Show(False)
             self.presences_contrat_heures.SetValue("%.2f heures" % heures_contractualisees)
             self.presences_realisees_heures.SetValue("%.2f heures" % heures_realisees)
             self.presences_facturees_heures.SetValue("%.2f heures" % heures_facturees)
-        except:
-            self.presences_contrat_heures.SetValue("<erreur>")
-            self.presences_realisees_heures.SetValue("<erreur>")
-            self.presences_facturees_heures.SetValue("<erreur>")
+            self.presences_contrat_euros.SetValue("%.2f €" % cotisations_contractualisees)
+            self.presences_realisees_euros.SetValue("%.2f €" % cotisations_realisees)
+            self.presences_facturees_euros.SetValue("%.2f €" % cotisations_facturees)
+        self.Layout()       
+        self.sizer.FitInside(self)
 
 class RelevesTab(AutoTab):
     def __init__(self, parent):

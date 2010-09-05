@@ -64,7 +64,7 @@ class FactureFinMois(object):
                     
                     self.heures_contractualisees += heures_reference
                     self.heures_realisees += heures_realisees
-                    
+                                       
                     if (cotisation.mode_inscription, cotisation.cotisation_mensuelle) in cotisations_mensuelles:
                         cotisation = cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)]
                         cotisation.heures_reference += heures_reference
@@ -121,6 +121,8 @@ class FactureFinMois(object):
                                 self.supplement_activites += activite.tarif
                     
             date += datetime.timedelta(1)
+            
+        self.total_realise = self.heures_realisees * cotisation.montant_heure_garde
 
         for mode_inscription, montant in cotisations_mensuelles:
             cotisation = cotisations_mensuelles[mode_inscription, montant]
