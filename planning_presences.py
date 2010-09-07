@@ -27,7 +27,7 @@ def isPresentDuringTranche(journee, tranche):
     
     debut, fin = tranches[tranche]
     for i in range(int(debut * (60 / BASE_GRANULARITY)), int(fin * (60 / BASE_GRANULARITY))):
-        if journee.values[i]:
+        if journee.values[i] > 0:
             return True
     return False
 
