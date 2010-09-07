@@ -122,21 +122,7 @@ class Cotisation(object):
         if len(errors) > 0:
             raise CotisationException(errors)
 
-        self.mois_sans_facture = []
-        for conge in creche.conges:
-            if conge.options == MOIS_SANS_FACTURE:
-                if conge.debut in months:
-                    mois = months.index(conge.debut) + 1
-                    if mois not in self.mois_sans_facture:
-                        self.mois_sans_facture.append(mois)
-                else:
-                    try:
-                        mois = int(conge.debut)
-                        if mois not in self.mois_sans_facture:
-                            self.mois_sans_facture.append(mois)
-                    except:
-                        pass
-        self.nombre_factures = 12 - len(self.mois_sans_facture)
+        self.nombre_factures = 12 - len(creche.mois_sans_facture)
         
         if creche.mode_facturation == FACTURATION_FORFAIT_10H:
             self.heures_semaine = self.jours_semaine * 10

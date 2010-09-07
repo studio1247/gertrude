@@ -480,6 +480,7 @@ class Creche(object):
         self.jours_fermeture = {}
         self.jours_fete = set()
         self.jours_weekend = []
+        self.mois_sans_facture = set()
         for year in range(first_date.year, last_date.year + 1):
             for label, func, enable in jours_fermeture:
                 if label in self.feries:
@@ -504,7 +505,17 @@ class Creche(object):
                 date += datetime.timedelta(1)
 
         for conge in self.conges:
-            if conge.options != MOIS_SANS_FACTURE:
+            if conge.options == MOIS_SANS_FACTURE:
+                if conge.debut in months:
+                    mois = months.index(conge.debut) + 1
+                    self.mois_sans_facture.add(mois)
+                else:
+                    try:
+                        mois = int(conge.debut)
+                        self.mois_sans_facture.add(mois)
+                    except:
+                        pass
+            else:
                 try:
                     count = conge.debut.count('/')
                     if count == 2:
@@ -906,6 +917,8 @@ class Inscrit(object):
         return result
     
     def hasFacture(self, date):
+        if date.month in creche.mois_sans_facture:
+            return False
         month_start = getMonthStart(date)
         if self.getInscriptions(month_start, getMonthEnd(date)):
             return True
