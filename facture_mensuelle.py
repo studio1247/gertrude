@@ -123,8 +123,6 @@ class FactureModifications(object):
                         ('date', '01/%.2d/%d' % (facture.mois, facture.annee)),
                         ('numfact', '%.2d%.4d%.2d%.4d' % (inscriptions[0].mode + 1, facture.annee, facture.mois, inscriptions[0].idx)),
                         ('cotisation-mensuelle', '%.2f' % facture.cotisation_mensuelle),
-                        ('tarif-horaire', '%.2f' % facture.tarif_horaire),
-                        ('heures-contrat', '%.2f' % facture.heures_contrat),
                         ('heures-supplementaires', '%.2f' % facture.heures_supplementaires),
                         ('supplement', '%.2f' % facture.supplement),
                         ('deduction', '- %.2f' % facture.deduction),

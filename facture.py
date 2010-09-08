@@ -31,10 +31,9 @@ class FactureFinMois(object):
         self.heures_facturees = [0.0, 0.0]
         self.heures_contractualisees = 0.0
         self.heures_realisees = 0.0
-        self.supplement = 0
-        self.deduction = 0
+        self.supplement = 0.0
+        self.deduction = 0.0
         self.jours_supplementaires = []
-        self.heures_contrat = 0.0
         self.heures_supplementaires = 0.0
         self.jours_maladie = []
         self.jours_maladie_deduits = []
@@ -129,25 +128,11 @@ class FactureFinMois(object):
         for mode_inscription, montant in cotisations_mensuelles:
             cotisation = cotisations_mensuelles[mode_inscription, montant]
             self.cotisation_mensuelle += montant * cotisation.heures_reference / self.heures_contractualisees
-            self.heures_contrat += cotisation.heures_mois * cotisation.heures_reference / self.heures_contractualisees
-        
-        if self.heures_contrat > 0:
-            self.tarif_horaire = self.cotisation_mensuelle / self.heures_contrat
-        else:
-            self.tarif_horaire = 0
-        
-        if creche.mode_facturation == FACTURATION_PSU: # on arrondit parce qu'ils veulent des multiplications avec chiffres arrondis !!!
-            self.tarif_horaire = round(self.tarif_horaire, 2)
-            self.cotisation_mensuelle = self.tarif_horaire * self.heures_contrat
-            self.supplement = round(self.supplement, 2) # normalement pas necessaire
-            self.deduction = round(self.deduction, 2) # normalement pas necessaire
             
         self.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction
-        if options & TRACES: print "cotisation mensuelle", self.cotisation_mensuelle
-        
-        if 0:
+        if options & TRACES:
             print inscrit.prenom
-            for var in ["heures_contrat", "heures_facturees", "heures_supplementaires", "tarif_horaire", "cotisation_mensuelle", "supplement", "deduction", "total"]:
+            for var in ["heures_contractualisees", "heures_facturees", "heures_supplementaires", "cotisation_mensuelle", "supplement", "deduction", "total"]:
                 print " ", var, eval("self.%s" % var)
                 
 class FactureDebutMois(FactureFinMois):
@@ -159,11 +144,9 @@ class FactureDebutMois(FactureFinMois):
             facture_precedente = FactureFinMois(inscrit, annee, mois-1, options)
         self.debut_recap = facture_precedente.debut_recap
         self.fin_recap = facture_precedente.fin_recap
-        # self.heures_facturees = [0.0, 0.0]
         self.supplement = facture_precedente.supplement
         self.deduction = facture_precedente.deduction
         self.jours_supplementaires = facture_precedente.jours_supplementaires
-        # self.heures_contrat = 0.0
         self.heures_supplementaires = facture_precedente.heures_supplementaires
         self.jours_maladie = facture_precedente.jours_maladie
         self.jours_maladie_deduits = facture_precedente.jours_maladie_deduits

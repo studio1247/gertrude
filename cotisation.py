@@ -78,6 +78,7 @@ class Cotisation(object):
             else:
                 self.assiette_annuelle += float(self.revenus_maman.revenu)
         else:
+            self.date_revenus = None
             self.assiette_annuelle = None
             
         if creche.type == TYPE_MUNICIPAL:
@@ -258,6 +259,7 @@ class Cotisation(object):
         else:
             self.majoration_mensuelle = 0.0
         self.cotisation_mensuelle += self.majoration_mensuelle
+        if options & TRACES: print "cotisation mensuelle :", self.cotisation_mensuelle
              
         if 0:
             print inscrit.prenom

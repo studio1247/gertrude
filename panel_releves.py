@@ -467,7 +467,6 @@ class StatistiquesFrequentationTab(AutoTab):
                 try:
                     if inscrit.getInscriptions(debut, fin):
                         facture = FactureFinMois(inscrit, annee, mois+1)
-                        # print inscrit.prenom, mois, facture.heures_contrat, facture.heures_realisees
                         heures_contractualisees += facture.heures_contractualisees
                         heures_realisees += facture.heures_realisees                       
                         heures_facturees += sum(facture.heures_facturees)

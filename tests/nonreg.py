@@ -6,6 +6,7 @@ import unittest
 import sqlinterface
 from sqlobjects import *
 from cotisation import *
+from facture import Facture
 
 class GertrudeTests(unittest.TestCase):
     def test_creation_bdd(self):
@@ -16,7 +17,7 @@ class GertrudeTests(unittest.TestCase):
         con.Create()
 
 class PAJETests(unittest.TestCase):
-    def test_paje(self):
+    def test_pas_de_taux_horaire(self):
         __builtin__.creche = Creche()
         creche.mode_facturation = FACTURATION_PAJE
         bureau = Bureau(creation=False)
@@ -33,6 +34,31 @@ class PAJETests(unittest.TestCase):
         creche.formule_taux_horaire = [["", 0.0]]
         creche.update_formule_taux_horaire(changed=False)
         cotisation = Cotisation(inscrit, (datetime.date(2010, 1, 1), None), NO_ADDRESS|NO_PARENTS)
+        
+    def test_nospetitspouces(self):
+        __builtin__.creche = Creche()
+        creche.mode_facturation = FACTURATION_PAJE
+        creche.formule_taux_horaire = [["", 6.70]]
+        creche.update_formule_taux_horaire(changed=False)
+        bureau = Bureau(creation=False)
+        bureau.debut = datetime.date(2010, 1, 1)
+        creche.bureaux.append(bureau)
+        inscrit = Inscrit(creation=False)
+        inscrit.prenom, inscrit.nom = 'gertrude', 'gertrude'
+        inscrit.papa = Parent(inscrit, creation=False)
+        inscrit.maman = Parent(inscrit, creation=False)
+        inscription = Inscription(inscrit, creation=False)
+        inscription.debut, inscription.fin = datetime.date(2010, 9, 6), datetime.date(2011, 7, 27)
+        inscription.reference[0].add_activity(96, 180, 0, -1)
+        inscription.reference[1].add_activity(96, 180, 0, -1)
+        inscription.reference[2].add_activity(96, 180, 0, -1)
+        inscription.reference[3].add_activity(96, 180, 0, -1)
+        inscription.reference[4].add_activity(96, 180, 0, -1)
+        inscrit.inscriptions.append(inscription)
+        cotisation = Cotisation(inscrit, (datetime.date(2010, 9, 6), None), NO_ADDRESS|NO_PARENTS)
+        self.assertEquals(float("%.2f" % cotisation.cotisation_mensuelle), 1001.95)
+        facture = Facture(inscrit, 2010, 9, NO_ADDRESS|NO_PARENTS)
+        self.assertEquals(float("%.2f" % facture.total), 1001.95)
 
 class MarmousetsTests(unittest.TestCase):
     def test_1(self):
