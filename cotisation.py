@@ -217,16 +217,7 @@ class Cotisation(object):
             else:
                 self.mode_taux_horaire = u'1 enfant à charge'
 
-            if creche.type == TYPE_MUNICIPAL:
-                if self.enfants_a_charge > 3:
-                    self.taux_effort = 6.0
-                elif self.enfants_a_charge == 3:
-                    self.taux_effort = 7.6
-                elif self.enfants_a_charge == 2:
-                    self.taux_effort = 10.0
-                else:
-                    self.taux_effort = 12.0
-            else:
+            if creche.type == TYPE_PARENTAL:
                 if self.enfants_a_charge > 3:
                     self.taux_effort = 5.55
                 elif self.enfants_a_charge == 3:
@@ -235,6 +226,16 @@ class Cotisation(object):
                     self.taux_effort = 8.33
                 else:
                     self.taux_effort = 10.0
+            else:
+                if self.enfants_a_charge > 3:
+                    self.taux_effort = 6.0
+                elif self.enfants_a_charge == 3:
+                    self.taux_effort = 7.6
+                elif self.enfants_a_charge == 2:
+                    self.taux_effort = 10.0
+                else:
+                    self.taux_effort = 12.0
+                
             self.taux_horaire = self.taux_effort / 200
 
             self.montant_heure_garde = self.assiette_mensuelle * self.taux_horaire / 100
