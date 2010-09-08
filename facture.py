@@ -59,11 +59,13 @@ class FactureFinMois(object):
                     else:
                         cotisation = Cotisation(inscrit, (date, date), options=NO_ADDRESS|self.options)
                         last_cotisation = cotisation
+                        if options & TRACES: print "cotisation mensuelle à partir de %s" % date, cotisation.cotisation_mensuelle
                         
                     state, heures_reference, heures_realisees, heures_supplementaires = inscrit.getState(date)
                     
                     self.heures_contractualisees += heures_reference
                     self.heures_realisees += heures_realisees
+                    self.heures_facturees[cotisation.mode_inscription] += heures_reference + heures_supplementaires
                                        
                     if (cotisation.mode_inscription, cotisation.cotisation_mensuelle) in cotisations_mensuelles:
                         cotisation = cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)]
@@ -126,21 +128,8 @@ class FactureFinMois(object):
 
         for mode_inscription, montant in cotisations_mensuelles:
             cotisation = cotisations_mensuelles[mode_inscription, montant]
-            cotisation.heures_mensuelles = 0.0
-            date = datetime.date(annee, mois, 1)
-            while date.month == mois:
-                if date not in creche.jours_fermeture:
-                    cotisation.heures_mensuelles += cotisation.inscription.getReferenceDay(date).get_heures()
-                date += datetime.timedelta(1)
-            if cotisation.heures_mensuelles > 0:
-                self.cotisation_mensuelle += montant * cotisation.heures_reference / cotisation.heures_mensuelles
-                self.heures_contrat += cotisation.heures_mois * cotisation.heures_reference / cotisation.heures_mensuelles
-                
-            if creche.mode_facturation == FACTURATION_FORFAIT_10H:
-                if cotisation.heures_mensuelles > 0:
-                    self.heures_facturees[mode_inscription] += cotisation.heures_mois * cotisation.heures_reference / cotisation.heures_mensuelles
-            else:
-                self.heures_facturees[mode_inscription] += cotisation.heures_mensuelles + self.heures_supplementaires
+            self.cotisation_mensuelle += montant * cotisation.heures_reference / self.heures_contractualisees
+            self.heures_contrat += cotisation.heures_mois * cotisation.heures_reference / self.heures_contractualisees
         
         if self.heures_contrat > 0:
             self.tarif_horaire = self.cotisation_mensuelle / self.heures_contrat
@@ -154,6 +143,7 @@ class FactureFinMois(object):
             self.deduction = round(self.deduction, 2) # normalement pas necessaire
             
         self.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction
+        if options & TRACES: print "cotisation mensuelle", self.cotisation_mensuelle
         
         if 0:
             print inscrit.prenom

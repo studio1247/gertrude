@@ -90,13 +90,7 @@ class FacturationPanel(GPanel):
             if not date.month in creche.mois_sans_facture and (isinstance(inscrit, list) or inscrit.hasFacture(date)):
                 self.factures_monthchoice.Append('%s %d' % (months[date.month - 1], date.year), date)
             date = getNextMonthStart(date)
-        if not self.factures_monthchoice.SetStringSelection(selection):
-            if today.month == 1:
-                self.factures_monthchoice.SetStringSelection('%s %d' % (months[11], today.year - 1))
-            elif today.month-1 in creche.mois_sans_facture:
-                self.factures_monthchoice.SetSelection(self.factures_monthchoice.GetCount()-1)   
-            else:
-                self.factures_monthchoice.SetStringSelection('%s %d' % (months[today.month - 2], today.year))
+        self.factures_monthchoice.SetSelection(self.factures_monthchoice.GetCount()-1)   
 
     def EvtRecusInscritChoice(self, evt):
         self.recus_periodechoice.Clear()
