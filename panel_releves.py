@@ -492,9 +492,9 @@ class StatistiquesFrequentationTab(AutoTab):
             self.presences_contrat_heures.SetValue("%.2f heures" % heures_contractualisees)
             self.presences_realisees_heures.SetValue("%.2f heures" % heures_realisees)
             self.presences_facturees_heures.SetValue("%.2f heures" % heures_facturees)
-            self.presences_contrat_euros.SetValue("%.2f €" % cotisations_contractualisees)
-            self.presences_realisees_euros.SetValue("%.2f €" % cotisations_realisees)
-            self.presences_facturees_euros.SetValue("%.2f €" % cotisations_facturees)
+            self.presences_contrat_euros.SetValue(u"%.2f €" % cotisations_contractualisees)
+            self.presences_realisees_euros.SetValue(u"%.2f €" % cotisations_realisees)
+            self.presences_facturees_euros.SetValue(u"%.2f €" % cotisations_facturees)
         self.Layout()       
         self.sizer.FitInside(self)
 
