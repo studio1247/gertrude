@@ -127,7 +127,8 @@ class FactureFinMois(object):
 
         for mode_inscription, montant in cotisations_mensuelles:
             cotisation = cotisations_mensuelles[mode_inscription, montant]
-            self.cotisation_mensuelle += montant * cotisation.heures_reference / self.heures_contractualisees
+            if self.heures_contractualisees:
+                self.cotisation_mensuelle += montant * cotisation.heures_reference / self.heures_contractualisees   
             
         self.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction
         if options & TRACES:

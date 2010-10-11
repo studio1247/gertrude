@@ -43,9 +43,13 @@ class EtatsPresenceModifications(object):
         lignes = table.getElementsByTagName("table:table-row")
 
         # Les champs de l'entête
+        if self.site:
+            site = self.site.nom
+        else:
+            site = ""
         ReplaceFields(lignes, [('debut', self.debut),
                                ('fin', self.fin),
-                               ('critere-site', self.site.nom),
+                               ('critere-site', site),
                                ('critere-inscrit', self.inscrit)])
         
         # Les lignes
@@ -55,10 +59,15 @@ class EtatsPresenceModifications(object):
         for date in dates:
             for site, inscrit, heures in self.selection[date]:
                 ligne = template.cloneNode(1)
+                if site:
+                    site_nom = site.nom
+                else:
+                    site_nom = ""
+                    
                 ReplaceFields(ligne, [('date', date),
                                       ('prenom', inscrit.prenom),
                                       ('nom', inscrit.nom),
-                                      ('site', site.nom),
+                                      ('site', site_nom),
                                       ('heures', heures)])
                 table.insertBefore(ligne, template)
 
