@@ -278,6 +278,7 @@ class EtatsPresenceTab(AutoTab):
                     kwargs[ctrl.parameter] = ctrl.GetClientData(ctrl.GetSelection())
             for ctrl in self.unordered:
                 ctrl.fill_function(**kwargs)
+        event.Skip()
     
     def move_to_unordered(self, object):
         kwargs = {"debut": self.debut_control.GetValue(), "fin": self.fin_control.GetValue()}
