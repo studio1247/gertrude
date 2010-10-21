@@ -36,6 +36,30 @@ def evalFields(fields):
             fields[i] = (param, value, text)
         fields.append((param.upper(), value, text.upper()))
     return fields
+
+def GetValue(node):
+    result = ""
+    text_nodes = node.getElementsByTagName("text:p") + node.getElementsByTagName("text:a")
+    for text_node in text_nodes:
+        child = text_node.childNodes[0]
+        if child.nodeType == child.TEXT_NODE:
+            result += text_node.childNodes[0].wholeText
+    return result
+
+def GetRepeat(node):
+    if node.hasAttribute("table:number-columns-repeated"):
+        return int(node.getAttribute("table:number-columns-repeated"))
+    else:
+        return 1
+    
+def GetValues(row):
+    result = []
+    cells = row.getElementsByTagName("table:table-cell")
+    for cell in cells:
+        # print cell.toprettyxml()
+        # print GetRepeat(cell), GetValue(cell)
+        result.extend([GetValue(cell)] * GetRepeat(cell))
+    return result
             
 def ReplaceTextFields(dom, fields):
     evalFields(fields)
@@ -131,6 +155,18 @@ def getNamedShapes(dom):
             if name:
                 shapes[name] = node
     return shapes
+
+def GetDom(filename, part="content.xml"):
+    zip = zipfile.ZipFile(filename, 'r')
+    data = zip.read(part)
+    dom = xml.dom.minidom.parseString(data)
+    zip.close()
+    return dom
+
+def GetTables(filename):
+    dom = GetDom(filename)
+    spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
+    return spreadsheet.getElementsByTagName("table:table")
 
 def GenerateDocument(modifications, filename=None, gauge=None):
     if gauge:
