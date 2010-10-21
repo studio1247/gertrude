@@ -152,6 +152,7 @@ class Cotisation(object):
                         self.heures_annee += self.inscription.getReferenceDay(date).get_heures()
                     date += datetime.timedelta(1)
                 
+                self.heures_annee = math.ceil(self.heures_annee)
                 if options & TRACES: print 'heures annuelles :', self.heures_annee
                 # self.heures_annee -= self.heures_conges
 #                print debut_inscription, fin_inscription
@@ -163,16 +164,17 @@ class Cotisation(object):
                 if options & TRACES: print 'nombres de factures :', self.nombre_factures
                 self.heures_mois = math.ceil(self.heures_annee / self.nombre_factures)
             elif creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
-        #            print self.heures_annee
                 for date in creche.jours_feries + [j for j in creche.jours_fermeture if creche.jours_fermeture[j].options == ACCUEIL_NON_FACTURE]:
                     if date.isocalendar()[0] == self.debut.year:
                         inscription = inscrit.getInscription(date)
                         if inscription:
                             self.heures_annee -= inscription.getReferenceDay(date).get_heures()
-        #                        if inscription.getReferenceDay(date).get_heures():
-        #                            print date, inscription.getReferenceDay(date).get_heures()
-        #            print self.heures_annee
+                
+                self.heures_annee = math.ceil(self.heures_annee)         
+                if options & TRACES: print 'heures annuelles :', self.heures_annee
+                if options & TRACES: print 'nombres de factures :', self.nombre_factures
                 self.heures_mois = math.ceil(self.heures_annee / self.nombre_factures)
+                if options & TRACES: print 'heures mensuelles :', self.heures_mois
 
         if self.jours_semaine == 5:
             self.str_mode_garde = u'plein temps'
