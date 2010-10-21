@@ -24,7 +24,7 @@ from functions import *
 from sqlobjects import *
 import wx
 
-VERSION = 38
+VERSION = 40
 
 def getdate(s):
     if s is None:
@@ -112,10 +112,10 @@ class SQLConnection(object):
             idx INTEGER PRIMARY KEY,
             debut DATE,
             fin DATE,
-            president INTEGER REFERENCES INSCRITS(idx),
-            vice_president INTEGER REFERENCES INSCRITS(idx),
-            tresorier INTEGER REFERENCES INSCRITS(idx),
-            secretaire INTEGER REFERENCES INSCRITS(idx)
+            president VARCHAR,
+            vice_president VARCHAR,
+            tresorier VARCHAR,
+            secretaire VARCHAR
           );""")
 
         cur.execute("""
@@ -160,6 +160,15 @@ class SQLConnection(object):
             telephone_portable_notes VARCHAR,
             email VARCHAR,
             diplomes VARCHAR
+          );""")
+        
+        cur.execute("""  
+          CREATE TABLE PROFESSEURS (
+            idx INTEGER PRIMARY KEY,
+            prenom VARCHAR,
+            nom VARCHAR,
+            entree DATE,
+            sortie DATE
           );""")
 
         cur.execute("""
@@ -217,6 +226,7 @@ class SQLConnection(object):
             idx INTEGER PRIMARY KEY,
             inscrit INTEGER REFERENCES INSCRITS(idx),
             site INTEGER REFERENCES SITES(idx),
+            professeur INTEGER REFERENCES PROFESSEURS(idx),
             debut DATE,
             fin DATE,
             mode, INTEGER,
@@ -296,6 +306,8 @@ class SQLConnection(object):
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2006, 9, 1), datetime.date(2007, 8, 31), 6547.92, 51723.60))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2007, 9, 1), datetime.date(2008, 12, 31), 6660.00, 52608.00))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2009, 1, 1), datetime.date(2009, 12, 31), 6876.00, 53400.00))
+        cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2010, 1, 1), datetime.date(2010, 12, 31), 6956.64, 54895.20))
+
         couleur = [5, 203, 28, 150, wx.SOLID]
         couleur_supplement = [5, 203, 28, 250, wx.SOLID]
         couleur_previsionnel = [5, 203, 28, 50, wx.SOLID]
@@ -386,7 +398,15 @@ class SQLConnection(object):
                 contrat.debut, contrat.fin, contrat.site, contrat.fonction, contrat.idx = getdate(debut), getdate(fin), site, fonction, idx
                 employe.contrats.append(contrat)
 
-        parents = {None: None}
+        cur.execute('SELECT prenom, nom, entree, sortie, idx FROM PROFESSEURS')
+        for professeur_entry in cur.fetchall():
+            professeur = Professeur(creation=False)
+            professeur.prenom, professeur.nom, professeur.entree, professeur.sortie, idx = professeur_entry
+            professeur.entree = getdate(professeur.entree)
+            professeur.sortie = getdate(professeur.sortie)
+            professeur.idx = idx
+            creche.professeurs.append(professeur)
+
         cur.execute('SELECT idx, prenom, nom, sexe, naissance, adresse, code_postal, ville, majoration, marche, photo FROM INSCRITS')
         for idx, prenom, nom, sexe, naissance, adresse, code_postal, ville, majoration, marche, photo in cur.fetchall():
             if photo:
@@ -405,12 +425,15 @@ class SQLConnection(object):
                 referent = Referent(inscrit, creation=False)
                 referent.prenom, referent.nom, referent.telephone, referent.idx = referent_entry
                 inscrit.referents.append(referent)
-            cur.execute('SELECT idx, debut, fin, mode, fin_periode_essai, duree_reference, semaines_conges, site FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
-            for idx, debut, fin, mode, fin_periode_essai, duree_reference, semaines_conges, site in cur.fetchall():
+            cur.execute('SELECT idx, debut, fin, mode, fin_periode_essai, duree_reference, semaines_conges, site, professeur FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
+            for idx, debut, fin, mode, fin_periode_essai, duree_reference, semaines_conges, site, professeur in cur.fetchall():
                 inscription = Inscription(inscrit, duree_reference, creation=False)
                 for tmp in creche.sites:
                     if site == tmp.idx:
                         inscription.site = tmp 
+                for tmp in creche.professeurs:
+                    if professeur == tmp.idx:
+                        inscription.professeur = tmp
                 inscription.debut, inscription.fin, inscription.mode, inscription.fin_periode_essai, inscription.semaines_conges, inscription.idx = getdate(debut), getdate(fin), mode, getdate(fin_periode_essai), semaines_conges, idx
                 inscrit.inscriptions.append(inscription)
             for inscription in inscrit.inscriptions:
@@ -430,7 +453,6 @@ class SQLConnection(object):
             for parent_entry in cur.fetchall():
                 parent = Parent(inscrit, creation=False)
                 parent.absent, parent.prenom, parent.nom, parent.telephone_domicile, parent.telephone_domicile_notes, parent.telephone_portable, parent.telephone_portable_notes, parent.telephone_travail, parent.telephone_travail_notes, parent.email, parent.idx = parent_entry
-                parents[parent.idx] = parent
                 if not inscrit.papa:
                     inscrit.papa = parent
                 else:
@@ -456,7 +478,7 @@ class SQLConnection(object):
         cur.execute('SELECT idx, debut, fin, president, vice_president, tresorier, secretaire FROM BUREAUX')
         for idx, debut, fin, president, vice_president, tresorier, secretaire in cur.fetchall():
             bureau = Bureau(creation=False)
-            bureau.debut, bureau.fin, bureau.president, bureau.vice_president, bureau.tresorier, bureau.secretaire, bureau.idx = getdate(debut), getdate(fin), parents[president], parents[vice_president], parents[tresorier], parents[secretaire], idx
+            bureau.debut, bureau.fin, bureau.president, bureau.vice_president, bureau.tresorier, bureau.secretaire, bureau.idx = getdate(debut), getdate(fin), president, vice_president, tresorier, secretaire, idx
             creche.bureaux.append(bureau)
 
         creche.inscrits.sort()
@@ -872,6 +894,42 @@ class SQLConnection(object):
             else:
                 cur.execute("UPDATE CRECHE SET formule_taux_horaire=?;", ('[["", %f]]' % forfait_horaire,))
 
+        if version < 39:
+            parents = { }
+            cur.execute('SELECT prenom, nom, idx FROM PARENTS;')
+            for parent_prenom, parent_nom, parent_idx in cur.fetchall():
+                parents[parent_idx] = parent_prenom + " " + parent_nom
+            cur.execute("ALTER TABLE BUREAUX RENAME TO OLD;")
+            cur.execute("""
+              CREATE TABLE BUREAUX(
+                idx INTEGER PRIMARY KEY,
+                debut DATE,
+                fin DATE,
+                president VARCHAR,
+                vice_president VARCHAR,
+                tresorier VARCHAR,
+                secretaire VARCHAR
+              );""")
+            cur.execute('SELECT idx, debut, fin, president, vice_president, tresorier, secretaire FROM OLD;')
+            for idx, debut, fin, president, vice_president, tresorier, secretaire in cur.fetchall():
+                president = parents.get(president, "")
+                vice_president = parents.get(vice_president, "")
+                tresorier = parents.get(tresorier, "")
+                secretaire = parents.get(secretaire, "")                
+                cur.execute('INSERT INTO BUREAUX (idx, debut, fin, president, vice_president, tresorier, secretaire) VALUES (NULL,?,?,?,?,?,?)', (debut, fin, president, vice_president, tresorier, secretaire))
+            cur.execute('DROP TABLE OLD;')
+            
+        if version < 40:
+            cur.execute("""  
+              CREATE TABLE PROFESSEURS (
+                idx INTEGER PRIMARY KEY,
+                prenom VARCHAR,
+                nom VARCHAR,
+                entree DATE,
+                sortie DATE
+              );""")
+            cur.execute("ALTER TABLE INSCRIPTIONS ADD professeur INTEGER REFERENCES PROFESSEURS(idx);")           
+            
         if version < VERSION:
             try:
                 cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))

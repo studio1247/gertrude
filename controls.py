@@ -623,8 +623,11 @@ class AutoChoiceCtrl(wx.Choice, AutoMixin):
     def SetItems(self, items):
         wx.Choice.Clear(self)
         self.values.clear()
-        for item, clientData in items:
-            self.Append(item, clientData)
+        for item in items:
+            if isinstance(item, tuple):
+                self.Append(item[0], item[1])
+            else:
+                self.Append(item, item)
         try:
             self.UpdateContents()
         except:

@@ -24,7 +24,13 @@ import wx
 
 types_creche = [("Parental", TYPE_PARENTAL),
                 ("Associatif", TYPE_ASSOCIATIF),
-                ("Municipal", TYPE_MUNICIPAL)]
+                ("Municipal", TYPE_MUNICIPAL),
+                (u"Garderie périscolaire", TYPE_GARDERIE_PERISCOLAIRE)]
+
+modes_facturation = [("Forfait 10h / jour", FACTURATION_FORFAIT_10H),
+                     (u"PSU (horaires réels avec forfait)", FACTURATION_PSU),
+                     (u"PAJE (taux horaire spécifique)", FACTURATION_PAJE),
+                     ("Horaires réels sans forfait", FACTURATION_HORAIRES_REELS)]
 
 class CrecheTab(AutoTab):
     def __init__(self, parent):
@@ -41,7 +47,9 @@ class CrecheTab(AutoTab):
         sizer2.AddMany([wx.StaticText(self, -1, 'Ville :'), (AutoTextCtrl(self, creche, 'ville'), 0, wx.EXPAND)])
         sizer2.AddMany([wx.StaticText(self, -1, u'Téléphone :'), (AutoPhoneCtrl(self, creche, 'telephone'), 0, wx.EXPAND)])
         sizer2.AddMany([wx.StaticText(self, -1, 'E-mail :'), (AutoTextCtrl(self, creche, 'email'), 0, wx.EXPAND)])
-        sizer2.AddMany([wx.StaticText(self, -1, 'Type :'), (AutoChoiceCtrl(self, creche, 'type', items=types_creche), 0, wx.EXPAND)])
+        type_structure_choice = AutoChoiceCtrl(self, creche, 'type', items=types_creche)
+        self.Bind(wx.EVT_CHOICE, self.onTypeStructureChoice, type_structure_choice)
+        sizer2.AddMany([wx.StaticText(self, -1, 'Type :'), (type_structure_choice, 0, wx.EXPAND)])
         sizer2.AddMany([wx.StaticText(self, -1, u'Capacité :'), (AutoNumericCtrl(self, creche, 'capacite', precision=0), 0, wx.EXPAND)])
         self.sizer.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
         
@@ -98,6 +106,12 @@ class CrecheTab(AutoTab):
         del creche.sites[index]
         self.sizer.FitInside(self)
         self.UpdateContents()
+        
+    def onTypeStructureChoice(self, event):
+        object = event.GetEventObject()
+        value = object.GetClientData(object.GetSelection())
+        self.GetParent().DisplayProfesseursTab(value==TYPE_GARDERIE_PERISCOLAIRE)
+        event.Skip()
 
 class EmployesTab(AutoTab):
     def __init__(self, parent):
@@ -227,7 +241,58 @@ class EmployesTab(AutoTab):
                     for ctrl in ctrls:
                         ctrl.Show(False)
             self.Layout()
+
+class ProfesseursTab(AutoTab):
+    def __init__(self, parent):
+        global delbmp
+        delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
+        AutoTab.__init__(self, parent)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.professeurs_sizer = wx.BoxSizer(wx.VERTICAL)
+        for professeur in creche.professeurs:
+            self.affiche_professeur(professeur)
+        self.sizer.Add(self.professeurs_sizer, 0, wx.EXPAND|wx.ALL, 5)
+        button_add = wx.Button(self, -1, 'Nouveau professeur')
+        self.sizer.Add(button_add, 0, wx.ALL, 5)
+        self.Bind(wx.EVT_BUTTON, self.ajoute_professeur, button_add)
+        self.SetSizer(self.sizer)
+
+    def UpdateContents(self):
+        pass
+
+    def affiche_professeur(self, professeur):
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, professeur, 'prenom'), 0, wx.ALIGN_CENTER_VERTICAL)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, professeur, 'nom'), 0, wx.ALIGN_CENTER_VERTICAL)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Entrée :', size=(50,-1)), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), AutoDateCtrl(self, professeur, 'entree')])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Sortie :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), AutoDateCtrl(self, professeur, 'sortie')])
+        delbutton = wx.BitmapButton(self, -1, delbmp, style=wx.NO_BORDER)
+        delbutton.professeur, delbutton.sizer = professeur, sizer
+        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
+        self.Bind(wx.EVT_BUTTON, self.retire_professeur, delbutton)
+        self.professeurs_sizer.Add(sizer)
+
+    def ajoute_professeur(self, event):
+        history.Append(Delete(creche.professeurs, -1))
+        professeur = Professeur()
+        creche.professeurs.append(professeur)
+        self.affiche_professeur(professeur)        
+        self.sizer.FitInside(self)
         
+    def retire_professeur(self, event):
+        obj = event.GetEventObject()
+        for i, professeur in enumerate(creche.professeurs):
+            if professeur == obj.professeur:
+                history.Append(Insert(creche.professeurs, i, professeur))
+                sizer = self.professeurs_sizer.GetItem(i)
+                sizer.DeleteWindows()
+                self.professeurs_sizer.Detach(i)
+                professeur.delete()
+                del creche.professeurs[i]
+                self.sizer.FitInside(self)
+                self.Refresh()
+                break
+            
 class ResponsabilitesTab(AutoTab, PeriodeMixin):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
@@ -237,13 +302,13 @@ class ResponsabilitesTab(AutoTab, PeriodeMixin):
         sizer2 = wx.FlexGridSizer(0, 2, 5, 5)
         sizer2.AddGrowableCol(1, 1)
         self.responsables_ctrls = []
-        self.responsables_ctrls.append(AutoChoiceCtrl(self, None, 'president'))
+        self.responsables_ctrls.append(AutoComboBox(self, None, 'president'))
         sizer2.AddMany([wx.StaticText(self, -1, u'Président :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
-        self.responsables_ctrls.append(AutoChoiceCtrl(self, None, 'vice_president'))
+        self.responsables_ctrls.append(AutoComboBox(self, None, 'vice_president'))
         sizer2.AddMany([wx.StaticText(self, -1, u'Vice président :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
-        self.responsables_ctrls.append(AutoChoiceCtrl(self, None, 'tresorier'))
+        self.responsables_ctrls.append(AutoComboBox(self, None, 'tresorier'))
         sizer2.AddMany([wx.StaticText(self, -1, u'Trésorier :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
-        self.responsables_ctrls.append(AutoChoiceCtrl(self, None, 'secretaire'))        
+        self.responsables_ctrls.append(AutoComboBox(self, None, 'secretaire'))        
         sizer2.AddMany([wx.StaticText(self, -1, u'Secrétaire :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
         sizer.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(sizer)
@@ -264,7 +329,6 @@ class ResponsabilitesTab(AutoTab, PeriodeMixin):
         PeriodeMixin.SetInstance(self, instance, periode)
 
     def GetNomsParents(self, periode):
-        result = []
         parents = []
         for inscrit in getInscrits(periode.debut, periode.fin):
             for parent in (inscrit.papa, inscrit.maman):
@@ -272,9 +336,8 @@ class ResponsabilitesTab(AutoTab, PeriodeMixin):
                     tmp = parent.prenom + ' ' + parent.nom
                     if not tmp in parents:
                         parents.append(tmp)
-                        result.append((tmp, parent))
-        result.sort(cmp=lambda x,y: cmp(x[0].lower(), y[0].lower()))
-        return result
+        parents.sort(cmp=lambda x,y: cmp(x.lower(), y.lower()))
+        return parents
 
 activity_modes = [("Normal", 0),
                   (u"Libère une place", MODE_LIBERE_PLACE),
@@ -586,7 +649,7 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, u'Présences supplémentaires :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'presences_supplementaires', [(u'Géré', True), (u'Non géré', False)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u"Modes d'inscription :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'modes_inscription', [(u'Crèche à plein-temps uniquement', MODE_5_5), ('Tous modes', MODE_5_5+MODE_4_5+MODE_3_5+MODE_HALTE_GARDERIE)]), 0, wx.EXPAND)])
         tmp = wx.BoxSizer(wx.HORIZONTAL)
-        mode_facturation_choice = AutoChoiceCtrl(self, creche, 'mode_facturation', [("Forfait 10h / jour", FACTURATION_FORFAIT_10H), (u"PSU (horaires réels)", FACTURATION_PSU), (u"PAJE (taux horaire spécifique)", FACTURATION_PAJE)])
+        mode_facturation_choice = AutoChoiceCtrl(self, creche, 'mode_facturation', modes_facturation)
         self.Bind(wx.EVT_CHOICE, self.onModeFacturationChoice, mode_facturation_choice)
         tmp.AddMany([(mode_facturation_choice, 1, wx.EXPAND), (AutoChoiceCtrl(self, creche, 'temps_facturation', [("Facturation fin de mois", FACTURATION_FIN_MOIS), (u"Facturation début de mois", FACTURATION_DEBUT_MOIS)]), 1, wx.EXPAND|wx.LEFT, 5)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Modes de facturation :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (tmp, 1, wx.EXPAND)])
@@ -600,7 +663,7 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, u"Durée minimale d'absence pour déduction / Durée de la carence :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'minimum_maladie', min=0, precision=0), 0, 0)])
         self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(self.sizer)
-    
+        
     def onModeFacturationChoice(self, event):
         object = event.GetEventObject()
         value = object.GetClientData(object.GetSelection())
@@ -770,7 +833,7 @@ profiles = [("Administrateur", PROFIL_ALL),
             (u"Saisie présences", PROFIL_SAISIE_PRESENCES),
             ]
 
-class UsersPanel(AutoTab):
+class UsersTab(AutoTab):
     def __init__(self, parent):
         global delbmp
         delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
@@ -855,6 +918,13 @@ class ParametresNotebook(wx.Notebook):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
         self.AddPage(CrecheTab(self), 'Structure')
         self.AddPage(EmployesTab(self), u'Employés')
+        self.professeurs_tab = ProfesseursTab(self)
+        if creche.type == TYPE_GARDERIE_PERISCOLAIRE:
+            self.AddPage(self.professeurs_tab, 'Professeurs')
+            self.professeurs_tab_displayed = True
+        else:
+            self.professeurs_tab.Show(False)
+            self.professeurs_tab_displayed = False
         self.AddPage(ResponsabilitesTab(self), u'Responsabilités')
         self.AddPage(CafTab(self), 'C.A.F.')
         self.AddPage(JoursFermeturePanel(self), u'Congés')
@@ -862,12 +932,12 @@ class ParametresNotebook(wx.Notebook):
         self.AddPage(ParametersPanel(self), u'Paramètres')
         self.taux_horaire_panel = TauxHorairePanel(self)
         if creche.mode_facturation == FACTURATION_PAJE:
-            self.AddPage(self.taux_horaire_panel, u'Taux horaire')
+            self.AddPage(self.taux_horaire_panel, 'Taux horaire')
             self.taux_horaire_panel_displayed = True
         else:
             self.taux_horaire_panel.Show(False)
             self.taux_horaire_panel_displayed = False
-        self.AddPage(UsersPanel(self), u'Utilisateurs et mots de passe')
+        self.AddPage(UsersTab(self), u'Utilisateurs et mots de passe')
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
     def OnPageChanged(self, event):
@@ -884,12 +954,29 @@ class ParametresNotebook(wx.Notebook):
             return
         else:
             self.taux_horaire_panel.Show(enable)
-            if enable:
-                self.InsertPage(7, self.taux_horaire_panel, u'Taux horaire')
+            if self.professeurs_tab_displayed:
+                tab_index = 8
             else:
-                self.RemovePage(7)
+                tab_index = 7
+            if enable:
+                self.InsertPage(tab_index, self.taux_horaire_panel, u'Taux horaire')
+            else:
+                self.RemovePage(tab_index)
 
         self.taux_horaire_panel_displayed = enable
+        self.Layout()
+        
+    def DisplayProfesseursTab(self, enable):
+        if enable == self.professeurs_tab_displayed:
+            return
+        else:
+            self.professeurs_tab.Show(enable)
+            if enable:
+                self.InsertPage(2, self.professeurs_tab, 'Professeurs')
+            else:
+                self.RemovePage(2)
+
+        self.professeurs_tab_displayed = enable
         self.Layout()
 
 class ConfigurationPanel(GPanel):

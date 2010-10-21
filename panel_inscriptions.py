@@ -23,21 +23,13 @@ from controls import *
 from planning import *
 from cotisation import *
 
-def isPresentDuringTranche(journee, tranche):
-    # Tranches horaires
-    tranches = [(creche.ouverture, 12), (12, 14), (14, creche.fermeture)]
-    
-    debut, fin = tranches[tranche]
+def isPresentDuringTranche(journee, debut, fin):
     for i in range(int(debut * (60 / BASE_GRANULARITY)), int(fin * (60 / BASE_GRANULARITY))):
         if journee.values[i]:
             return True
     return False
 
-def HeuresTranche(journee, tranche):
-    # Tranches horaires
-    tranches = [(creche.ouverture, 12), (12, 14), (14, creche.fermeture)]
-    
-    debut, fin = tranches[tranche]
+def HeuresTranche(journee, debut, fin):
     result = 0
     for i in range(int(debut * (60 / BASE_GRANULARITY)), int(fin * (60 / BASE_GRANULARITY))):
         if journee.values[i]:
@@ -508,13 +500,11 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         sizer1 = wx.FlexGridSizer(0, 2, 5, 10)
         sizer1.AddGrowableCol(1, 1)
         self.sites_items = wx.StaticText(self, -1, u"Site :"), AutoChoiceCtrl(self, None, 'site')
-        if len(creche.sites) > 1:
-            items = [(site.nom, site) for site in creche.sites]
-            self.sites_items[1].SetItems(items)
-        else:
-            for item in self.sites_items:
-                item.Show(False)
+        self.UpdateSiteItems()
         sizer1.AddMany([(self.sites_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.sites_items[1], 0, wx.EXPAND)])
+        self.professeur_items = wx.StaticText(self, -1, u"Professeur :"), AutoChoiceCtrl(self, None, 'professeur')
+        self.UpdateProfesseurItems()
+        sizer1.AddMany([(self.professeur_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.professeur_items[1], 0, wx.EXPAND)])
         self.mode_accueil_choice = AutoChoiceCtrl(self, None, 'mode', items=[("Plein temps", MODE_5_5), (u"4/5èmes", MODE_4_5), (u"3/5èmes", MODE_3_5), ("Halte-garderie", MODE_HALTE_GARDERIE)])
         sizer1.AddMany([(wx.StaticText(self, -1, u"Mode d'accueil :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.mode_accueil_choice, 0, wx.EXPAND)])
         self.semaines_conges_items = wx.StaticText(self, -1, u"Nombre de semaines de congés :"), AutoNumericCtrl(self, None, 'semaines_conges', min=0, precision=0)
@@ -575,8 +565,8 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
                 day.copy(inscription.reference[0], False)
                 day.save()
         self.UpdateContents()
-            
-    def UpdateContents(self):
+    
+    def UpdateSiteItems(self):
         if len(creche.sites) > 1:
             items = [(site.nom, site) for site in creche.sites]
             self.sites_items[1].SetItems(items)
@@ -585,6 +575,19 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         else:
             for item in self.sites_items:
                 item.Show(False)
+                
+    def UpdateProfesseurItems(self):
+        if creche.type == TYPE_GARDERIE_PERISCOLAIRE and len(creche.professeurs) > 0:
+            professeurs = [("%s %s" % (professeur.prenom, professeur.nom), professeur) for professeur in creche.professeurs]
+            self.professeur_items[1].SetItems(professeurs)
+            for item in self.professeur_items:
+                item.Show(True)
+        else:
+            for item in self.professeur_items:
+                item.Show(False)
+                
+    def UpdateContents(self):
+        self.UpdateSiteItems()
 
         InscriptionsTab.UpdateContents(self)
         self.mode_accueil_choice.Enable(creche.modes_inscription != MODE_5_5)
