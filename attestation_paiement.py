@@ -38,9 +38,14 @@ class AttestationModifications(object):
             return None
         
         errors = {}
-        tresorier = Select(creche.bureaux, today).tresorier
-        if not tresorier:
-            tresorier = Parent(None, creation=False)
+        tresorier = ""
+        directeur = ""
+        bureau = Select(creche.bureaux, today)
+        if bureau:
+            if bureau.tresorier:
+                tresorier = "%s %s" % (bureau.tresorier.prenom, bureau.tresorier.nom)
+            if bureau.directeur:
+                directeur = "%s %s" % (bureau.directeur.prenom, bureau.directeur.nom)
         
         # print dom.toprettyxml()
         doc = dom.getElementsByTagName("office:text")[0]
@@ -78,7 +83,8 @@ class AttestationModifications(object):
                     ('parents', getParentsStr(inscrit)),
                     ('naissance', inscrit.naissance),
                     ('nom', inscrit.nom),
-                    ('tresorier', "%s %s" % (tresorier.prenom, tresorier.nom)),
+                    ('tresorier', tresorier),
+                    ('directeur', directeur),
                     ('date', '%.2d/%.2d/%d' % (today.day, today.month, today.year)),
                     ('total', '%.2f' % total)
                     ]

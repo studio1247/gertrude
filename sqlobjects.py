@@ -195,7 +195,9 @@ class Journee(Day):
             self.values[i] &= ~PREVISIONNEL
         self.save()
         
-class Bureau(object):
+class Bureau(SQLObject):
+    table = "BUREAUX"
+    
     def __init__(self, creation=True):
         self.idx = None
         self.debut = None
@@ -204,13 +206,14 @@ class Bureau(object):
         self.vice_president = ""
         self.tresorier = ""
         self.secretaire = ""
+        self.directeur = ""
 
         if creation:
             self.create()
 
     def create(self):
         print 'nouveau bureau'
-        result = sql_connection.execute('INSERT INTO BUREAUX (idx, debut, fin, president, vice_president, tresorier, secretaire) VALUES (NULL,?,?,?,?,?,?)', (self.debut, self.fin, self.president, self.vice_president, self.tresorier, self.secretaire))
+        result = sql_connection.execute('INSERT INTO BUREAUX (idx, debut, fin, president, vice_president, tresorier, secretaire, directeur) VALUES (NULL,?,?,?,?,?,?,?)', (self.debut, self.fin, self.president, self.vice_president, self.tresorier, self.secretaire, self.directeur))
         self.idx = result.lastrowid
 
     def delete(self):
@@ -219,7 +222,7 @@ class Bureau(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['debut', 'fin', 'president', 'vice_president', 'tresorier', 'secretaire'] and self.idx:
+        if name in ['debut', 'fin', 'president', 'vice_president', 'tresorier', 'secretaire', 'directeur'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE BUREAUX SET %s=? WHERE idx=?' % name, (value, self.idx))
 

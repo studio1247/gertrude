@@ -588,6 +588,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
                 
     def UpdateContents(self):
         self.UpdateSiteItems()
+        self.UpdateProfesseurItems()
 
         InscriptionsTab.UpdateContents(self)
         self.mode_accueil_choice.Enable(creche.modes_inscription != MODE_5_5)

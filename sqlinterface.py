@@ -24,7 +24,7 @@ from functions import *
 from sqlobjects import *
 import wx
 
-VERSION = 40
+VERSION = 41
 
 def getdate(s):
     if s is None:
@@ -115,7 +115,8 @@ class SQLConnection(object):
             president VARCHAR,
             vice_president VARCHAR,
             tresorier VARCHAR,
-            secretaire VARCHAR
+            secretaire VARCHAR,
+            directeur VARCHAR,
           );""")
 
         cur.execute("""
@@ -475,10 +476,10 @@ class SQLConnection(object):
                 # print inscrit.prenom, key, debut, fin, value
                 journee.add_activity(debut, fin, value, idx)
 
-        cur.execute('SELECT idx, debut, fin, president, vice_president, tresorier, secretaire FROM BUREAUX')
-        for idx, debut, fin, president, vice_president, tresorier, secretaire in cur.fetchall():
+        cur.execute('SELECT idx, debut, fin, president, vice_president, tresorier, secretaire, directeur FROM BUREAUX')
+        for idx, debut, fin, president, vice_president, tresorier, secretaire, directeur in cur.fetchall():
             bureau = Bureau(creation=False)
-            bureau.debut, bureau.fin, bureau.president, bureau.vice_president, bureau.tresorier, bureau.secretaire, bureau.idx = getdate(debut), getdate(fin), president, vice_president, tresorier, secretaire, idx
+            bureau.debut, bureau.fin, bureau.president, bureau.vice_president, bureau.tresorier, bureau.secretaire, bureau.directeur, bureau.idx = getdate(debut), getdate(fin), president, vice_president, tresorier, secretaire, directeur, idx
             creche.bureaux.append(bureau)
 
         creche.inscrits.sort()
@@ -928,7 +929,10 @@ class SQLConnection(object):
                 entree DATE,
                 sortie DATE
               );""")
-            cur.execute("ALTER TABLE INSCRIPTIONS ADD professeur INTEGER REFERENCES PROFESSEURS(idx);")           
+            cur.execute("ALTER TABLE INSCRIPTIONS ADD professeur INTEGER REFERENCES PROFESSEURS(idx);")
+            
+        if version < 41:
+            cur.execute("ALTER TABLE BUREAUX ADD directeur VARCHAR;")          
             
         if version < VERSION:
             try:

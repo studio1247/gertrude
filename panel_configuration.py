@@ -303,13 +303,15 @@ class ResponsabilitesTab(AutoTab, PeriodeMixin):
         sizer2.AddGrowableCol(1, 1)
         self.responsables_ctrls = []
         self.responsables_ctrls.append(AutoComboBox(self, None, 'president'))
-        sizer2.AddMany([wx.StaticText(self, -1, u'Président :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
+        sizer2.AddMany([wx.StaticText(self, -1, u'Président(e) :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
         self.responsables_ctrls.append(AutoComboBox(self, None, 'vice_president'))
-        sizer2.AddMany([wx.StaticText(self, -1, u'Vice président :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
+        sizer2.AddMany([wx.StaticText(self, -1, u'Vice président(e) :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
         self.responsables_ctrls.append(AutoComboBox(self, None, 'tresorier'))
-        sizer2.AddMany([wx.StaticText(self, -1, u'Trésorier :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
+        sizer2.AddMany([wx.StaticText(self, -1, u'Trésorier(ère) :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
         self.responsables_ctrls.append(AutoComboBox(self, None, 'secretaire'))        
         sizer2.AddMany([wx.StaticText(self, -1, u'Secrétaire :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
+        self.directeur_ctrl = AutoComboBox(self, None, 'directeur')        
+        sizer2.AddMany([wx.StaticText(self, -1, u'Directeur(trice) :'), (self.directeur_ctrl, 0, wx.EXPAND)])
         sizer.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(sizer)
 
@@ -326,18 +328,27 @@ class ResponsabilitesTab(AutoTab, PeriodeMixin):
             parents = self.GetNomsParents(current_periode)
             for ctrl in self.responsables_ctrls:
                 ctrl.SetItems(parents)
+            salaries = self.GetNomsSalaries(current_periode)
+            self.directeur_ctrl.SetItems(salaries)
         PeriodeMixin.SetInstance(self, instance, periode)
 
     def GetNomsParents(self, periode):
-        parents = []
+        noms = []
         for inscrit in getInscrits(periode.debut, periode.fin):
             for parent in (inscrit.papa, inscrit.maman):
                 if parent.prenom and parent.nom:
                     tmp = parent.prenom + ' ' + parent.nom
                     if not tmp in parents:
-                        parents.append(tmp)
-        parents.sort(cmp=lambda x,y: cmp(x.lower(), y.lower()))
-        return parents
+                        noms.append(tmp)
+        noms.sort(cmp=lambda x,y: cmp(x.lower(), y.lower()))
+        return noms
+    
+    def GetNomsSalaries(self, periode):
+        noms = []
+        for salarie in creche.employes:
+            noms.append(salarie.prenom + " " + salarie.nom)
+        noms.sort(cmp=lambda x,y: cmp(x.lower(), y.lower()))
+        return noms
 
 activity_modes = [("Normal", 0),
                   (u"Libère une place", MODE_LIBERE_PLACE),
