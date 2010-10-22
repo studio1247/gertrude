@@ -168,7 +168,9 @@ class Cotisation(object):
                     if date.isocalendar()[0] == self.debut.year:
                         inscription = inscrit.getInscription(date)
                         if inscription:
-                            self.heures_annee -= inscription.getReferenceDay(date).get_heures()
+                            heures_deduites = inscription.getReferenceDay(date).get_heures()
+                            if heures_deduites and (options & TRACES): print u'jour déduit :', date, "(%fh)" % heures_deduites
+                            self.heures_annee -= heures_deduites
                 
                 self.heures_annee = math.ceil(self.heures_annee)         
                 if options & TRACES: print 'heures annuelles :', self.heures_annee

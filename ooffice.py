@@ -41,9 +41,9 @@ def GetValue(node):
     result = ""
     text_nodes = node.getElementsByTagName("text:p") + node.getElementsByTagName("text:a")
     for text_node in text_nodes:
-        child = text_node.childNodes[0]
-        if child.nodeType == child.TEXT_NODE:
-            result += text_node.childNodes[0].wholeText
+        for child in text_node.childNodes:
+            if child.nodeType == child.TEXT_NODE:
+                result += child.wholeText
     return result
 
 def GetRepeat(node):
@@ -60,6 +60,20 @@ def GetValues(row):
         # print GetRepeat(cell), GetValue(cell)
         result.extend([GetValue(cell)] * GetRepeat(cell))
     return result
+
+def RemoveColumn(rows, index):
+    for row in rows:
+        cells = row.getElementsByTagName("table:table-cell")
+        count = 0
+        for cell in cells:
+            repeat = GetRepeat(cell)
+            count += repeat
+            if count > index:
+                if repeat == 1:
+                    row.removeChild(cell)
+                else:
+                    cell.setAttribute("table:number-columns-repeated", str(repeat-1))
+                break
             
 def ReplaceTextFields(dom, fields):
     evalFields(fields)

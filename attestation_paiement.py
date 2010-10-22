@@ -43,9 +43,9 @@ class AttestationModifications(object):
         bureau = Select(creche.bureaux, today)
         if bureau:
             if bureau.tresorier:
-                tresorier = "%s %s" % (bureau.tresorier.prenom, bureau.tresorier.nom)
+                tresorier = GetPrenomNom(bureau.tresorier)
             if bureau.directeur:
-                directeur = "%s %s" % (bureau.directeur.prenom, bureau.directeur.nom)
+                directeur = GetPrenomNom(bureau.directeur)
         
         # print dom.toprettyxml()
         doc = dom.getElementsByTagName("office:text")[0]
@@ -67,7 +67,7 @@ class AttestationModifications(object):
                         total += facture.total
                     date = getNextMonthStart(date)
             except CotisationException, e:
-                errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
+                errors[GetPrenomNom(inscrit)] = e.errors
                 continue
             
             # Les champs du recu

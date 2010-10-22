@@ -174,7 +174,7 @@ def Liste(progress_handler=default_progress_handler):
     for database in config.databases.values():
         if database.section == config.default_database and c:
             for inscrit in c.inscrits:
-                result["%s %s" % (inscrit.prenom, inscrit.nom)] = database
+                result[GetPrenomNom(inscrit)] = database
         else:
             for entry in database.connection.Liste(progress_handler):
                 result[entry] = database

@@ -51,12 +51,32 @@ def getDateStr(date, weekday=True):
     else:
         return date_str
 
-def getInitialesPrenom(person):
+def GetInitialesPrenom(person):
     for char in ('-', ' '):
         if char in person.prenom:
             parts = person.prenom.split(char)
             return ''.join([part[0] for part in parts if len(part) > 0])
-    return person.prenom[0]   
+    return person.prenom[0]
+
+def GetNom(person):
+    if person:
+        return person.nom
+    else:
+        return ""
+    
+def GetPrenom(person):
+    if person:
+        return person.prenom
+    else:
+        return ""
+    
+def GetPrenomNom(person, maj_nom=False):
+    if not person:
+        return ""
+    elif maj_nom:
+        return "%s %s" % (person.prenom, person.nom.upper())
+    else:
+        return "%s %s" % (person.prenom, person.nom)
 
 def str2date(str, year=None):
     day = str.strip()

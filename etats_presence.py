@@ -22,15 +22,17 @@ from cotisation import Cotisation, CotisationException
 from ooffice import *
 
 class EtatsPresenceModifications(object):
-    def __init__(self, debut, fin, site, inscrit, selection):
+    def __init__(self, debut, fin, site, professeur, inscrit, selection):
         self.template = 'Etats presence.ods'
         self.default_output = "Etats presence"
         if site:
             self.default_output += " %s" % site.nom
+        if professeur:
+            self.default_output += " %s" % GetPrenomNom(professeur)
         if inscrit:
-            self.default_output += " %s %s" % (inscrit.prenom, inscrit.nom)
+            self.default_output += " %s" % GetPrenomNom(inscrit)
         self.default_output += ".ods"
-        self.debut, self.fin, self.site, self.inscrit, self.selection = debut, fin, site, inscrit, selection
+        self.debut, self.fin, self.site, self.professeur, self.inscrit, self.selection = debut, fin, site, professeur, inscrit, selection
         self.gauge = None
         
     def execute(self, filename, dom):
@@ -42,32 +44,42 @@ class EtatsPresenceModifications(object):
         table = spreadsheet.getElementsByTagName("table:table").item(0)
         lignes = table.getElementsByTagName("table:table-row")
 
+        titres = GetValues(lignes.item(7))
+        if creche.type != TYPE_GARDERIE_PERISCOLAIRE:
+            for i in range(7):
+                if u'Professeur : <critere-professeur>' in GetValues(lignes.item(i)):
+                    table.removeChild(lignes.item(i))
+                    break                
+            if titres[2] == "Professeur":
+                RemoveColumn(lignes, 2)
+        if len(creche.sites) < 2:
+            for i in range(7):
+                if u'Site : <critere-site>' in GetValues(lignes.item(i)):
+                    table.removeChild(lignes.item(i))
+                    break
+            if titres[1] == "Site":
+                RemoveColumn(lignes, 1)
+               
         # Les champs de l'entête
-        if self.site:
-            site = self.site.nom
-        else:
-            site = ""
         ReplaceFields(lignes, [('debut', self.debut),
                                ('fin', self.fin),
-                               ('critere-site', site),
-                               ('critere-inscrit', self.inscrit)])
+                               ('critere-site', GetNom(self.site)),
+                               ('critere-professeur', GetPrenomNom(self.professeur)),
+                               ('critere-inscrit', GetPrenomNom(self.inscrit))])
         
         # Les lignes
-        template = lignes.item(7)
+        template = lignes.item(8)
         dates = self.selection.keys()
         dates.sort()
         for date in dates:
-            for site, inscrit, heures in self.selection[date]:
+            for site, professeur, inscrit, heures in self.selection[date]:
                 ligne = template.cloneNode(1)
-                if site:
-                    site_nom = site.nom
-                else:
-                    site_nom = ""
-                    
                 ReplaceFields(ligne, [('date', date),
-                                      ('prenom', inscrit.prenom),
-                                      ('nom', inscrit.nom),
-                                      ('site', site_nom),
+                                      ('prenom', GetPrenom(inscrit)),
+                                      ('nom', GetNom(inscrit)),
+                                      ('site', GetNom(site)),
+                                      ('professeur-prenom', GetPrenom(professeur)),
+                                      ('professeur-nom', GetNom(professeur)),
                                       ('heures', heures)])
                 table.insertBefore(ligne, template)
 

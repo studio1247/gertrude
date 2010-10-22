@@ -53,8 +53,8 @@ class CoordonneesModifications(object):
                     if inscrit.getInscription(self.date):
                         line = template.cloneNode(1)
                         ReplaceTextFields(line, [('prenom', inscrit.prenom),
-                                                 ('papa', "%s %s" % (inscrit.papa.prenom, inscrit.papa.nom.upper())),
-                                                 ('maman', "%s %s" % (inscrit.maman.prenom, inscrit.maman.nom.upper())),
+                                                 ('papa', GetPrenomNom(inscrit.papa, maj_nom=True)),
+                                                 ('maman', GetPrenomNom(inscrit.maman, maj_nom=True)),
                                                  ('commentaire', None)])
                         phoneCell = line.getElementsByTagName('table:table-cell')[2]
                         phoneTemplate = phoneCell.getElementsByTagName('text:p')[0]
@@ -66,9 +66,9 @@ class CoordonneesModifications(object):
                                 phones.append((telephone_papa, phoneType))
                             else:
                                 if telephone_maman:
-                                    phones.append((telephone_maman, "%s %s" % (phoneType, getInitialesPrenom(inscrit.maman))))
+                                    phones.append((telephone_maman, "%s %s" % (phoneType, GetInitialesPrenom(inscrit.maman))))
                                 if telephone_papa:
-                                    phones.append((telephone_papa, "%s %s" % (phoneType, getInitialesPrenom(inscrit.papa))))
+                                    phones.append((telephone_papa, "%s %s" % (phoneType, GetInitialesPrenom(inscrit.papa))))
                         for phone, remark in phones:
                             phoneLine = phoneTemplate.cloneNode(1)
                             ReplaceTextFields(phoneLine, [('telephone', phone),

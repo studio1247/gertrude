@@ -55,7 +55,7 @@ class AppelCotisationsModifications(object):
             except CotisationException, e:
                 cotisation, supplement = '?', None
                 commentaire = '\n'.join(e.errors)
-                errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
+                errors[GetPrenomNom(inscrit)] = e.errors
             ReplaceFields(line, [('prenom', inscrit.prenom),
                                  ('cotisation', cotisation),
                                  ('supplement', supplement),

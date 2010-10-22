@@ -163,14 +163,17 @@ class EtatsPresenceTab(AutoTab):
         self.sites_choice = wx.Choice(self)
         self.sites_choice.fill_function = self.FillSites
         self.sites_choice.parameter = "site"
+        self.professeurs_choice = wx.Choice(self)
+        self.professeurs_choice.fill_function = self.FillProfesseurs
+        self.professeurs_choice.parameter = "professeur"
         self.inscrits_choice = wx.Choice(self)
         self.inscrits_choice.fill_function = self.FillInscrits
         self.inscrits_choice.parameter = "inscrit"
-        self.unordered_sizer.AddMany([(self.sites_choice, 0, wx.LEFT, 5), (self.inscrits_choice, 0, wx.LEFT, 5)])
+        self.unordered_sizer.AddMany([(self.sites_choice, 0, wx.LEFT, 5), (self.professeurs_choice, 0, wx.LEFT, 5), (self.inscrits_choice, 0, wx.LEFT, 5)])
         self.search_sizer.AddMany([(self.ordered_sizer, 0, wx.ALIGN_CENTER_VERTICAL), (self.unordered_sizer, 0, wx.ALIGN_CENTER_VERTICAL)])
         self.sizer.Add(self.search_sizer, 0, wx.ALL|wx.EXPAND, 5)
         self.ordered = []
-        self.unordered = [self.sites_choice, self.inscrits_choice]
+        self.unordered = [self.sites_choice, self.professeurs_choice, self.inscrits_choice]
         self.debut_value = None
         self.fin_value = None
         
@@ -186,7 +189,8 @@ class EtatsPresenceTab(AutoTab):
         # self.grid.EnableScrolling(False, False)
         self.grid.SetRowLabelSize(1)
         self.grid.SetColLabelValue(0, "Date")
-        self.site_col_displayed = False
+        self.site_col_displayed = 0
+        self.professeur_col_displayed = 0
         self.grid.SetColLabelValue(1, "Inscrit")
         self.grid.SetColLabelValue(2, "Heures")
         self.grid.SetColSize(0, 155)
@@ -199,9 +203,10 @@ class EtatsPresenceTab(AutoTab):
         self.Bind(wx.EVT_BUTTON, self.onOk, ok)
         self.Bind(wx.EVT_BUTTON, self.onExport, export)
         self.Bind(wx.EVT_CHOICE, self.onChoice, self.sites_choice)
+        self.Bind(wx.EVT_CHOICE, self.onChoice, self.professeurs_choice)
         self.Bind(wx.EVT_CHOICE, self.onChoice, self.inscrits_choice)
 
-    def FillSites(self, debut=None, fin=None, inscrit=None):
+    def FillSites(self, debut=None, fin=None, inscrit=None, professeur=None):
         if len(creche.sites) < 2:
             self.sites_choice.Show(False)
             return
@@ -216,7 +221,7 @@ class EtatsPresenceTab(AutoTab):
                 inscrits = creche.inscrits
             for inscrit in inscrits:
                 for inscription in inscrit.getInscriptions(debut, fin):
-                    if inscription.site and inscription.site not in sites:
+                    if inscription.site:
                         sites.add(inscription.site)
         self.sites_choice.Show(True)
         self.sites_choice.Clear()
@@ -224,17 +229,29 @@ class EtatsPresenceTab(AutoTab):
         for site in sites:
             self.sites_choice.Append(site.nom, site)
         self.sites_choice.Select(0)
+        
+    def FillProfesseurs(self, debut=None, fin=None, site=None, inscrit=None):
+        if creche.type != TYPE_GARDERIE_PERISCOLAIRE or not creche.professeurs:
+            self.professeurs_choice.Show(False)
+            return
+        
+        self.professeurs_choice.Show(True)
+        self.professeurs_choice.Clear()
+        self.professeurs_choice.Append("Tous les professeurs", None)
+        for professeur in creche.professeurs:
+            self.professeurs_choice.Append(professeur.prenom + " " + professeur.nom, professeur)
+        self.professeurs_choice.Select(0)
     
-    def FillInscrits(self, debut=None, fin=None, site=None):
+    def FillInscrits(self, debut=None, fin=None, site=None, professeur=None):
         self.inscrits_choice.Clear()
         self.inscrits_choice.Append("Tous les inscrits", None)
-        if debut is None and fin is None and site is None:
+        if debut is None and fin is None and site is None and professeur is None:
             inscrits = creche.inscrits
         else:
             inscrits = set()
             for inscrit in creche.inscrits:
                 for inscription in inscrit.getInscriptions(debut, fin):
-                    if site is None or inscription.site == site:
+                    if (site is None or inscription.site == site) and (professeur is None or inscription.professeur == professeur):
                         inscrits.add(inscrit)
 
         self.inscrits_choice.Clear()
@@ -249,15 +266,26 @@ class EtatsPresenceTab(AutoTab):
         if len(creche.sites) < 2:
             if self.site_col_displayed:
                 self.grid.DeleteCols(1)
-                self.site_col_displayed = False
+                self.site_col_displayed = 0
         else:
             if not self.site_col_displayed:
                 self.grid.InsertCols(1)
                 self.grid.SetColLabelValue(1, "Site")
                 self.grid.SetColSize(1, 100)
-                self.site_col_displayed = True   
+                self.site_col_displayed = 1
+        if creche.type == TYPE_GARDERIE_PERISCOLAIRE:
+            if not self.professeur_col_displayed:
+                self.grid.InsertCols(1+self.site_col_displayed)
+                self.grid.SetColLabelValue(1+self.site_col_displayed, "Professeur")
+                self.grid.SetColSize(1+self.site_col_displayed, 100)
+                self.professeur_col_displayed = 1
+        else:
+            if self.professeur_col_displayed:
+                self.grid.DeleteCols(1+self.site_col_displayed)
+                self.professeur_col_displayed = 0
         self.grid.ForceRefresh()
         self.FillSites()
+        self.FillProfesseurs()
         self.FillInscrits()
         self.sizer.FitInside(self)
     
@@ -337,8 +365,11 @@ class EtatsPresenceTab(AutoTab):
             site = None
         else:
             site = self.sites_choice.GetClientData(self.sites_choice.GetSelection())
+        if creche.type != TYPE_GARDERIE_PERISCOLAIRE or not creche.professeurs:
+            professeur = None
+        else:
+            professeur = self.professeurs_choice.GetClientData(self.professeurs_choice.GetSelection())
         inscrit = self.inscrits_choice.GetClientData(self.inscrits_choice.GetSelection())
-
         if inscrit:
             inscrits = [inscrit]
         else:
@@ -351,7 +382,7 @@ class EtatsPresenceTab(AutoTab):
         selection = {}
         for inscrit in inscrits:
             for inscription in inscrit.getInscriptions(debut, fin):
-                if site is None or inscription.site == site:
+                if (site is None or inscription.site == site) and (professeur is None or inscription.professeur == professeur):
                     date = max(debut, inscription.debut)
                     if inscription.fin:
                         date_fin = min(fin, inscription.fin)
@@ -362,7 +393,7 @@ class EtatsPresenceTab(AutoTab):
                         if state > 0 and state & PRESENT:
                             if date not in selection:
                                 selection[date] = []
-                            selection[date].append((inscription.site, inscrit, contrat+supplementaire))
+                            selection[date].append((inscription.site, inscription.professeur, inscrit, contrat+supplementaire))
                         date += datetime.timedelta(1)
         return selection
     
@@ -374,15 +405,18 @@ class EtatsPresenceTab(AutoTab):
         dates = selection.keys()
         dates.sort()
         for date in dates:
-            for site, inscrit, heures in selection[date]:
+            for site, professeur, inscrit, heures in selection[date]:
                 self.grid.AppendRows(1)
                 self.grid.SetCellValue(row, 0, date2str(date))
                 inscrit_column = 1
                 if self.site_col_displayed:
-                    inscrit_column = 2
+                    inscrit_column += 1
                     if site:
                         self.grid.SetCellValue(row, 1, site.nom)
-                self.grid.SetCellValue(row, inscrit_column, "%s %s" % (inscrit.prenom, inscrit.nom))
+                if self.professeur_col_displayed:
+                    self.grid.SetCellValue(row, inscrit_column, GetPrenomNom(professeur))
+                    inscrit_column += 1
+                self.grid.SetCellValue(row, inscrit_column, GetPrenomNom(inscrit))
                 self.grid.SetCellValue(row, inscrit_column+1, str(heures))
                 row += 1
         self.grid.ForceRefresh()
@@ -394,10 +428,14 @@ class EtatsPresenceTab(AutoTab):
             site = None
         else:
             site = self.sites_choice.GetClientData(self.sites_choice.GetSelection())
+        if creche.type != TYPE_GARDERIE_PERISCOLAIRE or not creche.professeurs:
+            professeur = None
+        else:
+            professeur = self.professeurs_choice.GetClientData(self.professeurs_choice.GetSelection())
         inscrit = self.inscrits_choice.GetClientData(self.inscrits_choice.GetSelection())
         
         selection = self.GetSelection()
-        DocumentDialog(self, EtatsPresenceModifications(debut, fin, site, inscrit, selection)).ShowModal()
+        DocumentDialog(self, EtatsPresenceModifications(debut, fin, site, professeur, inscrit, selection)).ShowModal()
           
 class StatistiquesFrequentationTab(AutoTab):
     def __init__(self, parent):
