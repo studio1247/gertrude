@@ -21,7 +21,7 @@ from parameters import *
 from functions import *
 from sqlobjects import *
 from controls import *
-from planning import PlanningWidget
+from planning import PlanningWidget, LigneConge
 
 class DayPlanningPanel(PlanningWidget):
     def UpdateContents(self):
@@ -42,8 +42,9 @@ class DayPlanningPanel(PlanningWidget):
         for inscrit in creche.inscrits:
             inscription = inscrit.getInscription(self.date)
             if inscription is not None and (len(creche.sites) <= 1 or inscription.site is self.site):
-                # print inscrit.prenom, 
-                if self.date in inscrit.journees:
+                if self.date in inscrit.jours_conges:
+                    line = LigneConge(inscrit.jours_conges[self.date].label)
+                elif self.date in inscrit.journees:
                     line = inscrit.journees[self.date]
                     line.insert = None
                 else:
