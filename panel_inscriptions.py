@@ -839,7 +839,7 @@ class InscriptionsPanel(GPanel):
         inscrit = ctrl.GetClientData(selected)
         if inscrit:
             self.delbutton.Enable()
-            self.SelectInscrit(inscrit)
+            self.notebook.SetInscrit(inscrit)
         else:
             ctrl.SetSelection(0)
             self.EvtInscritChoice(evt)
@@ -887,6 +887,7 @@ class InscriptionsPanel(GPanel):
             inscritId = GetInscritId(inscrit, creche.inscrits)
             if inscritId == '':
                 inscritId = 'Nouvelle inscription'
-            self.choice.SetString(self.choice.GetSelection(), inscritId)
-            self.choice.SetStringSelection(inscritId)
+            selection = self.choice.GetSelection()
+            self.choice.SetString(selection, inscritId)
+            self.choice.SetSelection(selection)
                                 

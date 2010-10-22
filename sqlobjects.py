@@ -142,8 +142,12 @@ class Day(object):
                 if self.values[h] > 0 and self.values[h] & mask:
                     result.add(value)
                     break
-        return result        
-        
+        return result
+    
+    def delete(self):
+        print 'suppression jour'
+        for start, end, value in self.activites.keys():
+            self.remove_activity(start, end, value)        
 
 class ReferenceDay(Day):
     def __init__(self, inscription, day):
@@ -161,13 +165,7 @@ class ReferenceDay(Day):
     def remove_activity(self, start, end, value):
         print 'suppression activite de reference %d' % self.activites[(start, end, value)]
         sql_connection.execute('DELETE FROM REF_ACTIVITIES WHERE idx=?', (self.activites[(start, end, value)],))
-        del self.activites[(start, end, value)]
-        
-    def delete(self):
-        print 'suppression jour de reference %d' % self.day
-        for start, end, value in self.activites.keys():
-            self.remove_activity(start, end, value)
-        
+        del self.activites[(start, end, value)]        
        
 class Journee(Day):
     def __init__(self, inscrit, date, reference=None):
@@ -774,6 +772,11 @@ class Inscription(SQLObject):
         print 'nouvelle inscription'
         result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, fin_periode_essai, duree_reference, semaines_conges) VALUES(NULL,?,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, self.fin_periode_essai, self.duree_reference, self.semaines_conges))
         self.idx = result.lastrowid
+        
+    def delete(self):
+        SQLObject.delete(self)
+        for object in self.reference:
+            object.delete()
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
