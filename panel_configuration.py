@@ -678,7 +678,7 @@ class ParametersPanel(AutoTab):
     def onModeFacturationChoice(self, event):
         object = event.GetEventObject()
         value = object.GetClientData(object.GetSelection())
-        self.GetParent().DisplayTauxHorairePanel(value==FACTURATION_PAJE)
+        self.GetParent().DisplayTauxHorairePanel(value in (FACTURATION_PAJE, FACTURATION_HORAIRES_REELS))
         event.Skip()
             
     def ouverture_check(self, ouverture, a, b):
@@ -942,7 +942,7 @@ class ParametresNotebook(wx.Notebook):
         self.AddPage(ActivitesTab(self), u'Couleurs / Activités')
         self.AddPage(ParametersPanel(self), u'Paramètres')
         self.taux_horaire_panel = TauxHorairePanel(self)
-        if creche.mode_facturation == FACTURATION_PAJE:
+        if creche.mode_facturation in (FACTURATION_PAJE, FACTURATION_HORAIRES_REELS):
             self.AddPage(self.taux_horaire_panel, 'Taux horaire')
             self.taux_horaire_panel_displayed = True
         else:

@@ -31,6 +31,7 @@ class FactureFinMois(object):
         self.heures_facturees = [0.0, 0.0]
         self.heures_contractualisees = 0.0
         self.heures_realisees = 0.0
+        self.total_realise = 0.0
         self.supplement = 0.0
         self.deduction = 0.0
         self.jours_supplementaires = []
@@ -65,6 +66,7 @@ class FactureFinMois(object):
                     self.heures_contractualisees += heures_reference
                     self.heures_realisees += heures_realisees
                     self.heures_facturees[cotisation.mode_inscription] += heures_reference + heures_supplementaires
+                    self.total_realise += heures_realisees * cotisation.montant_heure_garde
                                        
                     if (cotisation.mode_inscription, cotisation.cotisation_mensuelle) in cotisations_mensuelles:
                         cotisation = cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)]
@@ -80,31 +82,32 @@ class FactureFinMois(object):
 
                     if state == MALADE:
                         self.jours_maladie.append(date)
-                        # recherche du premier et du dernier jour
-                        premier_jour_maladie = tmp = date
-                        while tmp >= inscrit.inscriptions[0].debut and inscrit.getState(tmp)[0] in (MALADE, ABSENT):
-                            tmp -= datetime.timedelta(1)
-                            if inscrit.getState(tmp)[0] == MALADE:
-                                premier_jour_maladie = tmp
-                        dernier_jour_maladie = tmp = date
-                        while (not inscrit.inscriptions[-1].fin or tmp <= inscrit.inscriptions[-1].fin) and inscrit.getState(tmp)[0] in (MALADE, ABSENT):
-                            tmp += datetime.timedelta(1)
-                            if inscrit.getState(tmp)[0] == MALADE:
-                                dernier_jour_maladie = tmp
-
-                        if creche.traitement_maladie == DEDUCTION_MALADIE_AVEC_CARENCE:
-                            nb_jours_maladie = date - premier_jour_maladie + datetime.timedelta(1)
-                        else:
-                            nb_jours_maladie = dernier_jour_maladie - premier_jour_maladie + datetime.timedelta(1)
-                            
-                        if nb_jours_maladie > datetime.timedelta(creche.minimum_maladie):
-                            self.jours_maladie_deduits.append(date)
-                            if creche.mode_facturation == FACTURATION_FORFAIT_10H:
-                                self.deduction += cotisation.montant_jour_garde
+                        if creche.mode_facturation != FACTURATION_HORAIRES_REELS:
+                            # recherche du premier et du dernier jour
+                            premier_jour_maladie = tmp = date
+                            while tmp >= inscrit.inscriptions[0].debut and inscrit.getState(tmp)[0] in (MALADE, ABSENT):
+                                tmp -= datetime.timedelta(1)
+                                if inscrit.getState(tmp)[0] == MALADE:
+                                    premier_jour_maladie = tmp
+                            dernier_jour_maladie = tmp = date
+                            while (not inscrit.inscriptions[-1].fin or tmp <= inscrit.inscriptions[-1].fin) and inscrit.getState(tmp)[0] in (MALADE, ABSENT):
+                                tmp += datetime.timedelta(1)
+                                if inscrit.getState(tmp)[0] == MALADE:
+                                    dernier_jour_maladie = tmp
+    
+                            if creche.traitement_maladie == DEDUCTION_MALADIE_AVEC_CARENCE:
+                                nb_jours_maladie = date - premier_jour_maladie + datetime.timedelta(1)
                             else:
-                                self.deduction += cotisation.montant_heure_garde * heures_reference
-                            cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)].heures_maladie += heures_reference
-                            self.raison_deduction = u'(maladie > %dj consécutifs)' % creche.minimum_maladie
+                                nb_jours_maladie = dernier_jour_maladie - premier_jour_maladie + datetime.timedelta(1)
+                                
+                            if nb_jours_maladie > datetime.timedelta(creche.minimum_maladie):
+                                self.jours_maladie_deduits.append(date)
+                                if creche.mode_facturation == FACTURATION_FORFAIT_10H:
+                                    self.deduction += cotisation.montant_jour_garde
+                                else:
+                                    self.deduction += cotisation.montant_heure_garde * heures_reference
+                                cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)].heures_maladie += heures_reference
+                                self.raison_deduction = u'(maladie > %dj consécutifs)' % creche.minimum_maladie
                     elif state > 0:
                         if state & PREVISIONNEL:
                             self.previsionnel = True
@@ -122,8 +125,6 @@ class FactureFinMois(object):
                                 self.supplement_activites += activite.tarif
                     
             date += datetime.timedelta(1)
-            
-        self.total_realise = self.heures_realisees * cotisation.montant_heure_garde
 
         for mode_inscription, montant in cotisations_mensuelles:
             cotisation = cotisations_mensuelles[mode_inscription, montant]

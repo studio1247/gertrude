@@ -116,7 +116,7 @@ class SQLConnection(object):
             vice_president VARCHAR,
             tresorier VARCHAR,
             secretaire VARCHAR,
-            directeur VARCHAR,
+            directeur VARCHAR
           );""")
 
         cur.execute("""

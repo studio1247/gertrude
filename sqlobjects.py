@@ -290,7 +290,7 @@ class Conge(object):
 
     def create(self):
         print 'nouveau conge'
-        result = sql_connection.execute('INSERT INTO %s (idx, debut, fin) VALUES (NULL,?,?)' % self.__table__, (self.debut, self.fin))
+        result = sql_connection.execute('INSERT INTO %s (idx, debut, fin, label, options) VALUES (NULL,?,?,?,?)' % self.__table__, (self.debut, self.fin, self.label, self.options))
         self.idx = result.lastrowid
 
     def delete(self):

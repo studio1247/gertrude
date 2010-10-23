@@ -32,7 +32,7 @@ except:
 import controls, zipfile, xml.dom.minidom, wx.html, ooffice
 sys.path.insert(0, ".")
 
-VERSION = '0.83e'
+VERSION = '0.83h'
 
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):

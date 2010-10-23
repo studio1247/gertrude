@@ -70,6 +70,9 @@ class AttestationModifications(object):
                 errors[GetPrenomNom(inscrit)] = e.errors
                 continue
             
+            if facture_debut is None:
+                continue
+            
             # Les champs du recu
             fields = [('nom-creche', creche.nom),
                     ('adresse-creche', creche.adresse),

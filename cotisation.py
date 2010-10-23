@@ -139,10 +139,9 @@ class Cotisation(object):
                        
             self.heures_semaine = self.heures_reelles_semaine
             self.heures_annee = 47 * self.heures_semaine
-#            print 'heures annee', self.heures_annee
-            self.heures_mois = self.heures_annee / 12
             # TODO c'etait 45 au lieu de 46 pour Oleron, 47 pour Bois le roi
             # Il faudrait pouvoir saisir le nombre de samaines de vacances qq part
+            self.heures_mois = self.heures_annee / 12
             
             if creche.conges_inscription:
                 self.heures_annee = 0.0    
@@ -182,8 +181,17 @@ class Cotisation(object):
             self.str_mode_garde = u'plein temps'
         else:
             self.str_mode_garde = u'%d/5èmes' % self.jours_semaine
-                
-        if creche.mode_facturation == FACTURATION_PAJE:       
+        
+        if creche.mode_facturation == FACTURATION_HORAIRES_REELS:
+            self.taux_horaire = creche.eval_taux_horaire(self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine)
+            if self.taux_horaire is None:
+                errors.append(u" - La formule de calcul du taux horaire n'est pas correcte.")
+                raise CotisationException(errors)
+            self.montant_heure_garde = self.taux_horaire
+            self.montant_jour_supplementaire = 0
+            self.cotisation_periode = 0.0
+            self.cotisation_mensuelle = 0.0
+        elif creche.mode_facturation == FACTURATION_PAJE:       
             self.taux_horaire = creche.eval_taux_horaire(self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine)
             if self.taux_horaire is None:
                 errors.append(u" - La formule de calcul du taux horaire n'est pas correcte.")

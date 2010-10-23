@@ -223,7 +223,10 @@ class ForfaitPanel(ContextPanel):
                     str_inscription = "_creche"
                 else:
                     str_inscription = "_hg"
-                if creche.mode_facturation == FACTURATION_PAJE:
+                if creche.mode_facturation == FACTURATION_HORAIRES_REELS:
+                    str_facturation = "_reel"
+                    str_inscription = "_creche"
+                elif creche.mode_facturation == FACTURATION_PAJE:
                     str_facturation = "_paje"
                 else:
                     str_facturation = ""

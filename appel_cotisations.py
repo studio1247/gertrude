@@ -50,7 +50,7 @@ class AppelCotisationsModifications(object):
             line = template[i % 2].cloneNode(1)
             try:
                 facture = Facture(inscrit, self.debut.year, self.debut.month, self.options)
-                cotisation, supplement = facture.cotisation_mensuelle, None
+                cotisation, supplement = facture.cotisation_mensuelle, facture.supplement
                 commentaire = None
             except CotisationException, e:
                 cotisation, supplement = '?', None
