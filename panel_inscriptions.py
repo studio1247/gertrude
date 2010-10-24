@@ -156,7 +156,7 @@ class ForfaitPanel(ContextPanel):
     def GetPeriodes(self):
         periodes = []
         for inscription in self.inscrit.inscriptions:
-            separators = self.get_separators(inscription.debut, inscription.fin)
+            separators = self.get_separators(inscription)
             all_periodes = [(separators[i], separators[i+1] - datetime.timedelta(1)) for i in range(len(separators)-1)]
             previous_context = None
             previous_periode = None
@@ -175,14 +175,15 @@ class ForfaitPanel(ContextPanel):
                     previous_context = None
         return periodes
 
-    def get_separators(self, debut, fin):
-        if debut is None:
+    def get_separators(self, inscription):
+        if inscription.debut is None:
             return []
-
-        if fin is None:
+        else:
+            debut = inscription.debut
+        if inscription.fin is None:
             fin = datetime.date(day=1, month=1, year=datetime.date.today().year+1)
         else:
-            fin = fin + datetime.timedelta(1)
+            fin = inscription.fin + datetime.timedelta(1)
 
         separators = [debut, fin]
 
@@ -205,7 +206,9 @@ class ForfaitPanel(ContextPanel):
         for year in range(debut.year, fin.year+1):
             addseparator(datetime.date(day=1, month=9, year=year))
             addseparator(datetime.date(day=1, month=1, year=year))
-
+        if creche.facturation_periode_adaptation != PERIODE_ADAPTATION_FACTUREE_NORMALEMENT and inscription.fin_periode_adaptation:
+            addseparator(inscription.fin_periode_adaptation + datetime.timedelta(1))
+            
         separators.sort()
         return separators
 
@@ -515,7 +518,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         if creche.mode_facturation != FACTURATION_PAJE:
             for item in self.semaines_conges_items:
                 item.Show(False)
-        sizer1.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_essai'), 0, wx.EXPAND)])
+        sizer1.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_adaptation'), 0, wx.EXPAND)])
         self.duree_reference_choice = wx.Choice(self)
         for item, data in [("1 semaine", 7), (u"2 semaines", 14), (u"3 semaines", 21), ("4 semaines", 28)]:
             self.duree_reference_choice.Append(item, data)

@@ -265,7 +265,11 @@ class Cotisation(object):
                     self.montant_jour_supplementaire = self.montant_jour_garde
                 else: 
                     self.montant_jour_supplementaire = 0
-
+        
+        if creche.mode_facturation != FACTURATION_HORAIRES_REELS and creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and self.inscription.IsInPeriodeAdaptation(self.debut):
+            self.cotisation_periode = 0.0
+            self.cotisation_mensuelle = 0.0
+            
         if creche.majoration_localite and self.inscrit.majoration:
             self.majoration_mensuelle = creche.majoration_localite
         else:
@@ -288,6 +292,8 @@ class Cotisation(object):
         elif creche.mode_facturation != FACTURATION_PAJE and self.bareme_caf != Select(creche.baremes_caf, date):
             return False
         elif (self.enfants_a_charge, self.enfants_en_creche) != GetEnfantsCount(self.inscrit, date):
+            return False
+        elif creche.mode_facturation != FACTURATION_HORAIRES_REELS and creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and self.inscription.IsInPeriodeAdaptation(self.debut) != self.inscription.IsInPeriodeAdaptation(date):
             return False
         else:
             return True

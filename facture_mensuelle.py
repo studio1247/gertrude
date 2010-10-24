@@ -21,7 +21,7 @@ from facture import *
 from cotisation import Cotisation, CotisationException
 from ooffice import *
 
-couleurs = { PRESENT+SUPPLEMENT: 'A2',
+couleurs = { SUPPLEMENT: 'A2',
              MALADE: 'B2',
              PRESENT: 'C2',
              VACANCES: 'D2',
@@ -87,19 +87,25 @@ class FactureModifications(object):
                         while date.month == facture.debut_recap.month:
                             col = date.weekday()
                             if col < 5:
+                                details = ""
                                 row = (date.day + empty_cells) / 7
                                 cell = cells[row][col]
                                 # ecriture de la date dans la cellule
                                 text_node = cell.getElementsByTagName('text:p')[0]
-                                text_node.firstChild.replaceWholeText('%d' % date.day)
-                                if not date in creche.jours_fermeture:
-                                    # changement de la couleur de la cellule
-                                    state, foo1, foo2, supplement = inscrit.getState(date)
-                                    if state > 0:
-                                        state = state % PREVISIONNEL
-                                        if supplement > 0:
-                                            state += SUPPLEMENT
-                                    cell.setAttribute('table:style-name', 'Presences.%s' % couleurs[state])
+                                if date in facture.jours_presence_selon_contrat:
+                                    state = PRESENT
+                                    details = " (%.2fh)" % facture.jours_presence_selon_contrat[date]
+                                elif date in facture.jours_supplementaires:
+                                    state = SUPPLEMENT
+                                    details = " (%.2fh)" % facture.jours_supplementaires[date]
+                                elif date in facture.jours_maladie:
+                                    state = MALADE
+                                elif date in facture.jours_vacances:
+                                    state = VACANCES
+                                else:
+                                    state = ABSENT
+                                text_node.firstChild.replaceWholeText('%d%s' % (date.day, details))
+                                cell.setAttribute('table:style-name', 'Presences.%s' % couleurs[state])
                             date += datetime.timedelta(1)
         
                         for i in range(row + 1, len(rows)):

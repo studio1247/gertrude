@@ -501,6 +501,7 @@ class Creche(object):
         self.type = TYPE_PARENTAL
         self.capacite = 0
         self.majoration_localite = 0.0
+        self.facturation_periode_adaptation = PERIODE_ADAPTATION_FACTUREE_NORMALEMENT
         self.facturation_jours_feries = JOURS_FERIES_NON_DEDUITS
         self.formule_taux_horaire = None
         self.calcule_jours_conges()
@@ -627,7 +628,7 @@ class Creche(object):
         
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'majoration_localite', 'facturation_jours_feries'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'majoration_localite', 'facturation_jours_feries', 'facturation_periode_adaptation'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
@@ -742,7 +743,7 @@ class Inscription(SQLObject):
         self.reference = []
         for i in range(duree_reference):
             self.reference.append(ReferenceDay(self, i))
-        self.fin_periode_essai = None
+        self.fin_periode_adaptation = None
         self.professeur = None
 
         if creation:
@@ -767,10 +768,15 @@ class Inscription(SQLObject):
             return self.reference[((date - self.debut).days + self.debut.weekday()) % self.duree_reference]
         else:
             return self.reference[date.weekday()]
+        
+    def IsInPeriodeAdaptation(self, date):
+        if self.debut is None or self.fin_periode_adaptation is None:
+            return False
+        return date >= self.debut and date <= self.fin_periode_adaptation 
     
     def create(self):
         print 'nouvelle inscription'
-        result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, fin_periode_essai, duree_reference, semaines_conges) VALUES(NULL,?,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, self.fin_periode_essai, self.duree_reference, self.semaines_conges))
+        result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, fin_periode_adaptation, duree_reference, semaines_conges) VALUES(NULL,?,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, self.fin_periode_adaptation, self.duree_reference, self.semaines_conges))
         self.idx = result.lastrowid
         
     def delete(self):
@@ -782,7 +788,7 @@ class Inscription(SQLObject):
         self.__dict__[name] = value
         if name in ('site', 'professeur') and self.idx:
             value = value.idx
-        if name in ['debut', 'fin', 'mode', 'fin_periode_essai', 'duree_reference', 'semaines_conges', 'site', 'professeur'] and self.idx:
+        if name in ['debut', 'fin', 'mode', 'fin_periode_adaptation', 'duree_reference', 'semaines_conges', 'site', 'professeur'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE INSCRIPTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))   
 
@@ -1009,7 +1015,7 @@ class Inscrit(object):
                 return PRESENT, heures_reference, heures_realisees, heures_supplementaires
         else:
             if ref_state:
-                if creche.presences_previsionnelles and date > today:
+                if creche.presences_previsionnelles:
                     return PRESENT|PREVISIONNEL, heures_reference, heures_reference, 0
                 else:
                     return PRESENT, heures_reference, heures_reference, 0

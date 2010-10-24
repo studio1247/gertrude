@@ -34,10 +34,12 @@ class FactureFinMois(object):
         self.total_realise = 0.0
         self.supplement = 0.0
         self.deduction = 0.0
-        self.jours_supplementaires = []
+        self.jours_presence_selon_contrat = {}
+        self.jours_supplementaires = {}
         self.heures_supplementaires = 0.0
         self.jours_maladie = []
         self.jours_maladie_deduits = []
+        self.jours_vacances = []
         self.raison_deduction = ""
         self.supplement_activites = 0.0
         self.previsionnel = False
@@ -59,14 +61,9 @@ class FactureFinMois(object):
                     else:
                         cotisation = Cotisation(inscrit, (date, date), options=NO_ADDRESS|self.options)
                         last_cotisation = cotisation
-                        if options & TRACES: print "cotisation mensuelle à partir de %s" % date, cotisation.cotisation_mensuelle
+                        if options & TRACES: print u"cotisation mensuelle à partir de %s" % date, cotisation.cotisation_mensuelle
                         
                     state, heures_reference, heures_realisees, heures_supplementaires = inscrit.getState(date)
-                    
-                    self.heures_contractualisees += heures_reference
-                    self.heures_realisees += heures_realisees
-                    self.heures_facturees[cotisation.mode_inscription] += heures_reference + heures_supplementaires
-                    self.total_realise += heures_realisees * cotisation.montant_heure_garde
                                        
                     if (cotisation.mode_inscription, cotisation.cotisation_mensuelle) in cotisations_mensuelles:
                         cotisation = cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)]
@@ -81,7 +78,8 @@ class FactureFinMois(object):
                         heures_hebdomadaires[(cotisation.mode_inscription, cotisation.heures_semaine)] = 1
 
                     if state == MALADE:
-                        self.jours_maladie.append(date)
+                        if heures_reference > 0:
+                            self.jours_maladie.append(date)
                         if creche.mode_facturation != FACTURATION_HORAIRES_REELS:
                             # recherche du premier et du dernier jour
                             premier_jour_maladie = tmp = date
@@ -108,21 +106,36 @@ class FactureFinMois(object):
                                     self.deduction += cotisation.montant_heure_garde * heures_reference
                                 cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)].heures_maladie += heures_reference
                                 self.raison_deduction = u'(maladie > %dj consécutifs)' % creche.minimum_maladie
+                    elif state == VACANCES:
+                        if heures_reference > 0:
+                            self.jours_vacances.append(date)
                     elif state > 0:
                         if state & PREVISIONNEL:
                             self.previsionnel = True
-                        if state & SUPPLEMENT:
-                            self.jours_supplementaires.append(date)
+                        if heures_supplementaires > 0:
+                            self.jours_supplementaires[date] = heures_realisees
                             if creche.mode_facturation == FACTURATION_FORFAIT_10H:
                                 self.supplement += cotisation.montant_jour_garde
+                        else:
+                            if creche.mode_facturation == FACTURATION_HORAIRES_REELS or (creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date)):
+                                if not state & PREVISIONNEL:
+                                    self.supplement += heures_realisees * cotisation.montant_heure_garde
+                                    self.jours_presence_selon_contrat[date] = heures_realisees
+                            else:
+                                self.jours_presence_selon_contrat[date] = heures_realisees
                         if creche.mode_facturation != FACTURATION_FORFAIT_10H:
                             self.heures_supplementaires += heures_supplementaires
                             self.supplement += cotisation.montant_heure_garde * heures_supplementaires
-                        if creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE or (creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE_PERIODE_ESSAI and inscription.fin_periode_essai and date >= inscription.debut and date < inscription.fin_periode_essai):
+                        if creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE or (creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION and inscription.IsInPeriodeAdaptation(date)):
                             activites = inscrit.getActivites(date)
                             for index in activites:
                                 activite = creche.activites[index]
                                 self.supplement_activites += activite.tarif
+
+                    self.heures_contractualisees += heures_reference
+                    self.heures_realisees += heures_realisees
+                    self.heures_facturees[cotisation.mode_inscription] += heures_reference + heures_supplementaires
+                    self.total_realise += heures_realisees * cotisation.montant_heure_garde
                     
             date += datetime.timedelta(1)
 
@@ -148,10 +161,12 @@ class FactureDebutMois(FactureFinMois):
         self.fin_recap = facture_precedente.fin_recap
         self.supplement = facture_precedente.supplement
         self.deduction = facture_precedente.deduction
+        self.jours_presence_selon_contrat = facture_precedente.jours_presence_selon_contrat
         self.jours_supplementaires = facture_precedente.jours_supplementaires
         self.heures_supplementaires = facture_precedente.heures_supplementaires
         self.jours_maladie = facture_precedente.jours_maladie
         self.jours_maladie_deduits = facture_precedente.jours_maladie_deduits
+        self.jours_vacances = facture_precedente.jours_vacances
         self.raison_deduction = facture_precedente.raison_deduction
         self.supplement_activites = facture_precedente.supplement_activites
         self.previsionnel |= facture_precedente.previsionnel

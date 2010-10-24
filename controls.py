@@ -516,6 +516,9 @@ class AutoMixin:
                 self.SetValue(eval('self.instance.%s' % self.member))
             except:
                 print u"Erreur lors de l'évaluation de self.instance.%s" % self.member
+                print self.instance
+                # print self.instance.label
+                print creche.conges[5].label
             self.__ontext = True
             self.Enable(not readonly)
             
