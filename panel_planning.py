@@ -63,7 +63,7 @@ class DayPlanningPanel(PlanningWidget):
         
 
 class PlanningPanel(GPanel):
-    bitmap = './bitmaps/presences.png'
+    bitmap = GetBitmapFile("presences.png")
     profil = PROFIL_ALL
 
     def __init__(self, parent):

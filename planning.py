@@ -20,7 +20,7 @@ from buffered_window import BufferedWindow
 import datetime
 from constants import *
 from controls import getActivityColor
-from functions import getActivitiesSummary
+from functions import getActivitiesSummary, GetBitmapFile
 from history import *
 
 # PlanningWidget options
@@ -36,12 +36,12 @@ ICONS_WIDTH = 33 # px
 COLUMN_WIDTH = 48 / (60 / BASE_GRANULARITY) # px
 LINE_HEIGHT = 30 # px
 
-BUTTON_BITMAPS = { ABSENT: wx.Bitmap("./bitmaps/icone_vacances.png", wx.BITMAP_TYPE_PNG),
-                   ABSENT+PREVISIONNEL: wx.Bitmap("./bitmaps/icone_vacances.png", wx.BITMAP_TYPE_PNG),
-                   PRESENT: wx.Bitmap("./bitmaps/icone_presence.png", wx.BITMAP_TYPE_PNG),
-                   PRESENT+PREVISIONNEL: wx.Bitmap("./bitmaps/icone_presence_prev.png", wx.BITMAP_TYPE_PNG),
-                   VACANCES: wx.Bitmap("./bitmaps/icone_vacances.png", wx.BITMAP_TYPE_PNG),
-                   MALADE: wx.Bitmap("./bitmaps/icone_maladie.png", wx.BITMAP_TYPE_PNG),
+BUTTON_BITMAPS = { ABSENT: wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG),
+                   ABSENT+PREVISIONNEL: wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG),
+                   PRESENT: wx.Bitmap(GetBitmapFile("icone_presence.png"), wx.BITMAP_TYPE_PNG),
+                   PRESENT+PREVISIONNEL: wx.Bitmap(GetBitmapFile("icone_presence_prev.png"), wx.BITMAP_TYPE_PNG),
+                   VACANCES: wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG),
+                   MALADE: wx.Bitmap(GetBitmapFile("icone_maladie.png"), wx.BITMAP_TYPE_PNG),
                    }
 
 class LigneConge(object):

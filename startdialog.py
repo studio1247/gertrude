@@ -28,11 +28,11 @@ class StartDialog(wx.Dialog):
         self.frame = frame
         wx.Dialog.__init__(self, None, -1, "Gertrude")
         
-        icon = wx.Icon('./bitmaps/gertrude.ico', wx.BITMAP_TYPE_ICO )
+        icon = wx.Icon(GetBitmapFile("gertrude.ico"), wx.BITMAP_TYPE_ICO )
         self.SetIcon(icon)
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        bmp = wx.StaticBitmap(self, -1, wx.Bitmap("./bitmaps/splash_gertrude.png", wx.BITMAP_TYPE_PNG), style=wx.SUNKEN_BORDER)
+        bmp = wx.StaticBitmap(self, -1, wx.Bitmap(GetBitmapFile("splash_gertrude.png"), wx.BITMAP_TYPE_PNG), style=wx.SUNKEN_BORDER)
         self.sizer.Add(bmp, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
 
         self.info = wx.TextCtrl(self, -1, u"Démarrage ...\n", size=(-1, 50), style=wx.TE_READONLY|wx.TE_MULTILINE)

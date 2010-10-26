@@ -35,7 +35,7 @@ modes_facturation = [("Forfait 10h / jour", FACTURATION_FORFAIT_10H),
 class CrecheTab(AutoTab):
     def __init__(self, parent):
         global delbmp
-        delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
+        delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
 
         AutoTab.__init__(self, parent)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -116,7 +116,7 @@ class CrecheTab(AutoTab):
 class EmployesTab(AutoTab):
     def __init__(self, parent):
         global delbmp
-        delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
+        delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
         AutoTab.__init__(self, parent)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.employes_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -245,7 +245,7 @@ class EmployesTab(AutoTab):
 class ProfesseursTab(AutoTab):
     def __init__(self, parent):
         global delbmp
-        delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
+        delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
         AutoTab.__init__(self, parent)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.professeurs_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -357,7 +357,7 @@ activity_modes = [("Normal", 0),
 class ActivitesTab(AutoTab):
     def __init__(self, parent):
         global delbmp
-        delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
+        delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
         AutoTab.__init__(self, parent)
         self.color_buttons = {}
         self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -748,7 +748,7 @@ class ParametersPanel(AutoTab):
 class TauxHorairePanel(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
-        self.delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
+        self.delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
         addbutton = wx.Button(self, -1, "Ajouter un cas")
         addbutton.index = 0
         self.Bind(wx.EVT_BUTTON, self.onAdd, addbutton)
@@ -848,7 +848,7 @@ profiles = [("Administrateur", PROFIL_ALL),
 class UsersTab(AutoTab):
     def __init__(self, parent):
         global delbmp
-        delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
+        delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
         AutoTab.__init__(self, parent)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.users_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -992,7 +992,7 @@ class ParametresNotebook(wx.Notebook):
         self.Layout()
 
 class ConfigurationPanel(GPanel):
-    bitmap = './bitmaps/creche.png'
+    bitmap = GetBitmapFile("creche.png")
     profil = PROFIL_BUREAU
     def __init__(self, parent):
         GPanel.__init__(self, parent, 'Configuration')

@@ -262,7 +262,7 @@ class IdentitePanel(InscriptionsTab):
     def __init__(self, parent):
         InscriptionsTab.__init__(self, parent)
 
-        self.delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
+        self.delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         sizer2 = wx.FlexGridSizer(0, 2, 5, 10)
         sizer2.AddGrowableCol(1, 1)
@@ -360,7 +360,7 @@ class IdentitePanel(InscriptionsTab):
 class ParentsPanel(InscriptionsTab):
     def __init__(self, parent):
         InscriptionsTab.__init__(self, parent)
-        self.delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
+        self.delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
         self.regimes_choices = []
         self.revenus_items = []
         
@@ -645,7 +645,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
 class CongesPanel(InscriptionsTab):
     def __init__(self, parent):
         global delbmp
-        delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
+        delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
         self.last_creche_observer = 0
         
         InscriptionsTab.__init__(self, parent)
@@ -790,7 +790,7 @@ class InscriptionsNotebook(wx.Notebook):
         self.GetCurrentPage().UpdateContents()
             
 class InscriptionsPanel(GPanel):
-    bitmap = './bitmaps/inscriptions.png'
+    bitmap = GetBitmapFile("inscriptions.png")
     profil = PROFIL_ALL
     def __init__(self, parent):
         GPanel.__init__(self, parent, "Inscriptions")
@@ -799,8 +799,8 @@ class InscriptionsPanel(GPanel):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.choice = wx.Choice(self)
         self.Bind(wx.EVT_CHOICE, self.EvtInscritChoice, self.choice)
-        plusbmp = wx.Bitmap("bitmaps/plus.png", wx.BITMAP_TYPE_PNG)
-        delbmp = wx.Bitmap("bitmaps/remove.png", wx.BITMAP_TYPE_PNG)
+        plusbmp = wx.Bitmap(GetBitmapFile("plus.png"), wx.BITMAP_TYPE_PNG)
+        delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
         self.addbutton = wx.BitmapButton(self, -1, plusbmp, style=wx.BU_EXACTFIT)
         self.delbutton = wx.BitmapButton(self, -1, delbmp, style=wx.BU_EXACTFIT)
         self.addbutton.SetToolTipString(u"Ajouter un enfant")

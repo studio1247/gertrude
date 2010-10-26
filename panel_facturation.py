@@ -31,7 +31,7 @@ from attestation_paiement import AttestationModifications
 from appel_cotisations import AppelCotisationsModifications
 
 class FacturationPanel(GPanel):
-    bitmap = './bitmaps/facturation.png'
+    bitmap = GetBitmapFile("facturation.png")
     profil = PROFIL_TRESORIER
     def __init__(self, parent):
         GPanel.__init__(self, parent, "Facturation")

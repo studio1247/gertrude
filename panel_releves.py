@@ -628,7 +628,7 @@ class RelevesNotebook(wx.Notebook):
             self.GetPage(page).UpdateContents()
         
 class RelevesPanel(GPanel):
-    bitmap = './bitmaps/releves.png'
+    bitmap = GetBitmapFile("releves.png")
     profil = PROFIL_ALL
     def __init__(self, parent):
         GPanel.__init__(self, parent, u'Tableaux de bord')

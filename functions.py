@@ -15,7 +15,7 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import datetime, binascii
+import datetime, binascii, os.path
 from constants import *
 from parameters import *
 import wx
@@ -77,6 +77,13 @@ def GetPrenomNom(person, maj_nom=False):
         return "%s %s" % (person.prenom, person.nom.upper())
     else:
         return "%s %s" % (person.prenom, person.nom)
+    
+def GetBitmapFile(filename):
+    path = "./bitmaps/%s" % filename
+    if os.path.isfile(path):
+        return path
+    else:
+        return "./bitmaps_dist/%s" % filename
 
 def str2date(str, year=None):
     day = str.strip()

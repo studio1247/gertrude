@@ -30,9 +30,9 @@ except:
 
 # Don't remove these 2 lines (mandatory for py2exe)
 import controls, zipfile, xml.dom.minidom, wx.html, ooffice
-sys.path.insert(0, ".")
+from functions import GetBitmapFile
 
-VERSION = '0.83h'
+VERSION = '0.83i'
 
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):
@@ -136,7 +136,7 @@ class GertrudeFrame(wx.Frame):
         wx.Frame.__init__(self, None, -1, "Gertrude v%s" % VERSION, wx.DefaultPosition, (920, 600))
 
         # Icon
-        icon = wx.Icon('./bitmaps/gertrude.ico', wx.BITMAP_TYPE_ICO)
+        icon = wx.Icon(GetBitmapFile('gertrude.ico'), wx.BITMAP_TYPE_ICO)
         self.SetIcon(icon)
 
         # Statusbar
