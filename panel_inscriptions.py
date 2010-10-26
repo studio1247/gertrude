@@ -139,10 +139,7 @@ class ContratPanel(ContextPanel):
                     str_facturation = "_paje"
                 else:
                     str_facturation = ""
-                if os.path.exists("./templates/contrat_accueil%s.html" % str_facturation):
-                    self.html = ParseHtml("./templates/contrat_accueil%s.html" % str_facturation, context)
-                else:
-                    self.html = ParseHtml("./templates_dist/contrat_accueil%s.html" % str_facturation, context)
+                self.html = ParseHtml(GetTemplateFile("contrat_accueil%s.html" % str_facturation), context)
             except CotisationException, e:
                 error = '<br>'.join(e.errors)
                 self.html = u"<html><body><b>Le contrat d'accueil de l'enfant ne peut être édit&eacute; pour la (les) raison(s) suivante(s) :</b><br>" + error + "</body></html>"
@@ -232,11 +229,8 @@ class ForfaitPanel(ContextPanel):
                 elif creche.mode_facturation == FACTURATION_PAJE:
                     str_facturation = "_paje"
                 else:
-                    str_facturation = ""
-                if os.path.exists("./templates/frais_de_garde%s%s.html" % (str_inscription, str_facturation)):
-                    self.html = ParseHtml("./templates/frais_de_garde%s%s.html" % (str_inscription, str_facturation), context)
-                else:
-                    self.html = ParseHtml("./templates_dist/frais_de_garde%s%s.html" % (str_inscription, str_facturation), context)
+                    str_facturation = ""                
+                self.html = ParseHtml(GetTemplateFile("frais_de_garde%s%s.html" % (str_inscription, str_facturation)), context)
             except CotisationException, e:
                 error = '<br>'.join(e.errors)
                 self.html = u"<html><body><b>Les frais de garde mensuels ne peuvent être calcul&eacute;s pour la (les) raison(s) suivante(s) :</b><br>" + error  + "</body></html>"

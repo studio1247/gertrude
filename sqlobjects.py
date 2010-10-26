@@ -606,7 +606,7 @@ class Creche(object):
             return None
     
     def formule_taux_horaire_needs_revenus(self):
-        if self.mode_facturation != FACTURATION_PAJE:
+        if self.mode_facturation not in (FACTURATION_PAJE, FACTURATION_HORAIRES_REELS):
             return True
         if self.formule_taux_horaire is None:
             return False

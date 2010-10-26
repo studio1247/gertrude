@@ -77,13 +77,19 @@ def GetPrenomNom(person, maj_nom=False):
         return "%s %s" % (person.prenom, person.nom.upper())
     else:
         return "%s %s" % (person.prenom, person.nom)
-    
-def GetBitmapFile(filename):
-    path = "./bitmaps/%s" % filename
+
+def GetFile(filename, base):
+    path = "./%s/%s" % (base, filename)
     if os.path.isfile(path):
         return path
     else:
-        return "./bitmaps_dist/%s" % filename
+        return "./%s_dist/%s" % (base, filename)
+    
+def GetBitmapFile(filename):
+    return GetFile(filename, "bitmaps")
+
+def GetTemplateFile(filename):
+    return GetFile(filename, "templates")
 
 def str2date(str, year=None):
     day = str.strip()

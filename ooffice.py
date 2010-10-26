@@ -22,6 +22,7 @@ import re, urllib
 import wx, wx.lib.filebrowsebutton
 import traceback
 import unicodedata
+from functions import GetTemplateFile
 
 def evalFields(fields):
     for i, field in enumerate(fields[:]):
@@ -187,10 +188,7 @@ def GenerateDocument(modifications, filename=None, gauge=None):
         gauge.SetValue(0)
     if not filename:
         filename = unicodedata.normalize("NFKD", modification.default_output).encode('ascii', 'ignore')
-    if os.path.exists("./templates/%s" % modifications.template):
-        template = "./templates/%s" % modifications.template
-    else:
-        template = "./templates_dist/%s" % modifications.template
+    template = GetTemplateFile(modifications.template)
     errors = {}
     zip = zipfile.ZipFile(template, 'r')
     files = []
