@@ -338,7 +338,7 @@ class ResponsabilitesTab(AutoTab, PeriodeMixin):
             for parent in (inscrit.papa, inscrit.maman):
                 if parent.prenom and parent.nom:
                     tmp = parent.prenom + ' ' + parent.nom
-                    if not tmp in parents:
+                    if not tmp in noms:
                         noms.append(tmp)
         noms.sort(cmp=lambda x,y: cmp(x.lower(), y.lower()))
         return noms
