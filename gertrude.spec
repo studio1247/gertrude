@@ -12,9 +12,9 @@ exe = EXE(pyz,
           strip=False,
           upx=True,
           console=False,
-          icon='bitmaps\\gertrude.ico' )
+          icon='bitmaps_dist\\gertrude.ico' )
 coll = COLLECT( exe,
-               a.binaries + [(x, x, 'DATA') for x in glob.glob("*.ini.dist") + glob.glob("bitmaps\\*.png") + glob.glob("bitmaps\\*.ico") + glob.glob("templates_dist\\*.html") + glob.glob("templates_dist\\*.od?") + glob.glob("doc\\*")],
+               a.binaries + [(x, x, 'DATA') for x in glob.glob("*.ini.dist") + glob.glob("bitmaps_dist\\*.png") + glob.glob("bitmaps_dist\\*.ico") + glob.glob("templates_dist\\*.html") + glob.glob("templates_dist\\*.od?") + glob.glob("doc\\*")],
                a.zipfiles,
                a.datas,
                strip=False,

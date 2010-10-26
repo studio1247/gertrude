@@ -21,9 +21,9 @@ Compression=lzma
 SolidCompression=yes
 
 WizardImageBackColor=clWhite
-SetupIconFile=bitmaps\gertrude.ico
-WizardImageFile=bitmaps\setup_gertrude.bmp
-WizardSmallImageFile=bitmaps\setup_gertrude_mini.bmp
+SetupIconFile=bitmaps_dist\gertrude.ico
+WizardImageFile=bitmaps_dist\setup_gertrude.bmp
+WizardSmallImageFile=bitmaps_dist\setup_gertrude_mini.bmp
 UninstallDisplayIcon={app}\gertrude.exe
 
 [Messages]
@@ -53,7 +53,7 @@ Source: "dist\gertrude\Microsoft.VC90.CRT\*.*";  DestDir: "{app}\Microsoft.VC90.
 Source: "dist\gertrude\Microsoft.VC90.MFC\*.*";  DestDir: "{app}\Microsoft.VC90.CRT";  Flags: ignoreversion
 
 ; ---> Subdirectories
-Source: "dist\gertrude\bitmaps\*";               DestDir: "{app}\bitmaps";             Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dist\gertrude\bitmaps_dist\*";          DestDir: "{app}\bitmaps_dist";        Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dist\gertrude\doc\*";                   DestDir: "{app}\doc";                 Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dist\gertrude\templates_dist\*";        DestDir: "{app}\templates_dist";      Flags: ignoreversion recursesubdirs createallsubdirs
 
