@@ -128,6 +128,7 @@ class FactureModifications(object):
                         ('parents', getParentsStr(inscrit)),
                         ('date', '01/%.2d/%d' % (facture.mois, facture.annee)),
                         ('numfact', '%.2d%.4d%.2d%.4d' % (inscriptions[0].mode + 1, facture.annee, facture.mois, inscriptions[0].idx)),
+                        ('taux-horaire', '%.2f' % facture.taux_horaire),
                         ('cotisation-mensuelle', '%.2f' % facture.cotisation_mensuelle),
                         ('heures-supplementaires', '%.2f' % facture.heures_supplementaires),
                         ('supplement', '%.2f' % facture.supplement),
@@ -136,6 +137,8 @@ class FactureModifications(object):
                         ('supplement-activites', '%.2f' % facture.supplement_activites),
                         ('total', '%.2f' % facture.total)
                         ]
+
+
         
                 ReplaceTextFields(section, fields)
 

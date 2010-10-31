@@ -615,7 +615,7 @@ class RelevesTab(AutoTab):
             end = start
         DocumentDialog(self, PlanningDetailleModifications((start, end))).ShowModal()
         
-class RelevesNotebook(wx.Notebook):
+class TableauxDeBordNotebook(wx.Notebook):
     def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
         self.AddPage(PlacesDisponiblesTab(self), "Places disponibles")
@@ -627,12 +627,12 @@ class RelevesNotebook(wx.Notebook):
         for page in range(self.GetPageCount()):
             self.GetPage(page).UpdateContents()
         
-class RelevesPanel(GPanel):
-    bitmap = GetBitmapFile("releves.png")
+class TableauxDeBordPanel(GPanel):
+    bitmap = GetBitmapFile("tableaux-bord.png")
     profil = PROFIL_ALL
     def __init__(self, parent):
         GPanel.__init__(self, parent, u'Tableaux de bord')
-        self.notebook = RelevesNotebook(self)
+        self.notebook = TableauxDeBordNotebook(self)
         self.sizer.Add(self.notebook, 1, wx.EXPAND)
 
     def UpdateContents(self):

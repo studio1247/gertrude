@@ -61,6 +61,7 @@ class FactureFinMois(object):
                     else:
                         cotisation = Cotisation(inscrit, (date, date), options=NO_ADDRESS|self.options)
                         last_cotisation = cotisation
+                        self.taux_horaire = cotisation.taux_horaire
                         if options & TRACES: print u"cotisation mensuelle à partir de %s" % date, cotisation.cotisation_mensuelle
                         
                     state, heures_reference, heures_realisees, heures_supplementaires = inscrit.getState(date)

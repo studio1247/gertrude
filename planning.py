@@ -31,7 +31,7 @@ NO_BOTTOM_LINE = 8
 DRAW_NUMBERS = 16
 
 # Elements size
-LABEL_WIDTH = 80 # px
+LABEL_WIDTH = 105 # px
 ICONS_WIDTH = 33 # px
 COLUMN_WIDTH = 48 / (60 / BASE_GRANULARITY) # px
 LINE_HEIGHT = 30 # px
@@ -403,7 +403,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                 dc.DrawRoundedRectangleRect(rect, 4)
                 dc.DrawText(line, 5, 8 + i * LINE_HEIGHT)
             else:
-                dc.DrawText(line.label, 5, 5 + LINE_HEIGHT*i)
+                dc.DrawText(line.label, 5, 6 + LINE_HEIGHT*i)
         dc.EndDrawing()
 
 

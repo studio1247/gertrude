@@ -32,7 +32,7 @@ except:
 import controls, zipfile, xml.dom.minidom, wx.html, ooffice
 from functions import GetBitmapFile
 
-VERSION = '0.83i'
+VERSION = '0.83j'
 
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):
@@ -110,9 +110,9 @@ class GertrudeListbook(Listbook):
         import panel_facturation
         panels.append(panel_facturation.FacturationPanel(self))
         progress_handler.set(48)
-        progress_handler.display(u"Chargement de l'outil Relevés ...")
-        import panel_releves
-        panels.append(panel_releves.RelevesPanel(self))
+        progress_handler.display(u"Chargement de l'outil Tableaux de bord ...")
+        import panel_tableaux_bord
+        panels.append(panel_tableaux_bord.TableauxDeBordPanel(self))
         progress_handler.set(64)
         progress_handler.display(u"Chargement de l'outil Configuration ...")
         import panel_configuration

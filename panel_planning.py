@@ -51,7 +51,7 @@ class DayPlanningPanel(PlanningWidget):
                     line = inscrit.getReferenceDayCopy(self.date)
                     line.insert = inscrit.journees
                     line.key = self.date
-                line.label = GetInscritId(inscrit, creche.inscrits)
+                line.label = GetPrenomNom(inscrit)
                 line.reference = inscrit.getReferenceDay(self.date)
                 lines.append(line)
         self.SetLines(lines)
@@ -63,11 +63,11 @@ class DayPlanningPanel(PlanningWidget):
         
 
 class PlanningPanel(GPanel):
-    bitmap = GetBitmapFile("presences.png")
+    bitmap = GetBitmapFile("planning.png")
     profil = PROFIL_ALL
 
     def __init__(self, parent):
-        GPanel.__init__(self, parent, u'Plannings')
+        GPanel.__init__(self, parent, u'Planning')
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.current_site = 0
         

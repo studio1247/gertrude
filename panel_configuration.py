@@ -992,7 +992,7 @@ class ParametresNotebook(wx.Notebook):
         self.Layout()
 
 class ConfigurationPanel(GPanel):
-    bitmap = GetBitmapFile("creche.png")
+    bitmap = GetBitmapFile("configuration.png")
     profil = PROFIL_BUREAU
     def __init__(self, parent):
         GPanel.__init__(self, parent, 'Configuration')
