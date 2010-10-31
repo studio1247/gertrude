@@ -493,7 +493,7 @@ class Creche(object):
         self.temps_facturation = FACTURATION_FIN_MOIS
         self.conges_inscription = 0
         self.tarification_activites = ACTIVITES_NON_FACTUREES
-        self.traitement_maladie = DEDUCTION_MALADIE_AVEC_CARENCE
+        self.traitement_maladie = DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES
         self.presences_previsionnelles = False
         self.presences_supplementaires = True
         self.modes_inscription = MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5

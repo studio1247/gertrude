@@ -304,7 +304,7 @@ class SQLConnection(object):
             cur.execute("INSERT INTO CONGES (idx, debut) VALUES (NULL, ?)", (label, ))
         cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
         cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, mois_payes, presences_previsionnelles, presences_supplementaires, modes_inscription, minimum_maladie, email, type, capacite, mode_facturation, temps_facturation, conges_inscription, tarification_activites, traitement_maladie, majoration_localite, facturation_jours_feries, facturation_periode_adaptation, formule_taux_horaire) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-                     ("","","","","",7.75,18.5,7.75,19.0,15,12,False,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,15,"",TYPE_PARENTAL,0,FACTURATION_FORFAIT_10H,FACTURATION_FIN_MOIS,0,0,DEDUCTION_MALADIE_AVEC_CARENCE,0.0,JOURS_FERIES_NON_DEDUITS,PERIODE_ADAPTATION_FACTUREE_NORMALEMENT,"None"))
+                     ("","","","","",7.75,18.5,7.75,19.0,15,12,False,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,15,"",TYPE_PARENTAL,0,FACTURATION_FORFAIT_10H,FACTURATION_FIN_MOIS,0,0,DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES,0.0,JOURS_FERIES_NON_DEDUITS,PERIODE_ADAPTATION_FACTUREE_NORMALEMENT,"None"))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2006, 9, 1), datetime.date(2007, 8, 31), 6547.92, 51723.60))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2007, 9, 1), datetime.date(2008, 12, 31), 6660.00, 52608.00))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2009, 1, 1), datetime.date(2009, 12, 31), 6876.00, 53400.00))
@@ -726,11 +726,11 @@ class SQLConnection(object):
                 cur.execute('SELECT mode_maladie FROM CRECHE')
                 mode_maladie = cur.fetchall()[0][0]
                 if mode_maladie == 2:
-                    mode_facturation = 2 # DEDUCTION_MALADIE_AVEC_CARENCE
+                    mode_facturation = 2 # DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES
                 else:
                     mode_facturation = 0
             else:
-                mode_facturation = 2 # DEDUCTION_MALADIE_AVEC_CARENCE
+                mode_facturation = 2 # DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES
             cur.execute("ALTER TABLE CRECHE ADD mode_facturation INTEGER;")
             cur.execute('UPDATE CRECHE SET mode_facturation=?', (mode_facturation,))
 
@@ -797,8 +797,8 @@ class SQLConnection(object):
             cur.execute("ALTER TABLE CRECHE ADD traitement_maladie INTEGER;")
             cur.execute('SELECT mode_facturation FROM CRECHE')
             mode_facturation = cur.fetchall()[0][0]
-            if mode_facturation & 2: # DEDUCTION_MALADIE_AVEC_CARENCE
-                cur.execute('UPDATE CRECHE SET traitement_maladie=?', (2,)) # DEDUCTION_MALADIE_AVEC_CARENCE
+            if mode_facturation & 2: # DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES
+                cur.execute('UPDATE CRECHE SET traitement_maladie=?', (2,)) # DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES
                 cur.execute('UPDATE CRECHE SET mode_facturation=?', (mode_facturation-2,))
             else:
                 cur.execute('UPDATE CRECHE SET traitement_maladie=?', (0,)) # DEDUCTION_MALADIE_SANS_CARENCE
