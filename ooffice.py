@@ -50,8 +50,20 @@ def GetValue(node):
 def GetRepeat(node):
     if node.hasAttribute("table:number-columns-repeated"):
         return int(node.getAttribute("table:number-columns-repeated"))
+    elif node.hasAttribute("table:number-rows-repeated"):
+        return int(node.getAttribute("table:number-rows-repeated"))
     else:
         return 1
+    
+def GetRow(table, index):
+    rows = table.getElementsByTagName("table:table-row")
+    i = 0
+    for row in rows:
+        repeat = GetRepeat(row)
+        i += repeat
+        if i >= index:
+            return row
+    return None
     
 def GetValues(row):
     result = []
@@ -195,16 +207,22 @@ def GenerateDocument(modifications, filename=None, gauge=None):
     if gauge:
         modifications.gauge = gauge
         gauge.SetValue(5)
-    for f in zip.namelist():
+        
+    XML_FILES = ('meta.xml', 'styles.xml', 'content.xml')
+    for f in XML_FILES:
         data = zip.read(f)
-        if f in ('content.xml', 'styles.xml'):
-            dom = xml.dom.minidom.parseString(data)
-            #print dom.toprettyxml()
-            new_errors = modifications.execute(f, dom)
-            if new_errors:
-                errors.update(new_errors)
-            data = dom.toxml('UTF-8')
-        files.append((f, data))
+        dom = xml.dom.minidom.parseString(data)
+        new_errors = modifications.execute(f, dom)
+        if new_errors:
+            errors.update(new_errors)
+        data = dom.toxml('UTF-8')
+        files.append((f, data))  
+    
+    for f in zip.namelist():
+        if not f in XML_FILES:
+            data = zip.read(f)
+            files.append((f, data))
+            
     zip.close()
     zip = zipfile.ZipFile(filename, 'w')
     if gauge:

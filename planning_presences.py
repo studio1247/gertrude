@@ -33,68 +33,100 @@ def isPresentDuringTranche(journee, tranche):
 
 class PlanningModifications(object):
     def __init__(self, debut):
-        self.template = 'Planning presences.ods'
-        self.default_output = "Planning presences %s.ods" % str(debut)
+        self.template = 'Planning.ods'
+        self.default_output = "Planning %s.ods" % str(debut)
         self.debut = debut
+        self.metas = {"Format": 1, "Periodicite": 11}
 
     def execute(self, filename, dom):
-        if filename != 'content.xml':
+        if filename == 'meta.xml':
+            metas = dom.getElementsByTagName('meta:user-defined')
+            for meta in metas:
+                # print meta.toprettyxml()
+                name = meta.getAttribute('meta:name')
+                value = meta.childNodes[0].wholeText
+                if meta.getAttribute('meta:value-type') == 'float':
+                    self.metas[name] = float(value)
+                else:
+                    self.metas[name] = value
             return None
-        
-        date_fin = self.debut + datetime.timedelta(11)
+        elif filename != 'content.xml':
+            return None
+              
+        date_fin = self.debut + datetime.timedelta(self.metas["Periodicite"])
         spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
-        tables = spreadsheet.getElementsByTagName("table:table")
-        template = tables.item(0)
-        template.setAttribute('table:name', '%d %s %d - %d %s %d' % (self.debut.day, months[self.debut.month - 1], date_fin.year, date_fin.day, months[date_fin.month - 1], date_fin.year))
+        table = spreadsheet.getElementsByTagName("table:table")[0]
+        table.setAttribute('table:name', '%d %s %d - %d %s %d' % (self.debut.day, months[self.debut.month - 1], date_fin.year, date_fin.day, months[date_fin.month - 1], date_fin.year))
 
-        lignes = template.getElementsByTagName("table:table-row")
+        lignes = table.getElementsByTagName("table:table-row")
 
         # Les titres des pages
-        ReplaceFields(lignes.item(0), [('date-debut', self.debut),
-                                       ('date-fin', date_fin)])
+        ReplaceFields(lignes, [('date-debut', self.debut),
+                              ('date-fin', date_fin)])
 
-        # Les jours
-        ligne = lignes.item(1)
-        cellules = ligne.getElementsByTagName("table:table-cell")
-        for semaine in range(2):
-            for jour in range(5):
-                date = self.debut + datetime.timedelta(semaine * 7 + jour)
-                cellule = cellules.item(1 + semaine * 6 + jour)
-                ReplaceFields([cellule], [('date', date)])
-
-        ligne_total = lignes.item(15)
-
-#        # Les enfants en adaptation
-#        indexes = [] # TODO getAdaptationIndexes(self.debut, date_fin)
-#        indexes = getTriParPrenomIndexes(indexes)
-#        self.printPresences(template, indexes, 15)
-#        nb_ad = max(2, len(indexes))
-
-        # Les halte-garderie
-        indexes = getInscritsByMode(self.debut, date_fin, MODE_HALTE_GARDERIE)
-        indexes = getTriParPrenomIndexes(indexes)
-        self.printPresences(template, indexes, 11)
-        nb_hg = max(2, len(indexes))
-
-        # Les mi-temps
-        indexes = getInscritsByMode(self.debut, date_fin, MODE_4_5|MODE_3_5)
-        indexes = getTriParPrenomIndexes(indexes)
-        self.printPresences(template, indexes, 7)
-        nb_45 = max(2, len(indexes))
-
-        # Les plein-temps
-        indexes = getInscritsByMode(self.debut, date_fin, MODE_5_5)
-        indexes = getTriParPrenomIndexes(indexes)
-        self.printPresences(template, indexes, 3)
-        nb_55 = max(2, len(indexes))
-
-        cellules = ligne_total.getElementsByTagName("table:table-cell")
-        for i in range(cellules.length):
-            cellule = cellules.item(i)
-            if (cellule.hasAttribute('table:formula')):
-                formule = cellule.getAttribute('table:formula')
-                formule = formule.replace('14', '%d' % (3+nb_55+1+nb_45+1+nb_hg+1))
-                cellule.setAttribute('table:formula', formule)
+        if self.metas["Format"] == 1:
+            # Les jours
+            ligne = lignes.item(1)
+            cellules = ligne.getElementsByTagName("table:table-cell")
+            for semaine in range(2):
+                for jour in range(5):
+                    date = self.debut + datetime.timedelta(semaine * 7 + jour)
+                    cellule = cellules.item(1 + semaine * 6 + jour)
+                    ReplaceFields([cellule], [('date', date)])
+    
+            ligne_total = lignes.item(15)
+    
+    #        # Les enfants en adaptation
+    #        indexes = [] # TODO getAdaptationIndexes(self.debut, date_fin)
+    #        indexes = getTriParPrenomIndexes(indexes)
+    #        self.printPresences(template, indexes, 15)
+    #        nb_ad = max(2, len(indexes))
+    
+            # Les halte-garderie
+            indexes = getInscritsByMode(self.debut, date_fin, MODE_HALTE_GARDERIE)
+            indexes = getTriParPrenomIndexes(indexes)
+            self.printPresences(table, indexes, 11)
+            nb_hg = max(2, len(indexes))
+    
+            # Les mi-temps
+            indexes = getInscritsByMode(self.debut, date_fin, MODE_4_5|MODE_3_5)
+            indexes = getTriParPrenomIndexes(indexes)
+            self.printPresences(table, indexes, 7)
+            nb_45 = max(2, len(indexes))
+    
+            # Les plein-temps
+            indexes = getInscritsByMode(self.debut, date_fin, MODE_5_5)
+            indexes = getTriParPrenomIndexes(indexes)
+            self.printPresences(table, indexes, 3)
+            nb_55 = max(2, len(indexes))
+    
+            cellules = ligne_total.getElementsByTagName("table:table-cell")
+            for i in range(cellules.length):
+                cellule = cellules.item(i)
+                if (cellule.hasAttribute('table:formula')):
+                    formule = cellule.getAttribute('table:formula')
+                    formule = formule.replace('14', '%d' % (3+nb_55+1+nb_45+1+nb_hg+1))
+                    cellule.setAttribute('table:formula', formule)
+        elif self.metas["Format"] == 2:
+            inscriptions = GetInscriptions(self.debut, date_fin)
+            template = GetRow(table, 10)
+            def GetState(inscription, delta):
+                state = inscription.inscrit.getState(self.debut + datetime.timedelta(delta))[0]
+                if state <= 0:
+                    return 0
+                else:
+                    return state & PRESENT
+            for inscription in inscriptions:
+                ligne = template.cloneNode(1)
+                fields = [('prenom', GetPrenom(inscription.inscrit)),
+                          ('nom', GetNom(inscription.inscrit)),
+                          ('professeur-prenom', GetPrenom(inscription.professeur)),
+                          ('professeur-nom', GetNom(inscription.professeur))] 
+                for i, day in enumerate(days):
+                    fields.append((day.lower(), GetState(inscription, i)))
+                ReplaceFields(ligne, fields)
+                table.insertBefore(ligne, template)
+            table.removeChild(template)
 
         #print dom.toprettyxml()
         return None
@@ -147,3 +179,19 @@ class PlanningModifications(object):
                         else:
                             ReplaceFields([cellule], [('p', '')])
 
+
+if __name__ == '__main__':
+    import os
+    from config import *
+    from data import *
+    LoadConfig()
+    Load()
+            
+    today = datetime.date.today()
+
+    filename = 'planning-1.ods'
+    try:
+        GenerateDocument(PlanningModifications(today), filename)
+        print u'Fichier %s généré' % filename
+    except CotisationException, e:
+        print e.errors

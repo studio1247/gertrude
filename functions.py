@@ -149,6 +149,13 @@ def getInscritsByMode(start, end, mode): # TODO pourquoi retourner les index
                 break
     return result
 
+def GetInscriptions(start, end):
+    result = []
+    for inscrit in creche.inscrits:
+        for inscription in inscrit.getInscriptions(start, end):
+            result.append(inscription)
+    return result
+
 def getTriParCommuneEtNomIndexes(indexes):
     # Tri par commune (Rennes en premier) + ordre alphabetique des noms
     def tri(one, two):

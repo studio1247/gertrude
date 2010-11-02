@@ -566,16 +566,11 @@ class RelevesTab(AutoTab):
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Planning des présences'), wx.HORIZONTAL)
         self.weekchoice = wx.Choice(self)
         day = getFirstMonday()
-        semaine = 1
         while day < last_date:
-            string = 'Semaines %d et %d (%d %s %d)' % (semaine, semaine+1, day.day, months[day.month - 1], day.year)
-            self.weekchoice.Append(string, day)
-            if (day.year == (day + datetime.timedelta(14)).year):
-                semaine += 2
-            else:
-                semaine = 1
-            day += datetime.timedelta(14)
-        self.weekchoice.SetSelection((today - getFirstMonday()).days / 14 + 1)
+            str = '%d %s %d' % (day.day, months[day.month - 1], day.year)
+            self.weekchoice.Append(str, day)
+            day += datetime.timedelta(7)
+        self.weekchoice.SetSelection((today - getFirstMonday()).days / 7 + 1)
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationPlanningPresences, button)
         box_sizer.AddMany([(self.weekchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
