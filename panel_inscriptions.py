@@ -479,7 +479,7 @@ class ReferencePlanningPanel(PlanningWidget):
         lines = []
         if self.inscription:
             for day in range(self.inscription.duree_reference):
-                if day % 7 < 5 or not "Week-end" in creche.feries:
+                if JourSemaineAffichable(day):
                     line = self.inscription.reference[day]
                     line.insert = None
                     line.label = days[day % 7]
@@ -554,14 +554,14 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         inscription = self.inscrit.inscriptions[self.periode]
         inscription.mode = MODE_5_5
         for i, day in enumerate(inscription.reference):
-            if (i % 7 < 5) or "Week-end" not in creche.feries:
+            if JourSemaineAffichable():
                 day.set_state(PRESENT)
         self.UpdateContents()
     
     def onMondayCopy(self, event):
         inscription = self.inscrit.inscriptions[self.periode]
         for i, day in enumerate(inscription.reference):
-            if i > 0 and ((i % 7 < 5) or "Week-end" not in creche.feries):
+            if i > 0 and JourSemaineAffichable(i):
                 day.copy(inscription.reference[0], False)
                 day.save()
         self.UpdateContents()

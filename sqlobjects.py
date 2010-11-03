@@ -772,7 +772,16 @@ class Inscription(SQLObject):
     def IsInPeriodeAdaptation(self, date):
         if self.debut is None or self.fin_periode_adaptation is None:
             return False
-        return date >= self.debut and date <= self.fin_periode_adaptation 
+        return date >= self.debut and date <= self.fin_periode_adaptation
+    
+    def GetJoursHeuresReference(self):
+        jours = 0
+        heures = 0.0
+        for i in range(self.duree_reference):
+            if JourSemaineAffichable(i) and self.reference[i].get_state() & PRESENT:
+                jours += 1
+                heures += self.reference[i].get_heures()
+        return jours, heures
     
     def create(self):
         print 'nouvelle inscription'

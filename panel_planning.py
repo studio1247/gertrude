@@ -110,18 +110,15 @@ class PlanningPanel(GPanel):
         # le notebook pour les jours de la semaine
         self.notebook = wx.Notebook(self, style=wx.LB_DEFAULT)
         self.sizer.Add(self.notebook, 1, wx.EXPAND|wx.TOP, 5)
-        if "Week-end" in creche.feries:
-            self.count = 5
-        else:
-            self.count = 7
-        for week_day in range(self.count):
-            date = first_monday + datetime.timedelta(semaine * 7 + week_day)
-            planning_panel = DayPlanningPanel(self.notebook, self.activity_choice)
-            if len(creche.sites) > 1:
-                planning_panel.SetData(creche.sites[0], date)
-            else:
-                planning_panel.SetData(None, date)
-            self.notebook.AddPage(planning_panel, getDateStr(date))
+        for week_day in range(7):
+            if JourSemaineAffichable(week_day):
+                date = first_monday + datetime.timedelta(semaine * 7 + week_day)
+                planning_panel = DayPlanningPanel(self.notebook, self.activity_choice)
+                if len(creche.sites) > 1:
+                    planning_panel.SetData(creche.sites[0], date)
+                else:
+                    planning_panel.SetData(None, date)
+                self.notebook.AddPage(planning_panel, getDateStr(date))
 
         self.sizer.Layout()
 
@@ -135,13 +132,15 @@ class PlanningPanel(GPanel):
         self.previous_button.Enable(week_selection is not 0)
         self.next_button.Enable(week_selection is not self.week_choice.GetCount() - 1)
         monday = self.week_choice.GetClientData(week_selection)
-        for week_day in range(self.count):
-            day = monday + datetime.timedelta(week_day)
-            note = self.notebook.GetPage(week_day)
-            self.notebook.SetPageText(week_day, getDateStr(day))
-            note = self.notebook.GetPage(week_day)
-            note.SetData(site, day)
-            self.notebook.SetSelection(0)
+        page_index = 0
+        for week_day in range(7):
+            if JourSemaineAffichable(week_day):
+                day = monday + datetime.timedelta(week_day)
+                self.notebook.SetPageText(page_index, getDateStr(day))
+                note = self.notebook.GetPage(page_index)
+                note.SetData(site, day)
+                page_index += 1
+        self.notebook.SetSelection(0)
         self.sizer.Layout()
         
     def onPreviousWeek(self, evt):
@@ -177,8 +176,8 @@ class PlanningPanel(GPanel):
             self.activity_choice.Show(False)
             self.activity_choice.Append(creche.activites[0].label, creche.activites[0])
         self.activity_choice.SetSelection(selected)
-        for week_day in range(self.count):
-            note = self.notebook.GetPage(week_day)
+        for row in range(self.notebook.GetRowCount()):
+            note = self.notebook.GetPage(row)
             note.UpdateContents()
         self.sizer.Layout()
 

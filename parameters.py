@@ -39,6 +39,7 @@ last_date = today + datetime.timedelta(12*30)
 # Jours fériés
 jours_fermeture = []
 jours_fermeture.append(("Week-end", lambda year: getWeekEnds(year), True))
+jours_fermeture.append(("Mercredi", lambda year: getWeekDays(year, 2), True))
 jours_fermeture.append(("1er janvier", lambda year: datetime.date(year, 1, 1), True))
 jours_fermeture.append(("1er mai", lambda year: datetime.date(year, 5, 1), True))
 jours_fermeture.append(("8 mai", lambda year: datetime.date(year, 5, 8), True))

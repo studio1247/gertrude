@@ -35,16 +35,10 @@ from planning import *
 from sqlobjects import Day
 
 class SitesPlanningPanel(PlanningWidget):
-    def UpdateContents(self):
-        if "Week-end" in creche.feries:
-            self.count = 5
-        else:
-            self.count = 7
-            
+    def UpdateContents(self):          
         first_monday = getFirstMonday()
-        
         lines = []
-        for week_day in range(self.count):
+        for week_day in range(7):
             date = first_monday + datetime.timedelta(self.semaine * 7 + week_day)
             if date in creche.jours_fermeture:
                 continue

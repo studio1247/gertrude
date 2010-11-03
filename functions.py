@@ -116,6 +116,14 @@ def periodestr(o):
     else:
         return u"Année %d" % o.debut.year
 
+def JourSemaineAffichable(day):
+    if day == 2:
+        return not "Mercredi" in creche.feries
+    elif day == 5 or day == 6:
+        return not "Week-end" in creche.feries
+    else:
+        return True
+
 def Select(object, date):
     for o in object:
         if o.debut and date >= o.debut and (not o.fin or date <= o.fin):
