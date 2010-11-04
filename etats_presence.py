@@ -18,7 +18,6 @@
 from constants import *
 from functions import *
 from facture import *
-from cotisation import Cotisation, CotisationException
 from ooffice import *
 
 class EtatsPresenceModifications(object):

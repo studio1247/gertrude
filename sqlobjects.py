@@ -839,6 +839,9 @@ class Inscrit(object):
         self.adresse = ""
         self.code_postal = ""
         self.ville = ""
+        self.numero_securite_sociale = ""
+        self.numero_allocataire_caf = ""
+        self.handicap = False
         self.majoration = False
         self.marche = None
         self.photo = None
@@ -856,7 +859,6 @@ class Inscrit(object):
             self.maman = Parent(self)
             self.inscriptions.append(Inscription(self))
 
-#       self.handicape = 0
 #        self.reglement_cotisation = 0
 #        self.reglement_caution = 0
 #        self.reglement_premier_mois = 0
@@ -875,7 +877,7 @@ class Inscrit(object):
 
     def create(self):
         print 'nouvel inscrit'
-        result = sql_connection.execute('INSERT INTO INSCRITS (idx, prenom, nom, naissance, adresse, code_postal, ville, majoration, marche, photo) VALUES(NULL,?,?,?,?,?,?,?,?,?)', (self.prenom, self.nom, self.naissance, self.adresse, self.code_postal, self.ville, self.majoration, self.marche, self.photo))
+        result = sql_connection.execute('INSERT INTO INSCRITS (idx, prenom, nom, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, majoration, marche, photo) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?)', (self.prenom, self.nom, self.naissance, self.adresse, self.code_postal, self.ville, self.numero_securite_sociale, self.numero_allocataire_caf, self.handicap, self.majoration, self.marche, self.photo))
         self.idx = result.lastrowid
         for obj in [self.papa, self.maman] + self.freres_soeurs + self.referents + self.inscriptions: # TODO + self.presences.values():
             if obj: obj.create()
@@ -894,7 +896,7 @@ class Inscrit(object):
         self.__dict__[name] = value
         if name == 'photo' and value:
             value = binascii.b2a_base64(value)
-        if name in ['prenom', 'nom', 'sexe', 'naissance', 'adresse', 'code_postal', 'ville', 'majoration', 'marche', 'photo'] and self.idx:
+        if name in ['prenom', 'nom', 'sexe', 'naissance', 'adresse', 'code_postal', 'ville', 'numero_securite_sociale', 'numero_allocataire_caf', 'handicap', 'majoration', 'marche', 'photo'] and self.idx:
             print 'update', name, (old_value, value)
             sql_connection.execute('UPDATE INSCRITS SET %s=? WHERE idx=?' % name, (value, self.idx))
 

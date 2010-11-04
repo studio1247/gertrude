@@ -18,7 +18,7 @@
 from constants import *
 from functions import *
 from facture import *
-from cotisation import Cotisation, CotisationException
+from cotisation import CotisationException
 from ooffice import *
 
 left = 1.5
@@ -33,9 +33,9 @@ class PlanningDetailleModifications(object):
         self.template = 'Planning detaille.odg'
         self.start, self.end = periode
         if self.start == self.end:
-            self.default_output = "Planning presences %s.odg" % getDateStr(self.start, weekday=False)
+            self.default_output = "Planning presences %s.odg" % GetDateString(self.start, weekday=False)
         else:
-            self.default_output = "Planning presences %s-%s.odg" % (getDateStr(self.start, weekday=False), getDateStr(self.end, weekday=False))
+            self.default_output = "Planning presences %s-%s.odg" % (GetDateString(self.start, weekday=False), GetDateString(self.end, weekday=False))
         self.errors = {}
 
     def execute(self, filename, dom):
@@ -68,7 +68,7 @@ class PlanningDetailleModifications(object):
             for page_index in range(pages_count):
                 lines_count = min(lines_max, len(lines)-page_index*lines_max)
                 page = template.cloneNode(1)
-                page.setAttribute("draw:name", getDateStr(day))
+                page.setAttribute("draw:name", GetDateString(day))
                 drawing.appendChild(page)
                 
                 # le quadrillage et l'echelle
@@ -166,9 +166,9 @@ class PlanningDetailleModifications(object):
     
                 fields = [('nom-creche', creche.nom)]
                 if pages_count > 1:
-                    fields.append(('date', getDateStr(day) + " (%d/%d)" % (page_index+1, pages_count)))
+                    fields.append(('date', GetDateString(day) + " (%d/%d)" % (page_index+1, pages_count)))
                 else:
-                    fields.append(('date', getDateStr(day)))
+                    fields.append(('date', GetDateString(day)))
 
                 ReplaceTextFields(page, fields)
             day += datetime.timedelta(1)

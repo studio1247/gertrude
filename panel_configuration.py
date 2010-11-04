@@ -476,7 +476,7 @@ class ActivitesTab(AutoTab):
         if len(entrees) > 0:
             message = 'Cette activité est utilisée par :\n'
             for inscrit, date in entrees:
-                message += '%s %s le %s, ' % (inscrit.prenom, inscrit.nom, getDateStr(date))
+                message += '%s %s le %s, ' % (inscrit.prenom, inscrit.nom, GetDateString(date))
             message += '\nVoulez-vous vraiment la supprimer ?'
             dlg = wx.MessageDialog(self, message, 'Confirmation', wx.OK|wx.CANCEL|wx.ICON_WARNING)
             reponse = dlg.ShowModal()
@@ -664,7 +664,7 @@ class ParametersPanel(AutoTab):
         self.Bind(wx.EVT_CHOICE, self.onModeFacturationChoice, mode_facturation_choice)
         tmp.AddMany([(mode_facturation_choice, 1, wx.EXPAND), (AutoChoiceCtrl(self, creche, 'temps_facturation', [("Facturation fin de mois", FACTURATION_FIN_MOIS), (u"Facturation début de mois", FACTURATION_DEBUT_MOIS)]), 1, wx.EXPAND|wx.LEFT, 5)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Mode de facturation :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (tmp, 1, wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, u"Mode de facturation des périodes d'essai:"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'facturation_periode_adaptation', [(u'Facturation normale', PERIODE_ADAPTATION_FACTUREE_NORMALEMENT), ("Horaires réels", FACTURATION_HORAIRES_REELS)]), 1, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u"Mode de facturation des périodes d'adaptation:"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'facturation_periode_adaptation', [(u'Facturation normale', PERIODE_ADAPTATION_FACTUREE_NORMALEMENT), ("Horaires réels", FACTURATION_HORAIRES_REELS)]), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Facturation des jours fériés :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'facturation_jours_feries', [(u'Pas de déduction', JOURS_FERIES_NON_DEDUITS), (u"Déduits, répartis sur l'année", JOURS_FERIES_DEDUITS_ANNUELLEMENT)]), 0, wx.EXPAND)])
         # TODO n'afficher que si PSU/PAJE est choisi
         sizer.AddMany([(wx.StaticText(self, -1, u"Gestion de périodes de congés non facturées lors de l'inscription :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'conges_inscription', [('Non', 0), ('Oui', 1)]), 0, wx.EXPAND)])

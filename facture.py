@@ -59,7 +59,7 @@ class FactureFinMois(object):
                     if last_cotisation and last_cotisation.Include(date):
                         cotisation = last_cotisation
                     else:
-                        cotisation = Cotisation(inscrit, (date, date), options=NO_ADDRESS|self.options)
+                        cotisation = Cotisation(inscrit, date, options=NO_ADDRESS|self.options)
                         last_cotisation = cotisation
                         self.montant_heure_garde = cotisation.montant_heure_garde
                         if options & TRACES: print u"cotisation mensuelle à partir de %s" % date, cotisation.cotisation_mensuelle

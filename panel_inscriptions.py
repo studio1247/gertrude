@@ -22,6 +22,8 @@ from sqlobjects import *
 from controls import *
 from planning import *
 from cotisation import *
+from ooffice import *
+from contrat_accueil import ContratAccueilModifications
 
 def isPresentDuringTranche(journee, debut, fin):
     for i in range(int(debut * (60 / BASE_GRANULARITY)), int(fin * (60 / BASE_GRANULARITY))):
@@ -134,7 +136,7 @@ class ContratPanel(ContextPanel):
             self.periodechoice.Disable()
         else:
             try:
-                context = Cotisation(self.inscrit, self.periode)
+                context = Cotisation(self.inscrit, self.periode[0])
                 if creche.mode_facturation == FACTURATION_PAJE:
                     str_facturation = "_paje"
                 else:
@@ -159,7 +161,7 @@ class ForfaitPanel(ContextPanel):
             previous_periode = None
             for periode in all_periodes:
                 try:
-                    context = Cotisation(self.inscrit, periode, options=NO_ADDRESS+NO_PARENTS+TRACES)                    
+                    context = Cotisation(self.inscrit, periode[0], options=NO_ADDRESS+NO_PARENTS+TRACES)                    
                     if not previous_periode or context != previous_context:
                         periodes.append(periode)
                         previous_periode = periode
@@ -218,7 +220,7 @@ class ForfaitPanel(ContextPanel):
             self.periodechoice.Disable()
         else:
             try:
-                context = Cotisation(self.inscrit, self.periode, options=NO_ADDRESS+NO_PARENTS)
+                context = Cotisation(self.inscrit, self.periode[0], options=NO_ADDRESS+NO_PARENTS)
                 if context.mode_inscription == MODE_CRECHE:
                     str_inscription = "_creche"
                 else:
@@ -272,8 +274,11 @@ class IdentitePanel(InscriptionsTab):
         self.Bind(wx.EVT_TEXT, self.EvtChangementCodePostal, self.code_postal_ctrl)
         sizer2.AddMany([(wx.StaticText(self, -1, 'Code Postal :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.code_postal_ctrl, 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, 'Ville :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.ville_ctrl, 0, wx.EXPAND)])
+        sizer2.AddMany([(wx.StaticText(self, -1, u'Numéro de sécurité sociale :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'numero_securite_sociale'), 0, wx.EXPAND)])
+        sizer2.AddMany([(wx.StaticText(self, -1, u"Numéro d'allocataire CAF :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'numero_allocataire_caf'), 0, wx.EXPAND)])
+        sizer2.AddMany([(wx.StaticText(self, -1, u"Enfant handicapé :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoCheckBox(self, None, 'handicap'), 0, wx.EXPAND)])
         if creche.majoration_localite:
-            sizer2.AddMany([(wx.StaticText(self, -1, u'Majoration (enfant hors localité) :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoCheckBox(self, None, 'majoration', ''), 0, wx.EXPAND)])
+            sizer2.AddMany([(wx.StaticText(self, -1, u'Majoration (enfant hors localité) :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoCheckBox(self, None, 'majoration'), 0, wx.EXPAND)])
 ##        sizer2.AddMany([(wx.StaticText(self, -1, 'Date de marche :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'marche'), 0, wx.EXPAND)])
         sizer3 = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Frères et soeurs'), wx.VERTICAL)
         self.fratries_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -496,7 +501,13 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         InscriptionsTab.__init__(self, parent)
         PeriodeMixin.__init__(self, 'inscriptions')
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(PeriodeChoice(self, self.nouvelleInscription), 0, wx.TOP|wx.BOTTOM, 5)               
+        sizer1 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer1.Add(PeriodeChoice(self, self.nouvelleInscription), 0)
+        if IsTemplateFile("Contrat accueil.odt"):
+            button = wx.Button(self, -1, u"Générer le contrat")
+            sizer1.Add(button, 0, wx.LEFT, 5)
+            self.Bind(wx.EVT_BUTTON, self.EvtGenerationContrat, button)
+        sizer.Add(sizer1, 0, wx.TOP|wx.BOTTOM, 5)
         sizer1 = wx.FlexGridSizer(0, 2, 5, 10)
         sizer1.AddGrowableCol(1, 1)
         self.sites_items = wx.StaticText(self, -1, u"Site :"), AutoChoiceCtrl(self, None, 'site')
@@ -545,6 +556,9 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.SetInstance(inscrit)
         self.UpdateContents()
     
+    def EvtGenerationContrat(self, evt):
+        DocumentDialog(self, ContratAccueilModifications(self.inscrit, self.inscrit.inscriptions[self.periode].debut)).ShowModal()
+        
     def onDureeReferenceChoice(self, event):
         duration = self.duree_reference_choice.GetClientData(self.duree_reference_choice.GetSelection())
         self.inscrit.inscriptions[self.periode].setReferenceDuration(duration)
@@ -750,9 +764,12 @@ class InscriptionsNotebook(wx.Notebook):
             self.conges_panel = None
 
         if profil & PROFIL_TRESORIER:
-            self.contrat_panel = ContratPanel(self)
+            if IsTemplateFile("Contrat accueil.odt"):
+                self.contrat_panel = None
+            else:
+                self.contrat_panel = ContratPanel(self)
+                self.AddPage(self.contrat_panel, "Contrat d'accueil")
             self.forfait_panel = ForfaitPanel(self)
-            self.AddPage(self.contrat_panel, "Contrat d'accueil")
             self.AddPage(self.forfait_panel, 'Frais de garde mensuels')
         else:
             self.contrat_panel = self.forfait_panel = None

@@ -30,10 +30,10 @@ class PAJETests(unittest.TestCase):
         inscription = Inscription(inscrit, creation=False)
         inscription.debut = datetime.date(2010, 1, 1)
         inscrit.inscriptions.append(inscription)
-        self.assertRaises(CotisationException, Cotisation, inscrit, (datetime.date(2010, 1, 1), None), NO_ADDRESS|NO_PARENTS)
+        self.assertRaises(CotisationException, Cotisation, inscrit, datetime.date(2010, 1, 1), NO_ADDRESS|NO_PARENTS)
         creche.formule_taux_horaire = [["", 0.0]]
         creche.update_formule_taux_horaire(changed=False)
-        cotisation = Cotisation(inscrit, (datetime.date(2010, 1, 1), None), NO_ADDRESS|NO_PARENTS)
+        cotisation = Cotisation(inscrit, datetime.date(2010, 1, 1), NO_ADDRESS|NO_PARENTS)
         
     def test_nospetitspouces(self):
         __builtin__.creche = Creche()
@@ -55,7 +55,7 @@ class PAJETests(unittest.TestCase):
         inscription.reference[3].add_activity(96, 180, 0, -1)
         inscription.reference[4].add_activity(96, 180, 0, -1)
         inscrit.inscriptions.append(inscription)
-        cotisation = Cotisation(inscrit, (datetime.date(2010, 9, 6), None), NO_ADDRESS|NO_PARENTS)
+        cotisation = Cotisation(inscrit, datetime.date(2010, 9, 6), NO_ADDRESS|NO_PARENTS)
         self.assertEquals(float("%.2f" % cotisation.cotisation_mensuelle), 1001.95)
         facture = Facture(inscrit, 2010, 9, NO_ADDRESS|NO_PARENTS)
         self.assertEquals(float("%.2f" % facture.total), 1001.95)
@@ -100,7 +100,7 @@ class MarmousetsTests(unittest.TestCase):
         conge = CongeInscrit(inscrit, creation=False)
         conge.debut, conge.fin = "01/02/2010", "20/02/2010"
         inscrit.add_conge(conge)
-        cotisation = Cotisation(inscrit, (datetime.date(2010, 1, 4), None), NO_ADDRESS|NO_PARENTS)
+        cotisation = Cotisation(inscrit, datetime.date(2010, 1, 4), NO_ADDRESS|NO_PARENTS)
         self.assertEquals(float("%.2f" % cotisation.heures_semaine), 37.0)
         self.assertEquals(cotisation.heures_annee, 971.0)
         self.assertEquals(cotisation.nombre_factures, 7)

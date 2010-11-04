@@ -41,7 +41,7 @@ def getNextMonthStart(date):
     else:
         return datetime.date(date.year, date.month+1, 1)
 
-def getDateStr(date, weekday=True):
+def GetDateString(date, weekday=True):
     if date.day == 1:
         date_str = "1er %s %d" % (months[date.month-1].lower(), date.year)
     else:
@@ -91,6 +91,10 @@ def GetBitmapFile(filename):
 def GetTemplateFile(filename):
     return GetFile(filename, "templates")
 
+def IsTemplateFile(filename):
+    path = "./templates/%s" % filename
+    return os.path.isfile(path)
+
 def str2date(str, year=None):
     day = str.strip()
     if year and str.count('/') == 1:
@@ -136,7 +140,7 @@ def getDeMoisStr(mois):
     else:
         return "de %s" % months[mois].lower()
 
-def getParentsStr(inscrit):
+def GetParentsString(inscrit):
     if inscrit.papa.nom == inscrit.maman.nom:
         return '%s et %s %s' % (inscrit.maman.prenom, inscrit.papa.prenom, inscrit.papa.nom)
     else:

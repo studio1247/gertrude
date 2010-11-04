@@ -18,7 +18,7 @@
 from constants import *
 from functions import *
 from facture import *
-from cotisation import Cotisation, CotisationException
+from cotisation import CotisationException
 from ooffice import *
 
 class AppelCotisationsModifications(object):

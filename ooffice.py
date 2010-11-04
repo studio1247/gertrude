@@ -103,10 +103,22 @@ def ReplaceTextFields(dom, fields):
                     nodeText = child.wholeText
                     replace = False
                     for field, value, text in fields:
-                        tag = '<%s>' % field
-                        if tag in nodeText:
-                            replace = True
-                            nodeText = nodeText.replace(tag, text)
+                        if callable(value):
+                            start_tag, end_tag = '<%s(' % field, ')>'
+                            if start_tag in nodeText and end_tag in nodeText:
+                                tag = nodeText[nodeText.find(start_tag):nodeText.find(end_tag)+2]
+                                parameters = tag[len(field)+2:-2]
+                                try:
+                                    replace = True
+                                    nodeText = nodeText.replace(tag, eval("value(%s)" % parameters))
+                                except:
+                                    print 'erreur :', tag, parameters
+                        else:
+                            tag = '<%s>' % field
+                            if tag in nodeText:
+                                replace = True
+                                nodeText = nodeText.replace(tag, text)
+                        
                     if replace:
                         child.replaceWholeText(nodeText)
                 except Exception, e:

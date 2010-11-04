@@ -18,7 +18,7 @@
 from constants import *
 from functions import *
 from facture import *
-from cotisation import Cotisation, CotisationException
+from cotisation import CotisationException
 from ooffice import *
 
 couleurs = { SUPPLEMENT: 'A2',
@@ -125,7 +125,7 @@ class FactureModifications(object):
                         ('de-mois', '%s %d' % (getDeMoisStr(facture.mois - 1), facture.annee)),
                         ('de-mois-recap', '%s %d' % (getDeMoisStr(facture.debut_recap.month - 1), facture.debut_recap.year)),
                         ('prenom', inscrit.prenom),
-                        ('parents', getParentsStr(inscrit)),
+                        ('parents', GetParentsString(inscrit)),
                         ('date', '01/%.2d/%d' % (facture.mois, facture.annee)),
                         ('numfact', '%.2d%.4d%.2d%.4d' % (inscriptions[0].mode + 1, facture.annee, facture.mois, inscriptions[0].idx)),
                         ('montant-heure-garde', '%.2f' % facture.montant_heure_garde),

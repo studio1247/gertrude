@@ -18,7 +18,6 @@
 from constants import *
 from functions import *
 from facture import *
-from cotisation import Cotisation, CotisationException
 from ooffice import *
 
 class CoordonneesModifications(object):
@@ -28,7 +27,7 @@ class CoordonneesModifications(object):
             self.date = today
         else:
             self.date = date
-        self.default_output = u"Coordonnees parents %s.ods" % getDateStr(self.date, weekday=False)
+        self.default_output = u"Coordonnees parents %s.ods" % GetDateString(self.date, weekday=False)
         
     def execute(self, filename, dom):
         # print dom.toprettyxml()

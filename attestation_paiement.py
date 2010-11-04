@@ -19,7 +19,7 @@ from constants import *
 from functions import *
 from facture import *
 from sqlobjects import Parent
-from cotisation import Cotisation, CotisationException
+from cotisation import CotisationException
 from ooffice import *
 
 class AttestationModifications(object):
@@ -42,10 +42,8 @@ class AttestationModifications(object):
         directeur = ""
         bureau = Select(creche.bureaux, today)
         if bureau:
-            if bureau.tresorier:
-                tresorier = GetPrenomNom(bureau.tresorier)
-            if bureau.directeur:
-                directeur = GetPrenomNom(bureau.directeur)
+            tresorier = GetPrenomNom(bureau.tresorier)
+            directeur = GetPrenomNom(bureau.directeur)
         
         # print dom.toprettyxml()
         doc = dom.getElementsByTagName("office:text")[0]
@@ -83,7 +81,7 @@ class AttestationModifications(object):
                     ('de-debut', '%s %d' % (getDeMoisStr(facture_debut.month - 1), facture_debut.year)),
                     ('de-fin', '%s %d' % (getDeMoisStr(facture_fin.month - 1), facture_fin.year)),
                     ('prenom', inscrit.prenom),
-                    ('parents', getParentsStr(inscrit)),
+                    ('parents', GetParentsString(inscrit)),
                     ('naissance', inscrit.naissance),
                     ('nom', inscrit.nom),
                     ('tresorier', tresorier),

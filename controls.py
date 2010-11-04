@@ -516,9 +516,6 @@ class AutoMixin:
                 self.SetValue(eval('self.instance.%s' % self.member))
             except:
                 print u"Erreur lors de l'évaluation de self.instance.%s" % self.member
-                print self.instance
-                # print self.instance.label
-                print creche.conges[5].label
             self.__ontext = True
             self.Enable(not readonly)
             
@@ -637,7 +634,7 @@ class AutoChoiceCtrl(wx.Choice, AutoMixin):
             pass
 
 class AutoCheckBox(wx.CheckBox, AutoMixin):
-    def __init__(self, parent, instance, member, label, value=1, fixed_instance=False, observers=[], *args, **kwargs):
+    def __init__(self, parent, instance, member, label="", value=1, fixed_instance=False, observers=[], *args, **kwargs):
         wx.CheckBox.__init__(self, parent, -1, label, *args, **kwargs)
         self.value = value
         AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)

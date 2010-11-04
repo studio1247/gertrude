@@ -23,7 +23,6 @@ import xml.dom.minidom
 from constants import *
 from functions import *
 from facture import *
-from cotisation import Cotisation, CotisationException
 from ooffice import *
 from controls import *
 from facture_mensuelle import FactureModifications

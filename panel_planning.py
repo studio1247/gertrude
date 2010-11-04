@@ -118,7 +118,7 @@ class PlanningPanel(GPanel):
                     planning_panel.SetData(creche.sites[0], date)
                 else:
                     planning_panel.SetData(None, date)
-                self.notebook.AddPage(planning_panel, getDateStr(date))
+                self.notebook.AddPage(planning_panel, GetDateString(date))
 
         self.sizer.Layout()
 
@@ -136,7 +136,7 @@ class PlanningPanel(GPanel):
         for week_day in range(7):
             if JourSemaineAffichable(week_day):
                 day = monday + datetime.timedelta(week_day)
-                self.notebook.SetPageText(page_index, getDateStr(day))
+                self.notebook.SetPageText(page_index, GetDateString(day))
                 note = self.notebook.GetPage(page_index)
                 note.SetData(site, day)
                 page_index += 1
