@@ -54,6 +54,7 @@ class AttestationModifications(object):
         for inscrit in self.inscrits:
             facture_debut = facture_fin = None
             date = self.debut
+            heures_facturees = 0.0
             total = 0.0
             try:
                 while date <= self.fin:
@@ -63,6 +64,7 @@ class AttestationModifications(object):
                             facture_debut = date
                         facture_fin = getMonthEnd(date)
                         total += facture.total
+                        heures_facturees += sum(facture.heures_facturees)
                     date = getNextMonthStart(date)
             except CotisationException, e:
                 errors[GetPrenomNom(inscrit)] = e.errors
@@ -87,6 +89,7 @@ class AttestationModifications(object):
                     ('tresorier', tresorier),
                     ('directeur', directeur),
                     ('date', '%.2d/%.2d/%d' % (today.day, today.month, today.year)),
+                    ('heures-facturees', '%.2f' % heures_facturees),
                     ('total', '%.2f' % total)
                     ]
     

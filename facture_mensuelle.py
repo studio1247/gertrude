@@ -54,9 +54,7 @@ class FactureModifications(object):
             except CotisationException, e:
                 errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
                 continue
-
-            inscriptions = inscrit.getInscriptions(facture.debut_recap, facture.fin_recap)
-            
+           
             for template in templates:
                 section = template.cloneNode(1)
                 if section.nodeName in ("draw:frame", "draw:custom-shape"):
@@ -110,7 +108,7 @@ class FactureModifications(object):
         
                         for i in range(row + 1, len(rows)):
                             table.removeChild(rows[i])
-    
+
                 # Les champs de la facture
                 fields = [('nom-creche', creche.nom),
                         ('adresse-creche', creche.adresse),
@@ -127,7 +125,7 @@ class FactureModifications(object):
                         ('prenom', inscrit.prenom),
                         ('parents', GetParentsString(inscrit)),
                         ('date', '01/%.2d/%d' % (facture.mois, facture.annee)),
-                        ('numfact', '%.2d%.4d%.2d%.4d' % (inscriptions[0].mode + 1, facture.annee, facture.mois, inscriptions[0].idx)),
+                        ('numfact', '%03d%04d%02d' % (inscrit.idx, facture.annee, facture.mois)),
                         ('montant-heure-garde', '%.2f' % facture.montant_heure_garde),
                         ('cotisation-mensuelle', '%.2f' % facture.cotisation_mensuelle),
                         ('heures-supplementaires', '%.2f' % facture.heures_supplementaires),
