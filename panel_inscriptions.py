@@ -277,8 +277,11 @@ class IdentitePanel(InscriptionsTab):
         sizer2.AddMany([(wx.StaticText(self, -1, u'Numéro de sécurité sociale :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'numero_securite_sociale'), 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, u"Numéro d'allocataire CAF :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'numero_allocataire_caf'), 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, u"Enfant handicapé :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoCheckBox(self, None, 'handicap'), 0, wx.EXPAND)])
-        if creche.majoration_localite:
-            sizer2.AddMany([(wx.StaticText(self, -1, u'Majoration (enfant hors localité) :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoCheckBox(self, None, 'majoration'), 0, wx.EXPAND)])
+        self.majoration_localite_items = (wx.StaticText(self, -1, u'Majoration (enfant hors localité) :'), AutoCheckBox(self, None, 'majoration'))
+        sizer2.AddMany([(self.majoration_localite_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.majoration_localite_items[1], 0, wx.EXPAND)])
+        if not creche.majoration_localite:
+            for item in self.majoration_localite_items:
+                item.Show(False)
 ##        sizer2.AddMany([(wx.StaticText(self, -1, 'Date de marche :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'marche'), 0, wx.EXPAND)])
         sizer3 = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Frères et soeurs'), wx.VERTICAL)
         self.fratries_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -339,6 +342,8 @@ class IdentitePanel(InscriptionsTab):
         self.sizer.FitInside(self)
         
     def UpdateContents(self):
+        for item in self.majoration_localite_items:
+            item.Show(creche.majoration_localite)
         if self.inscrit:
             freres_count = len(self.inscrit.freres_soeurs)
             for i in range(len(self.fratries_sizer.GetChildren()), freres_count):
