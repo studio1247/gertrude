@@ -334,7 +334,11 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             line.insert_activity(None, None, button.activite.value)
         else:
             history.Append([])
-            line.remove_activity(None, None, button.activite.value)   
+            line.remove_activity(None, None, button.activite.value)
+        line.save()
+        if line.insert is not None:
+            line.insert[line.key] = line
+            line.insert = None
 
     def UpdateLine(self, index):
         if not self.GetParent().options & NO_ICONS:
@@ -357,11 +361,13 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         
     def UpdateCheckboxes(self, index):
         line = self.lines[index]
-        if isinstance(line, LigneConge):
-            return
         for activite_sizer in self.activites_sizers:
             checkbox = activite_sizer.GetItem(index).GetWindow()
-            checkbox.SetValue(checkbox.activite.value in line.activites_sans_horaires)
+            if isinstance(line, LigneConge):
+                checkbox.Disable()
+            else:
+                checkbox.Enable()
+                checkbox.SetValue(checkbox.activite.value in line.activites_sans_horaires)
 
     def SetInfo(self, info):
         self.grid_panel.SetInfo(info)
@@ -372,6 +378,9 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         if not self.GetParent().options & NO_ICONS:
             self.buttons_sizer.Clear(True)
             self.buttons_sizer.Layout()
+        for activite_sizer in self.activites_sizers:
+            activite_sizer.Clear(True)
+            activite_sizer.Layout()
         self.labels_panel.SetMinSize((LABEL_WIDTH, 1))
         self.grid_panel.Disable(info)
         self.sizer.Layout()

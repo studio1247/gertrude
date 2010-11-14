@@ -137,6 +137,9 @@ class Day(object):
             for i in range(24 * 60 / BASE_GRANULARITY):
                 if self.values[i]:
                     self.values[i] |= PREVISIONNEL
+        self.activites_sans_horaires = {}
+        for key in day.activites_sans_horaires:
+            self.activites_sans_horaires[key] = None
                     
     def GetExtraActivites(self):
         result = set()
@@ -152,11 +155,14 @@ class Day(object):
         print 'suppression jour'
         for start, end, value in self.activites.keys():
             self.remove_activity(start, end, value)
+        for value in self.activites_sans_horaires.keys():
+            self.remove_activity(None, None, value)
             
     def remove_activity(self, start, end, value):
         if start is None and end is None:
-            print 'suppression %s %d' % (self.nom, self.activites_sans_horaires[value])
-            sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.table, (self.activites_sans_horaires[value],))
+            if self.activites_sans_horaires[value] is not None:
+                print 'suppression %s %d' % (self.nom, self.activites_sans_horaires[value])
+                sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.table, (self.activites_sans_horaires[value],))
             del self.activites_sans_horaires[value]
         else:
             print 'suppression %s %d' % (self.nom, self.activites[(start, end, value)])
@@ -173,7 +179,7 @@ class ReferenceDay(Day):
         self.day = day
 
     def insert_activity(self, start, end, value):
-        print 'nouvelle activite de reference (%d, %d, %d)' % (start, end, value), 
+        print 'nouvelle activite de reference (%r, %r %d)' % (start, end, value), 
         result = sql_connection.execute('INSERT INTO REF_ACTIVITIES (idx, reference, day, value, debut, fin) VALUES (NULL,?,?,?,?,?)', (self.inscription.idx, self.day, value, start, end))
         idx = result.lastrowid
         if start is None and end is None:
@@ -979,19 +985,19 @@ class Inscrit(object):
         if not date_fin:
             date_fin = datetime.date.max
         for inscription in self.inscriptions:
-          if inscription.debut:
-            try:
-              date_debut_periode = inscription.debut
-              if inscription.fin:
-                date_fin_periode = inscription.fin
-              else:
-                date_fin_periode = datetime.date.max
-              if ((date_debut >= date_debut_periode and date_debut <= date_fin_periode) or 
-                  (date_fin >= date_debut_periode and date_fin <= date_fin_periode) or
-                  (date_debut < date_debut_periode and date_fin > date_fin_periode)):
-                  result.append(inscription)
-            except:
-              pass
+            if inscription.debut:
+                try:
+                    date_debut_periode = inscription.debut
+                    if inscription.fin:
+                        date_fin_periode = inscription.fin
+                    else:
+                        date_fin_periode = datetime.date.max
+                    if ((date_debut >= date_debut_periode and date_debut <= date_fin_periode) or 
+                        (date_fin >= date_debut_periode and date_fin <= date_fin_periode) or
+                        (date_debut < date_debut_periode and date_fin > date_fin_periode)):
+                        result.append(inscription)
+                except:
+                    pass
         return result
     
     def hasFacture(self, date):
@@ -1071,12 +1077,10 @@ class Inscrit(object):
         if inscription is None:
             return []
         
-        reference = self.getReferenceDay(date)
-        result = reference.GetExtraActivites()
         if date in self.journees:
-            journee = self.journees[date]
-            result.update(journee.GetExtraActivites())
-        return result
+            return self.journees[date].GetExtraActivites()
+        else:
+            return inscription.getReferenceDay(date).GetExtraActivites()
 
     def __cmp__(self, other):
         if other is self: return 0

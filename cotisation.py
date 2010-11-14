@@ -114,6 +114,9 @@ class Cotisation(object):
 
         self.enfants_a_charge, self.enfants_en_creche, debut, fin = GetEnfantsCount(inscrit, self.date)
         self.AjustePeriode((debut, fin))
+        
+        if self.fin is None:
+            self.fin = datetime.date(self.debut.year, 12, 31)
 
         if len(errors) > 0:
             raise CotisationException(errors)
@@ -256,5 +259,5 @@ class Cotisation(object):
             self.fin = fin
             
     def Include(self, date):
-        return date >= self.debut and (self.fin is None or date <= self.fin) 
+        return date >= self.debut and date <= self.fin 
 

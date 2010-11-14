@@ -446,10 +446,7 @@ class SQLConnection(object):
                 cur.execute('SELECT day, value, debut, fin, idx FROM REF_ACTIVITIES WHERE reference=?', (inscription.idx,))
                 for day, value, debut, fin, idx in cur.fetchall():
                     reference_day = inscription.reference[day]
-                    if value in creche.activites and creche.activites[value].mode == MODE_SANS_HORAIRES:
-                        reference_day.add_activite_sans_horaires(value, idx)
-                    else:
-                        reference_day.add_activity(debut, fin, value, idx)
+                    reference_day.add_activity(debut, fin, value, idx)
                     # print inscrit.prenom, day, debut, fin, value
             cur.execute('SELECT debut, fin, label, idx FROM CONGES_INSCRITS WHERE inscrit=?', (inscrit.idx,))
             for conges_entry in cur.fetchall():
