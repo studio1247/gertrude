@@ -52,7 +52,7 @@ class FactureFinMois(object):
 
         date = datetime.date(annee, mois, 1)
         while date.month == mois:
-            if not date in creche.jours_fermeture:
+            if not (date in creche.jours_fermeture or date in inscrit.jours_conges):
                 jours_ouvres += 1
                 inscription = inscrit.getInscription(date)
                 if inscription:
@@ -73,6 +73,7 @@ class FactureFinMois(object):
                         cotisation.heures_reference = heures_reference
                         cotisation.heures_maladie = 0.0
                         cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)] = cotisation
+                    
                     if (cotisation.mode_inscription, cotisation.heures_semaine) in heures_hebdomadaires:
                         heures_hebdomadaires[(cotisation.mode_inscription, cotisation.heures_semaine)] += 1
                     else:
@@ -112,7 +113,7 @@ class FactureFinMois(object):
                             if nb_jours_maladie > creche.minimum_maladie:
                                 self.jours_maladie_deduits.append(date)
                                 if creche.mode_facturation == FACTURATION_FORFAIT_10H:
-                                    self.deduction += cotisation.montant_jour_garde
+                                    self.deduction += 10 * cotisation.montant_heure_garde
                                 else:
                                     self.deduction += cotisation.montant_heure_garde * heures_reference
                                 cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)].heures_maladie += heures_reference
@@ -126,7 +127,7 @@ class FactureFinMois(object):
                         if heures_supplementaires > 0:
                             self.jours_supplementaires[date] = heures_realisees
                             if creche.mode_facturation == FACTURATION_FORFAIT_10H:
-                                self.supplement += cotisation.montant_jour_garde
+                                self.supplement += 10 * cotisation.montant_heure_garde
                         else:
                             if creche.mode_facturation == FACTURATION_HORAIRES_REELS or (creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date)):
                                 if not state & PREVISIONNEL:
@@ -137,11 +138,11 @@ class FactureFinMois(object):
                         if creche.mode_facturation != FACTURATION_FORFAIT_10H:
                             self.heures_supplementaires += heures_supplementaires
                             self.supplement += cotisation.montant_heure_garde * heures_supplementaires
-                        if creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE or (creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION and inscription.IsInPeriodeAdaptation(date)):
-                            activites = inscrit.getActivites(date)
-                            for index in activites:
-                                activite = creche.activites[index]
-                                self.supplement_activites += activite.tarif
+                    if creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE or (creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION and inscription.IsInPeriodeAdaptation(date)):
+                        activites = inscrit.GetExtraActivites(date)
+                        for value in activites:
+                            activite = creche.activites[value]
+                            self.supplement_activites += activite.tarif
 
                     self.heures_contractualisees += heures_reference
                     self.heures_realisees += heures_realisees

@@ -18,7 +18,7 @@
 import sys, __builtin__
 import wx, wx.lib, wx.lib.scrolledpanel, wx.lib.masked, wx.lib.stattext, wx.combo
 from wx.lib.masked import Field
-import fpformat, datetime
+import fpformat, datetime, time
 from functions import *
 from history import Change, Delete, Insert
 
@@ -536,7 +536,7 @@ class AutoMixin:
                 history.Append(Change(self.instance, self.member, old_value))
             exec('self.instance.%s = new_value' % self.member)
             for o in self.observers:
-                observers[o] += 1
+                observers[o] = time.time()
         
 class AutoTextCtrl(wx.TextCtrl, AutoMixin):
     def __init__(self, parent, instance, member, fixed_instance=False, observers=[], *args, **kwargs):

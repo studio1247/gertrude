@@ -73,11 +73,14 @@ class ContratAccueilModifications(object):
                 ('plancher-caf', plancher_caf),
                 ('plafond-caf', plafond_caf),
                 ('heures-semaine', cotisation.heures_semaine),
-                ('assiette-annuelle', cotisation.assiette_annuelle),
-                ('taux-effort', cotisation.taux_horaire),
+                ('assiette-annuelle', "%.2f" % cotisation.assiette_annuelle),
+                ('taux-effort', cotisation.taux_effort),
                 ('montant-heure-garde', cotisation.montant_heure_garde),
-                ('cotisation-mensuelle', cotisation.cotisation_mensuelle),
+                ('cotisation-mensuelle', "%.2f" % cotisation.cotisation_mensuelle),
                 ('date', '%.2d/%.2d/%d' % (self.date.day, self.date.month, self.date.year)),
+                ('annee-debut', cotisation.debut.year),
+                ('annee-fin', cotisation.debut.year+1),
+                ('permanences', self.GetPermanences(inscription)),
                 ('IsPresentDuringTranche', self.IsPresentDuringTranche),
                 ]
     
@@ -95,6 +98,21 @@ class ContratAccueilModifications(object):
             if journee.values[i]:
                 return "X"
         return ""
+    
+    def GetPermanences(self, inscription):
+        jours, heures = inscription.GetJoursHeuresReference()           
+        if heures >= 11:
+            result = 8
+        elif heures >= 8:
+            result = 6
+        else:
+            result = 4
+        if GetEnfantsCount(inscription.inscrit, inscription.debut)[1]:
+            return 2 + result
+        else:
+            return result        
+    
+            
 
 if __name__ == '__main__':
     import os

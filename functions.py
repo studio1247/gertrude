@@ -77,6 +77,23 @@ def GetPrenomNom(person, maj_nom=False):
         return "%s %s" % (person.prenom, person.nom.upper())
     else:
         return "%s %s" % (person.prenom, person.nom)
+    
+def GetEnfantsCount(inscrit, date):
+    enfants_a_charge = 1
+    enfants_en_creche = 1
+    debut, fin = None, None
+    for frere_soeur in inscrit.freres_soeurs:
+        if frere_soeur.naissance:
+            if frere_soeur.naissance <= date:
+                if not debut or frere_soeur.naissance > debut:
+                    debut = frere_soeur.naissance
+                enfants_a_charge += 1
+                if frere_soeur.entree and frere_soeur.entree <= date and (frere_soeur.sortie is None or frere_soeur.sortie > date):
+                    enfants_en_creche += 1
+            else:
+                if not fin or frere_soeur.naissance < fin:
+                    fin = frere_soeur.naissance
+    return enfants_a_charge, enfants_en_creche, debut, fin
 
 def GetFile(filename, base):
     path = "./%s/%s" % (base, filename)

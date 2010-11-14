@@ -16,7 +16,7 @@
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import os.path
-import datetime
+import datetime, time
 from constants import *
 from controls import *
 from sqlobjects import *
@@ -352,6 +352,7 @@ class ResponsabilitesTab(AutoTab, PeriodeMixin):
 
 activity_modes = [("Normal", 0),
                   (u"Libère une place", MODE_LIBERE_PLACE),
+                  (u"Sans horaires", MODE_SANS_HORAIRES),
                  ]
 
 class ActivitesTab(AutoTab):
@@ -359,6 +360,7 @@ class ActivitesTab(AutoTab):
         global delbmp
         delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
         AutoTab.__init__(self, parent)
+        observers['activites'] = 0
         self.color_buttons = {}
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -379,7 +381,7 @@ class ActivitesTab(AutoTab):
             flex_sizer.AddMany([(wx.StaticText(self, -1, u'Couleur des %s :' % label), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (color_button, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (color_button.hash_cb, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5)])
         box_sizer.Add(flex_sizer, 0, wx.BOTTOM, 5)
         button = wx.Button(self, -1, u'Rétablir les couleurs par défaut')
-        self.Bind(wx.EVT_BUTTON, self.couleursDefaut, button)
+        self.Bind(wx.EVT_BUTTON, self.OnCouleursDefaut, button)
         box_sizer.Add(button, 0, wx.ALL, 5)
         self.sizer.Add(box_sizer, 0, wx.ALL|wx.EXPAND, 5)
 
@@ -408,7 +410,8 @@ class ActivitesTab(AutoTab):
                 self.line_add(activity)
         self.sizer.Layout()
         
-    def couleursDefaut(self, event):
+    def OnCouleursDefaut(self, event):
+        observers['activites'] = time.time()
         creche.activites[0].couleur = [5, 203, 28, 150, wx.SOLID]
         creche.activites[0].couleur_supplement = [5, 203, 28, 250, wx.SOLID]
         creche.activites[0].couleur_previsionnel = [5, 203, 28, 50, wx.SOLID]
@@ -422,26 +425,34 @@ class ActivitesTab(AutoTab):
     def line_add(self, activity):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, u'Libellé :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, 'activites[%d].label' % activity.value), 1, wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, 'Mode :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoChoiceCtrl(self, creche, 'activites[%d].mode' % activity.value, items=activity_modes), 1, wx.EXPAND)])
-        color_button = wx.Button(self, -1, "", size=(20, 20))
+        mode_choice = AutoChoiceCtrl(self, creche, 'activites[%d].mode' % activity.value, items=activity_modes, observers=['activites'])
+        self.Bind(wx.EVT_CHOICE, self.onModeChoice, mode_choice)
+        sizer.AddMany([(wx.StaticText(self, -1, 'Mode :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (mode_choice, 1, wx.EXPAND)])
+        color_button = mode_choice.color_button = wx.Button(self, -1, "", size=(20, 20))
         r, g, b, a, h = activity.couleur
         color_button.SetBackgroundColour(wx.Color(r, g, b))
         self.Bind(wx.EVT_BUTTON, self.onColorButton, color_button)
+        color_button.static = wx.StaticText(self, -1, 'Couleur :')
         color_button.hash_cb = HashComboBox(self)
         color_button.activite = color_button.hash_cb.activite = activity
         color_button.field = color_button.hash_cb.field = ["couleur", "couleur_supplement", "couleur_previsionnel"]
         self.UpdateHash(color_button.hash_cb, activity.couleur)
         self.Bind(wx.EVT_COMBOBOX, self.onHashChange, color_button.hash_cb)
-        sizer.AddMany([(wx.StaticText(self, -1, 'Couleur :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (color_button, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (color_button.hash_cb, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5)])
+        sizer.AddMany([(color_button.static, 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (color_button, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (color_button.hash_cb, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5)])
         if creche.tarification_activites:
             sizer.AddMany([(wx.StaticText(self, -1, 'Tarif :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoNumericCtrl(self, creche, 'activites[%d].tarif' % activity.value, precision=2), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5)])
         delbutton = wx.BitmapButton(self, -1, delbmp)
         delbutton.index = activity.value
+        if activity.mode == MODE_SANS_HORAIRES:
+            color_button.Disable()
+            color_button.static.Disable()
+            color_button.hash_cb.Disable()
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
         self.Bind(wx.EVT_BUTTON, self.activite_del, delbutton)
         self.activites_sizer.Add(sizer, 0, wx.EXPAND|wx.BOTTOM, 5)
 
     def activite_add(self, event):
+        observers['activites'] = time.time()
         activity = Activite()
         colors = [tmp.couleur for tmp in creche.activites.values()]
         for h in (wx.BDIAGONAL_HATCH, wx.CROSSDIAG_HATCH, wx.FDIAGONAL_HATCH, wx.CROSS_HATCH, wx.HORIZONTAL_HATCH, wx.VERTICAL_HATCH, wx.TRANSPARENT, wx.SOLID):
@@ -464,6 +475,7 @@ class ActivitesTab(AutoTab):
         self.sizer.Layout()
 
     def activite_del(self, event):
+        observers['activites'] = time.time()
         index = event.GetEventObject().index
         entrees = []
         for inscrit in creche.inscrits:
@@ -504,8 +516,18 @@ class ActivitesTab(AutoTab):
             hash_cb.Append("", (r, g, b, a, hash))
             if hash == h:
                 hash_cb.SetSelection(i)
-            
+    
+    def onModeChoice(self, event):
+        object = event.GetEventObject()
+        color_button = object.color_button
+        value = object.GetClientData(object.GetSelection())
+        color_button.Enable(value != MODE_SANS_HORAIRES)
+        color_button.static.Enable(value != MODE_SANS_HORAIRES)
+        color_button.hash_cb.Enable(value != MODE_SANS_HORAIRES)
+        event.Skip()
+        
     def onColorButton(self, event):
+        observers['activites'] = time.time()
         obj = event.GetEventObject()
         r, g, b, a, h = couleur = getattr(obj.activite, obj.field[0])
         data = wx.ColourData()
@@ -530,6 +552,7 @@ class ActivitesTab(AutoTab):
         self.UpdateHash(obj.hash_cb, couleur)
     
     def onHashChange(self, event):
+        observers['activites'] = time.time()
         obj = event.GetEventObject()
         for field in obj.field:
             setattr(obj.activite, field, obj.GetClientData(obj.GetSelection()))
@@ -603,14 +626,14 @@ class JoursFermeturePanel(AutoTab):
         self.conges_sizer.Detach(index)
 
     def conges_add(self, event):
-        observers['conges'] += 1
+        observers['conges'] = time.time()
         history.Append(Delete(creche.conges, -1))
         creche.add_conge(Conge(creche))
         self.line_add(len(creche.conges) - 1)
         self.sizer.Layout()
 
     def conges_del(self, event):
-        observers['conges'] += 1
+        observers['conges'] = time.time()
         index = event.GetEventObject().index
         history.Append(Insert(creche.conges, index, creche.conges[index]))
         self.line_del()
@@ -679,7 +702,7 @@ class ParametersPanel(AutoTab):
     def onModeFacturationChoice(self, event):
         object = event.GetEventObject()
         value = object.GetClientData(object.GetSelection())
-        self.GetParent().DisplayTauxHorairePanel(value in (FACTURATION_PAJE, FACTURATION_HORAIRES_REELS))
+        self.GetParent().DisplayTarifHorairePanel(value in (FACTURATION_PAJE, FACTURATION_HORAIRES_REELS))
         event.Skip()
             
     def ouverture_check(self, ouverture, a, b):
@@ -745,7 +768,7 @@ class ParametersPanel(AutoTab):
         else:
             obj.AutoChange(value)
             
-class TauxHorairePanel(AutoTab):
+class TarifHorairePanel(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
         self.delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
@@ -942,13 +965,13 @@ class ParametresNotebook(wx.Notebook):
         self.AddPage(JoursFermeturePanel(self), u'Congés')
         self.AddPage(ActivitesTab(self), u'Couleurs / Activités')
         self.AddPage(ParametersPanel(self), u'Paramètres')
-        self.taux_horaire_panel = TauxHorairePanel(self)
+        self.tarif_horaire_panel = TarifHorairePanel(self)
         if creche.mode_facturation in (FACTURATION_PAJE, FACTURATION_HORAIRES_REELS):
-            self.AddPage(self.taux_horaire_panel, 'Taux horaire')
-            self.taux_horaire_panel_displayed = True
+            self.AddPage(self.tarif_horaire_panel, 'Taux horaire')
+            self.tarif_horaire_panel_displayed = True
         else:
-            self.taux_horaire_panel.Show(False)
-            self.taux_horaire_panel_displayed = False
+            self.tarif_horaire_panel.Show(False)
+            self.tarif_horaire_panel_displayed = False
         self.AddPage(UsersTab(self), u'Utilisateurs et mots de passe')
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
@@ -961,21 +984,21 @@ class ParametresNotebook(wx.Notebook):
         page = self.GetCurrentPage()
         page.UpdateContents()
         
-    def DisplayTauxHorairePanel(self, enable):
-        if enable == self.taux_horaire_panel_displayed:
+    def DisplayTarifHorairePanel(self, enable):
+        if enable == self.tarif_horaire_panel_displayed:
             return
         else:
-            self.taux_horaire_panel.Show(enable)
+            self.tarif_horaire_panel.Show(enable)
             if self.professeurs_tab_displayed:
                 tab_index = 8
             else:
                 tab_index = 7
             if enable:
-                self.InsertPage(tab_index, self.taux_horaire_panel, u'Taux horaire')
+                self.InsertPage(tab_index, self.tarif_horaire_panel, u'Taux horaire')
             else:
                 self.RemovePage(tab_index)
 
-        self.taux_horaire_panel_displayed = enable
+        self.tarif_horaire_panel_displayed = enable
         self.Layout()
         
     def DisplayProfesseursTab(self, enable):

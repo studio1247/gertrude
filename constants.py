@@ -35,7 +35,9 @@ TYPE_MUNICIPAL = 2
 TYPE_GARDERIE_PERISCOLAIRE = 3
 
 # Modes des activités
+MODE_NORMAL = 0
 MODE_LIBERE_PLACE = 1
+MODE_SANS_HORAIRES = 2
 
 # Granularité du planning dans la base
 BASE_GRANULARITY = 5 # 5 minutes

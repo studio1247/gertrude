@@ -24,15 +24,15 @@ from wx.lib import masked
 from startdialog import StartDialog
 from config import Liste, Load, Save, Restore, Exit, ProgressHandler
 try:
-  import winsound
+    import winsound
 except:
-  pass
+    pass
 
 # Don't remove these 2 lines (mandatory for py2exe)
 import controls, zipfile, xml.dom.minidom, wx.html, ooffice
 from functions import GetBitmapFile
 
-VERSION = '0.83l'
+VERSION = '0.83m'
 
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):

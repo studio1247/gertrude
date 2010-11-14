@@ -163,15 +163,16 @@ class PlanningPanel(GPanel):
             
         self.activity_choice.Clear()
         selected = 0
-        if len(creche.activites) > 1:
+        if creche.HasActivitesAvecHoraires():
             self.activity_choice.Show(True)
             for i, activity in enumerate(creche.activites.values()):
-                self.activity_choice.Append(activity.label, activity)
-                try:
-                    if self.activity_choice.activity.value == activity.value:
-                        selected = i
-                except:
-                    pass
+                if activity.mode != MODE_SANS_HORAIRES:
+                    self.activity_choice.Append(activity.label, activity)
+                    try:
+                        if self.activity_choice.activity.value == activity.value:
+                            selected = i
+                    except:
+                        pass
         else:
             self.activity_choice.Show(False)
             self.activity_choice.Append(creche.activites[0].label, creche.activites[0])

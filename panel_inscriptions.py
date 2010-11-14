@@ -15,7 +15,7 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import os, datetime, xml.dom.minidom, cStringIO
+import os, datetime, time, xml.dom.minidom, cStringIO
 import wx, wx.lib.scrolledpanel, wx.html
 from constants import *
 from sqlobjects import *
@@ -70,9 +70,9 @@ def ParseHtml(filename, context):
         text = data[start:end]
         dom = xml.dom.minidom.parseString(text)
         try:
-          replacement = eval(dom.getElementsByTagName('var')[0].getAttribute('value'))
+            replacement = eval(dom.getElementsByTagName('var')[0].getAttribute('value'))
         except:
-          replacement = "<erreur (%s)>" % dom.getElementsByTagName('var')[0].getAttribute('value')
+            replacement = "<erreur (%s)>" % dom.getElementsByTagName('var')[0].getAttribute('value')
         if type(replacement) == datetime.date:
             replacement = date2str(replacement)
         elif type(replacement) != str and type(replacement) != unicode:
@@ -86,141 +86,107 @@ class ContextPanel(wx.Panel):
         self.parent = parent
         wx.Panel.__init__(self, parent)
         sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer1 = wx.BoxSizer(wx.HORIZONTAL)
         self.periodechoice = wx.Choice(self)
         self.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.periodechoice)
+        sizer1.Add(self.periodechoice, 0)
+        if IsTemplateFile("Contrat accueil.odt"):
+            button = wx.Button(self, -1, u"Générer le contrat")
+            sizer1.Add(button, 0, wx.LEFT, 5)
+            self.Bind(wx.EVT_BUTTON, self.EvtGenerationContrat, button)
+        sizer.Add(sizer1, 0, wx.ALL, 5)
         self.html_window = wx.html.HtmlWindow(self, style=wx.SUNKEN_BORDER)
-        sizer.AddMany([(self.periodechoice, 0, wx.EXPAND|wx.ALL, 5), (self.html_window, 1, wx.EXPAND|wx.ALL-wx.TOP, 5)])
+        sizer.Add(self.html_window, 1, wx.EXPAND|wx.ALL-wx.TOP, 5)
         self.SetSizer(sizer)
 
     def SetInscrit(self, inscrit):
         self.inscrit = inscrit
         self.UpdateContents()
 
+    def GetCotisations(self):
+        self.cotisations = []
+        for inscription in self.inscrit.inscriptions:
+            date = inscription.debut
+            while date:
+                try:
+                    cotisation = Cotisation(self.inscrit, date, TRACES)
+                    self.cotisations.append((cotisation.debut, cotisation.fin, cotisation))
+                    if cotisation.fin and (not inscription.fin or cotisation.fin < inscription.fin):
+                        date = cotisation.fin + datetime.timedelta(1)
+                    else:
+                        date = None
+                except CotisationException, e:
+                    self.cotisations.append((date, inscription.fin, e))
+                    date = None
+    
     def UpdateContents(self):
-        if self.inscrit and self.inscrit.inscriptions and self.inscrit.inscriptions[0].debut:
-            self.periodechoice.Clear()   
-            self.periodes = self.GetPeriodes()
-            for p in self.periodes:
-                self.periodechoice.Append(date2str(p[0]) + ' - ' + date2str(p[1]))
-            if len(self.periodes) > 1:
+        self.periodechoice.Clear()
+        if self.inscrit:
+            self.GetCotisations()
+            for c in self.cotisations:
+                self.periodechoice.Append(date2str(c[0]) + ' - ' + date2str(c[1]))
+            if len(self.cotisations) > 1:
                 self.periodechoice.Enable()
             else:
                 self.periodechoice.Disable()
 
-            self.periode = self.periodes[-1]
+            self.current_cotisation = self.cotisations[-1]
             self.periodechoice.SetSelection(self.periodechoice.GetCount() - 1)
         else:
-            self.periode = None
-            self.periodechoice.Clear()
+            self.current_cotisation = None
             self.periodechoice.Disable()
         self.UpdatePage()
 
     def EvtPeriodeChoice(self, evt):
         ctrl = evt.GetEventObject()
-        self.periode = self.periodes[ctrl.GetSelection()]
+        self.current_cotisation = self.cotisations[ctrl.GetSelection()]
         self.UpdatePage()
+        
+    def EvtGenerationContrat(self, evt):
+        DocumentDialog(self, ContratAccueilModifications(self.inscrit, self.current_cotisation[0])).ShowModal()
 
 class ContratPanel(ContextPanel):
     def __init__(self, parent):
         ContextPanel.__init__(self, parent)
 
-    def GetPeriodes(self):
-        return [(inscription.debut, inscription.fin) for inscription in self.inscrit.inscriptions]
-
     def UpdatePage(self):
         if self.inscrit is None:
             self.html = '<html><body>Aucun inscrit s&eacute;lectionn&eacute; !</body></html>'
             self.periodechoice.Disable()
-        elif self.periode is None:
+        elif not self.current_cotisation:
             self.html = '<html><body>Aucune inscription !</body></html>'
             self.periodechoice.Disable()
         else:
-            try:
-                context = Cotisation(self.inscrit, self.periode[0])
+            context = self.current_cotisation[-1]
+            if isinstance(context, CotisationException):
+                error = '<br>'.join(context.errors)
+                self.html = u"<html><body><b>Le contrat d'accueil de l'enfant ne peut être édit&eacute; pour la (les) raison(s) suivante(s) :</b><br>" + error + "</body></html>"
+            else:
                 if creche.mode_facturation == FACTURATION_PAJE:
                     str_facturation = "_paje"
                 else:
                     str_facturation = ""
                 self.html = ParseHtml(GetTemplateFile("contrat_accueil%s.html" % str_facturation), context)
-            except CotisationException, e:
-                error = '<br>'.join(e.errors)
-                self.html = u"<html><body><b>Le contrat d'accueil de l'enfant ne peut être édit&eacute; pour la (les) raison(s) suivante(s) :</b><br>" + error + "</body></html>"
-
+                
         self.html_window.SetPage(self.html)
 
 class ForfaitPanel(ContextPanel):
     def __init__(self, parent):
         ContextPanel.__init__(self, parent)
 
-    def GetPeriodes(self):
-        periodes = []
-        for inscription in self.inscrit.inscriptions:
-            separators = self.get_separators(inscription)
-            all_periodes = [(separators[i], separators[i+1] - datetime.timedelta(1)) for i in range(len(separators)-1)]
-            previous_context = None
-            previous_periode = None
-            for periode in all_periodes:
-                try:
-                    context = Cotisation(self.inscrit, periode[0], options=NO_ADDRESS+NO_PARENTS+TRACES)                    
-                    if not previous_periode or context != previous_context:
-                        periodes.append(periode)
-                        previous_periode = periode
-                        previous_context = context
-                    else:
-                        periodes[-1] = (previous_periode[0], periode[1])
-                except CotisationException, e:
-                    periodes.append(periode)           
-                    previous_periode = periode
-                    previous_context = None
-        return periodes
-
-    def get_separators(self, inscription):
-        if inscription.debut is None:
-            return []
-        else:
-            debut = inscription.debut
-        if inscription.fin is None:
-            fin = datetime.date(day=1, month=1, year=datetime.date.today().year+1)
-        else:
-            fin = inscription.fin + datetime.timedelta(1)
-
-        separators = [debut, fin]
-
-        def addseparator(separator, end=0):
-            if separator is None:
-                return
-            if end == 1:
-                separator = separator + datetime.timedelta(1)
-            if separator >= debut and separator <= fin and not separator in separators:
-                separators.append(separator)
-
-        for parent in [self.inscrit.papa, self.inscrit.maman]:
-            for revenu in parent.revenus:
-                addseparator(revenu.debut)
-                addseparator(revenu.fin, 1)
-        for frere_soeur in self.inscrit.freres_soeurs:
-            addseparator(frere_soeur.naissance)
-            addseparator(frere_soeur.entree)
-            addseparator(frere_soeur.sortie, 1)
-        for year in range(debut.year, fin.year+1):
-            addseparator(datetime.date(day=1, month=9, year=year))
-            addseparator(datetime.date(day=1, month=1, year=year))
-        if creche.facturation_periode_adaptation != PERIODE_ADAPTATION_FACTUREE_NORMALEMENT and inscription.fin_periode_adaptation:
-            addseparator(inscription.fin_periode_adaptation + datetime.timedelta(1))
-            
-        separators.sort()
-        return separators
-
     def UpdatePage(self):      
         if self.inscrit is None:
             self.html = '<html><body>Aucun inscrit s&eacute;lectionn&eacute; !</body></html>'
             self.periodechoice.Disable()
-        elif self.periode is None:
+        elif not self.current_cotisation:
             self.html = '<html><body>Aucune inscription !</body></html>'
             self.periodechoice.Disable()
         else:
-            try:
-                context = Cotisation(self.inscrit, self.periode[0], options=NO_ADDRESS+NO_PARENTS)
+            context = self.current_cotisation[-1]
+            if isinstance(context, CotisationException):
+                error = '<br>'.join(context.errors)
+                self.html = u"<html><body><b>Les frais de garde mensuels ne peuvent être calcul&eacute;s pour la (les) raison(s) suivante(s) :</b><br>" + error  + "</body></html>"
+            else:
                 if context.mode_inscription == MODE_CRECHE:
                     str_inscription = "_creche"
                 else:
@@ -233,10 +199,7 @@ class ForfaitPanel(ContextPanel):
                 else:
                     str_facturation = ""                
                 self.html = ParseHtml(GetTemplateFile("frais_de_garde%s%s.html" % (str_inscription, str_facturation)), context)
-            except CotisationException, e:
-                error = '<br>'.join(e.errors)
-                self.html = u"<html><body><b>Les frais de garde mensuels ne peuvent être calcul&eacute;s pour la (les) raison(s) suivante(s) :</b><br>" + error  + "</body></html>"
-                
+
         self.html_window.SetPage(self.html)
 
             
@@ -506,13 +469,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         InscriptionsTab.__init__(self, parent)
         PeriodeMixin.__init__(self, 'inscriptions')
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer1 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer1.Add(PeriodeChoice(self, self.nouvelleInscription), 0)
-        if IsTemplateFile("Contrat accueil.odt"):
-            button = wx.Button(self, -1, u"Générer le contrat")
-            sizer1.Add(button, 0, wx.LEFT, 5)
-            self.Bind(wx.EVT_BUTTON, self.EvtGenerationContrat, button)
-        sizer.Add(sizer1, 0, wx.TOP|wx.BOTTOM, 5)
+        sizer.Add(PeriodeChoice(self, self.nouvelleInscription), 0)
         sizer1 = wx.FlexGridSizer(0, 2, 5, 10)
         sizer1.AddGrowableCol(1, 1)
         self.sites_items = wx.StaticText(self, -1, u"Site :"), AutoChoiceCtrl(self, None, 'site')
@@ -560,9 +517,6 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.inscrit = inscrit
         self.SetInstance(inscrit)
         self.UpdateContents()
-    
-    def EvtGenerationContrat(self, evt):
-        DocumentDialog(self, ContratAccueilModifications(self.inscrit, self.inscrit.inscriptions[self.periode].debut)).ShowModal()
         
     def onDureeReferenceChoice(self, event):
         duration = self.duree_reference_choice.GetClientData(self.duree_reference_choice.GetSelection())
@@ -624,7 +578,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
             
         self.activity_choice.Clear()
         selected = 0
-        if len(creche.activites) > 1:
+        if creche.HasActivitesAvecHoraires():
             self.activity_choice.Show(True)
             for i, activity in enumerate(creche.activites.values()):
                 self.activity_choice.Append(activity.label, activity)
@@ -718,8 +672,7 @@ class CongesPanel(InscriptionsTab):
             for child in sizer.GetChildren():
                 child.GetWindow().Disable()
             self.conges_creche_sizer.Add(sizer)
-        if 'conges' in observers:
-            self.last_creche_observer = observers['conges']
+        self.last_creche_observer = time.time()
 
     def line_add(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)

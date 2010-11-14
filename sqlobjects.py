@@ -28,6 +28,7 @@ class SQLObject(object):
 class Day(object):
     def __init__(self):
         self.activites = {}
+        self.activites_sans_horaires = {}
         self.values = [0] * 24 * (60 / BASE_GRANULARITY)
         self.last_heures = None
         self.values_used_for_last_heures = []
@@ -72,15 +73,18 @@ class Day(object):
                     a = h
                     v = nv
                 h += 1
-        return result        
-
+        return result           
+            
     def add_activity(self, start, end, value, idx):
-        for i in range(start, end):
-            if value >= 0:
-                self.values[i] |= (1 << (value % PREVISIONNEL)) + (value & PREVISIONNEL)
-            else:
-                self.values[i] = value
-        self.activites[(start, end, value)] = idx
+        if start is None and end is None:
+            self.activites_sans_horaires[value] = idx
+        else:
+            for i in range(start, end):
+                if value >= 0:
+                    self.values[i] |= (1 << (value % PREVISIONNEL)) + (value & PREVISIONNEL)
+                else:
+                    self.values[i] = value
+            self.activites[(start, end, value)] = idx
         
     def remove_all_activities(self, value):
         mask = ~(1 << value)
@@ -134,22 +138,35 @@ class Day(object):
                 if self.values[i]:
                     self.values[i] |= PREVISIONNEL
                     
-    def get_extra_activities(self):
+    def GetExtraActivites(self):
         result = set()
-        for value in creche.activites.keys():
-            mask = (1 << value)
-            for h in range(24 * 60 / BASE_GRANULARITY):
-                if self.values[h] > 0 and self.values[h] & mask:
-                    result.add(value)
-                    break
+        for key in self.activites.keys():
+            value = key[2]
+            if value > 0:
+                result.add(value & ~PREVISIONNEL)
+        for value in self.activites_sans_horaires.keys():
+            result.add(value)
         return result
     
     def delete(self):
         print 'suppression jour'
         for start, end, value in self.activites.keys():
-            self.remove_activity(start, end, value)        
+            self.remove_activity(start, end, value)
+            
+    def remove_activity(self, start, end, value):
+        if start is None and end is None:
+            print 'suppression %s %d' % (self.nom, self.activites_sans_horaires[value])
+            sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.table, (self.activites_sans_horaires[value],))
+            del self.activites_sans_horaires[value]
+        else:
+            print 'suppression %s %d' % (self.nom, self.activites[(start, end, value)])
+            sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.table, (self.activites[(start, end, value)],))
+            del self.activites[(start, end, value)]  
 
 class ReferenceDay(Day):
+    table = "REF_ACTIVITIES"
+    nom = u"activité de référence"
+    
     def __init__(self, inscription, day):
         Day.__init__(self)
         self.inscription = inscription
@@ -159,15 +176,16 @@ class ReferenceDay(Day):
         print 'nouvelle activite de reference (%d, %d, %d)' % (start, end, value), 
         result = sql_connection.execute('INSERT INTO REF_ACTIVITIES (idx, reference, day, value, debut, fin) VALUES (NULL,?,?,?,?,?)', (self.inscription.idx, self.day, value, start, end))
         idx = result.lastrowid
-        self.activites[(start, end, value)] = idx
-        print idx
-        
-    def remove_activity(self, start, end, value):
-        print 'suppression activite de reference %d' % self.activites[(start, end, value)]
-        sql_connection.execute('DELETE FROM REF_ACTIVITIES WHERE idx=?', (self.activites[(start, end, value)],))
-        del self.activites[(start, end, value)]        
+        if start is None and end is None:
+            self.activites_sans_horaires[value] = idx
+        else:
+            self.activites[(start, end, value)] = idx   
+        print idx    
        
 class Journee(Day):
+    table = "ACTIVITES"
+    nom = u"activité"
+    
     def __init__(self, inscrit, date, reference=None):
         Day.__init__(self)
         self.inscrit_idx = inscrit.idx
@@ -177,16 +195,15 @@ class Journee(Day):
             self.copy(reference, creche.presences_previsionnelles)
 
     def insert_activity(self, start, end, value):
-        print 'nouvelle activite (%d, %d, %d)' % (start, end, value), 
+        print 'nouvelle activite (%r, %r, %d)' % (start, end, value), 
         result = sql_connection.execute('INSERT INTO ACTIVITES (idx, inscrit, date, value, debut, fin) VALUES (NULL,?,?,?,?,?)', (self.inscrit_idx, self.date, value, start, end))
         idx = result.lastrowid
-        self.activites[(start, end, value)] = idx
+        if start is None and end is None:
+            self.activites_sans_horaires[value] = idx
+        else:
+            self.activites[(start, end, value)] = idx           
         print idx
-        
-    def remove_activity(self, start, end, value):
-        print 'suppression activite %d' % self.activites[(start, end, value)]
-        sql_connection.execute('DELETE FROM ACTIVITES WHERE idx=?', (self.activites[(start, end, value)],))
-        del self.activites[(start, end, value)]
+        return idx
        
     def confirm(self):
         for i in range(24 * 60 / BASE_GRANULARITY):
@@ -624,7 +641,21 @@ class Creche(object):
             test = eval(self.conversion_formule_taux_horaire[index][0])
             return True
         except:
-            return False               
+            return False
+        
+    def HasActivitesAvecHoraires(self):
+        count = len(self.activites)
+        for activity in self.activites.values():
+            if activity.mode == MODE_SANS_HORAIRES:
+                count -= 1 
+        return count > 1
+    
+    def GetActivitesSansHoraires(self):
+        result = []
+        for activite in self.activites.values():
+            if activite.mode == MODE_SANS_HORAIRES:
+                result.append(activite) 
+        return result
         
     def __setattr__(self, name, value):
         self.__dict__[name] = value
@@ -1033,7 +1064,7 @@ class Inscrit(object):
             else:
                 return ABSENT, 0, 0, 0
             
-    def getActivites(self, date):
+    def GetExtraActivites(self, date):
         if date in creche.jours_fermeture:
             return []
         inscription = self.getInscription(date)
@@ -1041,11 +1072,10 @@ class Inscrit(object):
             return []
         
         reference = self.getReferenceDay(date)
-        result = reference.get_extra_activities()
+        result = reference.GetExtraActivites()
         if date in self.journees:
             journee = self.journees[date]
-            result.update(journee.get_extra_activities())
-        result.discard(0)
+            result.update(journee.GetExtraActivites())
         return result
 
     def __cmp__(self, other):
