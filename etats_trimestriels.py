@@ -44,112 +44,113 @@ class EtatsTrimestrielsModifications(object):
             ReplaceTextFields(dom, fields)
             return []
 
-        global_indexes = getTriParCommuneEtNomIndexes(range(len(creche.inscrits)))
-
-        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
-        tables = spreadsheet.getElementsByTagName("table:table")
-
-        # LES 4 TRIMESTRES
-        template = tables.item(1)
-        spreadsheet.removeChild(template)
-        for trimestre in range(4):
-            debut = datetime.date(self.annee, trimestre * 3 + 1, 1)
-            if debut > today:
-                break
-
-            if trimestre == 3:
-                fin = datetime.date(self.annee, 12, 31)
-            else:
-                fin = datetime.date(self.annee, trimestre * 3 + 4, 1) - datetime.timedelta(1)
-
-            # On retire ceux qui ne sont pas inscrits pendant la periode qui nous interesse
-            indexes = getPresentsIndexes(global_indexes, (debut, fin))
-
-            table = template.cloneNode(1)
-            spreadsheet.appendChild(table)
-            table.setAttribute("table:name", "%s tr %d" % (trimestres[trimestre], self.annee))
-            lines = table.getElementsByTagName("table:table-row")
-            page_template = lines[:template_total_lines_count]
-            last_line = lines[template_total_lines_count]
-            for line in page_template:
-                table.removeChild(line)
-
-            nb_pages = (len(indexes) / template_lines_count) + (len(indexes) % template_lines_count > 0)
-            for page in range(nb_pages):
-                lines = []
-                for l, line in enumerate(page_template):
-                    clone = line.cloneNode(1)
-                    lines.append(clone)
-                    table.insertBefore(clone, last_line)
-                
-                # Le titre de la page
-                ReplaceFields(lines[0], [('annee', self.annee),
-                                         ('trimestre', trimestres[trimestre].upper())])
-                # Les mois
-                ReplaceFields(lines[2], [('mois(1)', months[trimestre * 3].upper()),
-                                         ('mois(2)', months[(trimestre * 3) + 1].upper()),
-                                         ('mois(3)', months[(trimestre * 3) + 2].upper())])
-                
-                for l, line in enumerate(lines[template_first_line:template_first_line+template_lines_count]):
-                    index = page * template_lines_count + l
-                    heures = [[0] * 3, [0] * 3]
-                    previsionnel = [0] * 3
-
-                    if index < len(indexes):
-                        inscrit = creche.inscrits[indexes[index]]
-
-                        # Calcul du nombre d'heures pour chaque mois
-                        for i in range(3):
-                            mois = trimestre * 3 + i + 1
-                            try:
-                                facture = self.get_facture(inscrit, mois)
-                            except:
-                                continue
-                            previsionnel[i] = facture.previsionnel
-                            heures[0][i] = facture.heures_facturees[0]
-                            heures[1][i] = facture.heures_facturees[1]
-
-                        fields = [('nom', inscrit.nom),
-                                  ('prenom', inscrit.prenom),
-                                  ('adresse', inscrit.adresse),
-                                  ('ville', inscrit.ville),
-                                  ('code_postal', str(inscrit.code_postal)),
-                                  ('naissance', inscrit.naissance),
-                                  ('entree', inscrit.inscriptions[0].debut),
-                                  ('sortie', inscrit.inscriptions[-1].fin)]
-
-                        for m, mode in enumerate(["creche", "halte"]):
+        elif filename == 'content.xml':
+            global_indexes = getTriParCommuneEtNomIndexes(range(len(creche.inscrits)))
+    
+            spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
+            tables = spreadsheet.getElementsByTagName("table:table")
+    
+            # LES 4 TRIMESTRES
+            template = tables.item(1)
+            spreadsheet.removeChild(template)
+            for trimestre in range(4):
+                debut = datetime.date(self.annee, trimestre * 3 + 1, 1)
+                if debut > today:
+                    break
+    
+                if trimestre == 3:
+                    fin = datetime.date(self.annee, 12, 31)
+                else:
+                    fin = datetime.date(self.annee, trimestre * 3 + 4, 1) - datetime.timedelta(1)
+    
+                # On retire ceux qui ne sont pas inscrits pendant la periode qui nous interesse
+                indexes = getPresentsIndexes(global_indexes, (debut, fin))
+    
+                table = template.cloneNode(1)
+                spreadsheet.appendChild(table)
+                table.setAttribute("table:name", "%s tr %d" % (trimestres[trimestre], self.annee))
+                lines = table.getElementsByTagName("table:table-row")
+                page_template = lines[:template_total_lines_count]
+                last_line = lines[template_total_lines_count]
+                for line in page_template:
+                    table.removeChild(line)
+    
+                nb_pages = (len(indexes) / template_lines_count) + (len(indexes) % template_lines_count > 0)
+                for page in range(nb_pages):
+                    lines = []
+                    for l, line in enumerate(page_template):
+                        clone = line.cloneNode(1)
+                        lines.append(clone)
+                        table.insertBefore(clone, last_line)
+                    
+                    # Le titre de la page
+                    ReplaceFields(lines[0], [('annee', self.annee),
+                                             ('trimestre', trimestres[trimestre].upper())])
+                    # Les mois
+                    ReplaceFields(lines[2], [('mois(1)', months[trimestre * 3].upper()),
+                                             ('mois(2)', months[(trimestre * 3) + 1].upper()),
+                                             ('mois(3)', months[(trimestre * 3) + 2].upper())])
+                    
+                    for l, line in enumerate(lines[template_first_line:template_first_line+template_lines_count]):
+                        index = page * template_lines_count + l
+                        heures = [[0] * 3, [0] * 3]
+                        previsionnel = [0] * 3
+    
+                        if index < len(indexes):
+                            inscrit = creche.inscrits[indexes[index]]
+    
+                            # Calcul du nombre d'heures pour chaque mois
                             for i in range(3):
-                                if heures[m][i] == 0:
+                                mois = trimestre * 3 + i + 1
+                                try:
+                                    facture = self.get_facture(inscrit, mois)
+                                except:
+                                    continue
+                                previsionnel[i] = facture.previsionnel
+                                heures[0][i] = facture.heures_facturees[0]
+                                heures[1][i] = facture.heures_facturees[1]
+    
+                            fields = [('nom', inscrit.nom),
+                                      ('prenom', inscrit.prenom),
+                                      ('adresse', inscrit.adresse),
+                                      ('ville', inscrit.ville),
+                                      ('code_postal', str(inscrit.code_postal)),
+                                      ('naissance', inscrit.naissance),
+                                      ('entree', inscrit.inscriptions[0].debut),
+                                      ('sortie', inscrit.inscriptions[-1].fin)]
+    
+                            for m, mode in enumerate(["creche", "halte"]):
+                                for i in range(3):
+                                    if heures[m][i] == 0:
+                                        fields.append(('%s(%d)' % (mode, i+1), ''))
+                                    # elif getMonthEnd(datetime.date(self.annee, trimestre * 3 + i + 1, 1)) > today or (creche.presences_previsionnelles and previsionnel[m]):
+                                    #     fields.append(('%s(%d)' % (mode, i+1), '(%d)' % heures[m][i]))
+                                    else:
+                                        fields.append(('%s(%d)' % (mode, i+1), heures[m][i]))
+                        else:
+                            fields = [(tmp, '') for tmp in ('nom', 'prenom', 'adresse', 'ville', 'code_postal', 'naissance', 'entree', 'sortie')]
+                            for mode in ["creche", "halte"]:
+                                for i in range(3):
                                     fields.append(('%s(%d)' % (mode, i+1), ''))
-                                # elif getMonthEnd(datetime.date(self.annee, trimestre * 3 + i + 1, 1)) > today or (creche.presences_previsionnelles and previsionnel[m]):
-                                #     fields.append(('%s(%d)' % (mode, i+1), '(%d)' % heures[m][i]))
-                                else:
-                                    fields.append(('%s(%d)' % (mode, i+1), heures[m][i]))
-                    else:
-                        fields = [(tmp, '') for tmp in ('nom', 'prenom', 'adresse', 'ville', 'code_postal', 'naissance', 'entree', 'sortie')]
-                        for mode in ["creche", "halte"]:
-                            for i in range(3):
-                                fields.append(('%s(%d)' % (mode, i+1), ''))
-
-                    ReplaceFields(line, fields)
-
-        # LA SYNTHESE ANNUELLE
-        table = tables.item(0)
-        if datetime.date(self.annee, 9, 1) < today:       
-            debut = datetime.date(self.annee, 1, 1)
-            fin = datetime.date(self.annee, 12, 31)
-            if debut < today:
-                lignes = table.getElementsByTagName("table:table-row")
-
-                # Les inscrits en creche
-                indexes = getInscritsByMode(debut, fin, MODE_5_5|MODE_4_5|MODE_3_5)
-                self.Synthese(table, lignes, indexes, MODE_CRECHE, 'creche', 0)
-                # Les inscrits en halte-garderie
-                indexes = getInscritsByMode(debut, fin, MODE_HALTE_GARDERIE)
-                self.Synthese(table, lignes, indexes, MODE_HALTE_GARDERIE, 'halte', 6)
-        else:
-            spreadsheet.removeChild(table)
+    
+                        ReplaceFields(line, fields)
+    
+            # LA SYNTHESE ANNUELLE
+            table = tables.item(0)
+            if datetime.date(self.annee, 9, 1) < today:       
+                debut = datetime.date(self.annee, 1, 1)
+                fin = datetime.date(self.annee, 12, 31)
+                if debut < today:
+                    lignes = table.getElementsByTagName("table:table-row")
+    
+                    # Les inscrits en creche
+                    indexes = getInscritsByMode(debut, fin, MODE_5_5|MODE_4_5|MODE_3_5)
+                    self.Synthese(table, lignes, indexes, MODE_CRECHE, 'creche', 0)
+                    # Les inscrits en halte-garderie
+                    indexes = getInscritsByMode(debut, fin, MODE_HALTE_GARDERIE)
+                    self.Synthese(table, lignes, indexes, MODE_HALTE_GARDERIE, 'halte', 6)
+            else:
+                spreadsheet.removeChild(table)
 
         return self.errors
 
