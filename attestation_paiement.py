@@ -42,8 +42,8 @@ class AttestationModifications(object):
         directeur = ""
         bureau = Select(creche.bureaux, today)
         if bureau:
-            tresorier = GetPrenomNom(bureau.tresorier)
-            directeur = GetPrenomNom(bureau.directeur)
+            tresorier = bureau.tresorier
+            directeur = bureau.directeur
         
         # print dom.toprettyxml()
         doc = dom.getElementsByTagName("office:text")[0]
