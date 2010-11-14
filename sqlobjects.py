@@ -889,6 +889,7 @@ class Inscrit(object):
         self.inscriptions = []
         self.conges = []
         self.journees = {}
+        self.jours_conges = {}
 
         if creation:
             self.create()
