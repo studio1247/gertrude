@@ -51,9 +51,11 @@ class CoordonneesModifications(object):
                 for inscrit in creche.inscrits:
                     if inscrit.getInscription(self.date):
                         line = template.cloneNode(1)
+                        referents = ", ".join([GetPrenomNom(referent) for referent in inscrit.referents])
                         ReplaceTextFields(line, [('prenom', inscrit.prenom),
                                                  ('papa', GetPrenomNom(inscrit.papa, maj_nom=True)),
                                                  ('maman', GetPrenomNom(inscrit.maman, maj_nom=True)),
+                                                 ('referents', referents),
                                                  ('commentaire', None)])
                         phoneCell = line.getElementsByTagName('table:table-cell')[2]
                         phoneTemplate = phoneCell.getElementsByTagName('text:p')[0]
