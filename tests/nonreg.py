@@ -8,25 +8,48 @@ from sqlobjects import *
 from cotisation import *
 from facture import Facture
 
-class GertrudeTests(unittest.TestCase):
-    def test_creation_bdd(self):
+class GertrudeTestCase(unittest.TestCase):
+    def setUp(self):
+        __builtin__.creche = Creche()
+
+    def AddJourFerie(self, label):
+        conge = Conge(creche, creation=False)
+        conge.debut = label
+        creche.add_conge(conge)
+            
+    def AddConge(self, debut, fin="", options=0):
+        conge = Conge(creche, creation=False)
+        conge.debut, conge.fin = debut, fin
+        conge.options = options
+        creche.add_conge(conge)
+    
+    def AddParents(self, inscrit):
+        inscrit.papa = Parent(inscrit, creation=False)
+        revenu = Revenu(inscrit.papa, creation=False)
+        revenu.debut, revenu.revenu = datetime.date(2008, 1, 1), 30000.0
+        inscrit.papa.revenus.append(revenu)
+        inscrit.maman = Parent(inscrit, creation=False)
+        revenu = Revenu(inscrit.maman, creation=False)
+        revenu.debut, revenu.revenu = datetime.date(2008, 1, 1), 0.0
+        inscrit.maman.revenus.append(revenu)
+        
+class DatabaseTests(unittest.TestCase):
+    def test_creation(self):
         filename = "gertrude.db"
         if os.path.isfile(filename):
             os.remove(filename)
         con = sqlinterface.SQLConnection(filename)
         con.Create()
 
-class PAJETests(unittest.TestCase):
+class PAJETests(GertrudeTestCase):
     def test_pas_de_taux_horaire(self):
-        __builtin__.creche = Creche()
         creche.mode_facturation = FACTURATION_PAJE
         bureau = Bureau(creation=False)
         bureau.debut = datetime.date(2010, 1, 1)
         creche.bureaux.append(bureau)
         inscrit = Inscrit(creation=False)
         inscrit.prenom, inscrit.nom = 'gertrude', 'gertrude'
-        inscrit.papa = Parent(inscrit, creation=False)
-        inscrit.maman = Parent(inscrit, creation=False)
+        self.AddParents(inscrit)
         inscription = Inscription(inscrit, creation=False)
         inscription.debut = datetime.date(2010, 1, 1)
         inscrit.inscriptions.append(inscription)
@@ -36,7 +59,6 @@ class PAJETests(unittest.TestCase):
         cotisation = Cotisation(inscrit, datetime.date(2010, 1, 1), NO_ADDRESS|NO_PARENTS)
         
     def test_nospetitspouces(self):
-        __builtin__.creche = Creche()
         creche.mode_facturation = FACTURATION_PAJE
         creche.formule_taux_horaire = [["", 6.70]]
         creche.update_formule_taux_horaire(changed=False)
@@ -45,8 +67,7 @@ class PAJETests(unittest.TestCase):
         creche.bureaux.append(bureau)
         inscrit = Inscrit(creation=False)
         inscrit.prenom, inscrit.nom = 'gertrude', 'gertrude'
-        inscrit.papa = Parent(inscrit, creation=False)
-        inscrit.maman = Parent(inscrit, creation=False)
+        self.AddParents(inscrit)
         inscription = Inscription(inscrit, creation=False)
         inscription.debut, inscription.fin = datetime.date(2010, 9, 6), datetime.date(2011, 7, 27)
         inscription.reference[0].add_activity(96, 180, 0, -1)
@@ -60,16 +81,13 @@ class PAJETests(unittest.TestCase):
         facture = Facture(inscrit, 2010, 9, NO_ADDRESS|NO_PARENTS)
         self.assertEquals(float("%.2f" % facture.total), 1001.95)
 
-class MarmousetsTests(unittest.TestCase):
+class MarmousetsTests(GertrudeTestCase):
     def test_1(self):
-        __builtin__.creche = Creche()
         creche.mode_facturation = FACTURATION_PSU
         creche.temps_facturation = FACTURATION_DEBUT_MOIS
         creche.conges_inscription = 1
         for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", u"15 août", "1er novembre", "11 novembre", u"25 décembre", u"Lundi de Pâques", "Jeudi de l'Ascension"):
-            conge = Conge(creche, creation=False)
-            conge.debut = label
-            creche.add_conge(conge)
+            self.AddJourFerie(label)
         conge = Conge(creche, creation=False)
         conge.debut = conge.fin = "14/05/2010"
         creche.add_conge(conge)
@@ -81,14 +99,7 @@ class MarmousetsTests(unittest.TestCase):
         creche.bureaux.append(bureau)
         inscrit = Inscrit(creation=False)
         inscrit.prenom, inscrit.nom = 'gertrude', 'gertrude'
-        inscrit.papa = Parent(inscrit, creation=False)
-        revenu = Revenu(inscrit.papa, creation=False)
-        revenu.debut, revenu.revenu = datetime.date(2008, 1, 1), 30000.0
-        inscrit.papa.revenus.append(revenu)
-        inscrit.maman = Parent(inscrit, creation=False)
-        revenu = Revenu(inscrit.maman, creation=False)
-        revenu.debut, revenu.revenu = datetime.date(2008, 1, 1), 0.0
-        inscrit.maman.revenus.append(revenu)
+        self.AddParents(inscrit)
         inscription = Inscription(inscrit, creation=False)
         inscription.debut = datetime.date(2010, 1, 4)
         inscription.fin = datetime.date(2010, 7, 30)
@@ -104,34 +115,9 @@ class MarmousetsTests(unittest.TestCase):
         self.assertEquals(float("%.2f" % cotisation.heures_semaine), 37.0)
         self.assertEquals(cotisation.heures_annee, 971.0)
         self.assertEquals(cotisation.nombre_factures, 7)
-
-class GertrudeTestCase(unittest.TestCase):
-    def AddJourFerie(self, label):
-        conge = Conge(creche, creation=False)
-        conge.debut = label
-        creche.add_conge(conge)
-            
-    def AddConge(self, debut, fin=None, options=0):
-        conge = Conge(creche, creation=False)
-        if fin is None:
-            fin = debut
-        conge.debut, conge.fin = debut, fin
-        conge.options = options
-        creche.add_conge(conge)
-    
-    def AddParents(self, inscrit):
-        inscrit.papa = Parent(inscrit, creation=False)
-        revenu = Revenu(inscrit.papa, creation=False)
-        revenu.debut, revenu.revenu = datetime.date(2008, 1, 1), 30000.0
-        inscrit.papa.revenus.append(revenu)
-        inscrit.maman = Parent(inscrit, creation=False)
-        revenu = Revenu(inscrit.maman, creation=False)
-        revenu.debut, revenu.revenu = datetime.date(2008, 1, 1), 0.0
-        inscrit.maman.revenus.append(revenu)
                 
 class DessineMoiUnMoutonTests(GertrudeTestCase):
     def test_24aout_31dec(self):
-        __builtin__.creche = Creche()
         creche.mode_facturation = FACTURATION_PSU
         creche.temps_facturation = FACTURATION_FIN_MOIS
         creche.facturation_jours_feries = JOURS_FERIES_DEDUITS_ANNUELLEMENT 
@@ -161,7 +147,6 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         self.assertEquals(cotisation.nombre_factures, 4)
         
     def test_9sept_31dec(self):
-        __builtin__.creche = Creche()
         creche.mode_facturation = FACTURATION_PSU
         creche.temps_facturation = FACTURATION_FIN_MOIS
         creche.facturation_jours_feries = JOURS_FERIES_DEDUITS_ANNUELLEMENT 
@@ -191,7 +176,6 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         self.assertEquals(cotisation.nombre_factures, 4)
     
     def test_1janv_31dec(self):
-        __builtin__.creche = Creche()
         creche.mode_facturation = FACTURATION_PSU
         creche.temps_facturation = FACTURATION_FIN_MOIS
         creche.facturation_jours_feries = JOURS_FERIES_DEDUITS_ANNUELLEMENT 
