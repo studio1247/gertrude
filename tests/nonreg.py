@@ -105,7 +105,122 @@ class MarmousetsTests(unittest.TestCase):
         self.assertEquals(cotisation.heures_annee, 971.0)
         self.assertEquals(cotisation.nombre_factures, 7)
 
-
+class GertrudeTestCase(unittest.TestCase):
+    def AddJourFerie(self, label):
+        conge = Conge(creche, creation=False)
+        conge.debut = label
+        creche.add_conge(conge)
+            
+    def AddConge(self, debut, fin=None, options=0):
+        conge = Conge(creche, creation=False)
+        if fin is None:
+            fin = debut
+        conge.debut, conge.fin = debut, fin
+        conge.options = options
+        creche.add_conge(conge)
+    
+    def AddParents(self, inscrit):
+        inscrit.papa = Parent(inscrit, creation=False)
+        revenu = Revenu(inscrit.papa, creation=False)
+        revenu.debut, revenu.revenu = datetime.date(2008, 1, 1), 30000.0
+        inscrit.papa.revenus.append(revenu)
+        inscrit.maman = Parent(inscrit, creation=False)
+        revenu = Revenu(inscrit.maman, creation=False)
+        revenu.debut, revenu.revenu = datetime.date(2008, 1, 1), 0.0
+        inscrit.maman.revenus.append(revenu)
+                
+class DessineMoiUnMoutonTests(GertrudeTestCase):
+    def test_24aout_31dec(self):
+        __builtin__.creche = Creche()
+        creche.mode_facturation = FACTURATION_PSU
+        creche.temps_facturation = FACTURATION_FIN_MOIS
+        creche.facturation_jours_feries = JOURS_FERIES_DEDUITS_ANNUELLEMENT 
+        for label in ("Week-end", "1er janvier", "14 juillet", "1er novembre", "11 novembre", u"Lundi de Pâques", "Jeudi de l'Ascension", u"Lundi de Pentecôte"):
+            self.AddJourFerie(label)
+        self.AddConge("30/07/2010", options=ACCUEIL_NON_FACTURE)
+        self.AddConge("23/08/2010")
+        self.AddConge("02/08/2010", "20/08/2010")
+        self.AddConge("19/04/2010", "23/04/2010")
+        self.AddConge("20/12/2010", "24/12/2010")
+        self.AddConge(u"Août", options=MOIS_SANS_FACTURE)
+        inscrit = Inscrit(creation=False)
+        inscrit.prenom, inscrit.nom = 'gertrude', 'gertrude'
+        self.AddParents(inscrit)
+        inscription = Inscription(inscrit, creation=False)
+        inscription.debut = datetime.date(2010, 8, 24)
+        inscription.fin = datetime.date(2010, 12, 31)
+        inscription.reference[0].add_activity(102, 210, 0, -1)
+        inscription.reference[1].add_activity(102, 210, 0, -1)
+        inscription.reference[2].add_activity(102, 210, 0, -1)
+        inscription.reference[3].add_activity(102, 210, 0, -1)
+        inscription.reference[4].add_activity(102, 210, 0, -1)
+        inscrit.inscriptions.append(inscription)
+        cotisation = Cotisation(inscrit, datetime.date(2010, 9, 1))
+        self.assertEquals(float("%.2f" % cotisation.heures_semaine), 45.0)
+        self.assertEquals(cotisation.heures_mois, 196.0)
+        self.assertEquals(cotisation.nombre_factures, 4)
+        
+    def test_9sept_31dec(self):
+        __builtin__.creche = Creche()
+        creche.mode_facturation = FACTURATION_PSU
+        creche.temps_facturation = FACTURATION_FIN_MOIS
+        creche.facturation_jours_feries = JOURS_FERIES_DEDUITS_ANNUELLEMENT 
+        for label in ("Week-end", "1er janvier", "14 juillet", "1er novembre", "11 novembre", u"Lundi de Pâques", "Jeudi de l'Ascension", u"Lundi de Pentecôte"):
+            self.AddJourFerie(label)
+        self.AddConge("30/07/2010", options=ACCUEIL_NON_FACTURE)
+        self.AddConge("23/08/2010")
+        self.AddConge("02/08/2010", "20/08/2010")
+        self.AddConge("19/04/2010", "23/04/2010")
+        self.AddConge("20/12/2010", "24/12/2010")
+        self.AddConge(u"Août", options=MOIS_SANS_FACTURE)
+        inscrit = Inscrit(creation=False)
+        inscrit.prenom, inscrit.nom = 'gertrude', 'gertrude'
+        self.AddParents(inscrit)
+        inscription = Inscription(inscrit, creation=False)
+        inscription.debut = datetime.date(2010, 9, 1)
+        inscription.fin = datetime.date(2010, 12, 31)
+        inscription.reference[0].add_activity(102, 210, 0, -1)
+        inscription.reference[1].add_activity(102, 210, 0, -1)
+        inscription.reference[2].add_activity(102, 210, 0, -1)
+        inscription.reference[3].add_activity(102, 210, 0, -1)
+        inscription.reference[4].add_activity(102, 210, 0, -1)
+        inscrit.inscriptions.append(inscription)
+        cotisation = Cotisation(inscrit, datetime.date(2010, 9, 1))
+        self.assertEquals(float("%.2f" % cotisation.heures_semaine), 45.0)
+        self.assertEquals(cotisation.heures_mois, 183.0)
+        self.assertEquals(cotisation.nombre_factures, 4)
+    
+    def test_1janv_31dec(self):
+        __builtin__.creche = Creche()
+        creche.mode_facturation = FACTURATION_PSU
+        creche.temps_facturation = FACTURATION_FIN_MOIS
+        creche.facturation_jours_feries = JOURS_FERIES_DEDUITS_ANNUELLEMENT 
+        for label in ("Week-end", "1er janvier", "14 juillet", "1er novembre", "11 novembre", u"Lundi de Pâques", "Jeudi de l'Ascension", u"Lundi de Pentecôte"):
+            self.AddJourFerie(label)
+        self.AddConge("30/07/2010", options=ACCUEIL_NON_FACTURE)
+        self.AddConge("23/08/2010")
+        self.AddConge("02/08/2010", "20/08/2010")
+        self.AddConge("19/04/2010", "23/04/2010")
+        self.AddConge("20/12/2010", "24/12/2010")
+        self.AddConge(u"Août", options=MOIS_SANS_FACTURE)
+        inscrit = Inscrit(creation=False)
+        inscrit.prenom, inscrit.nom = 'gertrude', 'gertrude'
+        self.AddParents(inscrit)
+        inscription = Inscription(inscrit, creation=False)
+        inscription.debut = datetime.date(2010, 1, 1)
+        inscription.fin = datetime.date(2010, 12, 31)
+        inscription.reference[0].add_activity(102, 210, 0, -1)
+        inscription.reference[1].add_activity(102, 222, 0, -1)
+        inscription.reference[2].add_activity(102, 210, 0, -1)
+        inscription.reference[3].add_activity(102, 222, 0, -1)
+        inscription.reference[4].add_activity(102, 222, 0, -1)
+        inscrit.inscriptions.append(inscription)
+        cotisation = Cotisation(inscrit, datetime.date(2010, 9, 1))
+        self.assertEquals(float("%.2f" % cotisation.heures_semaine), 48.0)
+        self.assertEquals(cotisation.heures_mois, 199.0)
+        self.assertEquals(cotisation.nombre_factures, 11)
+        
+    
 
 if __name__ == '__main__':
     unittest.main()
