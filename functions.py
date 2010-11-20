@@ -162,6 +162,21 @@ def GetParentsString(inscrit):
         return '%s et %s %s' % (inscrit.maman.prenom, inscrit.papa.prenom, inscrit.papa.nom)
     else:
         return '%s %s et %s %s' % (inscrit.maman.prenom, inscrit.maman.nom, inscrit.papa.prenom, inscrit.papa.nom)
+#
+#def GetParentsString(inscrit):
+#    if not inscrit.parents['papa'] and not inscrit.parents['maman']:
+#        return "orphelin"
+#    elif not inscrit.parents['maman']:
+#        return GetPrenomNom(inscrit.parents['papa'])
+#    elif not inscrit.parents['papa']:
+#        return GetPrenomNom(inscrit.parents['maman'])
+#    else:
+#        papa = inscrit.parents['papa']
+#        maman = inscrit.parents['maman']
+#        if maman.nom == papa.nom:
+#            return '%s et %s %s' % (maman.prenom, papa.prenom, papa.nom)
+#        else:
+#            return '%s %s et %s %s' % (maman.prenom, maman.nom, papa.prenom, papa.nom)
 
 def GetInscritId(inscrit, inscrits):
     for i in inscrits:
@@ -284,30 +299,26 @@ def getActivitiesSummary(creche, lines):
     return summary
 
 class ProgressHandler:
-    def __init__(self, display_fn=None, gauge=None, max=None):
+    def __init__(self, display_fn=None, gauge_fn=None, min=None, max=None):
         self.display_fn = display_fn
-        self.gauge = gauge
-        self.max = max
-        if self.gauge:
-            self.min = self.gauge.GetValue()
+        self.gauge_fn = gauge_fn
+        self.min, self.max = min, max
+        self.value = min
         
     def __del__(self):
-        if self.gauge:
-            self.gauge.SetValue(self.max)
+        if self.gauge_fn:
+            self.gauge_fn(self.max)
 
     def set(self, value):
-        if self.gauge:
-            self.gauge.SetValue(self.min + (self.max-self.min)*value/100)
+        if self.gauge_fn:
+            self.gauge_fn(self.min + (self.max-self.min)*value/100)
 
     def display(self, s):
         print s
         if self.display_fn:
             self.display_fn(s+"\n")
 
-    def new(self, value):
-        if self.gauge:
-            return ProgressHandler(self.display_fn, self.gauge, self.gauge.GetValue(), self.gauge.GetValue() + (self.max-self.min)*value/100)
-        else:
-            return ProgressHandler(self.display_fn)
+    def new(self, ratio):
+        return ProgressHandler(self.display_fn, self.gauge_fn, self.value, self.value + (self.max-self.min)*ratio/100)
 
 default_progress_handler = ProgressHandler()
