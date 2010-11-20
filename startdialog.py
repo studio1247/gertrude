@@ -81,8 +81,11 @@ class StartDialog(wx.Dialog):
         self.SetPosition(((W-w)/2, (H-h)/2 - 50))
 
         __builtin__.force_token = False
+        
+        self.MessageEvent, EVT_MESSAGE_EVENT = wx.lib.newevent.NewEvent()
+        self.Bind(EVT_MESSAGE_EVENT, self.OnMessage)
         self.LoadedEvent, EVT_PROGRESS_EVENT = wx.lib.newevent.NewEvent()
-        self.Bind(EVT_PROGRESS_EVENT, self.OnLoaded)
+        self.Bind(EVT_PROGRESS_EVENT, self.OnLoaded)       
         thread.start_new_thread(self.Load, ())
 
     def OnLoaded(self, event):
@@ -133,15 +136,27 @@ class StartDialog(wx.Dialog):
             self.sizer.Layout()
             self.sizer.Fit(self)
     
+    def AppendMessage(self, message):
+        wx.PostEvent(self, self.MessageEvent(message=message, gauge=None))
+        
+    def SetGauge(self, gauge):
+        wx.PostEvent(self, self.MessageEvent(message=None, gauge=gauge))
+
+    def OnMessage(self, event):
+        if event.message is not None:
+            self.info.AppendText(event.message)
+        if event.gauge is not None:
+            self.gauge.SetValue(event.gauge)
+                
     def Load(self, section=None):
         time.sleep(1)
         try:
             if section is None:
-                LoadConfig(ProgressHandler(self.info.AppendText, self.gauge, 5))
+                LoadConfig(ProgressHandler(self.AppendMessage, self.SetGauge, 0, 5))
                 if config.connection is None:
                     wx.PostEvent(self, self.LoadedEvent(result=None))
                     return
-            result = Load(ProgressHandler(self.info.AppendText, self.gauge, 75))
+            result = Load(ProgressHandler(self.AppendMessage, self.SetGauge, 5, 75))
         except Exception, e:
             traceback.print_exc()
             try:
@@ -157,7 +172,7 @@ class StartDialog(wx.Dialog):
         wx.PostEvent(self, self.LoadedEvent(result=result))
 
     def StartFrame(self):
-        self.frame(ProgressHandler(self.info.AppendText, self.gauge, 100)).Show()
+        self.frame(ProgressHandler(self.AppendMessage, self.SetGauge, 75, 100)).Show()
         self.gauge.SetValue(100)
         self.Destroy()
 
@@ -191,5 +206,5 @@ class StartDialog(wx.Dialog):
     def OnExit(self, evt):
         self.info.AppendText("\nFermeture ...\n")
         if self.loaded:
-            Exit(ProgressHandler(self.info.AppendText, self.gauge, 100))
+            Exit(ProgressHandler(self.AppendMessage, self.SetGauge, 5, 100))
         self.Destroy()
