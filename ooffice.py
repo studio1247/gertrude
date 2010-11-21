@@ -24,18 +24,27 @@ import traceback
 import unicodedata
 from functions import GetTemplateFile
 
+def GetText(value):
+    if isinstance(value, basestring):
+        return value
+    elif isinstance(value, datetime.date):
+        return '%.2d/%.2d/%.4d' % (value.day, value.month, value.year)
+    else:
+        return str(value)
+                
 def evalFields(fields):
     for i, field in enumerate(fields[:]):
         if len(field) == 2:
             param, value = field
-            if isinstance(value, basestring):
-                text = value
-            elif isinstance(value, datetime.date):
-                text = '%.2d/%.2d/%.4d' % (value.day, value.month, value.year)
+            if isinstance(value, list):
+                text = [GetText(v) for v in value]
+                fields.append((param.upper(), value, [t.upper() for t in text]))
             else:
-                text = str(value)
+                text = GetText(value) 
+                fields.append((param.upper(), value, text.upper()))
             fields[i] = (param, value, text)
-        fields.append((param.upper(), value, text.upper()))
+        else:    
+            fields.append((param.upper(), value, text.upper()))
     return fields
 
 def GetValue(node):
@@ -86,8 +95,8 @@ def RemoveColumn(rows, index):
                     row.removeChild(cell)
                 else:
                     cell.setAttribute("table:number-columns-repeated", str(repeat-1))
-                break
-            
+                break    
+     
 def ReplaceTextFields(dom, fields):
     evalFields(fields)
     #print dom.toprettyxml()
@@ -103,21 +112,34 @@ def ReplaceTextFields(dom, fields):
                     nodeText = child.wholeText
                     replace = False
                     for field, value, text in fields:
-                        if callable(value):
+                        if isinstance(text, basestring) and callable(value):
                             start_tag, end_tag = '<%s(' % field, ')>'
                             if start_tag in nodeText and end_tag in nodeText:
-                                tag = nodeText[nodeText.find(start_tag):nodeText.find(end_tag)+2]
-                                parameters = tag[len(field)+2:-2]
-                                try:
-                                    replace = True
-                                    nodeText = nodeText.replace(tag, eval("value(%s)" % parameters))
-                                except:
-                                    print 'erreur :', tag, parameters
+                                if isinstance(text, list):
+                                    print child.toprettyxml()
+                                else:
+                                    tag = nodeText[nodeText.find(start_tag):nodeText.find(end_tag)+2]
+                                    parameters = tag[len(field)+2:-2]
+                                    try:
+                                        replace = True
+                                        nodeText = nodeText.replace(tag, eval("value(%s)" % parameters))
+                                    except:
+                                        print 'erreur :', tag, parameters
                         else:
                             tag = '<%s>' % field
                             if tag in nodeText:
-                                replace = True
-                                nodeText = nodeText.replace(tag, text)
+                                if isinstance(text, list):
+                                    for t in text:
+                                        duplicate = node.cloneNode(1)
+                                        node.parentNode.insertBefore(duplicate, node)
+                                        for c in duplicate.childNodes:
+                                            if c.nodeType == child.TEXT_NODE:
+                                                nt = c.wholeText.replace(tag, t)
+                                                c.replaceWholeText(nt)
+                                    node.parentNode.removeChild(node)
+                                else:
+                                    replace = True
+                                    nodeText = nodeText.replace(tag, text)
                         
                     if replace:
                         child.replaceWholeText(nodeText)

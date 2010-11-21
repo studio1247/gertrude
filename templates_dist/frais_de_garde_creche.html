@@ -12,24 +12,28 @@
  <br>
  <br>
  <table cellspacing="0" cellpadding="4" border="0">
+  <if value="inscrit.parents['papa']">
   <tr>
-   <td width="400">Revenu <var value="debut.year-1"/> de <var value="inscrit.papa.prenom"/> </td>
-   <td>= <var value="'%.02f' % revenus_papa.revenu"/> &euro;</td>
-  </tr>
-  <if value="revenus_papa.chomage">
-  <tr>
-   <td width=400>Abattement consenti pour ch&ocirc;mage (30 %)</td>
-   <td>= <var value="'%.02f' % abattement_chomage_papa"/> &euro;</td>
+   <td width="400">Revenu <var value="debut.year-1"/> de <var value="GetPrenomNom(inscrit.parents['papa'])"/> </td>
+   <td>= <var value="'%.02f' % revenus_parents['papa'].revenu"/> &euro;</td>
   </tr>
   </if>
+  <if value="inscrit.parents['papa'] and revenus_parents['papa'].chomage">
   <tr>
-   <td width=400>Revenu <var value="debut.year-1"/> de <var value="inscrit.maman.prenom"/> </td>
-   <td>= <var value="'%.02f' % revenus_maman.revenu"/> &euro;</td>
+   <td width=400>Abattement consenti pour ch&ocirc;mage (30 %)</td>
+   <td>= <var value="'%.02f' % abattement_chomage['papa']"/> &euro;</td>
   </tr>
-  <if value="revenus_maman.chomage">
+  </if>
+  <if value="inscrit.parents['maman']">
+  <tr>
+   <td width=400>Revenu <var value="debut.year-1"/> de <var value="GetPrenomNom(inscrit.parents['maman'])"/> </td>
+   <td>= <var value="'%.02f' % revenus_parents['maman'].revenu"/> &euro;</td>
+  </tr>
+  </if>
+  <if value="inscrit.parents['maman'] and revenus_parents['maman'].chomage">
   <tr>
    <td>Abattement consenti pour ch&ocirc;mage (30 %)</td>
-   <td>= <var value="'%.02f' % abattement_chomage_maman"/> &euro;</td>
+   <td>= <var value="'%.02f' % abattement_chomage['maman']"/> &euro;</td>
   </tr>
   </if>
   <tr>

@@ -64,6 +64,7 @@ class Cotisation(object):
         
         if creche.formule_taux_horaire_needs_revenus():
             self.revenus_parents = { }
+            self.abattement_chomage = { }
             self.date_revenus = GetDateRevenus(self.date)
             self.assiette_annuelle = 0.0 
             for parent in inscrit.parents.values():

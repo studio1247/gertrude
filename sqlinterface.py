@@ -460,6 +460,12 @@ class SQLConnection(object):
                 parent = Parent(inscrit, creation=False)
                 parent.relation, parent.prenom, parent.nom, parent.telephone_domicile, parent.telephone_domicile_notes, parent.telephone_portable, parent.telephone_portable_notes, parent.telephone_travail, parent.telephone_travail_notes, parent.email, parent.idx = parent_entry
                 inscrit.parents[parent.relation] = parent
+                cur.execute('SELECT debut, fin, revenu, chomage, regime, idx FROM REVENUS WHERE parent=?', (parent.idx,))
+                for revenu_entry in cur.fetchall():
+                    revenu = Revenu(parent, creation=False)
+                    revenu.debut, revenu.fin, revenu.revenu, revenu.chomage, revenu.regime, idx = revenu_entry
+                    revenu.debut, revenu.fin, revenu.idx = getdate(revenu.debut), getdate(revenu.fin), idx
+                    parent.revenus.append(revenu)
             cur.execute('SELECT date, value, debut, fin, idx FROM ACTIVITES WHERE inscrit=?', (inscrit.idx,))
             for date, value, debut, fin, idx in cur.fetchall():
                 key = getdate(date)

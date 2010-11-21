@@ -51,8 +51,8 @@ class CoordonneesModifications(object):
                 for inscrit in creche.inscrits:
                     if inscrit.getInscription(self.date):
                         line = template.cloneNode(1)
-                        referents = ", ".join([GetPrenomNom(referent) for referent in inscrit.referents])
-                        parents = ", ".join([GetPrenomNom(parent) for parent in inscrit.parents])
+                        referents = [GetPrenomNom(referent) for referent in inscrit.referents]
+                        parents = [GetPrenomNom(parent) for parent in inscrit.parents.values()]
                         ReplaceTextFields(line, [('prenom', inscrit.prenom),
                                                  ('parents', parents),
                                                  ('referents', referents),
@@ -61,18 +61,25 @@ class CoordonneesModifications(object):
                         phoneTemplate = phoneCell.getElementsByTagName('text:p')[0]
                         phones = { } # clé: [téléphone, initiales, ?travail]
                         emails = set()
-                        for parent in inscrit.parents:
+                        for parent in inscrit.parents.values():
                             emails.add(parent.email)
                             for phoneType in ["domicile", "portable", "travail"]:
                                 phone = getattr(parent, "telephone_"+phoneType)
-                                if phone in phones.keys():
-                                    phones[phone][1] = "parents"
-                                else:
-                                    phones[phone] = [phone, GetInitialesPrenom(parent), phoneType=="travail"]
-                        for phone, initiales, phoneType in phones:
+                                if phone:
+                                    if phone in phones.keys():
+                                        phones[phone][1] = ""
+                                    else:
+                                        phones[phone] = [phone, GetInitialesPrenom(parent), phoneType=="travail"]
+                        for phone, initiales, phoneType in phones.values():
                             remark = initiales
-                            if phoneType:
-                                remark += " %s" % phoneType
+                            if initiales and phoneType:
+                                remark = "(%s travail)" % initiales
+                            elif initiales:
+                                remark = "(%s)" % initiales
+                            elif phoneType:
+                                remark = "(travail)"
+                            else:
+                                remark = ""
                             phoneLine = phoneTemplate.cloneNode(1)
                             ReplaceTextFields(phoneLine, [('telephone', phone),
                                                           ('remarque', remark)])
@@ -103,4 +110,15 @@ class CoordonneesModifications(object):
 
         return None
 
+if __name__ == '__main__':
+    import os
+    from config import *
+    from data import *
+    LoadConfig()
+    Load()
 
+    today = datetime.date.today()
+
+    filename = 'coordonneesparent.ods'
+    print GenerateDocument(CoordonneesModifications(today), filename)
+    print u'Fichier %s généré' % filename

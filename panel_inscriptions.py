@@ -400,12 +400,12 @@ class ParentsPanel(InscriptionsTab):
         if value == None:
             self.inscrit.parents[object.instance.relation] = None
             object.instance.delete()
-            for item in self.parents_items[object.index][1:]:
+            for item in self.parents_items[object.index]:
                 item.Show(False)
             self.sizer.FitInside(self)
         elif not self.inscrit.parents[value]:
             self.inscrit.parents[value] = parent = Parent(self.inscrit, value)
-            for item in self.parents_items[object.index][1:]:
+            for item in self.parents_items[object.index]:
                 try:
                     item.SetInstance(parent)
                 except:
@@ -419,10 +419,16 @@ class ParentsPanel(InscriptionsTab):
     def UpdateContents(self):
         if self.inscrit:
             for index, key in enumerate(self.inscrit.parents.keys()):
+                parent = self.inscrit.parents[key]
+                if parent:
+                    self.relations_items[index].SetStringSelection(key.capitalize())
+                else:
+                    self.relations_items[index].SetSelection(2)
+                self.relations_items[index].instance = parent
                 for i, item in enumerate(self.parents_items[index]):
-                    item.Show(self.inscrit.parents[key] is not None)
+                    item.Show(parent is not None)
                     try:
-                        item.SetInstance(self.inscrit.parents[key])
+                        item.SetInstance(parent)
                     except:
                         pass
             referents_count = len(self.inscrit.referents)
