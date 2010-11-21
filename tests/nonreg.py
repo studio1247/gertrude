@@ -24,14 +24,14 @@ class GertrudeTestCase(unittest.TestCase):
         creche.add_conge(conge)
     
     def AddParents(self, inscrit):
-        inscrit.papa = Parent(inscrit, creation=False)
-        revenu = Revenu(inscrit.papa, creation=False)
+        inscrit.parents["papa"] = papa = Parent(inscrit, creation=False)
+        revenu = Revenu(papa, creation=False)
         revenu.debut, revenu.revenu = datetime.date(2008, 1, 1), 30000.0
-        inscrit.papa.revenus.append(revenu)
-        inscrit.maman = Parent(inscrit, creation=False)
-        revenu = Revenu(inscrit.maman, creation=False)
+        papa.revenus.append(revenu)
+        inscrit.parents["maman"] = maman = Parent(inscrit, creation=False)
+        revenu = Revenu(maman, creation=False)
         revenu.debut, revenu.revenu = datetime.date(2008, 1, 1), 0.0
-        inscrit.maman.revenus.append(revenu)
+        maman.revenus.append(revenu)
         
 class DatabaseTests(unittest.TestCase):
     def test_creation(self):

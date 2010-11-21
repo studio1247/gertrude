@@ -156,7 +156,7 @@ class StartDialog(wx.Dialog):
                 if config.connection is None:
                     wx.PostEvent(self, self.LoadedEvent(result=None))
                     return
-            result = Load(ProgressHandler(self.AppendMessage, self.SetGauge, 5, 75))
+            result = Load(ProgressHandler(self.AppendMessage, self.SetGauge, 5, 50))
         except Exception, e:
             traceback.print_exc()
             try:
@@ -172,7 +172,7 @@ class StartDialog(wx.Dialog):
         wx.PostEvent(self, self.LoadedEvent(result=result))
 
     def StartFrame(self):
-        self.frame(ProgressHandler(self.AppendMessage, self.SetGauge, 75, 100)).Show()
+        self.frame(ProgressHandler(self.info.AppendText, self.gauge.SetValue, 50, 100)).Show()
         self.gauge.SetValue(100)
         self.Destroy()
 
@@ -206,5 +206,5 @@ class StartDialog(wx.Dialog):
     def OnExit(self, evt):
         self.info.AppendText("\nFermeture ...\n")
         if self.loaded:
-            Exit(ProgressHandler(self.AppendMessage, self.SetGauge, 5, 100))
+            Exit(ProgressHandler(self.info.AppendText, self.gauge.SetValue, 5, 100))
         self.Destroy()

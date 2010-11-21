@@ -158,25 +158,19 @@ def getDeMoisStr(mois):
         return "de %s" % months[mois].lower()
 
 def GetParentsString(inscrit):
-    if inscrit.papa.nom == inscrit.maman.nom:
-        return '%s et %s %s' % (inscrit.maman.prenom, inscrit.papa.prenom, inscrit.papa.nom)
+    if not inscrit.parents['papa'] and not inscrit.parents['maman']:
+        return "orphelin"
+    elif not inscrit.parents['maman']:
+        return GetPrenomNom(inscrit.parents['papa'])
+    elif not inscrit.parents['papa']:
+        return GetPrenomNom(inscrit.parents['maman'])
     else:
-        return '%s %s et %s %s' % (inscrit.maman.prenom, inscrit.maman.nom, inscrit.papa.prenom, inscrit.papa.nom)
-#
-#def GetParentsString(inscrit):
-#    if not inscrit.parents['papa'] and not inscrit.parents['maman']:
-#        return "orphelin"
-#    elif not inscrit.parents['maman']:
-#        return GetPrenomNom(inscrit.parents['papa'])
-#    elif not inscrit.parents['papa']:
-#        return GetPrenomNom(inscrit.parents['maman'])
-#    else:
-#        papa = inscrit.parents['papa']
-#        maman = inscrit.parents['maman']
-#        if maman.nom == papa.nom:
-#            return '%s et %s %s' % (maman.prenom, papa.prenom, papa.nom)
-#        else:
-#            return '%s %s et %s %s' % (maman.prenom, maman.nom, papa.prenom, papa.nom)
+        papa = inscrit.parents['papa']
+        maman = inscrit.parents['maman']
+        if maman.nom == papa.nom:
+            return '%s et %s %s' % (maman.prenom, papa.prenom, papa.nom)
+        else:
+            return '%s %s et %s %s' % (maman.prenom, maman.nom, papa.prenom, papa.nom)
 
 def GetInscritId(inscrit, inscrits):
     for i in inscrits:

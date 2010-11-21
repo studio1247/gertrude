@@ -330,30 +330,38 @@ class ParentsPanel(InscriptionsTab):
         self.delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
         self.regimes_choices = []
         self.revenus_items = []
+        self.parents_items = []
         
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        for parent in ['papa', 'maman']:
-            sizer1 = wx.StaticBoxSizer(wx.StaticBox(self, -1, parent.capitalize()), wx.VERTICAL)
-            sizer11 = wx.BoxSizer(wx.VERTICAL)
-            sizer1.Add(sizer11, 0, wx.EXPAND)
+        sizer1 = wx.StaticBoxSizer(wx.StaticBox(self, -1, "Parents"), wx.VERTICAL)
+        sizer11 = wx.BoxSizer(wx.VERTICAL)
+        sizer1.Add(sizer11, 0, wx.EXPAND)
+        self.sizer.Add(sizer1, 1, wx.EXPAND|wx.ALL, 5)
+        for index in range(2):
+            self.parents_items.append([])
             sizer2 = wx.FlexGridSizer(0, 2, 5, 5)
             sizer2.AddGrowableCol(1, 1)
-            sizer2.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, '%s.prenom' % parent), 0, wx.EXPAND)])
-            sizer2.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, '%s.nom' % parent), 0, wx.EXPAND)])
-            sizer3 = wx.BoxSizer(wx.HORIZONTAL)
-            sizer3.AddMany([AutoPhoneCtrl(self, None, '%s.telephone_domicile' % parent), (AutoTextCtrl(self, None, '%s.telephone_domicile_notes' % parent), 1, wx.LEFT|wx.EXPAND, 5)])
-            sizer2.AddMany([(wx.StaticText(self, -1, u'Téléphone domicile :'), 0, wx.ALIGN_CENTER_VERTICAL), (sizer3, 0, wx.EXPAND)])
-            sizer3 = wx.BoxSizer(wx.HORIZONTAL)
-            sizer3.AddMany([AutoPhoneCtrl(self, None, '%s.telephone_portable' % parent), (AutoTextCtrl(self, None, '%s.telephone_portable_notes' % parent), 1, wx.LEFT|wx.EXPAND, 5)])        
-            sizer2.AddMany([(wx.StaticText(self, -1, u'Téléphone portable :'), 0, wx.ALIGN_CENTER_VERTICAL), (sizer3, 0, wx.EXPAND)])
-            sizer3 = wx.BoxSizer(wx.HORIZONTAL)
-            sizer3.AddMany([AutoPhoneCtrl(self, None, '%s.telephone_travail' % parent), (AutoTextCtrl(self, None, '%s.telephone_travail_notes' % parent), 1, wx.LEFT|wx.EXPAND, 5)])        
-            sizer2.AddMany([(wx.StaticText(self, -1, u'Téléphone travail :'), 0, wx.ALIGN_CENTER_VERTICAL), (sizer3, 0, wx.EXPAND)])
-            sizer2.AddMany([(wx.StaticText(self, -1, 'E-mail :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, '%s.email' % parent), 0, wx.EXPAND)])
+            self.parents_items[-1].append(AutoChoiceCtrl(self, None, 'relation', items=(('Papa', 'papa'), ('Maman', 'maman'), ('Parent manquant', None))))
+            self.parents_items[-1][-1].index = index
+            self.Bind(wx.EVT_CHOICE, self.OnParentRelationChoice, self.parents_items[-1][-1])
+            sizer2.AddMany([(wx.StaticText(self, -1, 'Relation :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])           
+            self.parents_items[-1].extend([wx.StaticText(self, -1, u'Prénom :'), AutoTextCtrl(self, None, 'prenom')])           
+            sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
+            self.parents_items[-1].extend([wx.StaticText(self, -1, 'Nom :'), AutoTextCtrl(self, None, 'nom')])
+            sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
+            for label, field in (u"Téléphone domicile", "telephone_domicile"), (u"Téléphone portable", "telephone_portable"), (u"Téléphone travail", "telephone_travail"):
+                sizer3 = wx.BoxSizer(wx.HORIZONTAL)
+                self.parents_items[-1].extend([wx.StaticText(self, -1, label+' :'), AutoPhoneCtrl(self, None, field), AutoTextCtrl(self, None, field+'_notes')])
+                sizer3.AddMany([self.parents_items[-1][-2], (self.parents_items[-1][-1], 1, wx.LEFT|wx.EXPAND, 5)])
+                sizer2.AddMany([(self.parents_items[-1][-3], 0, wx.ALIGN_CENTER_VERTICAL), (sizer3, 0, wx.EXPAND)])
+            self.parents_items[-1].extend([wx.StaticText(self, -1, 'E-mail :'), AutoTextCtrl(self, None, 'email')])
+            sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
             sizer11.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
+            if index != 1:
+                sizer11.Add(wx.StaticLine(self, -1, style=wx.LI_HORIZONTAL), 0, wx.EXPAND|wx.ALL, 5)
             
-            if profil & PROFIL_TRESORIER:
-                panel = PeriodePanel(self, parent+'.revenus')
+            if 0: # profil & PROFIL_TRESORIER:
+                panel = PeriodePanel(self, 'parents["%s"].revenus' % parent)
                 revenus_sizer = wx.StaticBoxSizer(wx.StaticBox(panel, -1, u"Revenus et régime d'appartenance"), wx.VERTICAL)
                 revenus_sizer.Add(PeriodeChoice(panel, eval('self.nouveau_revenu_%s' % parent)), 0, wx.EXPAND|wx.ALL, 5)
                 revenus_gridsizer = wx.FlexGridSizer(0, 2, 5, 10)
@@ -373,8 +381,6 @@ class ParentsPanel(InscriptionsTab):
                 panel.SetSizer(revenus_sizer)
                 sizer11.Add(panel, 0, wx.ALL|wx.EXPAND, 5)
 
-            self.sizer.Add(sizer1, 1, wx.EXPAND|wx.ALL, 5)
-
         sizer4 = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Référents'), wx.VERTICAL)
         self.referents_sizer = wx.BoxSizer(wx.VERTICAL)
         sizer4.Add(self.referents_sizer, 0, wx.EXPAND+wx.RIGHT+wx.LEFT+wx.TOP, 10)
@@ -383,9 +389,30 @@ class ParentsPanel(InscriptionsTab):
         sizer4.Add(self.nouveau_referent, 0, wx.RIGHT+wx.LEFT+wx.BOTTOM, 10)
         self.Bind(wx.EVT_BUTTON, self.EvtNouveauReferent, self.nouveau_referent)
         self.sizer.Add(sizer4, 0, wx.EXPAND|wx.ALL, 5)
-
         self.SetSizer(self.sizer)
 
+    def OnParentRelationChoice(self, event):
+        object = event.GetEventObject()
+        value = object.GetClientData(object.GetSelection())
+        if value == None:
+            self.inscrit.parents[object.instance.relation] = None
+            object.instance.delete()
+            for item in self.parents_items[object.index][1:]:
+                item.Show(False)
+            self.sizer.FitInside(self)
+        elif not self.inscrit.parents[value]:
+            self.inscrit.parents[value] = parent = Parent(self.inscrit, value)
+            for item in self.parents_items[object.index][1:]:
+                try:
+                    item.SetInstance(parent)
+                except:
+                    pass
+                item.Show(True)
+            self.UpdateContents()
+            self.sizer.FitInside(self)
+        else:
+            event.Skip()
+            
     def nouveau_revenu_papa(self):
         return Revenu(self.inscrit.papa)
     
@@ -408,8 +435,14 @@ class ParentsPanel(InscriptionsTab):
 
     def SetInscrit(self, inscrit):
         self.inscrit = inscrit
+        for i, key in enumerate(inscrit.parents.keys()):
+            for item in self.parents_items[i]:
+                try:
+                    item.SetInstance(inscrit.parents[key])
+                except:
+                    pass
         self.UpdateContents()
-        InscriptionsTab.SetInscrit(self, inscrit)
+        # InscriptionsTab.SetInscrit(self, inscrit)
         self.nouveau_referent.Enable(self.inscrit is not None)
 
     def referent_line_add(self, index):

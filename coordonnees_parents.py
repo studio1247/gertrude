@@ -52,25 +52,27 @@ class CoordonneesModifications(object):
                     if inscrit.getInscription(self.date):
                         line = template.cloneNode(1)
                         referents = ", ".join([GetPrenomNom(referent) for referent in inscrit.referents])
+                        parents = ", ".join([GetPrenomNom(parent) for parent in inscrit.parents])
                         ReplaceTextFields(line, [('prenom', inscrit.prenom),
-                                                 ('papa', GetPrenomNom(inscrit.papa, maj_nom=True)),
-                                                 ('maman', GetPrenomNom(inscrit.maman, maj_nom=True)),
+                                                 ('parents', parents),
                                                  ('referents', referents),
                                                  ('commentaire', None)])
                         phoneCell = line.getElementsByTagName('table:table-cell')[2]
                         phoneTemplate = phoneCell.getElementsByTagName('text:p')[0]
-                        phones = []
-                        for phoneType in ["domicile", "portable", "travail"]:
-                            telephone_papa = getattr(inscrit.papa, "telephone_"+phoneType)
-                            telephone_maman = getattr(inscrit.maman, "telephone_"+phoneType)
-                            if telephone_papa and telephone_maman == telephone_papa:
-                                phones.append((telephone_papa, phoneType))
-                            else:
-                                if telephone_maman:
-                                    phones.append((telephone_maman, "%s %s" % (phoneType, GetInitialesPrenom(inscrit.maman))))
-                                if telephone_papa:
-                                    phones.append((telephone_papa, "%s %s" % (phoneType, GetInitialesPrenom(inscrit.papa))))
-                        for phone, remark in phones:
+                        phones = { } # clé: [téléphone, initiales, ?travail]
+                        emails = set()
+                        for parent in inscrit.parents:
+                            emails.add(parent.email)
+                            for phoneType in ["domicile", "portable", "travail"]:
+                                phone = getattr(parent, "telephone_"+phoneType)
+                                if phone in phones.keys():
+                                    phones[phone][1] = "parents"
+                                else:
+                                    phones[phone] = [phone, GetInitialesPrenom(parent), phoneType=="travail"]
+                        for phone, initiales, phoneType in phones:
+                            remark = initiales
+                            if phoneType:
+                                remark += " %s" % phoneType
                             phoneLine = phoneTemplate.cloneNode(1)
                             ReplaceTextFields(phoneLine, [('telephone', phone),
                                                           ('remarque', remark)])
@@ -78,7 +80,7 @@ class CoordonneesModifications(object):
                         phoneCell.removeChild(phoneTemplate)
                         emailCell = line.getElementsByTagName('table:table-cell')[3]
                         emailTemplate = emailCell.getElementsByTagName('text:p')[0]
-                        for email in (inscrit.maman.email, inscrit.papa.email):
+                        for email in emails:
                             emailLine = emailTemplate.cloneNode(1)
                             ReplaceTextFields(emailLine, [('email', email)])
                             emailCell.insertBefore(emailLine, emailTemplate)

@@ -333,20 +333,18 @@ class ResponsabilitesTab(AutoTab, PeriodeMixin):
         PeriodeMixin.SetInstance(self, instance, periode)
 
     def GetNomsParents(self, periode):
-        noms = []
+        noms = set()
         for inscrit in getInscrits(periode.debut, periode.fin):
-            for parent in (inscrit.papa, inscrit.maman):
-                if parent.prenom and parent.nom:
-                    tmp = parent.prenom + ' ' + parent.nom
-                    if not tmp in noms:
-                        noms.append(tmp)
+            for parent in inscrit.parents:
+                noms.add(GetPrenomNom(parent))
+        noms = list(noms)
         noms.sort(cmp=lambda x,y: cmp(x.lower(), y.lower()))
         return noms
     
     def GetNomsSalaries(self, periode):
         noms = []
         for salarie in creche.employes:
-            noms.append(salarie.prenom + " " + salarie.nom)
+            noms.append(GetPrenomNom(salarie))
         noms.sort(cmp=lambda x,y: cmp(x.lower(), y.lower()))
         return noms
 

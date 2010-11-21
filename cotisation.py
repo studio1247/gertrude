@@ -63,26 +63,19 @@ class Cotisation(object):
             self.debut, self.fin = self.inscription.debut, self.inscription.fin
         
         if creche.formule_taux_horaire_needs_revenus():
+            self.revenus_parents = { }
             self.date_revenus = GetDateRevenus(self.date)
             self.assiette_annuelle = 0.0 
-            self.revenus_papa = Select(inscrit.papa.revenus, self.date_revenus)
-            if self.revenus_papa is None or self.revenus_papa.revenu == '':
-                errors.append(u" - Les déclarations de revenus du papa sont incomplètes.")
-            else:
-                self.AjustePeriode(self.revenus_papa)
-                self.assiette_annuelle += float(self.revenus_papa.revenu)
-                if self.revenus_papa.chomage:
-                    self.abattement_chomage_papa = 0.3 * float(self.revenus_papa.revenu)
-                    self.assiette_annuelle -= self.abattement_chomage_papa
-            self.revenus_maman = Select(inscrit.maman.revenus, self.date_revenus)
-            if self.revenus_maman is None or self.revenus_maman.revenu == '':
-                errors.append(u" - Les déclarations de revenus de la maman sont incomplètes.")
-            else:
-                self.AjustePeriode(self.revenus_maman)
-                self.assiette_annuelle += float(self.revenus_maman.revenu)
-                if self.revenus_maman.chomage:
-                    self.abattement_chomage_maman = 0.3 * float(self.revenus_maman.revenu)
-                    self.assiette_annuelle -= self.abattement_chomage_maman
+            for parent in inscrit.parents.values():
+                self.revenus_parents[parent.relation] = revenus_parent = Select(parent.revenus, self.date_revenus)
+                if revenus_parent is None or revenus_parent == '':
+                    errors.append(u" - Les déclarations de revenus de %s sont incomplètes." % parent.relation)
+                else:
+                    self.AjustePeriode(revenus_parent)
+                    self.assiette_annuelle += float(revenus_parent.revenu)
+                    if revenus_parent.chomage:
+                        self.abattement_chomage[parent.relation] = abattement = 0.3 * float(revenus_parent.revenu)
+                        self.assiette_annuelle -= abattement
             
             self.bareme_caf = Select(creche.baremes_caf, self.date)
             if self.bareme_caf:

@@ -24,7 +24,7 @@ from functions import *
 from sqlobjects import *
 import wx
 
-VERSION = 43
+VERSION = 44
 
 def getdate(s):
     if s is None:
@@ -195,7 +195,7 @@ class SQLConnection(object):
           CREATE TABLE PARENTS(
             idx INTEGER PRIMARY KEY,
             inscrit INTEGER REFERENCES INSCRITS(idx),
-            absent BOOLEAN,
+            relation VARCHAR,
             prenom VARCHAR,
             nom VARCHAR,
             telephone_domicile VARCHAR,
@@ -455,21 +455,11 @@ class SQLConnection(object):
                 inscrit.conges.append(conge)
             inscrit.calcule_jours_conges(creche)
             
-            cur.execute('SELECT absent, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email, idx FROM PARENTS WHERE inscrit=?', (inscrit.idx,))
+            cur.execute('SELECT relation, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email, idx FROM PARENTS WHERE inscrit=?', (inscrit.idx,))
             for parent_entry in cur.fetchall():
                 parent = Parent(inscrit, creation=False)
-                parent.absent, parent.prenom, parent.nom, parent.telephone_domicile, parent.telephone_domicile_notes, parent.telephone_portable, parent.telephone_portable_notes, parent.telephone_travail, parent.telephone_travail_notes, parent.email, parent.idx = parent_entry
-                if not inscrit.papa:
-                    inscrit.papa = parent
-                else:
-                    inscrit.maman = parent
-                if not parent.absent:
-                    cur.execute('SELECT debut, fin, revenu, chomage, regime, idx FROM REVENUS WHERE parent=?', (parent.idx,))
-                    for revenu_entry in cur.fetchall():
-                        revenu = Revenu(parent, creation=False)
-                        revenu.debut, revenu.fin, revenu.revenu, revenu.chomage, revenu.regime, idx = revenu_entry
-                        revenu.debut, revenu.fin, revenu.idx = getdate(revenu.debut), getdate(revenu.fin), idx
-                        parent.revenus.append(revenu)
+                parent.relation, parent.prenom, parent.nom, parent.telephone_domicile, parent.telephone_domicile_notes, parent.telephone_portable, parent.telephone_portable_notes, parent.telephone_travail, parent.telephone_travail_notes, parent.email, parent.idx = parent_entry
+                inscrit.parents[parent.relation] = parent
             cur.execute('SELECT date, value, debut, fin, idx FROM ACTIVITES WHERE inscrit=?', (inscrit.idx,))
             for date, value, debut, fin, idx in cur.fetchall():
                 key = getdate(date)
@@ -952,6 +942,15 @@ class SQLConnection(object):
             cur.execute('UPDATE INSCRITS SET numero_securite_sociale=""')
             cur.execute('UPDATE INSCRITS SET numero_allocataire_caf=""')
             cur.execute('UPDATE INSCRITS SET handicap=0')
+            
+        if version < 44:
+            cur.execute("ALTER TABLE PARENTS ADD relation VARCHAR;")
+            cur.execute('SELECT idx FROM INSCRITS')
+            for inscrit_idx in cur.fetchall():
+                cur.execute('SELECT idx FROM PARENTS WHERE inscrit=?', (inscrit_idx[0],))
+                papa_idx, maman_idx = cur.fetchall()
+                cur.execute('UPDATE PARENTS SET relation=? WHERE idx=?', ("papa", papa_idx[0]))
+                cur.execute('UPDATE PARENTS SET relation=? WHERE idx=?', ("maman", maman_idx[0]))
                         
         if version < VERSION:
             try:
