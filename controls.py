@@ -600,7 +600,6 @@ class AutoChoiceCtrl(wx.Choice, AutoMixin):
         self.values[clientData] = index
         
     def onChoice(self, event):
-        value = event.GetClientData()
         self.AutoChange(event.GetClientData())
         event.Skip()
     
@@ -795,7 +794,10 @@ class PeriodeChoice(wx.BoxSizer):
 
     def EvtPeriodeAddButton(self, evt):
         self.periode = len(self.instance)
-        new_periode = self.constructor()
+        try:
+            new_periode = self.constructor()
+        except:
+            new_periode = self.constructor(self.parent.instance)
         if len(self.instance) > 0:
             last_periode = self.instance[-1]
             new_periode.debut = last_periode.fin + datetime.timedelta(1)

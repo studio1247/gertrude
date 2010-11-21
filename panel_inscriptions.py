@@ -337,14 +337,17 @@ class ParentsPanel(InscriptionsTab):
         sizer11 = wx.BoxSizer(wx.VERTICAL)
         sizer1.Add(sizer11, 0, wx.EXPAND)
         self.sizer.Add(sizer1, 1, wx.EXPAND|wx.ALL, 5)
+        self.relations_items = []
         for index in range(2):
             self.parents_items.append([])
             sizer2 = wx.FlexGridSizer(0, 2, 5, 5)
             sizer2.AddGrowableCol(1, 1)
-            self.parents_items[-1].append(AutoChoiceCtrl(self, None, 'relation', items=(('Papa', 'papa'), ('Maman', 'maman'), ('Parent manquant', None))))
-            self.parents_items[-1][-1].index = index
-            self.Bind(wx.EVT_CHOICE, self.OnParentRelationChoice, self.parents_items[-1][-1])
-            sizer2.AddMany([(wx.StaticText(self, -1, 'Relation :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])           
+            self.relations_items.append(wx.Choice(self, -1))
+            for item, value in (('Papa', 'papa'), ('Maman', 'maman'), ('Parent manquant', None)):
+                self.relations_items[-1].Append(item, value)
+            self.relations_items[-1].index = index
+            self.Bind(wx.EVT_CHOICE, self.OnParentRelationChoice, self.relations_items[-1])
+            sizer2.AddMany([(wx.StaticText(self, -1, 'Relation :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.relations_items[-1], 0, wx.EXPAND)])           
             self.parents_items[-1].extend([wx.StaticText(self, -1, u'Prénom :'), AutoTextCtrl(self, None, 'prenom')])           
             sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
             self.parents_items[-1].extend([wx.StaticText(self, -1, 'Nom :'), AutoTextCtrl(self, None, 'nom')])
@@ -357,13 +360,11 @@ class ParentsPanel(InscriptionsTab):
             self.parents_items[-1].extend([wx.StaticText(self, -1, 'E-mail :'), AutoTextCtrl(self, None, 'email')])
             sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
             sizer11.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
-            if index != 1:
-                sizer11.Add(wx.StaticLine(self, -1, style=wx.LI_HORIZONTAL), 0, wx.EXPAND|wx.ALL, 5)
-            
-            if 0: # profil & PROFIL_TRESORIER:
-                panel = PeriodePanel(self, 'parents["%s"].revenus' % parent)
+            if profil & PROFIL_TRESORIER:
+                panel = PeriodePanel(self, 'revenus')
+                self.parents_items[-1].append(panel)
                 revenus_sizer = wx.StaticBoxSizer(wx.StaticBox(panel, -1, u"Revenus et régime d'appartenance"), wx.VERTICAL)
-                revenus_sizer.Add(PeriodeChoice(panel, eval('self.nouveau_revenu_%s' % parent)), 0, wx.EXPAND|wx.ALL, 5)
+                revenus_sizer.Add(PeriodeChoice(panel, Revenu), 0, wx.EXPAND|wx.ALL, 5)
                 revenus_gridsizer = wx.FlexGridSizer(0, 2, 5, 10)
                 revenus_gridsizer.AddGrowableCol(1, 1)
                 revenus_gridsizer.AddMany([(wx.StaticText(panel, -1, 'Revenus annuels bruts :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(panel, None, 'revenu', precision=2), 0, wx.EXPAND)])
@@ -380,6 +381,8 @@ class ParentsPanel(InscriptionsTab):
                 revenus_sizer.Add(revenus_gridsizer, 0, wx.ALL|wx.EXPAND, 5)
                 panel.SetSizer(revenus_sizer)
                 sizer11.Add(panel, 0, wx.ALL|wx.EXPAND, 5)
+            if index != 1:
+                sizer11.Add(wx.StaticLine(self, -1, style=wx.LI_HORIZONTAL), 0, wx.EXPAND|wx.ALL, 5)
 
         sizer4 = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Référents'), wx.VERTICAL)
         self.referents_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -412,15 +415,16 @@ class ParentsPanel(InscriptionsTab):
             self.sizer.FitInside(self)
         else:
             event.Skip()
-            
-    def nouveau_revenu_papa(self):
-        return Revenu(self.inscrit.papa)
     
-    def nouveau_revenu_maman(self):
-        return Revenu(self.inscrit.maman)
-
     def UpdateContents(self):
         if self.inscrit:
+            for index, key in enumerate(self.inscrit.parents.keys()):
+                for i, item in enumerate(self.parents_items[index]):
+                    item.Show(self.inscrit.parents[key] is not None)
+                    try:
+                        item.SetInstance(self.inscrit.parents[key])
+                    except:
+                        pass
             referents_count = len(self.inscrit.referents)
             for i in range(len(self.referents_sizer.GetChildren()), referents_count):
                 self.referent_line_add(i)
@@ -435,14 +439,7 @@ class ParentsPanel(InscriptionsTab):
 
     def SetInscrit(self, inscrit):
         self.inscrit = inscrit
-        for i, key in enumerate(inscrit.parents.keys()):
-            for item in self.parents_items[i]:
-                try:
-                    item.SetInstance(inscrit.parents[key])
-                except:
-                    pass
         self.UpdateContents()
-        # InscriptionsTab.SetInscrit(self, inscrit)
         self.nouveau_referent.Enable(self.inscrit is not None)
 
     def referent_line_add(self, index):
