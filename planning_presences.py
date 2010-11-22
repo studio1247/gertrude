@@ -56,8 +56,6 @@ class PlanningModifications(object):
         date_fin = self.debut + datetime.timedelta(self.metas["Periodicite"])
         spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
         table = spreadsheet.getElementsByTagName("table:table")[0]
-        table.setAttribute('table:name', '%d %s %d - %d %s %d' % (self.debut.day, months[self.debut.month - 1], date_fin.year, date_fin.day, months[date_fin.month - 1], date_fin.year))
-
         lignes = table.getElementsByTagName("table:table-row")
 
         # Les titres des pages
@@ -65,6 +63,8 @@ class PlanningModifications(object):
                               ('date-fin', date_fin)])
 
         if self.metas["Format"] == 1:
+            table.setAttribute('table:name', '%d %s %d - %d %s %d' % (self.debut.day, months[self.debut.month - 1], date_fin.year, date_fin.day, months[date_fin.month - 1], date_fin.year))
+
             # Les jours
             ligne = lignes.item(1)
             cellules = ligne.getElementsByTagName("table:table-cell")
@@ -109,24 +109,36 @@ class PlanningModifications(object):
                     cellule.setAttribute('table:formula', formule)
         elif self.metas["Format"] == 2:
             inscriptions = GetInscriptions(self.debut, date_fin)
-            template = GetRow(table, 10)
+            tableau = { } # par professeur
+            for inscription in inscriptions:
+                if inscription.professeur in tableau:
+                    tableau[inscription.professeur].append(inscription)
+                else:
+                    tableau[inscription.professeur] = [inscription]
             def GetState(inscription, delta):
                 state = inscription.inscrit.getState(self.debut + datetime.timedelta(delta))[0]
                 if state <= 0:
                     return 0
                 else:
                     return state & PRESENT
-            for inscription in inscriptions:
-                ligne = template.cloneNode(1)
-                fields = [('prenom', GetPrenom(inscription.inscrit)),
-                          ('nom', GetNom(inscription.inscrit)),
-                          ('professeur-prenom', GetPrenom(inscription.professeur)),
-                          ('professeur-nom', GetNom(inscription.professeur))] 
-                for i, day in enumerate(days):
-                    fields.append((day.lower(), GetState(inscription, i)))
-                ReplaceFields(ligne, fields)
-                table.insertBefore(ligne, template)
-            table.removeChild(template)
+            template = table
+            for professeur in tableau:
+                table = template.cloneNode(1)
+                table.setAttribute('table:name', GetPrenomNom(professeur))
+                template.parentNode.insertBefore(table, template)
+                ligne_template = GetRow(table, 10)
+                for inscription in tableau[professeur]:
+                    ligne = ligne_template.cloneNode(1)
+                    fields = [('prenom', GetPrenom(inscription.inscrit)),
+                              ('nom', GetNom(inscription.inscrit)),
+                              ('professeur-prenom', GetPrenom(inscription.professeur)),
+                              ('professeur-nom', GetNom(inscription.professeur))] 
+                    for i, day in enumerate(days):
+                        fields.append((day.lower(), GetState(inscription, i)))
+                    ReplaceFields(ligne, fields)
+                    table.insertBefore(ligne, ligne_template)
+                table.removeChild(ligne_template)
+            template.parentNode.removeChild(template)
 
         #print dom.toprettyxml()
         return None

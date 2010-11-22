@@ -308,6 +308,10 @@ def save_current_document(filename):
     return 1
     
 def convert_to_pdf(filename, pdffilename):
+    if filename.endswith("ods"):
+        filtername = "calc_pdf_Export"
+    else:
+        filtername = "writer_pdf_Export"
     filename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(filename)).encode("latin-1"))])
     pdffilename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(pdffilename)).encode("latin-1"))])
     StarDesktop, objServiceManager, corereflection = getOOoContext()
@@ -318,7 +322,7 @@ def convert_to_pdf(filename, pdffilename):
     document.storeToUrl( pdffilename,
         MakePropertyValues(objServiceManager,
                     [["CompressMode", 1],
-                    ["FilterName", "writer_pdf_Export"]]))
+                    ["FilterName", filtername]]))
     document.close(False)
 
 dde_server = None
