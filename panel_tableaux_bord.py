@@ -30,6 +30,7 @@ from coordonnees_parents import CoordonneesModifications
 from etats_trimestriels import EtatsTrimestrielsModifications
 from planning_detaille import PlanningDetailleModifications
 from etats_presence import EtatsPresenceModifications
+from rapport_frequentation import RapportFrequentationModifications
 from facture import FactureFinMois
 from planning import *
 from sqlobjects import Day
@@ -549,10 +550,21 @@ class RelevesTab(AutoTab):
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés trimestriels'), wx.HORIZONTAL)
         self.choice = wx.Choice(self)
         button = wx.Button(self, -1, u'Génération')
-        for year in range(first_date.year, last_date.year + 1):
+        for year in range(first_date.year, today.year + 1):
             self.choice.Append(u'Année %d' % year, year)
         self.choice.SetSelection(today.year - first_date.year)
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationEtatsTrimestriels, button)
+        box_sizer.AddMany([(self.choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+        
+        # Les rapports de fréquentation
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Rapports de fréquentation'), wx.HORIZONTAL)
+        self.choice = wx.Choice(self)
+        button = wx.Button(self, -1, u'Génération')
+        for year in range(first_date.year, today.year + 1):
+            self.choice.Append(u'Année %d' % year, year)
+        self.choice.SetSelection(today.year - first_date.year)
+        self.Bind(wx.EVT_BUTTON, self.EvtGenerationRapportFrequentation, button)
         box_sizer.AddMany([(self.choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
@@ -592,6 +604,10 @@ class RelevesTab(AutoTab):
     def EvtGenerationEtatsTrimestriels(self, evt):
         annee = self.choice.GetClientData(self.choice.GetSelection())
         DocumentDialog(self, EtatsTrimestrielsModifications(annee)).ShowModal()
+        
+    def EvtGenerationRapportFrequentation(self, evt):
+        annee = self.choice.GetClientData(self.choice.GetSelection())
+        DocumentDialog(self, RapportFrequentationModifications(annee)).ShowModal()
 
     def EvtGenerationPlanningPresences(self, evt):
         date = self.weekchoice.GetClientData(self.weekchoice.GetSelection())

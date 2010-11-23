@@ -152,7 +152,7 @@ def ReplaceFields(cellules, fields):
     # Si l'argument est une ligne ...
     if cellules.__class__ == xml.dom.minidom.Element:
         if cellules.nodeName == "table:table-cell":
-            cellules = [cellule]
+            cellules = [cellules]
         else:
             cellules = cellules.getElementsByTagName("table:table-cell")
     elif len(cellules) > 0 and cellules[0].nodeName != "table:table-cell":
@@ -192,7 +192,7 @@ def ReplaceFields(cellules, fields):
                     # print node.firstChild.wholeText, '=>', text
                     node.firstChild.replaceWholeText(nodeText)
 
-def IncrementFormulas(cellules, inc=1):
+def IncrementFormulas(cellules, row=0, column=0):
     formula_gure = re.compile("\[\.([A-Z]+)([0-9]+)\]")
     if cellules.__class__ == xml.dom.minidom.Element:
         cellules = cellules.getElementsByTagName("table:table-cell")
@@ -203,7 +203,7 @@ def IncrementFormulas(cellules, inc=1):
             while mo is not None:
                 mo = formula_gure.search(formula)
                 if mo:
-                    formula = formula.replace(mo.group(0), "[_.%s%d_]" % (mo.group(1), int(mo.group(2))+inc))
+                    formula = formula.replace(mo.group(0), "[_.%s%d_]" % (chr(ord(mo.group(1))+column), int(mo.group(2))+row))
             formula = formula.replace('[_', '[').replace('_]', ']')
             cellule.setAttribute("table:formula", formula)
             

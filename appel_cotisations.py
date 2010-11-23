@@ -61,7 +61,7 @@ class AppelCotisationsModifications(object):
                                  ('supplement', supplement),
                                  ('commentaire', commentaire)])
             table.insertBefore(line, template[0])
-            IncrementFormulas(template[i % 2], +2)
+            IncrementFormulas(template[i % 2], row=+2)
 
         table.removeChild(template[0])
         table.removeChild(template[1])
