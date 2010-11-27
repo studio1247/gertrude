@@ -50,8 +50,8 @@ class Day(object):
         for value in creche.activites.keys():
             mask = (1 << value)
             a = v = h = 0
-            while h <= 24 * 60 / BASE_GRANULARITY:
-                if h == 24 * 60 / BASE_GRANULARITY:
+            while h <= TAILLE_TABLE_ACTIVITES:
+                if h == TAILLE_TABLE_ACTIVITES:
                     nv = 0
                 elif self.values[h] < 0:
                     if value == 0:
@@ -88,7 +88,7 @@ class Day(object):
         
     def remove_all_activities(self, value):
         mask = ~(1 << value)
-        for i in range(24 * 60 / BASE_GRANULARITY):
+        for i in range(TAILLE_TABLE_ACTIVITES):
             if self.values[i] > 0:
                 self.values[i] &= mask
                 if self.values[i] == PREVISIONNEL:
@@ -102,7 +102,7 @@ class Day(object):
         
     def get_state(self):
         state = ABSENT
-        for i in range(24 * 60 / BASE_GRANULARITY):
+        for i in range(TAILLE_TABLE_ACTIVITES):
             if self.values[i] < 0:
                 return self.values[i]
             else:
@@ -116,25 +116,25 @@ class Day(object):
         else:
             return state
         
-    def get_heures(self):
+    def GetNombreHeures(self):
         if self.values_used_for_last_heures == self.values:
             return self.last_heures
         
         self.values_used_for_last_heures = self.values[:]
-        heures = 0.0
-        for i in range(24 * 60 / BASE_GRANULARITY):
+        value = 0.0
+        for i in range(TAILLE_TABLE_ACTIVITES):
             if self.values[i] < 0:
-                self.last_heures = 0.0
-                return 0.0
+                value = 0.0
+                break
             elif self.values[i] > 0:
-                heures += 5.0 / 60
-        self.last_heures = heures
-        return heures
+                value += 5.0
+        self.last_heures = value / 60 
+        return self.last_heures
     
     def copy(self, day, previsionnel=True):
         self.values = day.values[:]
         if previsionnel:
-            for i in range(24 * 60 / BASE_GRANULARITY):
+            for i in range(TAILLE_TABLE_ACTIVITES):
                 if self.values[i]:
                     self.values[i] |= PREVISIONNEL
         self.activites_sans_horaires = {}
@@ -150,6 +150,15 @@ class Day(object):
         for value in self.activites_sans_horaires.keys():
             result.add(value)
         return result
+    
+    def GetPlageHoraire(self):
+        debut, fin = None, None
+        for start, end, value in self.activites.keys():
+            if not debut or start < debut:
+                debut = start
+            if not fin or end > fin:
+                fin = end
+        return debut, fin
     
     def delete(self):
         print 'suppression jour'
@@ -212,7 +221,7 @@ class Journee(Day):
         return idx
        
     def confirm(self):
-        for i in range(24 * 60 / BASE_GRANULARITY):
+        for i in range(TAILLE_TABLE_ACTIVITES):
             self.values[i] &= ~PREVISIONNEL
         self.save()
         
@@ -817,7 +826,7 @@ class Inscription(SQLObject):
         for i in range(self.duree_reference):
             if JourSemaineAffichable(i) and self.reference[i].get_state() & PRESENT:
                 jours += 1
-                heures += self.reference[i].get_heures()
+                heures += self.reference[i].GetNombreHeures()
         return jours, heures
     
     def create(self):
@@ -1039,7 +1048,7 @@ class Inscrit(object):
             return ABSENT, 0, 0, 0
         
         reference = self.getReferenceDay(date)
-        heures_reference = reference.get_heures()
+        heures_reference = reference.GetNombreHeures()
         ref_state = reference.get_state()
         if date in self.journees:
             journee = self.journees[date]
@@ -1055,7 +1064,7 @@ class Inscrit(object):
                 heures_supplementaires = 0.0
                 tranche = 5.0 / 60
                 heures_realisees = 0.0
-                for i in range(24 * 60 / BASE_GRANULARITY):
+                for i in range(TAILLE_TABLE_ACTIVITES):
                     if journee.values[i]:
                         heures_realisees += tranche
                         if not reference.values[i]:
