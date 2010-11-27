@@ -66,7 +66,7 @@ class Cotisation(object):
             self.revenus_parents = { }
             self.abattement_chomage = { }
             self.date_revenus = GetDateRevenus(self.date)
-            self.assiette_annuelle = 0.0 
+            self.assiette_annuelle = 0.0
             for parent in inscrit.parents.values():
                 if parent:
                     self.revenus_parents[parent.relation] = revenus_parent = Select(parent.revenus, self.date_revenus)
@@ -117,11 +117,11 @@ class Cotisation(object):
             raise CotisationException(errors)
         
         if options & TRACES: print u"\nCotisation de %s au %s (%s - %s) :" % (GetPrenomNom(inscrit), date, self.debut, self.fin)
-        
+                
         if creche.mode_facturation == FACTURATION_FORFAIT_10H:
             self.heures_semaine = self.jours_semaine * 10
             self.heures_mois = self.heures_semaine * 4
-            self.heures_annee = 12 * self.heures_mois
+            self.heures_periode = 12 * self.heures_mois
             self.nombre_factures = 12 - len(creche.mois_sans_facture)
         else:                
             self.heures_semaine = self.heures_reelles_semaine
@@ -130,25 +130,31 @@ class Cotisation(object):
             self.heures_semaine = self.heures_reelles_semaine
             
             if creche.conges_inscription or creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
-                self.heures_annee = 0.0    
+                self.heures_periode = 0.0
+                self.heures_fermeture_creche = 0.0
+                self.heures_accueil_non_facture = 0.0
+                self.conges_inscription = []
                 date = self.debut
                 while date <= self.fin:
-                    heures = self.inscription.getReferenceDay(date).get_heures()
+                    heures = self.inscription.getReferenceDay(date).GetNombreHeures()
                     if heures:
-                        if date in creche.jours_fermeture or date in self.inscrit.jours_conges:
-                            if (options & TRACES): print u' jour déduit :', date, "(%fh)" % heures
+                        if date in creche.jours_fermeture:
+                            if creche.jours_fermeture[date].options == ACCUEIL_NON_FACTURE:
+                                if (options & TRACES): print u' accueil non facturé :', date, "(%fh)" % heures
+                                self.heures_accueil_non_facture += heures
+                            else:
+                                if (options & TRACES): print u' jour de fermeture :', date, "(%fh)" % heures
+                                self.heures_fermeture_creche += heures
+                        elif date in self.inscrit.jours_conges:
+                            if (options & TRACES): print u' jour de congé inscription :', date, "(%fh)" % heures
+                            self.conges_inscription.append(date)                            
                         else:
-                            self.heures_annee += heures
+                            self.heures_periode += heures
                     date += datetime.timedelta(1)
                 
-                self.heures_annee = math.ceil(self.heures_annee)
-                if options & TRACES: print ' heures annuelles :', self.heures_annee
-                # self.heures_annee -= self.heures_conges
-#                print debut_inscription, fin_inscription
-#                for date in creche.jours_fermeture.keys() + inscrit.jours_conges.keys():
-#                    if date >= debut_inscription and date <= fin_inscription:
-#                        print date
-#                        self.heures_annee -= inscription.getReferenceDay(date).get_heures()
+                self.heures_periode = math.ceil(self.heures_periode)
+                if options & TRACES: print ' heures periode :', self.heures_periode
+
                 self.nombre_factures = 0
                 date = self.debut
                 while date <= self.fin:
@@ -156,13 +162,13 @@ class Cotisation(object):
                         self.nombre_factures += 1
                     date = getNextMonthStart(date)
                 if options & TRACES: print ' nombres de factures :', self.nombre_factures
-                self.heures_mois = math.ceil(self.heures_annee / self.nombre_factures)
+                self.heures_mois = math.ceil(self.heures_periode / self.nombre_factures)
                 if options & TRACES: print ' heures mensuelles :', self.heures_mois
             else:
-                self.heures_annee = 47 * self.heures_semaine
+                self.heures_periode = 47 * self.heures_semaine
                 # TODO c'etait 45 au lieu de 46 pour Oleron, 47 pour Bois le roi
                 # Il faudrait pouvoir saisir le nombre de samaines de vacances qq part
-                self.heures_mois = self.heures_annee / 12
+                self.heures_mois = self.heures_periode / 12
                 self.nombre_factures = 12 - len(creche.mois_sans_facture)
 
         if self.jours_semaine == 5:

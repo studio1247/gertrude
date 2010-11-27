@@ -113,7 +113,7 @@ class MarmousetsTests(GertrudeTestCase):
         inscrit.add_conge(conge)
         cotisation = Cotisation(inscrit, datetime.date(2010, 1, 4), NO_ADDRESS|NO_PARENTS)
         self.assertEquals(float("%.2f" % cotisation.heures_semaine), 37.0)
-        self.assertEquals(cotisation.heures_annee, 971.0)
+        self.assertEquals(cotisation.heures_periode, 971.0)
         self.assertEquals(cotisation.nombre_factures, 7)
                 
 class DessineMoiUnMoutonTests(GertrudeTestCase):

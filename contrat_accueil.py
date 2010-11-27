@@ -56,6 +56,7 @@ class ContratAccueilModifications(object):
         fields = [('nom-creche', creche.nom),
                 ('adresse-creche', creche.adresse),
                 ('code-postal-creche', str(creche.code_postal)),
+                ('departement-creche', str(creche.code_postal/1000)),
                 ('ville-creche', creche.ville),
                 ('telephone-creche', creche.telephone),
                 ('email-creche', creche.email),
@@ -72,18 +73,41 @@ class ContratAccueilModifications(object):
                 ('directeur', directeur),
                 ('plancher-caf', plancher_caf),
                 ('plafond-caf', plafond_caf),
-                ('heures-semaine', cotisation.heures_semaine),
-                ('assiette-annuelle', "%.2f" % cotisation.assiette_annuelle),
-                ('taux-effort', cotisation.taux_effort),
+                ('heures-semaine', GetHeureString(cotisation.heures_semaine)),
+                ('heures-periode', cotisation.heures_periode),
+                ('nombre-factures', cotisation.nombre_factures),
+                ('heures-mois', cotisation.heures_mois),
                 ('montant-heure-garde', cotisation.montant_heure_garde),
                 ('cotisation-mensuelle', "%.2f" % cotisation.cotisation_mensuelle),
                 ('date', '%.2d/%.2d/%d' % (self.date.day, self.date.month, self.date.year)),
+                ('debut-inscription', inscription.debut),
+                ('fin-inscription', inscription.fin),
                 ('annee-debut', cotisation.debut.year),
                 ('annee-fin', cotisation.debut.year+1),
                 ('permanences', self.GetPermanences(inscription)),
+                ('enfants-a-charge', cotisation.enfants_a_charge),
                 ('IsPresentDuringTranche', self.IsPresentDuringTranche),
                 ]
+        
+        if cotisation.assiette_annuelle is not None:
+            fields.append(('assiette-annuelle', "%.2f" % cotisation.assiette_annuelle))
+            fields.append(('taux-effort', cotisation.taux_effort))
+            
+        if creche.conges_inscription or creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
+            fields.append(('dates-conges-inscription', ", ".join([GetDateString(d) for d in cotisation.conges_inscription])))
+            fields.append(('heures-fermeture-creche', GetHeureString(cotisation.heures_fermeture_creche)))
+            fields.append(('heures-accueil-non-facture', GetHeureString(cotisation.heures_accueil_non_facture)))
+            heures_brut_periode = cotisation.heures_periode + cotisation.heures_fermeture_creche + cotisation.heures_accueil_non_facture
+            fields.append(('heures-brut-periode', GetHeureString(heures_brut_periode)))
+            fields.append(('semaines-brut-periode', "%.2f" % (heures_brut_periode / cotisation.heures_semaine)))
     
+        for jour in range(5):
+            jour_reference = inscription.reference[jour]
+            debut, fin = jour_reference.GetPlageHoraire()
+            fields.append(('heure-debut[%d]' % jour, GetHeureString(debut)))
+            fields.append(('heure-fin[%d]' % jour, GetHeureString(fin)))
+            fields.append(('heures-jour[%d]' % jour, GetHeureString(jour_reference.GetNombreHeures())))
+
 #            if inscrit.sexe == 1:
 #                fields.append(('ne-e', u"né"))
 #            else:

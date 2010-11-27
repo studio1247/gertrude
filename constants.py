@@ -41,6 +41,7 @@ MODE_SANS_HORAIRES = 2
 
 # Granularité du planning dans la base
 BASE_GRANULARITY = 5 # 5 minutes
+TAILLE_TABLE_ACTIVITES = 24 * 60 / BASE_GRANULARITY
 
 # Modes d'inscription
 MODE_CRECHE = 0

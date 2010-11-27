@@ -90,10 +90,9 @@ class ContextPanel(wx.Panel):
         self.periodechoice = wx.Choice(self)
         self.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.periodechoice)
         sizer1.Add(self.periodechoice, 0)
-        if IsTemplateFile("Contrat accueil.odt"):
-            button = wx.Button(self, -1, u"Générer le contrat")
-            sizer1.Add(button, 0, wx.LEFT, 5)
-            self.Bind(wx.EVT_BUTTON, self.EvtGenerationContrat, button)
+        self.contrat_button = wx.Button(self, -1, u"Générer le contrat")
+        sizer1.Add(self.contrat_button, 0, wx.LEFT, 5)
+        self.Bind(wx.EVT_BUTTON, self.EvtGenerationContrat, self.contrat_button)
         sizer.Add(sizer1, 0, wx.ALL, 5)
         self.html_window = wx.html.HtmlWindow(self, style=wx.SUNKEN_BORDER)
         sizer.Add(self.html_window, 1, wx.EXPAND|wx.ALL-wx.TOP, 5)
@@ -123,18 +122,21 @@ class ContextPanel(wx.Panel):
         self.periodechoice.Clear()
         if self.inscrit:
             self.GetCotisations()
-            for c in self.cotisations:
-                self.periodechoice.Append(date2str(c[0]) + ' - ' + date2str(c[1]))
             if len(self.cotisations) > 1:
+                self.current_cotisation = self.cotisations[-1]
                 self.periodechoice.Enable()
+                self.contrat_button.Enable()
+                for c in self.cotisations:
+                    self.periodechoice.Append(date2str(c[0]) + ' - ' + date2str(c[1]))
+                self.periodechoice.SetSelection(self.periodechoice.GetCount() - 1)
             else:
+                self.current_cotisation = None
                 self.periodechoice.Disable()
-
-            self.current_cotisation = self.cotisations[-1]
-            self.periodechoice.SetSelection(self.periodechoice.GetCount() - 1)
+                self.contrat_button.Disable()
         else:
             self.current_cotisation = None
             self.periodechoice.Disable()
+            self.contrat_button.Disable()
         self.UpdatePage()
 
     def EvtPeriodeChoice(self, evt):

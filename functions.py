@@ -41,6 +41,18 @@ def getNextMonthStart(date):
     else:
         return datetime.date(date.year, date.month+1, 1)
 
+def GetHeureString(value):
+    if value is None:
+        return ""
+    elif isinstance(value, int):
+        minutes = value * 5;
+        heures = minutes / 60
+        minutes -= heures * 60
+    else:
+        heures = int(value)
+        minutes = (value - heures) * 60
+    return "%02dh%02d" % (heures, minutes)
+
 def GetDateString(date, weekday=True):
     if date.day == 1:
         date_str = "1er %s %d" % (months[date.month-1].lower(), date.year)
@@ -151,11 +163,12 @@ def Select(object, date):
             return o
     return None
 
-def getDeMoisStr(mois):
+def GetDeMoisStr(mois):
     if months[mois].startswith('A') or months[mois].startswith('O'):
         return "d'%s" % months[mois].lower()
     else:
         return "de %s" % months[mois].lower()
+       
 
 def GetParentsString(inscrit):
     if not inscrit.parents['papa'] and not inscrit.parents['maman']:
@@ -284,7 +297,7 @@ def getActivitiesSummary(creche, lines):
     summary = {}
     for activity in creche.activites:
         summary[activity] = Summary(creche.activites[activity].label)
-        for i in range(24 * 60 / BASE_GRANULARITY):
+        for i in range(TAILLE_TABLE_ACTIVITES):
             for line in lines:
                 if not isinstance(line, list):
                     line = line.values

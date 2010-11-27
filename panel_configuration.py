@@ -335,7 +335,7 @@ class ResponsabilitesTab(AutoTab, PeriodeMixin):
     def GetNomsParents(self, periode):
         noms = set()
         for inscrit in getInscrits(periode.debut, periode.fin):
-            for parent in inscrit.parents:
+            for parent in inscrit.parents.values():
                 noms.add(GetPrenomNom(parent))
         noms = list(noms)
         noms.sort(cmp=lambda x,y: cmp(x.lower(), y.lower()))
@@ -738,7 +738,7 @@ class ParametersPanel(AutoTab):
                 return
         obj.AutoChange(value)
         for inscrit, jour, info, date in errors:
-            for i in range(0, int(creche.ouverture*4)) + range(int(creche.fermeture*4), 24 * 60 / BASE_GRANULARITY):
+            for i in range(0, int(creche.ouverture*4)) + range(int(creche.fermeture*4), TAILLE_TABLE_ACTIVITES):
                 jour.values[i] = 0
             jour.save()
         if creche.affichage_min > creche.ouverture:
