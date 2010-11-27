@@ -33,10 +33,10 @@ class ContratAccueilModifications(object):
             return None
         
         errors = {}
-        tresorier = ""
-        directeur = ""
+        president = tresorier = directeur = ""
         bureau = Select(creche.bureaux, self.date)
         if bureau:
+            president = bureau.president
             tresorier = bureau.tresorier
             directeur = bureau.directeur
             
@@ -69,6 +69,7 @@ class ContratAccueilModifications(object):
                 ('numero-securite-sociale', self.inscrit.numero_securite_sociale),
                 ('numero-allocataire-caf', self.inscrit.numero_allocataire_caf),
                 ('naissance', self.inscrit.naissance),
+                ('president', president),
                 ('tresorier', tresorier),
                 ('directeur', directeur),
                 ('plancher-caf', plancher_caf),
@@ -86,6 +87,7 @@ class ContratAccueilModifications(object):
                 ('annee-fin', cotisation.debut.year+1),
                 ('permanences', self.GetPermanences(inscription)),
                 ('enfants-a-charge', cotisation.enfants_a_charge),
+                ('carence-maladie', creche.minimum_maladie),
                 ('IsPresentDuringTranche', self.IsPresentDuringTranche),
                 ]
         

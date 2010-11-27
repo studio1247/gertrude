@@ -15,7 +15,7 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import datetime, binascii, os.path
+import datetime, binascii, math, os.path
 from constants import *
 from parameters import *
 import wx
@@ -51,7 +51,7 @@ def GetHeureString(value):
     else:
         heures = int(value)
         minutes = (value - heures) * 60
-    return "%02dh%02d" % (heures, minutes)
+    return "%02dh%02d" % (heures, round(minutes))
 
 def GetDateString(date, weekday=True):
     if date.day == 1:

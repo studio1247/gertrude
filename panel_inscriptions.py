@@ -81,7 +81,8 @@ def ParseHtml(filename, context):
 
     return data
 
-class ContextPanel(wx.Panel):
+    
+class ForfaitPanel(wx.Panel):
     def __init__(self, parent):
         self.parent = parent
         wx.Panel.__init__(self, parent)
@@ -97,84 +98,6 @@ class ContextPanel(wx.Panel):
         self.html_window = wx.html.HtmlWindow(self, style=wx.SUNKEN_BORDER)
         sizer.Add(self.html_window, 1, wx.EXPAND|wx.ALL-wx.TOP, 5)
         self.SetSizer(sizer)
-
-    def SetInscrit(self, inscrit):
-        self.inscrit = inscrit
-        self.UpdateContents()
-
-    def GetCotisations(self):
-        self.cotisations = []
-        for inscription in self.inscrit.inscriptions:
-            date = inscription.debut
-            while date:
-                try:
-                    cotisation = Cotisation(self.inscrit, date, TRACES)
-                    self.cotisations.append((cotisation.debut, cotisation.fin, cotisation))
-                    if cotisation.fin and (not inscription.fin or cotisation.fin < inscription.fin):
-                        date = cotisation.fin + datetime.timedelta(1)
-                    else:
-                        date = None
-                except CotisationException, e:
-                    self.cotisations.append((date, inscription.fin, e))
-                    date = None
-    
-    def UpdateContents(self):
-        self.periodechoice.Clear()
-        if self.inscrit:
-            self.GetCotisations()
-            if len(self.cotisations) > 1:
-                self.current_cotisation = self.cotisations[-1]
-                self.periodechoice.Enable()
-                self.contrat_button.Enable()
-                for c in self.cotisations:
-                    self.periodechoice.Append(date2str(c[0]) + ' - ' + date2str(c[1]))
-                self.periodechoice.SetSelection(self.periodechoice.GetCount() - 1)
-            else:
-                self.current_cotisation = None
-                self.periodechoice.Disable()
-                self.contrat_button.Disable()
-        else:
-            self.current_cotisation = None
-            self.periodechoice.Disable()
-            self.contrat_button.Disable()
-        self.UpdatePage()
-
-    def EvtPeriodeChoice(self, evt):
-        ctrl = evt.GetEventObject()
-        self.current_cotisation = self.cotisations[ctrl.GetSelection()]
-        self.UpdatePage()
-        
-    def EvtGenerationContrat(self, evt):
-        DocumentDialog(self, ContratAccueilModifications(self.inscrit, self.current_cotisation[0])).ShowModal()
-
-class ContratPanel(ContextPanel):
-    def __init__(self, parent):
-        ContextPanel.__init__(self, parent)
-
-    def UpdatePage(self):
-        if self.inscrit is None:
-            self.html = '<html><body>Aucun inscrit s&eacute;lectionn&eacute; !</body></html>'
-            self.periodechoice.Disable()
-        elif not self.current_cotisation:
-            self.html = '<html><body>Aucune inscription !</body></html>'
-            self.periodechoice.Disable()
-        else:
-            context = self.current_cotisation[-1]
-            if isinstance(context, CotisationException):
-                error = '<br>'.join(context.errors)
-                self.html = u"<html><body><b>Le contrat d'accueil de l'enfant ne peut être édit&eacute; pour la (les) raison(s) suivante(s) :</b><br>" + error + "</body></html>"
-            else:
-                if creche.mode_facturation == FACTURATION_PAJE:
-                    str_facturation = "_paje"
-                else:
-                    str_facturation = ""
-                self.html = ParseHtml(GetTemplateFile("contrat_accueil%s.html" % str_facturation), context)
-                
-        self.html_window.SetPage(self.html)
-
-class ForfaitPanel(ContextPanel):
-    def __init__(self, parent):
-        ContextPanel.__init__(self, parent)
 
     def UpdatePage(self):      
         if self.inscrit is None:
@@ -203,6 +126,56 @@ class ForfaitPanel(ContextPanel):
                 self.html = ParseHtml(GetTemplateFile("frais_de_garde%s%s.html" % (str_inscription, str_facturation)), context)
 
         self.html_window.SetPage(self.html)
+        
+    def SetInscrit(self, inscrit):
+        self.inscrit = inscrit
+        self.UpdateContents()
+
+    def GetCotisations(self):
+        self.cotisations = []
+        for inscription in self.inscrit.inscriptions:
+            date = inscription.debut
+            while date:
+                try:
+                    cotisation = Cotisation(self.inscrit, date, TRACES)
+                    self.cotisations.append((cotisation.debut, cotisation.fin, cotisation))
+                    if cotisation.fin and (not inscription.fin or cotisation.fin < inscription.fin):
+                        date = cotisation.fin + datetime.timedelta(1)
+                    else:
+                        date = None
+                except CotisationException, e:
+                    self.cotisations.append((date, inscription.fin, e))
+                    date = None
+    
+    def UpdateContents(self):
+        self.periodechoice.Clear()
+        if self.inscrit:
+            self.GetCotisations()
+            if len(self.cotisations) > 0:
+                self.current_cotisation = self.cotisations[-1]
+                self.periodechoice.Enable()
+                self.contrat_button.Enable()
+                for c in self.cotisations:
+                    self.periodechoice.Append(date2str(c[0]) + ' - ' + date2str(c[1]))
+                self.periodechoice.SetSelection(self.periodechoice.GetCount() - 1)
+            else:
+                self.current_cotisation = None
+                self.periodechoice.Disable()
+                self.contrat_button.Disable()
+        else:
+            self.current_cotisation = None
+            self.periodechoice.Disable()
+            self.contrat_button.Disable()
+        self.UpdatePage()
+        
+    def EvtPeriodeChoice(self, evt):
+        ctrl = evt.GetEventObject()
+        self.current_cotisation = self.cotisations[ctrl.GetSelection()]
+        self.UpdatePage()
+        
+    def EvtGenerationContrat(self, evt):
+        DocumentDialog(self, ContratAccueilModifications(self.inscrit, self.current_cotisation[0])).ShowModal()
+
 
             
 wildcard = "PNG (*.png)|*.png|"     \
@@ -760,15 +733,10 @@ class InscriptionsNotebook(wx.Notebook):
             self.conges_panel = None
 
         if profil & PROFIL_TRESORIER:
-            if IsTemplateFile("Contrat accueil.odt"):
-                self.contrat_panel = None
-            else:
-                self.contrat_panel = ContratPanel(self)
-                self.AddPage(self.contrat_panel, "Contrat d'accueil")
             self.forfait_panel = ForfaitPanel(self)
             self.AddPage(self.forfait_panel, 'Frais de garde mensuels')
         else:
-            self.contrat_panel = self.forfait_panel = None
+            self.forfait_panel = None
 
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.onPageChanged)  
             
