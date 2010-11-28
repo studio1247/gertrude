@@ -1,6 +1,7 @@
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="fr" lang="fr">
 <head>
- <meta http-equiv=Content-Type content="text/html; charset=windows-1252">
+ <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
  <title>FRAIS DE GARDE MENSUELS</title>
 </head>
 <body>
@@ -12,28 +13,28 @@
  <br>
  <br>
  <table cellspacing="0" cellpadding="4" border="0">
-  <if value="inscrit.parents['papa']">
+  <if value="len(revenus_parents) &gt; 0">
   <tr>
-   <td width="400">Revenu <var value="debut.year-1"/> de <var value="GetPrenomNom(inscrit.parents['papa'])"/> </td>
-   <td>= <var value="'%.02f' % revenus_parents['papa'].revenu"/> &euro;</td>
+   <td width="400">Revenu <var value="annee_revenus"/> de <var value="GetPrenomNom(revenus_parents[0][0])"/> </td>
+   <td>= <var value="'%.02f' % revenus_parents[0][1]"/> &euro;</td>
   </tr>
   </if>
-  <if value="inscrit.parents['papa'] and revenus_parents['papa'].chomage">
+  <if value="len(revenus_parents) &gt; 0 and revenus_parents[0][2]">
   <tr>
-   <td width=400>Abattement consenti pour ch&ocirc;mage (30 %)</td>
-   <td>= <var value="'%.02f' % abattement_chomage['papa']"/> &euro;</td>
+   <td width="400">Abattement consenti pour ch&ocirc;mage (30 %)</td>
+   <td>= <var value="'%.02f' % revenus_parents[0][2]"/> &euro;</td>
   </tr>
   </if>
-  <if value="inscrit.parents['maman']">
+  <if value="len(revenus_parents) &gt; 1">
   <tr>
-   <td width=400>Revenu <var value="debut.year-1"/> de <var value="GetPrenomNom(inscrit.parents['maman'])"/> </td>
-   <td>= <var value="'%.02f' % revenus_parents['maman'].revenu"/> &euro;</td>
+   <td width="400">Revenu <var value="annee_revenus"/> de <var value="GetPrenomNom(revenus_parents[1][0])"/> </td>
+   <td>= <var value="'%.02f' % revenus_parents[1][1]"/> &euro;</td>
   </tr>
   </if>
-  <if value="inscrit.parents['maman'] and revenus_parents['maman'].chomage">
+  <if value="len(revenus_parents) &gt; 1 and revenus_parents[1][2]">
   <tr>
-   <td>Abattement consenti pour ch&ocirc;mage (30 %)</td>
-   <td>= <var value="'%.02f' % abattement_chomage['maman']"/> &euro;</td>
+   <td width="400">Abattement consenti pour ch&ocirc;mage (30 %)</td>
+   <td>= <var value="'%.02f' % revenus_parents[1][2]"/> &euro;</td>
   </tr>
   </if>
   <tr>

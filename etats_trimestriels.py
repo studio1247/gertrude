@@ -248,5 +248,5 @@ if __name__ == '__main__':
     today = datetime.date.today()
 
     filename = 'etats_trimestriels_%d.ods' % (today.year - 1)
-    print GenerateDocument(EtatsTrimestrielsModifications(today.year - 1), filename)
+    print GenerateOODocument(EtatsTrimestrielsModifications(today.year - 1), filename)
     print u'Fichier %s généré' % filename

@@ -15,7 +15,7 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import datetime, binascii, math, os.path
+import datetime, os.path
 from constants import *
 from parameters import *
 import wx
@@ -62,6 +62,19 @@ def GetDateString(date, weekday=True):
         return days[date.weekday()].lower() + " " + date_str
     else:
         return date_str
+    
+def IsPresentDuringTranche(journee, debut, fin):
+    for i in range(int(debut * (60 / BASE_GRANULARITY)), int(fin * (60 / BASE_GRANULARITY))):
+        if journee.values[i]:
+            return True
+    return False
+
+def HeuresTranche(journee, debut, fin):
+    result = 0
+    for i in range(int(debut * (60 / BASE_GRANULARITY)), int(fin * (60 / BASE_GRANULARITY))):
+        if journee.values[i]:
+            result += BASE_GRANULARITY
+    return float(result) / 60
 
 def GetInitialesPrenom(person):
     for char in ('-', ' '):
@@ -106,6 +119,12 @@ def GetEnfantsCount(inscrit, date):
                 if not fin or frere_soeur.naissance < fin:
                     fin = frere_soeur.naissance
     return enfants_a_charge, enfants_en_creche, debut, fin
+
+def GetDepartement(cp):
+    if cp:
+        return int(cp/1000)
+    else:
+        return ""
 
 def GetFile(filename, base):
     path = "./%s/%s" % (base, filename)

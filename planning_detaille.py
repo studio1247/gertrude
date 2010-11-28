@@ -183,7 +183,7 @@ if __name__ == '__main__':
 
     filename = 'planning-details-1.odg'
     try:
-        GenerateDocument(PlanningDetailleModifications((datetime.date(2009, 2, 16), datetime.date(2009, 2, 20))), filename)
+        GenerateOODocument(PlanningDetailleModifications((datetime.date(2009, 2, 16), datetime.date(2009, 2, 20))), filename)
         print u'Fichier %s généré' % filename
     except CotisationException, e:
         print e.errors

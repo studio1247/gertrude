@@ -21,18 +21,12 @@ from sqlobjects import Parent
 from cotisation import Cotisation, CotisationException
 from ooffice import *
 
-class ContratAccueilModifications(object):
+class DocumentAccueilModifications(object):
     def __init__(self, who, date):
-        self.template = 'Contrat accueil.odt'
-        self.default_output = u"Contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
         self.inscrit = who
         self.date = date
 
-    def execute(self, filename, dom):
-        if filename != 'content.xml':
-            return None
-        
-        errors = {}
+    def GetFields(self):
         president = tresorier = directeur = ""
         bureau = Select(creche.bureaux, self.date)
         if bureau:
@@ -48,15 +42,12 @@ class ContratAccueilModifications(object):
             plafond_caf = "%.2f" % bareme_caf.plafond
             
         inscription = self.inscrit.getInscription(self.date)
-        cotisation = Cotisation(self.inscrit, self.date)
+        self.cotisation = Cotisation(self.inscrit, self.date)
         
-        # print dom.toprettyxml()
-        doc = dom.getElementsByTagName("office:text")[0]
-            
         fields = [('nom-creche', creche.nom),
                 ('adresse-creche', creche.adresse),
                 ('code-postal-creche', str(creche.code_postal)),
-                ('departement-creche', str(creche.code_postal/1000)),
+                ('departement-creche', GetDepartement(creche.code_postal)),
                 ('ville-creche', creche.ville),
                 ('telephone-creche', creche.telephone),
                 ('email-creche', creche.email),
@@ -74,34 +65,43 @@ class ContratAccueilModifications(object):
                 ('directeur', directeur),
                 ('plancher-caf', plancher_caf),
                 ('plafond-caf', plafond_caf),
-                ('heures-semaine', GetHeureString(cotisation.heures_semaine)),
-                ('heures-periode', cotisation.heures_periode),
-                ('nombre-factures', cotisation.nombre_factures),
-                ('heures-mois', cotisation.heures_mois),
-                ('montant-heure-garde', cotisation.montant_heure_garde),
-                ('cotisation-mensuelle', "%.2f" % cotisation.cotisation_mensuelle),
+                ('heures-semaine', GetHeureString( self.cotisation.heures_semaine)),
+                ('heures-periode', self.cotisation.heures_periode),
+                ('nombre-factures', self.cotisation.nombre_factures),
+                ('heures-mois', self.cotisation.heures_mois),
+                ('montant-heure-garde', self.cotisation.montant_heure_garde),
+                ('cotisation-mensuelle', self.cotisation.cotisation_mensuelle),
                 ('date', '%.2d/%.2d/%d' % (self.date.day, self.date.month, self.date.year)),
                 ('debut-inscription', inscription.debut),
                 ('fin-inscription', inscription.fin),
-                ('annee-debut', cotisation.debut.year),
-                ('annee-fin', cotisation.debut.year+1),
+                ('annee-debut', self.cotisation.debut.year),
+                ('annee-fin', self.cotisation.debut.year+1),
                 ('permanences', self.GetPermanences(inscription)),
-                ('enfants-a-charge', cotisation.enfants_a_charge),
+                ('enfants-a-charge', self.cotisation.enfants_a_charge),
                 ('carence-maladie', creche.minimum_maladie),
                 ('IsPresentDuringTranche', self.IsPresentDuringTranche),
                 ]
         
-        if cotisation.assiette_annuelle is not None:
-            fields.append(('assiette-annuelle', "%.2f" % cotisation.assiette_annuelle))
-            fields.append(('taux-effort', cotisation.taux_effort))
+        if self.cotisation.assiette_annuelle is not None:
+            fields.append(('annee-revenu', self.cotisation.date_revenus.year))
+            fields.append(('assiette-annuelle', self.cotisation.assiette_annuelle))
+            fields.append(('assiette-mensuelle', self.cotisation.assiette_mensuelle))
+            fields.append(('taux-effort', self.cotisation.taux_effort))
+            
+        for i, (parent, revenu, abattement) in enumerate(self.cotisation.revenus_parents):
+            i += 1
+            fields.append(('parent%d' % i, GetPrenomNom(parent)))
+            fields.append(('relation-parent%d' % i, parent.relation))
+            fields.append(('revenu-parent%d' % i, revenu))
+            fields.append(('abattement-parent%d' % i, abattement))
             
         if creche.conges_inscription or creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
-            fields.append(('dates-conges-inscription', ", ".join([GetDateString(d) for d in cotisation.conges_inscription])))
-            fields.append(('heures-fermeture-creche', GetHeureString(cotisation.heures_fermeture_creche)))
-            fields.append(('heures-accueil-non-facture', GetHeureString(cotisation.heures_accueil_non_facture)))
-            heures_brut_periode = cotisation.heures_periode + cotisation.heures_fermeture_creche + cotisation.heures_accueil_non_facture
+            fields.append(('dates-conges-inscription', ", ".join([GetDateString(d) for d in self.cotisation.conges_inscription])))
+            fields.append(('heures-fermeture-creche', GetHeureString(self.cotisation.heures_fermeture_creche)))
+            fields.append(('heures-accueil-non-facture', GetHeureString(self.cotisation.heures_accueil_non_facture)))
+            heures_brut_periode = self.cotisation.heures_periode + self.cotisation.heures_fermeture_creche + self.cotisation.heures_accueil_non_facture
             fields.append(('heures-brut-periode', GetHeureString(heures_brut_periode)))
-            fields.append(('semaines-brut-periode', "%.2f" % (heures_brut_periode / cotisation.heures_semaine)))
+            fields.append(('semaines-brut-periode', "%.2f" % (heures_brut_periode / self.cotisation.heures_semaine)))
     
         for jour in range(5):
             jour_reference = inscription.reference[jour]
@@ -114,16 +114,15 @@ class ContratAccueilModifications(object):
 #                fields.append(('ne-e', u"né"))
 #            else:
 #                fields.append(('ne-e', u"née"))
-            
-        ReplaceTextFields(doc, fields)
-        return errors
-    
+
+        return fields
+
     def IsPresentDuringTranche(self, weekday, debut, fin):
         journee = self.inscrit.getInscription(self.date).reference[weekday]
-        for i in range(int(debut * (60 / BASE_GRANULARITY)), int(fin * (60 / BASE_GRANULARITY))):
-            if journee.values[i]:
-                return "X"
-        return ""
+        if IsPresentDuringTranche(journee, debut, fin):
+            return "X"
+        else:
+            return ""
     
     def GetPermanences(self, inscription):
         jours, heures = inscription.GetJoursHeuresReference()           
@@ -137,7 +136,54 @@ class ContratAccueilModifications(object):
             return 2 + result
         else:
             return result        
+
+class ContratAccueilModifications(DocumentAccueilModifications):
+    def __init__(self, who, date):
+        DocumentAccueilModifications.__init__(self, who, date)
+        self.template = 'Contrat accueil.odt'
+        self.default_output = u"Contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
+
+    def execute(self, filename, dom):
+        if filename != 'content.xml':
+            return None
+        
+        fields = self.GetFields()
+        
+        # print dom.toprettyxml()
+        doc = dom.getElementsByTagName("office:text")[0]
+            
+        ReplaceTextFields(doc, fields)
+        return {}
     
+class FraisGardeModifications(DocumentAccueilModifications):
+    def __init__(self, who, date):
+        DocumentAccueilModifications.__init__(self, who, date)
+        self.template = 'Frais de garde.ods'
+        self.default_output = u"Frais de garde %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
+        
+    def execute(self, filename, dom):
+        if filename != 'content.xml':
+            return None
+        
+        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
+        table = spreadsheet.getElementsByTagName("table:table").item(0)       
+        lignes = table.getElementsByTagName("table:table-row")
+
+        fields = self.GetFields()
+                      
+        ReplaceFields(lignes, fields)
+        if len(self.cotisation.revenus_parents) < 2:
+            table.removeChild(lignes[3])
+            table.removeChild(lignes[4])
+        elif not self.cotisation.revenus_parents[1][2]:
+            table.removeChild(lignes[4]) 
+        if len(self.cotisation.revenus_parents) < 1:
+            table.removeChild(lignes[1])
+            table.removeChild(lignes[2])
+        elif not self.cotisation.revenus_parents[0][2]:
+            table.removeChild(lignes[2])
+            
+        return {} 
             
 
 if __name__ == '__main__':
@@ -151,7 +197,14 @@ if __name__ == '__main__':
 
     filename = 'contrat-1.odt'
     try:
-        GenerateDocument(ContratAccueilModifications(creche.inscrits[0], today), filename)
+        GenerateOODocument(ContratAccueilModifications(creche.inscrits[0], today), filename)
+        print u'Fichier %s généré' % filename
+    except CotisationException, e:
+        print e.errors
+        
+    filename = 'frais-1.ods'
+    try:
+        GenerateOODocument(FraisGardeModifications(creche.inscrits[0], today), filename)
         print u'Fichier %s généré' % filename
     except CotisationException, e:
         print e.errors

@@ -120,5 +120,5 @@ if __name__ == '__main__':
     today = datetime.date.today()
 
     filename = 'coordonneesparent.ods'
-    print GenerateDocument(CoordonneesModifications(today), filename)
+    print GenerateOODocument(CoordonneesModifications(today), filename)
     print u'Fichier %s généré' % filename

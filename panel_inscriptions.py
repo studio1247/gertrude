@@ -23,20 +23,7 @@ from controls import *
 from planning import *
 from cotisation import *
 from ooffice import *
-from contrat_accueil import ContratAccueilModifications
-
-def isPresentDuringTranche(journee, debut, fin):
-    for i in range(int(debut * (60 / BASE_GRANULARITY)), int(fin * (60 / BASE_GRANULARITY))):
-        if journee.values[i]:
-            return True
-    return False
-
-def HeuresTranche(journee, debut, fin):
-    result = 0
-    for i in range(int(debut * (60 / BASE_GRANULARITY)), int(fin * (60 / BASE_GRANULARITY))):
-        if journee.values[i]:
-            result += BASE_GRANULARITY
-    return float(result) / 60
+from contrat_accueil import ContratAccueilModifications, FraisGardeModifications
 
 def ParseHtml(filename, context):
     locals().update(context.__dict__)
@@ -80,9 +67,8 @@ def ParseHtml(filename, context):
         data = data.replace(text, replacement)
 
     return data
-
     
-class ForfaitPanel(wx.Panel):
+class FraisAccueilPanel(wx.Panel):
     def __init__(self, parent):
         self.parent = parent
         wx.Panel.__init__(self, parent)
@@ -91,6 +77,9 @@ class ForfaitPanel(wx.Panel):
         self.periodechoice = wx.Choice(self)
         self.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.periodechoice)
         sizer1.Add(self.periodechoice, 0)
+        self.frais_accueil_button = wx.Button(self, -1, u"Exporter")
+        sizer1.Add(self.frais_accueil_button, 0, wx.LEFT, 5)
+        self.Bind(wx.EVT_BUTTON, self.EvtGenerationFraisAccueil, self.frais_accueil_button)
         self.contrat_button = wx.Button(self, -1, u"Générer le contrat")
         sizer1.Add(self.contrat_button, 0, wx.LEFT, 5)
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationContrat, self.contrat_button)
@@ -111,19 +100,19 @@ class ForfaitPanel(wx.Panel):
             if isinstance(context, CotisationException):
                 error = '<br>'.join(context.errors)
                 self.html = u"<html><body><b>Les frais de garde mensuels ne peuvent être calcul&eacute;s pour la (les) raison(s) suivante(s) :</b><br>" + error  + "</body></html>"
+                self.frais_accueil_button.Disable()
+                self.contrat_button.Disable()
             else:
-                if context.mode_inscription == MODE_CRECHE:
-                    str_inscription = "_creche"
-                else:
-                    str_inscription = "_hg"
                 if creche.mode_facturation == FACTURATION_HORAIRES_REELS:
-                    str_facturation = "_reel"
-                    str_inscription = "_creche"
+                    filename = "Frais accueil reel.html"
                 elif creche.mode_facturation == FACTURATION_PAJE:
-                    str_facturation = "_paje"
+                    filename = "Frais accueil paje.html"
                 else:
-                    str_facturation = ""                
-                self.html = ParseHtml(GetTemplateFile("frais_de_garde%s%s.html" % (str_inscription, str_facturation)), context)
+                    filename = "Frais accueil defaut.html"   
+                self.html = ParseHtml(GetTemplateFile(filename), context)
+                self.frais_accueil_button.Enable()
+                self.contrat_button.Enable()
+
 
         self.html_window.SetPage(self.html)
         
@@ -154,6 +143,7 @@ class ForfaitPanel(wx.Panel):
             if len(self.cotisations) > 0:
                 self.current_cotisation = self.cotisations[-1]
                 self.periodechoice.Enable()
+                self.frais_accueil_button.Enable()
                 self.contrat_button.Enable()
                 for c in self.cotisations:
                     self.periodechoice.Append(date2str(c[0]) + ' - ' + date2str(c[1]))
@@ -161,10 +151,12 @@ class ForfaitPanel(wx.Panel):
             else:
                 self.current_cotisation = None
                 self.periodechoice.Disable()
+                self.frais_accueil_button.Disable()
                 self.contrat_button.Disable()
         else:
             self.current_cotisation = None
             self.periodechoice.Disable()
+            self.frais_accueil_button.Disable()
             self.contrat_button.Disable()
         self.UpdatePage()
         
@@ -173,6 +165,9 @@ class ForfaitPanel(wx.Panel):
         self.current_cotisation = self.cotisations[ctrl.GetSelection()]
         self.UpdatePage()
         
+    def EvtGenerationFraisAccueil(self, evt):
+        DocumentDialog(self, FraisGardeModifications(self.inscrit, self.current_cotisation[0])).ShowModal()
+
     def EvtGenerationContrat(self, evt):
         DocumentDialog(self, ContratAccueilModifications(self.inscrit, self.current_cotisation[0])).ShowModal()
 
@@ -733,7 +728,7 @@ class InscriptionsNotebook(wx.Notebook):
             self.conges_panel = None
 
         if profil & PROFIL_TRESORIER:
-            self.forfait_panel = ForfaitPanel(self)
+            self.forfait_panel = FraisAccueilPanel(self)
             self.AddPage(self.forfait_panel, 'Frais de garde mensuels')
         else:
             self.forfait_panel = None

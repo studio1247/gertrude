@@ -164,5 +164,5 @@ if __name__ == '__main__':
     today = datetime.date.today()
 
     filename = 'rapport_frequentation_%d.ods' % (today.year)
-    print 'erreurs :', GenerateDocument(RapportFrequentationModifications(today.year), filename)
+    print 'erreurs :', GenerateOODocument(RapportFrequentationModifications(today.year), filename)
     print u'Fichier %s généré' % filename

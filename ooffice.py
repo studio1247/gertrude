@@ -22,7 +22,7 @@ import re, urllib
 import wx, wx.lib.filebrowsebutton
 import traceback
 import unicodedata
-from functions import GetTemplateFile
+from functions import *
 
 def GetText(value):
     if isinstance(value, basestring):
@@ -229,11 +229,11 @@ def GetTables(filename):
     spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
     return spreadsheet.getElementsByTagName("table:table")
 
-def GenerateDocument(modifications, filename=None, gauge=None):
+def GenerateOODocument(modifications, filename=None, gauge=None):
     if gauge:
         gauge.SetValue(0)
     if not filename:
-        filename = unicodedata.normalize("NFKD", modification.default_output).encode('ascii', 'ignore')
+        filename = unicodedata.normalize("NFKD", modifications.default_output).encode('ascii', 'ignore')
     template = GetTemplateFile(modifications.template)
     errors = {}
     zip = zipfile.ZipFile(template, 'r')
@@ -267,6 +267,27 @@ def GenerateDocument(modifications, filename=None, gauge=None):
     if gauge:
         gauge.SetValue(100)
     return errors
+
+def GenerateHtmlDocument(modifications, filename=None, gauge=None):
+    if gauge:
+        gauge.SetValue(0)
+    if not filename:
+        filename = unicodedata.normalize("NFKD", modifications.default_output).encode('ascii', 'ignore')
+    template = GetTemplateFile(modifications.template)
+    html = file(template, 'r').read()
+    if gauge:
+        modifications.gauge = gauge
+        gauge.SetValue(5)
+        
+    html = modifications.execute(html)
+    if not isinstance(html, basestring):
+        return html 
+
+    file(filename, 'w').write(html)
+    if gauge:
+        gauge.SetValue(100)
+        
+    return {}
 
 def getOOoContext():
     import win32com.client
@@ -446,7 +467,10 @@ class DocumentDialog(wx.Dialog):
         config.documents_directory = os.path.dirname(self.filename)
         dlg = None
         try:
-            errors = GenerateDocument(self.modifications, filename=self.oo_filename, gauge=self.gauge)
+            if self.oo_filename.endswith(".html"):
+                errors = GenerateHtmlDocument(self.modifications, filename=self.oo_filename, gauge=self.gauge)
+            else:
+                errors = GenerateOODocument(self.modifications, filename=self.oo_filename, gauge=self.gauge)
             if pdf:
                 convert_to_pdf(self.oo_filename, self.filename)
                 os.remove(self.oo_filename)
@@ -481,7 +505,7 @@ class DocumentDialog(wx.Dialog):
             if not result:
                 dlg = wx.MessageDialog(self, "Impossible d'ouvrir le document", 'Erreur', wx.OK|wx.ICON_WARNING)
                 dlg.ShowModal()
-                dlg.Destroy()
+                dlg.Destroy()               
     
 if __name__ == '__main__':
     save_current_document('./document.odt')

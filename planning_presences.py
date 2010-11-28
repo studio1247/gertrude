@@ -203,7 +203,7 @@ if __name__ == '__main__':
 
     filename = 'planning-1.ods'
     try:
-        GenerateDocument(PlanningModifications(today), filename)
+        GenerateOODocument(PlanningModifications(today), filename)
         print u'Fichier %s généré' % filename
     except CotisationException, e:
         print e.errors
