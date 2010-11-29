@@ -671,6 +671,9 @@ class Creche(object):
             if activite.mode == MODE_SANS_HORAIRES:
                 result.append(activite) 
         return result
+    
+    def GetAmplitudeHoraire(self):
+        return self.fermeture - self.ouverture
         
     def __setattr__(self, name, value):
         self.__dict__[name] = value

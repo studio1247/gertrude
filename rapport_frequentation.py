@@ -34,17 +34,20 @@ class RapportFrequentationModifications(object):
         self.errors = {}
 
     def execute(self, filename, dom):
-        if filename == 'styles.xml':
-            fields = [('nom-creche', creche.nom),
+        fields = [('nom-creche', creche.nom),
                       ('adresse-creche', creche.adresse),
                       ('code-postal-creche', str(creche.code_postal)),
                       ('ville-creche', creche.ville),
                       ('capacite', creche.capacite),
-                     ]
+                      ('capacite-creche', creche.capacite),
+                      ('amplitude-horaire', creche.GetAmplitudeHoraire())]
+                      
+        if filename == 'styles.xml':
             ReplaceTextFields(dom, fields)
             return []
 
-        elif filename == 'content.xml':   
+        elif filename == 'content.xml':
+            ReplaceFields(dom, fields)
             spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
             tables = spreadsheet.getElementsByTagName("table:table")
             
@@ -103,26 +106,29 @@ class RapportFrequentationModifications(object):
                     for j, jour in enumerate(jours):
                         date = datetime.date(debut.year, debut.month, jour)
                         state, heures_reference, heures_realisees, heures_supplementaires = inscrit.getState(date)
-                        heures = heures_reference+heures_supplementaires
-                        if not heures:
-                            heures = ""
-                        ReplaceFields(cells[2+j], [('heures', heures)])
+                        heures_facturees = heures_reference + heures_supplementaires
+                        if not heures_facturees:
+                            heures_facturees = ""
+                        if not heures_realisees:
+                            heures_realisees = ""
+                        ReplaceFields(cells[2+j], [('heures-realisees', heures_realisees),
+                                                   ('heures-facturees', heures_facturees)])
                     total_cell = cells[len(jours)+2]
-                    total_cell.setAttribute("table:formula", "of:=SUM([.C%d:.%c%d])" % (i+2, chr(66+len(jours)), i+2))
+                    total_cell.setAttribute("table:formula", "of:=SUM([.C%d:.%s%d])" % (i+2, GetColumnName(1+len(jours)), i+2))
                     if i == 0:
                         IncrementFormulas(cells[len(jours)+4:], column=len(jours)-1)
-                        cells[len(jours)+5].setAttribute("table:formula", "of:=COUNT([.C1:.%c1])" % chr(66+len(jours)))
+                        cells[len(jours)+5].setAttribute("table:formula", "of:=COUNT([.C1:.%s1])" % GetColumnName(1+len(jours)))
                         for cell in line_template.getElementsByTagName("table:table-cell")[len(jours)+3:]:
                             line_template.removeChild(cell)
                     if not inscrit in inscrits_annee:
                         inscrits_annee[inscrit] = []
-                    inscrits_annee[inscrit].append("%s.%c%d" % (months[mois-1], chr(67+len(jours)), i+2))
+                    inscrits_annee[inscrit].append("%s.%s%d" % (months[mois-1], GetColumnName(2+len(jours)), i+2))
                 table.removeChild(line_template)
                 last_line = 1 + len(inscriptions)
                 for i, cell in enumerate(sum_line.getElementsByTagName("table:table-cell")[1:2+len(jours)]):
-                    column = chr(67+i)
-                    cell.setAttribute("table:formula", "of:=SUM([.%c2:.%c%d])" % (column, column, last_line))
-                jours_mois.append("%s.%c2" % (months[mois-1], chr(70+len(jours))))
+                    column = GetColumnName(2+i)
+                    cell.setAttribute("table:formula", "of:=SUM([.%s2:.%s%d])" % (column, column, last_line))
+                jours_mois.append("%s.%s2" % (months[mois-1], GetColumnName(5+len(jours))))
             spreadsheet.removeChild(template)
             
             # La recap de l'annee

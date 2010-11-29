@@ -31,7 +31,19 @@ def GetText(value):
         return '%.2d/%.2d/%.4d' % (value.day, value.month, value.year)
     else:
         return str(value)
-                
+
+def GetColumnName(index):
+    if index < 26:
+        return chr(65+index)
+    else:
+        return chr(64+(index / 26)) + chr(65+(index % 26))
+    
+def GetColumnIndex(name):
+    if len(name) == 1:
+        return ord(name) - 65
+    elif len(name) == 2:
+        return (ord(name[0]) - 64) * 26 + (ord(name[0]) - 65)    
+                    
 def evalFields(fields):
     for i, field in enumerate(fields[:]):
         if len(field) == 2:
@@ -150,7 +162,7 @@ def ReplaceFields(cellules, fields):
     evalFields(fields)
     
     # Si l'argument est une ligne ...
-    if cellules.__class__ == xml.dom.minidom.Element:
+    if cellules.__class__ in (xml.dom.minidom.Element, xml.dom.minidom.Document):
         if cellules.nodeName == "table:table-cell":
             cellules = [cellules]
         else:
@@ -163,6 +175,13 @@ def ReplaceFields(cellules, fields):
 
     # Remplacement ...
     for cellule in cellules:
+        formula = cellule.getAttribute("table:formula")
+        if formula:
+            for param, value, text in fields:
+                tag = '<%s>' % param
+                if tag in formula:
+                    formula = formula.replace(tag, text)
+            cellule.setAttribute("table:formula", formula)
         nodes = cellule.getElementsByTagName("text:p")
         for node in nodes:
             if node.firstChild and node.firstChild.nodeType == node.TEXT_NODE:
@@ -203,7 +222,7 @@ def IncrementFormulas(cellules, row=0, column=0):
             while mo is not None:
                 mo = formula_gure.search(formula)
                 if mo:
-                    formula = formula.replace(mo.group(0), "[_.%s%d_]" % (chr(ord(mo.group(1))+column), int(mo.group(2))+row))
+                    formula = formula.replace(mo.group(0), "[_.%s%d_]" % (GetColumnName(GetColumnIndex(mo.group(1))+column), int(mo.group(2))+row))
             formula = formula.replace('[_', '[').replace('_]', ']')
             cellule.setAttribute("table:formula", formula)
             
