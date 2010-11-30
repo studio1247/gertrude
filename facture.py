@@ -26,6 +26,7 @@ class FactureFinMois(object):
         self.mois = mois
         self.debut_recap = datetime.date(annee, mois, 1)
         self.fin_recap = getMonthEnd(self.debut_recap)
+        self.date = self.fin_recap
         self.options = options
         self.cotisation_mensuelle = 0.0
         self.heures_facturees = [0.0, 0.0]
@@ -171,6 +172,7 @@ class FactureDebutMois(FactureFinMois):
             facture_precedente = FactureFinMois(inscrit, annee, mois-1, options)
         self.debut_recap = facture_precedente.debut_recap
         self.fin_recap = facture_precedente.fin_recap
+        self.date = datetime.date(annee, mois, 1)
         self.supplement = facture_precedente.supplement
         self.deduction = facture_precedente.deduction
         self.jours_presence_selon_contrat = facture_precedente.jours_presence_selon_contrat

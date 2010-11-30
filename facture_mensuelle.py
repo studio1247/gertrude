@@ -124,7 +124,7 @@ class FactureModifications(object):
                         ('de-mois-recap', '%s %d' % (GetDeMoisStr(facture.debut_recap.month - 1), facture.debut_recap.year)),
                         ('prenom', inscrit.prenom),
                         ('parents', GetParentsString(inscrit)),
-                        ('date', '01/%.2d/%d' % (facture.mois, facture.annee)),
+                        ('date', '%.2d/%.2d/%d' % (facture.date.day, facture.mois, facture.annee)),
                         ('numfact', '%03d%04d%02d' % (inscrit.idx, facture.annee, facture.mois)),
                         ('montant-heure-garde', '%.2f' % facture.montant_heure_garde),
                         ('cotisation-mensuelle', '%.2f' % facture.cotisation_mensuelle),
