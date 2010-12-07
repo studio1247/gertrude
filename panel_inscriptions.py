@@ -72,9 +72,9 @@ class FraisAccueilPanel(wx.Panel):
     def __init__(self, parent):
         self.parent = parent
         wx.Panel.__init__(self, parent)
-        sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
         sizer1 = wx.BoxSizer(wx.HORIZONTAL)
-        self.periodechoice = wx.Choice(self)
+        self.periodechoice = wx.Choice(self, size=(150,0))
         self.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.periodechoice)
         sizer1.Add(self.periodechoice, 0)
         self.frais_accueil_button = wx.Button(self, -1, u"Exporter")
@@ -83,10 +83,10 @@ class FraisAccueilPanel(wx.Panel):
         self.contrat_button = wx.Button(self, -1, u"Générer le contrat")
         sizer1.Add(self.contrat_button, 0, wx.LEFT, 5)
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationContrat, self.contrat_button)
-        sizer.Add(sizer1, 0, wx.ALL, 5)
+        self.sizer.Add(sizer1, 0, wx.ALL, 5)
         self.html_window = wx.html.HtmlWindow(self, style=wx.SUNKEN_BORDER)
-        sizer.Add(self.html_window, 1, wx.EXPAND|wx.ALL-wx.TOP, 5)
-        self.SetSizer(sizer)
+        self.sizer.Add(self.html_window, 1, wx.EXPAND|wx.ALL-wx.TOP, 5)
+        self.SetSizer(self.sizer)
 
     def UpdatePage(self):      
         if self.inscrit is None:

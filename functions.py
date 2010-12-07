@@ -26,6 +26,12 @@ def getFirstMonday():
         first_monday += datetime.timedelta(1)
     return first_monday
 
+def GetYearStart(date):
+    return datetime.date(date.year, 1, 1)
+
+def GetYearEnd(date):
+    return datetime.date(date.year, 12, 31)
+
 def getMonthStart(date):
     return datetime.date(date.year, date.month, 1)
 

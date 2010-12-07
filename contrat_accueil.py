@@ -88,12 +88,12 @@ class DocumentAccueilModifications(object):
             fields.append(('assiette-mensuelle', self.cotisation.assiette_mensuelle))
             fields.append(('taux-effort', self.cotisation.taux_effort))
             
-        for i, (parent, revenu, abattement) in enumerate(self.cotisation.revenus_parents):
-            i += 1
-            fields.append(('parent%d' % i, GetPrenomNom(parent)))
-            fields.append(('relation-parent%d' % i, parent.relation))
-            fields.append(('revenu-parent%d' % i, revenu))
-            fields.append(('abattement-parent%d' % i, abattement))
+            for i, (parent, revenu, abattement) in enumerate(self.cotisation.revenus_parents):
+                i += 1
+                fields.append(('parent%d' % i, GetPrenomNom(parent)))
+                fields.append(('relation-parent%d' % i, parent.relation))
+                fields.append(('revenu-parent%d' % i, revenu))
+                fields.append(('abattement-parent%d' % i, abattement))
             
         if creche.conges_inscription or creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
             fields.append(('dates-conges-inscription', ", ".join([GetDateString(d) for d in self.cotisation.conges_inscription])))

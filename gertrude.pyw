@@ -195,7 +195,7 @@ class GertrudeFrame(wx.Frame):
             if result:
                 version, location = result.split()
                 wx.PostEvent(self, self.UpdateEvent(version=version, location=location))
-        except Exception, e:
+        except:
             return None
     
     def OnChangementDatabase(self, event):

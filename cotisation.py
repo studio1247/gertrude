@@ -61,7 +61,7 @@ class Cotisation(object):
                 self.debut, self.fin = self.inscription.fin_periode_adaptation + datetime.timedelta(1), self.inscription.fin
         else:
             self.debut, self.fin = self.inscription.debut, self.inscription.fin
-        
+            
         if creche.formule_taux_horaire_needs_revenus():
             self.revenus_parents = [ ]
             self.date_revenus = GetDateRevenus(self.date)
@@ -72,7 +72,7 @@ class Cotisation(object):
                     if revenus_parent is None or revenus_parent == '':
                         errors.append(u" - Les déclarations de revenus de %s sont incomplètes." % parent.relation)
                     else:
-                        self.AjustePeriode(revenus_parent)
+                        self.AjustePeriode((GetYearStart(self.date), GetYearEnd(self.date)))
                         self.assiette_annuelle += float(revenus_parent.revenu)
                         if revenus_parent.chomage:
                             abattement = 0.3 * float(revenus_parent.revenu)
@@ -113,7 +113,7 @@ class Cotisation(object):
         self.AjustePeriode((debut, fin))
         
         if self.fin is None:
-            self.fin = datetime.date(self.debut.year, 12, 31)
+            self.fin = datetime.date(self.date.year, 12, 31)
 
         if len(errors) > 0:
             raise CotisationException(errors)
