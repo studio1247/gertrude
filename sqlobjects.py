@@ -128,7 +128,10 @@ class Day(object):
                 break
             elif self.values[i] > 0:
                 value += 5.0
-        self.last_heures = value / 60 
+        if creche.mode_facturation == FACTURATION_FORFAIT_10H:
+            self.last_heures = 10.0 * (value > 0)
+        else:
+            self.last_heures = value / 60
         return self.last_heures
     
     def copy(self, day, previsionnel=True):

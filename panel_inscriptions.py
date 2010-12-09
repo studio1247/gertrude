@@ -74,7 +74,7 @@ class FraisAccueilPanel(wx.Panel):
         wx.Panel.__init__(self, parent)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         sizer1 = wx.BoxSizer(wx.HORIZONTAL)
-        self.periodechoice = wx.Choice(self, size=(150,0))
+        self.periodechoice = wx.Choice(self, size=(150,-1))
         self.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.periodechoice)
         sizer1.Add(self.periodechoice, 0)
         self.frais_accueil_button = wx.Button(self, -1, u"Exporter")

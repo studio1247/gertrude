@@ -121,7 +121,7 @@ class Cotisation(object):
         if options & TRACES: print u"\nCotisation de %s au %s (%s - %s) :" % (GetPrenomNom(inscrit), date, self.debut, self.fin)
                 
         if creche.mode_facturation == FACTURATION_FORFAIT_10H:
-            self.heures_semaine = self.jours_semaine * 10
+            self.heures_semaine = 10.0 * self.jours_semaine
             self.heures_mois = self.heures_semaine * 4
             self.heures_periode = 12 * self.heures_mois
             self.nombre_factures = 12 - len(creche.mois_sans_facture)

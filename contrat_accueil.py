@@ -65,7 +65,7 @@ class DocumentAccueilModifications(object):
                 ('directeur', directeur),
                 ('plancher-caf', plancher_caf),
                 ('plafond-caf', plafond_caf),
-                ('heures-semaine', GetHeureString( self.cotisation.heures_semaine)),
+                ('heures-semaine', GetHeureString(self.cotisation.heures_semaine)),
                 ('heures-periode', self.cotisation.heures_periode),
                 ('nombre-factures', self.cotisation.nombre_factures),
                 ('heures-mois', self.cotisation.heures_mois),
@@ -95,13 +95,16 @@ class DocumentAccueilModifications(object):
                 fields.append(('revenu-parent%d' % i, revenu))
                 fields.append(('abattement-parent%d' % i, abattement))
             
-        if creche.conges_inscription or creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
-            fields.append(('dates-conges-inscription', ", ".join([GetDateString(d) for d in self.cotisation.conges_inscription])))
-            fields.append(('heures-fermeture-creche', GetHeureString(self.cotisation.heures_fermeture_creche)))
-            fields.append(('heures-accueil-non-facture', GetHeureString(self.cotisation.heures_accueil_non_facture)))
-            heures_brut_periode = self.cotisation.heures_periode + self.cotisation.heures_fermeture_creche + self.cotisation.heures_accueil_non_facture
-            fields.append(('heures-brut-periode', GetHeureString(heures_brut_periode)))
-            fields.append(('semaines-brut-periode', "%.2f" % (heures_brut_periode / self.cotisation.heures_semaine)))
+            if creche.mode_facturation != FACTURATION_FORFAIT_10H:
+                if creche.conges_inscription:
+                    fields.append(('dates-conges-inscription', ", ".join([GetDateString(d) for d in self.cotisation.conges_inscription])))
+                    
+                if creche.conges_inscription or creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
+                    fields.append(('heures-fermeture-creche', GetHeureString(self.cotisation.heures_fermeture_creche)))
+                    fields.append(('heures-accueil-non-facture', GetHeureString(self.cotisation.heures_accueil_non_facture)))
+                    heures_brut_periode = self.cotisation.heures_periode + self.cotisation.heures_fermeture_creche + self.cotisation.heures_accueil_non_facture
+                    fields.append(('heures-brut-periode', GetHeureString(heures_brut_periode)))
+                    fields.append(('semaines-brut-periode', "%.2f" % (heures_brut_periode / self.cotisation.heures_semaine)))
     
         for jour in range(5):
             jour_reference = inscription.reference[jour]
