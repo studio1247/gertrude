@@ -204,7 +204,32 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         self.assertEquals(cotisation.heures_mois, 199.0)
         self.assertEquals(cotisation.nombre_factures, 11)
         
-    
+class LoupandisesTests(GertrudeTestCase):
+    def test_facture_periode_adaptation(self):
+        creche.mode_facturation = FACTURATION_PSU
+        creche.facturation_periode_adaptation = FACTURATION_HORAIRES_REELS
+        creche.temps_facturation = FACTURATION_FIN_MOIS
+        creche.facturation_jours_feries = JOURS_FERIES_DEDUITS_ANNUELLEMENT 
+        for label in ("Week-end", "1er janvier", "14 juillet", "1er novembre", "11 novembre", u"Lundi de Pâques", "Jeudi de l'Ascension", u"Lundi de Pentecôte"):
+            self.AddJourFerie(label)
+        self.AddConge("23/10/2010", "02/11/2010")
+        inscrit = Inscrit(creation=False)
+        inscrit.prenom, inscrit.nom = 'gertrude', 'gertrude'
+        self.AddParents(inscrit)
+        inscription = Inscription(inscrit, creation=False)
+        inscription.debut = datetime.date(2010, 9, 6)
+        inscription.fin_periode_adaptation = datetime.date(2010, 11, 30)
+        inscription.reference[1].add_activity(141, 201, 0, -1)
+        inscription.reference[3].add_activity(165, 201, 0, -1)
+        inscrit.inscriptions.append(inscription)
+        inscrit.journees[datetime.date(2010, 11, 4)] = Journee(inscrit, datetime.date(2010, 11, 4))
+        inscrit.journees[datetime.date(2010, 11, 8)] = Journee(inscrit, datetime.date(2010, 11, 8))
+        inscrit.journees[datetime.date(2010, 11, 8)].add_activity(120, 156, 0, None)
+        inscrit.journees[datetime.date(2010, 11, 9)] = Journee(inscrit, datetime.date(2010, 11, 9))
+        inscrit.journees[datetime.date(2010, 11, 9)].add_activity(105, 201, 0, None)
+        inscrit.journees[datetime.date(2010, 11, 18)] = Journee(inscrit, datetime.date(2010, 11, 18))
+        facture = Facture(inscrit, 2010, 11)
+        self.assertEquals(float("%.2f" % facture.heures_supplementaires), 29.0)
 
 if __name__ == '__main__':
     unittest.main()

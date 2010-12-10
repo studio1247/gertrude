@@ -125,19 +125,22 @@ class FactureFinMois(object):
                     elif state > 0:
                         if state & PREVISIONNEL:
                             self.previsionnel = True
+
                         if heures_supplementaires > 0:
                             self.jours_supplementaires[date] = heures_realisees
+                        else:
+                            self.jours_presence_selon_contrat[date] = heures_realisees
+                            
+                        if creche.mode_facturation == FACTURATION_HORAIRES_REELS or (creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date)):
+                            if not state & PREVISIONNEL:
+                                self.heures_supplementaires += heures_realisees
+                                self.supplement += heures_realisees * cotisation.montant_heure_garde
+                        elif heures_supplementaires > 0:
                             if creche.mode_facturation == FACTURATION_FORFAIT_10H:
                                 self.supplement += 10 * cotisation.montant_heure_garde
                             else:
                                 self.heures_supplementaires += heures_supplementaires
                                 self.supplement += cotisation.montant_heure_garde * heures_supplementaires
-                        if creche.mode_facturation == FACTURATION_HORAIRES_REELS or (creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date)):
-                            if not state & PREVISIONNEL:
-                                self.supplement += heures_realisees * cotisation.montant_heure_garde
-                                self.jours_presence_selon_contrat[date] = heures_realisees
-                        else:
-                            self.jours_presence_selon_contrat[date] = heures_realisees
 
                     if creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE or (creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION and inscription.IsInPeriodeAdaptation(date)):
                         activites = inscrit.GetExtraActivites(date)
