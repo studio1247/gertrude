@@ -32,7 +32,7 @@ except:
 import controls, zipfile, xml.dom.minidom, wx.html, ooffice
 from functions import GetBitmapFile
 
-VERSION = '0.83q'
+VERSION = '0.83s'
 
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):
