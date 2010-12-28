@@ -362,6 +362,12 @@ class ParentsPanel(InscriptionsTab):
         sizer4.Add(self.nouveau_referent, 0, wx.RIGHT+wx.LEFT+wx.BOTTOM, 10)
         self.Bind(wx.EVT_BUTTON, self.EvtNouveauReferent, self.nouveau_referent)
         self.sizer.Add(sizer4, 0, wx.EXPAND|wx.ALL, 5)
+        
+        sizer5 = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Notes'), wx.VERTICAL)
+        self.notes_parents_ctrl = AutoTextCtrl(self, None, 'notes_parents', style=wx.TE_MULTILINE)
+        sizer5.Add(self.notes_parents_ctrl, 0, wx.EXPAND+wx.RIGHT+wx.LEFT+wx.TOP, 10)
+        self.sizer.Add(sizer5, 0, wx.EXPAND|wx.ALL, 5)
+        
         self.SetSizer(self.sizer)
 
     def OnParentRelationChoice(self, event):
@@ -415,6 +421,7 @@ class ParentsPanel(InscriptionsTab):
 
     def SetInscrit(self, inscrit):
         self.inscrit = inscrit
+        self.notes_parents_ctrl.SetInstance(inscrit)
         self.UpdateContents()
         self.nouveau_referent.Enable(self.inscrit is not None)
 
@@ -712,6 +719,13 @@ class CongesPanel(InscriptionsTab):
         self.sizer.Layout()
         self.UpdateContents()
         
+class NotesPanel(InscriptionsTab):
+    def __init__(self, parent):        
+        InscriptionsTab.__init__(self, parent)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer.Add(AutoTextCtrl(self, None, 'notes', style=wx.TE_MULTILINE), 1, wx.EXPAND|wx.ALL, 5)
+        self.SetSizer(self.sizer)
+        
 class InscriptionsNotebook(wx.Notebook):
     def __init__(self, parent, *args, **kwargs):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT, *args, **kwargs)      
@@ -726,7 +740,7 @@ class InscriptionsNotebook(wx.Notebook):
             self.AddPage(self.conges_panel, u"Congés")
         else:
             self.conges_panel = None
-
+        self.AddPage(NotesPanel(self), "Notes")
         if profil & PROFIL_TRESORIER:
             self.forfait_panel = FraisAccueilPanel(self)
             self.AddPage(self.forfait_panel, 'Frais de garde mensuels')

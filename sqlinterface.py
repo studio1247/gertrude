@@ -188,7 +188,9 @@ class SQLConnection(object):
             handicap BOOLEAN,
             majoration BOOLEAN,
             marche BOOLEAN,
-            photo VARCHAR
+            photo VARCHAR,
+            notes VARCHAR,
+            notes_parents VARCHAR
           );""")
 
         cur.execute("""
@@ -337,7 +339,7 @@ class SQLConnection(object):
         cur = con.cursor()
         cur.execute('SELECT prenom, nom FROM INSCRITS')
         return ["%s %s" % entry for entry in cur.fetchall()]
-           
+        
     def Load(self, progress_handler=default_progress_handler):
         if not self.con:
             self.open()
@@ -973,6 +975,10 @@ class SQLConnection(object):
                 cur.execute('UPDATE PARENTS SET relation=? WHERE idx=?', ("maman", maman_idx[0]))
                 
         if version < 45:
+            cur.execute("ALTER TABLE INSCRITS ADD notes VARCHAR;")
+            cur.execute('UPDATE INSCRITS SET notes=?', ("",))
+            cur.execute("ALTER TABLE INSCRITS ADD notes_parents VARCHAR;")
+            cur.execute('UPDATE INSCRITS SET notes_parents=?', ("",))
             cur.execute("""  
               CREATE TABLE ALERTES (
                 idx INTEGER PRIMARY KEY,
