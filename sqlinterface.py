@@ -24,7 +24,7 @@ from functions import *
 from sqlobjects import *
 import wx
 
-VERSION = 44
+VERSION = 45
 
 def getdate(s):
     if s is None:
@@ -302,6 +302,14 @@ class SQLConnection(object):
             fin VARCHAR,
             label VARCHAR
           );""")
+        
+        cur.execute("""  
+          CREATE TABLE ALERTES (
+            idx INTEGER PRIMARY KEY,
+            texte VARCHAR,
+            date DATE,
+            acquittement BOOLEAN
+          );""")
 
         for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", u"15 août", "1er novembre", "11 novembre", u"25 décembre", u"Lundi de Pâques", "Jeudi de l'Ascension"):
             cur.execute("INSERT INTO CONGES (idx, debut) VALUES (NULL, ?)", (label, ))
@@ -329,7 +337,7 @@ class SQLConnection(object):
         cur = con.cursor()
         cur.execute('SELECT prenom, nom FROM INSCRITS')
         return ["%s %s" % entry for entry in cur.fetchall()]
-        
+           
     def Load(self, progress_handler=default_progress_handler):
         if not self.con:
             self.open()
@@ -482,7 +490,13 @@ class SQLConnection(object):
             bureau = Bureau(creation=False)
             bureau.debut, bureau.fin, bureau.president, bureau.vice_president, bureau.tresorier, bureau.secretaire, bureau.directeur, bureau.idx = getdate(debut), getdate(fin), president, vice_president, tresorier, secretaire, directeur, idx
             creche.bureaux.append(bureau)
-
+            
+        cur.execute('SELECT idx, date, texte, acquittement FROM ALERTES')
+        for idx, date, texte, acquittement in cur.fetchall():
+            alerte = Alerte(getdate(date), texte, acquittement, creation=False)
+            alerte.idx = idx
+            creche.alertes[texte] = alerte
+            
         creche.inscrits.sort()
         return creche
 
@@ -957,6 +971,15 @@ class SQLConnection(object):
                 papa_idx, maman_idx = cur.fetchall()
                 cur.execute('UPDATE PARENTS SET relation=? WHERE idx=?', ("papa", papa_idx[0]))
                 cur.execute('UPDATE PARENTS SET relation=? WHERE idx=?', ("maman", maman_idx[0]))
+                
+        if version < 45:
+            cur.execute("""  
+              CREATE TABLE ALERTES (
+                idx INTEGER PRIMARY KEY,
+                texte VARCHAR,
+                date DATE,
+                acquittement BOOLEAN
+              );""")
                         
         if version < VERSION:
             try:

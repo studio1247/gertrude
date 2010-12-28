@@ -23,6 +23,8 @@ import wx, wx.lib.wordwrap
 from wx.lib import masked
 from startdialog import StartDialog
 from config import Liste, Load, Save, Restore, Exit, ProgressHandler
+from functions import GetBitmapFile
+from alertes import CheckAlertes
 try:
     import winsound
 except:
@@ -30,9 +32,8 @@ except:
 
 # Don't remove these 2 lines (mandatory for py2exe)
 import controls, zipfile, xml.dom.minidom, wx.html, ooffice
-from functions import GetBitmapFile
 
-VERSION = '0.84'
+VERSION = '0.85a'
 
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):
@@ -184,8 +185,35 @@ class GertrudeFrame(wx.Frame):
         self.UpdateEvent, EVT_UPDATE_AVAILABLE_EVENT = wx.lib.newevent.NewEvent()
         self.Bind(EVT_UPDATE_AVAILABLE_EVENT, self.OnUpdateAvailable)
         thread.start_new_thread(self.CheckForUpdates, ())
+        
+        self.AlertEvent, EVT_ALERT_EVENT = wx.lib.newevent.NewEvent()
+        self.Bind(EVT_ALERT_EVENT, self.OnAlertAvailable)
+        thread.start_new_thread(self.CheckAlertes, ())
 
         self.Bind(wx.EVT_CLOSE, self.OnExit)
+    
+    def CheckAlertes(self):
+        new_alertes, alertes_non_acquittees = CheckAlertes()
+        if new_alertes or alertes_non_acquittees:
+            wx.PostEvent(self, self.AlertEvent(new_alertes=new_alertes, alertes_non_acquittees=alertes_non_acquittees))
+            
+    def OnAlertAvailable(self, event):
+        if event.new_alertes:
+            for alerte in event.new_alertes:
+                alerte.create()
+            history.append([])
+        if event.alertes_non_acquittees:
+            texte = ""
+            for alerte in event.alertes_non_acquittees:
+                texte += alerte.texte + "\n"
+            texte += "\n"
+            dlg = wx.MessageDialog(self, texte + "Voulez-vous acquitter ces alertes ?", "Gertrude", wx.YES_NO|wx.YES_DEFAULT|wx.CANCEL|wx.ICON_QUESTION)
+            result = dlg.ShowModal()
+            dlg.Destroy()
+            if result == wx.ID_YES:
+                for alerte in event.alertes_non_acquittees:
+                    alerte.acquittement = True
+                history.append([])
         
     def CheckForUpdates(self):
         try:

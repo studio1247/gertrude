@@ -620,6 +620,36 @@ class RelevesTab(AutoTab):
             end = start
         DocumentDialog(self, PlanningDetailleModifications((start, end))).ShowModal()
         
+class AlertesTab(AutoTab):
+    def __init__(self, parent):
+        AutoTab.__init__(self, parent)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.grid = wx.grid.Grid(self)
+        self.grid.CreateGrid(0, 3)
+        self.grid.SetRowLabelSize(1)
+        self.grid.SetColLabelValue(0, "ID")
+        self.grid.SetColLabelValue(1, "Date")
+        self.grid.SetColLabelValue(2, u"Libellé")
+        self.grid.SetColSize(0, 30)
+        self.grid.SetColSize(1, 100)
+        self.grid.SetColSize(2, 500)
+        self.UpdateContents()
+        self.sizer.Add(self.grid, -1, wx.EXPAND|wx.ALL, 5)
+        self.SetSizer(self.sizer)
+
+    def UpdateContents(self):
+        if self.grid.GetNumberRows() > 0:
+            self.grid.DeleteRows(0, self.grid.GetNumberRows())
+        alertes = creche.alertes.values()
+        alertes.sort(key=lambda alerte: alerte.date)
+        for row, alerte in enumerate(alertes):    
+            self.grid.AppendRows(1)
+            self.grid.SetCellValue(row, 0, str(row+1))
+            self.grid.SetCellValue(row, 1, date2str(alerte.date))
+            self.grid.SetCellValue(row, 2, alerte.texte)
+
+        self.grid.ForceRefresh()
+                
 class TableauxDeBordNotebook(wx.Notebook):
     def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
@@ -627,6 +657,7 @@ class TableauxDeBordNotebook(wx.Notebook):
         self.AddPage(EtatsPresenceTab(self), u"Etats de présence")
         self.AddPage(StatistiquesFrequentationTab(self), u'Statistiques de fréquentation')
         self.AddPage(RelevesTab(self), u'Edition de relevés')
+        self.AddPage(AlertesTab(self), u'Alertes')
 
     def UpdateContents(self):
         for page in range(self.GetPageCount()):

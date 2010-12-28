@@ -539,6 +539,7 @@ class Creche(object):
         self.facturation_periode_adaptation = PERIODE_ADAPTATION_FACTUREE_NORMALEMENT
         self.facturation_jours_feries = JOURS_FERIES_NON_DEDUITS
         self.formule_taux_horaire = None
+        self.alertes = {}
         self.calcule_jours_conges()
 
     def calcule_jours_conges(self):
@@ -1101,3 +1102,27 @@ class Inscrit(object):
         if other is self: return 0
         if other is None: return 1
         return cmp("%s %s" % (self.prenom, self.nom), "%s %s" % (other.prenom, other.nom))
+
+class Alerte(object):
+    def __init__(self, date, texte, acquittement=False, creation=True):
+        self.idx = None
+        self.date = date
+        self.texte = texte
+        self.acquittement = acquittement
+        if creation:
+            self.create()
+
+    def create(self):
+        print 'nouvelle alerte'
+        result = sql_connection.execute('INSERT INTO ALERTES (idx, date, texte, acquittement) VALUES(NULL,?,?,?)', (self.date, self.texte, self.acquittement))
+        self.idx = result.lastrowid
+        
+    def delete(self):
+        print 'suppression alerte'
+        sql_connection.execute('DELETE FROM ALERTES WHERE idx=?', (self.idx,))
+
+    def __setattr__(self, name, value):
+        self.__dict__[name] = value
+        if name in ['acquittement'] and self.idx:
+            print 'update', name
+            sql_connection.execute('UPDATE ALERTES SET %s=? WHERE idx=?' % name, (value, self.idx))
