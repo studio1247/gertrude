@@ -657,7 +657,8 @@ class TableauxDeBordNotebook(wx.Notebook):
         self.AddPage(EtatsPresenceTab(self), u"Etats de présence")
         self.AddPage(StatistiquesFrequentationTab(self), u'Statistiques de fréquentation')
         self.AddPage(RelevesTab(self), u'Edition de relevés')
-        self.AddPage(AlertesTab(self), u'Alertes')
+        if creche.gestion_alertes:
+            self.AddPage(AlertesTab(self), u'Alertes')
 
     def UpdateContents(self):
         for page in range(self.GetPageCount()):

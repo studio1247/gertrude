@@ -529,6 +529,7 @@ class Creche(object):
         self.conges_inscription = 0
         self.tarification_activites = ACTIVITES_NON_FACTUREES
         self.traitement_maladie = DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES
+        self.preinscriptions = False
         self.presences_previsionnelles = False
         self.presences_supplementaires = True
         self.modes_inscription = MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5
@@ -539,6 +540,7 @@ class Creche(object):
         self.facturation_periode_adaptation = PERIODE_ADAPTATION_FACTUREE_NORMALEMENT
         self.facturation_jours_feries = JOURS_FERIES_NON_DEDUITS
         self.formule_taux_horaire = None
+        self.gestion_alertes = False
         self.alertes = {}
         self.calcule_jours_conges()
 
@@ -681,7 +683,7 @@ class Creche(object):
         
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'majoration_localite', 'facturation_jours_feries', 'facturation_periode_adaptation'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'majoration_localite', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
@@ -787,7 +789,9 @@ class Inscription(SQLObject):
     def __init__(self, inscrit, duree_reference=7, creation=True):
         self.idx = None
         self.inscrit = inscrit
+        self.preinscription = False
         self.site = None
+        self.sites_preinscription = []
         self.debut = None
         self.fin = None
         self.mode = MODE_5_5
@@ -850,7 +854,9 @@ class Inscription(SQLObject):
         self.__dict__[name] = value
         if name in ('site', 'professeur') and self.idx:
             value = value.idx
-        if name in ['debut', 'fin', 'mode', 'fin_periode_adaptation', 'duree_reference', 'semaines_conges', 'site', 'professeur'] and self.idx:
+        elif name == "sites_preinscription":
+            value = " ".join([str(value.idx) for value in value])
+        if name in ['debut', 'fin', 'mode', 'fin_periode_adaptation', 'duree_reference', 'semaines_conges', 'preinscription', 'site', 'sites_preinscription', 'professeur'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE INSCRIPTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))   
 

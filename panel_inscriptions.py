@@ -482,7 +482,14 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         InscriptionsTab.__init__(self, parent)
         PeriodeMixin.__init__(self, 'inscriptions')
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(PeriodeChoice(self, self.nouvelleInscription), 0)
+        ligne_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        ligne_sizer.Add(PeriodeChoice(self, self.nouvelleInscription))
+        self.validation_button = wx.ToggleButton(self, -1, "Invalider l'inscription")
+        ligne_sizer.Add(self.validation_button, 0, wx.LEFT, 10)
+        self.Bind(wx.EVT_TOGGLEBUTTON, self.OnValidationInscription, self.validation_button)    
+        if not creche.preinscriptions:
+            self.validation_button.Show(False)
+        sizer.Add(ligne_sizer, 0, wx.TOP, 5)
         sizer1 = wx.FlexGridSizer(0, 2, 5, 10)
         sizer1.AddGrowableCol(1, 1)
         self.sites_items = wx.StaticText(self, -1, u"Site :"), AutoChoiceCtrl(self, None, 'site')
@@ -524,12 +531,24 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.UpdateContents()
         
     def nouvelleInscription(self): # TODO les autres pareil ...
-        return Inscription(self.inscrit)
+        inscription = Inscription(self.inscrit)
+        inscription.preinscription = creche.preinscriptions 
+        return inscription
 
     def SetInscrit(self, inscrit):
         self.inscrit = inscrit
         self.SetInstance(inscrit)
         self.UpdateContents()
+    
+    def OnValidationInscription(self, event):
+        obj = event.GetEventObject()
+        inscription = self.inscrit.inscriptions[self.periode]
+        if obj.GetValue():
+            inscription.preinscription = False
+            obj.SetLabel("Invalider l'inscription")
+        else:
+            inscription.preinscription = True
+            obj.SetLabel("Valider l'inscription")
         
     def onDureeReferenceChoice(self, event):
         duration = self.duree_reference_choice.GetClientData(self.duree_reference_choice.GetSelection())
@@ -578,16 +597,9 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
 
         InscriptionsTab.UpdateContents(self)
         self.mode_accueil_choice.Enable(creche.modes_inscription != MODE_5_5)
-        
-        if self.inscrit and self.periode is not None and self.periode != -1 and self.periode < len(self.inscrit.inscriptions):
-            for obj in [self.duree_reference_choice, self.mode_accueil_choice, self.button_5_5, self.button_copy]:
-                obj.Enable()
-            self.duree_reference_choice.SetSelection(self.inscrit.inscriptions[self.periode].duree_reference / 7 - 1)
-            self.planning_panel.SetInscription(self.inscrit.inscriptions[self.periode])
-        else:
-            self.planning_panel.SetInscription(None)
-            for obj in [self.duree_reference_choice, self.mode_accueil_choice, self.button_5_5, self.button_copy]:
-                obj.Disable()
+        self.validation_button.Show(creche.preinscriptions)
+
+        self.InternalUpdate()
             
         self.activity_choice.Clear()
         selected = 0
@@ -612,14 +624,24 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
 
     def SetPeriode(self, periode):
         PeriodeMixin.SetPeriode(self, periode)
+        self.InternalUpdate()
+    
+    def InternalUpdate(self):
         if self.inscrit and self.periode is not None and self.periode != -1 and self.periode < len(self.inscrit.inscriptions):
             inscription = self.inscrit.inscriptions[self.periode]
-            self.planning_panel.SetInscription(inscription)
-            for obj in [self.duree_reference_choice, self.mode_accueil_choice, self.button_5_5, self.button_copy]:
+            for obj in [self.duree_reference_choice, self.mode_accueil_choice, self.button_5_5, self.button_copy, self.validation_button]:
                 obj.Enable()
+            if inscription.preinscription:
+                self.validation_button.SetValue(False)
+                self.validation_button.SetLabel("Valider l'inscription")
+            else:
+                self.validation_button.SetValue(True)
+                self.validation_button.SetLabel("Invalider l'inscription")
             self.duree_reference_choice.SetSelection(inscription.duree_reference / 7 - 1)
+            self.planning_panel.SetInscription(inscription)
         else:
-            for obj in [self.duree_reference_choice, self.mode_accueil_choice, self.button_5_5, self.button_copy]:
+            self.planning_panel.SetInscription(None)
+            for obj in [self.duree_reference_choice, self.mode_accueil_choice, self.button_5_5, self.button_copy, self.validation_button]:
                 obj.Disable()
                 
 class CongesPanel(InscriptionsTab):

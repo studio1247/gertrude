@@ -193,9 +193,10 @@ class GertrudeFrame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.OnExit)
     
     def CheckAlertes(self):
-        new_alertes, alertes_non_acquittees = CheckAlertes()
-        if new_alertes or alertes_non_acquittees:
-            wx.PostEvent(self, self.AlertEvent(new_alertes=new_alertes, alertes_non_acquittees=alertes_non_acquittees))
+        if creche.gestion_alertes:
+            new_alertes, alertes_non_acquittees = CheckAlertes()
+            if new_alertes or alertes_non_acquittees:
+                wx.PostEvent(self, self.AlertEvent(new_alertes=new_alertes, alertes_non_acquittees=alertes_non_acquittees))
             
     def OnAlertAvailable(self, event):
         if event.new_alertes:
