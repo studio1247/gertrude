@@ -216,7 +216,7 @@ def GetInscritId(inscrit, inscrits):
             return inscrit.prenom + " " + inscrit.nom
     return inscrit.prenom
 
-def getInscritsByMode(start, end, mode): # TODO pourquoi retourner les index
+def GetInscritsByMode(start, end, mode): # TODO pourquoi retourner les index
     result = []
     for i, inscrit in enumerate(creche.inscrits):
         for inscription in inscrit.GetInscriptions(start, end):
@@ -264,7 +264,7 @@ def getTriParNomIndexes(indexes):
     indexes.sort(tri)
     return indexes
 
-def getPresentsIndexes(indexes, (debut, fin)):
+def getPresentsIndexes(indexes, (debut, fin), site=None):
     if indexes is None:
         indexes = range(len(creche.inscrits))
     result = []
@@ -274,13 +274,17 @@ def getPresentsIndexes(indexes, (debut, fin)):
         inscrit = creche.inscrits[indexes[i]]
         #print inscrit.prenom
         for inscription in inscrit.inscriptions:
-            if ((inscription.fin is None or inscription.fin >= debut) and ((not creche.preinscriptions or not inscription.preinscription) and inscription.debut != None and (not fin or inscription.debut <= fin))):
+            if ((inscription.fin is None or inscription.fin >= debut) and
+                (not creche.preinscriptions or not inscription.preinscription) and
+                (site is None or inscription.site == site) and
+                inscription.debut != None and 
+                (not fin or inscription.debut <= fin)):
                 result.append(indexes[i])
                 break
     return result
 
-def getInscrits(debut, fin):
-    indexes = getPresentsIndexes(None, (debut, fin))
+def GetInscrits(debut, fin, site=None):
+    indexes = getPresentsIndexes(None, (debut, fin), site=site)
     return [creche.inscrits[i] for i in indexes]
 
 def getLines(date, inscrits):

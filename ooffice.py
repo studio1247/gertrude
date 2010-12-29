@@ -184,32 +184,33 @@ def ReplaceFields(cellules, fields):
             cellule.setAttribute("table:formula", formula)
         nodes = cellule.getElementsByTagName("text:p")
         for node in nodes:
-            if node.firstChild and node.firstChild.nodeType == node.TEXT_NODE:
-                nodeText = node.firstChild.wholeText
-                if '<' in nodeText and '>' in nodeText:
-                    for param, value, text in fields:
-                        tag = '<%s>' % param
-                        if tag in nodeText:
-                            if value is None:
-                                nodeText = nodeText.replace(tag, '')
-                            elif isinstance(value, int) or isinstance(value, float):
-                                if len(nodes) == 1 and nodeText == tag:
-                                    cellule.setAttribute("office:value-type", 'float')
-                                    cellule.setAttribute("office:value", str(value))
-                                nodeText = nodeText.replace(tag, text)
-                            elif isinstance(value, datetime.date):
-                                if len(nodes) == 1 and nodeText == tag:
-                                    cellule.setAttribute("office:value-type", 'date')
-                                    cellule.setAttribute("office:date-value", '%d-%d-%d' % (value.year, value.month, value.day))
-                                nodeText = nodeText.replace(tag, text)
-                            else:
-                                nodeText = nodeText.replace(tag, text)
-
-                        if '<' not in nodeText or '>' not in nodeText:
-                            break
-
-                    # print node.firstChild.wholeText, '=>', text
-                    node.firstChild.replaceWholeText(nodeText)
+            for child in node.childNodes:
+                if child.nodeType == node.TEXT_NODE:
+                    nodeText = child.wholeText
+                    if '<' in nodeText and '>' in nodeText:
+                        for param, value, text in fields:
+                            tag = '<%s>' % param
+                            if tag in nodeText:
+                                if value is None:
+                                    nodeText = nodeText.replace(tag, '')
+                                elif isinstance(value, int) or isinstance(value, float):
+                                    if len(nodes) == 1 and nodeText == tag:
+                                        cellule.setAttribute("office:value-type", 'float')
+                                        cellule.setAttribute("office:value", str(value))
+                                    nodeText = nodeText.replace(tag, text)
+                                elif isinstance(value, datetime.date):
+                                    if len(nodes) == 1 and nodeText == tag:
+                                        cellule.setAttribute("office:value-type", 'date')
+                                        cellule.setAttribute("office:date-value", '%d-%d-%d' % (value.year, value.month, value.day))
+                                    nodeText = nodeText.replace(tag, text)
+                                else:
+                                    nodeText = nodeText.replace(tag, text)
+    
+                            if '<' not in nodeText or '>' not in nodeText:
+                                break
+    
+                        # print child.wholeText, '=>', text
+                        child.replaceWholeText(nodeText)
 
 def IncrementFormulas(cellules, row=0, column=0):
     formula_gure = re.compile("\[\.([A-Z]+)([0-9]+)\]")

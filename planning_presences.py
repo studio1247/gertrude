@@ -83,19 +83,19 @@ class PlanningModifications(object):
     #        nb_ad = max(2, len(indexes))
     
             # Les halte-garderie
-            indexes = getInscritsByMode(self.debut, date_fin, MODE_HALTE_GARDERIE)
+            indexes = GetInscritsByMode(self.debut, date_fin, MODE_HALTE_GARDERIE)
             indexes = getTriParPrenomIndexes(indexes)
             self.printPresences(table, indexes, 11)
             nb_hg = max(2, len(indexes))
     
             # Les mi-temps
-            indexes = getInscritsByMode(self.debut, date_fin, MODE_4_5|MODE_3_5)
+            indexes = GetInscritsByMode(self.debut, date_fin, MODE_4_5|MODE_3_5)
             indexes = getTriParPrenomIndexes(indexes)
             self.printPresences(table, indexes, 7)
             nb_45 = max(2, len(indexes))
     
             # Les plein-temps
-            indexes = getInscritsByMode(self.debut, date_fin, MODE_5_5)
+            indexes = GetInscritsByMode(self.debut, date_fin, MODE_5_5)
             indexes = getTriParPrenomIndexes(indexes)
             self.printPresences(table, indexes, 3)
             nb_55 = max(2, len(indexes))

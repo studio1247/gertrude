@@ -588,9 +588,8 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         if len(creche.sites) > 1:
             items = [(site.nom, site) for site in creche.sites]
             self.sites_items[1].SetItems(items)
-            if creche.preinscriptions:
-                for nom, site in items:
-                    self.sites_items[3].Append(nom)
+            for nom, site in items:
+                self.sites_items[3].Append(nom)
         else:
             for item in self.sites_items:
                 item.Show(False)

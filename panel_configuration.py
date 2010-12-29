@@ -338,7 +338,7 @@ class ResponsabilitesTab(AutoTab, PeriodeMixin):
 
     def GetNomsParents(self, periode):
         noms = set()
-        for inscrit in getInscrits(periode.debut, periode.fin):
+        for inscrit in GetInscrits(periode.debut, periode.fin):
             for parent in inscrit.parents.values():
                 noms.add(GetPrenomNom(parent))
         noms = list(noms)

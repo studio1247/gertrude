@@ -35,19 +35,42 @@ class AppelCotisationsModifications(object):
         
         errors = {}
         spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
-        table = spreadsheet.getElementsByTagName("table:table").item(0)
+        template = spreadsheet.getElementsByTagName("table:table").item(0)
+        
+        if len(creche.sites) > 1:
+            spreadsheet.removeChild(template)
+            for i, site in enumerate(creche.sites):
+                table = template.cloneNode(1)
+                spreadsheet.appendChild(table)
+                table.setAttribute("table:name", site.nom)
+                self.fill_table(table, site)
+                if self.gauge:
+                    self.gauge.SetValue((90/len(creche.sites)) * (i+1))
+        else:
+            self.fill_table(template)
+            if self.gauge:
+                self.gauge.SetValue(90)
+        
+        return errors
+
+    def fill_table(self, table, site=None):
         lignes = table.getElementsByTagName("table:table-row")
-
+            
         # La date
-        ReplaceFields(lignes, [('date', self.debut)])
-        template = [lignes.item(5), lignes.item(6)]
-
+        fields = [('date', self.debut)]
+        if site is None:
+            table.removeChild(lignes[2])
+        else:
+            fields.append(('site', site.nom))
+        ReplaceFields(lignes, fields)
+        
         # Les cotisations
-        inscrits = getInscrits(self.debut, self.fin)
+        lines_template = [lignes.item(7), lignes.item(8)]
+        inscrits = GetInscrits(self.debut, self.fin, site=site)
         for i, inscrit in enumerate(inscrits):
             if self.gauge:
                 self.gauge.SetValue(10+int(80.0*i/len(inscrits)))
-            line = template[i % 2].cloneNode(1)
+            line = lines_template[i % 2].cloneNode(1)
             try:
                 facture = Facture(inscrit, self.debut.year, self.debut.month, self.options)
                 cotisation, supplement = facture.cotisation_mensuelle, facture.supplement
@@ -56,15 +79,16 @@ class AppelCotisationsModifications(object):
                 cotisation, supplement = '?', None
                 commentaire = '\n'.join(e.errors)
                 errors[GetPrenomNom(inscrit)] = e.errors
-            ReplaceFields(line, [('prenom', inscrit.prenom),
-                                 ('cotisation', cotisation),
-                                 ('supplement', supplement),
-                                 ('commentaire', commentaire)])
-            table.insertBefore(line, template[0])
-            IncrementFormulas(template[i % 2], row=+2)
+                
+            fields = [('prenom', inscrit.prenom),
+                      ('nom', inscrit.nom),
+                      ('cotisation', cotisation),
+                      ('supplement', supplement),
+                      ('commentaire', commentaire)]
+            
+            ReplaceFields(line, fields)
+            table.insertBefore(line, lines_template[0])
+            IncrementFormulas(lines_template[i % 2], row=+2)
 
-        table.removeChild(template[0])
-        table.removeChild(template[1])
-        if self.gauge:
-            self.gauge.SetValue(90)
-        return errors
+        table.removeChild(lines_template[0])
+        table.removeChild(lines_template[1])
