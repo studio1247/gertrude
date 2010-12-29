@@ -1004,7 +1004,7 @@ class Inscrit(object):
         
     def GetInscription(self, date, preinscription=False):
         for inscription in self.inscriptions:
-            if (preinscription or not inscription.preinscription) and inscription.debut and date >= inscription.debut and (not inscription.fin or date <= inscription.fin):
+            if (preinscription or not creche.preinscriptions or not inscription.preinscription) and inscription.debut and date >= inscription.debut and (not inscription.fin or date <= inscription.fin):
                 return inscription
         return None
 
@@ -1015,7 +1015,7 @@ class Inscrit(object):
         if not date_fin:
             date_fin = datetime.date.max
         for inscription in self.inscriptions:
-            if not inscription.preinscription and inscription.debut:
+            if (not creche.preinscriptions or not inscription.preinscription) and inscription.debut:
                 try:
                     date_debut_periode = inscription.debut
                     if inscription.fin:

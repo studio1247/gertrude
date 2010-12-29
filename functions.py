@@ -274,7 +274,7 @@ def getPresentsIndexes(indexes, (debut, fin)):
         inscrit = creche.inscrits[indexes[i]]
         #print inscrit.prenom
         for inscription in inscrit.inscriptions:
-            if ((inscription.fin is None or inscription.fin >= debut) and (not inscription.preinscription and inscription.debut != None and (not fin or inscription.debut <= fin))):
+            if ((inscription.fin is None or inscription.fin >= debut) and ((not creche.preinscriptions or not inscription.preinscription) and inscription.debut != None and (not fin or inscription.debut <= fin))):
                 result.append(indexes[i])
                 break
     return result

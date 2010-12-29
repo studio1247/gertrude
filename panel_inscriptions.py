@@ -680,6 +680,11 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
                             item.Show(True)
                         for item in self.sites_items[2:4]:
                             item.Show(False)
+            elif creche.sites > 1:
+                for item in self.sites_items[0:2]:
+                    item.Show(True)
+                for item in self.sites_items[2:4]:
+                    item.Show(False)
 
             self.duree_reference_choice.SetSelection(inscription.duree_reference / 7 - 1)
             self.planning_panel.SetInscription(inscription)

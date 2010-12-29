@@ -34,7 +34,7 @@ def GetAlertes():
             alertes.append((date, texte))
         if inscription.debut and inscription.debut.year != today.year:
             date = datetime.date(today.year, inscription.debut.month, inscription.debut.day)
-            texte = "l'inscription de %s %s passe un an au %02d/%02d/%04d" % (inscrit.prenom, inscrit.nom, date.day, date.month, date.year)
+            texte = "L'inscription de %s %s passe un an au %02d/%02d/%04d" % (inscrit.prenom, inscrit.nom, date.day, date.month, date.year)
             alertes.append((date, texte))
     return alertes
 
