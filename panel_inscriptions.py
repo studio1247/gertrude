@@ -103,7 +103,9 @@ class FraisAccueilPanel(wx.Panel):
                 self.frais_accueil_button.Disable()
                 self.contrat_button.Disable()
             else:
-                if creche.mode_facturation == FACTURATION_HORAIRES_REELS:
+                if creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
+                    filename = "Frais accueil forfait.html"
+                elif creche.mode_facturation == FACTURATION_HORAIRES_REELS:
                     filename = "Frais accueil reel.html"
                 elif creche.mode_facturation == FACTURATION_PAJE:
                     filename = "Frais accueil paje.html"
@@ -124,7 +126,7 @@ class FraisAccueilPanel(wx.Panel):
         self.cotisations = []
         for inscription in self.inscrit.inscriptions:
             date = inscription.debut
-            while date:
+            while date and date.year < today.year + 2:
                 try:
                     cotisation = Cotisation(self.inscrit, date, TRACES)
                     self.cotisations.append((cotisation.debut, cotisation.fin, cotisation))
@@ -487,14 +489,14 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.validation_button = wx.ToggleButton(self, -1, "Invalider l'inscription")
         ligne_sizer.Add(self.validation_button, 0, wx.LEFT, 10)
         self.Bind(wx.EVT_TOGGLEBUTTON, self.OnValidationInscription, self.validation_button)    
-        if not creche.preinscriptions:
-            self.validation_button.Show(False)
         sizer.Add(ligne_sizer, 0, wx.TOP, 5)
         sizer1 = wx.FlexGridSizer(0, 2, 5, 10)
         sizer1.AddGrowableCol(1, 1)
-        self.sites_items = wx.StaticText(self, -1, u"Site :"), AutoChoiceCtrl(self, None, 'site')
+        self.sites_items = wx.StaticText(self, -1, u"Site :"), AutoChoiceCtrl(self, None, 'site'), wx.StaticText(self, -1, u"Sites de préinscription :"), wx.CheckListBox(self, -1)
+        self.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckPreinscriptionSite, self.sites_items[3])
         self.UpdateSiteItems()
         sizer1.AddMany([(self.sites_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.sites_items[1], 0, wx.EXPAND)])
+        sizer1.AddMany([(self.sites_items[2], 0, wx.ALIGN_CENTER_VERTICAL), (self.sites_items[3], 0, wx.EXPAND)])
         self.professeur_items = wx.StaticText(self, -1, u"Professeur :"), AutoChoiceCtrl(self, None, 'professeur')
         self.UpdateProfesseurItems()
         sizer1.AddMany([(self.professeur_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.professeur_items[1], 0, wx.EXPAND)])
@@ -502,9 +504,8 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         sizer1.AddMany([(wx.StaticText(self, -1, u"Mode d'accueil :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.mode_accueil_choice, 0, wx.EXPAND)])
         self.semaines_conges_items = wx.StaticText(self, -1, u"Nombre de semaines de congés :"), AutoNumericCtrl(self, None, 'semaines_conges', min=0, precision=0)
         sizer1.AddMany([(self.semaines_conges_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.semaines_conges_items[1], 0, wx.EXPAND)])
-        if creche.mode_facturation != FACTURATION_PAJE:
-            for item in self.semaines_conges_items:
-                item.Show(False)
+        self.facturation_items = wx.StaticText(self, -1, u"Forfait mensuel :"), AutoNumericCtrl(self, None, 'forfait_mensuel', min=0, precision=2)
+        sizer1.AddMany([(self.facturation_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.facturation_items[1], 0, wx.EXPAND)])
         sizer1.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_adaptation'), 0, wx.EXPAND)])
         self.duree_reference_choice = wx.Choice(self)
         for item, data in [("1 semaine", 7), (u"2 semaines", 14), (u"3 semaines", 21), ("4 semaines", 28)]:
@@ -543,12 +544,24 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
     def OnValidationInscription(self, event):
         obj = event.GetEventObject()
         inscription = self.inscrit.inscriptions[self.periode]
-        if obj.GetValue():
-            inscription.preinscription = False
-            obj.SetLabel("Invalider l'inscription")
-        else:
-            inscription.preinscription = True
-            obj.SetLabel("Valider l'inscription")
+        if len(creche.sites) > 1:
+            if obj.GetValue():
+                if len(inscription.sites_preinscription) != 1:
+                    if not inscription.sites_preinscription:
+                        dlg = wx.MessageDialog(self, u"Avant de valider une inscription, il faut choisir un site de préinscription", 'Erreur', wx.OK|wx.ICON_WARNING)
+                    else:
+                        dlg = wx.MessageDialog(self, u"Avant de valider une inscription, il ne faut garder qu'un seul site de préinscription", 'Erreur', wx.OK|wx.ICON_WARNING)
+                    dlg.ShowModal()
+                    dlg.Destroy()
+                    self.UpdateContents()
+                    event.Skip()
+                    return
+                else:
+                    inscription.site = inscription.sites_preinscription[0]
+            else:
+                inscription.sites_preinscription = [inscription.site]
+        inscription.preinscription = not obj.GetValue()
+        self.UpdateContents()
         
     def onDureeReferenceChoice(self, event):
         duration = self.duree_reference_choice.GetClientData(self.duree_reference_choice.GetSelection())
@@ -559,7 +572,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         inscription = self.inscrit.inscriptions[self.periode]
         inscription.mode = MODE_5_5
         for i, day in enumerate(inscription.reference):
-            if JourSemaineAffichable():
+            if JourSemaineAffichable(i):
                 day.set_state(PRESENT)
         self.UpdateContents()
     
@@ -575,11 +588,25 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         if len(creche.sites) > 1:
             items = [(site.nom, site) for site in creche.sites]
             self.sites_items[1].SetItems(items)
-            for item in self.sites_items:
-                item.Show(True)
+            if creche.preinscriptions:
+                for nom, site in items:
+                    self.sites_items[3].Append(nom)
         else:
             for item in self.sites_items:
                 item.Show(False)
+        self.last_site_observer = time.time()
+        
+    def OnCheckPreinscriptionSite(self, event):
+        index = event.GetSelection()
+        object = event.GetEventObject()
+        site = creche.sites[index]
+        inscription = self.inscrit.inscriptions[self.periode]
+        history.Append(Change(inscription, "sites_preinscription", inscription.sites_preinscription[:]))
+        if object.IsChecked(index):
+            inscription.sites_preinscription.append(site)
+        else:
+            inscription.sites_preinscription.remove(site)
+        inscription.sites_preinscription = inscription.sites_preinscription
                 
     def UpdateProfesseurItems(self):
         if creche.type == TYPE_GARDERIE_PERISCOLAIRE and len(creche.professeurs) > 0:
@@ -592,7 +619,8 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
                 item.Show(False)
                 
     def UpdateContents(self):
-        self.UpdateSiteItems()
+        if 'sites' in observers and observers['sites'] > self.last_site_observer:
+            self.UpdateSiteItems()
         self.UpdateProfesseurItems()
 
         InscriptionsTab.UpdateContents(self)
@@ -619,6 +647,9 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         
         for item in self.semaines_conges_items:
             item.Show(creche.mode_facturation == FACTURATION_PAJE)
+            
+        for item in self.facturation_items:
+            item.Show(creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL)
                             
         self.Layout()
 
@@ -631,12 +662,25 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
             inscription = self.inscrit.inscriptions[self.periode]
             for obj in [self.duree_reference_choice, self.mode_accueil_choice, self.button_5_5, self.button_copy, self.validation_button]:
                 obj.Enable()
-            if inscription.preinscription:
-                self.validation_button.SetValue(False)
-                self.validation_button.SetLabel("Valider l'inscription")
-            else:
-                self.validation_button.SetValue(True)
-                self.validation_button.SetLabel("Invalider l'inscription")
+            if creche.preinscriptions:
+                if inscription.preinscription:
+                    self.validation_button.SetValue(False)
+                    self.validation_button.SetLabel("Valider l'inscription")
+                    if creche.sites > 1:
+                        for item in self.sites_items[0:2]:
+                            item.Show(False)
+                        for item in self.sites_items[2:4]:
+                            item.Show(True)
+                        self.sites_items[3].SetCheckedStrings([site.nom for site in inscription.sites_preinscription])
+                else:
+                    self.validation_button.SetValue(True)
+                    self.validation_button.SetLabel("Invalider l'inscription")
+                    if creche.sites > 1:
+                        for item in self.sites_items[0:2]:
+                            item.Show(True)
+                        for item in self.sites_items[2:4]:
+                            item.Show(False)
+
             self.duree_reference_choice.SetSelection(inscription.duree_reference / 7 - 1)
             self.planning_panel.SetInscription(inscription)
         else:
@@ -827,12 +871,12 @@ class InscriptionsPanel(GPanel):
         self.choice.Clear()
         # Ceux qui sont presents
         for inscrit in creche.inscrits:
-            if inscrit.getInscription(datetime.date.today()) != None:
+            if inscrit.GetInscription(datetime.date.today(), preinscription=True) != None:
                 self.choice.Append(GetInscritId(inscrit, creche.inscrits), inscrit)
         # Les autres
         separator = False
         for inscrit in creche.inscrits:
-            if inscrit.getInscription(datetime.date.today()) == None:
+            if inscrit.GetInscription(datetime.date.today()) == None:
                 if not separator:
                     self.choice.Append(150 * '-', None)
                     separator = True

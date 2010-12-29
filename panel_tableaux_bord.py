@@ -63,7 +63,7 @@ class SitesPlanningPanel(PlanningWidget):
                 lines.append(site_line)
             
             for inscrit in creche.inscrits:
-                inscription = inscrit.getInscription(date)
+                inscription = inscrit.GetInscription(date)
                 if inscription is not None:
                     if date in inscrit.journees:
                         line = inscrit.journees[date]
@@ -215,7 +215,7 @@ class EtatsPresenceTab(AutoTab):
             else:
                 inscrits = creche.inscrits
             for inscrit in inscrits:
-                for inscription in inscrit.getInscriptions(debut, fin):
+                for inscription in inscrit.GetInscriptions(debut, fin):
                     if inscription.site:
                         sites.add(inscription.site)
         self.sites_choice.Show(True)
@@ -245,7 +245,7 @@ class EtatsPresenceTab(AutoTab):
         else:
             inscrits = set()
             for inscrit in creche.inscrits:
-                for inscription in inscrit.getInscriptions(debut, fin):
+                for inscription in inscrit.GetInscriptions(debut, fin):
                     if (site is None or inscription.site == site) and (professeur is None or inscription.professeur == professeur):
                         inscrits.add(inscrit)
 
@@ -376,7 +376,7 @@ class EtatsPresenceTab(AutoTab):
         
         selection = {}
         for inscrit in inscrits:
-            for inscription in inscrit.getInscriptions(debut, fin):
+            for inscription in inscrit.GetInscriptions(debut, fin):
                 if (site is None or inscription.site == site) and (professeur is None or inscription.professeur == professeur):
                     date = max(debut, inscription.debut)
                     if inscription.fin:
@@ -499,7 +499,7 @@ class StatistiquesFrequentationTab(AutoTab):
             fin = getMonthEnd(debut)
             for inscrit in creche.inscrits:
                 try:
-                    if inscrit.getInscriptions(debut, fin):
+                    if inscrit.GetInscriptions(debut, fin):
                         facture = FactureFinMois(inscrit, annee, mois+1)
                         heures_contractualisees += facture.heures_contractualisees
                         heures_realisees += facture.heures_realisees                       

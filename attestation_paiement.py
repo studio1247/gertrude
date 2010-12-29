@@ -27,7 +27,7 @@ class AttestationModifications(object):
         self.template = 'Attestation paiement.odt'
         if isinstance(who, list):
             self.default_output = u"Attestations de paiement %s-%s %d.odt" % (months[debut.month - 1], months[fin.month - 1], debut.year)
-            self.inscrits = [inscrit for inscrit in creche.inscrits if inscrit.getInscriptions(debut, fin)]
+            self.inscrits = [inscrit for inscrit in creche.inscrits if inscrit.GetInscriptions(debut, fin)]
         else:
             self.default_output = u"Attestation de paiement %s %s %s-%s %d.odt" % (who.prenom, who.nom, months[debut.month - 1], months[fin.month - 1], debut.year)
             self.inscrits = [who]

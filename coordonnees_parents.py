@@ -49,7 +49,7 @@ class CoordonneesModifications(object):
                 template = table.getElementsByTagName('table:table-row')[1]
                 #print template.toprettyxml()
                 for inscrit in creche.inscrits:
-                    if inscrit.getInscription(self.date):
+                    if inscrit.GetInscription(self.date):
                         line = template.cloneNode(1)
                         referents = [GetPrenomNom(referent) for referent in inscrit.referents]
                         parents = [GetPrenomNom(parent) for parent in inscrit.parents.values()]

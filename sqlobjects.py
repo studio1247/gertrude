@@ -644,8 +644,10 @@ class Creche(object):
             return None
     
     def formule_taux_horaire_needs_revenus(self):
-        if self.mode_facturation not in (FACTURATION_PAJE, FACTURATION_HORAIRES_REELS):
+        if self.mode_facturation in (FACTURATION_FORFAIT_10H, FACTURATION_PSU):
             return True
+        elif self.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
+            return False
         if self.formule_taux_horaire is None:
             return False
         for cas in self.formule_taux_horaire:
@@ -802,6 +804,7 @@ class Inscription(SQLObject):
             self.reference.append(ReferenceDay(self, i))
         self.fin_periode_adaptation = None
         self.professeur = None
+        self.forfait_mensuel = 0.0
 
         if creation:
             self.create()
@@ -842,7 +845,7 @@ class Inscription(SQLObject):
     
     def create(self):
         print 'nouvelle inscription'
-        result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, fin_periode_adaptation, duree_reference, semaines_conges) VALUES(NULL,?,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, self.fin_periode_adaptation, self.duree_reference, self.semaines_conges))
+        result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, forfait_mensuel, fin_periode_adaptation, duree_reference, semaines_conges) VALUES(NULL,?,?,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, self.forfait_mensuel, self.fin_periode_adaptation, self.duree_reference, self.semaines_conges))
         self.idx = result.lastrowid
         
     def delete(self):
@@ -856,7 +859,7 @@ class Inscription(SQLObject):
             value = value.idx
         elif name == "sites_preinscription":
             value = " ".join([str(value.idx) for value in value])
-        if name in ['debut', 'fin', 'mode', 'fin_periode_adaptation', 'duree_reference', 'semaines_conges', 'preinscription', 'site', 'sites_preinscription', 'professeur'] and self.idx:
+        if name in ['debut', 'fin', 'mode', 'forfait_mensuel', 'fin_periode_adaptation', 'duree_reference', 'semaines_conges', 'preinscription', 'site', 'sites_preinscription', 'professeur'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE INSCRIPTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))   
 
@@ -999,17 +1002,20 @@ class Inscrit(object):
             except:
                 pass
         
-    def getInscription(self, date):
-        return Select(self.inscriptions, date)
+    def GetInscription(self, date, preinscription=False):
+        for inscription in self.inscriptions:
+            if (preinscription or not inscription.preinscription) and inscription.debut and date >= inscription.debut and (not inscription.fin or date <= inscription.fin):
+                return inscription
+        return None
 
-    def getInscriptions(self, date_debut, date_fin):
+    def GetInscriptions(self, date_debut, date_fin):
         result = []
         if not date_debut:
             date_debut = datetime.date.min
         if not date_fin:
             date_fin = datetime.date.max
         for inscription in self.inscriptions:
-            if inscription.debut:
+            if not inscription.preinscription and inscription.debut:
                 try:
                     date_debut_periode = inscription.debut
                     if inscription.fin:
@@ -1028,16 +1034,16 @@ class Inscrit(object):
         if date.month in creche.mois_sans_facture:
             return False
         month_start = getMonthStart(date)
-        if self.getInscriptions(month_start, getMonthEnd(date)):
+        if self.GetInscriptions(month_start, getMonthEnd(date)):
             return True
         if creche.temps_facturation == FACTURATION_DEBUT_MOIS:
             previous_month_end = month_start - datetime.timedelta(1)
-            if self.getInscriptions(getMonthStart(previous_month_end), previous_month_end):
+            if self.GetInscriptions(getMonthStart(previous_month_end), previous_month_end):
                 return True
         return False
 
     def getReferenceDay(self, date):
-        inscription = self.getInscription(date)
+        inscription = self.GetInscription(date)
         if inscription:
             return inscription.getReferenceDay(date)
         else:
@@ -1058,7 +1064,7 @@ class Inscrit(object):
         """
         if date in creche.jours_fermeture:
             return ABSENT, 0, 0, 0
-        inscription = self.getInscription(date)
+        inscription = self.GetInscription(date)
         if inscription is None:
             return ABSENT, 0, 0, 0
         
@@ -1097,7 +1103,7 @@ class Inscrit(object):
     def GetExtraActivites(self, date):
         if date in creche.jours_fermeture:
             return []
-        inscription = self.getInscription(date)
+        inscription = self.GetInscription(date)
         if inscription is None:
             return []
         

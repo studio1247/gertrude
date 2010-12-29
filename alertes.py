@@ -32,6 +32,10 @@ def GetAlertes():
                 date = datetime.date(inscrit.naissance.year+2, inscrit.naissance.month+9, inscrit.naissance.day)
             texte = "%s %s a 3 ans le %02d/%02d/%04d" % (inscrit.prenom, inscrit.nom, inscrit.naissance.day, inscrit.naissance.month, inscrit.naissance.year+3)      
             alertes.append((date, texte))
+        if inscription.debut and inscription.debut.year != today.year:
+            date = datetime.date(today.year, inscription.debut.month, inscription.debut.day)
+            texte = "l'inscription de %s %s passe un an au %02d/%02d/%04d" % (inscrit.prenom, inscrit.nom, date.day, date.month, date.year)
+            alertes.append((date, texte))
     return alertes
 
 def CheckAlertes():

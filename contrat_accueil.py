@@ -41,7 +41,7 @@ class DocumentAccueilModifications(object):
             plancher_caf = "%.2f" % bareme_caf.plancher
             plafond_caf = "%.2f" % bareme_caf.plafond
             
-        inscription = self.inscrit.getInscription(self.date)
+        inscription = self.inscrit.GetInscription(self.date, preinscription=True)
         self.cotisation = Cotisation(self.inscrit, self.date)
         
         fields = [('nom-creche', creche.nom),
@@ -65,11 +65,10 @@ class DocumentAccueilModifications(object):
                 ('directeur', directeur),
                 ('plancher-caf', plancher_caf),
                 ('plafond-caf', plafond_caf),
-                ('heures-semaine', GetHeureString(self.cotisation.heures_semaine)),
-                ('heures-periode', GetHeureString(self.cotisation.heures_periode)),
                 ('nombre-factures', self.cotisation.nombre_factures),
+                ('heures-semaine', GetHeureString(self.cotisation.heures_semaine)),
                 ('heures-mois', GetHeureString(self.cotisation.heures_mois)),
-                ('montant-heure-garde', self.cotisation.montant_heure_garde),
+                ('heures-periode', GetHeureString(self.cotisation.heures_periode)),
                 ('cotisation-mensuelle', "%.02f" % self.cotisation.cotisation_mensuelle),
                 ('date', '%.2d/%.2d/%d' % (self.date.day, self.date.month, self.date.year)),
                 ('debut-inscription', inscription.debut),
@@ -82,6 +81,9 @@ class DocumentAccueilModifications(object):
                 ('IsPresentDuringTranche', self.IsPresentDuringTranche),
                 ]
         
+        if creche.mode_facturation != FACTURATION_FORFAIT_MENSUEL:
+            fields.append(('montant-heure-garde', self.cotisation.montant_heure_garde))
+
         if self.cotisation.assiette_annuelle is not None:
             fields.append(('annee-revenu', self.cotisation.date_revenus.year))
             fields.append(('assiette-annuelle', self.cotisation.assiette_annuelle))
@@ -122,7 +124,7 @@ class DocumentAccueilModifications(object):
         return fields
 
     def IsPresentDuringTranche(self, weekday, debut, fin):
-        journee = self.inscrit.getInscription(self.date).reference[weekday]
+        journee = self.inscrit.GetInscription(self.date).reference[weekday]
         if IsPresentDuringTranche(journee, debut, fin):
             return "X"
         else:
@@ -173,9 +175,9 @@ class FraisGardeModifications(DocumentAccueilModifications):
         table = spreadsheet.getElementsByTagName("table:table").item(0)       
         lignes = table.getElementsByTagName("table:table-row")
 
-        fields = self.GetFields()
-                      
+        fields = self.GetFields()             
         ReplaceFields(lignes, fields)
+                
         if len(self.cotisation.revenus_parents) < 2:
             table.removeChild(lignes[3])
             table.removeChild(lignes[4])
@@ -184,8 +186,16 @@ class FraisGardeModifications(DocumentAccueilModifications):
         if len(self.cotisation.revenus_parents) < 1:
             table.removeChild(lignes[1])
             table.removeChild(lignes[2])
+            table.removeChild(lignes[5])
         elif not self.cotisation.revenus_parents[0][2]:
             table.removeChild(lignes[2])
+            
+        if creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
+            table.removeChild(lignes[7])
+            table.removeChild(lignes[8])
+            table.removeChild(lignes[9])
+            table.removeChild(lignes[11])
+            table.removeChild(lignes[14])
             
         return {} 
             

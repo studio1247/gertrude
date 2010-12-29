@@ -40,7 +40,7 @@ class DayPlanningPanel(PlanningWidget):
         
         lines = []
         for inscrit in creche.inscrits:
-            inscription = inscrit.getInscription(self.date)
+            inscription = inscrit.GetInscription(self.date)
             if inscription is not None and (len(creche.sites) <= 1 or inscription.site is self.site):
                 if self.date in inscrit.jours_conges:
                     line = LigneConge(inscrit.jours_conges[self.date].label)

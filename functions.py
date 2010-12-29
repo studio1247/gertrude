@@ -219,7 +219,7 @@ def GetInscritId(inscrit, inscrits):
 def getInscritsByMode(start, end, mode): # TODO pourquoi retourner les index
     result = []
     for i, inscrit in enumerate(creche.inscrits):
-        for inscription in inscrit.getInscriptions(start, end):
+        for inscription in inscrit.GetInscriptions(start, end):
             if inscription.mode & mode:
                 result.append(i)
                 break
@@ -228,7 +228,7 @@ def getInscritsByMode(start, end, mode): # TODO pourquoi retourner les index
 def GetInscriptions(start, end):
     result = []
     for inscrit in creche.inscrits:
-        for inscription in inscrit.getInscriptions(start, end):
+        for inscription in inscrit.GetInscriptions(start, end):
             result.append(inscription)
     return result
 
@@ -274,7 +274,7 @@ def getPresentsIndexes(indexes, (debut, fin)):
         inscrit = creche.inscrits[indexes[i]]
         #print inscrit.prenom
         for inscription in inscrit.inscriptions:
-            if ((inscription.fin is None or inscription.fin >= debut) and (inscription.debut != None and (not fin or inscription.debut <= fin))):
+            if ((inscription.fin is None or inscription.fin >= debut) and (not inscription.preinscription and inscription.debut != None and (not fin or inscription.debut <= fin))):
                 result.append(indexes[i])
                 break
     return result
@@ -286,7 +286,7 @@ def getInscrits(debut, fin):
 def getLines(date, inscrits):
     lines = []
     for inscrit in inscrits:
-        if inscrit.getInscription(date) is not None:
+        if inscrit.GetInscription(date) is not None:
             # print inscrit.prenom, 
             if date in inscrit.journees:
                 line = inscrit.journees[date]

@@ -49,7 +49,7 @@ class Cotisation(object):
         if self.date is None:
             errors.append(u" - La date de début de la période n'est pas renseignée.")
             raise CotisationException(errors)
-        self.inscription = inscrit.getInscription(self.date)
+        self.inscription = inscrit.GetInscription(self.date, preinscription=True)
         if self.inscription is None:
             errors.append(u" - Il n'y a pas d'inscription à cette date.")
             raise CotisationException(errors)
@@ -61,9 +61,9 @@ class Cotisation(object):
                 self.debut, self.fin = self.inscription.fin_periode_adaptation + datetime.timedelta(1), self.inscription.fin
         else:
             self.debut, self.fin = self.inscription.debut, self.inscription.fin
-            
+        
+        self.revenus_parents = []
         if creche.formule_taux_horaire_needs_revenus():
-            self.revenus_parents = [ ]
             self.date_revenus = GetDateRevenus(self.date)
             self.assiette_annuelle = 0.0
             for parent in inscrit.parents.values():
@@ -118,19 +118,23 @@ class Cotisation(object):
         if len(errors) > 0:
             raise CotisationException(errors)
         
-        if options & TRACES: print u"\nCotisation de %s au %s (%s - %s) :" % (GetPrenomNom(inscrit), date, self.debut, self.fin)
+        if options & TRACES:
+            print u"\nCotisation de %s au %s (%s - %s) :" % (GetPrenomNom(inscrit), date, self.debut, self.fin)
+            print u" heures hebdomadaires (réelles) :", self.heures_reelles_semaine
                 
         if creche.mode_facturation == FACTURATION_FORFAIT_10H:
             self.heures_semaine = 10.0 * self.jours_semaine
             self.heures_mois = self.heures_semaine * 4
-            self.heures_periode = 12 * self.heures_mois
+            self.heures_periode = self.heures_mois * 12
+            self.nombre_factures = 12 - len(creche.mois_sans_facture)
+        elif creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
+            self.heures_semaine = self.heures_reelles_semaine
+            self.heures_mois = self.heures_semaine * 4
+            self.heures_periode = self.heures_mois * 12
             self.nombre_factures = 12 - len(creche.mois_sans_facture)
         else:                
             self.heures_semaine = self.heures_reelles_semaine
-            if options & TRACES: print u" heures hebdomadaires :", self.heures_semaine
-                       
-            self.heures_semaine = self.heures_reelles_semaine
-            
+                        
             if creche.conges_inscription or creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
                 self.heures_periode = 0.0
                 self.heures_fermeture_creche = 0.0
@@ -178,7 +182,11 @@ class Cotisation(object):
         else:
             self.str_mode_garde = u'%d/5èmes' % self.jours_semaine
         
-        if creche.mode_facturation == FACTURATION_HORAIRES_REELS:
+        if creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
+            self.montant_heure_garde = 0.0
+            self.cotisation_periode = 0.0
+            self.cotisation_mensuelle = self.inscription.forfait_mensuel
+        elif creche.mode_facturation == FACTURATION_HORAIRES_REELS:
             self.montant_heure_garde = creche.eval_taux_horaire(self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine)
             if self.montant_heure_garde is None:
                 errors.append(u" - La formule de calcul du tarif horaire n'est pas correcte.")

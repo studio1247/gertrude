@@ -55,7 +55,7 @@ class FactureFinMois(object):
         while date.month == mois:
             if not (date in creche.jours_fermeture or date in inscrit.jours_conges):
                 jours_ouvres += 1
-                inscription = inscrit.getInscription(date)
+                inscription = inscrit.GetInscription(date)
                 if inscription:
                     if last_cotisation and last_cotisation.Include(date):
                         cotisation = last_cotisation

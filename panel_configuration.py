@@ -28,9 +28,10 @@ types_creche = [("Parental", TYPE_PARENTAL),
                 (u"Garderie périscolaire", TYPE_GARDERIE_PERISCOLAIRE)]
 
 modes_facturation = [("Forfait 10h / jour", FACTURATION_FORFAIT_10H),
-                     (u"PSU (horaires réels avec forfait)", FACTURATION_PSU),
+                     (u"PSU", FACTURATION_PSU),
                      (u"PAJE (taux horaire spécifique)", FACTURATION_PAJE),
-                     ("Horaires réels sans forfait", FACTURATION_HORAIRES_REELS)]
+                     (u"Horaires réels", FACTURATION_HORAIRES_REELS),
+                     (u"Facturation personnalisée (forfait mensuel)", FACTURATION_FORFAIT_MENSUEL)]
 
 class CrecheTab(AutoTab):
     def __init__(self, parent):
@@ -38,6 +39,7 @@ class CrecheTab(AutoTab):
         delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
 
         AutoTab.__init__(self, parent)
+        observers['sites'] = 0
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         sizer2 = wx.FlexGridSizer(0, 2, 5, 5)
         sizer2.AddGrowableCol(1, 1)
@@ -74,7 +76,7 @@ class CrecheTab(AutoTab):
 
     def line_add(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, 'sites[%d].nom' % index), 1, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, 'sites[%d].nom' % index, observers=['sites']), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, 'Adresse :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, 'sites[%d].adresse' % index), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, 'Code Postal :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoNumericCtrl(self, creche, 'sites[%d].code_postal' % index, precision=0), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, 'Ville :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, 'sites[%d].ville' % index), 1, wx.EXPAND)])
@@ -93,12 +95,14 @@ class CrecheTab(AutoTab):
         self.sites_sizer.Detach(index)
 
     def add(self, event):
+        observers['sites'] = time.time()
         history.Append(Delete(creche.sites, -1))
         creche.sites.append(Site())
         self.line_add(len(creche.sites) - 1)
         self.sizer.Layout()
 
     def remove(self, event):
+        observers['sites'] = time.time()
         index = event.GetEventObject().index
         history.Append(Insert(creche.sites, index, creche.sites[index]))
         self.line_del()

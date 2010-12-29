@@ -104,13 +104,13 @@ class FacturationPanel(GPanel):
                 self.recus_periodechoice.Append(u"Janvier - %s %d" % (months[today.month-1], today.year), (datetime.date(today.year, 1, 1), datetime.date(today.year, today.month, 1)))
         else:
             for year in range(today.year-10, today.year):
-                if inscrit.getInscriptions(datetime.date(year, 1, 1), datetime.date(year, 12, 31)):
+                if inscrit.GetInscriptions(datetime.date(year, 1, 1), datetime.date(year, 12, 31)):
                     need_separator = True
                     self.recus_periodechoice.Append(u"Année %d" % year, (datetime.date(year, 1, 1), datetime.date(year, 12, 31)))
-            if inscrit.getInscriptions(datetime.date(today.year, 1, 1), getMonthEnd(today)):
+            if inscrit.GetInscriptions(datetime.date(today.year, 1, 1), getMonthEnd(today)):
                 need_separator = True
                 debut = 1
-                while not inscrit.getInscriptions(datetime.date(today.year, debut, 1), getMonthEnd(datetime.date(today.year, debut, 1))) and debut < today.month:
+                while not inscrit.GetInscriptions(datetime.date(today.year, debut, 1), getMonthEnd(datetime.date(today.year, debut, 1))) and debut < today.month:
                     debut += 1
                 if debut == today.month:
                     self.recus_periodechoice.Append("%s %d" % (months[debut-1], today.year), (datetime.date(today.year, debut, 1), getMonthEnd(datetime.date(today.year, debut, 1))))
@@ -120,7 +120,7 @@ class FacturationPanel(GPanel):
         
         date = getFirstMonday()
         while date < today:
-            if isinstance(inscrit, list) or inscrit.getInscriptions(datetime.date(date.year, date.month, 1), getMonthEnd(date)):
+            if isinstance(inscrit, list) or inscrit.GetInscriptions(datetime.date(date.year, date.month, 1), getMonthEnd(date)):
                 if need_separator:
                     self.recus_periodechoice.Append(50 * "-", None)
                     need_separator = False
@@ -138,7 +138,7 @@ class FacturationPanel(GPanel):
             if debut.month == fin.month and debut < today:
                 date = debut
                 while date < today:
-                    if isinstance(inscrit, list) or inscrit.getInscriptions(datetime.date(date.year, date.month, 1), getMonthEnd(date)):
+                    if isinstance(inscrit, list) or inscrit.GetInscriptions(datetime.date(date.year, date.month, 1), getMonthEnd(date)):
                         self.recus_endchoice.Append('%s %d' % (months[date.month - 1], date.year), (datetime.date(date.year, date.month, 1), getMonthEnd(date)))
                     date = getNextMonthStart(date)
                 self.recus_endchoice.Enable()
@@ -155,13 +155,13 @@ class FacturationPanel(GPanel):
             choice.Append('Tous les enfants', creche.inscrits)
         # Ceux qui sont presents
         for inscrit in creche.inscrits:
-            if inscrit.getInscription(datetime.date.today()) != None:
+            if inscrit.GetInscription(datetime.date.today()) != None:
                 for choice in self.inscrits_choice.values():
                     choice.Append(GetInscritId(inscrit, creche.inscrits), inscrit)
         # Les autres
         separator = False
         for inscrit in creche.inscrits:
-            if inscrit.getInscription(datetime.date.today()) == None:
+            if inscrit.GetInscription(datetime.date.today()) == None:
                 if not separator:
                     separator = True
                     for choice in self.inscrits_choice.values():
