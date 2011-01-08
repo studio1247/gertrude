@@ -110,34 +110,7 @@ class FactureModifications(object):
                             table.removeChild(rows[i])
 
                 # Les champs de la facture
-                fields = [('nom-creche', creche.nom),
-                        ('adresse-creche', creche.adresse),
-                        ('code-postal-creche', str(creche.code_postal)),
-                        ('ville-creche', creche.ville),
-                        ('telephone-creche', creche.telephone),
-                        ('email-creche', creche.email),
-                        ('adresse', inscrit.adresse),
-                        ('code-postal', str(inscrit.code_postal)),
-                        ('ville', inscrit.ville),
-                        ('mois', '%s %d' % (months[facture.mois - 1], facture.annee)),
-                        ('de-mois', '%s %d' % (GetDeMoisStr(facture.mois - 1), facture.annee)),
-                        ('de-mois-recap', '%s %d' % (GetDeMoisStr(facture.debut_recap.month - 1), facture.debut_recap.year)),
-                        ('prenom', inscrit.prenom),
-                        ('parents', GetParentsString(inscrit)),
-                        ('date', '%.2d/%.2d/%d' % (facture.date.day, facture.mois, facture.annee)),
-                        ('numfact', '%03d%04d%02d' % (inscrit.idx, facture.annee, facture.mois)),
-                        ('montant-heure-garde', '%.2f' % facture.montant_heure_garde),
-                        ('cotisation-mensuelle', '%.2f' % facture.cotisation_mensuelle),
-                        ('heures-supplementaires', '%.2f' % facture.heures_supplementaires),
-                        ('supplement', '%.2f' % facture.supplement),
-                        ('deduction', '- %.2f' % facture.deduction),
-                        ('raison-deduction', facture.raison_deduction),
-                        ('supplement-activites', '%.2f' % facture.supplement_activites),
-                        ('total', '%.2f' % facture.total)
-                        ]
-
-
-        
+                fields = GetCrecheFields(creche) + GetInscritFields(inscrit) + GetFactureFields(facture)
                 ReplaceTextFields(section, fields)
 
         for template in templates:

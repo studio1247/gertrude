@@ -37,6 +37,7 @@ Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 
 [InstallDelete]
 Type: files; Name: "{app}\*.py"
+Type: files; Name: "{app}\*.php"
 Type: files; Name: "{app}\*.pyc"
 Type: files; Name: "{app}\*.log"
 
@@ -47,6 +48,7 @@ Name: "{app}"; Permissions:users-modify
 ; ---> Gertrude directory
 Source: "dist\gertrude\*.exe";                   DestDir: "{app}";                     Flags: ignoreversion
 Source: "dist\gertrude\*.ini.dist";              DestDir: "{app}";                     Flags: ignoreversion
+Source: "dist\gertrude\*.php";                   DestDir: "{app}";                     Flags: ignoreversion
 Source: "dist\gertrude\*.dll";                   DestDir: "{app}";                     Flags: ignoreversion
 Source: "dist\gertrude\*.pyd";                   DestDir: "{app}";                     Flags: ignoreversion
 Source: "dist\gertrude\Microsoft.VC90.CRT\*.*";  DestDir: "{app}\Microsoft.VC90.CRT";  Flags: ignoreversion

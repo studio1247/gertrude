@@ -941,7 +941,7 @@ class Inscrit(object):
 
     def create(self):
         print 'nouvel inscrit'
-        result = sql_connection.execute('INSERT INTO INSCRITS (idx, prenom, nom, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, majoration, marche, photo, notes, notes_parents) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', (self.prenom, self.nom, self.naissance, self.adresse, self.code_postal, self.ville, self.numero_securite_sociale, self.numero_allocataire_caf, self.handicap, self.majoration, self.marche, self.photo, self.notes, self.notes_parents))
+        result = sql_connection.execute('INSERT INTO INSCRITS (idx, prenom, nom, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, majoration, marche, photo, notes, notes_parents) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', (self.prenom, self.nom, self.naissance, self.adresse, self.code_postal, self.ville, self.numero_securite_sociale, self.numero_allocataire_caf, self.handicap, self.majoration, self.marche, self.photo, self.notes, self.notes_parents))
         self.idx = result.lastrowid
         for obj in self.parents.values() + self.freres_soeurs + self.referents + self.inscriptions: # TODO + self.presences.values():
             if obj: obj.create()

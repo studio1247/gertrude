@@ -566,8 +566,8 @@ class CafTab(AutoTab, PeriodeMixin):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(PeriodeChoice(self, BaremeCAF), 0, wx.TOP, 5)
         sizer2 = wx.FlexGridSizer(4, 2, 5, 5)
-        sizer2.AddMany([wx.StaticText(self, -1, 'Plancher :'), AutoNumericCtrl(self, None, 'plancher', precision=2)])
-        sizer2.AddMany([wx.StaticText(self, -1, 'Plafond :'), AutoNumericCtrl(self, None, 'plafond', precision=2)])
+        sizer2.AddMany([wx.StaticText(self, -1, 'Plancher annuel :'), AutoNumericCtrl(self, None, 'plancher', precision=2)])
+        sizer2.AddMany([wx.StaticText(self, -1, 'Plafond annuel :'), AutoNumericCtrl(self, None, 'plafond', precision=2)])
         sizer.Add(sizer2, 0, wx.ALL, 5)
         sizer.Fit(self)
         self.SetSizer(sizer)
@@ -653,10 +653,9 @@ class JoursFermeturePanel(AutoTab):
             creche.add_conge(conge)
         else:
             conge = creche.feries[label]
-            conge.delete()
             del creche.feries[label]
-            
-        history.Append(None)
+            conge.delete()            
+        history.Append(None) # TODO
 
 class ParametersPanel(AutoTab):
     def __init__(self, parent):

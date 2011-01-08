@@ -334,6 +334,52 @@ def getActivitiesSummary(creche, lines):
                     summary[activity][i] += 1
     return summary
 
+def GetCrecheFields(creche):
+    return [('nom-creche', creche.nom),
+            ('adresse-creche', creche.adresse),
+            ('code-postal-creche', str(creche.code_postal)),
+            ('ville-creche', creche.ville),
+            ('telephone-creche', creche.telephone),
+            ('email-creche', creche.email)]
+    
+def GetInscritFields(inscrit):
+    return [('adresse', inscrit.adresse),
+            ('prenom', inscrit.prenom),
+            ('nom', inscrit.nom),
+            ('code-postal', str(inscrit.code_postal)),
+            ('ville', inscrit.ville),
+            ('parents', GetParentsString(inscrit))]
+    
+def GetFactureFields(facture):
+    if facture:
+        return [('mois', '%s %d' % (months[facture.mois - 1], facture.annee)),
+                ('de-mois', '%s %d' % (GetDeMoisStr(facture.mois - 1), facture.annee)),
+                ('de-mois-recap', '%s %d' % (GetDeMoisStr(facture.debut_recap.month - 1), facture.debut_recap.year)),
+                ('date', '%.2d/%.2d/%d' % (facture.date.day, facture.mois, facture.annee)),
+                ('numfact', '%03d%04d%02d' % (facture.inscrit.idx, facture.annee, facture.mois)),
+                ('montant-heure-garde', facture.montant_heure_garde, FIELD_EUROS),
+                ('cotisation-mensuelle', facture.cotisation_mensuelle, FIELD_EUROS),
+                ('heures-supplementaires', '%.2f' % facture.heures_supplementaires),
+                ('supplement', facture.supplement, FIELD_EUROS),
+                ('deduction', '- %.2f' % facture.deduction),
+                ('raison-deduction', facture.raison_deduction),
+                ('supplement-activites', facture.supplement_activites, FIELD_EUROS),
+                ('total', facture.total, FIELD_EUROS)]
+    else:
+        return [('mois', '?'),
+                ('de-mois', '?'),
+                ('de-mois-recap', '?'),
+                ('date', '?'),
+                ('numfact', '?'),
+                ('montant-heure-garde', '?'),
+                ('cotisation-mensuelle', '?'),
+                ('heures-supplementaires', '?'),
+                ('supplement', '?'),
+                ('deduction', '?'),
+                ('raison-deduction', '?'),
+                ('supplement-activites', '?'),
+                ('total', '?')]
+    
 class ProgressHandler:
     def __init__(self, display_fn=None, gauge_fn=None, min=None, max=None):
         self.display_fn = display_fn

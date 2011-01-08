@@ -43,7 +43,7 @@ class AppelCotisationsModifications(object):
                 table = template.cloneNode(1)
                 spreadsheet.appendChild(table)
                 table.setAttribute("table:name", site.nom)
-                self.fill_table(table, site)
+                self.fill_table(table, site, errors)
                 if self.gauge:
                     self.gauge.SetValue((90/len(creche.sites)) * (i+1))
         else:
@@ -53,15 +53,15 @@ class AppelCotisationsModifications(object):
         
         return errors
 
-    def fill_table(self, table, site=None):
+    def fill_table(self, table, site=None, errors={}):
         lignes = table.getElementsByTagName("table:table-row")
             
         # La date
         fields = [('date', self.debut)]
-        if site is None:
-            table.removeChild(lignes[2])
-        else:
+        if site:
             fields.append(('site', site.nom))
+        else:
+            fields.append(('site', None))
         ReplaceFields(lignes, fields)
         
         # Les cotisations
@@ -73,20 +73,15 @@ class AppelCotisationsModifications(object):
             line = lines_template[i % 2].cloneNode(1)
             try:
                 facture = Facture(inscrit, self.debut.year, self.debut.month, self.options)
-                cotisation, supplement = facture.cotisation_mensuelle, facture.supplement
                 commentaire = None
             except CotisationException, e:
-                cotisation, supplement = '?', None
+                facture = None
                 commentaire = '\n'.join(e.errors)
                 errors[GetPrenomNom(inscrit)] = e.errors
                 
-            fields = [('prenom', inscrit.prenom),
-                      ('nom', inscrit.nom),
-                      ('cotisation', cotisation),
-                      ('supplement', supplement),
-                      ('commentaire', commentaire)]
-            
+            fields = GetCrecheFields(creche) + GetInscritFields(inscrit) + GetFactureFields(facture) + [('commentaire', commentaire)]            
             ReplaceFields(line, fields)
+            
             table.insertBefore(line, lines_template[0])
             IncrementFormulas(lines_template[i % 2], row=+2)
 

@@ -69,7 +69,7 @@ class Cotisation(object):
             for parent in inscrit.parents.values():
                 if parent:
                     revenus_parent = Select(parent.revenus, self.date_revenus)
-                    if revenus_parent is None or revenus_parent == '':
+                    if revenus_parent is None or revenus_parent.revenu == '':
                         errors.append(u" - Les déclarations de revenus de %s sont incomplètes." % parent.relation)
                     else:
                         self.AjustePeriode((GetYearStart(self.date), GetYearEnd(self.date)))
@@ -169,7 +169,7 @@ class Cotisation(object):
                     date = getNextMonthStart(date)
                 if options & TRACES: print ' nombres de factures :', self.nombre_factures
                 self.heures_mois = math.ceil(self.heures_periode / self.nombre_factures)
-                if options & TRACES: print ' heures mensuelles :', self.heures_mois
+                if options & TRACES: print ' heures mensuelles : %f (%f)' % (self.heures_mois, self.heures_periode / self.nombre_factures)
             else:
                 self.heures_periode = 47 * self.heures_semaine
                 # TODO c'etait 45 au lieu de 46 pour Oleron, 47 pour Bois le roi

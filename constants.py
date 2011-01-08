@@ -92,6 +92,9 @@ MALADE = -2
 SUPPLEMENT = 1 << 29 # pas d'activité > 28 !
 PREVISIONNEL = 1 << 30 # flag previsionnel
 
+# Types des champs OpenOffice
+FIELD_EUROS = 1
+
 #IDs de boutons
 ID_SYNCHRO = 10001
 ID_UNDO = 10002

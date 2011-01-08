@@ -46,8 +46,8 @@ def GetColumnIndex(name):
                     
 def evalFields(fields):
     for i, field in enumerate(fields[:]):
-        if len(field) == 2:
-            param, value = field
+        if len(field) == 2 or field[2] == FIELD_EUROS:
+            param, value = field[0:2]
             if isinstance(value, list):
                 text = [GetText(v) for v in value]
                 fields.append((param.upper(), value, [t.upper() for t in text]))
@@ -110,6 +110,10 @@ def RemoveColumn(rows, index):
                 break    
      
 def ReplaceTextFields(dom, fields):
+    for i, field in enumerate(fields):
+        if len(field) == 3 and field[2] == FIELD_EUROS:
+            fields[i] = (field[0], "%.2f" % field[1])
+
     evalFields(fields)
     #print dom.toprettyxml()
 
@@ -158,7 +162,7 @@ def ReplaceTextFields(dom, fields):
                 except Exception, e:
                     print e
 
-def ReplaceFields(cellules, fields):
+def ReplaceFields(cellules, fields):          
     evalFields(fields)
     
     # Si l'argument est une ligne ...
