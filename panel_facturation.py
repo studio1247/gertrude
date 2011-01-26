@@ -157,7 +157,7 @@ class FacturationPanel(GPanel):
         for inscrit in creche.inscrits:
             if inscrit.GetInscription(datetime.date.today()) != None:
                 for choice in self.inscrits_choice.values():
-                    choice.Append(GetInscritId(inscrit, creche.inscrits), inscrit)
+                    choice.Append(GetPrenomNom(inscrit), inscrit)
         # Les autres
         separator = False
         for inscrit in creche.inscrits:
@@ -167,7 +167,7 @@ class FacturationPanel(GPanel):
                     for choice in self.inscrits_choice.values():
                         choice.Append(50 * '-', None)
                 for choice in self.inscrits_choice.values():
-                    choice.Append(GetInscritId(inscrit, creche.inscrits), inscrit)
+                    choice.Append(GetPrenomNom(inscrit), inscrit)
         for choice in self.inscrits_choice.values():
             choice.SetSelection(0)
 

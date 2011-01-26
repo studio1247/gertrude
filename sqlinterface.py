@@ -24,7 +24,7 @@ from functions import *
 from sqlobjects import *
 import wx
 
-VERSION = 47
+VERSION = 48
 
 def getdate(s):
     if s is None:
@@ -1010,6 +1010,10 @@ class SQLConnection(object):
         if version < 47:
             cur.execute("ALTER TABLE INSCRIPTIONS ADD forfait_mensuel FLOAT")
             cur.execute("UPDATE INSCRIPTIONS SET forfait_mensuel=?", (.0,))
+            
+        if version < 48:
+            cur.execute("UPDATE CONGES SET label='' WHERE label IS NULL")
+            cur.execute("UPDATE CONGES_INSCRITS SET label='' WHERE label IS NULL")
             
         if version < VERSION:
             try:

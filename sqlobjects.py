@@ -345,7 +345,7 @@ class CongeInscrit(Conge):
     
     def create(self):
         print 'nouveau conge'
-        result = sql_connection.execute('INSERT INTO %s (idx, inscrit, debut, fin) VALUES (NULL,?,?,?)' % self.__table__, (self.parent.idx, self.debut, self.fin))
+        result = sql_connection.execute('INSERT INTO %s (idx, inscrit, debut, fin, label) VALUES (NULL,?,?,?,?)' % self.__table__, (self.parent.idx, self.debut, self.fin, self.label))
         self.idx = result.lastrowid
 
 class Activite(object):

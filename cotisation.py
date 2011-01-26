@@ -234,7 +234,7 @@ class Cotisation(object):
                 if self.enfants_a_charge > 3:
                     self.taux_effort = 0.03
                 elif self.enfants_a_charge == 3:
-                    self.taux_effort = 0.038
+                    self.taux_effort = 0.04
                 elif self.enfants_a_charge == 2:
                     self.taux_effort = 0.05
                 else:

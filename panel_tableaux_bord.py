@@ -252,7 +252,7 @@ class EtatsPresenceTab(AutoTab):
         self.inscrits_choice.Clear()
         self.inscrits_choice.Append("Tous les inscrits", None)
         for inscrit in inscrits:
-            self.inscrits_choice.Append(GetInscritId(inscrit, creche.inscrits), inscrit)
+            self.inscrits_choice.Append(GetPrenomNom(inscrit), inscrit)
         self.inscrits_choice.Select(0)
         
     def UpdateContents(self):

@@ -83,11 +83,14 @@ def HeuresTranche(journee, debut, fin):
     return float(result) / 60
 
 def GetInitialesPrenom(person):
-    for char in ('-', ' '):
-        if char in person.prenom:
-            parts = person.prenom.split(char)
-            return ''.join([part[0] for part in parts if len(part) > 0])
-    return person.prenom[0]
+    if person.prenom:
+        for char in ('-', ' '):
+            if char in person.prenom:
+                parts = person.prenom.split(char)
+                return ''.join([part[0] for part in parts if len(part) > 0])
+        return person.prenom[0]
+    else:
+        return '?'
 
 def GetNom(person):
     if person:
@@ -210,12 +213,6 @@ def GetParentsString(inscrit):
         else:
             return '%s %s et %s %s' % (maman.prenom, maman.nom, papa.prenom, papa.nom)
 
-def GetInscritId(inscrit, inscrits):
-    for i in inscrits:
-        if (inscrit != i and inscrit.prenom == i.prenom):
-            return inscrit.prenom + " " + inscrit.nom
-    return inscrit.prenom
-
 def GetInscritsByMode(start, end, mode): # TODO pourquoi retourner les index
     result = []
     for i, inscrit in enumerate(creche.inscrits):
@@ -298,7 +295,7 @@ def getLines(date, inscrits):
                 line = inscrit.getReferenceDayCopy(date)
             line.nom = inscrit.nom
             line.prenom = inscrit.prenom
-            line.label = GetInscritId(inscrit, inscrits)
+            line.label = GetPrenomNom(inscrit)
             line.reference = inscrit.getReferenceDay(date)
             lines.append(line)
     return lines

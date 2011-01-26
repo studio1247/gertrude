@@ -876,7 +876,7 @@ class InscriptionsPanel(GPanel):
         # Ceux qui sont presents
         for inscrit in creche.inscrits:
             if inscrit.GetInscription(datetime.date.today(), preinscription=True) != None:
-                self.choice.Append(GetInscritId(inscrit, creche.inscrits), inscrit)
+                self.choice.Append(GetPrenomNom(inscrit), inscrit)
         # Les autres
         separator = False
         for inscrit in creche.inscrits:
@@ -884,7 +884,7 @@ class InscriptionsPanel(GPanel):
                 if not separator:
                     self.choice.Append(150 * '-', None)
                     separator = True
-                self.choice.Append(GetInscritId(inscrit, creche.inscrits), inscrit)
+                self.choice.Append(GetPrenomNom(inscrit), inscrit)
 
         if len(creche.inscrits) > 0 and selected != None and selected in creche.inscrits:
             self.SelectInscrit(selected)
@@ -944,8 +944,8 @@ class InscriptionsPanel(GPanel):
         
     def ChangePrenom(self, inscrit):
         if creche and inscrit:
-            inscritId = GetInscritId(inscrit, creche.inscrits)
-            if inscritId == '':
+            inscritId = GetPrenomNom(inscrit)
+            if inscritId.isspace():
                 inscritId = 'Nouvelle inscription'
             selection = self.choice.GetSelection()
             self.choice.SetString(selection, inscritId)
