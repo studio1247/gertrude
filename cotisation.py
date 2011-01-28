@@ -187,14 +187,14 @@ class Cotisation(object):
             self.cotisation_periode = 0.0
             self.cotisation_mensuelle = self.inscription.forfait_mensuel
         elif creche.mode_facturation == FACTURATION_HORAIRES_REELS:
-            self.montant_heure_garde = creche.eval_taux_horaire(self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine)
+            self.montant_heure_garde = creche.eval_taux_horaire(self.mode_garde, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine)
             if self.montant_heure_garde is None:
                 errors.append(u" - La formule de calcul du tarif horaire n'est pas correcte.")
                 raise CotisationException(errors)
             self.cotisation_periode = 0.0
             self.cotisation_mensuelle = 0.0
         elif creche.mode_facturation == FACTURATION_PAJE:       
-            self.montant_heure_garde = creche.eval_taux_horaire(self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine)
+            self.montant_heure_garde = creche.eval_taux_horaire(self.mode_garde, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine)
             if self.montant_heure_garde is None:
                 errors.append(u" - La formule de calcul du tarif horaire n'est pas correcte.")
                 raise CotisationException(errors)
