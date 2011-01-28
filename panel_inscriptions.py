@@ -202,7 +202,13 @@ class IdentitePanel(InscriptionsTab):
         sizer2.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.ALIGN_CENTER_VERTICAL), (ctrl, 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'nom'), 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, 'Sexe :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoChoiceCtrl(self, None, 'sexe', items=[(u"Garçon", 1), ("Fille", 2)]), 0, wx.EXPAND)])
-        sizer2.AddMany([(wx.StaticText(self, -1, 'Date de naissance :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'naissance'), 0, wx.EXPAND)])
+        sizer3 = wx.BoxSizer(wx.HORIZONTAL)
+        self.age_ctrl = wx.TextCtrl(self, -1)
+        self.age_ctrl.Disable()
+        self.date_naissance_ctrl = AutoDateCtrl(self, None, 'naissance')
+        self.Bind(wx.EVT_TEXT, self.EvtChangementDateNaissance, self.date_naissance_ctrl)
+        sizer3.AddMany([(self.date_naissance_ctrl, 1, wx.EXPAND), (self.age_ctrl, 1, wx.EXPAND|wx.LEFT, 5)])
+        sizer2.AddMany([(wx.StaticText(self, -1, 'Date de naissance :'), 0, wx.ALIGN_CENTER_VERTICAL), (sizer3, 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, 'Adresse :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'adresse'), 0, wx.EXPAND)])
         self.ville_ctrl = AutoTextCtrl(self, None, 'ville') # A laisser avant le code postal !
         self.code_postal_ctrl = AutoNumericCtrl(self, None, 'code_postal', min=0, precision=0)
@@ -252,6 +258,24 @@ class IdentitePanel(InscriptionsTab):
     def EvtChangementPrenom(self, event):
         event.GetEventObject().onText(event)
         self.parent.EvtChangementPrenom(event)
+
+    def EvtChangementDateNaissance(self, event):
+        date_naissance = self.date_naissance_ctrl.GetValue()
+        if date_naissance:
+            age = today.year * 12 + today.month - date_naissance.year * 12 - date_naissance.month
+            if today.day < date_naissance.day:
+                age -= 1
+            annees, mois = age / 12, age % 12
+            if annees < 0:
+                self.age_ctrl.SetValue("")   
+            elif annees and mois:
+                self.age_ctrl.SetValue("%d ans et %d mois" % (annees, mois))
+            elif annees:
+                self.age_ctrl.SetValue("%d ans" % annees)
+            else:
+                self.age_ctrl.SetValue("%d mois" % mois)
+        else:
+            self.age_ctrl.SetValue("")
 
     def EvtChangementCodePostal(self, event):
         code_postal = self.code_postal_ctrl.GetValue()
@@ -679,7 +703,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
                             item.Show(True)
                         for item in self.sites_items[2:4]:
                             item.Show(False)
-            elif creche.sites > 1:
+            elif len(creche.sites) > 1:
                 for item in self.sites_items[0:2]:
                     item.Show(True)
                 for item in self.sites_items[2:4]:
