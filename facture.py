@@ -86,7 +86,7 @@ class FactureFinMois(object):
                         if creche.mode_facturation != FACTURATION_HORAIRES_REELS:
                             # recherche du premier et du dernier jour
                             premier_jour_maladie = tmp = date
-                            nombre_jours_ouvres_maladie = 1
+                            nombre_jours_ouvres_maladie = 0
                             while tmp > inscrit.inscriptions[0].debut:
                                 if not tmp in creche.jours_fermeture:
                                     nombre_jours_ouvres_maladie += 1
