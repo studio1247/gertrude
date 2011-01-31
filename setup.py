@@ -57,10 +57,9 @@ elif "linux" in sys.platform:
     p.section = "utils"
     p.arch = "all"
 
-    p["/usr/share/applications"] =["gertrude.desktop|gertrude.desktop"]
-    p["/usr/share/gertrude"]=[i+"|"+i for i in glob.glob("bitmaps_dist/*.*") + glob.glob("templates_dist/*.html") + glob.glob("templates_dist/*.od?")]
-    p["/usr/share/gertrude"]=glob.glob("*.py")
-    p["/usr/bin"]=["gertrude|gertrude"]
+    p["/usr/share/applications"] =["./linux/gertrude.desktop|gertrude.desktop"]
+    p["/usr/share/gertrude"] = glob.glob("./*.py") + glob.glob("./bitmaps_dist/*") + glob.glob("./templates_dist/*.html") + glob.glob("./templates_dist/*.od?")
+    p["/usr/bin"]=["./linux/gertrude|gertrude"]
     p["/usr/share/doc/gertrude"]=["COPYING"]
     p.generate(VERSION, "", rpm=True, src=True)
 else:
