@@ -1,0 +1,4 @@
+#!/bin/sh
+prefix=/usr
+exec ${prefix}/share/gertrude/gertrude.py "$@"
+

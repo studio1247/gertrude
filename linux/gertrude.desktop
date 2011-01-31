@@ -1,0 +1,15 @@
+[Desktop Entry]
+X-AppInstall-Package=Gertrude
+X-AppInstall-Popcon=140
+X-AppInstall-Section=universe
+
+Name=Gertrude
+Comment=Logiciel de gestion pour les crèches
+Exec=/usr/bin/gertrude
+Icon=gertrude
+Terminal=false
+Type=Application
+StartupNotify=true
+GenericName=
+X-Ubuntu-Gettext-Domain=app-install-data
+
