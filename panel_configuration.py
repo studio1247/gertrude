@@ -22,9 +22,11 @@ from controls import *
 from sqlobjects import *
 import wx
 
-types_creche = [("Parental", TYPE_PARENTAL),
-                ("Associatif", TYPE_ASSOCIATIF),
-                ("Municipal", TYPE_MUNICIPAL),
+types_creche = [(u"Parental", TYPE_PARENTAL),
+                (u"Associatif", TYPE_ASSOCIATIF),
+                (u"Municipal", TYPE_MUNICIPAL),
+                (u"Micro-crèche", TYPE_MICRO_CRECHE),
+                (u"Assistante maternelle", TYPE_ASSISTANTE_MATERNELLE),
                 (u"Garderie périscolaire", TYPE_GARDERIE_PERISCOLAIRE)]
 
 modes_facturation = [("Forfait 10h / jour", FACTURATION_FORFAIT_10H),

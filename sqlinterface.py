@@ -24,7 +24,7 @@ from functions import *
 from sqlobjects import *
 import wx
 
-VERSION = 48
+VERSION = 49
 
 def getdate(s):
     if s is None:
@@ -244,6 +244,7 @@ class SQLConnection(object):
             mode, INTEGER,
             fin_periode_adaptation DATE,
             duree_reference INTEGER,
+            forfait_heures_presence INTEGER,
             semaines_conges INTEGER
           );""")
 
@@ -446,8 +447,8 @@ class SQLConnection(object):
                 referent = Referent(inscrit, creation=False)
                 referent.prenom, referent.nom, referent.telephone, referent.idx = referent_entry
                 inscrit.referents.append(referent)
-            cur.execute('SELECT idx, debut, fin, mode, forfait_mensuel, fin_periode_adaptation, duree_reference, semaines_conges, preinscription, site, sites_preinscription, professeur FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
-            for idx, debut, fin, mode, forfait_mensuel, fin_periode_adaptation, duree_reference, semaines_conges, preinscription, site, sites_preinscription, professeur in cur.fetchall():
+            cur.execute('SELECT idx, debut, fin, mode, forfait_mensuel, fin_periode_adaptation, duree_reference, forfait_heures_presence, semaines_conges, preinscription, site, sites_preinscription, professeur FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
+            for idx, debut, fin, mode, forfait_mensuel, fin_periode_adaptation, duree_reference, forfait_heures_presence, semaines_conges, preinscription, site, sites_preinscription, professeur in cur.fetchall():
                 inscription = Inscription(inscrit, duree_reference, creation=False)
                 for tmp in creche.sites:
                     if site == tmp.idx:
@@ -461,7 +462,7 @@ class SQLConnection(object):
                 for tmp in creche.professeurs:
                     if professeur == tmp.idx:
                         inscription.professeur = tmp
-                inscription.debut, inscription.fin, inscription.mode, inscription.preinscription, inscription.forfait_mensuel, inscription.fin_periode_adaptation, inscription.semaines_conges, inscription.idx = getdate(debut), getdate(fin), mode, preinscription, forfait_mensuel, getdate(fin_periode_adaptation), semaines_conges, idx
+                inscription.debut, inscription.fin, inscription.mode, inscription.preinscription, inscription.forfait_heures_presence, inscription.forfait_mensuel, inscription.fin_periode_adaptation, inscription.semaines_conges, inscription.idx = getdate(debut), getdate(fin), mode, preinscription, forfait_heures_presence, forfait_mensuel, getdate(fin_periode_adaptation), semaines_conges, idx
                 inscrit.inscriptions.append(inscription)
             for inscription in inscrit.inscriptions:
                 cur.execute('SELECT day, value, debut, fin, idx FROM REF_ACTIVITIES WHERE reference=?', (inscription.idx,))
@@ -1014,6 +1015,10 @@ class SQLConnection(object):
         if version < 48:
             cur.execute("UPDATE CONGES SET label='' WHERE label IS NULL")
             cur.execute("UPDATE CONGES_INSCRITS SET label='' WHERE label IS NULL")
+        
+        if version < 49:
+            cur.execute("ALTER TABLE INSCRIPTIONS ADD forfait_heures_presence INTEGER")
+            cur.execute("UPDATE INSCRIPTIONS SET forfait_heures_presence=?", (0,))
             
         if version < VERSION:
             try:

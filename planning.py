@@ -594,6 +594,7 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
         self.internal_panel.SetLines(lines)
         if self.summary_panel:
             self.summary_panel.UpdateContents()
+        self.Refresh()
         
     def UpdateLine(self, index):
         if self.summary_panel:
@@ -618,6 +619,7 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
         dc.SetFont(font)
         dc.SetTextForeground("WHITE")
         
+        # dessin de l'échelle
         affichage_min = int(creche.affichage_min * (60 / BASE_GRANULARITY))
         affichage_max = int(creche.affichage_max * (60 / BASE_GRANULARITY))
         if affichage_min % (creche.granularite / BASE_GRANULARITY):

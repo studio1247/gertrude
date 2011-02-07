@@ -803,6 +803,7 @@ class Inscription(SQLObject):
         self.fin = None
         self.mode = MODE_5_5
         self.duree_reference = duree_reference
+        self.forfait_heures_presence = 0
         self.semaines_conges = 0
         self.reference = []
         for i in range(duree_reference):
@@ -810,6 +811,7 @@ class Inscription(SQLObject):
         self.fin_periode_adaptation = None
         self.professeur = None
         self.forfait_mensuel = 0.0
+        self.heures_supplementaires = {}
 
         if creation:
             self.create()
@@ -850,7 +852,7 @@ class Inscription(SQLObject):
     
     def create(self):
         print 'nouvelle inscription'
-        result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, forfait_mensuel, fin_periode_adaptation, duree_reference, semaines_conges) VALUES(NULL,?,?,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, self.forfait_mensuel, self.fin_periode_adaptation, self.duree_reference, self.semaines_conges))
+        result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, forfait_mensuel, fin_periode_adaptation, duree_reference, forfait_heures_presence, semaines_conges) VALUES(NULL,?,?,?,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, self.forfait_mensuel, self.fin_periode_adaptation, self.duree_reference, self.forfait_heures_presence, self.semaines_conges))
         self.idx = result.lastrowid
         
     def delete(self):
@@ -864,7 +866,7 @@ class Inscription(SQLObject):
             value = value.idx
         elif name == "sites_preinscription":
             value = " ".join([str(value.idx) for value in value])
-        if name in ['debut', 'fin', 'mode', 'forfait_mensuel', 'fin_periode_adaptation', 'duree_reference', 'semaines_conges', 'preinscription', 'site', 'sites_preinscription', 'professeur'] and self.idx:
+        if name in ['debut', 'fin', 'mode', 'forfait_mensuel', 'fin_periode_adaptation', 'duree_reference', 'forfait_heures_presence', 'semaines_conges', 'preinscription', 'site', 'sites_preinscription', 'professeur'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE INSCRIPTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))   
 

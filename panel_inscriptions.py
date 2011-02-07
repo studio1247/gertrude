@@ -524,7 +524,8 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.professeur_items = wx.StaticText(self, -1, u"Professeur :"), AutoChoiceCtrl(self, None, 'professeur')
         self.UpdateProfesseurItems()
         sizer1.AddMany([(self.professeur_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.professeur_items[1], 0, wx.EXPAND)])
-        self.mode_accueil_choice = AutoChoiceCtrl(self, None, 'mode', items=[("Plein temps", MODE_5_5), (u"4/5èmes", MODE_4_5), (u"3/5èmes", MODE_3_5), ("Halte-garderie", MODE_HALTE_GARDERIE)])
+        self.mode_accueil_choice = AutoChoiceCtrl(self, None, 'mode', items=[("Plein temps", MODE_5_5), (u"4/5èmes", MODE_4_5), (u"3/5èmes", MODE_3_5), ("Forfait horaire mensuel", MODE_FORFAIT_MENSUEL), ("Halte-garderie", MODE_HALTE_GARDERIE)])
+        self.Bind(wx.EVT_CHOICE, self.onModeAccueilChoice, self.mode_accueil_choice)
         sizer1.AddMany([(wx.StaticText(self, -1, u"Mode d'accueil :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.mode_accueil_choice, 0, wx.EXPAND)])
         self.semaines_conges_items = wx.StaticText(self, -1, u"Nombre de semaines de congés :"), AutoNumericCtrl(self, None, 'semaines_conges', min=0, precision=0)
         sizer1.AddMany([(self.semaines_conges_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.semaines_conges_items[1], 0, wx.EXPAND)])
@@ -536,6 +537,9 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
             self.duree_reference_choice.Append(item, data)
         self.Bind(wx.EVT_CHOICE, self.onDureeReferenceChoice, self.duree_reference_choice)
         sizer1.AddMany([(wx.StaticText(self, -1, u"Durée de la période de référence :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.duree_reference_choice, 0, wx.EXPAND)])
+        self.forfait_heures_presences_static = wx.StaticText(self, -1, u"Forfait mensuel en heures :")
+        self.forfait_heures_presences_ctrl = AutoNumericCtrl(self, None, 'forfait_heures_presence', min=0, precision=0)
+        sizer1.AddMany([(self.forfait_heures_presences_static, 0, wx.ALIGN_CENTER_VERTICAL), (self.forfait_heures_presences_ctrl, 0, wx.EXPAND)])
         sizer.Add(sizer1, 0, wx.ALL|wx.EXPAND, 5)
        
         sizer2 = wx.BoxSizer(wx.HORIZONTAL)
@@ -586,6 +590,10 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
                 inscription.sites_preinscription = [inscription.site]
         inscription.preinscription = not obj.GetValue()
         self.UpdateContents()
+    
+    def onModeAccueilChoice(self, event):
+        self.inscrit.inscriptions[self.periode].mode = self.mode_accueil_choice.GetClientData(self.mode_accueil_choice.GetSelection())
+        self.UpdateContents()        
         
     def onDureeReferenceChoice(self, event):
         duration = self.duree_reference_choice.GetClientData(self.duree_reference_choice.GetSelection())
@@ -708,7 +716,9 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
                     item.Show(True)
                 for item in self.sites_items[2:4]:
                     item.Show(False)
-
+                    
+            self.forfait_heures_presences_ctrl.Show(inscription.mode == MODE_FORFAIT_MENSUEL)
+            self.forfait_heures_presences_static.Show(inscription.mode == MODE_FORFAIT_MENSUEL)
             self.duree_reference_choice.SetSelection(inscription.duree_reference / 7 - 1)
             self.planning_panel.SetInscription(inscription)
         else:
@@ -808,8 +818,9 @@ class CongesPanel(InscriptionsTab):
         index = event.GetEventObject().index
         history.Append(Insert(self.inscrit.conges, index, self.inscrit.conges[index]))
         self.line_del()
-        self.inscrit.conges[index].delete()
+        conge = self.inscrit.conges[index]
         del self.inscrit.conges[index]
+        conge.delete()
         self.sizer.Layout()
         self.UpdateContents()
         
