@@ -63,8 +63,12 @@ class Day(object):
                     if nv:
                         if creche.presences_previsionnelles and self.values[h] & PREVISIONNEL:
                             nv += PREVISIONNEL
-                        elif creche.presences_supplementaires and reference and not (reference.values[h] & mask):
-                            nv += SUPPLEMENT
+                        elif creche.presences_supplementaires:
+                            if self.inscription.mode == MODE_FORFAIT_MENSUEL:
+                                pass
+                            else:
+                                if reference and not (reference.values[h] & mask):
+                                    nv += SUPPLEMENT
                 if nv != v:
                     if v < 0:
                         result.append((a, h, v))

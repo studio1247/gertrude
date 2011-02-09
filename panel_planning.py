@@ -53,6 +53,7 @@ class DayPlanningPanel(PlanningWidget):
                     line.key = self.date
                 line.label = GetPrenomNom(inscrit)
                 line.reference = inscrit.getReferenceDay(self.date)
+                line.inscription = inscription
                 lines.append(line)
         self.SetLines(lines)
 

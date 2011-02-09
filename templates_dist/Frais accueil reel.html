@@ -16,9 +16,19 @@
  
  <table cellspacing="0" cellpadding="4" border="0">
   <tr>
-   <td>Tarif horaire appliqu&eacute; (A)</td>
+   <td>Tarif horaire appliqu&eacute;</td>
    <td>= <var value="'%.02f' % montant_heure_garde"/> &euro;</td>
   </tr>
+  <if value="forfait_heures_presence">
+  <tr>
+   <td>Forfait d'heures de pr&eacute;sence mensuelles</td>
+   <td>= <var value="'%d' % forfait_heures_presence"/>h</td>
+  </tr>
+  <tr>
+   <td><b>Cotisation mensuelle sur la base du forfait</b></td>
+   <td><b>= <var value="'%.2f' % cotisation_mensuelle"/> &euro;</b></td>
+  </tr>
+  </if>
   <tr>
    <td>&nbsp</td>
   </tr>
