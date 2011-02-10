@@ -213,7 +213,7 @@ class Cotisation(object):
                 raise CotisationException(errors)
             if self.inscription.fin:
                 self.semaines_periode = min(52, ((self.inscription.fin - self.inscription.debut).days + 6) / 7)
-                self.nombre_factures = GetNombreFactures(self.inscription.debut, self.inscription.fin)
+                self.nombre_factures = min(12 - len(creche.mois_sans_facture), GetNombreFactures(self.inscription.debut, self.inscription.fin))
             else:
                 self.semaines_periode = 52
                 self.nombre_factures = 12 - len(creche.mois_sans_facture)
