@@ -561,6 +561,37 @@ class ActivitesTab(AutoTab):
         for field in obj.field:
             setattr(obj.activite, field, obj.GetClientData(obj.GetSelection()))
 
+class ChargesTab(AutoTab, PeriodeMixin):
+    def __init__(self, parent):
+        AutoTab.__init__(self, parent)
+        PeriodeMixin.__init__(self, 'charges')
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        self.annee_choice = wx.Choice(self, -1)
+        for annee in range(today.year - 1, today.year + 2):
+            self.annee_choice.Append(u"Année %d" % annee, annee)
+        self.Bind(wx.EVT_CHOICE, self.EvtAnneeChoice, self.annee_choice)
+        sizer.Add(self.annee_choice, 0, wx.TOP, 5)
+        sizer2 = wx.FlexGridSizer(4, 2, 5, 5)
+        self.charges_ctrls = []
+        for m in range(12):
+            ctrl = AutoNumericCtrl(self, None, 'charges', precision=2)
+            self.charges_ctrls.append(ctrl)
+            sizer2.AddMany([wx.StaticText(self, -1, months[m] + ' :'), ctrl])
+        sizer.Add(sizer2, 0, wx.ALL, 5)
+        self.annee_choice.SetSelection(1)
+        self.EvtAnneeChoice(None)
+        sizer.Fit(self)
+        self.SetSizer(sizer)
+
+    def EvtAnneeChoice(self, evt):
+        selected = self.annee_choice.GetSelection()
+        annee = self.annee_choice.GetClientData(selected)
+        for m in range(12):
+            date = datetime.date(annee, m+1, 1)
+            if not date in creche.charges:
+                creche.charges[date] = Charges(date)
+            self.charges_ctrls[m].SetInstance(creche.charges[date])
+        
 class CafTab(AutoTab, PeriodeMixin):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
@@ -967,6 +998,7 @@ class ParametresNotebook(wx.Notebook):
             self.professeurs_tab.Show(False)
             self.professeurs_tab_displayed = False
         self.AddPage(ResponsabilitesTab(self), u'Responsabilités')
+        self.AddPage(ChargesTab(self), u'Charges')
         self.AddPage(CafTab(self), 'C.A.F.')
         self.AddPage(JoursFermeturePanel(self), u'Congés')
         self.AddPage(ActivitesTab(self), u'Couleurs / Activités')

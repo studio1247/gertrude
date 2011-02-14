@@ -289,6 +289,30 @@ class BaremeCAF(object):
             print 'update', name
             sql_connection.execute('UPDATE BAREMESCAF SET %s=? WHERE idx=?' % name, (value, self.idx))
 
+class Charges(object):
+    def __init__(self, date=None, creation=True):
+        self.idx = None
+        self.date = date
+        self.charges = 0.0
+
+        if creation:
+            self.create()
+
+    def create(self):
+        print 'nouvelles charges'
+        result = sql_connection.execute('INSERT INTO CHARGES (idx, date, charges) VALUES (NULL,?,?)', (self.date, self.charges))
+        self.idx = result.lastrowid
+
+    def delete(self):
+        print 'suppression charges'
+        sql_connection.execute('DELETE FROM CHARGES WHERE idx=?', (self.idx,))
+
+    def __setattr__(self, name, value):
+        self.__dict__[name] = value
+        if name in ['date', 'charges'] and self.idx:
+            print 'update', name
+            sql_connection.execute('UPDATE CHARGES SET %s=? WHERE idx=?' % name, (value, self.idx))
+
 class User(object):
     def __init__(self, creation=True):
         self.idx = None
@@ -520,6 +544,7 @@ class Creche(object):
         self.conges = []
         self.bureaux = []
         self.baremes_caf = []
+        self.charges = {}
         self.inscrits = []
         self.ouverture = 7.75
         self.fermeture = 18.5

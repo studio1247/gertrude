@@ -24,7 +24,7 @@ from functions import *
 from sqlobjects import *
 import wx
 
-VERSION = 49
+VERSION = 50
 
 def getdate(s):
     if s is None:
@@ -318,6 +318,13 @@ class SQLConnection(object):
             date DATE,
             acquittement BOOLEAN
           );""")
+        
+        cur.execute("""
+          CREATE TABLE CHARGES (
+            idx INTEGER PRIMARY KEY,
+            date DATE,
+            charges FLOAT
+          );""")
 
         for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", u"15 août", "1er novembre", "11 novembre", u"25 décembre", u"Lundi de Pâques", "Jeudi de l'Ascension"):
             cur.execute("INSERT INTO CONGES (idx, debut) VALUES (NULL, ?)", (label, ))
@@ -393,6 +400,13 @@ class SQLConnection(object):
             bareme.debut, bareme.fin, bareme.plancher, bareme.plafond, idx = bareme_entry
             bareme.debut, bareme.fin, bareme.idx = getdate(bareme.debut), getdate(bareme.fin), idx
             creche.baremes_caf.append(bareme)
+            
+        cur.execute('SELECT date, charges, idx FROM CHARGES')
+        for charges_entry in cur.fetchall():
+            charges = Charges(creation=False)
+            date, charges.charges, idx = charges_entry
+            charges.date, charges.idx = getdate(date), idx
+            creche.charges[charges.date] = charges
 
         cur.execute('SELECT label, value, mode, couleur, couleur_supplement, couleur_previsionnel, tarif, idx FROM ACTIVITIES')
         activites_by_idx = {}
@@ -1019,6 +1033,14 @@ class SQLConnection(object):
         if version < 49:
             cur.execute("ALTER TABLE INSCRIPTIONS ADD forfait_heures_presence INTEGER")
             cur.execute("UPDATE INSCRIPTIONS SET forfait_heures_presence=?", (0,))
+            
+        if version < 50:
+            cur.execute("""
+              CREATE TABLE CHARGES (
+                idx INTEGER PRIMARY KEY,
+                date DATE,
+                charges FLOAT
+              );""")
             
         if version < VERSION:
             try:
