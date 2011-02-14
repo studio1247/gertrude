@@ -127,11 +127,11 @@ class PlanningGridWindow(BufferedWindow):
             for start, end, activity in line.get_activities(reference=line.reference):
                 r, g, b, t, s = getActivityColor(activity)
                 try:
-                  dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
-                  dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
+                    dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
+                    dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
                 except:
-                  dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
-                  dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
+                    dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
+                    dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
                 rect = wx.Rect(1+(start-int(creche.affichage_min*(60 / BASE_GRANULARITY)))*COLUMN_WIDTH, 1 + index*LINE_HEIGHT, (end-start)*COLUMN_WIDTH-1, LINE_HEIGHT-1)
                 dc.DrawRoundedRectangleRect(rect, 4)
         else:
@@ -341,9 +341,11 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             line.insert = None
 
     def UpdateLine(self, index):
-        if not self.GetParent().options & NO_ICONS:
+        options = self.GetParent().options
+        if not options & NO_ICONS:
             self.UpdateButton(index)
-        self.UpdateCheckboxes(index)
+        if not options & DRAW_NUMBERS:
+            self.UpdateCheckboxes(index)
         self.GetParent().UpdateLine(index)
             
     def UpdateButton(self, index):
@@ -365,7 +367,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             checkbox = activite_sizer.GetItem(index).GetWindow()
             if isinstance(line, LigneConge):
                 checkbox.Disable()
-            else:
+            elif not isinstance(line, basestring):
                 checkbox.Enable()
                 checkbox.SetValue(checkbox.activite.value in line.activites_sans_horaires)
 
@@ -394,7 +396,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         self.lines = lines
         count = len(self.lines)
         
-        if self.last_activites_observer == 0 or ('activites' in observers and observers['activites'] > self.last_activites_observer):
+        if not self.GetParent().options & DRAW_NUMBERS and (self.last_activites_observer == 0 or ('activites' in observers and observers['activites'] > self.last_activites_observer)):
             activites = creche.GetActivitesSansHoraires()
             activites_count = len(activites)
             previous_activites_count = len(self.activites_sizers)
@@ -451,11 +453,13 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             self.sizer.Layout()
             self.SetupScrolling(scroll_x=False)
             self.GetParent().sizer.Layout()
-                    
+        
+        options = self.GetParent().options 
         for i in range(count):
-            if not self.GetParent().options & NO_ICONS:
+            if not options & NO_ICONS:
                 self.UpdateButton(i)
-            self.UpdateCheckboxes(i)
+            if not options & DRAW_NUMBERS:
+                self.UpdateCheckboxes(i)
         
         self.grid_panel.UpdateDrawing()
         self.labels_panel.Refresh()
