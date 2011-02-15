@@ -665,6 +665,7 @@ class Creche(object):
     def eval_taux_horaire(self, mode, revenus, enfants, jours):
         hg = MODE_HALTE_GARDERIE
         creche = MODE_CRECHE
+        forfait = MODE_FORFAIT_MENSUEL
         try:
             for cas in self.conversion_formule_taux_horaire:
                 if eval(cas[0]):
@@ -690,6 +691,7 @@ class Creche(object):
     def test_formule_taux_horaire(self, index):
         hg = MODE_HALTE_GARDERIE
         creche = MODE_CRECHE
+        forfait = MODE_FORFAIT_MENSUEL
         mode = hg
         revenus = 20000
         jours = 5

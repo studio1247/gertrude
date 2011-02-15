@@ -697,7 +697,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
                 if inscription.preinscription:
                     self.validation_button.SetValue(False)
                     self.validation_button.SetLabel("Valider l'inscription")
-                    if creche.sites > 1:
+                    if len(creche.sites) > 1:
                         for item in self.sites_items[0:2]:
                             item.Show(False)
                         for item in self.sites_items[2:4]:
@@ -706,7 +706,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
                 else:
                     self.validation_button.SetValue(True)
                     self.validation_button.SetLabel("Invalider l'inscription")
-                    if creche.sites > 1:
+                    if len(creche.sites) > 1:
                         for item in self.sites_items[0:2]:
                             item.Show(True)
                         for item in self.sites_items[2:4]:
