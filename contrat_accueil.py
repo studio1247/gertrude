@@ -83,6 +83,9 @@ class DocumentAccueilModifications(object):
         
         if creche.mode_facturation != FACTURATION_FORFAIT_MENSUEL:
             fields.append(('montant-heure-garde', self.cotisation.montant_heure_garde))
+            
+        if inscription.mode == MODE_FORFAIT_MENSUEL:
+            fields.append(('forfait-heures-presence', self.cotisation.forfait_heures_presence))
 
         if self.cotisation.assiette_annuelle is not None:
             fields.append(('annee-revenu', self.cotisation.date_revenus.year))
