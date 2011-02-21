@@ -998,7 +998,8 @@ class ParametresNotebook(wx.Notebook):
             self.professeurs_tab.Show(False)
             self.professeurs_tab_displayed = False
         self.AddPage(ResponsabilitesTab(self), u'Responsabilités')
-        self.AddPage(ChargesTab(self), u'Charges')
+        if IsTemplateFile("Synthese financiere.ods"):
+            self.AddPage(ChargesTab(self), u'Charges')
         self.AddPage(CafTab(self), 'C.A.F.')
         self.AddPage(JoursFermeturePanel(self), u'Congés')
         self.AddPage(ActivitesTab(self), u'Couleurs / Activités')
