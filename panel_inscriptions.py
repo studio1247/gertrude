@@ -524,7 +524,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.professeur_items = wx.StaticText(self, -1, u"Professeur :"), AutoChoiceCtrl(self, None, 'professeur')
         self.UpdateProfesseurItems()
         sizer1.AddMany([(self.professeur_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.professeur_items[1], 0, wx.EXPAND)])
-        self.mode_accueil_choice = AutoChoiceCtrl(self, None, 'mode', items=[("Plein temps", MODE_5_5), (u"4/5èmes", MODE_4_5), (u"3/5èmes", MODE_3_5), ("Forfait horaire mensuel", MODE_FORFAIT_MENSUEL), ("Halte-garderie", MODE_HALTE_GARDERIE)])
+        self.mode_accueil_choice = AutoChoiceCtrl(self, None, 'mode', items=[("Temps plein", MODE_5_5), ("Temps partiel", MODE_TEMPS_PARTIEL), (u"4/5èmes", MODE_4_5), (u"3/5èmes", MODE_3_5), ("Forfait horaire mensuel", MODE_FORFAIT_MENSUEL), ("Halte-garderie", MODE_HALTE_GARDERIE)])
         self.Bind(wx.EVT_CHOICE, self.onModeAccueilChoice, self.mode_accueil_choice)
         sizer1.AddMany([(wx.StaticText(self, -1, u"Mode d'accueil :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.mode_accueil_choice, 0, wx.EXPAND)])
         self.semaines_conges_items = wx.StaticText(self, -1, u"Nombre de semaines de congés :"), AutoNumericCtrl(self, None, 'semaines_conges', min=0, precision=0)

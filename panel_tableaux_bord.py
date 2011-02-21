@@ -31,6 +31,7 @@ from etats_trimestriels import EtatsTrimestrielsModifications
 from planning_detaille import PlanningDetailleModifications
 from etats_presence import EtatsPresenceModifications
 from rapport_frequentation import RapportFrequentationModifications
+from synthese_financiere import SyntheseFinanciereModifications
 from facture import FactureFinMois
 from planning import *
 from sqlobjects import Day
@@ -503,7 +504,7 @@ class StatistiquesFrequentationTab(AutoTab):
                         facture = FactureFinMois(inscrit, annee, mois+1)
                         heures_contractualisees += facture.heures_contractualisees
                         heures_realisees += facture.heures_realisees                       
-                        heures_facturees += sum(facture.heures_facturees)
+                        heures_facturees += facture.heures_facturees
                         cotisations_contractualisees += facture.cotisation_mensuelle
                         cotisations_realisees += facture.total_realise
                         cotisations_facturees += facture.total
@@ -567,6 +568,18 @@ class RelevesTab(AutoTab):
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationRapportFrequentation, button)
         box_sizer.AddMany([(self.choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+        
+        # Les synthèses financières
+        if IsTemplateFile("Synthese financiere.ods"):
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Synthèse financière'), wx.HORIZONTAL)
+            self.choice = wx.Choice(self)
+            button = wx.Button(self, -1, u'Génération')
+            for year in range(first_date.year, today.year + 1):
+                self.choice.Append(u'Année %d' % year, year)
+            self.choice.SetSelection(today.year - first_date.year)
+            self.Bind(wx.EVT_BUTTON, self.EvtGenerationSyntheseFinanciere, button)
+            box_sizer.AddMany([(self.choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
         # Les plannings de presence enfants
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Planning des présences'), wx.HORIZONTAL)
@@ -608,6 +621,10 @@ class RelevesTab(AutoTab):
     def EvtGenerationRapportFrequentation(self, evt):
         annee = self.choice.GetClientData(self.choice.GetSelection())
         DocumentDialog(self, RapportFrequentationModifications(annee)).ShowModal()
+        
+    def EvtGenerationSyntheseFinanciere(self, evt):
+        annee = self.choice.GetClientData(self.choice.GetSelection())
+        DocumentDialog(self, SyntheseFinanciereModifications(annee)).ShowModal()
 
     def EvtGenerationPlanningPresences(self, evt):
         date = self.weekchoice.GetClientData(self.weekchoice.GetSelection())

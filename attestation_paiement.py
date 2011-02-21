@@ -64,7 +64,7 @@ class AttestationModifications(object):
                             facture_debut = date
                         facture_fin = getMonthEnd(date)
                         total += facture.total
-                        heures_facturees += sum(facture.heures_facturees)
+                        heures_facturees += facture.heures_facturees
                     date = getNextMonthStart(date)
             except CotisationException, e:
                 errors[GetPrenomNom(inscrit)] = e.errors

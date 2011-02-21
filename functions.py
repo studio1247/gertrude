@@ -82,6 +82,15 @@ def HeuresTranche(journee, debut, fin):
             result += BASE_GRANULARITY
     return float(result) / 60
 
+def GetJoursOuvres(annee, mois):
+    jours_ouvres = 0
+    date = datetime.date(annee, mois, 1)
+    while date.month == mois:
+        if not date in creche.jours_fermeture:
+            jours_ouvres += 1
+        date += datetime.timedelta(1)
+    return jours_ouvres        
+
 def GetInitialesPrenom(person):
     if person.prenom:
         for char in ('-', ' '):
