@@ -29,6 +29,12 @@
    <td><b>= <var value="'%.2f' % cotisation_mensuelle"/> &euro;</b></td>
   </tr>
   </if>
+  <if value="not forfait_heures_presence">
+  <tr>
+   <td>Nombre d'heures par semaine</td>
+   <td>= <var value="'%d' % heures_semaine"/>h</td>
+  </tr>
+  </if>
   <tr>
    <td>&nbsp</td>
   </tr>

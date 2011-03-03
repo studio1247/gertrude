@@ -91,6 +91,9 @@ def GetJoursOuvres(annee, mois):
         date += datetime.timedelta(1)
     return jours_ouvres        
 
+def GetHeuresAccueil(annee, mois):
+    return GetJoursOuvres(annee, mois) * (creche.fermeture - creche.ouverture) * creche.capacite
+    
 def GetInitialesPrenom(person):
     if person.prenom:
         for char in ('-', ' '):
@@ -346,7 +349,14 @@ def GetCrecheFields(creche):
             ('code-postal-creche', str(creche.code_postal)),
             ('ville-creche', creche.ville),
             ('telephone-creche', creche.telephone),
-            ('email-creche', creche.email)]
+            ('email-creche', creche.email),
+            ('capacite', creche.capacite)]
+    
+def GetTarifsHorairesFields(creche):
+    if creche.formule_taux_horaire:
+        return [('tarif(%s)' % cas[0], cas[1]) for cas in creche.formule_taux_horaire]
+    else:
+        return []
     
 def GetInscritFields(inscrit):
     return [('adresse', inscrit.adresse),

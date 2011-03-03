@@ -658,7 +658,7 @@ class Creche(object):
                     condition = "True"
                 else:
                     condition = condition.lower().replace(" et ", " and ").replace(" ou ", " or ").replace("=", "==")
-                self.conversion_formule_taux_horaire.append([condition, cas[1]])
+                self.conversion_formule_taux_horaire.append([condition, cas[1], cas[0]])
         else:
             self.conversion_formule_taux_horaire = None
     

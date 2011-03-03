@@ -99,7 +99,7 @@ class FraisAccueilPanel(wx.Panel):
             context = self.current_cotisation[-1]
             if isinstance(context, CotisationException):
                 error = '<br>'.join(context.errors)
-                self.html = u"<html><body><b>Les frais de garde mensuels ne peuvent être calcul&eacute;s pour la (les) raison(s) suivante(s) :</b><br>" + error  + "</body></html>"
+                self.html = u"<html><body><b>Les frais de garde ne peuvent être calcul&eacute;s pour la (les) raison(s) suivante(s) :</b><br>" + error  + "</body></html>"
                 self.frais_accueil_button.Disable()
                 self.contrat_button.Disable()
             else:
@@ -848,7 +848,7 @@ class InscriptionsNotebook(wx.Notebook):
         self.AddPage(NotesPanel(self), "Notes")
         if profil & PROFIL_TRESORIER:
             self.forfait_panel = FraisAccueilPanel(self)
-            self.AddPage(self.forfait_panel, 'Frais de garde mensuels')
+            self.AddPage(self.forfait_panel, 'Frais de garde')
         else:
             self.forfait_panel = None
 

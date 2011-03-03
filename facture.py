@@ -77,6 +77,7 @@ class FactureFinMois(object):
                     else:
                         cotisation.heures_reference = heures_reference
                         cotisation.heures_maladie = 0.0
+                        cotisation.heures_contractualisees = 0.0
                         cotisations_mensuelles[(cotisation.mode_inscription, cotisation.cotisation_mensuelle)] = cotisation
                     
                     if (cotisation.mode_inscription, cotisation.heures_semaine) in heures_hebdomadaires:
@@ -136,11 +137,7 @@ class FactureFinMois(object):
                         else:
                             self.jours_presence_selon_contrat[date] = heures_realisees
                             
-                        if creche.mode_facturation == FACTURATION_HORAIRES_REELS or (creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date)):
-                            if inscription.mode != MODE_FORFAIT_MENSUEL and not state & PREVISIONNEL:
-                                self.heures_supplementaires += heures_realisees
-                                self.supplement += heures_realisees * cotisation.montant_heure_garde
-                        elif heures_supplementaires > 0:
+                        if heures_supplementaires > 0:
                             if creche.mode_facturation == FACTURATION_FORFAIT_10H:
                                 self.supplement += 10 * cotisation.montant_heure_garde
                             else:
@@ -156,6 +153,7 @@ class FactureFinMois(object):
                     self.heures_realisees += heures_realisees
                     cotisation.heures_realisees += heures_realisees
                     if cotisation.inscription.mode != MODE_FORFAIT_MENSUEL:
+                        cotisation.heures_contractualisees += heures_reference
                         self.heures_contractualisees += heures_reference
                         self.heures_facturees_par_mode[cotisation.mode_garde] += heures_reference + heures_supplementaires                    
                     self.total_realise += heures_realisees * cotisation.montant_heure_garde
@@ -175,8 +173,13 @@ class FactureFinMois(object):
                     heures_contractualisees = cotisation.heures_contractualisees
                 if cotisation.heures_realisees > heures_contractualisees:
                     cotisation.heures_supplementaires = cotisation.heures_realisees - heures_contractualisees
+                    self.heures_facturees_par_mode[cotisation.mode_garde] += cotisation.heures_realisees 
                     self.heures_supplementaires += cotisation.heures_supplementaires
                     self.supplement += cotisation.heures_supplementaires * cotisation.montant_heure_garde
+                else:
+                    self.heures_facturees_par_mode[cotisation.mode_garde] += heures_contractualisees
+            elif creche.mode_facturation == FACTURATION_HORAIRES_REELS:
+                self.cotisation_mensuelle += cotisation.heures_contractualisees * cotisation.montant_heure_garde
             elif self.heures_contractualisees:
                 self.cotisation_mensuelle += montant * cotisation.heures_reference / self.heures_contractualisees   
         

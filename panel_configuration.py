@@ -993,13 +993,16 @@ class ParametresNotebook(wx.Notebook):
         self.professeurs_tab = ProfesseursTab(self)
         if creche.type == TYPE_GARDERIE_PERISCOLAIRE:
             self.AddPage(self.professeurs_tab, 'Professeurs')
-            self.professeurs_tab_displayed = True
+            self.professeurs_tab_displayed = 1
         else:
             self.professeurs_tab.Show(False)
-            self.professeurs_tab_displayed = False
+            self.professeurs_tab_displayed = 0
         self.AddPage(ResponsabilitesTab(self), u'Responsabilités')
         if IsTemplateFile("Synthese financiere.ods"):
             self.AddPage(ChargesTab(self), u'Charges')
+            self.charges_tab_displayed = 1
+        else:
+            self.charges_tab_displayed = 0
         self.AddPage(CafTab(self), 'C.A.F.')
         self.AddPage(JoursFermeturePanel(self), u'Congés')
         self.AddPage(ActivitesTab(self), u'Couleurs / Activités')
@@ -1007,10 +1010,10 @@ class ParametresNotebook(wx.Notebook):
         self.tarif_horaire_panel = TarifHorairePanel(self)
         if creche.mode_facturation in (FACTURATION_PAJE, FACTURATION_HORAIRES_REELS):
             self.AddPage(self.tarif_horaire_panel, 'Taux horaire')
-            self.tarif_horaire_panel_displayed = True
+            self.tarif_horaire_panel_displayed = 1
         else:
             self.tarif_horaire_panel.Show(False)
-            self.tarif_horaire_panel_displayed = False
+            self.tarif_horaire_panel_displayed = 0
         self.AddPage(UsersTab(self), u'Utilisateurs et mots de passe')
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
@@ -1028,10 +1031,7 @@ class ParametresNotebook(wx.Notebook):
             return
         else:
             self.tarif_horaire_panel.Show(enable)
-            if self.professeurs_tab_displayed:
-                tab_index = 8
-            else:
-                tab_index = 7
+            tab_index = 7 + self.professeurs_tab_displayed + self.charges_tab_displayed
             if enable:
                 self.InsertPage(tab_index, self.tarif_horaire_panel, u'Taux horaire')
             else:

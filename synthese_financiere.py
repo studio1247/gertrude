@@ -35,12 +35,7 @@ class SyntheseFinanciereModifications(object):
 
     def execute(self, filename, dom):
         if filename == 'styles.xml':
-            fields = [('nom-creche', creche.nom),
-                      ('adresse-creche', creche.adresse),
-                      ('code-postal-creche', str(creche.code_postal)),
-                      ('ville-creche', creche.ville),
-                      ('capacite', creche.capacite),
-                     ]
+            fields = GetCrecheFields(creche)
             ReplaceTextFields(dom, fields)
             return []
 
@@ -53,11 +48,10 @@ class SyntheseFinanciereModifications(object):
             lines = table.getElementsByTagName("table:table-row")
             # line_heures_ouvrees = lines[2]
     
-            fields = []
+            fields = GetCrecheFields(creche) + GetTarifsHorairesFields(creche)
+            fields.append(("annee", self.annee))
             for mois in range(1, 13):
-                jours_ouvres = GetJoursOuvres(self.annee, mois)
-                heures_ouvrees = jours_ouvres * (creche.fermeture - creche.ouverture)
-                
+                heures_accueil = GetHeuresAccueil(self.annee, mois)
                 heures_facturees = 0.0
                 heures_facturees_par_mode = [0.0] * 33
                 cotisations_facturees = 0.0
@@ -72,7 +66,7 @@ class SyntheseFinanciereModifications(object):
                         heures_facturees += facture.heures_facturees
                         cotisations_facturees += facture.total
 
-                fields.append(("heures-ouvrees[%d]" % (mois), heures_ouvrees*creche.capacite))
+                fields.append(("heures-accueil[%d]" % (mois), heures_accueil))
                 fields.append(("heures-facturees[forfait][%d]" % (mois), heures_facturees_par_mode[MODE_FORFAIT_MENSUEL]))
                 fields.append(("heures-facturees[hg][%d]" % (mois), heures_facturees_par_mode[MODE_HALTE_GARDERIE]))
                 fields.append(("heures-facturees[%d]" % (mois), heures_facturees))

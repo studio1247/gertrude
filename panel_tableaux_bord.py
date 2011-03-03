@@ -478,6 +478,9 @@ class StatistiquesFrequentationTab(AutoTab):
         self.presences_facturees_euros = wx.TextCtrl(self)
         self.presences_facturees_euros.Disable()
         self.result_sizer.AddMany([(wx.StaticText(self, -1, u'Présences facturées :'), 0, 0), (self.presences_facturees_heures, 0, wx.EXPAND), (self.presences_facturees_euros, 0, wx.EXPAND)])       
+        self.coefficient_remplissage = wx.TextCtrl(self)
+        self.coefficient_remplissage.Disable()
+        self.result_sizer.AddMany([(wx.StaticText(self, -1, u'Coefficient de remplissage :'), 0, 0), (self.coefficient_remplissage, 0, wx.EXPAND)])       
         self.sizer.Add(self.result_sizer, 0, wx.EXPAND|wx.ALL, 10)
         self.SetSizer(self.sizer)
         self.Layout()
@@ -494,10 +497,12 @@ class StatistiquesFrequentationTab(AutoTab):
         cotisations_contractualisees = 0.0
         cotisations_realisees = 0.0
         cotisations_facturees = 0.0
+        heures_accueil = 0.0
         erreurs = []
         for mois in periode:
             debut = datetime.date(annee, mois+1, 1)
             fin = getMonthEnd(debut)
+            heures_accueil += GetHeuresAccueil(annee, mois+1)
             for inscrit in creche.inscrits:
                 try:
                     if inscrit.GetInscriptions(debut, fin):
@@ -521,6 +526,7 @@ class StatistiquesFrequentationTab(AutoTab):
             self.presences_contrat_euros.SetValue("-")
             self.presences_realisees_euros.SetValue("-")
             self.presences_facturees_euros.SetValue("-")
+            self.coefficient_remplissage.SetValue("-")
         else:
             self.message.Show(False)
             self.presences_contrat_heures.SetValue("%.2f heures" % heures_contractualisees)
@@ -529,6 +535,7 @@ class StatistiquesFrequentationTab(AutoTab):
             self.presences_contrat_euros.SetValue(u"%.2f €" % cotisations_contractualisees)
             self.presences_realisees_euros.SetValue(u"%.2f €" % cotisations_realisees)
             self.presences_facturees_euros.SetValue(u"%.2f €" % cotisations_facturees)
+            self.coefficient_remplissage.SetValue(u"%.1f %%" % (100.0 * heures_facturees / heures_accueil))
         self.Layout()       
         self.sizer.FitInside(self)
 
