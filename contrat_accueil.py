@@ -111,7 +111,10 @@ class DocumentAccueilModifications(object):
                     fields.append(('heures-accueil-non-facture', GetHeureString(self.cotisation.heures_accueil_non_facture)))
                     heures_brut_periode = self.cotisation.heures_periode + self.cotisation.heures_fermeture_creche + self.cotisation.heures_accueil_non_facture
                     fields.append(('heures-brut-periode', GetHeureString(heures_brut_periode)))
-                    fields.append(('semaines-brut-periode', "%.2f" % (heures_brut_periode / self.cotisation.heures_semaine)))
+                    if self.cotisation.heures_semaine > 0:
+                        fields.append(('semaines-brut-periode', "%.2f" % (heures_brut_periode / self.cotisation.heures_semaine)))
+                    else:
+                        fields.append(('semaines-brut-periode', "0"))
     
         for jour in range(5):
             jour_reference = inscription.reference[jour]
@@ -150,7 +153,15 @@ class DocumentAccueilModifications(object):
 class ContratAccueilModifications(DocumentAccueilModifications):
     def __init__(self, who, date):
         DocumentAccueilModifications.__init__(self, who, date)
-        self.template = 'Contrat accueil.odt'
+        inscription = who.GetInscription(date)
+        if inscription.mode == MODE_TEMPS_PARTIEL and IsTemplateFile("Contrat accueil temps partiel.odt"):
+            self.template = "Contrat accueil temps partiel.odt"
+        elif inscription.mode == MODE_FORFAIT_MENSUEL and IsTemplateFile("Contrat accueil forfait mensuel.odt"):
+            self.template = "Contrat accueil forfait mensuel.odt"
+        elif inscription.mode == MODE_HALTE_GARDERIE and IsTemplateFile("Contrat accueil halte garderie.odt"):
+            self.template = "Contrat accueil halte garderie.odt"
+        else:
+            self.template = 'Contrat accueil.odt'
         self.default_output = u"Contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
 
     def execute(self, filename, dom):
