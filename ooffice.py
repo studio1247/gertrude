@@ -112,7 +112,7 @@ def RemoveColumn(rows, index):
 def ReplaceTextFields(dom, fields):
     for i, field in enumerate(fields):
         if len(field) == 3 and field[2] == FIELD_EUROS:
-            fields[i] = (field[0], "%.2f" % (field[1] + 0.005))
+            fields[i] = (field[0], "%.2f" % field[1])
 
     evalFields(fields)
     #print dom.toprettyxml()

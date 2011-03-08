@@ -218,15 +218,17 @@ class LoupandisesTests(GertrudeTestCase):
         inscription.reference[1].add_activity(141, 201, 0, -1)
         inscription.reference[3].add_activity(165, 201, 0, -1)
         inscrit.inscriptions.append(inscription)
-        inscrit.journees[datetime.date(2010, 11, 4)] = Journee(inscrit, datetime.date(2010, 11, 4))
-        inscrit.journees[datetime.date(2010, 11, 8)] = Journee(inscrit, datetime.date(2010, 11, 8))
-        inscrit.journees[datetime.date(2010, 11, 8)].add_activity(120, 156, 0, None)
-        inscrit.journees[datetime.date(2010, 11, 9)] = Journee(inscrit, datetime.date(2010, 11, 9))
-        inscrit.journees[datetime.date(2010, 11, 9)].add_activity(105, 201, 0, None)
+        inscrit.journees[datetime.date(2010, 11, 4)] = Journee(inscrit, datetime.date(2010, 11, 4))       
+        self.AddJourneePresence(inscrit, datetime.date(2010, 11, 8), 120, 156)
+        self.AddJourneePresence(inscrit, datetime.date(2010, 11, 9), 105, 201)
         inscrit.journees[datetime.date(2010, 11, 18)] = Journee(inscrit, datetime.date(2010, 11, 18))
         facture = Facture(inscrit, 2010, 11)
-        self.assertEquals(float("%.2f" % facture.heures_supplementaires), 29.0)
-        
+        self.assertEquals(round(facture.heures_facturees, 2), 29.0)
+        self.assertEquals(round(facture.heures_contractualisees, 2), 29.0)
+        self.assertEquals(round(facture.heures_supplementaires, 2), 6.0)
+        self.assertEquals(round(facture.heures_realisees, 2), 29.0)
+        self.assertEquals(facture.total, 36.25)
+                
 class MonPetitBijouTests(GertrudeTestCase):
     def setUp(self):
         GertrudeTestCase.setUp(self)
@@ -238,7 +240,7 @@ class MonPetitBijouTests(GertrudeTestCase):
     def test_forfait_mensuel(self):
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
-        inscription.mode = MODE_FORFAIT_MENSUEL
+        inscription.mode = MODE_FORFAIT_HORAIRE
         inscription.forfait_heures_presence = 90.0
         inscription.debut = datetime.date(2010, 3, 1)
         inscription.reference[0].add_activity(93, 213, 0, -1)
@@ -272,7 +274,7 @@ class MonPetitBijouTests(GertrudeTestCase):
         self.AddJourneePresence(inscrit, datetime.date(2011, 3, 7), 90, 189)
         self.AddJourneePresence(inscrit, datetime.date(2011, 3, 8), 90, 189)
         facture = Facture(inscrit, 2011, 3)
-        self.assertEquals(facture.total, 1120.0 - 7.0 * 2 + 7.0 * 0.5)
+        self.assertEquals(facture.total, 1120.0 - 7.0 * 4 + 7.0 * 0.5)
     
     def test_halte_garderie(self):
         inscrit = self.AddInscrit()

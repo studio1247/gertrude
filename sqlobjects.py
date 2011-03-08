@@ -64,7 +64,7 @@ class Day(object):
                         if creche.presences_previsionnelles and self.values[h] & PREVISIONNEL:
                             nv += PREVISIONNEL
                         elif creche.presences_supplementaires:
-                            if self.inscription.mode == MODE_FORFAIT_MENSUEL:
+                            if self.inscription.mode == MODE_FORFAIT_HORAIRE:
                                 pass
                             else:
                                 if reference and not (reference.values[h] & mask):
@@ -665,7 +665,7 @@ class Creche(object):
     def eval_taux_horaire(self, mode, revenus, enfants, jours):
         hg = MODE_HALTE_GARDERIE
         creche = MODE_CRECHE
-        forfait = MODE_FORFAIT_MENSUEL
+        forfait = MODE_FORFAIT_HORAIRE
         try:
             for cas in self.conversion_formule_taux_horaire:
                 if eval(cas[0]):
@@ -691,7 +691,7 @@ class Creche(object):
     def test_formule_taux_horaire(self, index):
         hg = MODE_HALTE_GARDERIE
         creche = MODE_CRECHE
-        forfait = MODE_FORFAIT_MENSUEL
+        forfait = MODE_FORFAIT_HORAIRE
         mode = hg
         revenus = 20000
         jours = 5

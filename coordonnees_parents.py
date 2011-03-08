@@ -52,7 +52,7 @@ class CoordonneesModifications(object):
                     if inscrit.GetInscription(self.date):
                         line = template.cloneNode(1)
                         referents = [GetPrenomNom(referent) for referent in inscrit.referents]
-                        parents = [GetPrenomNom(parent) for parent in inscrit.parents.values()]
+                        parents = [GetPrenomNom(parent) for parent in inscrit.parents.values() if parent is not None]
                         ReplaceTextFields(line, [('prenom', inscrit.prenom),
                                                  ('parents', parents),
                                                  ('referents', referents),
@@ -62,14 +62,15 @@ class CoordonneesModifications(object):
                         phones = { } # clé: [téléphone, initiales, ?travail]
                         emails = set()
                         for parent in inscrit.parents.values():
-                            emails.add(parent.email)
-                            for phoneType in ["domicile", "portable", "travail"]:
-                                phone = getattr(parent, "telephone_"+phoneType)
-                                if phone:
-                                    if phone in phones.keys():
-                                        phones[phone][1] = ""
-                                    else:
-                                        phones[phone] = [phone, GetInitialesPrenom(parent), phoneType=="travail"]
+                            if parent:
+                                emails.add(parent.email)
+                                for phoneType in ["domicile", "portable", "travail"]:
+                                    phone = getattr(parent, "telephone_"+phoneType)
+                                    if phone:
+                                        if phone in phones.keys():
+                                            phones[phone][1] = ""
+                                        else:
+                                            phones[phone] = [phone, GetInitialesPrenom(parent), phoneType=="travail"]
                         for phone, initiales, phoneType in phones.values():
                             remark = initiales
                             if initiales and phoneType:
