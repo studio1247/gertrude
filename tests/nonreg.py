@@ -33,6 +33,16 @@ class GertrudeTestCase(unittest.TestCase):
         revenu.debut, revenu.revenu = datetime.date(2008, 1, 1), 0.0
         maman.revenus.append(revenu)
         
+    def AddInscrit(self):
+        inscrit = Inscrit(creation=False)
+        inscrit.prenom, inscrit.nom = 'gertrude', 'gertrude'
+        self.AddParents(inscrit)
+        return inscrit
+    
+    def AddJourneePresence(self, inscrit, date, debut, fin):
+        inscrit.journees[date] = Journee(inscrit, date)
+        inscrit.journees[date].add_activity(debut, fin, 0, None)
+        
 class DatabaseTests(unittest.TestCase):
     def test_creation(self):
         filename = "gertrude.db"
@@ -47,9 +57,7 @@ class PAJETests(GertrudeTestCase):
         bureau = Bureau(creation=False)
         bureau.debut = datetime.date(2010, 1, 1)
         creche.bureaux.append(bureau)
-        inscrit = Inscrit(creation=False)
-        inscrit.prenom, inscrit.nom = 'gertrude', 'gertrude'
-        self.AddParents(inscrit)
+        inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
         inscription.debut = datetime.date(2010, 1, 1)
         inscrit.inscriptions.append(inscription)
@@ -65,9 +73,7 @@ class PAJETests(GertrudeTestCase):
         bureau = Bureau(creation=False)
         bureau.debut = datetime.date(2010, 1, 1)
         creche.bureaux.append(bureau)
-        inscrit = Inscrit(creation=False)
-        inscrit.prenom, inscrit.nom = 'gertrude', 'gertrude'
-        self.AddParents(inscrit)
+        inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
         inscription.debut, inscription.fin = datetime.date(2010, 9, 6), datetime.date(2011, 7, 27)
         inscription.reference[0].add_activity(96, 180, 0, -1)
@@ -97,9 +103,7 @@ class MarmousetsTests(GertrudeTestCase):
         bureau = Bureau(creation=False)
         bureau.debut = datetime.date(2010, 1, 1)
         creche.bureaux.append(bureau)
-        inscrit = Inscrit(creation=False)
-        inscrit.prenom, inscrit.nom = 'gertrude', 'gertrude'
-        self.AddParents(inscrit)
+        inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
         inscription.debut = datetime.date(2010, 1, 4)
         inscription.fin = datetime.date(2010, 7, 30)
@@ -129,9 +133,7 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         self.AddConge("19/04/2010", "23/04/2010")
         self.AddConge("20/12/2010", "24/12/2010")
         self.AddConge(u"Août", options=MOIS_SANS_FACTURE)
-        inscrit = Inscrit(creation=False)
-        inscrit.prenom, inscrit.nom = 'gertrude', 'gertrude'
-        self.AddParents(inscrit)
+        inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
         inscription.debut = datetime.date(2010, 8, 24)
         inscription.fin = datetime.date(2010, 12, 31)
@@ -158,9 +160,7 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         self.AddConge("19/04/2010", "23/04/2010")
         self.AddConge("20/12/2010", "24/12/2010")
         self.AddConge(u"Août", options=MOIS_SANS_FACTURE)
-        inscrit = Inscrit(creation=False)
-        inscrit.prenom, inscrit.nom = 'gertrude', 'gertrude'
-        self.AddParents(inscrit)
+        inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
         inscription.debut = datetime.date(2010, 9, 1)
         inscription.fin = datetime.date(2010, 12, 31)
@@ -187,9 +187,7 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         self.AddConge("19/04/2010", "23/04/2010")
         self.AddConge("20/12/2010", "24/12/2010")
         self.AddConge(u"Août", options=MOIS_SANS_FACTURE)
-        inscrit = Inscrit(creation=False)
-        inscrit.prenom, inscrit.nom = 'gertrude', 'gertrude'
-        self.AddParents(inscrit)
+        inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
         inscription.debut = datetime.date(2010, 1, 1)
         inscription.fin = datetime.date(2010, 12, 31)
@@ -213,9 +211,7 @@ class LoupandisesTests(GertrudeTestCase):
         for label in ("Week-end", "1er janvier", "14 juillet", "1er novembre", "11 novembre", u"Lundi de Pâques", "Jeudi de l'Ascension", u"Lundi de Pentecôte"):
             self.AddJourFerie(label)
         self.AddConge("23/10/2010", "02/11/2010")
-        inscrit = Inscrit(creation=False)
-        inscrit.prenom, inscrit.nom = 'gertrude', 'gertrude'
-        self.AddParents(inscrit)
+        inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
         inscription.debut = datetime.date(2010, 9, 6)
         inscription.fin_periode_adaptation = datetime.date(2010, 11, 30)
@@ -230,6 +226,72 @@ class LoupandisesTests(GertrudeTestCase):
         inscrit.journees[datetime.date(2010, 11, 18)] = Journee(inscrit, datetime.date(2010, 11, 18))
         facture = Facture(inscrit, 2010, 11)
         self.assertEquals(float("%.2f" % facture.heures_supplementaires), 29.0)
+        
+class MonPetitBijouTests(GertrudeTestCase):
+    def setUp(self):
+        GertrudeTestCase.setUp(self)
+        creche.mode_facturation = FACTURATION_HORAIRES_REELS
+        creche.type = TYPE_MICRO_CRECHE
+        creche.formule_taux_horaire = [["mode=hg", 9.50], ["", 7.0]]
+        creche.update_formule_taux_horaire(changed=False)
+        
+    def test_forfait_mensuel(self):
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit, creation=False)
+        inscription.mode = MODE_FORFAIT_MENSUEL
+        inscription.forfait_heures_presence = 90.0
+        inscription.debut = datetime.date(2010, 3, 1)
+        inscription.reference[0].add_activity(93, 213, 0, -1)
+        inscription.reference[1].add_activity(93, 213, 0, -1)
+        inscription.reference[2].add_activity(93, 141, 0, -1)
+        inscription.reference[3].add_activity(93, 213, 0, -1)
+        inscrit.inscriptions.append(inscription)
+        facture = Facture(inscrit, 2011, 2)
+        self.assertEquals(facture.total, 952.0)
+        facture = Facture(inscrit, 2011, 3)
+        self.assertEquals(facture.total, 1120.0)
+        self.AddJourneePresence(inscrit, datetime.date(2011, 3, 7), 90, 189)
+        self.AddJourneePresence(inscrit, datetime.date(2011, 3, 8), 90, 189)
+        facture = Facture(inscrit, 2011, 3)
+        self.assertEquals(facture.total, 1120.0 - 7.0 * 4 + 7.0 * 0.5 * 2)
+    
+    def test_temps_partiel(self):
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit, creation=False)
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.debut = datetime.date(2010, 3, 1)
+        inscription.reference[0].add_activity(93, 213, 0, -1)
+        inscription.reference[1].add_activity(93, 213, 0, -1)
+        inscription.reference[2].add_activity(93, 141, 0, -1)
+        inscription.reference[3].add_activity(93, 213, 0, -1)
+        inscrit.inscriptions.append(inscription)
+        facture = Facture(inscrit, 2011, 2)
+        self.assertEquals(facture.total, 952.0)
+        facture = Facture(inscrit, 2011, 3)
+        self.assertEquals(facture.total, 1120.0)
+        self.AddJourneePresence(inscrit, datetime.date(2011, 3, 7), 90, 189)
+        self.AddJourneePresence(inscrit, datetime.date(2011, 3, 8), 90, 189)
+        facture = Facture(inscrit, 2011, 3)
+        self.assertEquals(facture.total, 1120.0 - 7.0 * 2 + 7.0 * 0.5)
+    
+    def test_halte_garderie(self):
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit, creation=False)
+        inscription.mode = MODE_HALTE_GARDERIE
+        inscription.debut = datetime.date(2010, 3, 1)
+        inscription.reference[0].add_activity(93, 213, 0, -1)
+        inscription.reference[1].add_activity(93, 213, 0, -1)
+        inscription.reference[2].add_activity(93, 141, 0, -1)
+        inscription.reference[3].add_activity(93, 213, 0, -1)
+        inscrit.inscriptions.append(inscription)
+        facture = Facture(inscrit, 2011, 2)
+        self.assertEquals(facture.total, 1292.0)
+        facture = Facture(inscrit, 2011, 3)
+        self.assertEquals(facture.total, 1520.0)
+        self.AddJourneePresence(inscrit, datetime.date(2011, 3, 7), 90, 189)
+        self.AddJourneePresence(inscrit, datetime.date(2011, 3, 8), 90, 189)
+        facture = Facture(inscrit, 2011, 3)
+        self.assertEquals(facture.total, 1520.0 - 9.5 * 4 + 9.5 * 0.5)
 
 if __name__ == '__main__':
     unittest.main()
