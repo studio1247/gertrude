@@ -85,6 +85,16 @@ def GetRow(table, index):
         if i >= index:
             return row
     return None
+
+def GetCell(row, index):
+    i = 0
+    for child in row.childNodes:
+        if child.nodeName in ("table:table-cell", "table:covered-table-cell"):
+            if i == index:
+                return child
+            else:
+                i += 1
+    return None
     
 def GetValues(row):
     result = []

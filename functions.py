@@ -296,12 +296,16 @@ def GetInscrits(debut, fin, site=None):
     indexes = getPresentsIndexes(None, (debut, fin), site=site)
     return [creche.inscrits[i] for i in indexes]
 
-def GetLines(date, inscrits):
+def GetLines(date, inscrits, presence=False):
     lines = []
     for inscrit in inscrits:
         inscription = inscrit.GetInscription(date)
         if inscription is not None:
             # print inscrit.prenom, 
+            if presence:
+                state = inscrit.getState(date)[0]
+                if state < 0 or not state & PRESENT:
+                    continue 
             if date in inscrit.journees:
                 line = inscrit.journees[date]
             else:

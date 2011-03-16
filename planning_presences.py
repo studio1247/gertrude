@@ -139,7 +139,47 @@ class PlanningModifications(object):
                     table.insertBefore(ligne, ligne_template)
                 table.removeChild(ligne_template)
             template.parentNode.removeChild(template)
+        elif self.metas["Format"] == 3:
+            # lecture des couleurs
+            couleurs = {}
+            for i, inscrit in enumerate(creche.inscrits):
+                row = lignes[5+(i%40)]
+                couleurs[GetPrenomNom(inscrit)] = [GetCell(row, j).getAttribute("table:style-name") for j in range(1, 5)]
+            for row in lignes[5:45]:
+                table.removeChild(row)
+            del lignes[5:45]
 
+            date = self.debut
+            fin = self.debut + datetime.timedelta(5)
+            jour = 0
+            while date < fin:
+                template = lignes[4+3*jour]
+                lignes_presence = GetLines(date, creche.inscrits, presence=True)
+                for i, presence in enumerate(lignes_presence):
+                    if i == 0:
+                        row = lignes[3+3*jour]
+                        GetCell(row, 0).setAttribute("table:number-rows-spanned", str(len(lignes_presence)))
+                    else:
+                        row = template.cloneNode(1)
+                        table.insertBefore(row, template)
+                    nom_ecrit = False
+                    for c in range(24): # 12h
+                        cell = GetCell(row, c+1)
+                        if IsPresentDuringTranche(presence, 7.0+c*0.5, 7.0+c*0.5+0.5):
+                            if not nom_ecrit:
+                                cell.setAttribute("office:value-type", "string")
+                                text_node = GetCell(row, 3).childNodes[0]
+                                GetCell(row, 3).removeChild(text_node)
+                                ReplaceTextFields(text_node, [("nom", GetPrenomNom(presence)) ])
+                                cell.appendChild(text_node)
+                                nom_ecrit = True
+                            cell.setAttribute("table:style-name", couleurs[presence.label][2 + (c&1)])
+                        else:
+                            cell.setAttribute("table:style-name", couleurs[presence.label][c&1])
+                table.removeChild(template)               
+                date += datetime.timedelta(1)
+                jour += 1                
+        
         #print dom.toprettyxml()
         return None
 
@@ -203,7 +243,7 @@ if __name__ == '__main__':
 
     filename = 'planning-1.ods'
     try:
-        GenerateOODocument(PlanningModifications(today), filename)
+        GenerateOODocument(PlanningModifications(datetime.date(2011, 3, 14)), filename)
         print u'Fichier %s généré' % filename
     except CotisationException, e:
         print e.errors
