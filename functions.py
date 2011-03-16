@@ -296,10 +296,11 @@ def GetInscrits(debut, fin, site=None):
     indexes = getPresentsIndexes(None, (debut, fin), site=site)
     return [creche.inscrits[i] for i in indexes]
 
-def getLines(date, inscrits):
+def GetLines(date, inscrits):
     lines = []
     for inscrit in inscrits:
-        if inscrit.GetInscription(date) is not None:
+        inscription = inscrit.GetInscription(date)
+        if inscription is not None:
             # print inscrit.prenom, 
             if date in inscrit.journees:
                 line = inscrit.journees[date]
@@ -308,7 +309,8 @@ def getLines(date, inscrits):
             line.nom = inscrit.nom
             line.prenom = inscrit.prenom
             line.label = GetPrenomNom(inscrit)
-            line.reference = inscrit.getReferenceDay(date)
+            line.inscription = inscription
+            line.reference = inscription.getReferenceDay(date)
             lines.append(line)
     return lines
 

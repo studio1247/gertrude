@@ -60,7 +60,7 @@ class PlanningDetailleModifications(object):
                     day += datetime.timedelta(1)
                     continue
                 
-                lines = getLines(day, creche.inscrits)
+                lines = GetLines(day, creche.inscrits)
                 pages_count = 1 + (len(lines) - 1) / lines_max
                 for page_index in range(pages_count):
                     lines_count = min(lines_max, len(lines)-page_index*lines_max)
