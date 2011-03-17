@@ -195,6 +195,7 @@ class FactureFinMois(object):
         self.supplement = round(self.supplement, 2)
         self.supplement_activites = round(self.supplement_activites, 2)
         self.deduction = round(self.deduction, 2)
+        self.total_realise = round(self.total_realise, 2)
         
         self.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction
         if options & TRACES:
