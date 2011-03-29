@@ -149,9 +149,11 @@ class EtatsPresenceTab(AutoTab):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.search_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.debut_control = DateCtrl(self)
+        self.debut_control.SetValue(today)
         wx.EVT_TEXT(self.debut_control, -1, self.onPeriodeChange)
         self.search_sizer.AddMany([(wx.StaticText(self, -1, u'Début :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.debut_control, 0, wx.ALIGN_CENTER_VERTICAL)])
         self.fin_control = DateCtrl(self)
+        self.fin_control.SetValue(today)
         wx.EVT_TEXT(self.fin_control, -1, self.onPeriodeChange)
         self.search_sizer.AddMany([(wx.StaticText(self, -1, u'Fin :'), 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5), (self.fin_control, 0, wx.ALIGN_CENTER_VERTICAL)])
         self.ordered_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -389,7 +391,12 @@ class EtatsPresenceTab(AutoTab):
                         if state > 0 and state & PRESENT:
                             if date not in selection:
                                 selection[date] = []
-                            selection[date].append((inscription.site, inscription.professeur, inscrit, contrat+supplementaire))
+                            if date in inscrit.journees:
+                                journee = inscrit.journees[date]
+                            else:
+                                journee = inscrit.getReferenceDay(date)
+                            arrivee, depart = journee.GetPlageHoraire()
+                            selection[date].append((inscription.site, inscription.professeur, inscrit, arrivee, depart, contrat+supplementaire))
                         date += datetime.timedelta(1)
         return selection
     
@@ -401,7 +408,7 @@ class EtatsPresenceTab(AutoTab):
         dates = selection.keys()
         dates.sort()
         for date in dates:
-            for site, professeur, inscrit, heures in selection[date]:
+            for site, professeur, inscrit, heure_arrivee, heure_depart, heures in selection[date]:
                 self.grid.AppendRows(1)
                 self.grid.SetCellValue(row, 0, date2str(date))
                 inscrit_column = 1
@@ -413,7 +420,7 @@ class EtatsPresenceTab(AutoTab):
                     self.grid.SetCellValue(row, inscrit_column, GetPrenomNom(professeur))
                     inscrit_column += 1
                 self.grid.SetCellValue(row, inscrit_column, GetPrenomNom(inscrit))
-                self.grid.SetCellValue(row, inscrit_column+1, str(heures))
+                self.grid.SetCellValue(row, inscrit_column+1, GetHeureString(heures))
                 row += 1
         self.grid.ForceRefresh()
         
