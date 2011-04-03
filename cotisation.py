@@ -228,32 +228,35 @@ class Cotisation(object):
                 self.mode_taux_effort = u'%d enfants à charge' % self.enfants_a_charge
             else:
                 self.mode_taux_effort = u'1 enfant à charge'
-
-            if creche.type == TYPE_PARENTAL:
-                tranche = self.enfants_a_charge
-                if inscrit.handicap:
-                    tranche += 1
-                if tranche > 3:
-                    self.taux_effort = 0.02
-                elif tranche == 3:
-                    self.taux_effort = 0.03
-                elif tranche == 2:
-                    self.taux_effort = 0.04
-                else:
-                    self.taux_effort = 0.05
+                
+            if creche.mode_facturation == FACTURATION_PSU_TAUX_PERSONNALISES:
+                self.taux_effort = creche.eval_taux_effort(self.mode_garde, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine)
             else:
-                if self.enfants_a_charge > 3:
-                    self.taux_effort = 0.03
-                elif self.enfants_a_charge == 3:
-                    self.taux_effort = 0.04
-                elif self.enfants_a_charge == 2:
-                    self.taux_effort = 0.05
+                if creche.type == TYPE_PARENTAL:
+                    tranche = self.enfants_a_charge
+                    if inscrit.handicap:
+                        tranche += 1
+                    if tranche > 3:
+                        self.taux_effort = 0.02
+                    elif tranche == 3:
+                        self.taux_effort = 0.03
+                    elif tranche == 2:
+                        self.taux_effort = 0.04
+                    else:
+                        self.taux_effort = 0.05
                 else:
-                    self.taux_effort = 0.06
+                    if self.enfants_a_charge > 3:
+                        self.taux_effort = 0.03
+                    elif self.enfants_a_charge == 3:
+                        self.taux_effort = 0.04
+                    elif self.enfants_a_charge == 2:
+                        self.taux_effort = 0.05
+                    else:
+                        self.taux_effort = 0.06
             if options & TRACES: print " taux d'effort :", self.taux_effort
                 
             self.montant_heure_garde = self.assiette_mensuelle * self.taux_effort / 100
-            if creche.mode_facturation == FACTURATION_PSU:
+            if creche.mode_facturation in (FACTURATION_PSU, FACTURATION_PSU_TAUX_PERSONNALISES):
                 self.montant_heure_garde = round(self.montant_heure_garde, 2)
                 self.cotisation_mensuelle = self.heures_mois * self.montant_heure_garde
             else:

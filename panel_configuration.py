@@ -31,6 +31,7 @@ types_creche = [(u"Parental", TYPE_PARENTAL),
 
 modes_facturation = [("Forfait 10h / jour", FACTURATION_FORFAIT_10H),
                      (u"PSU", FACTURATION_PSU),
+                     (u"PSU avec taux d'effort personnalisés", FACTURATION_PSU_TAUX_PERSONNALISES),
                      (u"PAJE (taux horaire spécifique)", FACTURATION_PAJE),
                      (u"Horaires réels", FACTURATION_HORAIRES_REELS),
                      (u"Facturation personnalisée (forfait mensuel)", FACTURATION_FORFAIT_MENSUEL)]
@@ -740,6 +741,7 @@ class ParametersPanel(AutoTab):
         object = event.GetEventObject()
         value = object.GetClientData(object.GetSelection())
         self.GetParent().DisplayTarifHorairePanel(value in (FACTURATION_PAJE, FACTURATION_HORAIRES_REELS))
+        self.GetParent().DisplayTauxEffortPanel(value == FACTURATION_PSU_TAUX_PERSONNALISES)
         event.Skip()
             
     def ouverture_check(self, ouverture, a, b):
@@ -896,6 +898,99 @@ class TarifHorairePanel(AutoTab):
         object = event.GetEventObject()
         creche.formule_taux_horaire[object.index][1] = float(object.GetValue())
         creche.update_formule_taux_horaire()
+        history.Append([]) # TODO
+        
+class TauxEffortPanel(AutoTab):
+    def __init__(self, parent):
+        AutoTab.__init__(self, parent)
+        self.delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
+        addbutton = wx.Button(self, -1, "Ajouter un cas")
+        addbutton.index = 0
+        self.Bind(wx.EVT_BUTTON, self.onAdd, addbutton)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer.Add(addbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.TOP, 5)
+        self.controls = []
+        if creche.formule_taux_effort:
+            for i, cas in enumerate(creche.formule_taux_effort):
+                self.line_add(i, cas[0], cas[1])
+        self.SetSizer(self.sizer)
+        self.Layout()
+        
+    def line_add(self, index, condition="", taux=0.0):
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.AddSpacer(10)
+        cas = wx.StaticText(self, -1, "[Cas %d]" % (index+1))
+        cas.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.BOLD))
+        sizer1 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer1.Add(cas, 0, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 10)
+        condition_ctrl = wx.TextCtrl(self, -1, condition)
+        condition_ctrl.index = index
+        sizer1.AddMany([(wx.StaticText(self, -1, 'Condition :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (condition_ctrl, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
+        taux_ctrl = wx.TextCtrl(self, -1, str(taux))
+        taux_ctrl.index = index
+        sizer1.AddMany([(wx.StaticText(self, -1, "Taux d'effort :"), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (taux_ctrl, 0, wx.ALIGN_CENTER_VERTICAL, 5)])
+        delbutton = wx.BitmapButton(self, -1, self.delbmp)
+        delbutton.index = index
+        addbutton = wx.Button(self, -1, "Ajouter un cas")
+        addbutton.index = index+1
+        sizer1.Add(delbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT|wx.RIGHT, 5)
+        sizer.Add(sizer1, 0, wx.EXPAND)
+        sizer.Add(addbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.TOP, 5)
+        self.Bind(wx.EVT_TEXT, self.onConditionChange, condition_ctrl)
+        self.Bind(wx.EVT_TEXT, self.onTauxChange, taux_ctrl)
+        self.Bind(wx.EVT_BUTTON, self.onDel, delbutton)
+        self.Bind(wx.EVT_BUTTON, self.onAdd, addbutton)
+        self.controls.insert(index, (cas, condition_ctrl, taux_ctrl, delbutton, addbutton))
+        self.sizer.Insert(index+1, sizer, 0, wx.EXPAND|wx.BOTTOM, 5)         
+
+    def onAdd(self, event):
+        object = event.GetEventObject()
+        self.line_add(object.index)
+        if creche.formule_taux_effort is None:
+            creche.formule_taux_effort = [["", 0.0]]
+        else:
+            creche.formule_taux_effort.insert(object.index, ["", 0.0])
+        creche.update_formule_taux_effort()
+        for i in range(object.index+1, len(self.controls)):
+            self.controls[i][0].SetLabel("[Cas %d]" % (i+1))
+            for control in self.controls[i][1:]:
+                control.index += 1
+        self.sizer.FitInside(self)
+        history.Append([]) # TODO
+    
+    def onDel(self, event):
+        index = event.GetEventObject().index
+        sizer = self.sizer.GetItem(index+1)
+        sizer.DeleteWindows()
+        self.sizer.Detach(index+1)
+        del self.controls[index]
+        if len(creche.formule_taux_effort) == 1:
+            creche.formule_taux_effort = None
+        else:
+            del creche.formule_taux_effort[index]
+        creche.update_formule_taux_effort()
+        for i in range(index, len(self.controls)):
+            self.controls[i][0].SetLabel("[Cas %d]" % (i+1))
+            for control in self.controls[i][1:]:
+                control.index -= 1
+        self.sizer.FitInside(self)
+        history.Append([]) # TODO
+    
+    def onConditionChange(self, event):
+        object = event.GetEventObject()
+        creche.formule_taux_effort[object.index][0] = object.GetValue()
+        creche.update_formule_taux_effort()
+        if creche.test_formule_taux_effort(object.index):
+            object.SetBackgroundColour(wx.WHITE)
+        else:
+            object.SetBackgroundColour(wx.RED)
+        object.Refresh()
+        history.Append([]) # TODO
+        
+    def onTauxChange(self, event):
+        object = event.GetEventObject()
+        creche.formule_taux_effort[object.index][1] = float(object.GetValue())
+        creche.update_formule_taux_effort()
         history.Append([]) # TODO    
 
 profiles = [("Administrateur", PROFIL_ALL),
@@ -1014,6 +1109,13 @@ class ParametresNotebook(wx.Notebook):
         else:
             self.tarif_horaire_panel.Show(False)
             self.tarif_horaire_panel_displayed = 0
+        self.taux_effort_panel = TauxEffortPanel(self)
+        if creche.mode_facturation == FACTURATION_PSU_TAUX_PERSONNALISES:
+            self.AddPage(self.taux_effort_panel, 'Taux horaire')
+            self.taux_effort_panel_displayed = 1
+        else:
+            self.taux_effort_panel.Show(False)
+            self.taux_effort_panel_displayed = 0
         self.AddPage(UsersTab(self), u'Utilisateurs et mots de passe')
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
@@ -1033,11 +1135,25 @@ class ParametresNotebook(wx.Notebook):
             self.tarif_horaire_panel.Show(enable)
             tab_index = 7 + self.professeurs_tab_displayed + self.charges_tab_displayed
             if enable:
-                self.InsertPage(tab_index, self.tarif_horaire_panel, u'Taux horaire')
+                self.InsertPage(tab_index, self.tarif_horaire_panel, u'Tarif horaire')
             else:
                 self.RemovePage(tab_index)
 
         self.tarif_horaire_panel_displayed = enable
+        self.Layout()
+        
+    def DisplayTauxEffortPanel(self, enable):
+        if enable == self.taux_effort_panel_displayed:
+            return
+        else:
+            self.taux_effort_panel.Show(enable)
+            tab_index = 7 + self.professeurs_tab_displayed + self.charges_tab_displayed + self.tarif_horaire_panel_displayed
+            if enable:
+                self.InsertPage(tab_index, self.taux_effort_panel, u"Taux d'effort")
+            else:
+                self.RemovePage(tab_index)
+
+        self.taux_effort_panel_displayed = enable
         self.Layout()
         
     def DisplayProfesseursTab(self, enable):
