@@ -835,7 +835,7 @@ class TarifHorairePanel(AutoTab):
         sizer1.AddMany([(wx.StaticText(self, -1, 'Condition :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (condition_ctrl, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
         taux_ctrl = wx.TextCtrl(self, -1, str(taux))
         taux_ctrl.index = index
-        sizer1.AddMany([(wx.StaticText(self, -1, 'Taux horaire :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (taux_ctrl, 0, wx.ALIGN_CENTER_VERTICAL, 5)])
+        sizer1.AddMany([(wx.StaticText(self, -1, 'Tarif horaire :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (taux_ctrl, 0, wx.ALIGN_CENTER_VERTICAL, 5)])
         delbutton = wx.BitmapButton(self, -1, self.delbmp)
         delbutton.index = index
         addbutton = wx.Button(self, -1, "Ajouter un cas")
@@ -1104,14 +1104,14 @@ class ParametresNotebook(wx.Notebook):
         self.AddPage(ParametersPanel(self), u'Paramètres')
         self.tarif_horaire_panel = TarifHorairePanel(self)
         if creche.mode_facturation in (FACTURATION_PAJE, FACTURATION_HORAIRES_REELS):
-            self.AddPage(self.tarif_horaire_panel, 'Taux horaire')
+            self.AddPage(self.tarif_horaire_panel, 'Tarif horaire')
             self.tarif_horaire_panel_displayed = 1
         else:
             self.tarif_horaire_panel.Show(False)
             self.tarif_horaire_panel_displayed = 0
         self.taux_effort_panel = TauxEffortPanel(self)
         if creche.mode_facturation == FACTURATION_PSU_TAUX_PERSONNALISES:
-            self.AddPage(self.taux_effort_panel, 'Taux horaire')
+            self.AddPage(self.taux_effort_panel, "Taux d'effort")
             self.taux_effort_panel_displayed = 1
         else:
             self.taux_effort_panel.Show(False)
