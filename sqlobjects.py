@@ -677,7 +677,7 @@ class Creche(object):
             return None
     
     def formule_taux_horaire_needs_revenus(self):
-        if self.mode_facturation in (FACTURATION_FORFAIT_10H, FACTURATION_PSU):
+        if self.mode_facturation in (FACTURATION_FORFAIT_10H, FACTURATION_PSU, FACTURATION_PSU_TAUX_PERSONNALISES):
             return True
         elif self.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
             return False
