@@ -36,6 +36,9 @@ modes_facturation = [("Forfait 10h / jour", FACTURATION_FORFAIT_10H),
                      (u"Horaires réels", FACTURATION_HORAIRES_REELS),
                      (u"Facturation personnalisée (forfait mensuel)", FACTURATION_FORFAIT_MENSUEL)]
 
+modes_facturation_adaptation = [(u'Facturation normale', PERIODE_ADAPTATION_FACTUREE_NORMALEMENT),
+                                (u"Horaires réels", FACTURATION_HORAIRES_REELS)]
+
 class CrecheTab(AutoTab):
     def __init__(self, parent):
         global delbmp
@@ -723,7 +726,7 @@ class ParametersPanel(AutoTab):
         self.Bind(wx.EVT_CHOICE, self.onModeFacturationChoice, mode_facturation_choice)
         tmp.AddMany([(mode_facturation_choice, 1, wx.EXPAND), (AutoChoiceCtrl(self, creche, 'temps_facturation', [("Facturation fin de mois", FACTURATION_FIN_MOIS), (u"Facturation début de mois", FACTURATION_DEBUT_MOIS)]), 1, wx.EXPAND|wx.LEFT, 5)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Mode de facturation :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (tmp, 1, wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, u"Mode de facturation des périodes d'adaptation :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'facturation_periode_adaptation', [(u'Facturation normale', PERIODE_ADAPTATION_FACTUREE_NORMALEMENT), ("Horaires réels", FACTURATION_HORAIRES_REELS)]), 1, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u"Mode de facturation des périodes d'adaptation :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'facturation_periode_adaptation', modes_facturation_adaptation), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Facturation des jours fériés :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'facturation_jours_feries', [(u'Pas de déduction', JOURS_FERIES_NON_DEDUITS), (u"Déduits, répartis sur l'année", JOURS_FERIES_DEDUITS_ANNUELLEMENT)]), 0, wx.EXPAND)])
         # TODO n'afficher que si PSU/PAJE est choisi
         sizer.AddMany([(wx.StaticText(self, -1, u"Gestion de périodes de congés non facturées lors de l'inscription :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'conges_inscription', [('Non', 0), ('Oui', 1)]), 0, wx.EXPAND)])
