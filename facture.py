@@ -29,6 +29,7 @@ class FactureFinMois(object):
         self.date = self.fin_recap
         self.options = options
         self.cotisation_mensuelle = 0.0
+        self.report_cotisation_mensuelle = 0.0
         self.heures_facturees_par_mode = [0.0] * 33
         self.heures_contractualisees = 0.0
         self.heures_realisees = 0.0
@@ -184,14 +185,18 @@ class FactureFinMois(object):
                 else:
                     self.heures_facturees_par_mode[cotisation.mode_garde] += heures_contractualisees
             elif creche.mode_facturation == FACTURATION_HORAIRES_REELS or (creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and cotisation.inscription.IsInPeriodeAdaptation(cotisation.debut)):
-                self.cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_supplementaires) * cotisation.montant_heure_garde
+                self.report_cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_supplementaires) * cotisation.montant_heure_garde
             elif self.heures_contractualisees:
                 self.cotisation_mensuelle += montant * cotisation.heures_reference / self.heures_contractualisees   
         
         self.heures_facturees = sum(self.heures_facturees_par_mode)
-
+        if creche.temps_facturation == FACTURATION_FIN_MOIS:
+            self.cotisation_mensuelle += self.report_cotisation_mensuelle
+            self.report_cotisation_mensuelle = 0.0
+            
         # arrondi de tous les champs en euros
         self.cotisation_mensuelle = round(self.cotisation_mensuelle, 2)
+        self.report_cotisation_mensuelle = round(self.report_cotisation_mensuelle, 2)
         self.supplement = round(self.supplement, 2)
         self.supplement_activites = round(self.supplement_activites, 2)
         self.deduction = round(self.deduction, 2)
@@ -213,6 +218,7 @@ class FactureDebutMois(FactureFinMois):
         self.debut_recap = facture_precedente.debut_recap
         self.fin_recap = facture_precedente.fin_recap
         self.date = datetime.date(annee, mois, 1)
+        self.cotisation_mensuelle += facture_precedente.report_cotisation_mensuelle
         self.supplement = facture_precedente.supplement
         self.deduction = facture_precedente.deduction
         self.jours_presence_selon_contrat = facture_precedente.jours_presence_selon_contrat
