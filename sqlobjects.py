@@ -569,7 +569,9 @@ class Creche(object):
         self.facturation_periode_adaptation = PERIODE_ADAPTATION_FACTUREE_NORMALEMENT
         self.facturation_jours_feries = JOURS_FERIES_NON_DEDUITS
         self.formule_taux_horaire = None
+        self.conversion_formule_taux_horaire = None
         self.formule_taux_effort = None
+        self.conversion_formule_taux_effort = None
         self.gestion_alertes = False
         self.alertes = {}
         self.calcule_jours_conges()
@@ -651,30 +653,10 @@ class Creche(object):
         if changed:
             print 'update formule_taux_horaire', self.formule_taux_horaire
             sql_connection.execute('UPDATE CRECHE SET formule_taux_horaire=?', (str(self.formule_taux_horaire),))
-        if self.formule_taux_horaire:
-            self.conversion_formule_taux_horaire = []
-            for cas in self.formule_taux_horaire:
-                condition = cas[0].strip()
-                if condition == "":
-                    condition = "True"
-                else:
-                    condition = condition.lower().replace(" et ", " and ").replace(" ou ", " or ").replace("=", "==")
-                self.conversion_formule_taux_horaire.append([condition, cas[1], cas[0]])
-        else:
-            self.conversion_formule_taux_horaire = None
+        self.conversion_formule_taux_horaire = self.GetFormuleConversion(self.formule_taux_horaire)
     
     def eval_taux_horaire(self, mode, revenus, enfants, jours):
-        hg = MODE_HALTE_GARDERIE
-        creche = MODE_CRECHE
-        forfait = MODE_FORFAIT_HORAIRE
-        try:
-            for cas in self.conversion_formule_taux_horaire:
-                if eval(cas[0]):
-                    return cas[1]
-            else:
-                return None
-        except:
-            return None
+        return self.EvalFormule(self.conversion_formule_taux_horaire, mode, revenus, enfants, jours)
     
     def formule_taux_horaire_needs_revenus(self):
         if self.mode_facturation in (FACTURATION_FORFAIT_10H, FACTURATION_PSU, FACTURATION_PSU_TAUX_PERSONNALISES):
@@ -690,41 +672,28 @@ class Creche(object):
             return False
         
     def test_formule_taux_horaire(self, index):
-        hg = MODE_HALTE_GARDERIE
-        creche = MODE_CRECHE
-        forfait = MODE_FORFAIT_HORAIRE
-        mode = hg
-        revenus = 20000
-        jours = 5
-        enfants = 1
-        try:
-            test = eval(self.conversion_formule_taux_horaire[index][0])
-            return True
-        except:
-            return False
-        
-    def update_formule_taux_effort(self, changed=True):
-        if changed:
-            print 'update formule_taux_effort', self.formule_taux_effort
-            sql_connection.execute('UPDATE CRECHE SET formule_taux_effort=?', (str(self.formule_taux_effort),))
-        if self.formule_taux_effort:
-            self.conversion_formule_taux_effort = []
-            for cas in self.formule_taux_effort:
+        return self.TestFormule(self.conversion_formule_taux_horaire, index)
+    
+    def GetFormuleConversion(self, formule):
+        if formule:
+            result = []
+            for cas in formule:
                 condition = cas[0].strip()
                 if condition == "":
                     condition = "True"
                 else:
-                    condition = condition.lower().replace(" et ", " and ").replace(" ou ", " or ").replace("=", "==")
-                self.conversion_formule_taux_effort.append([condition, cas[1], cas[0]])
+                    condition = condition.lower().replace(" et ", " and ").replace(" ou ", " or ").replace("!=", "<>").replace("=", "==").replace("<>", "!=")
+                result.append([condition, cas[1], cas[0]])
+            return result
         else:
-            self.conversion_formule_taux_effort = None
-    
-    def eval_taux_effort(self, mode, revenus, enfants, jours):
+            return None
+        
+    def EvalFormule(self, formule, mode, revenus, enfants, jours):
         hg = MODE_HALTE_GARDERIE
         creche = MODE_CRECHE
         forfait = MODE_FORFAIT_HORAIRE
         try:
-            for cas in self.conversion_formule_taux_effort:
+            for cas in formule:
                 if eval(cas[0]):
                     return cas[1]
             else:
@@ -732,7 +701,7 @@ class Creche(object):
         except:
             return None
         
-    def test_formule_taux_effort(self, index):
+    def TestFormule(self, formule, index):
         hg = MODE_HALTE_GARDERIE
         creche = MODE_CRECHE
         forfait = MODE_FORFAIT_HORAIRE
@@ -741,11 +710,22 @@ class Creche(object):
         jours = 5
         enfants = 1
         try:
-            test = eval(self.conversion_formule_taux_effort[index][0])
+            test = eval(formule[index][0])
             return True
         except:
             return False
+            
+    def update_formule_taux_effort(self, changed=True):
+        if changed:
+            print 'update formule_taux_effort', self.formule_taux_effort
+            sql_connection.execute('UPDATE CRECHE SET formule_taux_effort=?', (str(self.formule_taux_effort),))
+        self.conversion_formule_taux_effort = self.GetFormuleConversion(self.formule_taux_effort)
+    
+    def eval_taux_effort(self, mode, revenus, enfants, jours):
+        return self.EvalFormule(self.conversion_formule_taux_effort, mode, revenus, enfants, jours)
         
+    def test_formule_taux_effort(self, index):
+        return self.TestFormule(self.conversion_formule_taux_effort, index)
         
     def HasActivitesAvecHoraires(self):
         count = len(self.activites)
