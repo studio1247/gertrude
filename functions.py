@@ -190,8 +190,8 @@ def periodestr(o):
         return u"Année %d" % o.debut.year
 
 def JourSemaineAffichable(day):
-    if day == 2:
-        return not "Mercredi" in creche.feries
+    if days[day] in creche.feries:
+        return False
     elif day == 5 or day == 6:
         return not "Week-end" in creche.feries
     else:
@@ -386,6 +386,7 @@ def GetFactureFields(facture):
                 ('deduction', '- %.2f' % facture.deduction),
                 ('raison-deduction', facture.raison_deduction),
                 ('supplement-activites', facture.supplement_activites, FIELD_EUROS),
+                ('majoration', '+ %.2f' % facture.majoration_mensuelle),
                 ('total', facture.total, FIELD_EUROS)]
     else:
         return [('mois', '?'),
@@ -400,6 +401,7 @@ def GetFactureFields(facture):
                 ('deduction', '?'),
                 ('raison-deduction', '?'),
                 ('supplement-activites', '?'),
+                ('majoration', '?'),
                 ('total', '?')]
     
 class ProgressHandler:

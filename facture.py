@@ -202,6 +202,11 @@ class FactureFinMois(object):
         self.deduction = round(self.deduction, 2)
         self.total_realise = round(self.total_realise, 2)
         
+        if creche.majoration_localite and inscrit.majoration:
+            self.majoration_mensuelle = creche.majoration_localite
+        else:
+            self.majoration_mensuelle = 0.0
+        
         self.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction
         if options & TRACES:
             print inscrit.prenom
