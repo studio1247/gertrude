@@ -299,6 +299,8 @@ def GetInscrits(debut, fin, site=None):
 def GetLines(date, inscrits, presence=False):
     lines = []
     for inscrit in inscrits:
+        if date in inscrit.jours_conges:
+            continue           
         inscription = inscrit.GetInscription(date)
         if inscription is not None:
             # print inscrit.prenom, 

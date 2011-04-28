@@ -901,7 +901,7 @@ class Inscription(SQLObject):
         jours = 0
         heures = 0.0
         for i in range(self.duree_reference):
-            if JourSemaineAffichable(i) and self.reference[i].get_state() & PRESENT:
+            if JourSemaineAffichable(i%7) and self.reference[i].get_state() & PRESENT:
                 jours += 1
                 heures += self.reference[i].GetNombreHeures()
         return jours, heures
@@ -1125,7 +1125,7 @@ class Inscrit(object):
         \param date la journée
         \return (état, heures contractualisées, heures realisées, heures supplémentaires)
         """
-        if date in creche.jours_fermeture:
+        if date in creche.jours_fermeture or date in self.jours_conges:
             return ABSENT, 0, 0, 0
         inscription = self.GetInscription(date)
         if inscription is None:
