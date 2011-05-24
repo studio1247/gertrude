@@ -33,6 +33,7 @@ class FactureFinMois(object):
         self.heures_facturees_par_mode = [0.0] * 33
         self.heures_contractualisees = 0.0
         self.heures_realisees = 0.0
+        self.total_contractualise = 0.0
         self.total_realise = 0.0
         self.supplement = 0.0
         self.deduction = 0.0
@@ -45,12 +46,20 @@ class FactureFinMois(object):
         self.raison_deduction = ""
         self.supplement_activites = 0.0
         self.previsionnel = False
+        self.cloture = False
 
         jours_ouvres = 0
         jours_fermeture = 0
         cotisations_mensuelles = {}
         heures_hebdomadaires = {}
         last_cotisation = None
+        
+        if creche.cloture_factures:
+            fin = self.debut_recap - datetime.timedelta(1)
+            debut = getMonthStart(fin) 
+            if inscrit.GetInscriptions(debut, fin) and debut not in inscrit.factures_cloturees:
+                error = u"La facture du mois " + GetDeMoisStr(debut.month-1) + " " + str(debut.year) + u" n'est pas clôturée"
+                raise CotisationException([error])
 
         date = datetime.date(annee, mois, 1)
         while date.month == mois:
@@ -145,7 +154,8 @@ class FactureFinMois(object):
                             else:
                                 cotisation.heures_supplementaires += heures_supplementaires
                                 self.heures_supplementaires += heures_supplementaires
-                                self.supplement += cotisation.montant_heure_garde * heures_supplementaires
+                                if creche.mode_facturation != FACTURATION_HORAIRES_REELS and (creche.facturation_periode_adaptation != FACTURATION_HORAIRES_REELS or not cotisation.inscription.IsInPeriodeAdaptation(date)): 
+                                    self.supplement += cotisation.montant_heure_garde * heures_supplementaires
 
                     if creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE or (creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION and inscription.IsInPeriodeAdaptation(date)):
                         activites = inscrit.GetExtraActivites(date)
@@ -158,6 +168,7 @@ class FactureFinMois(object):
                     if cotisation.inscription.mode != MODE_FORFAIT_HORAIRE:
                         cotisation.heures_contractualisees += heures_reference
                         self.heures_contractualisees += heures_reference
+                        self.total_contractualise += heures_reference * cotisation.montant_heure_garde
                         if creche.mode_facturation == FACTURATION_HORAIRES_REELS or (creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date)):
                             self.heures_facturees_par_mode[cotisation.mode_garde] += heures_realisees
                         else:
@@ -172,6 +183,7 @@ class FactureFinMois(object):
                 self.cotisation_mensuelle += montant * cotisation.jours_ouvres / jours_ouvres
                 cotisation.heures_contractualisees = cotisation.inscription.forfait_heures_presence * cotisation.jours_ouvres / jours_ouvres
                 self.heures_contractualisees += cotisation.heures_contractualisees
+                self.total_contractualise += cotisation.heures_contractualisees * cotisation.montant_heure_garde
                 if cotisation.nombre_jours_maladie_deduits > 0:
                     self.deduction += montant * cotisation.nombre_jours_maladie_deduits / cotisation.jours_ouvres
                     heures_contractualisees = cotisation.heures_contractualisees * (cotisation.jours_ouvres - cotisation.nombre_jours_maladie_deduits) / cotisation.jours_ouvres
@@ -185,21 +197,25 @@ class FactureFinMois(object):
                 else:
                     self.heures_facturees_par_mode[cotisation.mode_garde] += heures_contractualisees
             elif creche.mode_facturation == FACTURATION_HORAIRES_REELS or (creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and cotisation.inscription.IsInPeriodeAdaptation(cotisation.debut)):
-                self.report_cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_supplementaires) * cotisation.montant_heure_garde
+                self.cotisation_mensuelle += cotisation.heures_contractualisees * cotisation.montant_heure_garde
+                self.report_cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_contractualisees) * cotisation.montant_heure_garde
             elif self.heures_contractualisees:
-                self.cotisation_mensuelle += montant * cotisation.heures_reference / self.heures_contractualisees   
+                prorata = montant * cotisation.heures_reference / self.heures_contractualisees   
+                self.cotisation_mensuelle += prorata 
+                self.total_contractualise += prorata
         
         self.heures_facturees = sum(self.heures_facturees_par_mode)
         if creche.temps_facturation == FACTURATION_FIN_MOIS:
             self.cotisation_mensuelle += self.report_cotisation_mensuelle
             self.report_cotisation_mensuelle = 0.0
-            
+
         # arrondi de tous les champs en euros
         self.cotisation_mensuelle = round(self.cotisation_mensuelle, 2)
         self.report_cotisation_mensuelle = round(self.report_cotisation_mensuelle, 2)
         self.supplement = round(self.supplement, 2)
         self.supplement_activites = round(self.supplement_activites, 2)
         self.deduction = round(self.deduction, 2)
+        self.total_contractualise = round(self.total_contractualise, 2)
         self.total_realise = round(self.total_realise, 2)
         
         if creche.majoration_localite and inscrit.majoration:
@@ -208,38 +224,125 @@ class FactureFinMois(object):
             self.majoration_mensuelle = 0.0
         
         self.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction
+        self.total_facture = self.total + self.report_cotisation_mensuelle
+        
         if options & TRACES:
             print inscrit.prenom
             for var in ["heures_contractualisees", "heures_facturees", "heures_supplementaires", "cotisation_mensuelle", "supplement", "deduction", "total"]:
                 print " ", var, eval("self.%s" % var)
                 
+    def Cloture(self, date=None):
+        if not self.cloture:
+            if date is None:
+                date = datetime.date(self.annee, self.mois, 1)
+            self.cloture = True
+            self.inscrit.factures_cloturees[date] = self
+            if sql_connection:
+                sql_connection.execute('INSERT INTO FACTURES (idx, inscrit, date, cotisation_mensuelle, total_contractualise, total_realise, total_facture, supplement_activites, supplement, deduction) VALUES (NULL,?,?,?,?,?,?,?,?,?)', (self.inscrit.idx, date, self.cotisation_mensuelle, self.total_contractualise, self.total_realise, self.total_facture, self.supplement_activites, self.supplement, self.deduction))
+            
+    def Restore(self):
+        return self
+    
 class FactureDebutMois(FactureFinMois):
     def __init__(self, inscrit, annee, mois, options=0):
         FactureFinMois.__init__(self, inscrit, annee, mois, options)
         if mois == 1:
-            facture_precedente = FactureFinMois(inscrit, annee-1, 12, options)
+            self.facture_precedente = FactureFinMois(inscrit, annee-1, 12, options)
         else:
-            facture_precedente = FactureFinMois(inscrit, annee, mois-1, options)
-        self.debut_recap = facture_precedente.debut_recap
-        self.fin_recap = facture_precedente.fin_recap
+            self.facture_precedente = FactureFinMois(inscrit, annee, mois-1, options)
+        self.debut_recap = self.facture_precedente.debut_recap
+        self.fin_recap = self.facture_precedente.fin_recap
         self.date = datetime.date(annee, mois, 1)
-        self.cotisation_mensuelle += facture_precedente.report_cotisation_mensuelle
-        self.supplement = facture_precedente.supplement
-        self.deduction = facture_precedente.deduction
-        self.jours_presence_selon_contrat = facture_precedente.jours_presence_selon_contrat
-        self.jours_supplementaires = facture_precedente.jours_supplementaires
-        self.heures_supplementaires = facture_precedente.heures_supplementaires
-        self.jours_maladie = facture_precedente.jours_maladie
-        self.jours_maladie_deduits = facture_precedente.jours_maladie_deduits
-        self.jours_vacances = facture_precedente.jours_vacances
-        self.raison_deduction = facture_precedente.raison_deduction
-        self.supplement_activites = facture_precedente.supplement_activites
-        self.previsionnel |= facture_precedente.previsionnel
-        self.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction
+        self.jours_presence_selon_contrat = self.facture_precedente.jours_presence_selon_contrat
+        self.jours_supplementaires = self.facture_precedente.jours_supplementaires
+        self.heures_supplementaires = self.facture_precedente.heures_supplementaires
+        self.jours_maladie = self.facture_precedente.jours_maladie
+        self.jours_maladie_deduits = self.facture_precedente.jours_maladie_deduits
+        self.jours_vacances = self.facture_precedente.jours_vacances
+        self.raison_deduction = self.facture_precedente.raison_deduction
+        self.previsionnel |= self.facture_precedente.previsionnel
         
-def Facture(inscrit, annee, mois, options=0):      
-    if creche.temps_facturation == FACTURATION_FIN_MOIS:
+class FactureDebutMoisContrat(FactureDebutMois):
+    def __init__(self, inscrit, annee, mois, options=0):
+        FactureDebutMois.__init__(self, inscrit, annee, mois, options)
+        self.cotisation_mensuelle += self.facture_precedente.report_cotisation_mensuelle
+        self.supplement = self.facture_precedente.supplement
+        self.deduction = self.facture_precedente.deduction
+        self.supplement_activites = self.facture_precedente.supplement_activites
+        self.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction
+
+class FactureDebutMoisPrevisionnel(FactureDebutMois):
+    def __init__(self, inscrit, annee, mois, options=0):
+        FactureDebutMois.__init__(self, inscrit, annee, mois, options)
+
+        if inscrit.GetInscriptions(self.facture_precedente.debut_recap, self.facture_precedente.fin_recap):
+            if self.facture_precedente.fin_recap not in inscrit.factures_cloturees:
+                error = u"La facture du mois " + GetDeMoisStr(self.facture_precedente.fin_recap.month-1) + " " + str(self.facture_precedente.fin_recap.year) + u" n'est pas clôturée"
+                raise CotisationException([error])
+            
+            facture_cloturee = inscrit.factures_cloturees[self.facture_precedente.fin_recap].Restore()
+            self.cotisation_mensuelle += self.facture_precedente.cotisation_mensuelle - facture_cloturee.cotisation_mensuelle
+            self.supplement += self.facture_precedente.supplement - facture_cloturee.supplement
+            self.deduction += self.facture_precedente.deduction - facture_cloturee.deduction
+            self.supplement_activites += self.facture_precedente.supplement_activites - facture_cloturee.supplement_activites            
+        
+        self.cotisation_mensuelle += self.report_cotisation_mensuelle
+        self.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction
+
+    def Cloture(self, date=None):
+        if not self.cloture:
+            facture_previsionnelle = FactureFinMois(self.inscrit, self.annee, self.mois)
+            facture_previsionnelle.Cloture(facture_previsionnelle.fin_recap)
+            date = self.date
+            while date.month == self.mois:
+                if date in self.inscrit.journees:
+                    journee = self.inscrit.journees[date]
+                    journee.CloturePrevisionnel()
+                elif not (date in creche.jours_fermeture or date in self.inscrit.jours_conges):
+                    journee = self.inscrit.getReferenceDayCopy(date)
+                    if journee:
+                        self.inscrit.journees[date] = journee
+                        journee.CloturePrevisionnel()
+                        journee.Save()
+                date += datetime.timedelta(1)
+            FactureFinMois.Cloture(self)       
+
+class FactureCloturee:
+    def __init__(self, inscrit, date, cotisation_mensuelle, total_contractualise, total_realise, total_facture, supplement_activites, supplement, deduction):
+        self.inscrit = inscrit
+        self.date = date
+        self.cotisation_mensuelle = cotisation_mensuelle
+        self.total_contractualise = total_contractualise
+        self.total_realise = total_realise
+        self.total_facture = total_facture
+        self.supplement_activites = total_realise
+        self.supplement = supplement
+        self.deduction = deduction
+        self.facture = None
+        
+    def Restore(self):
+        if not self.facture:
+            if self.date.day == 1:
+                self.facture = FactureDebutMois(self.inscrit, self.date.year, self.date.month)
+            else:
+                self.facture = FactureFinMois(self.inscrit, self.date.year, self.date.month)
+            self.facture.cotisation_mensuelle = self.cotisation_mensuelle
+            self.facture.total_contractualise = self.total_contractualise
+            self.facture.total_realise = self.total_realise
+            self.facture.total_facture = self.total_facture
+            self.facture.supplement_activites = self.supplement_activites
+            self.facture.supplement = self.supplement
+            self.facture.deduction = self.deduction
+        return self.facture
+            
+def Facture(inscrit, annee, mois, options=0):
+    date = datetime.date(annee, mois, 1)
+    if date in inscrit.factures_cloturees:
+        return inscrit.factures_cloturees[date].Restore()        
+    elif creche.temps_facturation == FACTURATION_FIN_MOIS:
         return FactureFinMois(inscrit, annee, mois, options)
+    elif creche.temps_facturation == FACTURATION_DEBUT_MOIS_CONTRAT:
+        return FactureDebutMoisContrat(inscrit, annee, mois, options)
     else:
-        return FactureDebutMois(inscrit, annee, mois, options)           
+        return FactureDebutMoisPrevisionnel(inscrit, annee, mois, options)           
 

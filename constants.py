@@ -43,7 +43,7 @@ MODE_SANS_HORAIRES = 2
 
 # Granularité du planning dans la base
 BASE_GRANULARITY = 5 # 5 minutes
-TAILLE_TABLE_ACTIVITES = 24 * 60 / BASE_GRANULARITY
+DAY_SIZE = 24 * 60 / BASE_GRANULARITY
 
 # Modes d'inscription
 MODE_CRECHE = 0
@@ -67,7 +67,8 @@ PERIODE_ADAPTATION_FACTUREE_NORMALEMENT = 0
 
 # Facturation début/fin de mois
 FACTURATION_FIN_MOIS = 0
-FACTURATION_DEBUT_MOIS = 1
+FACTURATION_DEBUT_MOIS_CONTRAT = 1
+FACTURATION_DEBUT_MOIS_PREVISIONNEL = 2
 
 # Modes de traitement des absences pour maladie
 DEDUCTION_MALADIE_SANS_CARENCE = 0
@@ -88,11 +89,12 @@ ACCUEIL_NON_FACTURE = 1 #  jours de nettoyage par exemple
 MOIS_SANS_FACTURE = 2 # si présence dans cette periode (mois d'août par exemple), elle est répartie sur les autres mois de l'année 
 
 # Valeurs de présence
+MALADE = -2
+VACANCES = -1
 ABSENT = 0
 PRESENT = 1 << 0 # activité 0
-VACANCES = -1
-MALADE = -2
-SUPPLEMENT = 1 << 29 # pas d'activité > 28 !
+CLOTURE = 1 << 28 # pas d'activité > 27 !
+SUPPLEMENT = 1 << 29
 PREVISIONNEL = 1 << 30 # flag previsionnel
 
 # Types des champs OpenOffice

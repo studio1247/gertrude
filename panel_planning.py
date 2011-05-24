@@ -46,14 +46,20 @@ class DayPlanningPanel(PlanningWidget):
                     line = LigneConge(inscrit.jours_conges[self.date].label)
                 elif self.date in inscrit.journees:
                     line = inscrit.journees[self.date]
+                    line.reference = inscription.getReferenceDay(self.date)
                     line.insert = None
                 else:
-                    line = inscrit.getReferenceDayCopy(self.date)
+                    line = inscription.getReferenceDayCopy(self.date)
                     line.insert = inscrit.journees
                     line.key = self.date
                 line.label = GetPrenomNom(inscrit)
-                line.reference = inscrit.getReferenceDay(self.date)
                 line.inscription = inscription
+                if creche.temps_facturation == FACTURATION_FIN_MOIS:
+                    date = getMonthStart(self.date)
+                else:
+                    date = getNextMonthStart(self.date)
+                if date in inscrit.factures_cloturees:
+                    line.readonly = True
                 lines.append(line)
         self.SetLines(lines)
 
@@ -178,7 +184,7 @@ class PlanningPanel(GPanel):
             self.activity_choice.Show(False)
             self.activity_choice.Append(creche.activites[0].label, creche.activites[0])
         self.activity_choice.SetSelection(selected)
-        for row in range(self.notebook.GetRowCount()):
+        for row in range(self.notebook.GetPageCount()):
             note = self.notebook.GetPage(row)
             note.UpdateContents()
         self.sizer.Layout()

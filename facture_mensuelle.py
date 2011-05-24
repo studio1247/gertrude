@@ -28,15 +28,15 @@ couleurs = { SUPPLEMENT: 'A2',
              ABSENT: 'E2'}
 
 class FactureModifications(object):
-    def __init__(self, who, periode):
+    def __init__(self, inscrits, periode):
         self.template = 'Facture mensuelle.odt'
+        self.inscrits = inscrits
         self.periode = periode
-        if isinstance(who, list):
+        if len(inscrits) > 1:
             self.default_output = u"Factures %s %d.odt" % (months[periode.month - 1], periode.year)
-            self.inscrits = [inscrit for inscrit in who if inscrit.hasFacture(periode)]
         else:
+            who = inscrits[0]
             self.default_output = u"Facture %s %s %s %d.odt" % (who.prenom, who.nom, months[periode.month - 1], periode.year)
-            self.inscrits = [who]
 
     def execute(self, filename, dom):
         if filename != 'content.xml':

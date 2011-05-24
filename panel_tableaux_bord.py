@@ -49,18 +49,15 @@ class SitesPlanningPanel(PlanningWidget):
             if len(creche.sites) > 1:
                 lines.append(days[week_day])
                 for site in creche.sites:
-                    line = Day()
+                    line = Summary(site.nom)
                     for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
-                        line.values[i] = site.capacite
-                    line.label = site.nom
+                        line[i] = site.capacite
                     day_lines[site] = line
                     lines.append(line)
             else:
-                site_line = Day()
+                site_line = Summary(days[week_day])
                 for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
-                    site_line.values[i] = creche.capacite
-                site_line.reference = None
-                site_line.label = days[week_day]
+                    site_line[i] = creche.capacite
                 lines.append(site_line)
             
             for inscrit in creche.inscrits:
@@ -75,9 +72,10 @@ class SitesPlanningPanel(PlanningWidget):
                             site_line = day_lines[inscription.site]
                         else:
                             continue
-                    for i, value in enumerate(line.values):
-                        if value > 0 and value & PRESENT:
-                            site_line.values[i] -= 1
+                    for start, end, value in line.activites:
+                        if value in (0, PREVISIONNEL):
+                            for i in range(start, end):
+                                site_line[i] -= 1
 
         self.SetLines(lines)
 
@@ -117,8 +115,7 @@ class PlacesDisponiblesTab(AutoTab):
         self.sizer.Add(sizer, 0, wx.EXPAND)
                 
         self.planning_panel = SitesPlanningPanel(self, options=DRAW_NUMBERS|NO_ICONS|NO_BOTTOM_LINE|READ_ONLY)
-        self.planning_panel.SetData(semaine)
-            
+        self.planning_panel.SetData(semaine)          
         self.sizer.Add(self.planning_panel, 1, wx.EXPAND)
         self.sizer.Layout()
         self.SetSizer(self.sizer)
@@ -396,7 +393,8 @@ class EtatsPresenceTab(AutoTab):
                             else:
                                 journee = inscrit.getReferenceDay(date)
                             arrivee, depart = journee.GetPlageHoraire()
-                            selection[date].append((inscription.site, inscription.professeur, inscrit, arrivee, depart, contrat+supplementaire))
+                            # print date, arrivee, depart, journee.activites
+                            selection[date].append((inscription.site, inscription.professeur, inscrit, arrivee, depart, realise))
                         date += datetime.timedelta(1)
         return selection
     
@@ -517,9 +515,9 @@ class StatistiquesFrequentationTab(AutoTab):
                         heures_contractualisees += facture.heures_contractualisees
                         heures_realisees += facture.heures_realisees                       
                         heures_facturees += facture.heures_facturees
-                        cotisations_contractualisees += facture.cotisation_mensuelle
+                        cotisations_contractualisees += facture.total_contractualise
                         cotisations_realisees += facture.total_realise
-                        cotisations_facturees += facture.total
+                        cotisations_facturees += facture.total_facture
                 except Exception, e:
                     erreurs.append((inscrit, e))
                               

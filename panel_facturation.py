@@ -53,13 +53,16 @@ class FacturationPanel(GPanel):
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
         # Les factures
-        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Edition des factures'), wx.HORIZONTAL)
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Clôture et édition des factures'), wx.HORIZONTAL)
         self.inscrits_choice["factures"] = wx.Choice(self)
         self.factures_monthchoice = wx.Choice(self)
         self.Bind(wx.EVT_CHOICE, self.EvtFacturesInscritChoice, self.inscrits_choice["factures"])
-        button = wx.Button(self, -1, u'Génération')
-        self.Bind(wx.EVT_BUTTON, self.EvtGenerationFacture, button)
-        box_sizer.AddMany([(self.inscrits_choice["factures"], 1, wx.ALL|wx.EXPAND, 5), (self.factures_monthchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        self.Bind(wx.EVT_CHOICE, self.EvtFacturesMonthChoice, self.factures_monthchoice)
+        self.cloture_button = wx.Button(self, -1, u'Clôture')
+        self.Bind(wx.EVT_BUTTON, self.EvtClotureFacture, self.cloture_button)
+        button2 = wx.Button(self, -1, u'Génération')
+        self.Bind(wx.EVT_BUTTON, self.EvtGenerationFacture, button2)
+        box_sizer.AddMany([(self.inscrits_choice["factures"], 1, wx.ALL|wx.EXPAND, 5), (self.factures_monthchoice, 1, wx.ALL|wx.EXPAND, 5), (self.cloture_button, 0, wx.ALL, 5), (button2, 0, wx.ALL, 5)])
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
         # Les attestations de paiement
@@ -89,7 +92,21 @@ class FacturationPanel(GPanel):
             if not date.month in creche.mois_sans_facture and (isinstance(inscrit, list) or inscrit.hasFacture(date)):
                 self.factures_monthchoice.Append('%s %d' % (months[date.month - 1], date.year), date)
             date = getNextMonthStart(date)
-        self.factures_monthchoice.SetSelection(self.factures_monthchoice.GetCount()-1)   
+        self.factures_monthchoice.SetSelection(self.factures_monthchoice.GetCount()-1)
+        self.EvtFacturesMonthChoice()
+        
+    def EvtFacturesMonthChoice(self, evt=None):
+        date = self.factures_monthchoice.GetClientData(self.factures_monthchoice.GetSelection())
+        inscrits = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
+        if not isinstance(inscrits, list):
+            inscrits = [inscrits]
+        for inscrit in inscrits:
+            if inscrit.hasFacture(date) and date not in inscrit.factures_cloturees:
+                print date, inscrit.factures_cloturees
+                self.cloture_button.Enable()
+                break
+        else:
+            self.cloture_button.Disable()
 
     def EvtRecusInscritChoice(self, evt):
         self.recus_periodechoice.Clear()
@@ -170,17 +187,47 @@ class FacturationPanel(GPanel):
                     choice.Append(GetPrenomNom(inscrit), inscrit)
         for choice in self.inscrits_choice.values():
             choice.SetSelection(0)
+        
+        self.cloture_button.Show(creche.cloture_factures)
 
         self.EvtFacturesInscritChoice(None)
         self.EvtRecusInscritChoice(None)
+        
+        self.Layout()
 
     def EvtGenerationAppelCotisations(self, evt):
         periode = self.appels_monthchoice.GetClientData(self.appels_monthchoice.GetSelection())
         DocumentDialog(self, AppelCotisationsModifications(periode, options=NO_NOM)).ShowModal()
 
-    def EvtGenerationFacture(self, evt):
+    def __get_facturation_inscrits_periode(self):
         inscrits = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
         periode = self.factures_monthchoice.GetClientData(self.factures_monthchoice.GetSelection())
+        if isinstance(inscrits, list):
+            inscrits = [inscrit for inscrit in inscrits if inscrit.hasFacture(periode)]
+        else:
+            inscrits = [inscrits]
+        return inscrits, periode
+            
+    def EvtClotureFacture(self, evt):
+        inscrits, periode = self.__get_facturation_inscrits_periode()
+        errors = {}
+        for inscrit in inscrits:
+            try:
+                facture = Facture(inscrit, periode.year, periode.month)
+                facture.Cloture()
+            except CotisationException, e:
+                errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
+                continue
+        if errors:
+            message = u"Erreurs lors de la clôture :\n"
+            for label in errors.keys():
+                message += '\n' + label + ' :\n  '
+                message += '\n  '.join(errors[label])
+            wx.MessageDialog(self, message, 'Message', wx.OK|wx.ICON_WARNING).ShowModal()
+        self.EvtFacturesMonthChoice()
+
+    def EvtGenerationFacture(self, evt):
+        inscrits, periode = self.__get_facturation_inscrits_periode()
         DocumentDialog(self, FactureModifications(inscrits, periode)).ShowModal()
 
     def EvtGenerationRecu(self, evt):

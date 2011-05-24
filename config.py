@@ -61,6 +61,14 @@ def getDocumentsDirectory(parser):
     except:
         return getDefaultDocumentsDirectory()
     
+def getBackupsDirectory(parser):
+    try:
+        directory = parser.get(DEFAULT_SECTION, "backups-directory")
+        assert os.path.isdir(directory)
+        return directory
+    except:
+        return ""
+    
 def getDefaultDatabase(parser):
     try:
         return parser.get(DEFAULT_SECTION, "default-database")
@@ -119,6 +127,9 @@ def LoadConfig(progress_handler=default_progress_handler):
     config.original_documents_directory = getDocumentsDirectory(parser)
     config.documents_directory = config.original_documents_directory
     
+    config.original_backups_directory = getBackupsDirectory(parser)
+    config.backups_directory = config.original_backups_directory
+    
     config.original_default_database = getDefaultDatabase(parser)
     config.default_database = config.original_default_database
     
@@ -136,6 +147,8 @@ def SaveConfig(progress_handler):
     parameters = {}
     if config.documents_directory != config.original_documents_directory:
         parameters["documents-directory"] = config.documents_directory
+    if config.backups_directory != config.original_backups_directory:
+        parameters["backups-directory"] = config.backups_directory
     if config.default_database != config.original_default_database:
         parameters["default-database"] = config.default_database
     if parameters:

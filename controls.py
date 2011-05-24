@@ -31,7 +31,7 @@ class GPanel(wx.Panel):
             st = wx.StaticText(self, -1, title, size=(-1, 24), style=wx.BORDER_SUNKEN|wx.ST_NO_AUTORESIZE)
             font = wx.Font(12, wx.SWISS, wx.NORMAL, wx.BOLD)
         else:
-            st = wx.lib.stattext.GenStaticText(self, -1, title, size=(-1, 28), style=wx.BORDER_SUNKEN|wx.ST_NO_AUTORESIZE)
+            st = wx.lib.stattext.GenStaticText(self, -1, ' ' + title, size=(-1, 28), style=wx.BORDER_SUNKEN|wx.ST_NO_AUTORESIZE)
             font = st.GetFont()
             font.SetPointSize(14)
         st.SetFont(font)

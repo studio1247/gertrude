@@ -123,7 +123,7 @@ class PlanningDetailleModifications(object):
                         
                         # le récapitulatif par activité
                         i = lines_count
-                        summary = getActivitiesSummary(creche, lines)
+                        summary = GetActivitiesSummary(creche, lines)
                         for activity in summary.keys():
                             i += 1
                             if activity == 0:

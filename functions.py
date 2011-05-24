@@ -178,10 +178,10 @@ def str2date(str, year=None):
         return None
 
 def date2str(date):
-  if date is None:
-    return ''
-  else:
-    return '%.02d/%.02d/%.04d' % (date.day, date.month, date.year)
+    if date is None:
+        return ''
+    else:
+        return '%.02d/%.02d/%.04d' % (date.day, date.month, date.year)
 
 def periodestr(o):
     if None in (o.debut, o.fin) or (o.debut.year, o.debut.month, o.debut.day) != (o.fin.year, 1, 1) or (o.fin.month, o.fin.day) != (12, 31):
@@ -190,6 +190,7 @@ def periodestr(o):
         return u"Année %d" % o.debut.year
 
 def JourSemaineAffichable(day):
+    day = day % 7
     if days[day] in creche.feries:
         return False
     elif day == 5 or day == 6:
@@ -311,7 +312,7 @@ def GetLines(date, inscrits, presence=False):
             if date in inscrit.journees:
                 line = inscrit.journees[date]
             else:
-                line = inscrit.getReferenceDayCopy(date)
+                line = inscription.getReferenceDayCopy(date)
             line.nom = inscrit.nom
             line.prenom = inscrit.prenom
             line.label = GetPrenomNom(inscrit)
@@ -323,7 +324,7 @@ def GetLines(date, inscrits, presence=False):
 def getActivityColor(value):
     if value < 0:
         return creche.couleurs[value].couleur
-    activity = value & ~(PREVISIONNEL|SUPPLEMENT)
+    activity = value & ~(PREVISIONNEL|SUPPLEMENT|CLOTURE)
     if activity in creche.activites:
         if value & PREVISIONNEL:
             return creche.activites[activity].couleur_previsionnel
@@ -334,21 +335,22 @@ def getActivityColor(value):
     else:
         return 0, 0, 0, 0, 100
         
-def getActivitiesSummary(creche, lines):
-    class Summary(list):
-        def __init__(self, label):
-            self.label = label
-            self.extend([0] * 24 * (60 / BASE_GRANULARITY))
+class Summary(list):
+    def __init__(self, label):
+        self.label = label
+        self.extend([0] * DAY_SIZE)
             
+def GetActivitiesSummary(creche, lines):
     summary = {}
     for activity in creche.activites:
         summary[activity] = Summary(creche.activites[activity].label)
-        for i in range(TAILLE_TABLE_ACTIVITES):
-            for line in lines:
-                if not isinstance(line, list):
-                    line = line.values
-                if line[i] > 0 and line[i] & (1 << activity):
-                    summary[activity][i] += 1
+    for line in lines:
+        for start, end, value in line.activites:
+            if value < PREVISIONNEL+CLOTURE:
+                value &= ~(PREVISIONNEL+CLOTURE)
+                if value in creche.activites:
+                    for i in range(start, end):
+                        summary[value][i] += 1
     return summary
 
 def GetCrecheFields(creche):

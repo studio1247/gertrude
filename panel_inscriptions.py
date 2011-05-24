@@ -612,8 +612,8 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         inscription = self.inscrit.inscriptions[self.periode]
         for i, day in enumerate(inscription.reference):
             if i > 0 and JourSemaineAffichable(i):
-                day.copy(inscription.reference[0], False)
-                day.save()
+                day.Copy(inscription.reference[0], False)
+                day.Save()
         self.UpdateContents()
     
     def UpdateSiteItems(self):

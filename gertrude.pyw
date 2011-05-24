@@ -23,7 +23,7 @@ import wx, wx.lib.wordwrap
 from wx.lib import masked
 from startdialog import StartDialog
 from config import Liste, Load, Save, Restore, Exit, ProgressHandler
-from functions import GetBitmapFile
+from functions import GetBitmapFile, today
 from alertes import CheckAlertes
 try:
     import winsound
@@ -158,8 +158,10 @@ class GertrudeFrame(wx.Frame):
             menu.AppendMenu(1000, "Changer de structure", self.db_menu)
         menu.Append(101, "&Enregistrer\tCtrl+S", u"Enregistre")
         self.Bind(wx.EVT_MENU, self.OnSave, id=101)
-        menu.Append(102, "&Fermer\tAlt+F4", u"Ferme la fenêtre")
-        self.Bind(wx.EVT_MENU, self.OnExit, id=102)
+        menu.Append(102, u"&Copie de secours des données", u"Crée une copie de toutes les données")
+        self.Bind(wx.EVT_MENU, self.OnBackup, id=102)
+        menu.Append(103, "&Fermer\tAlt+F4", u"Ferme la fenêtre")
+        self.Bind(wx.EVT_MENU, self.OnExit, id=103)
         menuBar.Append(menu, "&Fichier")
         menu = wx.Menu()
         menu.Append(201, "&Annuler\tCtrl+Z", u"Annule l'action précédente")
@@ -321,6 +323,21 @@ class GertrudeFrame(wx.Frame):
     def OnSave(self, evt):
         self.SetStatusText("Enregistrement en cours ...")
         Save(ProgressHandler(self.SetStatusText))
+        self.SetStatusText("")
+        
+    def OnBackup(self, evt):
+        self.SetStatusText("Copie de secours ...")
+        Save(ProgressHandler(self.SetStatusText))
+        wildcard = "ZIP files (*.zip)|*.zip"
+        dlg = wx.FileDialog(self, style=wx.SAVE, wildcard=wildcard, defaultDir=config.backups_directory, defaultFile="gertrude-%d-%d-%d.zip" % (today.day, today.month, today.year))
+        result = dlg.ShowModal()
+        if result == wx.ID_OK:
+            filename = dlg.GetPath()
+            config.backups_directory = os.path.dirname(filename)            
+            zip = zipfile.ZipFile(filename, 'w')
+            zip.write(config.connection.filename)
+            for f in glob.glob("./templates/*"):
+                zip.write(f)
         self.SetStatusText("")
 
     def OnExit(self, evt):

@@ -20,7 +20,8 @@ from buffered_window import BufferedWindow
 import datetime, time
 from constants import *
 from controls import getActivityColor
-from functions import getActivitiesSummary, GetBitmapFile
+from functions import GetActivitiesSummary, GetBitmapFile
+from sqlobjects import Day
 from history import *
 
 # PlanningWidget options
@@ -48,6 +49,7 @@ BUTTON_BITMAPS = { ABSENT: wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BIT
 class LigneConge(object):
     def __init__(self, info):
         self.info = info
+        self.readonly = True
 
 class PlanningGridWindow(BufferedWindow):
     def __init__(self, parent, activity_combobox, options):
@@ -56,7 +58,7 @@ class PlanningGridWindow(BufferedWindow):
         BufferedWindow.__init__(self, parent, size=((creche.affichage_max-creche.affichage_min) * 4 * COLUMN_WIDTH + 1, -1))
         self.SetBackgroundColour(wx.WHITE)
         self.activity_combobox = activity_combobox
-        self.state = -1
+        self.value, self.state = None, None
         if options & DRAW_NUMBERS:
             self.draw_line = self.DrawNumbersLine
         else:
@@ -82,11 +84,7 @@ class PlanningGridWindow(BufferedWindow):
     def UpdateLine(self, index):
         self.UpdateDrawing()
 
-    def Draw(self, dc):
-        dc.BeginDrawing()
-        dc.Clear()
-
-        # le quadrillage
+    def DrawLineGrid(self, dc):
         dc.SetPen(wx.GREY_PEN)
         dc.SetBrush(wx.WHITE_BRUSH)
         affichage_min = int(creche.affichage_min * 60 / BASE_GRANULARITY)
@@ -104,6 +102,13 @@ class PlanningGridWindow(BufferedWindow):
                 dc.SetPen(wx.LIGHT_GREY_PEN)
             dc.DrawLine(x, 0,  x, height)
             heure += creche.granularite / BASE_GRANULARITY
+            
+    def Draw(self, dc):
+        dc.BeginDrawing()
+        dc.Clear()
+
+        # le quadrillage
+        self.DrawLineGrid(dc)
 
         if self.info:
             dc.SetTextForeground("LIGHT GREY")
@@ -124,7 +129,9 @@ class PlanningGridWindow(BufferedWindow):
 
     def DrawActivitiesLine(self, dc, index, line):
         if not isinstance(line, LigneConge):
-            for start, end, activity in line.get_activities(reference=line.reference):
+            keys = line.activites.keys()
+            keys.sort(key=lambda key:key[-1])
+            for start, end, activity in keys:
                 r, g, b, t, s = getActivityColor(activity)
                 try:
                     dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
@@ -132,7 +139,7 @@ class PlanningGridWindow(BufferedWindow):
                 except:
                     dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
                     dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
-                rect = wx.Rect(1+(start-int(creche.affichage_min*(60 / BASE_GRANULARITY)))*COLUMN_WIDTH, 1 + index*LINE_HEIGHT, (end-start)*COLUMN_WIDTH-1, LINE_HEIGHT-1)
+                rect = wx.Rect(1+(start-int(creche.affichage_min*(60 / BASE_GRANULARITY)))*COLUMN_WIDTH, 1+index*LINE_HEIGHT, (end-start)*COLUMN_WIDTH-1, LINE_HEIGHT-1)
                 dc.DrawRoundedRectangleRect(rect, 4)
         else:
             dc.SetPen(wx.Pen(wx.BLACK))
@@ -140,7 +147,6 @@ class PlanningGridWindow(BufferedWindow):
             
     def DrawNumbersLine(self, dc, index, line):
         if not isinstance(line, basestring):
-            line = line.values    
             pos = -2
             if not self.GetParent().GetParent().options & NO_ICONS:
                 pos += ICONS_WIDTH
@@ -185,83 +191,67 @@ class PlanningGridWindow(BufferedWindow):
         self.curStartX = (posX / (creche.granularite/BASE_GRANULARITY)) * (creche.granularite/BASE_GRANULARITY)
         if self.curStartY < len(self.lines):
             line = self.lines[self.curStartY]
-            if not isinstance(line, LigneConge):
-                line.original_values = line.values[:]
-                if line.get_state() < 0 or not line.values[posX] & (1<<self.activity_combobox.activity.value):
-                    self.state = 1
+            if not line.readonly:
+                self.value = self.activity_combobox.activity.value
+                if creche.presences_previsionnelles and line.reference and line.date > datetime.date.today():
+                    self.value |= PREVISIONNEL
+                for a, b, v in line.activites.keys():
+                    if v == self.value and posX >= a and posX <= b:
+                        self.state = -1
+                        break
                 else:
-                    self.state = 0
+                    self.state = 1
                 self.OnLeftButtonDragging(event)
 
     def OnLeftButtonDragging(self, event):
-        if self.state != -1:
+        if self.state is not None:
             posX, self.curEndY = self.__get_pos(event.GetX(), event.GetY())
             self.curEndX = (posX / (creche.granularite/BASE_GRANULARITY)) * (creche.granularite/BASE_GRANULARITY)
-            start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX)
+            start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX) + creche.granularite/BASE_GRANULARITY
             line = self.lines[self.curStartY]
-            line.values = line.original_values[:]
             
-            for i in range(start, end + creche.granularite/BASE_GRANULARITY):
-                if line.values[i] < 0:
-                    line.values[i] = 0
-                if creche.presences_previsionnelles and line.reference and line.date > datetime.date.today():
-                    line.values[i] |= PREVISIONNEL
-                else:
-                    line.values[i] &= ~PREVISIONNEL
-                if self.state:
-                    line.values[i] |= 1 << self.activity_combobox.activity.value
-                else:
-                    line.values[i] &= ~(1 << self.activity_combobox.activity.value)
-            self.UpdateLine(self.curStartY)
+            line_copy = Day()
+            line_copy.Copy(line, False)
+            if self.state > 0:
+                line_copy.SetActivity(start, end, self.value)
+            else:
+                line_copy.ClearActivity(start, end, self.value)
+
+            bmp = wx.EmptyBitmap((creche.affichage_max-creche.affichage_min)*(60 / BASE_GRANULARITY)*COLUMN_WIDTH+1, 3*LINE_HEIGHT)
+            lineDC = wx.MemoryDC()
+            lineDC.SelectObject(bmp)
+            lineDC.Clear()
+            self.DrawLineGrid(lineDC)
+            try:
+                lineGCDC = wx.GCDC(lineDC)
+            except:
+                lineGCDC = line2DC
+            lineGCDC.BeginDrawing()
+            if self.curStartY > 0:
+                self.draw_line(lineGCDC, 0, self.lines[self.curStartY-1])
+            self.draw_line(lineGCDC, 1, line_copy)
+            if self.curStartY < len(self.lines) - 1:
+                self.draw_line(lineGCDC, 2, self.lines[self.curStartY+1])
+            lineGCDC.EndDrawing()
+            wx.ClientDC(self).Blit(0, self.curStartY*LINE_HEIGHT, (creche.affichage_max-creche.affichage_min)*(60 / BASE_GRANULARITY)*COLUMN_WIDTH+1, LINE_HEIGHT+1, lineDC, 0, LINE_HEIGHT)
 
     def OnLeftButtonUp(self, event):
-        if self.state != -1:
-            start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX)
+        if self.state is not None:
+            start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX) + creche.granularite/BASE_GRANULARITY
             line = self.lines[self.curStartY]
-            line.values = line.original_values[:]
-            if line.get_state() < 0:
-                line.values = [0] * 24 * (60 / BASE_GRANULARITY)
-            if self.state:
-                value = 1 << self.activity_combobox.activity.value
-                clear_values = [1 << activity.value for activity in creche.activites.values() if (activity.mode & MODE_LIBERE_PLACE)]
-            else:
-                value = ~(1 << self.activity_combobox.activity.value)
-                clear_values = [1 << activity.value for activity in creche.activites.values() if not (activity.mode & MODE_LIBERE_PLACE)]
-                clear_values = ~sum(clear_values)
             
-            for i in range(start, end + creche.granularite/BASE_GRANULARITY):
-                if self.state:
-                    if self.activity_combobox.activity.mode & MODE_LIBERE_PLACE:
-                        line.values[i] = value
-                    elif line.values[i] in clear_values:
-                        line.values[i] = (value | 1)
-                    else:
-                        line.values[i] |= (value | 1)
-                else:
-                    if self.activity_combobox.activity.value == 0:
-                        line.values[i] &= clear_values
-                    else:
-                        line.values[i] &= value
-                if creche.presences_previsionnelles and line.reference and line.date > datetime.date.today():
-                    line.values[i] |= PREVISIONNEL
-                else:
-                    line.values[i] &= ~PREVISIONNEL
-
-            if not (self.GetParent().GetParent().options & PRESENCES_ONLY) and line.get_state() == ABSENT and line.reference.get_state() != ABSENT:
-                line.set_state(VACANCES)
+            history.Append([Call(line.Restore, line.Backup())])
+            
+            if self.state > 0:
+                line.SetActivity(start, end, self.value)
             else:
-                line.save()
-
+                line.ClearActivity(start, end, self.value)
             if line.insert is not None:
                 line.insert[line.key] = line
                 line.insert = None
 
-            history.Append([Change(line, 'values', line.original_values),
-                            Call(line.save)])
-
-            self.UpdateLine(self.curStartY)
-            self.state = -1
             self.GetParent().UpdateLine(self.curStartY)
+            self.state = None
 
 class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, activity_combobox, options):
@@ -297,48 +287,46 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def OnButtonPressed(self, event):
         button = event.GetEventObject()
         line = self.lines[button.line]
-        if isinstance(line, LigneConge):
-            return
-        
-        history.Append([Change(line, 'values', line.values[:]),
-                        Call(line.save)])
-
-        state = line.get_state()
-        if state == VACANCES:
-            line.set_state(MALADE)
-        elif state == MALADE:
-            line.copy(line.reference, creche.presences_previsionnelles and (line.date > datetime.date.today()))
-            line.save()
-        elif line.date <= datetime.date.today() and state & PREVISIONNEL:
-            line.confirm()
-        else:
-            if line.reference.get_state() == ABSENT:
+        if not line.readonly:
+            history.Append([Call(line.Restore, line.Backup())])        
+            state = line.get_state()
+            if state == VACANCES:
                 line.set_state(MALADE)
+            elif state == MALADE:
+                if line.HasPrevisionnelCloture():
+                    line.RestorePrevisionnelCloture(creche.presences_previsionnelles and line.date > datetime.date.today())
+                else:
+                    line.Copy(line.reference, creche.presences_previsionnelles and line.date > datetime.date.today())
+                    line.Save()
+            elif line.date <= datetime.date.today() and state & PREVISIONNEL:
+                line.Confirm()
             else:
-                line.set_state(VACANCES)
-
-        if line.insert is not None:
-            line.insert[line.key] = line
-            line.insert = None
-
-        self.grid_panel.UpdateLine(button.line)
-        self.UpdateLine(button.line)
+                if line.reference.get_state() == ABSENT:
+                    line.set_state(MALADE)
+                else:
+                    line.set_state(VACANCES)
+    
+            if line.insert is not None:
+                line.insert[line.key] = line
+                line.insert = None
+    
+            self.grid_panel.UpdateLine(button.line)
+            self.UpdateLine(button.line)
         
     def OnActiviteCheckbox(self, event):
         button = event.GetEventObject()
         line = self.lines[button.line]
-        if isinstance(line, LigneConge):
-            return
-        elif event.Checked():
-            history.Append([])
-            line.insert_activity(None, None, button.activite.value)
-        else:
-            history.Append([])
-            line.remove_activity(None, None, button.activite.value)
-        line.save()
-        if line.insert is not None:
-            line.insert[line.key] = line
-            line.insert = None
+        if not line.readonly:
+            if event.Checked():
+                history.Append([])
+                line.insert_activity(None, None, button.activite.value)
+            else:
+                history.Append([])
+                line.remove_activity(None, None, button.activite.value)
+            line.Save()
+            if line.insert is not None:
+                line.insert[line.key] = line
+                line.insert = None
 
     def UpdateLine(self, index):
         options = self.GetParent().options
@@ -501,7 +489,7 @@ class PlanningSummaryPanel(BufferedWindow):
             self.GetParent().sizer.Layout()
             
         lines = self.GetParent().GetSummaryLines()
-        self.summary = getActivitiesSummary(creche, lines)
+        self.summary = GetActivitiesSummary(creche, lines)
         self.UpdateDrawing()
 
     def Draw(self, dc):
@@ -605,11 +593,11 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
             self.summary_panel.UpdateContents()
         
     def GetSummaryLines(self):
-        values = []
+        lines = []
         for line in self.lines:
             if not isinstance(line, LigneConge):
-                values.append(line.values)
-        return values
+                lines.append(line)
+        return lines
 
     def OnPaint(self, event):
         dc = wx.PaintDC(self.scale_window)

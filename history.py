@@ -44,11 +44,15 @@ class Insert:
         self.value.create()
 
 class Call:
-    def __init__(self, function):
+    def __init__(self, function, args=None):
         self.function = function
+        self.args = args
 
     def Undo(self):
-        self.function()
+        if self.args is None:
+            self.function()
+        else:
+            self.function(self.args)
        
 class History(list):
     def __init__(self):
