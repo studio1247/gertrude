@@ -102,7 +102,6 @@ class FacturationPanel(GPanel):
             inscrits = [inscrits]
         for inscrit in inscrits:
             if inscrit.hasFacture(date) and date not in inscrit.factures_cloturees:
-                print date, inscrit.factures_cloturees
                 self.cloture_button.Enable()
                 break
         else:

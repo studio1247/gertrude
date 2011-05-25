@@ -47,6 +47,7 @@ class FactureFinMois(object):
         self.supplement_activites = 0.0
         self.previsionnel = False
         self.cloture = False
+        self.montant_heure_garde = 0.0
 
         jours_ouvres = 0
         jours_fermeture = 0
