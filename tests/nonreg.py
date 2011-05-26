@@ -413,6 +413,21 @@ class MonPetitBijouTests(GertrudeTestCase):
         facture = Facture(inscrit, 2011, 3)
         self.assertEquals(facture.total, 1520.0 - 2*1.75*9.5)
         
+    def test_periode_adaptation(self):
+        creche.temps_facturation = FACTURATION_FIN_MOIS
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit, creation=False)
+        inscription.mode = MODE_FORFAIT_HORAIRE
+        inscription.forfait_heures_presence = 60.0
+        inscription.debut = datetime.date(2011, 4, 7)
+        inscription.fin_periode_adaptation = datetime.date(2011, 9, 1)
+        inscrit.inscriptions.append(inscription)
+        facture = Facture(inscrit, 2011, 4)
+        self.assertEquals(facture.total, 0)
+        self.AddJourneePresence(inscrit, datetime.date(2011, 4, 14), 90, 102) # 1h 
+        facture = Facture(inscrit, 2011, 4)
+        self.assertEquals(facture.total, 7.00)
+        
 class VivreADomicileTests(GertrudeTestCase):
     def setUp(self):
         GertrudeTestCase.setUp(self)
@@ -449,7 +464,6 @@ class VivreADomicileTests(GertrudeTestCase):
         self.AddJourneePresence(inscrit, datetime.date(2011, 1, 26), 102, 204) # 8h30
         facture = Facture(inscrit, 2011, 1)
         self.assertEquals("%.2f" % facture.total, "10.46")
-
 
 if __name__ == '__main__':
     unittest.main()
