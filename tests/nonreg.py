@@ -43,6 +43,14 @@ class GertrudeTestCase(unittest.TestCase):
         inscrit.journees[date] = Journee(inscrit, date)
         inscrit.journees[date].add_activity(debut, fin, 0, None)
         
+    def AddFrere(self, inscrit, naissance):
+        result = Frere_Soeur(inscrit, creation=False)
+        result.prenom = "Frere ou Soeur"
+        result.nom = "GPL"
+        result.naissance = naissance
+        inscrit.freres_soeurs.append(result)
+        return result
+        
 class DatabaseTests(unittest.TestCase):
     def test_creation(self):
         filename = "gertrude.db"
@@ -149,7 +157,8 @@ class MarmousetsTests(GertrudeTestCase):
         self.assertEquals(cotisation.nombre_factures, 7)
                 
 class DessineMoiUnMoutonTests(GertrudeTestCase):
-    def test_24aout_31dec(self):
+    def setUp(self):
+        GertrudeTestCase.setUp(self)
         creche.mode_facturation = FACTURATION_PSU
         creche.temps_facturation = FACTURATION_FIN_MOIS
         creche.facturation_jours_feries = JOURS_FERIES_DEDUITS_ANNUELLEMENT 
@@ -161,6 +170,8 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         self.AddConge("19/04/2010", "23/04/2010")
         self.AddConge("20/12/2010", "24/12/2010")
         self.AddConge(u"Août", options=MOIS_SANS_FACTURE)
+        
+    def test_24aout_31dec(self):
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
         inscription.debut = datetime.date(2010, 8, 24)
@@ -177,17 +188,6 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         self.assertEquals(cotisation.nombre_factures, 4)
         
     def test_9sept_31dec(self):
-        creche.mode_facturation = FACTURATION_PSU
-        creche.temps_facturation = FACTURATION_FIN_MOIS
-        creche.facturation_jours_feries = JOURS_FERIES_DEDUITS_ANNUELLEMENT 
-        for label in ("Week-end", "1er janvier", "14 juillet", "1er novembre", "11 novembre", u"Lundi de Pâques", "Jeudi de l'Ascension", u"Lundi de Pentecôte"):
-            self.AddJourFerie(label)
-        self.AddConge("30/07/2010", options=ACCUEIL_NON_FACTURE)
-        self.AddConge("23/08/2010")
-        self.AddConge("02/08/2010", "20/08/2010")
-        self.AddConge("19/04/2010", "23/04/2010")
-        self.AddConge("20/12/2010", "24/12/2010")
-        self.AddConge(u"Août", options=MOIS_SANS_FACTURE)
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
         inscription.debut = datetime.date(2010, 9, 1)
@@ -204,17 +204,6 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         self.assertEquals(cotisation.nombre_factures, 4)
     
     def test_1janv_31dec(self):
-        creche.mode_facturation = FACTURATION_PSU
-        creche.temps_facturation = FACTURATION_FIN_MOIS
-        creche.facturation_jours_feries = JOURS_FERIES_DEDUITS_ANNUELLEMENT 
-        for label in ("Week-end", "1er janvier", "14 juillet", "1er novembre", "11 novembre", u"Lundi de Pâques", "Jeudi de l'Ascension", u"Lundi de Pentecôte"):
-            self.AddJourFerie(label)
-        self.AddConge("30/07/2010", options=ACCUEIL_NON_FACTURE)
-        self.AddConge("23/08/2010")
-        self.AddConge("02/08/2010", "20/08/2010")
-        self.AddConge("19/04/2010", "23/04/2010")
-        self.AddConge("20/12/2010", "24/12/2010")
-        self.AddConge(u"Août", options=MOIS_SANS_FACTURE)
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
         inscription.debut = datetime.date(2010, 1, 1)
@@ -283,8 +272,8 @@ class FacturationDebutMoisContratTests(GertrudeTestCase):
         facture = Facture(inscrit, 2011, 3)
         self.assertEquals(facture.cotisation_mensuelle, 90.0*7.0)
         self.assertEquals(facture.total, (4*4+12*10)*7.0)
-        self.AddJourneePresence(inscrit, datetime.date(2011, 2, 14), 90, 189) # 8h25 
-        self.AddJourneePresence(inscrit, datetime.date(2011, 2, 15), 90, 189) # 8h25 
+        self.AddJourneePresence(inscrit, datetime.date(2011, 2, 14), 90, 189) # 8h15 
+        self.AddJourneePresence(inscrit, datetime.date(2011, 2, 15), 90, 189) # 8h15 
         facture = Facture(inscrit, 2011, 3)
         self.assertEquals(facture.cotisation_mensuelle, 90.0*7.0)
         self.assertEquals(facture.total, (4*4.0+12*10.0-1.75-1.75) * 7.0)
@@ -305,8 +294,8 @@ class FacturationDebutMoisContratTests(GertrudeTestCase):
         self.assertEquals(facture.total, (4*4+12*10)*7.0)
         facture = Facture(inscrit, 2011, 3)
         self.assertEquals(facture.total, 1120.0)
-        self.AddJourneePresence(inscrit, datetime.date(2011, 2, 14), 90, 189) # 8h25 
-        self.AddJourneePresence(inscrit, datetime.date(2011, 2, 15), 90, 189) # 8h25 
+        self.AddJourneePresence(inscrit, datetime.date(2011, 2, 14), 90, 189) # 8h15 
+        self.AddJourneePresence(inscrit, datetime.date(2011, 2, 15), 90, 189) # 8h15 
         facture = Facture(inscrit, 2011, 3)
         self.assertEquals(facture.total, 1120.0 - (1.75 * 2) * 7.0)
     
@@ -326,8 +315,8 @@ class FacturationDebutMoisContratTests(GertrudeTestCase):
         self.assertEquals(facture.total, 1292.0)
         facture = Facture(inscrit, 2011, 3)
         self.assertEquals(facture.total, 1520.0)
-        self.AddJourneePresence(inscrit, datetime.date(2011, 2, 14), 90, 189) # 8h25 
-        self.AddJourneePresence(inscrit, datetime.date(2011, 2, 15), 90, 189) # 8h25 
+        self.AddJourneePresence(inscrit, datetime.date(2011, 2, 14), 90, 189) # 8h15 
+        self.AddJourneePresence(inscrit, datetime.date(2011, 2, 15), 90, 189) # 8h15 
         facture = Facture(inscrit, 2011, 3)
         self.assertEquals(facture.total, 1520.0 - (1.75 * 2) * 9.5)
 
@@ -363,13 +352,13 @@ class MonPetitBijouTests(GertrudeTestCase):
         facture = Facture(inscrit, 2011, 3)
         self.assertEquals(facture.cotisation_mensuelle, 90.0*7.0)
         self.assertEquals(facture.total, (5*4.0+14*10.0)*7.0)
-        self.AddJourneePresence(inscrit, datetime.date(2011, 2, 14), 90, 189) # 8h25 
-        self.AddJourneePresence(inscrit, datetime.date(2011, 2, 15), 90, 189) # 8h25 
+        self.AddJourneePresence(inscrit, datetime.date(2011, 2, 14), 90, 189) # 8h15 
+        self.AddJourneePresence(inscrit, datetime.date(2011, 2, 15), 90, 189) # 8h15 
         facture = Facture(inscrit, 2011, 3)
         self.assertEquals(facture.cotisation_mensuelle, 90.0*7.0)
         self.assertEquals(facture.total, (5*4.0+14*10.0-2*1.75) * 7.0)
-        self.AddJourneePresence(inscrit, datetime.date(2011, 3, 7), 90, 189) # 8h25 
-        self.AddJourneePresence(inscrit, datetime.date(2011, 3, 8), 90, 189) # 8h25 
+        self.AddJourneePresence(inscrit, datetime.date(2011, 3, 7), 90, 189) # 8h15 
+        self.AddJourneePresence(inscrit, datetime.date(2011, 3, 8), 90, 189) # 8h15 
         facture = Facture(inscrit, 2011, 3)
         self.assertEquals(facture.cotisation_mensuelle, 90.0*7.0)
         self.assertEquals(facture.total, (5*4.0+14*10.0-4*1.75) * 7.0)
@@ -394,8 +383,8 @@ class MonPetitBijouTests(GertrudeTestCase):
         facture.Cloture(None)
         facture = Facture(inscrit, 2011, 3)
         self.assertEquals(facture.total, (5*4.0+14*10.0) * 7.0) # 1120.0
-        self.AddJourneePresence(inscrit, datetime.date(2011, 3, 7), 90, 189) # 8h25 
-        self.AddJourneePresence(inscrit, datetime.date(2011, 3, 8), 90, 189) # 8h25 
+        self.AddJourneePresence(inscrit, datetime.date(2011, 3, 7), 90, 189) # 8h15 
+        self.AddJourneePresence(inscrit, datetime.date(2011, 3, 8), 90, 189) # 8h15 
         facture = Facture(inscrit, 2011, 3)
         self.assertEquals(facture.total, 1120.0 - 2*1.75*7.0)
     
@@ -419,10 +408,48 @@ class MonPetitBijouTests(GertrudeTestCase):
         facture.Cloture(None)
         facture = Facture(inscrit, 2011, 3)
         self.assertEquals(facture.total, 1520.0)
-        self.AddJourneePresence(inscrit, datetime.date(2011, 3, 7), 90, 189) # 8h25 
-        self.AddJourneePresence(inscrit, datetime.date(2011, 3, 8), 90, 189) # 8h25 
+        self.AddJourneePresence(inscrit, datetime.date(2011, 3, 7), 90, 189) # 8h15 
+        self.AddJourneePresence(inscrit, datetime.date(2011, 3, 8), 90, 189) # 8h15 
         facture = Facture(inscrit, 2011, 3)
         self.assertEquals(facture.total, 1520.0 - 2*1.75*9.5)
+        
+class VivreADomicileTests(GertrudeTestCase):
+    def setUp(self):
+        GertrudeTestCase.setUp(self)
+        creche.mode_facturation = FACTURATION_PSU
+        creche.facturation_periode_adaptation = FACTURATION_HORAIRES_REELS
+        creche.temps_facturation = FACTURATION_FIN_MOIS
+        creche.type = TYPE_PARENTAL
+        self.AddConge("01/08/2011", "26/08/2011")
+        self.AddConge("03/06/2011", "03/06/2011")
+        self.AddConge(u"Août", options=MOIS_SANS_FACTURE)       
+        
+    def test_heures_supplementaires(self):
+        inscrit = self.AddInscrit()
+        self.AddFrere(inscrit, datetime.date(2002, 9, 13))
+        self.AddFrere(inscrit, datetime.date(2003, 9, 19))
+        inscrit.parents["papa"].revenus[0].revenu = 6960.0
+        inscription = Inscription(inscrit, creation=False)
+        inscription.mode = MODE_HALTE_GARDERIE
+        inscription.debut = datetime.date(2011, 1, 3)
+        inscription.fin = datetime.date(2011, 2, 28)
+        inscription.fin_periode_adaptation = datetime.date(2011, 1, 5)
+        inscrit.inscriptions.append(inscription)
+        cotisation = Cotisation(inscrit, datetime.date(2011, 1, 3), NO_ADDRESS|NO_PARENTS)
+        self.assertEquals(cotisation.assiette_mensuelle, 580.00)
+        self.assertEquals(cotisation.taux_effort, 0.03)        
+        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 10), 102, 204) # 8h30 
+        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 17), 102, 204) # 8h30
+        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 24), 102, 204) # 8h30 
+        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 31), 102, 204) # 8h30
+        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 5), 102, 126) # 8h30 
+        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 12), 102, 204) # 8h30
+        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 19), 102, 204) # 8h30 
+        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 26), 102, 204) # 8h30
+        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 26), 102, 204) # 8h30
+        facture = Facture(inscrit, 2011, 1)
+        self.assertEquals("%.2f" % facture.total, "10.46")
+
 
 if __name__ == '__main__':
     unittest.main()
