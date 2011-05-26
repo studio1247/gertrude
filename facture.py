@@ -55,7 +55,7 @@ class FactureFinMois(object):
         heures_hebdomadaires = {}
         last_cotisation = None
         
-        if creche.cloture_factures:
+        if creche.cloture_factures and today > self.fin_recap:
             fin = self.debut_recap - datetime.timedelta(1)
             debut = getMonthStart(fin) 
             if inscrit.GetInscriptions(debut, fin) and debut not in inscrit.factures_cloturees:
@@ -271,16 +271,17 @@ class FactureDebutMoisPrevisionnel(FactureDebutMois):
     def __init__(self, inscrit, annee, mois, options=0):
         FactureDebutMois.__init__(self, inscrit, annee, mois, options)
 
-        if inscrit.GetInscriptions(self.facture_precedente.debut_recap, self.facture_precedente.fin_recap):
-            if self.facture_precedente.fin_recap not in inscrit.factures_cloturees:
-                error = u"La facture du mois " + GetDeMoisStr(self.facture_precedente.fin_recap.month-1) + " " + str(self.facture_precedente.fin_recap.year) + u" n'est pas clôturée"
-                raise CotisationException([error])
-            
-            facture_cloturee = inscrit.factures_cloturees[self.facture_precedente.fin_recap].Restore()
-            self.cotisation_mensuelle += self.facture_precedente.cotisation_mensuelle - facture_cloturee.cotisation_mensuelle
-            self.supplement += self.facture_precedente.supplement - facture_cloturee.supplement
-            self.deduction += self.facture_precedente.deduction - facture_cloturee.deduction
-            self.supplement_activites += self.facture_precedente.supplement_activites - facture_cloturee.supplement_activites            
+        if today > self.fin_recap:
+            if inscrit.GetInscriptions(self.facture_precedente.debut_recap, self.facture_precedente.fin_recap):
+                if self.facture_precedente.fin_recap not in inscrit.factures_cloturees:
+                    error = u"La facture du mois " + GetDeMoisStr(self.facture_precedente.fin_recap.month-1) + " " + str(self.facture_precedente.fin_recap.year) + u" n'est pas clôturée"
+                    raise CotisationException([error])
+                
+                facture_cloturee = inscrit.factures_cloturees[self.facture_precedente.fin_recap].Restore()
+                self.cotisation_mensuelle += self.facture_precedente.cotisation_mensuelle - facture_cloturee.cotisation_mensuelle
+                self.supplement += self.facture_precedente.supplement - facture_cloturee.supplement
+                self.deduction += self.facture_precedente.deduction - facture_cloturee.deduction
+                self.supplement_activites += self.facture_precedente.supplement_activites - facture_cloturee.supplement_activites            
         
         self.cotisation_mensuelle += self.report_cotisation_mensuelle
         self.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction
