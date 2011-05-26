@@ -100,7 +100,7 @@ class PlanningDetailleModifications(object):
                                   ('label', line.label)]
                         ReplaceTextFields(node, fields)
                         page.appendChild(node)
-                        for a, b, v in line.get_activities():
+                        for a, b, v in line.activites:
                             if v >= 0:
                                 v = v & (~PREVISIONNEL)
                                 # print a,b,v

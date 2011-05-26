@@ -70,17 +70,18 @@ def GetDateString(date, weekday=True):
         return date_str
     
 def IsPresentDuringTranche(journee, debut, fin):
-    for i in range(int(debut * (60 / BASE_GRANULARITY)), int(fin * (60 / BASE_GRANULARITY))):
-        if journee.values[i]:
+    for start, end, value in journee.activites:
+        if start < fin and end > debut and (not value & PREVISIONNEL or not value & CLOTURE):
             return True
     return False
 
 def HeuresTranche(journee, debut, fin):
-    result = 0
-    for i in range(int(debut * (60 / BASE_GRANULARITY)), int(fin * (60 / BASE_GRANULARITY))):
-        if journee.values[i]:
-            result += BASE_GRANULARITY
-    return float(result) / 60
+    result = [0] * ((fin - debut) * (60 / BASE_GRANULARITY))
+    for start, end, value in journee.activites:
+        if start < fin and end > debut and (not value & PREVISIONNEL or not value & CLOTURE):
+            for i in range(max(start, debut) * (60 / BASE_GRANULARITY), min(end, fin) * (60 / BASE_GRANULARITY)):
+                result[i] = 1
+    return float(sum(result) * BASE_GRANULARITY) / 60
 
 def GetJoursOuvres(annee, mois):
     jours_ouvres = 0
