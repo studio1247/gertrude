@@ -34,12 +34,14 @@ class DocumentAccueilModifications(object):
             tresorier = bureau.tresorier
             directeur = bureau.directeur
             
-        plancher_caf = "non rempli"
-        plafond_caf = "non rempli"
+        
         bareme_caf = Select(creche.baremes_caf, self.date)
-        if bareme_caf:
+        try:
             plancher_caf = "%.2f" % bareme_caf.plancher
             plafond_caf = "%.2f" % bareme_caf.plafond
+        except:
+            plancher_caf = "non rempli"
+            plafond_caf = "non rempli"
             
         inscription = self.inscrit.GetInscription(self.date, preinscription=True)
         self.cotisation = Cotisation(self.inscrit, self.date)
