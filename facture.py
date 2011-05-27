@@ -78,7 +78,7 @@ class FactureFinMois(object):
                         cotisation = Cotisation(inscrit, date, options=NO_ADDRESS|self.options)
                         cotisation.jours_ouvres = 1
                         cotisation.heures_reference = heures_reference
-                        cotisation.heures_realisees = 0
+                        cotisation.heures_realisees = 0.0
                         cotisation.nombre_jours_maladie_deduits = 0
                         cotisation.heures_maladie = 0.0
                         cotisation.heures_contractualisees = 0.0
@@ -176,6 +176,8 @@ class FactureFinMois(object):
 
         for cotisation in cotisations_mensuelles:
             if creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and cotisation.inscription.IsInPeriodeAdaptation(cotisation.debut):
+                if cotisation.inscription.mode == MODE_FORFAIT_HORAIRE:
+                    self.heures_facturees_par_mode[cotisation.mode_garde] += cotisation.heures_realisees 
                 self.cotisation_mensuelle += cotisation.heures_contractualisees * cotisation.montant_heure_garde
                 self.report_cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_contractualisees) * cotisation.montant_heure_garde                
             elif cotisation.inscription.mode == MODE_FORFAIT_HORAIRE:
@@ -238,6 +240,7 @@ class FactureFinMois(object):
             self.inscrit.factures_cloturees[date] = self
             if sql_connection:
                 sql_connection.execute('INSERT INTO FACTURES (idx, inscrit, date, cotisation_mensuelle, total_contractualise, total_realise, total_facture, supplement_activites, supplement, deduction) VALUES (NULL,?,?,?,?,?,?,?,?,?)', (self.inscrit.idx, date, self.cotisation_mensuelle, self.total_contractualise, self.total_realise, self.total_facture, self.supplement_activites, self.supplement, self.deduction))
+                history.append(None)
             
     def Restore(self):
         return self

@@ -62,13 +62,17 @@ class History(list):
         result = 0
         for i in range(count):
             if len(self) > 0:
-                for action in self.pop(-1):
+                actions = self[-1]
+                if actions is None:
+                    return result
+                self.pop(-1)
+                for action in actions:
                     action.Undo()
                     result += 1
         return result
 
     def Append(self, actions):
-        if not isinstance(actions, list):
+        if actions is not None and not isinstance(actions, list):
             actions = [actions]
         self.append(actions)
 

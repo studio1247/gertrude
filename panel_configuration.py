@@ -697,7 +697,7 @@ class JoursFermeturePanel(AutoTab):
             conge = creche.feries[label]
             del creche.feries[label]
             conge.delete()            
-        history.Append(None) # TODO
+        history.Append(None)
 
 class ParametersPanel(AutoTab):
     def __init__(self, parent):
@@ -872,7 +872,7 @@ class TarifHorairePanel(AutoTab):
             for control in self.controls[i][1:]:
                 control.index += 1
         self.sizer.FitInside(self)
-        history.Append([]) # TODO
+        history.Append(None)
     
     def onDel(self, event):
         index = event.GetEventObject().index
@@ -890,7 +890,7 @@ class TarifHorairePanel(AutoTab):
             for control in self.controls[i][1:]:
                 control.index -= 1
         self.sizer.FitInside(self)
-        history.Append([]) # TODO
+        history.Append(None)
     
     def onConditionChange(self, event):
         object = event.GetEventObject()
@@ -901,13 +901,13 @@ class TarifHorairePanel(AutoTab):
         else:
             object.SetBackgroundColour(wx.RED)
         object.Refresh()
-        history.Append([]) # TODO
+        history.Append(None)
         
     def onTauxChange(self, event):
         object = event.GetEventObject()
         creche.formule_taux_horaire[object.index][1] = float(object.GetValue())
         creche.update_formule_taux_horaire()
-        history.Append([]) # TODO
+        history.Append(None)
         
 class TauxEffortPanel(AutoTab):
     def __init__(self, parent):
@@ -965,7 +965,7 @@ class TauxEffortPanel(AutoTab):
             for control in self.controls[i][1:]:
                 control.index += 1
         self.sizer.FitInside(self)
-        history.Append([]) # TODO
+        history.Append(None)
     
     def onDel(self, event):
         index = event.GetEventObject().index
@@ -983,7 +983,7 @@ class TauxEffortPanel(AutoTab):
             for control in self.controls[i][1:]:
                 control.index -= 1
         self.sizer.FitInside(self)
-        history.Append([]) # TODO
+        history.Append(None)
     
     def onConditionChange(self, event):
         object = event.GetEventObject()
@@ -994,13 +994,13 @@ class TauxEffortPanel(AutoTab):
         else:
             object.SetBackgroundColour(wx.RED)
         object.Refresh()
-        history.Append([]) # TODO
+        history.Append(None)
         
     def onTauxChange(self, event):
         object = event.GetEventObject()
         creche.formule_taux_effort[object.index][1] = float(object.GetValue())
         creche.update_formule_taux_effort()
-        history.Append([]) # TODO    
+        history.Append(None)    
 
 profiles = [("Administrateur", PROFIL_ALL),
             ("Bureau", PROFIL_BUREAU),

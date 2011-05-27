@@ -33,7 +33,7 @@ except:
 # Don't remove these 2 lines (mandatory for py2exe)
 import controls, zipfile, xml.dom.minidom, wx.html, ooffice
 
-VERSION = '0.87f'
+VERSION = '0.87g'
 
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):
@@ -204,7 +204,7 @@ class GertrudeFrame(wx.Frame):
         if event.new_alertes:
             for alerte in event.new_alertes:
                 alerte.create()
-            history.append([])
+            history.append(None)
         if event.alertes_non_acquittees:
             texte = ""
             for alerte in event.alertes_non_acquittees:
@@ -216,7 +216,7 @@ class GertrudeFrame(wx.Frame):
             if result == wx.ID_YES:
                 for alerte in event.alertes_non_acquittees:
                     alerte.acquittement = True
-                history.append([])
+                history.append(None)
         
     def CheckForUpdates(self):
         try:

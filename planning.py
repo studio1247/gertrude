@@ -319,10 +319,10 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         line = self.lines[button.line]
         if not line.readonly:
             if event.Checked():
-                history.Append([])
+                history.Append(None)
                 line.insert_activity(None, None, button.activite.value)
             else:
-                history.Append([])
+                history.Append(None)
                 line.remove_activity(None, None, button.activite.value)
             line.Save()
             if line.insert is not None:
