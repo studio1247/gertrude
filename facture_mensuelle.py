@@ -92,10 +92,10 @@ class FactureModifications(object):
                                 text_node = cell.getElementsByTagName('text:p')[0]
                                 if date in facture.jours_presence_selon_contrat:
                                     state = PRESENT
-                                    details = " (%.2fh)" % facture.jours_presence_selon_contrat[date]
+                                    details = " (%s)" % GetHeureString(facture.jours_presence_selon_contrat[date])
                                 elif date in facture.jours_supplementaires:
                                     state = SUPPLEMENT
-                                    details = " (%.2fh)" % facture.jours_supplementaires[date]
+                                    details = " (%s)" % GetHeureString(facture.jours_supplementaires[date])
                                 elif date in facture.jours_maladie:
                                     state = MALADE
                                 elif date in facture.jours_vacances:

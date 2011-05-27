@@ -57,7 +57,7 @@ def GetHeureString(value):
     else:
         heures = int(value)
         minutes = (value - heures) * 60
-    return "%02dh%02d" % (heures, round(minutes))
+    return "%dh%02d" % (heures, round(minutes))
 
 def GetDateString(date, weekday=True):
     if date.day == 1:
