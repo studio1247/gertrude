@@ -427,6 +427,8 @@ class MonPetitBijouTests(GertrudeTestCase):
         self.AddJourneePresence(inscrit, datetime.date(2011, 4, 14), 90, 102) # 1h 
         facture = Facture(inscrit, 2011, 4)
         self.assertEquals(facture.total, 7.00)
+        self.assertEquals(facture.heures_facturees, 1.0)
+        self.assertEquals(facture.heures_realisees, 1.0)
         
 class VivreADomicileTests(GertrudeTestCase):
     def setUp(self):
