@@ -252,6 +252,7 @@ class PlanningGridWindow(BufferedWindow):
 
             self.GetParent().UpdateLine(self.curStartY)
             self.state = None
+            self.UpdateDrawing()
 
 class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, activity_combobox, options):

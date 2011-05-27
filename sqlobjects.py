@@ -952,7 +952,7 @@ class Inscription(SQLObject):
         
     def getReferenceDayCopy(self, date):
         reference = self.getReferenceDay(date)
-        result = Journee(self, date, reference)
+        result = Journee(self.inscrit, date, reference)
         result.reference = reference
         return result
         
