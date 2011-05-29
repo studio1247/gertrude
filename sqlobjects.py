@@ -127,11 +127,16 @@ class Day(object):
     
     def Confirm(self):
         self.last_heures = None
-        for start, end, value in self.activites.keys() + self.activites_sans_horaires.keys():
+        for start, end, value in self.activites.keys():
             if value & PREVISIONNEL and not value & CLOTURE:
                 self.remove_activity(start, end, value)
-                value &= ~PREVISIONNEL
+                value -= PREVISIONNEL
                 self.insert_activity(start, end, value)
+        for value in self.activites_sans_horaires.keys():
+            if value & PREVISIONNEL and not value & CLOTURE:
+                self.remove_activity(None, None, value)
+                value -= PREVISIONNEL
+                self.insert_activity(None, None, value)
     
     def Save(self):
         self.last_heures = None

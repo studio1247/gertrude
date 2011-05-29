@@ -142,7 +142,7 @@ class PlanningGridWindow(BufferedWindow):
                 rect = wx.Rect(1+(start-int(creche.affichage_min*(60 / BASE_GRANULARITY)))*COLUMN_WIDTH, 1+index*LINE_HEIGHT, (end-start)*COLUMN_WIDTH-1, LINE_HEIGHT-1)
                 dc.DrawRoundedRectangleRect(rect, 4)
         else:
-            dc.SetPen(wx.Pen(wx.BLACK))
+            dc.SetPen(wx.BLACK_PEN)
             dc.DrawText(line.info, 200, 7 + index * LINE_HEIGHT)
             
     def DrawNumbersLine(self, dc, index, line):
@@ -328,6 +328,8 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             if line.insert is not None:
                 line.insert[line.key] = line
                 line.insert = None
+            if self.GetParent().summary_panel:
+                self.GetParent().summary_panel.UpdateContents()
 
     def UpdateLine(self, index):
         options = self.GetParent().options
@@ -479,18 +481,19 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
 
 class PlanningSummaryPanel(BufferedWindow):
     def __init__(self, parent):
-        self.activities_count = len(creche.activites)
-        self.summary = {}
+        self.activities_count = len(creche.activites) - len(creche.GetActivitesSansHoraires())
+        self.activites = {}
+        self.activites_sans_horaires = {}
         BufferedWindow.__init__(self, parent, size=(-1, 2+20*self.activities_count))
 
     def UpdateContents(self):
-        if self.activities_count != len(creche.activites):
-            self.activities_count = len(creche.activites)
+        if self.activities_count != len(creche.activites) - len(creche.GetActivitesSansHoraires()):
+            self.activities_count = len(creche.activites) - len(creche.GetActivitesSansHoraires())
             self.SetMinSize((-1, 2+20*self.activities_count))
             self.GetParent().sizer.Layout()
             
         lines = self.GetParent().GetSummaryLines()
-        self.summary = GetActivitiesSummary(creche, lines)
+        self.activites, self.activites_sans_horaires = GetActivitiesSummary(creche, lines)
         self.UpdateDrawing()
 
     def Draw(self, dc):
@@ -503,14 +506,23 @@ class PlanningSummaryPanel(BufferedWindow):
         except:
             pass
         
-        for i, activity in enumerate(self.summary.keys()):
-            dc.DrawText(self.summary[activity].label, 5, 6 + i * 20)
+        for i, activity in enumerate(self.activites.keys()):
+            dc.DrawText(self.activites[activity].label, 5, 6 + i * 20)
             self.DrawLine(dc, i, activity)
-
+            
+        dc.SetPen(wx.BLACK_PEN)
+        dc.SetBrush(wx.WHITE_BRUSH)
+        for i, count in enumerate(self.activites_sans_horaires.values()):
+            x = 689+i*25
+            if not (self.GetParent().options & NO_ICONS):
+                x += ICONS_WIDTH
+            rect = wx.Rect(x, 2, 20, 19)
+            dc.DrawRoundedRectangleRect(rect, 4)
+            dc.DrawText(str(count), x + 4, 5)
         dc.EndDrawing()
 
     def DrawLine(self, dc, index, activity):
-        line = self.summary[activity]
+        line = self.activites[activity]
         r, g, b, t, s = getActivityColor(activity)
         try:
             dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
@@ -522,7 +534,7 @@ class PlanningSummaryPanel(BufferedWindow):
         pos = LABEL_WIDTH
         if not self.GetParent().options & NO_ICONS:
             pos += ICONS_WIDTH
-        
+
         debut = int(creche.affichage_min * (60 / BASE_GRANULARITY))
         fin = int(creche.affichage_max * (60 / BASE_GRANULARITY))
         x = debut

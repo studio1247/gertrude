@@ -342,17 +342,24 @@ class Summary(list):
         self.extend([0] * DAY_SIZE)
             
 def GetActivitiesSummary(creche, lines):
-    summary = {}
-    for activity in creche.activites:
-        summary[activity] = Summary(creche.activites[activity].label)
+    activites = {}
+    activites_sans_horaires = {}
+    for activite in creche.activites:
+        if creche.activites[activite].mode == MODE_SANS_HORAIRES:
+            activites_sans_horaires[activite] = 0
+        else:
+            activites[activite] = Summary(creche.activites[activite].label)
+        
     for line in lines:
         for start, end, value in line.activites:
             if value < PREVISIONNEL+CLOTURE:
                 value &= ~(PREVISIONNEL+CLOTURE)
                 if value in creche.activites:
                     for i in range(start, end):
-                        summary[value][i] += 1
-    return summary
+                        activites[value][i] += 1
+        for key in line.activites_sans_horaires:            
+            activites_sans_horaires[key] += 1
+    return activites, activites_sans_horaires
 
 def GetCrecheFields(creche):
     return [('nom-creche', creche.nom),
