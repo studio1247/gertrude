@@ -72,20 +72,11 @@ class AttestationModifications(object):
             
             if facture_debut is None:
                 continue
-            
+                
             # Les champs du recu
-            fields = [('nom-creche', creche.nom),
-                    ('adresse-creche', creche.adresse),
-                    ('code-postal-creche', str(creche.code_postal)),
-                    ('ville-creche', creche.ville),
-                    ('telephone-creche', creche.telephone),
-                    ('email-creche', creche.email),
+            fields = GetCrecheFields(creche) +  GetInscritFields(inscrit) + [
                     ('de-debut', '%s %d' % (GetDeMoisStr(facture_debut.month - 1), facture_debut.year)),
                     ('de-fin', '%s %d' % (GetDeMoisStr(facture_fin.month - 1), facture_fin.year)),
-                    ('prenom', inscrit.prenom),
-                    ('parents', GetParentsString(inscrit)),
-                    ('naissance', inscrit.naissance),
-                    ('nom', inscrit.nom),
                     ('tresorier', tresorier),
                     ('directeur', directeur),
                     ('date', '%.2d/%.2d/%d' % (today.day, today.month, today.year)),

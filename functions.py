@@ -382,6 +382,9 @@ def GetInscritFields(inscrit):
             ('nom', inscrit.nom),
             ('code-postal', str(inscrit.code_postal)),
             ('ville', inscrit.ville),
+            ('naissance', inscrit.naissance),
+            ('numero-securite-sociale', inscrit.numero_securite_sociale),
+            ('numero-allocataire-caf', inscrit.numero_allocataire_caf),
             ('parents', GetParentsString(inscrit))]
     
 def GetFactureFields(facture):
