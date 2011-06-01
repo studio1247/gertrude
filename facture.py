@@ -165,9 +165,9 @@ class FactureFinMois(object):
                     if cotisation.inscription.mode != MODE_FORFAIT_HORAIRE:
                         cotisation.heures_contractualisees += heures_reference
                         self.heures_contractualisees += heures_reference
-                        self.total_contractualise += heures_reference * cotisation.montant_heure_garde
                         if creche.mode_facturation == FACTURATION_HORAIRES_REELS or (creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date)):
                             self.heures_facturees_par_mode[cotisation.mode_garde] += heures_realisees
+                            self.total_contractualise += heures_reference * cotisation.montant_heure_garde
                         else:
                             self.heures_facturees_par_mode[cotisation.mode_garde] += heures_reference + heures_supplementaires                    
                     self.total_realise += heures_realisees * cotisation.montant_heure_garde

@@ -218,6 +218,9 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         self.assertEquals(float("%.2f" % cotisation.heures_semaine), 48.0)
         self.assertEquals(cotisation.heures_mois, 199.0)
         self.assertEquals(cotisation.nombre_factures, 11)
+        facture = Facture(inscrit, 2010, 9)
+        self.assertEquals(facture.total_contractualise, 248.75)
+        self.assertEquals(facture.total_facture, 248.75)
         
 class LoupandisesTests(GertrudeTestCase):
     def test_facture_periode_adaptation(self):
