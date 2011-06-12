@@ -130,8 +130,31 @@ class PlanningGridWindow(BufferedWindow):
     def DrawActivitiesLine(self, dc, index, line):
         if not isinstance(line, LigneConge):
             keys = line.activites.keys()
-            keys.sort(key=lambda key:key[-1])
-            for start, end, activity in keys:
+            for start, end, activity in keys[:]:
+                if activity == 0 and line.reference:
+                    keys.remove((start, end, activity))
+                    splitted = [(start, end, activity)]
+                    i = 0
+                    while i < len(splitted):
+                        start, end, activity = splitted[i]
+                        for s, e, v in line.reference.activites:
+                            if v == 0:
+                                a = max(s, start)
+                                b = min(e, end)
+                                if a < b:
+                                    splitted.pop(i)
+                                    keys.append((a, b, activity))
+                                    if start < a:
+                                        splitted.append((start, a, activity))
+                                    if end > b:
+                                        splitted.append((b, end, activity))
+                                    break
+                        else:
+                            i += 1
+                    for start, end, activity in splitted:
+                        keys.append((start, end, activity|SUPPLEMENT))                                
+            keys.sort(key=lambda key:key[-1]&(~SUPPLEMENT))
+            for start, end, activity in keys:                              
                 r, g, b, t, s = getActivityColor(activity)
                 try:
                     dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
@@ -212,6 +235,7 @@ class PlanningGridWindow(BufferedWindow):
             
             line_copy = Day()
             line_copy.Copy(line, False)
+            line_copy.reference = line.reference
             if self.state > 0:
                 line_copy.SetActivity(start, end, self.value)
             else:

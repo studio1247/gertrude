@@ -909,12 +909,37 @@ class Referent(SQLObject):
         if name in ['prenom', 'nom', 'telephone'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE REFERENTS SET %s=? WHERE idx=?' % name, (value, self.idx))
+
+class Groupe(SQLObject):
+    table = "GROUPES"
+    def __init__(self, creation=True):
+        self.idx = None
+        self.nom = ""
+        if creation:
+            self.create()
+        
+    def create(self):
+        print 'nouveau groupe'
+        result = sql_connection.execute('INSERT INTO GROUPES (idx, nom) VALUES(NULL,?)', (self.nom, ))
+        self.idx = result.lastrowid
+        
+    def delete(self):
+        SQLObject.delete(self)
+        for object in self.reference:
+            object.delete()
+
+    def __setattr__(self, name, value):
+        self.__dict__[name] = value
+        if name in ['nom'] and self.idx:
+            print 'update', name, value
+            sql_connection.execute('UPDATE GROUPES SET %s=? WHERE idx=?' % name, (value, self.idx))
     
 class Inscription(SQLObject):
     table = "INSCRIPTIONS"
     def __init__(self, inscrit, duree_reference=7, creation=True):
         self.idx = None
         self.inscrit = inscrit
+        self.groupe = None
         self.preinscription = False
         self.site = None
         self.sites_preinscription = []
@@ -1224,10 +1249,11 @@ class Inscrit(object):
                         duration = end - start
                         heures_realisees += tranche * duration
                         for s, e, v in reference.activites:
-                            a = max(s, start)
-                            b = min(e, end)
-                            if a < b:
-                                duration -= b-a
+                            if v == 0:
+                                a = max(s, start)
+                                b = min(e, end)
+                                if a < b:
+                                    duration -= b-a
                         heures_supplementaires += tranche * duration 
                 return PRESENT, heures_reference, heures_realisees, heures_supplementaires
         else:

@@ -25,7 +25,7 @@ from sqlobjects import *
 from facture import FactureCloturee
 import wx
 
-VERSION = 53
+VERSION = 54
 
 def getdate(s):
     if s is None:
@@ -238,6 +238,7 @@ class SQLConnection(object):
             idx INTEGER PRIMARY KEY,
             inscrit INTEGER REFERENCES INSCRITS(idx),
             preinscription BOOLEAN,
+            groupe INTEGER REFERENCES GROUPES(idx),
             forfait_mensuel FLOAT,
             site INTEGER REFERENCES SITES(idx),
             sites_preinscription VARCHAR,
@@ -342,6 +343,12 @@ class SQLConnection(object):
             supplement FLOAT,
             deduction FLOAT
           );""")
+        
+        cur.execute("""
+          CREATE TABLE GROUPES (
+            idx INTEGER PRIMARY KEY,
+            nom VARCHAR
+          );""")        
 
         for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", u"15 août", "1er novembre", "11 novembre", u"25 décembre", u"Lundi de Pâques", "Jeudi de l'Ascension"):
             cur.execute("INSERT INTO CONGES (idx, debut) VALUES (NULL, ?)", (label, ))
@@ -1086,7 +1093,15 @@ class SQLConnection(object):
         if version < 53:
             cur.execute("ALTER TABLE CRECHE ADD cloture_factures BOOLEAN")
             cur.execute('UPDATE CRECHE SET cloture_factures=?', (False,))
-            
+
+        if version < 54:
+            cur.execute("""
+              CREATE TABLE GROUPES (
+                idx INTEGER PRIMARY KEY,
+                nom VARCHAR
+              );""")        
+            cur.execute("ALTER TABLE INSCRIPTIONS ADD groupe INTEGER REFERENCES GROUPES(idx)")            
+                        
         if version < VERSION:
             try:
                 cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))
