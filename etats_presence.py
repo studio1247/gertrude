@@ -73,15 +73,17 @@ class EtatsPresenceModifications(object):
         for date in dates:
             for site, professeur, inscrit, heure_arrivee, heure_depart, heures in self.selection[date]:
                 ligne = template.cloneNode(1)
-                ReplaceFields(ligne, [('date', date),
-                                      ('heure-arrivee', GetHeureString(heure_arrivee)),
-                                      ('heure-depart', GetHeureString(heure_depart)),
-                                      ('prenom', GetPrenom(inscrit)),
-                                      ('nom', GetNom(inscrit)),
-                                      ('site', GetNom(site)),
-                                      ('professeur-prenom', GetPrenom(professeur)),
-                                      ('professeur-nom', GetNom(professeur)),
-                                      ('heures', GetHeureString(heures))])
+                fields = GetInscritFields(inscrit)
+                fields.extend([('date', date),
+                               ('debut-contrat', inscrit.GetInscription(date).debut),
+                               ('fin-contrat', inscrit.GetInscription(date).fin),
+                               ('heure-arrivee', GetHeureString(heure_arrivee)),
+                               ('heure-depart', GetHeureString(heure_depart)),
+                               ('site', GetNom(site)),
+                               ('professeur-prenom', GetPrenom(professeur)),
+                               ('professeur-nom', GetNom(professeur)),
+                               ('heures', GetHeureString(heures))])
+                ReplaceFields(ligne, fields)
                 table.insertBefore(ligne, template)
 
         table.removeChild(template)

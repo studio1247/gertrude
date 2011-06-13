@@ -59,6 +59,23 @@ def GetHeureString(value):
         minutes = (value - heures) * 60
     return "%dh%02d" % (heures, round(minutes))
 
+def GetAgeString(naissance):
+    if naissance:
+        age = today.year * 12 + today.month - naissance.year * 12 - naissance.month
+        if today.day < naissance.day:
+            age -= 1
+        annees, mois = age / 12, age % 12
+        if annees < 0:
+            return ""   
+        elif annees and mois:
+            return "%d ans et %d mois" % (annees, mois)
+        elif annees:
+            return "%d ans" % annees
+        else:
+            return "%d mois" % mois
+    else:
+        return ""
+
 def GetDateString(date, weekday=True):
     if date.day == 1:
         date_str = "1er %s %d" % (months[date.month-1].lower(), date.year)
@@ -393,9 +410,11 @@ def GetInscritFields(inscrit):
             ('code-postal', str(inscrit.code_postal)),
             ('ville', inscrit.ville),
             ('naissance', inscrit.naissance),
+            ('age', GetAgeString(inscrit.naissance)),
             ('numero-securite-sociale', inscrit.numero_securite_sociale),
             ('numero-allocataire-caf', inscrit.numero_allocataire_caf),
-            ('parents', GetParentsString(inscrit))]
+            ('parents', GetParentsString(inscrit))
+            ]
     
 def GetFactureFields(facture):
     if facture:

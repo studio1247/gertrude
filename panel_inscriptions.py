@@ -261,21 +261,7 @@ class IdentitePanel(InscriptionsTab):
 
     def EvtChangementDateNaissance(self, event):
         date_naissance = self.date_naissance_ctrl.GetValue()
-        if date_naissance:
-            age = today.year * 12 + today.month - date_naissance.year * 12 - date_naissance.month
-            if today.day < date_naissance.day:
-                age -= 1
-            annees, mois = age / 12, age % 12
-            if annees < 0:
-                self.age_ctrl.SetValue("")   
-            elif annees and mois:
-                self.age_ctrl.SetValue("%d ans et %d mois" % (annees, mois))
-            elif annees:
-                self.age_ctrl.SetValue("%d ans" % annees)
-            else:
-                self.age_ctrl.SetValue("%d mois" % mois)
-        else:
-            self.age_ctrl.SetValue("")
+        self.age_ctrl.SetValue(GetAgeString(date_naissance))
 
     def EvtChangementCodePostal(self, event):
         code_postal = self.code_postal_ctrl.GetValue()
