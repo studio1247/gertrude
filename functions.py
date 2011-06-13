@@ -69,6 +69,14 @@ def GetDateString(date, weekday=True):
     else:
         return date_str
     
+def GetDureeArrondie(start, end):
+    if creche.arrondi_heures == ARRONDI_HEURE_ARRIVEE_DEPART:
+        return (((end + 11) / 12) - (start / 12)) * 12  
+    elif creche.arrondi_heures == ARRONDI_HEURE:
+        return ((end-start+11) / 12) * 12
+    else:
+        return end - start
+    
 def IsPresentDuringTranche(journee, debut, fin):
     for start, end, value in journee.activites:
         if start < fin and end > debut and (not value & PREVISIONNEL or not value & CLOTURE):
@@ -396,6 +404,9 @@ def GetFactureFields(facture):
                 ('numfact', '%03d%04d%02d' % (facture.inscrit.idx, facture.annee, facture.mois)),
                 ('montant-heure-garde', facture.montant_heure_garde, FIELD_EUROS),
                 ('cotisation-mensuelle', facture.cotisation_mensuelle, FIELD_EUROS),
+                ('heures-contractualisees', '%.2f' % facture.heures_contractualisees),
+                ('heures-realisees', '%.2f' % facture.heures_realisees),
+                ('heures-contractualisees-realisees', '%.2f' % facture.heures_realisees-facture.heures_supplementaires),
                 ('heures-supplementaires', '%.2f' % facture.heures_supplementaires),
                 ('supplement', facture.supplement, FIELD_EUROS),
                 ('deduction', '- %.2f' % facture.deduction),
@@ -404,20 +415,9 @@ def GetFactureFields(facture):
                 ('majoration', '+ %.2f' % facture.majoration_mensuelle),
                 ('total', facture.total, FIELD_EUROS)]
     else:
-        return [('mois', '?'),
-                ('de-mois', '?'),
-                ('de-mois-recap', '?'),
-                ('date', '?'),
-                ('numfact', '?'),
-                ('montant-heure-garde', '?'),
-                ('cotisation-mensuelle', '?'),
-                ('heures-supplementaires', '?'),
-                ('supplement', '?'),
-                ('deduction', '?'),
-                ('raison-deduction', '?'),
-                ('supplement-activites', '?'),
-                ('majoration', '?'),
-                ('total', '?')]
+        return [(label, '?') for label in [('mois', 'de-mois', 'de-mois-recap', 'date', 'numfact', 'montant-heure-garde', 'cotisation-mensuelle', 
+                                           'heures-contractualisees', 'heures-realisees', 'heures-contractualisees-realisees', 'heures-supplementaires',
+                                           'supplement', 'deduction', 'raison-deduction', 'supplement-activites', 'majoration', 'total')]]
     
 class ProgressHandler:
     def __init__(self, display_fn=None, gauge_fn=None, min=None, max=None):

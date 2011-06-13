@@ -165,7 +165,7 @@ class FactureFinMois(object):
                     if cotisation.inscription.mode != MODE_FORFAIT_HORAIRE:
                         cotisation.heures_contractualisees += heures_reference
                         self.heures_contractualisees += heures_reference
-                        if creche.mode_facturation == FACTURATION_HORAIRES_REELS or (creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date)):
+                        if creche.mode_facturation == FACTURATION_HORAIRES_REELS or (creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date)) or (creche.mode_facturation == FACTURATION_PSU and cotisation.mode_garde == MODE_HALTE_GARDERIE):
                             self.heures_facturees_par_mode[cotisation.mode_garde] += heures_realisees
                             self.total_contractualise += heures_reference * cotisation.montant_heure_garde
                         else:
@@ -200,6 +200,12 @@ class FactureFinMois(object):
             elif creche.mode_facturation == FACTURATION_HORAIRES_REELS:
                 self.cotisation_mensuelle += cotisation.heures_contractualisees * cotisation.montant_heure_garde
                 self.report_cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_contractualisees) * cotisation.montant_heure_garde
+            elif creche.mode_facturation == FACTURATION_PSU and cotisation.mode_garde == MODE_HALTE_GARDERIE and self.heures_contractualisees:
+                if cotisation.heures_realisees > cotisation.heures_reference:
+                    # On ne met dans la cotisation mensuelle que les heures realisees des heures du contrat
+                    self.cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_reference) * cotisation.montant_heure_garde
+                else:
+                    self.cotisation_mensuelle += cotisation.heures_realisees * cotisation.montant_heure_garde
             elif self.heures_contractualisees:
                 prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees   
                 self.cotisation_mensuelle += prorata 
