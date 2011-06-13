@@ -86,9 +86,15 @@ ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION = 3
 
 # Options des conges
 ACCUEIL_NON_FACTURE = 1 #  jours de nettoyage par exemple
-MOIS_SANS_FACTURE = 2 # si présence dans cette periode (mois d'août par exemple), elle est répartie sur les autres mois de l'année 
+MOIS_SANS_FACTURE = 2 # si présence dans cette periode (mois d'août par exemple), elle est répartie sur les autres mois de l'année
+
+# Modes d'arrondi des heures de presence
+SANS_ARRONDI = 0
+ARRONDI_HEURE = 1
+ARRONDI_HEURE_ARRIVEE_DEPART = 2
 
 # Valeurs de présence
+HOPITAL = -3
 MALADE = -2
 VACANCES = -1
 ABSENT = 0

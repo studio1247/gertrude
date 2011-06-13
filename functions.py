@@ -332,6 +332,8 @@ def GetLines(date, inscrits, presence=False):
 
 def getActivityColor(value):
     if value < 0:
+        if value == HOPITAL:
+            value = MALADE
         return creche.couleurs[value].couleur
     activity = value & ~(PREVISIONNEL|SUPPLEMENT|CLOTURE)
     if activity in creche.activites:
@@ -406,7 +408,7 @@ def GetFactureFields(facture):
                 ('cotisation-mensuelle', facture.cotisation_mensuelle, FIELD_EUROS),
                 ('heures-contractualisees', '%.2f' % facture.heures_contractualisees),
                 ('heures-realisees', '%.2f' % facture.heures_realisees),
-                ('heures-contractualisees-realisees', '%.2f' % facture.heures_realisees-facture.heures_supplementaires),
+                ('heures-contractualisees-realisees', '%.2f' % (facture.heures_realisees-facture.heures_supplementaires)),
                 ('heures-supplementaires', '%.2f' % facture.heures_supplementaires),
                 ('supplement', facture.supplement, FIELD_EUROS),
                 ('deduction', '- %.2f' % facture.deduction),

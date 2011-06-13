@@ -43,7 +43,7 @@ class FactureFinMois(object):
         self.jours_maladie = []
         self.jours_maladie_deduits = []
         self.jours_vacances = []
-        self.raison_deduction = ""
+        self.raison_deduction = []
         self.supplement_activites = 0.0
         self.previsionnel = False
         self.cloture = False
@@ -93,7 +93,18 @@ class FactureFinMois(object):
                     else:
                         heures_hebdomadaires[(cotisation.mode_inscription, cotisation.heures_semaine)] = 1
 
-                    if state == MALADE:
+                    if state == HOPITAL:
+                        if heures_reference > 0:
+                            self.jours_maladie.append(date)
+                        self.jours_maladie_deduits.append(date)
+                        cotisation.nombre_jours_maladie_deduits += 1
+                        cotisation.heures_maladie += heures_reference
+                        if creche.mode_facturation == FACTURATION_FORFAIT_10H:
+                            self.deduction += 10 * cotisation.montant_heure_garde
+                        elif inscription.mode != MODE_FORFAIT_HORAIRE:
+                            self.deduction += cotisation.montant_heure_garde * heures_reference                                
+                        self.raison_deduction.append('hospitalisation')
+                    elif state == MALADE:
                         if heures_reference > 0:
                             self.jours_maladie.append(date)
                         if creche.mode_facturation != FACTURATION_HORAIRES_REELS or inscription.mode == MODE_FORFAIT_HORAIRE:
@@ -132,7 +143,7 @@ class FactureFinMois(object):
                                     self.deduction += 10 * cotisation.montant_heure_garde
                                 elif inscription.mode != MODE_FORFAIT_HORAIRE:
                                     self.deduction += cotisation.montant_heure_garde * heures_reference                                
-                                self.raison_deduction = u'(maladie > %dj consécutifs)' % creche.minimum_maladie
+                                self.raison_deduction.append('maladie > %dj consécutifs' % creche.minimum_maladie)
                     elif state == VACANCES:
                         if heures_reference > 0:
                             self.jours_vacances.append(date)
@@ -222,6 +233,10 @@ class FactureFinMois(object):
         self.supplement = round(self.supplement, 2)
         self.supplement_activites = round(self.supplement_activites, 2)
         self.deduction = round(self.deduction, 2)
+        if self.raison_deduction:
+            self.raison_deduction = "(" + ", ".join(self.raison_deduction) + ")"
+        else:
+            self.raison_deduction = "" 
         self.total_contractualise = round(self.total_contractualise, 2)
         self.total_realise = round(self.total_realise, 2)
         

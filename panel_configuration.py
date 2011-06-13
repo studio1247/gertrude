@@ -733,6 +733,7 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, u"Clôture des factures :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'cloture_factures', [(u'Activée', True), (u'Désactivée', False)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u"Mode de facturation des périodes d'adaptation :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'facturation_periode_adaptation', modes_facturation_adaptation), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Facturation des jours fériés :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'facturation_jours_feries', [(u'Pas de déduction', JOURS_FERIES_NON_DEDUITS), (u"Déduits, répartis sur l'année", JOURS_FERIES_DEDUITS_ANNUELLEMENT)]), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u"Mode d'arrondi des horaires :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'arrondi_heures', [(u"Pas d'arrondi", SANS_ARRONDI), (u"Arrondi à l'heure", ARRONDI_HEURE), (u"Arrondi des heures d'arrivée et de départ", ARRONDI_HEURE_ARRIVEE_DEPART)]), 0, wx.EXPAND)])
         # TODO n'afficher que si PSU/PAJE est choisi
         sizer.AddMany([(wx.StaticText(self, -1, u"Gestion de périodes de congés à l'inscription :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'conges_inscription', [('Non', 0), ('Oui', 1)]), 0, wx.EXPAND)])
         # TODO n'afficher que si PSU/PAJE est choisi
@@ -740,6 +741,7 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, u'Majoration mensuelle enfants hors commune :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'majoration_localite', precision=2), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Traitement des absences pour maladie :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'traitement_maladie', [(u"Avec carence en jours ouvrés", DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_OUVRES), (u"Avec carence en jours calendaires", DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES), ("Sans carence", DEDUCTION_MALADIE_SANS_CARENCE)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u"Durée de la carence :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'minimum_maladie', min=0, precision=0), 0, 0)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Traitement des absences pour hospitalisation :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'gestion_maladie_hospitalisation', [(u"Géré", True), (u"Non géré", False)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u"Gestion d'alertes :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'gestion_alertes', [(u'Activée', True), (u'Désactivée', False)]), 0, wx.EXPAND)])
 
         self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 5)

@@ -185,15 +185,15 @@ class Day(object):
         return state
         
     def GetNombreHeures(self):
-        if self.last_heures is not None:
-            return self.last_heures
+#        if self.last_heures is not None:
+#            return self.last_heures
         self.last_heures = 0.0
         for start, end, value in self.activites:
             if value < 0:
                 self.last_heures = 0.0
                 return self.last_heures
             elif value == 0:
-                self.last_heures += 5.0 * (end - start)
+                self.last_heures += 5.0 * GetDureeArrondie(start, end)
         if creche.mode_facturation == FACTURATION_FORFAIT_10H:
             self.last_heures = 10.0 * (self.last_heures > 0)
         else:
@@ -636,6 +636,8 @@ class Creche(object):
         self.conversion_formule_taux_effort = None
         self.gestion_alertes = False
         self.cloture_factures = False
+        self.arrondi_heures = SANS_ARRONDI
+        self.gestion_maladie_hospitalisation = False
         self.alertes = {}
         self.calcule_jours_conges()
 
@@ -809,7 +811,7 @@ class Creche(object):
         
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'majoration_localite', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'cloture_factures'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'majoration_localite', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'cloture_factures', 'arrondi_heures', 'gestion_maladie_hospitalisation'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
@@ -1232,8 +1234,8 @@ class Inscrit(object):
         if date in self.journees:
             journee = self.journees[date]
             state = journee.get_state()
-            if state == MALADE:
-                return MALADE, heures_reference, 0, 0
+            if state == MALADE or state == HOPITAL:
+                return state, heures_reference, 0, 0
             elif state in (ABSENT, VACANCES):
                 if inscription.mode == MODE_5_5 or ref_state:
                     return VACANCES, heures_reference, 0, 0
@@ -1246,14 +1248,14 @@ class Inscrit(object):
                 
                 for start, end, value in journee.activites:
                     if value == 0:
-                        duration = end - start
+                        duration = GetDureeArrondie(start, end)
                         heures_realisees += tranche * duration
                         for s, e, v in reference.activites:
                             if v == 0:
                                 a = max(s, start)
                                 b = min(e, end)
                                 if a < b:
-                                    duration -= b-a
+                                    duration -= GetDureeArrondie(a, b)
                         heures_supplementaires += tranche * duration 
                 return PRESENT, heures_reference, heures_realisees, heures_supplementaires
         else:
