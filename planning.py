@@ -271,6 +271,10 @@ class PlanningGridWindow(BufferedWindow):
                 line.SetActivity(start, end, self.value)
             else:
                 line.ClearActivity(start, end, self.value)
+                
+            if not (self.GetParent().GetParent().options & PRESENCES_ONLY) and len(line.activites) == 0 and len(line.reference.activites) > 0:
+                line.set_state(VACANCES)
+                
             if line.insert is not None:
                 line.insert[line.key] = line
                 line.insert = None
