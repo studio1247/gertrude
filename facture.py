@@ -212,11 +212,8 @@ class FactureFinMois(object):
                 self.cotisation_mensuelle += cotisation.heures_contractualisees * cotisation.montant_heure_garde
                 self.report_cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_contractualisees) * cotisation.montant_heure_garde
             elif creche.mode_facturation == FACTURATION_PSU and cotisation.mode_garde == MODE_HALTE_GARDERIE and self.heures_contractualisees:
-                if cotisation.heures_realisees > cotisation.heures_reference:
-                    # On ne met dans la cotisation mensuelle que les heures realisees des heures du contrat
-                    self.cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_reference) * cotisation.montant_heure_garde
-                else:
-                    self.cotisation_mensuelle += cotisation.heures_realisees * cotisation.montant_heure_garde
+                # On ne met dans la cotisation mensuelle que les heures realisees des heures du contrat
+                self.cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_supplementaires) * cotisation.montant_heure_garde
             elif self.heures_contractualisees:
                 prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees   
                 self.cotisation_mensuelle += prorata 
