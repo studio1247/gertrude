@@ -33,6 +33,7 @@ class FactureFinMois(object):
         self.heures_facturees_par_mode = [0.0] * 33
         self.heures_contractualisees = 0.0
         self.heures_realisees = 0.0
+        self.heures_previsionnelles = 0.0
         self.total_contractualise = 0.0
         self.total_realise = 0.0
         self.supplement = 0.0
@@ -266,6 +267,8 @@ class FactureFinMois(object):
 class FactureDebutMois(FactureFinMois):
     def __init__(self, inscrit, annee, mois, options=0):
         FactureFinMois.__init__(self, inscrit, annee, mois, options)
+        self.heures_previsionnelles = self.heures_realisees
+        
         if mois == 1:
             self.facture_precedente = FactureFinMois(inscrit, annee-1, 12, options)
         else:
@@ -294,7 +297,7 @@ class FactureDebutMoisContrat(FactureDebutMois):
 class FactureDebutMoisPrevisionnel(FactureDebutMois):
     def __init__(self, inscrit, annee, mois, options=0):
         FactureDebutMois.__init__(self, inscrit, annee, mois, options)
-
+        
         if today > self.fin_recap:
             if inscrit.GetInscriptions(self.facture_precedente.debut_recap, self.facture_precedente.fin_recap):
                 if self.facture_precedente.fin_recap not in inscrit.factures_cloturees:

@@ -429,6 +429,7 @@ def GetFactureFields(facture):
                 ('heures-realisees', '%.2f' % facture.heures_realisees),
                 ('heures-contractualisees-realisees', '%.2f' % (facture.heures_realisees-facture.heures_supplementaires)),
                 ('heures-supplementaires', '%.2f' % facture.heures_supplementaires),
+                ('heures-previsionnelles', GetHeureString(facture.heures_previsionnelles)),
                 ('supplement', facture.supplement, FIELD_EUROS),
                 ('deduction', '- %.2f' % facture.deduction),
                 ('raison-deduction', facture.raison_deduction),
@@ -437,7 +438,7 @@ def GetFactureFields(facture):
                 ('total', facture.total, FIELD_EUROS)]
     else:
         return [(label, '?') for label in [('mois', 'de-mois', 'de-mois-recap', 'date', 'numfact', 'montant-heure-garde', 'cotisation-mensuelle', 
-                                           'heures-contractualisees', 'heures-realisees', 'heures-contractualisees-realisees', 'heures-supplementaires',
+                                           'heures-contractualisees', 'heures-realisees', 'heures-contractualisees-realisees', 'heures-supplementaires', 'heures-previsionnelles', 
                                            'supplement', 'deduction', 'raison-deduction', 'supplement-activites', 'majoration', 'total')]]
     
 class ProgressHandler:
