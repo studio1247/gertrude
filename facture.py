@@ -339,7 +339,7 @@ class FactureCloturee:
         self.total_contractualise = total_contractualise
         self.total_realise = total_realise
         self.total_facture = total_facture
-        self.supplement_activites = total_realise
+        self.supplement_activites = supplement_activites
         self.supplement = supplement
         self.deduction = deduction
         self.facture = None
@@ -357,6 +357,7 @@ class FactureCloturee:
             self.facture.supplement_activites = self.supplement_activites
             self.facture.supplement = self.supplement
             self.facture.deduction = self.deduction
+            self.facture.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction
         return self.facture
             
 def Facture(inscrit, annee, mois, options=0):
