@@ -32,7 +32,7 @@ from planning_detaille import PlanningDetailleModifications
 from etats_presence import EtatsPresenceModifications
 from rapport_frequentation import RapportFrequentationModifications
 from synthese_financiere import SyntheseFinanciereModifications
-from facture import FactureFinMois
+from facture import Facture
 from planning import *
 from sqlobjects import Day
 
@@ -511,9 +511,9 @@ class StatistiquesFrequentationTab(AutoTab):
             for inscrit in creche.inscrits:
                 try:
                     if inscrit.GetInscriptions(debut, fin):
-                        facture = FactureFinMois(inscrit, annee, mois+1)
+                        facture = Facture(inscrit, annee, mois+1)
                         heures_contractualisees += facture.heures_contractualisees
-                        heures_realisees += facture.heures_realisees                       
+                        heures_realisees += facture.heures_realisees
                         heures_facturees += facture.heures_facturees
                         cotisations_contractualisees += facture.total_contractualise
                         cotisations_realisees += facture.total_realise
