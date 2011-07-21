@@ -61,6 +61,34 @@ class DayPlanningPanel(PlanningWidget):
                 if date in inscrit.factures_cloturees:
                     line.readonly = True
                 lines.append(line)
+        if creche.tri_planning == TRI_GROUPE:
+            groupes = {}
+            for line in lines:
+                groupe = line.inscription.groupe
+                if groupe not in groupes:
+                    groupes[groupe] = []
+                groupes[groupe].append(line)
+            
+            keys = groupes.keys()
+            
+            def tri(one, two):
+                if one is None:
+                    return -1
+                elif two is None:
+                    return 1
+                else:
+                    return cmp(one.ordre, two.ordre)
+
+            keys.sort(tri)
+            lines = []
+            for key in keys:
+                groupes[key].sort(key=lambda line: line.label)
+                if key:
+                    groupes[key].insert(0, key.nom)                   
+                lines.extend(groupes[key])
+        else:
+            lines.sort(key=lambda line: line.label)    
+                 
         self.SetLines(lines)
 
     def SetData(self, site, date):

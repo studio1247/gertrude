@@ -51,6 +51,7 @@ class CrecheTab(AutoTab):
 
         AutoTab.__init__(self, parent)
         observers['sites'] = 0
+        observers['groupes'] = 0
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         sizer2 = wx.FlexGridSizer(0, 2, 5, 5)
         sizer2.AddGrowableCol(1, 1)
@@ -66,26 +67,41 @@ class CrecheTab(AutoTab):
         sizer2.AddMany([wx.StaticText(self, -1, u'Capacité :'), (AutoNumericCtrl(self, creche, 'capacite', precision=0), 0, wx.EXPAND)])
         self.sizer.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
         
-        self.sites_box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, "Multi-sites"), wx.VERTICAL)
+        self.sites_box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, "Sites"), wx.VERTICAL)
         self.sites_sizer = wx.BoxSizer(wx.VERTICAL)
         for i, site in enumerate(creche.sites):
-            self.line_add(i)
+            self.line_site_add(i)
         self.sites_box_sizer.Add(self.sites_sizer, 0, wx.EXPAND|wx.ALL, 5)
         button_add = wx.Button(self, -1, u'Nouveau site')
         self.sites_box_sizer.Add(button_add, 0, wx.ALL, 5)
-        self.Bind(wx.EVT_BUTTON, self.add, button_add)
+        self.Bind(wx.EVT_BUTTON, self.add_site, button_add)
         self.sizer.Add(self.sites_box_sizer, 0, wx.EXPAND|wx.ALL, 5)
+        
+        self.groupes_box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, "Groupes"), wx.VERTICAL)
+        self.groupes_sizer = wx.BoxSizer(wx.VERTICAL)
+        for i, groupe in enumerate(creche.groupes):
+            self.line_groupe_add(i)
+        self.groupes_box_sizer.Add(self.groupes_sizer, 0, wx.EXPAND|wx.ALL, 5)
+        button_add = wx.Button(self, -1, u'Nouveau groupe')
+        self.groupes_box_sizer.Add(button_add, 0, wx.ALL, 5)
+        self.Bind(wx.EVT_BUTTON, self.add_groupe, button_add)
+        self.sizer.Add(self.groupes_box_sizer, 0, wx.EXPAND|wx.ALL, 5)
+        
         self.SetSizer(self.sizer)
 
     def UpdateContents(self):
         for i in range(len(self.sites_sizer.GetChildren()), len(creche.sites)):
-            self.line_add(i)
+            self.line_site_add(i)
         for i in range(len(creche.sites), len(self.sites_sizer.GetChildren())):
-            self.line_del()
+            self.line_site_del()
+        for i in range(len(self.groupes_sizer.GetChildren()), len(creche.groupes)):
+            self.line_groupe_add(i)
+        for i in range(len(creche.groupes), len(self.groupes_sizer.GetChildren())):
+            self.line_groupe_del()
         self.sizer.Layout()
         AutoTab.UpdateContents(self)
 
-    def line_add(self, index):
+    def line_site_add(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, 'sites[%d].nom' % index, observers=['sites']), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, 'Adresse :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, 'sites[%d].adresse' % index), 1, wx.EXPAND)])
@@ -96,29 +112,65 @@ class CrecheTab(AutoTab):
         delbutton = wx.BitmapButton(self, -1, delbmp)
         delbutton.index = index
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
-        self.Bind(wx.EVT_BUTTON, self.remove, delbutton)
+        self.Bind(wx.EVT_BUTTON, self.remove_site, delbutton)
         self.sites_sizer.Add(sizer, 0, wx.EXPAND|wx.BOTTOM, 5)
 
-    def line_del(self):
+    def line_site_del(self):
         index = len(self.sites_sizer.GetChildren()) - 1
         sizer = self.sites_sizer.GetItem(index)
         sizer.DeleteWindows()
         self.sites_sizer.Detach(index)
 
-    def add(self, event):
+    def add_site(self, event):
         observers['sites'] = time.time()
         history.Append(Delete(creche.sites, -1))
         creche.sites.append(Site())
-        self.line_add(len(creche.sites) - 1)
+        self.line_site_add(len(creche.sites) - 1)
         self.sizer.Layout()
 
-    def remove(self, event):
+    def remove_site(self, event):
         observers['sites'] = time.time()
         index = event.GetEventObject().index
         history.Append(Insert(creche.sites, index, creche.sites[index]))
-        self.line_del()
+        self.line_site_del()
         creche.sites[index].delete()
         del creche.sites[index]
+        self.sizer.FitInside(self)
+        self.UpdateContents()
+
+    def line_groupe_add(self, index):
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, 'groupes[%d].nom' % index, observers=['groupes']), 1, wx.EXPAND), (AutoNumericCtrl(self, creche, 'groupes[%d].ordre' % index, observers=['groupes'], precision=0), 0, wx.EXPAND)])
+        delbutton = wx.BitmapButton(self, -1, delbmp)
+        delbutton.index = index
+        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
+        self.Bind(wx.EVT_BUTTON, self.remove_groupe, delbutton)
+        self.groupes_sizer.Add(sizer, 0, wx.EXPAND|wx.BOTTOM, 5)
+
+    def line_groupe_del(self):
+        index = len(self.groupes_sizer.GetChildren()) - 1
+        sizer = self.groupes_sizer.GetItem(index)
+        sizer.DeleteWindows()
+        self.groupes_sizer.Detach(index)
+
+    def add_groupe(self, event):
+        observers['groupes'] = time.time()
+        history.Append(Delete(creche.groupes, -1))
+        if len(creche.groupes) == 0:
+            ordre = 0
+        else:
+            ordre = creche.groupes[-1].ordre + 1
+        creche.groupes.append(Groupe(ordre))
+        self.line_groupe_add(len(creche.groupes) - 1)
+        self.sizer.Layout()
+
+    def remove_groupe(self, event):
+        observers['groupes'] = time.time()
+        index = event.GetEventObject().index
+        history.Append(Insert(creche.groupes, index, creche.groupes[index]))
+        self.line_groupe_del()
+        creche.groupes[index].delete()
+        del creche.groupes[index]
         self.sizer.FitInside(self)
         self.UpdateContents()
         
@@ -722,6 +774,7 @@ class ParametersPanel(AutoTab):
         sizer2.AddMany([(self.affichage_min_cb, 0, wx.EXPAND), (self.affichage_min_cb.spin, 0, wx.EXPAND), (wx.StaticText(self, -1, '-'), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10), (self.affichage_max_cb, 0, wx.EXPAND), (self.affichage_max_cb.spin, 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Heures affichées sur le planning :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (sizer2, 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Granularité du planning :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'granularite', [('10min', 10), ('1/4 heure', 15), ('1/2 heure', 30), ('1 heure', 60)]), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u"Ordre d'affichage sur le planning :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'tri_planning', [(u'Par prénom', TRI_PRENOM), ('Par nom', TRI_NOM), ('Par groupe', TRI_GROUPE)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Préinscriptions :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'preinscriptions', [(u'Géré', True), (u'Non géré', False)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Présences prévisionnelles :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'presences_previsionnelles', [(u'Géré', True), (u'Non géré', False)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Présences supplémentaires :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'presences_supplementaires', [(u'Géré', True), (u'Non géré', False)]), 0, wx.EXPAND)])

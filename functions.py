@@ -145,10 +145,13 @@ def GetPrenom(person):
 def GetPrenomNom(person, maj_nom=False):
     if not person:
         return ""
-    elif maj_nom:
-        return "%s %s" % (person.prenom, person.nom.upper())
+    nom = person.nom
+    if maj_nom:
+        nom = nom.upper()
+    if creche.tri_planning == TRI_NOM:
+        return "%s %s" % (nom, person.prenom)
     else:
-        return "%s %s" % (person.prenom, person.nom)
+        return "%s %s" % (person.prenom, nom)
     
 def GetEnfantsCount(inscrit, date):
     enfants_a_charge = 1

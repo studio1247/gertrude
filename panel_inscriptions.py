@@ -502,14 +502,21 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         sizer.Add(ligne_sizer, 0, wx.TOP, 5)
         sizer1 = wx.FlexGridSizer(0, 2, 5, 10)
         sizer1.AddGrowableCol(1, 1)
+        
         self.sites_items = wx.StaticText(self, -1, u"Site :"), AutoChoiceCtrl(self, None, 'site'), wx.StaticText(self, -1, u"Sites de préinscription :"), wx.CheckListBox(self, -1)
         self.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckPreinscriptionSite, self.sites_items[3])
         self.UpdateSiteItems()
         sizer1.AddMany([(self.sites_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.sites_items[1], 0, wx.EXPAND)])
         sizer1.AddMany([(self.sites_items[2], 0, wx.ALIGN_CENTER_VERTICAL), (self.sites_items[3], 0, wx.EXPAND)])
+        
+        self.groupe_items = wx.StaticText(self, -1, u"Groupe :"), AutoChoiceCtrl(self, None, 'groupe')
+        self.UpdateGroupeItems()
+        sizer1.AddMany([(self.groupe_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.groupe_items[1], 0, wx.EXPAND)])
+        
         self.professeur_items = wx.StaticText(self, -1, u"Professeur :"), AutoChoiceCtrl(self, None, 'professeur')
         self.UpdateProfesseurItems()
         sizer1.AddMany([(self.professeur_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.professeur_items[1], 0, wx.EXPAND)])
+        
         self.mode_accueil_choice = AutoChoiceCtrl(self, None, 'mode', items=[("Temps plein", MODE_5_5), ("Temps partiel", MODE_TEMPS_PARTIEL), (u"4/5èmes", MODE_4_5), (u"3/5èmes", MODE_3_5), ("Forfait horaire mensuel", MODE_FORFAIT_HORAIRE), ("Halte-garderie", MODE_HALTE_GARDERIE)])
         self.Bind(wx.EVT_CHOICE, self.onModeAccueilChoice, self.mode_accueil_choice)
         sizer1.AddMany([(wx.StaticText(self, -1, u"Mode d'accueil :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.mode_accueil_choice, 0, wx.EXPAND)])
@@ -624,6 +631,16 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         else:
             inscription.sites_preinscription.remove(site)
         inscription.sites_preinscription = inscription.sites_preinscription
+    
+    def UpdateGroupeItems(self):
+        if len(creche.groupes) > 0:
+            groupes = [(groupe.nom, groupe) for groupe in creche.groupes]
+            self.groupe_items[1].SetItems(groupes)
+            for item in self.groupe_items:
+                item.Show(True)
+        else:
+            for item in self.groupe_items:
+                item.Show(False)
                 
     def UpdateProfesseurItems(self):
         if creche.type == TYPE_GARDERIE_PERISCOLAIRE and len(creche.professeurs) > 0:

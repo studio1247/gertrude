@@ -129,7 +129,10 @@ class PlanningGridWindow(BufferedWindow):
         dc.EndDrawing()
 
     def DrawActivitiesLine(self, dc, index, line):
-        if not isinstance(line, LigneConge):
+        if isinstance(line, LigneConge):
+            dc.SetPen(wx.BLACK_PEN)
+            dc.DrawText(line.info, 200, 7 + index * LINE_HEIGHT)
+        elif not isinstance(line, basestring):
             keys = line.activites.keys()
             for start, end, activity in keys[:]:
                 if activity == 0 and line.reference:
@@ -165,9 +168,6 @@ class PlanningGridWindow(BufferedWindow):
                     dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
                 rect = wx.Rect(1+(start-int(creche.affichage_min*(60 / BASE_GRANULARITY)))*COLUMN_WIDTH, 1+index*LINE_HEIGHT, (end-start)*COLUMN_WIDTH-1, LINE_HEIGHT-1)
                 dc.DrawRoundedRectangleRect(rect, 4)
-        else:
-            dc.SetPen(wx.BLACK_PEN)
-            dc.DrawText(line.info, 200, 7 + index * LINE_HEIGHT)
             
     def DrawNumbersLine(self, dc, index, line):
         if not isinstance(line, basestring):
@@ -215,7 +215,7 @@ class PlanningGridWindow(BufferedWindow):
         self.curStartX = (posX / (creche.granularite/BASE_GRANULARITY)) * (creche.granularite/BASE_GRANULARITY)
         if self.curStartY < len(self.lines):
             line = self.lines[self.curStartY]
-            if not line.readonly:
+            if not (isinstance(line, basestring) or line.readonly):
                 self.value = self.activity_combobox.activity.value
                 if creche.presences_previsionnelles and line.reference and line.date > datetime.date.today():
                     self.value |= PREVISIONNEL
@@ -374,14 +374,22 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         line = self.lines[index]
         if isinstance(line, LigneConge):
             state = VACANCES
-        else:
+        elif not isinstance(line, basestring):
             state = line.get_state()
             if state > 0:
                 activities_state = state & ~(PRESENT|PREVISIONNEL)
                 if activities_state:
                     state &= ~activities_state
                     state |= PRESENT
-        self.buttons_sizer.GetItem(index).GetWindow().button.SetBitmapLabel(BUTTON_BITMAPS[state])
+        panel = self.buttons_sizer.GetItem(index).GetWindow()
+        button = panel.button
+        if isinstance(line, basestring):
+            panel.SetWindowStyle(wx.NO_BORDER)
+            button.Show(False)
+        else:
+            panel.SetWindowStyle(wx.SUNKEN_BORDER)
+            button.Show(True)
+            button.SetBitmapLabel(BUTTON_BITMAPS[state])
         
     def UpdateCheckboxes(self, index):
         line = self.lines[index]
@@ -455,6 +463,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             for i in range(previous_count, count):
                 if not self.GetParent().options & NO_ICONS:
                     panel = wx.Panel(self, style=wx.SUNKEN_BORDER)
+                    panel.SetMinSize((LINE_HEIGHT, LINE_HEIGHT))
                     self.buttons_sizer.Add(panel)
                     panel.button = wx.BitmapButton(panel, -1, BUTTON_BITMAPS[PRESENT], size=(26, 26), style=wx.NO_BORDER)
                     panel.button.line = i
@@ -639,7 +648,7 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
     def GetSummaryLines(self):
         lines = []
         for line in self.lines:
-            if not isinstance(line, LigneConge):
+            if not isinstance(line, LigneConge) and not isinstance(line, basestring):
                 lines.append(line)
         return lines
 

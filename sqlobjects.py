@@ -598,6 +598,7 @@ class Creche(object):
         self.telephone = ''
         self.sites = []
         self.users = []
+        self.groupes = []
         self.couleurs = {}
         self.activites = {}
         self.employes = []
@@ -638,6 +639,7 @@ class Creche(object):
         self.cloture_factures = False
         self.arrondi_heures = SANS_ARRONDI
         self.gestion_maladie_hospitalisation = False
+        self.tri_planning = TRI_PRENOM
         self.alertes = {}
         self.calcule_jours_conges()
 
@@ -811,7 +813,7 @@ class Creche(object):
         
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'majoration_localite', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'cloture_factures', 'arrondi_heures', 'gestion_maladie_hospitalisation'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'majoration_localite', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'cloture_factures', 'arrondi_heures', 'gestion_maladie_hospitalisation', 'tri_planning'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
@@ -914,25 +916,24 @@ class Referent(SQLObject):
 
 class Groupe(SQLObject):
     table = "GROUPES"
-    def __init__(self, creation=True):
+    def __init__(self, ordre=None, creation=True):
         self.idx = None
         self.nom = ""
+        self.ordre = ordre
         if creation:
             self.create()
         
     def create(self):
         print 'nouveau groupe'
-        result = sql_connection.execute('INSERT INTO GROUPES (idx, nom) VALUES(NULL,?)', (self.nom, ))
+        result = sql_connection.execute('INSERT INTO GROUPES (idx, nom, ordre) VALUES(NULL,?,?)', (self.nom, self.ordre))
         self.idx = result.lastrowid
         
     def delete(self):
         SQLObject.delete(self)
-        for object in self.reference:
-            object.delete()
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom'] and self.idx:
+        if name in ['nom', 'ordre'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE GROUPES SET %s=? WHERE idx=?' % name, (value, self.idx))
     
@@ -1014,11 +1015,11 @@ class Inscription(SQLObject):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ('site', 'professeur') and self.idx:
+        if name in ('site', 'professeur', 'groupe') and self.idx:
             value = value.idx
         elif name == "sites_preinscription":
             value = " ".join([str(value.idx) for value in value])
-        if name in ['debut', 'fin', 'mode', 'forfait_mensuel', 'fin_periode_adaptation', 'duree_reference', 'forfait_heures_presence', 'semaines_conges', 'preinscription', 'site', 'sites_preinscription', 'professeur'] and self.idx:
+        if name in ['debut', 'fin', 'mode', 'forfait_mensuel', 'fin_periode_adaptation', 'duree_reference', 'forfait_heures_presence', 'semaines_conges', 'preinscription', 'site', 'sites_preinscription', 'professeur', 'groupe'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE INSCRIPTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))   
 

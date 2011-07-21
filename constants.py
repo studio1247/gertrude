@@ -93,6 +93,11 @@ SANS_ARRONDI = 0
 ARRONDI_HEURE = 1
 ARRONDI_HEURE_ARRIVEE_DEPART = 2
 
+# Modes de tri des enfants sur le planning
+TRI_PRENOM = 0
+TRI_NOM = 1
+TRI_GROUPE = 2
+
 # Valeurs de présence
 HOPITAL = -3
 MALADE = -2
