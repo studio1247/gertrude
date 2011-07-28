@@ -21,15 +21,7 @@ from facture import *
 from cotisation import CotisationException
 from ooffice import *
 
-def isPresentDuringTranche(journee, tranche):
-    # Tranches horaires
-    tranches = [(creche.ouverture, 12), (12, 14), (14, creche.fermeture)]
-    
-    debut, fin = tranches[tranche]
-    for i in range(int(debut * (60 / BASE_GRANULARITY)), int(fin * (60 / BASE_GRANULARITY))):
-        if journee.values[i] > 0:
-            return True
-    return False
+tranches = [(creche.ouverture, 12), (12, 14), (14, creche.fermeture)]
 
 class PlanningModifications(object):
     def __init__(self, debut):
@@ -224,10 +216,10 @@ class PlanningModifications(object):
                             journee = inscrit.journees[date]
                         else:
                             journee = inscrit.getReferenceDayCopy(date)
-                    for tranche in range(3):
-                        cellule = cellules.item(1 + semaine * 17 + jour * 3 + tranche)
+                    for t in range(3):
+                        cellule = cellules.item(1 + semaine * 17 + jour * 3 + t)
                         if inscrit and journee:
-                            ReplaceFields([cellule], [('p', int(isPresentDuringTranche(journee, tranche)))])
+                            ReplaceFields([cellule], [('p', int(IsPresentDuringTranche(journee, tranches[t][0]*12, tranches[t][1]*12)))])
                         else:
                             ReplaceFields([cellule], [('p', '')])
 
