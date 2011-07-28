@@ -61,21 +61,22 @@ class SitesPlanningPanel(PlanningWidget):
                 lines.append(site_line)
             
             for inscrit in creche.inscrits:
-                inscription = inscrit.GetInscription(date)
-                if inscription is not None:
-                    if date in inscrit.journees:
-                        line = inscrit.journees[date]
-                    else:
-                        line = inscrit.getReferenceDay(date)
-                    if len(creche.sites) > 1:
-                        if inscription.site and inscription.site in day_lines:
-                            site_line = day_lines[inscription.site]
+                if date not in inscrit.jours_conges:
+                    inscription = inscrit.GetInscription(date)
+                    if inscription is not None:
+                        if date in inscrit.journees:
+                            line = inscrit.journees[date]
                         else:
-                            continue
-                    for start, end, value in line.activites:
-                        if value in (0, PREVISIONNEL):
-                            for i in range(start, end):
-                                site_line[i] -= 1
+                            line = inscrit.getReferenceDay(date)
+                        if len(creche.sites) > 1:
+                            if inscription.site and inscription.site in day_lines:
+                                site_line = day_lines[inscription.site]
+                            else:
+                                continue
+                        for start, end, value in line.activites:
+                            if value in (0, PREVISIONNEL):
+                                for i in range(start, end):
+                                    site_line[i] -= 1
 
         self.SetLines(lines)
 
