@@ -754,6 +754,7 @@ class JoursFermeturePanel(AutoTab):
 class ParametersPanel(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
+        observers['tarifs'] = 0
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         sizer = wx.FlexGridSizer(0, 2, 5, 5)
         sizer.AddGrowableCol(1, 1)
@@ -791,15 +792,59 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, u"Gestion de périodes de congés à l'inscription :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'conges_inscription', [('Non', 0), ('Oui', 1)]), 0, wx.EXPAND)])
         # TODO n'afficher que si PSU/PAJE est choisi
         sizer.AddMany([(wx.StaticText(self, -1, u'Tarification des activités :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'tarification_activites', [(u'Non géré', ACTIVITES_NON_FACTUREES), (u'A la journée', ACTIVITES_FACTUREES_JOURNEE), (u"Période d'adaptation, à la journée", ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION)]), 0, wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Majoration mensuelle enfants hors commune :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'majoration_localite', precision=2), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Traitement des absences pour maladie :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'traitement_maladie', [(u"Avec carence en jours ouvrés", DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_OUVRES), (u"Avec carence en jours calendaires", DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES), ("Sans carence", DEDUCTION_MALADIE_SANS_CARENCE)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u"Durée de la carence :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'minimum_maladie', min=0, precision=0), 0, 0)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Traitement des absences pour hospitalisation :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'gestion_maladie_hospitalisation', [(u"Géré", True), (u"Non géré", False)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u"Gestion d'alertes :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'gestion_alertes', [(u'Activée', True), (u'Désactivée', False)]), 0, wx.EXPAND)])
-
         self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 5)
-        self.SetSizer(self.sizer)
         
+        self.tarifs_box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u"Tarifs spéciaux"), wx.VERTICAL)
+        self.tarifs_sizer = wx.BoxSizer(wx.VERTICAL)
+        for i, tarif in enumerate(creche.tarifs_speciaux):
+            self.line_tarif_add(i)
+        self.tarifs_box_sizer.Add(self.tarifs_sizer, 0, wx.EXPAND|wx.ALL, 5)
+        button_add = wx.Button(self, -1, u'Nouveau tarif spécial')
+        self.tarifs_box_sizer.Add(button_add, 0, wx.ALL, 5)
+        self.Bind(wx.EVT_BUTTON, self.add_tarif, button_add)
+        self.sizer.Add(self.tarifs_box_sizer, 0, wx.EXPAND|wx.ALL, 5)
+        
+        self.SetSizer(self.sizer)
+    
+    def line_tarif_add(self, index):
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.AddMany([(wx.StaticText(self, -1, u'Libellé :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, 'tarifs_speciaux[%d].label' % index, observers=['tarifs']), 1, wx.RIGHT|wx.EXPAND, 5)])
+        sizer.AddMany([(AutoChoiceCtrl(self, creche, 'tarifs_speciaux[%d].reduction' % index, items=[("Majoration", False), (u"Réduction", True)]), 1, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Valeur :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoNumericCtrl(self, creche, 'tarifs_speciaux[%d].valeur' % index, precision=2), 1, wx.RIGHT|wx.EXPAND, 5)])
+        sizer.AddMany([(AutoChoiceCtrl(self, creche, 'tarifs_speciaux[%d].pourcentage' % index, items=[(u"€", False), (u"%", True)]), 1, wx.EXPAND)])
+        delbutton = wx.BitmapButton(self, -1, delbmp)
+        delbutton.index = index
+        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
+        self.Bind(wx.EVT_BUTTON, self.remove_tarif, delbutton)
+        self.tarifs_sizer.Add(sizer, 0, wx.EXPAND|wx.BOTTOM, 5)
+
+    def line_tarif_del(self):
+        index = len(self.tarifs_sizer.GetChildren()) - 1
+        sizer = self.tarifs_sizer.GetItem(index)
+        sizer.DeleteWindows()
+        self.tarifs_sizer.Detach(index)
+
+    def add_tarif(self, event):
+        observers['tarifs'] = time.time()
+        history.Append(Delete(creche.tarifs_speciaux, -1))
+        creche.tarifs_speciaux.append(TarifSpecial())
+        self.line_tarif_add(len(creche.tarifs_speciaux) - 1)
+        self.sizer.FitInside(self)
+
+    def remove_tarif(self, event):
+        observers['tarifs'] = time.time()
+        index = event.GetEventObject().index
+        history.Append(Insert(creche.tarifs_speciaux, index, creche.tarifs_speciaux[index]))
+        self.line_tarif_del()
+        creche.tarifs_speciaux[index].delete()
+        del creche.tarifs_speciaux[index]
+        self.sizer.FitInside(self)
+        self.UpdateContents()
+
     def onModeFacturationChoice(self, event):
         object = event.GetEventObject()
         value = object.GetClientData(object.GetSelection())

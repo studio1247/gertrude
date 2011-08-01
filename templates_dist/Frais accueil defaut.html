@@ -60,6 +60,15 @@
   <tr>
    <td>&nbsp</td>
   </tr>
+  <if value="majoration_mensuelle">
+  <tr>
+   <td>Majoration / R&eacute;duction</td>
+   <td>= <var value="'%+.02f' % majoration_mensuelle"/> &euro;</td>
+  </tr>
+  <tr>
+   <td>&nbsp</td>
+  </tr>
+  </if>
   <tr>
    <td><b>Montant de la cotisation mensuelle (A*B*C)</b></td>
    <td><b>= <var value="'%.02f' % cotisation_mensuelle"/> &euro;</b></td>

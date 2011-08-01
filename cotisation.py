@@ -268,11 +268,18 @@ class Cotisation(object):
         if creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and self.inscription.IsInPeriodeAdaptation(self.date):
             self.cotisation_periode = 0.0
             self.cotisation_mensuelle = 0.0
-            
-        if creche.majoration_localite and self.inscrit.majoration:
-            self.majoration_mensuelle = creche.majoration_localite
-        else:
-            self.majoration_mensuelle = 0.0
+        
+        self.majoration_mensuelle = 0.0
+        for tarif in creche.tarifs_speciaux:
+            if self.inscrit.tarifs & (1<<tarif.idx):
+                if tarif.pourcentage:
+                    value = (self.cotisation_mensuelle * tarif.valeur) / 100
+                else:
+                    value = tarif.valeur
+                if tarif.reduction:
+                    self.majoration_mensuelle -= value
+                else:
+                    self.majoration_mensuelle += value
         self.cotisation_mensuelle += self.majoration_mensuelle
         if options & TRACES: print " cotisation mensuelle :", self.cotisation_mensuelle
     

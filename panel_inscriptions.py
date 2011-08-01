@@ -43,6 +43,7 @@ def ParseHtml(filename, context):
                 replacement = text[text.index('>')+1:-5]
             else:
                 replacement = ''
+            
         except:
             print 'TODO', text
             replacement = '' # TODO la période de référence du contrat est cassée
@@ -192,10 +193,12 @@ class InscriptionsTab(AutoTab):
 class IdentitePanel(InscriptionsTab):
     def __init__(self, parent):
         InscriptionsTab.__init__(self, parent)
-
+        self.last_tarifs_observer = -1
+        self.inscrit = None
         self.delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         sizer2 = wx.FlexGridSizer(0, 2, 5, 10)
+        self.sizer2 = sizer2
         sizer2.AddGrowableCol(1, 1)
         ctrl = AutoTextCtrl(self, None, 'prenom')
         self.Bind(wx.EVT_TEXT, self.EvtChangementPrenom, ctrl)
@@ -218,11 +221,7 @@ class IdentitePanel(InscriptionsTab):
         sizer2.AddMany([(wx.StaticText(self, -1, u'Numéro de sécurité sociale :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'numero_securite_sociale'), 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, u"Numéro d'allocataire CAF :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'numero_allocataire_caf'), 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, u"Enfant handicapé :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoCheckBox(self, None, 'handicap'), 0, wx.EXPAND)])
-        self.majoration_localite_items = (wx.StaticText(self, -1, u'Majoration (enfant hors localité) :'), AutoCheckBox(self, None, 'majoration'))
-        sizer2.AddMany([(self.majoration_localite_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.majoration_localite_items[1], 0, wx.EXPAND)])
-        if not creche.majoration_localite:
-            for item in self.majoration_localite_items:
-                item.Show(False)
+        self.tarifs_sizer = wx.BoxSizer(wx.VERTICAL)
 ##        sizer2.AddMany([(wx.StaticText(self, -1, 'Date de marche :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'marche'), 0, wx.EXPAND)])
         sizer3 = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Frères et soeurs'), wx.VERTICAL)
         self.fratries_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -233,9 +232,11 @@ class IdentitePanel(InscriptionsTab):
         self.Bind(wx.EVT_BUTTON, self.EvtNouveauFrere, self.nouveau_frere)
         
         self.sizer.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
+        self.sizer.Add(self.tarifs_sizer, 0, wx.EXPAND|wx.ALL, 5)
         self.sizer.Add(sizer3, 0, wx.EXPAND|wx.ALL, 5)
 
         self.SetSizer(self.sizer)
+        self.sizer.FitInside(self)
 
     def frere_line_add(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -287,8 +288,17 @@ class IdentitePanel(InscriptionsTab):
         self.sizer.FitInside(self)
         
     def UpdateContents(self):
-        for item in self.majoration_localite_items:
-            item.Show(creche.majoration_localite)
+        if self.last_tarifs_observer < 0 or ('tarifs' in observers and observers['tarifs'] > self.last_tarifs_observer):
+            while len(self.tarifs_sizer.GetChildren()):
+                sizer = self.tarifs_sizer.GetItem(0)
+                sizer.DeleteWindows()
+                self.tarifs_sizer.Detach(0)
+            w = self.sizer2.GetColWidths()[0] + 10
+            for tarif in creche.tarifs_speciaux:
+                sizer = wx.BoxSizer(wx.HORIZONTAL)
+                sizer.AddMany([(wx.StaticText(self, -1, u'%s :' % tarif.label, size=(w, -1)), 0, wx.ALIGN_CENTER_VERTICAL), (AutoCheckBox(self, self.inscrit, 'tarifs', value=1<<tarif.idx), 0, wx.EXPAND)])
+                self.tarifs_sizer.Add(sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+            self.last_tarifs_observer = time.time()
         if self.inscrit:
             freres_count = len(self.inscrit.freres_soeurs)
             for i in range(len(self.fratries_sizer.GetChildren()), freres_count):
@@ -733,7 +743,7 @@ class CongesPanel(InscriptionsTab):
     def __init__(self, parent):
         global delbmp
         delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
-        self.last_creche_observer = 0
+        self.last_creche_observer = -1
         
         InscriptionsTab.__init__(self, parent)
         self.sizer = wx.BoxSizer(wx.VERTICAL)

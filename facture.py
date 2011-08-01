@@ -238,10 +238,17 @@ class FactureFinMois(object):
         self.total_contractualise = round(self.total_contractualise, 2)
         self.total_realise = round(self.total_realise, 2)
         
-        if creche.majoration_localite and inscrit.majoration:
-            self.majoration_mensuelle = creche.majoration_localite
-        else:
-            self.majoration_mensuelle = 0.0
+        self.majoration_mensuelle = 0.0
+        for tarif in creche.tarifs_speciaux:
+            if self.inscrit.tarifs & (1<<tarif.idx):
+                if tarif.pourcentage:
+                    value = (self.cotisation_mensuelle * tarif.valeur) / 100
+                else:
+                    value = tarif.valeur
+                if tarif.reduction:
+                    self.majoration_mensuelle -= value
+                else:
+                    self.majoration_mensuelle += value
         
         self.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction
         self.total_facture = self.total + self.report_cotisation_mensuelle
