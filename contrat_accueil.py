@@ -68,6 +68,7 @@ class DocumentAccueilModifications(object):
                 ('plancher-caf', plancher_caf),
                 ('plafond-caf', plafond_caf),
                 ('nombre-factures', self.cotisation.nombre_factures),
+                ('semaines-type', len(inscription.reference) / 7),
                 ('heures-semaine', GetHeureString(self.cotisation.heures_semaine)),
                 ('heures-mois', GetHeureString(self.cotisation.heures_mois)),
                 ('heures-periode', GetHeureString(self.cotisation.heures_periode)),
@@ -118,7 +119,7 @@ class DocumentAccueilModifications(object):
                     else:
                         fields.append(('semaines-brut-periode', "0"))
     
-        for jour in range(5):
+        for jour in range(len(inscription.reference)):
             jour_reference = inscription.reference[jour]
             debut, fin = jour_reference.GetPlageHoraire()
             fields.append(('heure-debut[%d]' % jour, GetHeureString(debut)))
@@ -155,12 +156,12 @@ class DocumentAccueilModifications(object):
 class ContratAccueilModifications(DocumentAccueilModifications):
     def __init__(self, who, date):
         DocumentAccueilModifications.__init__(self, who, date)
-        inscription = who.GetInscription(date)
-        if inscription.mode == MODE_TEMPS_PARTIEL and IsTemplateFile("Contrat accueil temps partiel.odt"):
+        self.inscription = who.GetInscription(date)
+        if self.inscription.mode == MODE_TEMPS_PARTIEL and IsTemplateFile("Contrat accueil temps partiel.odt"):
             self.template = "Contrat accueil temps partiel.odt"
-        elif inscription.mode == MODE_FORFAIT_HORAIRE and IsTemplateFile("Contrat accueil forfait mensuel.odt"):
+        elif self.inscription.mode == MODE_FORFAIT_HORAIRE and IsTemplateFile("Contrat accueil forfait mensuel.odt"):
             self.template = "Contrat accueil forfait mensuel.odt"
-        elif inscription.mode == MODE_HALTE_GARDERIE and IsTemplateFile("Contrat accueil halte garderie.odt"):
+        elif self.inscription.mode == MODE_HALTE_GARDERIE and IsTemplateFile("Contrat accueil halte garderie.odt"):
             self.template = "Contrat accueil halte garderie.odt"
         else:
             self.template = 'Contrat accueil.odt'
@@ -174,6 +175,22 @@ class ContratAccueilModifications(DocumentAccueilModifications):
         
         # print dom.toprettyxml()
         doc = dom.getElementsByTagName("office:text")[0]
+        
+        for table in doc.getElementsByTagName("table:table"):
+            if table.getAttribute("table:name") == "Tableau3":
+                rows = table.getElementsByTagName("table:table-row")
+                for semaine in range(1, len(self.inscription.reference)/7):
+                    for row in rows[1:-1]:
+                        clone = row.cloneNode(1)
+                        for textNode in clone.getElementsByTagName("text:p"):
+                            for child in textNode.childNodes:
+                                text = child.wholeText
+                                for i in range(5):
+                                    text = text.replace("[%d]" % i, "[%d]" % (i+semaine*7))
+                                child.replaceWholeText(text)
+                        table.insertBefore(clone, rows[-1])
+                # print table.toprettyxml()
+                break;
             
         ReplaceTextFields(doc, fields)
         return {}
@@ -225,17 +242,24 @@ if __name__ == '__main__':
     Load()
             
     today = datetime.date.today()
+    inscrit = None
+    for inscrit in creche.inscrits:
+        try:
+            if inscrit.GetInscription(today) and Cotisation(inscrit, today): 
+                break
+        except:
+            pass
 
     filename = 'contrat-1.odt'
     try:
-        GenerateOODocument(ContratAccueilModifications(creche.inscrits[0], today), filename)
+        GenerateOODocument(ContratAccueilModifications(inscrit, today), filename)
         print u'Fichier %s généré' % filename
     except CotisationException, e:
         print e.errors
         
     filename = 'frais-1.ods'
     try:
-        GenerateOODocument(FraisGardeModifications(creche.inscrits[0], today), filename)
+        GenerateOODocument(FraisGardeModifications(inscrit, today), filename)
         print u'Fichier %s généré' % filename
     except CotisationException, e:
         print e.errors
