@@ -21,7 +21,7 @@ from facture import *
 from cotisation import CotisationException
 from ooffice import *
 
-tranches = [(creche.ouverture, 12), (12, 14), (14, creche.fermeture)]
+
 
 class PlanningModifications(object):
     def __init__(self, debut):
@@ -157,7 +157,7 @@ class PlanningModifications(object):
                     nom_ecrit = False
                     for c in range(24): # 12h
                         cell = GetCell(row, c+1)
-                        if IsPresentDuringTranche(presence, 7.0+c*0.5, 7.0+c*0.5+0.5):
+                        if IsPresentDuringTranche(presence, (7.0+c*0.5)*12, (7.0+c*0.5+0.5)*12):
                             if not nom_ecrit:
                                 cell.setAttribute("office:value-type", "string")
                                 text_node = GetCell(row, 3).childNodes[0]
@@ -219,6 +219,7 @@ class PlanningModifications(object):
                     for t in range(3):
                         cellule = cellules.item(1 + semaine * 17 + jour * 3 + t)
                         if inscrit and journee:
+                            tranches = [(creche.ouverture, 12), (12, 14), (14, creche.fermeture)]
                             ReplaceFields([cellule], [('p', int(IsPresentDuringTranche(journee, tranches[t][0]*12, tranches[t][1]*12)))])
                         else:
                             ReplaceFields([cellule], [('p', '')])
@@ -235,7 +236,7 @@ if __name__ == '__main__':
 
     filename = 'planning-1.ods'
     try:
-        GenerateOODocument(PlanningModifications(datetime.date(2011, 3, 14)), filename)
+        GenerateOODocument(PlanningModifications(datetime.date(2011, 9, 5)), filename)
         print u'Fichier %s généré' % filename
     except CotisationException, e:
         print e.errors
