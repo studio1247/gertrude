@@ -418,7 +418,15 @@ def GetInscritFields(inscrit):
             ('numero-allocataire-caf', inscrit.numero_allocataire_caf),
             ('parents', GetParentsString(inscrit))
             ]
-    
+
+def GetInscriptionFields(inscription):
+    return [('debut-contrat', inscription.debut),
+            ('fin-contrat', inscription.fin),
+            ('site', GetNom(inscription.site)),
+            ('professeur-prenom', GetPrenom(inscription.professeur)),
+            ('professeur-nom', GetNom(inscription.professeur)),
+            ]
+
 def GetFactureFields(facture):
     if facture:
         return [('mois', '%s %d' % (months[facture.mois - 1], facture.annee)),

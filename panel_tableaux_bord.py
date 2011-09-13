@@ -30,6 +30,7 @@ from coordonnees_parents import CoordonneesModifications
 from etats_trimestriels import EtatsTrimestrielsModifications
 from planning_detaille import PlanningDetailleModifications
 from etats_presence import EtatsPresenceModifications
+from etats_inscriptions import EtatsInscriptionsModifications
 from rapport_frequentation import RapportFrequentationModifications
 from synthese_financiere import SyntheseFinanciereModifications
 from facture import Facture
@@ -560,6 +561,15 @@ class RelevesTab(AutoTab):
         box_sizer.AddMany([(self.coords_date, 1, wx.EXPAND|wx.ALL, 5), (button, 0, wx.ALL, 5)])
         self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
         
+        # Les contrats en cours
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Inscriptions en cours'), wx.HORIZONTAL)
+        self.inscriptions_date = wx.TextCtrl(self)
+        self.inscriptions_date.SetValue("Aujourd'hui")
+        button = wx.Button(self, -1, u'Génération')
+        self.Bind(wx.EVT_BUTTON, self.EvtGenerationEtatsInscriptions, button)
+        box_sizer.AddMany([(self.inscriptions_date, 1, wx.EXPAND|wx.ALL, 5), (button, 0, wx.ALL, 5)])
+        self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+
         # Les releves trimestriels
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés trimestriels'), wx.HORIZONTAL)
         self.choice = wx.Choice(self)
@@ -626,6 +636,10 @@ class RelevesTab(AutoTab):
     def EvtGenerationCoordonnees(self, evt):
         date = str2date(self.coords_date.GetValue())
         DocumentDialog(self, CoordonneesModifications(date)).ShowModal()
+
+    def EvtGenerationEtatsInscriptions(self, evt):
+        date = str2date(self.inscriptions_date.GetValue())
+        DocumentDialog(self, EtatsInscriptionsModifications(date)).ShowModal()
 
     def EvtGenerationEtatsTrimestriels(self, evt):
         annee = self.choice.GetClientData(self.choice.GetSelection())
