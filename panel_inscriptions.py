@@ -644,7 +644,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
     
     def UpdateGroupeItems(self):
         if len(creche.groupes) > 0:
-            groupes = [(groupe.nom, groupe) for groupe in creche.groupes]
+            groupes = [("----", None)] + [(groupe.nom, groupe) for groupe in creche.groupes]
             self.groupe_items[1].SetItems(groupes)
             for item in self.groupe_items:
                 item.Show(True)
