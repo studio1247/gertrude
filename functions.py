@@ -398,7 +398,10 @@ def GetCrecheFields(creche):
             ('ville-creche', creche.ville),
             ('telephone-creche', creche.telephone),
             ('email-creche', creche.email),
-            ('capacite', creche.capacite)]
+            ('capacite', creche.capacite),
+            ('capacite-creche', creche.capacite),
+            ('amplitude-horaire', creche.GetAmplitudeHoraire()),
+           ]
     
 def GetTarifsHorairesFields(creche):
     if creche.formule_taux_horaire:

@@ -32,15 +32,9 @@ class RapportFrequentationModifications(object):
         self.annee = annee
         self.factures = {}
         self.errors = {}
-
+    
     def execute(self, filename, dom):
-        fields = [('nom-creche', creche.nom),
-                      ('adresse-creche', creche.adresse),
-                      ('code-postal-creche', str(creche.code_postal)),
-                      ('ville-creche', creche.ville),
-                      ('capacite', creche.capacite),
-                      ('capacite-creche', creche.capacite),
-                      ('amplitude-horaire', creche.GetAmplitudeHoraire())]
+        fields = GetCrecheFields(creche)
                       
         if filename == 'styles.xml':
             ReplaceTextFields(dom, fields)
@@ -62,9 +56,9 @@ class RapportFrequentationModifications(object):
                 if fin > today:
                     break
     
-                inscriptions = GetInscriptions(debut, fin)
-                inscriptions.sort(lambda x, y: cmp(x.inscrit.nom.lower(), y.inscrit.nom.lower()))
-                if not inscriptions:
+                inscrits = GetInscrits(debut, fin)
+                inscrits.sort(lambda x, y: cmp(x.nom.lower(), y.nom.lower()))
+                if not inscrits:
                     continue
                 
                 jours = [jour for jour in range(debut.day, fin.day+1) if datetime.date(debut.year, debut.month, jour) not in creche.jours_fermeture]
@@ -96,8 +90,7 @@ class RapportFrequentationModifications(object):
                 line_template.removeChild(cell_template)
                 sum_line.removeChild(sum_line_cell_template)
                 
-                for i, inscription in enumerate(inscriptions):
-                    inscrit = inscription.inscrit
+                for i, inscrit in enumerate(inscrits):
                     line = line_template.cloneNode(1)
                     table.insertBefore(line, line_template)
                     ReplaceFields(line, [('prenom', inscrit.prenom),
@@ -124,7 +117,7 @@ class RapportFrequentationModifications(object):
                         inscrits_annee[inscrit] = []
                     inscrits_annee[inscrit].append("%s.%s%d" % (months[mois-1], GetColumnName(2+len(jours)), i+2))
                 table.removeChild(line_template)
-                last_line = 1 + len(inscriptions)
+                last_line = 1 + len(inscrits)
                 for i, cell in enumerate(sum_line.getElementsByTagName("table:table-cell")[1:2+len(jours)]):
                     column = GetColumnName(2+i)
                     cell.setAttribute("table:formula", "of:=SUM([.%s2:.%s%d])" % (column, column, last_line))
