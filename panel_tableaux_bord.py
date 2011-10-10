@@ -57,8 +57,9 @@ class SitesPlanningPanel(PlanningWidget):
                     lines.append(line)
             else:
                 site_line = Summary(days[week_day])
-                for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
-                    site_line[i] = creche.capacite
+                if isinstance(creche.capacite, int):
+                    for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
+                        site_line[i] = creche.capacite
                 lines.append(site_line)
             
             for inscrit in creche.inscrits:
@@ -542,7 +543,11 @@ class StatistiquesFrequentationTab(AutoTab):
             self.presences_contrat_euros.SetValue(u"%.2f €" % cotisations_contractualisees)
             self.presences_realisees_euros.SetValue(u"%.2f €" % cotisations_realisees)
             self.presences_facturees_euros.SetValue(u"%.2f €" % cotisations_facturees)
-            self.coefficient_remplissage.SetValue(u"%.1f %%" % (100.0 * heures_facturees / heures_accueil))
+            coeff_remplissage = 0.0
+            if heures_accueil:
+                coeff_remplissage = (100.0 * heures_facturees) / heures_accueil
+            self.coefficient_remplissage.SetValue(u"%.1f %%" % coeff_remplissage)
+            
         self.Layout()       
         self.sizer.FitInside(self)
 

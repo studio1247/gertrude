@@ -118,7 +118,10 @@ def GetJoursOuvres(annee, mois):
     return jours_ouvres        
 
 def GetHeuresAccueil(annee, mois):
-    return GetJoursOuvres(annee, mois) * (creche.fermeture - creche.ouverture) * creche.capacite
+    if isinstance(creche.capacite, int):
+        return GetJoursOuvres(annee, mois) * (creche.fermeture - creche.ouverture) * creche.capacite
+    else:
+        return 0
     
 def GetInitialesPrenom(person):
     if person.prenom:
