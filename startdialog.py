@@ -21,6 +21,15 @@ import wx, wx.lib, wx.lib.newevent
 from constants import *
 from functions import *
 from config import LoadConfig, Load, Exit
+from asyncore import dispatcher
+import sys, time, socket
+ 
+class Server(dispatcher):
+    def __init__(self):
+        dispatcher.__init__(self)
+        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.bind(('', 50000))
+        self.listen(1)
 
 class StartDialog(wx.Dialog):
     def __init__(self, frame):
@@ -93,7 +102,14 @@ class StartDialog(wx.Dialog):
             self.info.AppendText("Erreur lors du chargement !\n")
             self.gauge.SetValue(100)
             return
-        
+
+        try:
+            Server()
+        except:
+            self.info.AppendText(u"Gertrude est déjà lancée !\n")
+            self.gauge.SetValue(100)
+            return
+                
         if event.result is None:
             self.sizer.Hide(self.gauge)
             self.info.AppendText("Choix de la structure ...\n")
@@ -122,7 +138,7 @@ class StartDialog(wx.Dialog):
                 thread.start_new_thread(self.Load, ())
                 return
 
-        self.loaded = True
+        self.loaded = True        
         sql_connection.open()
         if len(creche.users) == 0:
             __builtin__.profil = PROFIL_ALL
