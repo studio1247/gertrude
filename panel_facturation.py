@@ -169,21 +169,31 @@ class FacturationPanel(GPanel):
         for choice in self.inscrits_choice.values():
             choice.Clear()
             choice.Append('Tous les enfants', creche.inscrits)
-        # Ceux qui sont presents
+            
+        inscrits = { }
+        autres = { }
         for inscrit in creche.inscrits:
             if inscrit.GetInscription(datetime.date.today()) != None:
-                for choice in self.inscrits_choice.values():
-                    choice.Append(GetPrenomNom(inscrit), inscrit)
-        # Les autres
-        separator = False
-        for inscrit in creche.inscrits:
-            if inscrit.GetInscription(datetime.date.today()) == None:
-                if not separator:
-                    separator = True
-                    for choice in self.inscrits_choice.values():
-                        choice.Append(50 * '-', None)
-                for choice in self.inscrits_choice.values():
-                    choice.Append(GetPrenomNom(inscrit), inscrit)
+                inscrits[GetPrenomNom(inscrit)] = inscrit
+            else:
+                autres[GetPrenomNom(inscrit)] = inscrit
+        
+        keys = inscrits.keys()
+        keys.sort()
+        for key in keys:
+            for choice in self.inscrits_choice.values():
+                choice.Append(key, inscrits[key])
+        
+        if len(inscrits) > 0 and len(autres) > 0:
+            for choice in self.inscrits_choice.values():
+                choice.Append(50 * '-', None)
+        
+        keys = autres.keys()
+        keys.sort()
+        for key in keys:
+            for choice in self.inscrits_choice.values():
+                choice.Append(key, autres[key])
+            
         for choice in self.inscrits_choice.values():
             choice.SetSelection(0)
         

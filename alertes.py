@@ -18,7 +18,7 @@
 import __builtin__
 import datetime
 from parameters import today
-from functions import GetInscriptions
+from functions import GetInscriptions, GetDateMinus
 from sqlobjects import Alerte
 
 def GetAlertes():
@@ -26,15 +26,17 @@ def GetAlertes():
     for inscription in GetInscriptions(today, today):
         inscrit = inscription.inscrit
         if inscrit.naissance:
-            if inscrit.naissance.month > 3:
-                date = datetime.date(inscrit.naissance.year+3, inscrit.naissance.month-3, inscrit.naissance.day)
-            else:
-                date = datetime.date(inscrit.naissance.year+2, inscrit.naissance.month+9, inscrit.naissance.day)
+            date = GetDateMinus(inscrit.naissance, years=-3, months=3)
             texte = "%s %s a 3 ans le %02d/%02d/%04d" % (inscrit.prenom, inscrit.nom, inscrit.naissance.day, inscrit.naissance.month, inscrit.naissance.year+3)      
             alertes.append((date, texte))
         if inscription.debut and inscription.debut.year != today.year:
             date = datetime.date(today.year, inscription.debut.month, inscription.debut.day)
             texte = "L'inscription de %s %s passe un an au %02d/%02d/%04d" % (inscrit.prenom, inscrit.nom, date.day, date.month, date.year)
+            alertes.append((date, texte))
+        if inscription.fin:
+            # Demandé par Mon Petit Bijou
+            date = GetDateMinus(inscription.fin, years=0, months=2)
+            texte = "L'inscription de %s %s se termine le %02d/%02d/%04d" % (inscrit.prenom, inscrit.nom, inscription.fin.day, inscription.fin.month, inscription.fin.year)      
             alertes.append((date, texte))
     return alertes
 

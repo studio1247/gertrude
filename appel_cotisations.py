@@ -67,6 +67,7 @@ class AppelCotisationsModifications(object):
         # Les cotisations
         lines_template = [lignes.item(7), lignes.item(8)]
         inscrits = GetInscrits(self.debut, self.fin, site=site)
+        inscrits.sort(cmp=lambda x,y: cmp(GetPrenomNom(x), GetPrenomNom(y)))
         for i, inscrit in enumerate(inscrits):
             if self.gauge:
                 self.gauge.SetValue(10+int(80.0*i/len(inscrits)))

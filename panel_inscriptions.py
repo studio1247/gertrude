@@ -921,18 +921,27 @@ class InscriptionsPanel(GPanel):
 
     def InitInscrits(self, selected=None):
         self.choice.Clear()
-        # Ceux qui sont presents
+
+        inscrits = { }
+        autres = { }
         for inscrit in creche.inscrits:
             if inscrit.GetInscription(datetime.date.today(), preinscription=True) != None:
-                self.choice.Append(GetPrenomNom(inscrit), inscrit)
-        # Les autres
-        separator = False
-        for inscrit in creche.inscrits:
-            if inscrit.GetInscription(datetime.date.today()) == None:
-                if not separator:
-                    self.choice.Append(150 * '-', None)
-                    separator = True
-                self.choice.Append(GetPrenomNom(inscrit), inscrit)
+                inscrits[GetPrenomNom(inscrit)] = inscrit
+            else:
+                autres[GetPrenomNom(inscrit)] = inscrit
+        
+        keys = inscrits.keys()
+        keys.sort()
+        for key in keys:
+            self.choice.Append(key, inscrits[key])
+        
+        if len(inscrits) > 0 and len(autres) > 0:
+            self.choice.Append(150 * '-', None)
+        
+        keys = autres.keys()
+        keys.sort()
+        for key in keys:
+            self.choice.Append(key, autres[key])
 
         if len(creche.inscrits) > 0 and selected != None and selected in creche.inscrits:
             self.SelectInscrit(selected)
