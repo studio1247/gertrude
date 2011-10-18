@@ -471,10 +471,6 @@ class ProgressHandler:
         self.min, self.max = min, max
         self.value = min
         
-    def __del__(self):
-        if self.gauge_fn:
-            self.gauge_fn(self.max)
-
     def set(self, value):
         if self.gauge_fn:
             self.gauge_fn(self.min + (self.max-self.min)*value/100)
