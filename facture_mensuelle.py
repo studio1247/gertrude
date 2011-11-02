@@ -110,7 +110,12 @@ class FactureModifications(object):
                             table.removeChild(rows[i])
 
                 # Les champs de la facture
-                fields = GetCrecheFields(creche) + GetInscritFields(inscrit) + GetFactureFields(facture)
+                last_inscription = None
+                for tmp in inscrit.inscriptions:
+                    if not last_inscription or not last_inscription.fin or (tmp.fin and tmp.fin > last_inscription.fin):
+                        last_inscription = tmp 
+                
+                fields = GetCrecheFields(creche) + GetInscritFields(inscrit) + GetInscriptionFields(last_inscription) + GetFactureFields(facture)
                 ReplaceTextFields(section, fields)
 
         for template in templates:

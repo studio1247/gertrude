@@ -102,13 +102,6 @@ class StartDialog(wx.Dialog):
             self.info.AppendText("Erreur lors du chargement !\n")
             self.gauge.SetValue(100)
             return
-
-        try:
-            Server()
-        except:
-            self.info.AppendText(u"Gertrude est déjà lancée !\n")
-            self.gauge.SetValue(100)
-            return
                 
         if event.result is None:
             self.sizer.Hide(self.gauge)
@@ -124,6 +117,14 @@ class StartDialog(wx.Dialog):
             self.ok_button.SetFocus()
             self.sizer.Layout()
             self.sizer.Fit(self)
+            return
+
+        try:
+            Server()
+        except Exception, e:
+            # print e
+            self.info.AppendText(u"Gertrude est déjà lancée !\n")
+            self.gauge.SetValue(100)
             return
 
         if readonly:
