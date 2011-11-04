@@ -63,6 +63,10 @@ class FacturationPanel(GPanel):
         button2 = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationFacture, button2)
         box_sizer.AddMany([(self.inscrits_choice["factures"], 1, wx.ALL|wx.EXPAND, 5), (self.factures_monthchoice, 1, wx.ALL|wx.EXPAND, 5), (self.cloture_button, 0, wx.ALL, 5), (button2, 0, wx.ALL, 5)])
+        if 0:
+            self.decloture_button = wx.Button(self, -1, u'Dé-clôture')
+            self.Bind(wx.EVT_BUTTON, self.EvtDeclotureFacture, self.decloture_button)
+            box_sizer.Add(self.decloture_button, 0, wx.ALL, 5)
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
         # Les attestations de paiement
@@ -229,6 +233,24 @@ class FacturationPanel(GPanel):
                 continue
         if errors:
             message = u"Erreurs lors de la clôture :\n"
+            for label in errors.keys():
+                message += '\n' + label + ' :\n  '
+                message += '\n  '.join(errors[label])
+            wx.MessageDialog(self, message, 'Message', wx.OK|wx.ICON_WARNING).ShowModal()
+        self.EvtFacturesMonthChoice()
+
+    def EvtDeclotureFacture(self, evt):
+        inscrits, periode = self.__get_facturation_inscrits_periode()
+        errors = {}
+        for inscrit in inscrits:
+            try:
+                facture = Facture(inscrit, periode.year, periode.month)
+                facture.Decloture()
+            except CotisationException, e:
+                errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
+                continue
+        if errors:
+            message = u"Erreurs lors de la de-clôture :\n"
             for label in errors.keys():
                 message += '\n' + label + ' :\n  '
                 message += '\n  '.join(errors[label])
