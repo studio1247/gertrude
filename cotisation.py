@@ -178,9 +178,8 @@ class Cotisation(object):
                 self.heures_mois = math.ceil(self.heures_periode / self.nombre_factures)
                 if options & TRACES: print ' heures mensuelles : %f (%f)' % (self.heures_mois, self.heures_periode / self.nombre_factures)
             else:
-                self.heures_periode = 47 * self.heures_semaine
-                # TODO c'etait 45 au lieu de 46 pour Oleron, 47 pour Bois le roi
-                # Il faudrait pouvoir saisir le nombre de samaines de vacances qq part
+                # 47 pour Bois le roi
+                self.heures_periode = (52 - self.inscription.semaines_conges) * self.heures_semaine
                 self.heures_mois = self.heures_periode / 12
                 self.nombre_factures = 12 - len(creche.mois_sans_facture)
 
