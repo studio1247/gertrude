@@ -27,6 +27,7 @@ template_lines_count = 8
 
 class RapportFrequentationModifications(object):
     def __init__(self, annee):
+        self.multi = False
         self.template = 'Rapport frequentation.ods'
         self.default_output = "Rapport frequentation %d.ods" % annee
         self.annee = annee

@@ -30,6 +30,7 @@ lines_max = 25
     
 class PlanningDetailleModifications(object):
     def __init__(self, periode):
+        self.multi = False
         self.template = 'Planning detaille.odg'
         self.start, self.end = periode
         if self.start == self.end:

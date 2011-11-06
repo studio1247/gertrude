@@ -25,6 +25,7 @@ from ooffice import *
 
 class PlanningModifications(object):
     def __init__(self, debut):
+        self.multi = False
         self.template = 'Planning.ods'
         self.default_output = "Planning %s.ods" % str(debut)
         self.debut = debut

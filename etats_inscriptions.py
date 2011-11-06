@@ -22,6 +22,7 @@ from ooffice import *
 
 class EtatsInscriptionsModifications(object):
     def __init__(self, date):
+        self.multi = False
         self.template = 'Etats inscriptions.ods'
         if date is None:
             self.date = today

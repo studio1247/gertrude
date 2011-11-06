@@ -27,6 +27,7 @@ template_lines_count = 8
 
 class SyntheseFinanciereModifications(object):
     def __init__(self, annee):
+        self.multi = False
         self.template = 'Synthese financiere.ods'
         self.default_output = "Synthese financiere %d.ods" % annee
         self.annee = annee

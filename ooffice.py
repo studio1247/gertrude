@@ -86,6 +86,13 @@ def GetRow(table, index):
             return row
     return None
 
+def GetCellsCount(row):
+    count = 0
+    for child in row.childNodes:
+        if child.nodeName in ("table:table-cell", "table:covered-table-cell"):
+            count += GetRepeat(child)
+    return count
+
 def GetCell(row, index):
     i = 0
     for child in row.childNodes:
@@ -457,7 +464,7 @@ class DocumentDialog(wx.Dialog):
         self.sizer.Add(line, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.TOP|wx.BOTTOM, 5)
         
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        if 1: #sys.platform == 'win32':
+        if not modifications.multi: #sys.platform == 'win32':
             self.sauver_ouvrir = wx.Button(self, -1, u"Sauver et ouvrir")
             self.sauver_ouvrir.SetDefault()
             self.Bind(wx.EVT_BUTTON, self.onSauverOuvrir, self.sauver_ouvrir)
@@ -501,13 +508,25 @@ class DocumentDialog(wx.Dialog):
         config.documents_directory = os.path.dirname(self.filename)
         dlg = None
         try:
-            if self.oo_filename.endswith(".html"):
-                errors = GenerateHtmlDocument(self.modifications, filename=self.oo_filename, gauge=self.gauge)
+            if self.modifications.multi:
+                errors = { }
+                for filename, modifs in self.modifications.GetSimpleModifications(self.oo_filename):
+                    if filename.endswith(".html"):
+                        errors.update(GenerateHtmlDocument(modifs, filename=filename, gauge=self.gauge))
+                    else:
+                        errors.update(GenerateOODocument(modifs, filename=filename, gauge=self.gauge))
+                    if pdf:
+                        f, e = os.path.splitext(filename)
+                        convert_to_pdf(filename, f+".pdf")
+                        os.remove(filename)
             else:
-                errors = GenerateOODocument(self.modifications, filename=self.oo_filename, gauge=self.gauge)
-            if pdf:
-                convert_to_pdf(self.oo_filename, self.filename)
-                os.remove(self.oo_filename)
+                if self.oo_filename.endswith(".html"):
+                    errors = GenerateHtmlDocument(self.modifications, filename=self.oo_filename, gauge=self.gauge)
+                else:
+                    errors = GenerateOODocument(self.modifications, filename=self.oo_filename, gauge=self.gauge)
+                if pdf:
+                    convert_to_pdf(self.oo_filename, self.filename)
+                    os.remove(self.oo_filename)
             self.document_generated = True
             if errors:
                 message = u"Document %s généré avec des erreurs :\n" % self.filename

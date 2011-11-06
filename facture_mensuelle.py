@@ -33,11 +33,16 @@ class FactureModifications(object):
         self.inscrits = inscrits
         self.periode = periode
         if len(inscrits) > 1:
-            self.default_output = u"Factures %s %d.odt" % (months[periode.month - 1], periode.year)
+            self.multi = True
+            self.default_output = u"Facture PRENOM NOM %s %d.odt" % (months[periode.month - 1], periode.year)
         else:
+            self.multi = False
             who = inscrits[0]
             self.default_output = u"Facture %s %s %s %d.odt" % (who.prenom, who.nom, months[periode.month - 1], periode.year)
 
+    def GetSimpleModifications(self, filename):
+        return [(filename.replace("PRENOM", inscrit.prenom).replace("NOM", inscrit.nom), FactureModifications([inscrit], self.periode)) for inscrit in self.inscrits]
+    
     def execute(self, filename, dom):
         if filename != 'content.xml':
             return None
@@ -71,8 +76,9 @@ class FactureModifications(object):
         
                 # Création d'un tableau de cells
                 for table in section.getElementsByTagName('table:table'):
-                    if table.getAttribute('table:name') == 'Presences':
+                    if table.getAttribute('table:name').startswith('Presences'):
                         rows = table.getElementsByTagName('table:table-row')[1:]
+                        cells_count = GetCellsCount(rows[0])
                         cells = []
                         for i in range(len(rows)):
                             cells.append(rows[i].getElementsByTagName('table:table-cell'))
@@ -84,9 +90,9 @@ class FactureModifications(object):
                         date = facture.debut_recap
                         while date.month == facture.debut_recap.month:
                             col = date.weekday()
-                            if col < 5:
+                            if col < cells_count:
                                 details = ""
-                                row = (date.day + empty_cells) / 7
+                                row = (date.day + empty_cells - 1) / 7
                                 cell = cells[row][col]
                                 # ecriture de la date dans la cellule
                                 text_node = cell.getElementsByTagName('text:p')[0]

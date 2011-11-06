@@ -22,6 +22,7 @@ from ooffice import *
 
 class EtatsPresenceModifications(object):
     def __init__(self, debut, fin, site, professeur, inscrit, selection):
+        self.multi = False
         self.template = 'Etats presence.ods'
         self.default_output = "Etats presence"
         if site:

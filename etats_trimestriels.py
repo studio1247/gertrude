@@ -27,6 +27,7 @@ template_lines_count = 8
 
 class EtatsTrimestrielsModifications(object):
     def __init__(self, annee):
+        self.multi = False
         self.template = 'Etats trimestriels.ods'
         self.default_output = "Etats trimestriels %d.ods" % annee
         self.annee = annee

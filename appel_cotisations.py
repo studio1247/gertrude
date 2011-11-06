@@ -23,6 +23,7 @@ from ooffice import *
 
 class AppelCotisationsModifications(object):
     def __init__(self, date, options=0):
+        self.multi = False
         self.template = 'Appel cotisations.ods'
         self.default_output = u"Appel cotisations %s %d.ods" % (months[date.month - 1], date.year)
         self.debut, self.fin = date, getMonthEnd(date)

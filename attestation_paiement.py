@@ -24,6 +24,7 @@ from ooffice import *
 
 class AttestationModifications(object):
     def __init__(self, who, debut, fin):
+        self.multi = False
         self.template = 'Attestation paiement.odt'
         if isinstance(who, list):
             self.default_output = u"Attestations de paiement %s-%s %d.odt" % (months[debut.month - 1], months[fin.month - 1], debut.year)

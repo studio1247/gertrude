@@ -22,6 +22,7 @@ from ooffice import *
 
 class CoordonneesModifications(object):
     def __init__(self, date):
+        self.multi = False
         self.template = 'Coordonnees parents.odt'
         if date is None:
             self.date = today

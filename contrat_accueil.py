@@ -157,6 +157,7 @@ class ContratAccueilModifications(DocumentAccueilModifications):
     def __init__(self, who, date):
         DocumentAccueilModifications.__init__(self, who, date)
         self.inscription = who.GetInscription(date)
+        self.multi = False
         if self.inscription.mode == MODE_TEMPS_PARTIEL and IsTemplateFile("Contrat accueil temps partiel.odt"):
             self.template = "Contrat accueil temps partiel.odt"
         elif self.inscription.mode == MODE_FORFAIT_HORAIRE and IsTemplateFile("Contrat accueil forfait mensuel.odt"):
@@ -198,6 +199,7 @@ class ContratAccueilModifications(DocumentAccueilModifications):
 class FraisGardeModifications(DocumentAccueilModifications):
     def __init__(self, who, date):
         DocumentAccueilModifications.__init__(self, who, date)
+        self.multi = False
         self.template = 'Frais de garde.ods'
         self.default_output = u"Frais de garde %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
         
