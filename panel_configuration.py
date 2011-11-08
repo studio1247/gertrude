@@ -774,6 +774,13 @@ class ParametersPanel(AutoTab):
         self.Bind(wx.EVT_CHOICE, self.onAffichage, self.affichage_max_cb)
         sizer2.AddMany([(self.affichage_min_cb, 0, wx.EXPAND), (self.affichage_min_cb.spin, 0, wx.EXPAND), (wx.StaticText(self, -1, '-'), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10), (self.affichage_max_cb, 0, wx.EXPAND), (self.affichage_max_cb.spin, 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Heures affichées sur le planning :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (sizer2, 0, wx.EXPAND)])
+        sizer2 = wx.BoxSizer(wx.HORIZONTAL)
+        self.debut_pause_cb = AutoTimeCtrl(self, creche, "debut_pause")
+        self.fin_pause_cb = AutoTimeCtrl(self, creche, "fin_pause")
+        self.Bind(wx.EVT_CHOICE, self.onPause, self.debut_pause_cb)
+        self.Bind(wx.EVT_CHOICE, self.onPause, self.fin_pause_cb)
+        sizer2.AddMany([(self.debut_pause_cb, 0, wx.EXPAND), (self.debut_pause_cb.spin, 0, wx.EXPAND), (wx.StaticText(self, -1, '-'), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10), (self.fin_pause_cb, 0, wx.EXPAND), (self.fin_pause_cb.spin, 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Interruption (plage non affichée) :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (sizer2, 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Granularité du planning :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'granularite', [('10min', 10), ('1/4 heure', 15), ('1/2 heure', 30), ('1 heure', 60)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u"Ordre d'affichage sur le planning :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'tri_planning', [(u'Par prénom', TRI_PRENOM), ('Par nom', TRI_NOM), ('Par groupe', TRI_GROUPE)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Préinscriptions :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'preinscriptions', [(u'Géré', True), (u'Non géré', False)]), 0, wx.EXPAND)])
@@ -915,6 +922,11 @@ class ParametersPanel(AutoTab):
             obj.UpdateContents()
         else:
             obj.AutoChange(value)
+
+    def onPause(self, event):
+        obj = event.GetEventObject()
+        value = event.GetClientData()
+        obj.AutoChange(value)
             
 class TarifHorairePanel(AutoTab):
     def __init__(self, parent):

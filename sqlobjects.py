@@ -170,8 +170,14 @@ class Day(object):
     def set_state(self, state):
         self.last_heures = None
         self.remove_all_activities()
-        start, end = int(creche.ouverture*(60 / BASE_GRANULARITY)), int(creche.fermeture*(60 / BASE_GRANULARITY))
-        self.insert_activity(start, end, state)
+        if creche.debut_pause and creche.fin_pause:
+            start, end = int(creche.ouverture*(60 / BASE_GRANULARITY)), int(creche.debut_pause*(60 / BASE_GRANULARITY))
+            self.insert_activity(start, end, state)
+            start, end = int(creche.fin_pause*(60 / BASE_GRANULARITY)), int(creche.fermeture*(60 / BASE_GRANULARITY))
+            self.insert_activity(start, end, state)
+        else:
+            start, end = int(creche.ouverture*(60 / BASE_GRANULARITY)), int(creche.fermeture*(60 / BASE_GRANULARITY))
+            self.insert_activity(start, end, state)
         
     def get_state(self):
         state = ABSENT
@@ -612,6 +618,8 @@ class Creche(object):
         self.inscrits = []
         self.ouverture = 7.75
         self.fermeture = 18.5
+        self.debut_pause = 0.0
+        self.fin_pause = 0.0
         self.affichage_min = 7.75
         self.affichage_max = 19.0
         self.granularite = 15
@@ -813,7 +821,7 @@ class Creche(object):
         
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'cloture_factures', 'arrondi_heures', 'gestion_maladie_hospitalisation', 'tri_planning'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'debut_pause', 'fin_pause', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'cloture_factures', 'arrondi_heures', 'gestion_maladie_hospitalisation', 'tri_planning'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 

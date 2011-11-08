@@ -608,7 +608,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         inscription.mode = MODE_5_5
         for i, day in enumerate(inscription.reference):
             if JourSemaineAffichable(i):
-                day.set_state(PRESENT)
+                day.set_state(0)
         self.UpdateContents()
     
     def onMondayCopy(self, event):

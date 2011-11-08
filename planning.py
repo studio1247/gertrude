@@ -57,7 +57,7 @@ class PlanningGridWindow(BufferedWindow):
         self.info = ""
         self.lines = []
         BufferedWindow.__init__(self, parent, size=((creche.affichage_max-creche.affichage_min) * 4 * COLUMN_WIDTH + 1, -1))
-        self.SetBackgroundColour(wx.WHITE)
+        # self.SetBackgroundColour(wx.WHITE)
         self.activity_combobox = activity_combobox
         self.value, self.state = None, None
         if options & DRAW_NUMBERS:
@@ -86,15 +86,26 @@ class PlanningGridWindow(BufferedWindow):
         self.UpdateDrawing()
 
     def DrawLineGrid(self, dc):
-        dc.SetPen(wx.GREY_PEN)
+        dc.SetPen(wx.WHITE_PEN)
         dc.SetBrush(wx.WHITE_BRUSH)
+        
         affichage_min = int(creche.affichage_min * 60 / BASE_GRANULARITY)
         affichage_max = int(creche.affichage_max * 60 / BASE_GRANULARITY)
+        debut_pause = int(creche.debut_pause * (60 / BASE_GRANULARITY))
+        fin_pause = int(creche.fin_pause * (60 / BASE_GRANULARITY))
         if affichage_min % (creche.granularite / BASE_GRANULARITY):
             heure = affichage_min + (creche.granularite / BASE_GRANULARITY) - affichage_min % (creche.granularite / BASE_GRANULARITY)
         else:
             heure = affichage_min
         height = dc.GetSize()[1]
+        
+        if debut_pause and fin_pause > debut_pause:
+            dc.DrawRectangle(0, 0, (debut_pause - affichage_min) * COLUMN_WIDTH, len(self.lines)*LINE_HEIGHT)
+            dc.DrawRectangle((debut_pause - affichage_min + 12) * COLUMN_WIDTH, 0, (affichage_max - fin_pause) * COLUMN_WIDTH, len(self.lines)*LINE_HEIGHT)
+        else:
+            dc.DrawRectangle(0, 0, (affichage_max - affichage_min) * COLUMN_WIDTH, len(self.lines)*LINE_HEIGHT)
+        
+        dc.SetPen(wx.GREY_PEN)
         while heure <= affichage_max:
             x = (heure - affichage_min) * COLUMN_WIDTH
             if heure % (60 / BASE_GRANULARITY) == 0:
@@ -103,9 +114,13 @@ class PlanningGridWindow(BufferedWindow):
                 dc.SetPen(wx.LIGHT_GREY_PEN)
             dc.DrawLine(x, 0,  x, height)
             heure += creche.granularite / BASE_GRANULARITY
+            if debut_pause and heure > debut_pause and heure < fin_pause:
+                heure = fin_pause
+                affichage_min += fin_pause - debut_pause - (60 / BASE_GRANULARITY)
             
     def Draw(self, dc):
         dc.BeginDrawing()
+        dc.SetBackground(wx.ClientDC(self).GetBackground())
         dc.Clear()
 
         # le quadrillage
@@ -166,6 +181,9 @@ class PlanningGridWindow(BufferedWindow):
                 except:
                     dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
                     dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
+                if creche.debut_pause and creche.fin_pause > creche.debut_pause and start >= creche.fin_pause * (60 / BASE_GRANULARITY):
+                    start -= (creche.fin_pause - creche.debut_pause) * (60 / BASE_GRANULARITY) - (60 / BASE_GRANULARITY)
+                    end -= (creche.fin_pause - creche.debut_pause) * (60 / BASE_GRANULARITY) - (60 / BASE_GRANULARITY)
                 rect = wx.Rect(1+(start-int(creche.affichage_min*(60 / BASE_GRANULARITY)))*COLUMN_WIDTH, 1+index*LINE_HEIGHT, (end-start)*COLUMN_WIDTH-1, LINE_HEIGHT-1)
                 dc.DrawRoundedRectangleRect(rect, 4)
             
@@ -176,6 +194,8 @@ class PlanningGridWindow(BufferedWindow):
                 pos += ICONS_WIDTH
             debut = int(creche.affichage_min * (60 / BASE_GRANULARITY))
             fin = int(creche.affichage_max * (60 / BASE_GRANULARITY))
+            debut_pause = int(creche.debut_pause * (60 / BASE_GRANULARITY))
+            fin_pause = int(creche.fin_pause * (60 / BASE_GRANULARITY))
             x = debut
             v = 0
             a = 0
@@ -204,16 +224,31 @@ class PlanningGridWindow(BufferedWindow):
                     a = x    
                     v = nv
                 x += 1
+                if debut_pause and x > debut_pause and x < fin_pause:
+                    a = x = fin_pause
+                    v = 0
+                    debut += fin_pause - debut_pause - (60 / BASE_GRANULARITY)
+
         
     def __get_pos(self, x, y):
+        p = -1
         l = int(creche.affichage_min * (60 / BASE_GRANULARITY) + (x / COLUMN_WIDTH))
+        if creche.debut_pause and creche.fin_pause > creche.debut_pause:
+            if l >= int(creche.debut_pause * (60 / BASE_GRANULARITY)):
+                l += int((creche.fin_pause - creche.debut_pause) * (60 / BASE_GRANULARITY)) - (60 / BASE_GRANULARITY)
+                p = 0
+            if l >= int(creche.fin_pause * (60 / BASE_GRANULARITY)):
+                p = 1
+            if l >= int(creche.affichage_max * (60 / BASE_GRANULARITY)):
+                l = int(creche.affichage_max * (60 / BASE_GRANULARITY)) - 1
+                
         c = int(y / LINE_HEIGHT)
-        return l, c
+        return l, c, p
 
     def OnLeftButtonDown(self, event):
-        posX, self.curStartY = self.__get_pos(event.GetX(), event.GetY())
+        posX, self.curStartY, self.curStartPos = self.__get_pos(event.GetX(), event.GetY())
         self.curStartX = (posX / (creche.granularite/BASE_GRANULARITY)) * (creche.granularite/BASE_GRANULARITY)
-        if self.curStartY < len(self.lines):
+        if self.curStartPos != 0 and self.curStartY < len(self.lines):
             line = self.lines[self.curStartY]
             if not (isinstance(line, basestring) or line.readonly):
                 self.value = self.activity_combobox.activity.value
@@ -229,8 +264,13 @@ class PlanningGridWindow(BufferedWindow):
 
     def OnLeftButtonDragging(self, event):
         if self.state is not None:
-            posX, self.curEndY = self.__get_pos(event.GetX(), event.GetY())
+            posX, self.curEndY, curEndPos = self.__get_pos(event.GetX(), event.GetY())
+            if self.curStartPos < 0 and curEndPos >= 0:
+                posX = int(creche.debut_pause * (60 / BASE_GRANULARITY)) - 1
+            if self.curStartPos > 0 and curEndPos <= 0:
+                posX = int(creche.fin_pause * (60 / BASE_GRANULARITY))
             self.curEndX = (posX / (creche.granularite/BASE_GRANULARITY)) * (creche.granularite/BASE_GRANULARITY)
+            
             start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX) + creche.granularite/BASE_GRANULARITY
             line = self.lines[self.curStartY]
             
@@ -245,6 +285,7 @@ class PlanningGridWindow(BufferedWindow):
             bmp = wx.EmptyBitmap((creche.affichage_max-creche.affichage_min)*(60 / BASE_GRANULARITY)*COLUMN_WIDTH+1, 3*LINE_HEIGHT)
             lineDC = wx.MemoryDC()
             lineDC.SelectObject(bmp)
+            lineDC.SetBackground(wx.ClientDC(self).GetBackground())
             lineDC.Clear()
             self.DrawLineGrid(lineDC)
             try:
@@ -551,7 +592,7 @@ class PlanningSummaryPanel(BufferedWindow):
             self.DrawLine(dc, i, activity)
             
         dc.SetPen(wx.BLACK_PEN)
-        dc.SetBrush(wx.WHITE_BRUSH)
+        # dc.SetBrush(wx.WHITE_BRUSH)
         for i, count in enumerate(self.activites_sans_horaires.values()):
             x = 689+i*25
             if not (self.GetParent().options & NO_ICONS):
@@ -577,9 +618,10 @@ class PlanningSummaryPanel(BufferedWindow):
 
         debut = int(creche.affichage_min * (60 / BASE_GRANULARITY))
         fin = int(creche.affichage_max * (60 / BASE_GRANULARITY))
+        debut_pause = int(creche.debut_pause * (60 / BASE_GRANULARITY))
+        fin_pause = int(creche.fin_pause * (60 / BASE_GRANULARITY))
         x = debut
         v = 0
-        holes = []
         a = 0
         while x <= fin:
             if x == fin:
@@ -591,19 +633,12 @@ class PlanningSummaryPanel(BufferedWindow):
                     rect = wx.Rect(pos+3+(a-debut)*COLUMN_WIDTH, 2 + index * 20, (x-a)*COLUMN_WIDTH-1, 19)
                     dc.DrawRoundedRectangleRect(rect, 4)
                     dc.DrawText(str(v), pos + 4 - 4*len(str(v)) + (float(x+a)/2-debut)*COLUMN_WIDTH, 4 + index * 20)
-                else:
-                    holes.append((a, x))
                 a = x    
                 v = nv
             x += 1
-        
-        dc.SetPen(wx.GREY_PEN)
-        for a, b in holes:
-            if a == 0:
-                a1 = 5
-            else:
-                a1 = pos + 4 + (a-debut)*COLUMN_WIDTH
-            dc.DrawLine(a1, 20 + index * 20, pos+(b-debut)*COLUMN_WIDTH, 20 + 20*index)
+            if debut_pause and x > debut_pause and x < fin_pause:
+                x = fin_pause
+                debut += fin_pause - debut_pause - (60 / BASE_GRANULARITY)
             
         
 class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
@@ -667,6 +702,8 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
         # dessin de l'échelle
         affichage_min = int(creche.affichage_min * (60 / BASE_GRANULARITY))
         affichage_max = int(creche.affichage_max * (60 / BASE_GRANULARITY))
+        debut_pause = int(creche.debut_pause * (60 / BASE_GRANULARITY))
+        fin_pause = int(creche.fin_pause * (60 / BASE_GRANULARITY))
         if affichage_min % (creche.granularite / BASE_GRANULARITY):
             heure = affichage_min + (creche.granularite / BASE_GRANULARITY) - affichage_min % (creche.granularite / BASE_GRANULARITY)
         else:
@@ -682,4 +719,8 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
             else:
                 dc.DrawLine(x, 20, x, 15)
             heure += creche.granularite / BASE_GRANULARITY
+            if debut_pause and heure > debut_pause and heure < fin_pause:
+                heure = fin_pause
+                affichage_min += fin_pause - debut_pause - (60 / BASE_GRANULARITY)
+                 
         dc.EndDrawing()
