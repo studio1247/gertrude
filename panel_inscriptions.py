@@ -84,6 +84,10 @@ class FraisAccueilPanel(wx.Panel):
         self.contrat_button = wx.Button(self, -1, u"Générer le contrat")
         sizer1.Add(self.contrat_button, 0, wx.LEFT, 5)
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationContrat, self.contrat_button)
+        if IsTemplateFile("Avenant contrat accueil.odt"):
+            self.avenant_button = wx.Button(self, -1, u"Générer un avenant")
+            sizer1.Add(self.avenant_button, 0, wx.LEFT, 5)
+            self.Bind(wx.EVT_BUTTON, self.EvtGenerationAvenant, self.avenant_button)
         self.sizer.Add(sizer1, 0, wx.ALL, 5)
         self.html_window = wx.html.HtmlWindow(self, style=wx.SUNKEN_BORDER)
         self.sizer.Add(self.html_window, 1, wx.EXPAND|wx.ALL-wx.TOP, 5)
@@ -174,7 +178,8 @@ class FraisAccueilPanel(wx.Panel):
     def EvtGenerationContrat(self, evt):
         DocumentDialog(self, ContratAccueilModifications(self.inscrit, self.current_cotisation[0])).ShowModal()
 
-
+    def EvtGenerationAvenant(self, evt):
+        DocumentDialog(self, ContratAccueilModifications(self.inscrit, self.current_cotisation[0], avenant=True)).ShowModal()
             
 wildcard = "PNG (*.png)|*.png|"     \
            "BMP (*.pmp)|*.bmp|"     \

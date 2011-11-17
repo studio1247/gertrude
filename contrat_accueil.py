@@ -154,19 +154,23 @@ class DocumentAccueilModifications(object):
             return result        
 
 class ContratAccueilModifications(DocumentAccueilModifications):
-    def __init__(self, who, date):
+    def __init__(self, who, date, avenant=False):
         DocumentAccueilModifications.__init__(self, who, date)
         self.inscription = who.GetInscription(date)
         self.multi = False
-        if self.inscription.mode == MODE_TEMPS_PARTIEL and IsTemplateFile("Contrat accueil temps partiel.odt"):
-            self.template = "Contrat accueil temps partiel.odt"
-        elif self.inscription.mode == MODE_FORFAIT_HORAIRE and IsTemplateFile("Contrat accueil forfait mensuel.odt"):
-            self.template = "Contrat accueil forfait mensuel.odt"
-        elif self.inscription.mode == MODE_HALTE_GARDERIE and IsTemplateFile("Contrat accueil halte garderie.odt"):
-            self.template = "Contrat accueil halte garderie.odt"
+        if avenant and IsTemplateFile("Avenant contrat accueil.odt"):
+            self.template = "Avenant contrat accueil.odt"
+            self.default_output = u"Avenant contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
         else:
-            self.template = 'Contrat accueil.odt'
-        self.default_output = u"Contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
+            if self.inscription.mode == MODE_TEMPS_PARTIEL and IsTemplateFile("Contrat accueil temps partiel.odt"):
+                self.template = "Contrat accueil temps partiel.odt"
+            elif self.inscription.mode == MODE_FORFAIT_HORAIRE and IsTemplateFile("Contrat accueil forfait mensuel.odt"):
+                self.template = "Contrat accueil forfait mensuel.odt"
+            elif self.inscription.mode == MODE_HALTE_GARDERIE and IsTemplateFile("Contrat accueil halte garderie.odt"):
+                self.template = "Contrat accueil halte garderie.odt"
+            else:
+                self.template = 'Contrat accueil.odt'
+            self.default_output = u"Contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
 
     def execute(self, filename, dom):
         if filename != 'content.xml':
