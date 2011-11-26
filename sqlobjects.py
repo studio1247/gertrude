@@ -1216,6 +1216,9 @@ class Inscrit(object):
                         date_fin_periode = inscription.fin
                     else:
                         date_fin_periode = datetime.date.max
+                    if (date_fin_periode < date_debut_periode):
+                        print "Periode incorrecte pour %s %s:" % (self.prenom, self.nom), date_debut_periode, date_fin_periode
+                        continue
                     if ((date_debut >= date_debut_periode and date_debut <= date_fin_periode) or 
                         (date_fin >= date_debut_periode and date_fin <= date_fin_periode) or
                         (date_debut < date_debut_periode and date_fin > date_fin_periode)):
