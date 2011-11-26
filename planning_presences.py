@@ -133,6 +133,7 @@ class PlanningModifications(object):
                 table.removeChild(ligne_template)
             template.parentNode.removeChild(template)
         elif self.metas["Format"] == 3:
+            # Mon petit bijou
             # lecture des couleurs
             couleurs = {}
             for i, inscrit in enumerate(creche.inscrits):
@@ -172,7 +173,43 @@ class PlanningModifications(object):
                 table.removeChild(template)               
                 date += datetime.timedelta(1)
                 jour += 1                
-        
+        elif self.metas["Format"] == 4:
+            # Garderie Ribambelle
+            fin = self.debut + datetime.timedelta(5)
+            template = lignes[4]
+            total_template = lignes[5]
+            inscriptions = GetInscriptions(self.debut, fin)
+            for inscription in inscriptions:
+                inscrit = inscription.inscrit
+                row = template.cloneNode(1)
+                date = self.debut
+                cell = 0
+                tranches = [(creche.ouverture, 12), (14, creche.fermeture)]
+                while date < fin:
+                    if date in inscrit.journees:
+                        journee = inscrit.journees[date]
+                    else:
+                        journee = inscrit.getReferenceDayCopy(date)
+                    for t in range(2):
+                        cell += 1
+                        if journee and IsPresentDuringTranche(journee, tranches[t][0]*12, tranches[t][1]*12):
+                            ReplaceFields(GetCell(row, cell), [('p', 1)])
+                        else:
+                            ReplaceFields(GetCell(row, cell), [('p', '')])
+                    date += datetime.timedelta(1)    
+                table.insertBefore(row, template)
+                ReplaceTextFields(GetCell(row, 0), GetInscritFields(inscription.inscrit))
+
+            table.removeChild(template)
+            
+            cellules = total_template.getElementsByTagName("table:table-cell")
+            for i in range(cellules.length):
+                cellule = cellules.item(i)
+                if cellule.hasAttribute('table:formula'):
+                    formule = cellule.getAttribute('table:formula')
+                    formule = formule.replace(':6', '%d' % (4+len(inscriptions)))
+                    cellule.setAttribute('table:formula', formule)    
+                           
         #print dom.toprettyxml()
         return None
 
