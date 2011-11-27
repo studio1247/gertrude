@@ -242,7 +242,7 @@ class PlanningDetailleModifications(object):
                     continue
                 if weekday == 0:
                     cell += 1
-                print date
+                
                 if date in inscrit.journees:
                     journee = inscrit.journees[date]
                 else:
@@ -250,7 +250,6 @@ class PlanningDetailleModifications(object):
                 for t in range(2):
                     if journee and IsPresentDuringTranche(journee, tranches[t][0]*12, tranches[t][1]*12):
                         heures = HeuresTranche(journee, tranches[t][0]*12, tranches[t][1]*12)
-                        print heures
                         ReplaceFields(GetCell(row, cell), [('p', heures)])
                     cell += 1
                 date += datetime.timedelta(1)    
