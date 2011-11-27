@@ -221,7 +221,7 @@ class PlanningDetailleModifications(object):
                 numero += 1
             
         inscriptions = GetInscriptions(debut, fin)
-        for inscription in inscriptions:
+        for index, inscription in enumerate(inscriptions):
             inscrit = inscription.inscrit
             row = template.cloneNode(1)
             # print row.toprettyxml()
@@ -256,6 +256,13 @@ class PlanningDetailleModifications(object):
             table.insertBefore(row, template)
             ReplaceTextFields(GetCell(row, 0), GetInscritFields(inscription.inscrit))
             ReplaceFields(row, [('p', '')])
+            cellules = row.getElementsByTagName("table:table-cell")
+            for i in range(cellules.length):
+                cellule = cellules.item(i)
+                if cellule.hasAttribute('table:formula'):
+                    formule = cellule.getAttribute('table:formula')
+                    formule = formule.replace('7', '%d' % (7+index))
+                    cellule.setAttribute('table:formula', formule)
 
         table.removeChild(template)
 
@@ -265,8 +272,8 @@ class PlanningDetailleModifications(object):
                 cellule = cellules.item(i)
                 if cellule.hasAttribute('table:formula'):
                     formule = cellule.getAttribute('table:formula')
-                    formule = formule.replace(':8', '%d' % (6+len(inscriptions)))
-                    formule = formule.replace(':9', '%d' % (7+len(inscriptions)))
+                    formule = formule.replace('9', '%d' % (7+len(inscriptions)))
+                    formule = formule.replace('8', '%d' % (6+len(inscriptions)))
                     cellule.setAttribute('table:formula', formule)
                     
         return None    

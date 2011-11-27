@@ -207,7 +207,7 @@ class PlanningModifications(object):
                 cellule = cellules.item(i)
                 if cellule.hasAttribute('table:formula'):
                     formule = cellule.getAttribute('table:formula')
-                    formule = formule.replace(':6', '%d' % (4+len(inscriptions)))
+                    formule = formule.replace('6', '%d' % (4+len(inscriptions)))
                     cellule.setAttribute('table:formula', formule)
                        
         #print dom.toprettyxml()
