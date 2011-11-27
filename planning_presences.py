@@ -208,8 +208,8 @@ class PlanningModifications(object):
                 if cellule.hasAttribute('table:formula'):
                     formule = cellule.getAttribute('table:formula')
                     formule = formule.replace(':6', '%d' % (4+len(inscriptions)))
-                    cellule.setAttribute('table:formula', formule)    
-                           
+                    cellule.setAttribute('table:formula', formule)
+                       
         #print dom.toprettyxml()
         return None
 
@@ -262,7 +262,14 @@ class PlanningModifications(object):
                         else:
                             ReplaceFields([cellule], [('p', '')])
 
-
+class PlanningDetailleModifications(object):
+    def __init__(self, debut):
+        self.multi = False
+        self.template = 'Planning.ods'
+        self.default_output = "Planning %s.ods" % str(debut)
+        self.debut = debut
+        self.metas = {"Format": 1, "Periodicite": 11}
+        
 if __name__ == '__main__':
     import os
     from config import *

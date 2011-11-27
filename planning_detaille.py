@@ -31,16 +31,36 @@ lines_max = 25
 class PlanningDetailleModifications(object):
     def __init__(self, periode):
         self.multi = False
-        self.template = 'Planning detaille.odg'
         self.start, self.end = periode
-        if self.start == self.end:
-            self.default_output = "Planning presences %s.odg" % GetDateString(self.start, weekday=False)
+        if IsTemplateFile("Planning detaille.ods"):
+            self.template = 'Planning detaille.ods'
+            self.default_output = "Planning detaille %s %d.ods" % (months[self.start.month-1], self.start.year)
         else:
-            self.default_output = "Planning presences %s-%s.odg" % (GetDateString(self.start, weekday=False), GetDateString(self.end, weekday=False))
+            self.template = 'Planning detaille.odg'
+            if self.start == self.end:
+                self.default_output = "Planning presences %s.odg" % GetDateString(self.start, weekday=False)
+            else:
+                self.default_output = "Planning presences %s-%s.odg" % (GetDateString(self.start, weekday=False), GetDateString(self.end, weekday=False))
         self.errors = {}
 
-    def execute(self, filename, dom):       
-        if filename == 'content.xml':
+    def execute(self, filename, dom):
+        if filename == 'meta.xml':
+            metas = dom.getElementsByTagName('meta:user-defined')
+            for meta in metas:
+                # print meta.toprettyxml()
+                name = meta.getAttribute('meta:name')
+                value = meta.childNodes[0].wholeText
+                if meta.getAttribute('meta:value-type') == 'float':
+                    self.metas[name] = float(value)
+                else:
+                    self.metas[name] = value
+            return None
+        elif filename != 'content.xml':
+            return None
+        
+        if IsTemplateFile("Planning detaille.ods"):
+            return self.ExecuteTemplateDetaille(filename, dom)
+        else:
             affichage_min = int(creche.affichage_min * 60 / BASE_GRANULARITY)
             affichage_max = int(creche.affichage_max * 60 / BASE_GRANULARITY)
             step = (21.0-left-right-labels_width) / (affichage_max - affichage_min)
@@ -172,6 +192,85 @@ class PlanningDetailleModifications(object):
                 day += datetime.timedelta(1)
             
         return None
+    
+    def ExecuteTemplateDetaille(self, filename, dom):
+        # Garderie Ribambelle, planning detaille
+
+        debut, fin = getMonthStart(self.start), getMonthEnd(self.start)
+        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
+        table = spreadsheet.getElementsByTagName("table:table")[0]
+        lignes = table.getElementsByTagName("table:table-row")
+
+        # Les titres des pages
+        ReplaceFields(lignes, [('mois', months[self.start.month-1]),
+                               ('annee', self.start.year)])
+
+        template = lignes[6]
+        semaines_template = lignes[3]
+        total_template = lignes[7]
+        montant_template = lignes[9]
+        
+        c = 0
+        numero = debut.isocalendar()[1]
+        while 1:
+            cell = GetCell(semaines_template, c)
+            if cell is None:
+                break
+            c += 1
+            if ReplaceFields(cell, [('numero-semaine', numero)]):
+                numero += 1
+            
+        inscriptions = GetInscriptions(debut, fin)
+        for inscription in inscriptions:
+            inscrit = inscription.inscrit
+            row = template.cloneNode(1)
+            # print row.toprettyxml()
+            date = debut
+            cell = 0
+            weekday = date.weekday()
+            if weekday == 6:
+                date += datetime.timedelta(1)
+            elif weekday == 5:
+                date += datetime.timedelta(2)
+            elif weekday > 0:
+                cell = weekday * 2 + 1
+            tranches = [(creche.ouverture, 12), (14, creche.fermeture)]
+            while date <= fin:
+                weekday = date.weekday()
+                if weekday == 2 or weekday >= 5:
+                    date += datetime.timedelta(1)
+                    continue
+                if weekday == 0:
+                    cell += 1
+                print date
+                if date in inscrit.journees:
+                    journee = inscrit.journees[date]
+                else:
+                    journee = inscrit.getReferenceDayCopy(date)
+                for t in range(2):
+                    if journee and IsPresentDuringTranche(journee, tranches[t][0]*12, tranches[t][1]*12):
+                        heures = HeuresTranche(journee, tranches[t][0]*12, tranches[t][1]*12)
+                        print heures
+                        ReplaceFields(GetCell(row, cell), [('p', heures)])
+                    cell += 1
+                date += datetime.timedelta(1)    
+            table.insertBefore(row, template)
+            ReplaceTextFields(GetCell(row, 0), GetInscritFields(inscription.inscrit))
+            ReplaceFields(row, [('p', '')])
+
+        table.removeChild(template)
+
+        for template in (total_template, montant_template):        
+            cellules = template.getElementsByTagName("table:table-cell")
+            for i in range(cellules.length):
+                cellule = cellules.item(i)
+                if cellule.hasAttribute('table:formula'):
+                    formule = cellule.getAttribute('table:formula')
+                    formule = formule.replace(':8', '%d' % (6+len(inscriptions)))
+                    formule = formule.replace(':9', '%d' % (7+len(inscriptions)))
+                    cellule.setAttribute('table:formula', formule)
+                    
+        return None    
 
 if __name__ == '__main__':
     import os
@@ -182,9 +281,9 @@ if __name__ == '__main__':
             
     today = datetime.date.today()
 
-    filename = 'planning-details-1.odg'
+    filename = 'planning-details-1.ods'
     try:
-        GenerateOODocument(PlanningDetailleModifications((datetime.date(2009, 2, 16), datetime.date(2009, 2, 20))), filename)
+        GenerateOODocument(PlanningDetailleModifications((datetime.date(2011, 9, 16), datetime.date(2009, 2, 20))), filename)
         print u'Fichier %s généré' % filename
     except CotisationException, e:
         print e.errors

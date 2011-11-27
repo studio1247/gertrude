@@ -107,10 +107,10 @@ def IsPresentDuringTranche(journee, debut, fin):
     return False
 
 def HeuresTranche(journee, debut, fin):
-    result = [0] * ((fin - debut) * (60 / BASE_GRANULARITY))
+    result = [0] * (24 * 60 / BASE_GRANULARITY)
     for start, end, value in journee.activites:
         if start < fin and end > debut and (not value & PREVISIONNEL or not value & CLOTURE):
-            for i in range(max(start, debut) * (60 / BASE_GRANULARITY), min(end, fin) * (60 / BASE_GRANULARITY)):
+            for i in range(max(start, debut), min(end, fin)):
                 result[i] = 1
     return float(sum(result) * BASE_GRANULARITY) / 60
 

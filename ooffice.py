@@ -179,7 +179,7 @@ def ReplaceTextFields(dom, fields):
                 except Exception, e:
                     print e
 
-def ReplaceFields(cellules, fields):          
+def ReplaceFields(cellules, fields):        
     evalFields(fields)
     
     # Si l'argument est une ligne ...
@@ -194,6 +194,8 @@ def ReplaceFields(cellules, fields):
         for node in nodes:
             cellules.extend(node.getElementsByTagName("table:table-cell"))
 
+    result = False
+    
     # Remplacement ...
     for cellule in cellules:
         formula = cellule.getAttribute("table:formula")
@@ -212,6 +214,7 @@ def ReplaceFields(cellules, fields):
                         for param, value, text in fields:
                             tag = '<%s>' % param
                             if tag in nodeText:
+                                result = True
                                 if value is None:
                                     nodeText = nodeText.replace(tag, '')
                                 elif isinstance(value, int) or isinstance(value, float):
@@ -232,6 +235,8 @@ def ReplaceFields(cellules, fields):
     
                         # print child.wholeText, '=>', text
                         child.replaceWholeText(nodeText)
+                        
+    return result
 
 def IncrementFormulas(cellules, row=0, column=0):
     formula_gure = re.compile("\[\.([A-Z]+)([0-9]+)\]")
