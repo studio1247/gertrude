@@ -44,18 +44,7 @@ class PlanningDetailleModifications(object):
         self.errors = {}
 
     def execute(self, filename, dom):
-        if filename == 'meta.xml':
-            metas = dom.getElementsByTagName('meta:user-defined')
-            for meta in metas:
-                # print meta.toprettyxml()
-                name = meta.getAttribute('meta:name')
-                value = meta.childNodes[0].wholeText
-                if meta.getAttribute('meta:value-type') == 'float':
-                    self.metas[name] = float(value)
-                else:
-                    self.metas[name] = value
-            return None
-        elif filename != 'content.xml':
+        if filename != 'content.xml':
             return None
         
         if IsTemplateFile("Planning detaille.ods"):
