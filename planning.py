@@ -79,7 +79,7 @@ class PlanningGridWindow(BufferedWindow):
         
     def SetLines(self, lines):
         self.lines = lines
-        self.SetMinSize((int((creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH), LINE_HEIGHT * len(self.lines)))
+        self.SetMinSize((int((creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH + 1), LINE_HEIGHT * len(self.lines) - 1))
        
     def UpdateLine(self, index):
         self.UpdateDrawing()
@@ -231,6 +231,8 @@ class PlanningGridWindow(BufferedWindow):
         
     def __get_pos(self, x, y):
         p = -1
+        if x > 0:
+            x -= 1
         l = int(creche.affichage_min * (60 / BASE_GRANULARITY) + (x / COLUMN_WIDTH))
         if creche.debut_pause and creche.fin_pause > creche.debut_pause:
             if l >= int(creche.debut_pause * (60 / BASE_GRANULARITY)):
