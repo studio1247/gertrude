@@ -458,6 +458,7 @@ def GetFactureFields(facture):
                 ('raison-deduction', facture.raison_deduction),
                 ('supplement-activites', facture.supplement_activites, FIELD_EUROS),
                 ('majoration', '%+.02f' % facture.majoration_mensuelle),
+                ('frais-inscription', '%+.02f' % facture.frais_inscription),
                 ('total', facture.total, FIELD_EUROS)]
     else:
         return [(label, '?') for label in [('mois', 'de-mois', 'de-mois-recap', 'date', 'numfact', 'montant-heure-garde', 'cotisation-mensuelle', 

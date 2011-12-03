@@ -63,7 +63,7 @@ class FactureFinMois(object):
                 error = u"La facture du mois " + GetDeMoisStr(debut.month-1) + " " + str(debut.year) + u" n'est pas clôturée"
                 raise CotisationException([error])
 
-        date = datetime.date(annee, mois, 1)
+        date = self.debut_recap
         while date.month == mois:
             if not (date in creche.jours_fermeture or date in inscrit.jours_conges):
                 jours_ouvres += 1
@@ -245,8 +245,13 @@ class FactureFinMois(object):
                     self.majoration_mensuelle -= tarif.valeur
                 else:
                     self.majoration_mensuelle += tarif.valeur
+                
+        self.frais_inscription = 0.0    
+        for inscription in self.inscrit.inscriptions:
+            if inscription.frais_inscription and inscription.debut and inscription.debut >= self.debut_recap and inscription.debut <= self.fin_recap:
+                self.frais_inscription += inscription.frais_inscription 
         
-        self.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction
+        self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction
         self.total_facture = self.total + self.report_cotisation_mensuelle
         
         if options & TRACES:
@@ -306,7 +311,7 @@ class FactureDebutMoisContrat(FactureDebutMois):
         self.supplement = self.facture_precedente.supplement
         self.deduction = self.facture_precedente.deduction
         self.supplement_activites = self.facture_precedente.supplement_activites
-        self.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction
+        self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction
 
 class FactureDebutMoisPrevisionnel(FactureDebutMois):
     def __init__(self, inscrit, annee, mois, options=0):
@@ -325,7 +330,7 @@ class FactureDebutMoisPrevisionnel(FactureDebutMois):
                 self.supplement_activites += self.facture_precedente.supplement_activites - facture_cloturee.supplement_activites            
         
         self.cotisation_mensuelle += self.report_cotisation_mensuelle
-        self.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction
+        self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction
 
     def Cloture(self, date=None):
         if not self.cloture:

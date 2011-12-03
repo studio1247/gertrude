@@ -176,10 +176,16 @@ class PlanningModifications(object):
         elif self.metas["Format"] == 4:
             # Garderie Ribambelle
             fin = self.debut + datetime.timedelta(5)
+            lignes_entete = lignes[0:5]
             template = lignes[4]
-            total_template = lignes[5]
+            separation = lignes[5]
+            total_template = lignes[6]
             inscriptions = GetInscriptions(self.debut, fin)
-            for inscription in inscriptions:
+            for index, inscription in enumerate(inscriptions):
+                if index != 0 and index % 24 == 0:
+                    for row in lignes_entete:
+                        table.insertBefore(row, total_template)
+                    
                 inscrit = inscription.inscrit
                 row = template.cloneNode(1)
                 date = self.debut

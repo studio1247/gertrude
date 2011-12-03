@@ -30,18 +30,23 @@ couleurs = { SUPPLEMENT: 'A2',
 class FactureModifications(object):
     def __init__(self, inscrits, periode):
         self.template = 'Facture mensuelle.odt'
+        self.multi = False
         self.inscrits = inscrits
         self.periode = periode
         if len(inscrits) > 1:
-            self.multi = True
-            self.default_output = u"Facture PRENOM NOM %s %d.odt" % (months[periode.month - 1], periode.year)
+            self.default_output = u"Factures %s %d.odt" % (months[periode.month - 1], periode.year)
         else:
-            self.multi = False
             who = inscrits[0]
             self.default_output = u"Facture %s %s %s %d.odt" % (who.prenom, who.nom, months[periode.month - 1], periode.year)
 
+        if IsTemplateFile("Facture mensuelle simple.odt"):
+            self.template = "Facture mensuelle simple.odt"
+            if len(inscrits) > 1:
+                self.multi = True
+                self.default_output = u"Facture <prenom> <nom> %s %d.odt" % (months[periode.month - 1], periode.year)
+
     def GetSimpleModifications(self, filename):
-        return [(filename.replace("PRENOM", inscrit.prenom).replace("NOM", inscrit.nom), FactureModifications([inscrit], self.periode)) for inscrit in self.inscrits]
+        return [(filename.replace("<prenom>", inscrit.prenom).replace("<nom>", inscrit.nom), FactureModifications([inscrit], self.periode)) for inscrit in self.inscrits]
     
     def execute(self, filename, dom):
         if filename != 'content.xml':
@@ -49,7 +54,7 @@ class FactureModifications(object):
 
         errors = {}
         
-        #print dom.toprettyxml()
+        # print dom.toprettyxml()
         doc = dom.getElementsByTagName("office:text")[0]
         templates = doc.childNodes[:]
         
@@ -76,7 +81,15 @@ class FactureModifications(object):
         
                 # Création d'un tableau de cells
                 for table in section.getElementsByTagName('table:table'):
-                    if table.getAttribute('table:name').startswith('Presences'):
+                    table_name = table.getAttribute('table:name')
+                    if table_name == 'Montants':
+                        rows = table.getElementsByTagName('table:table-row')
+                        if not facture.frais_inscription:
+                            for row in rows:
+                                if "Frais d'inscription" in row.toprettyxml():
+                                    table.removeChild(row)
+                                    break
+                    elif table_name.startswith('Presences'):
                         rows = table.getElementsByTagName('table:table-row')[1:]
                         cells_count = GetCellsCount(rows[0])
                         cells = []
