@@ -75,12 +75,11 @@ class PlanningGridWindow(BufferedWindow):
         
     def Disable(self, info):
         self.SetInfo(info)
-        self.lines = []
-        self.SetMinSize((int((creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH + 1), 400))
+        self.SetLines([])
         
     def SetLines(self, lines):
         self.lines = lines
-        self.SetMinSize((int((creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH + 1), LINE_HEIGHT * len(self.lines) - 1))
+        self.SetMinSize((int((creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH), LINE_HEIGHT * len(self.lines)))
        
     def UpdateLine(self, index):
         self.UpdateDrawing()
