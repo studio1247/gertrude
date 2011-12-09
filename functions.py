@@ -33,10 +33,17 @@ def GetYearEnd(date):
     return datetime.date(date.year, 12, 31)
 
 def GetDateMinus(date, years, months):
+    d = date.day
     if date.month > months:
-        return datetime.date(date.year-years, date.month-months, date.day)
+        y = date.year-years
+        m = date.month-months
     else:
-        return datetime.date(date.year-1-years, date.month+12-months, date.day)
+        y = date.year-1-years
+        m = date.month+12-months
+    end = getMonthEnd(datetime.date(y, m, 1))
+    if d > end.day:
+        d = end.day
+    return datetime.date(y, m, d)
                 
 def getMonthStart(date):
     return datetime.date(date.year, date.month, 1)
@@ -403,7 +410,7 @@ def GetActivitiesSummary(creche, lines):
 def GetCrecheFields(creche):
     return [('nom-creche', creche.nom),
             ('adresse-creche', creche.adresse),
-            ('code-postal-creche', str(creche.code_postal)),
+            ('code-postal-creche', "%.05d" % creche.code_postal),
             ('ville-creche', creche.ville),
             ('telephone-creche', creche.telephone),
             ('email-creche', creche.email),
@@ -422,7 +429,7 @@ def GetInscritFields(inscrit):
     return [('adresse', inscrit.adresse),
             ('prenom', inscrit.prenom),
             ('nom', inscrit.nom),
-            ('code-postal', str(inscrit.code_postal)),
+            ('code-postal', "%.05d" % inscrit.code_postal),
             ('ville', inscrit.ville),
             ('naissance', inscrit.naissance),
             ('age', GetAgeString(inscrit.naissance)),
