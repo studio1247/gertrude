@@ -176,15 +176,19 @@ class PlanningModifications(object):
         elif self.metas["Format"] == 4:
             # Garderie Ribambelle
             fin = self.debut + datetime.timedelta(5)
-            lignes_entete = lignes[0:5]
+            lignes_entete = lignes[0:6]
             template = lignes[4]
             separation = lignes[5]
             total_template = lignes[6]
             inscriptions = GetInscriptions(self.debut, fin)
             for index, inscription in enumerate(inscriptions):
                 if index != 0 and index % 24 == 0:
-                    for row in lignes_entete:
-                        table.insertBefore(row, total_template)
+                    for i, row in enumerate(lignes_entete):
+                        clone = row.cloneNode(1)
+                        table.insertBefore(clone, total_template)
+                        if i == 4:
+                            table.removeChild(template)
+                            template = clone
                     
                 inscrit = inscription.inscrit
                 row = template.cloneNode(1)
@@ -213,7 +217,7 @@ class PlanningModifications(object):
                 cellule = cellules.item(i)
                 if cellule.hasAttribute('table:formula'):
                     formule = cellule.getAttribute('table:formula')
-                    formule = formule.replace('6', '%d' % (4+len(inscriptions)))
+                    formule = formule.replace('6', '%d' % (5+len(inscriptions)+5*(len(inscriptions) / 24)))
                     cellule.setAttribute('table:formula', formule)
                        
         #print dom.toprettyxml()
