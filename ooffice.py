@@ -375,12 +375,13 @@ def save_current_document(filename):
     return 1
     
 def convert_to_pdf(filename, pdffilename):
+    # print filename, pdffilename
     if filename.endswith("ods"):
         filtername = "calc_pdf_Export"
     else:
         filtername = "writer_pdf_Export"
-    filename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(filename)).encode("latin-1"))])
-    pdffilename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(pdffilename)).encode("latin-1"))])
+    filename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(filename)).encode("utf8"))])
+    pdffilename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(pdffilename)).encode("utf8"))])
     StarDesktop, objServiceManager, corereflection = getOOoContext()
     document = StarDesktop.LoadComponentFromURL(filename, "_blank", 0,
         MakePropertyValues(objServiceManager,
@@ -515,11 +516,13 @@ class DocumentDialog(wx.Dialog):
         try:
             if self.modifications.multi:
                 errors = { }
-                for filename, modifs in self.modifications.GetSimpleModifications(self.oo_filename):
+                simple_modifications = self.modifications.GetSimpleModifications(self.oo_filename)
+                for i, (filename, modifs) in enumerate(simple_modifications):
+                    self.gauge.SetValue((100 * i) / len(simple_modifications))
                     if filename.endswith(".html"):
-                        errors.update(GenerateHtmlDocument(modifs, filename=filename, gauge=self.gauge))
+                        errors.update(GenerateHtmlDocument(modifs, filename=filename))
                     else:
-                        errors.update(GenerateOODocument(modifs, filename=filename, gauge=self.gauge))
+                        errors.update(GenerateOODocument(modifs, filename=filename))
                     if pdf:
                         f, e = os.path.splitext(filename)
                         convert_to_pdf(filename, f+".pdf")
