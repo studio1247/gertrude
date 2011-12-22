@@ -410,7 +410,7 @@ def GetActivitiesSummary(creche, lines):
 def GetCrecheFields(creche):
     return [('nom-creche', creche.nom),
             ('adresse-creche', creche.adresse),
-            ('code-postal-creche', "%.05d" % creche.code_postal),
+            ('code-postal-creche', GetCodePostal(creche)),
             ('ville-creche', creche.ville),
             ('telephone-creche', creche.telephone),
             ('email-creche', creche.email),
@@ -425,11 +425,17 @@ def GetTarifsHorairesFields(creche):
     else:
         return []
     
+def GetCodePostal(what):
+    try:
+        return "%.05d" % what.code_postal
+    except:
+        return ""
+    
 def GetInscritFields(inscrit):
     return [('adresse', inscrit.adresse),
             ('prenom', inscrit.prenom),
             ('nom', inscrit.nom),
-            ('code-postal', "%.05d" % inscrit.code_postal),
+            ('code-postal', GetCodePostal(inscrit)),
             ('ville', inscrit.ville),
             ('naissance', inscrit.naissance),
             ('age', GetAgeString(inscrit.naissance)),
