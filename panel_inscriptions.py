@@ -542,7 +542,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         sizer1.AddMany([(self.facturation_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.facturation_items[1], 0, wx.EXPAND)])
         sizer1.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_adaptation'), 0, wx.EXPAND)])
         self.duree_reference_choice = wx.Choice(self)
-        for item, data in [("1 semaine", 7), (u"2 semaines", 14), (u"3 semaines", 21), ("4 semaines", 28)]:
+        for item, data in [("1 semaine", 7), (u"2 semaines", 14), (u"3 semaines", 21), ("4 semaines", 28), ("5 semaines", 35)]:
             self.duree_reference_choice.Append(item, data)
         self.Bind(wx.EVT_CHOICE, self.onDureeReferenceChoice, self.duree_reference_choice)
         sizer1.AddMany([(wx.StaticText(self, -1, u"Durée de la période de référence :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.duree_reference_choice, 0, wx.EXPAND)])
