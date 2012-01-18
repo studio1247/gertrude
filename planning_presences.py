@@ -24,10 +24,11 @@ from ooffice import *
 
 
 class PlanningModifications(object):
-    def __init__(self, debut):
+    def __init__(self, site, debut):
         self.multi = False
         self.template = 'Planning.ods'
         self.default_output = "Planning %s.ods" % str(debut)
+        self.site = site
         self.debut = debut
         self.metas = {"Format": 1, "Periodicite": 11}
 
@@ -76,19 +77,19 @@ class PlanningModifications(object):
     #        nb_ad = max(2, len(indexes))
     
             # Les halte-garderie
-            indexes = GetInscritsByMode(self.debut, date_fin, MODE_HALTE_GARDERIE)
+            indexes = GetInscritsByMode(self.debut, date_fin, MODE_HALTE_GARDERIE, self.site)
             indexes = getTriParPrenomIndexes(indexes)
             self.printPresences(table, indexes, 11)
             nb_hg = max(2, len(indexes))
     
             # Les mi-temps
-            indexes = GetInscritsByMode(self.debut, date_fin, MODE_4_5|MODE_3_5)
+            indexes = GetInscritsByMode(self.debut, date_fin, MODE_4_5|MODE_3_5, self.site)
             indexes = getTriParPrenomIndexes(indexes)
             self.printPresences(table, indexes, 7)
             nb_45 = max(2, len(indexes))
     
             # Les plein-temps
-            indexes = GetInscritsByMode(self.debut, date_fin, MODE_5_5)
+            indexes = GetInscritsByMode(self.debut, date_fin, MODE_5_5, self.site)
             indexes = getTriParPrenomIndexes(indexes)
             self.printPresences(table, indexes, 3)
             nb_55 = max(2, len(indexes))
@@ -148,7 +149,7 @@ class PlanningModifications(object):
             jour = 0
             while date < fin:
                 template = lignes[4+3*jour]
-                lignes_presence = GetLines(date, creche.inscrits, presence=True)
+                lignes_presence = GetLines(self.site, date, creche.inscrits, presence=True)
                 for i, presence in enumerate(lignes_presence):
                     if i == 0:
                         row = lignes[3+3*jour]

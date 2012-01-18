@@ -21,9 +21,10 @@ from facture import *
 from ooffice import *
 
 class CoordonneesModifications(object):
-    def __init__(self, date):
+    def __init__(self, site, date):
         self.multi = False
         self.template = 'Coordonnees parents.odt'
+        self.site = site
         if date is None:
             self.date = today
         else:
@@ -50,7 +51,8 @@ class CoordonneesModifications(object):
                 template = table.getElementsByTagName('table:table-row')[1]
                 #print template.toprettyxml()
                 for inscrit in creche.inscrits:
-                    if inscrit.GetInscription(self.date):
+                    inscription = inscrit.GetInscription(self.date) 
+                    if inscription and (self.site == None or inscription.site == self.site):
                         line = template.cloneNode(1)
                         referents = [GetPrenomNom(referent) for referent in inscrit.referents]
                         parents = [GetPrenomNom(parent) for parent in inscrit.parents.values() if parent is not None]

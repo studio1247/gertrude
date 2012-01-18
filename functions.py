@@ -271,11 +271,11 @@ def GetParentsString(inscrit):
         else:
             return '%s %s et %s %s' % (maman.prenom, maman.nom, papa.prenom, papa.nom)
 
-def GetInscritsByMode(start, end, mode): # TODO pourquoi retourner les index
+def GetInscritsByMode(start, end, mode, site=None): # TODO pourquoi retourner les index
     result = []
     for i, inscrit in enumerate(creche.inscrits):
         for inscription in inscrit.GetInscriptions(start, end):
-            if inscription.mode & mode:
+            if inscription.mode & mode and (site is None or inscription.site == site):
                 result.append(i)
                 break
     return result
@@ -342,13 +342,13 @@ def GetInscrits(debut, fin, site=None):
     indexes = getPresentsIndexes(None, (debut, fin), site=site)
     return [creche.inscrits[i] for i in indexes]
 
-def GetLines(date, inscrits, presence=False):
+def GetLines(site, date, inscrits, presence=False):
     lines = []
     for inscrit in inscrits:
         if date in inscrit.jours_conges:
             continue           
         inscription = inscrit.GetInscription(date)
-        if inscription is not None:
+        if inscription and (site is None or inscription.site == site):
             # print inscrit.prenom, 
             if presence:
                 state = inscrit.getState(date)[0]

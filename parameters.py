@@ -33,8 +33,8 @@ def getWeekEnds(year):
 
 # Période de visualisation
 today = datetime.date.today()
-first_date = today - datetime.timedelta(12*30)
-last_date = today + datetime.timedelta(12*30)
+first_date = today - datetime.timedelta(24*30)
+last_date = today + datetime.timedelta(24*30)
 
 # Jours fériés
 jours_fermeture = []

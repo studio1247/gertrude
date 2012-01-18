@@ -29,8 +29,9 @@ line_height = 0.75
 lines_max = 25
     
 class PlanningDetailleModifications(object):
-    def __init__(self, periode):
+    def __init__(self, site, periode):
         self.multi = False
+        self.site = site
         self.start, self.end = periode
         if IsTemplateFile("Planning detaille.ods"):
             self.template = 'Planning detaille.ods'
@@ -70,7 +71,7 @@ class PlanningDetailleModifications(object):
                     day += datetime.timedelta(1)
                     continue
                 
-                lines = GetLines(day, creche.inscrits)
+                lines = GetLines(self.site, day, creche.inscrits)
                 pages_count = 1 + (len(lines) - 1) / lines_max
                 for page_index in range(pages_count):
                     lines_count = min(lines_max, len(lines)-page_index*lines_max)

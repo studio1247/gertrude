@@ -26,10 +26,11 @@ template_first_line = 4
 template_lines_count = 8
 
 class EtatsTrimestrielsModifications(object):
-    def __init__(self, annee):
+    def __init__(self, site, annee):
         self.multi = False
         self.template = 'Etats trimestriels.ods'
         self.default_output = "Etats trimestriels %d.ods" % annee
+        self.site = site
         self.annee = annee
         self.factures = {}
         self.errors = {}
@@ -65,7 +66,7 @@ class EtatsTrimestrielsModifications(object):
                     fin = datetime.date(self.annee, trimestre * 3 + 4, 1) - datetime.timedelta(1)
     
                 # On retire ceux qui ne sont pas inscrits pendant la periode qui nous interesse
-                indexes = getPresentsIndexes(global_indexes, (debut, fin))
+                indexes = getPresentsIndexes(global_indexes, (debut, fin), self.site)
     
                 table = template.cloneNode(1)
                 spreadsheet.appendChild(table)
@@ -145,10 +146,10 @@ class EtatsTrimestrielsModifications(object):
                     lignes = table.getElementsByTagName("table:table-row")
     
                     # Les inscrits en creche
-                    indexes = GetInscritsByMode(debut, fin, MODE_5_5|MODE_4_5|MODE_3_5)
+                    indexes = GetInscritsByMode(debut, fin, MODE_5_5|MODE_4_5|MODE_3_5, self.site)
                     self.Synthese(table, lignes, indexes, MODE_CRECHE, 'creche', 0)
                     # Les inscrits en halte-garderie
-                    indexes = GetInscritsByMode(debut, fin, MODE_HALTE_GARDERIE)
+                    indexes = GetInscritsByMode(debut, fin, MODE_HALTE_GARDERIE, self.site)
                     self.Synthese(table, lignes, indexes, MODE_HALTE_GARDERIE, 'halte', 6)
             else:
                 spreadsheet.removeChild(table)
@@ -254,5 +255,5 @@ if __name__ == '__main__':
     today = datetime.date.today()
 
     filename = 'etats_trimestriels_%d.ods' % (today.year - 1)
-    print GenerateOODocument(EtatsTrimestrielsModifications(today.year - 1), filename)
+    print GenerateOODocument(EtatsTrimestrielsModifications(None, today.year - 1), filename)
     print u'Fichier %s généré' % filename

@@ -93,7 +93,6 @@ class PlacesDisponiblesTab(AutoTab):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.current_site = 0
         
         # Les raccourcis pour semaine précédente / suivante
         self.previous_button = wx.Button(self, -1, '<', size=(20,0), style=wx.NO_BORDER)
@@ -446,11 +445,11 @@ class StatistiquesFrequentationTab(AutoTab):
         AutoTab.__init__(self, parent)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.sitechoice = wx.Choice(self)
         self.anneechoice = wx.Choice(self)
         for annee in range(first_date.year, last_date.year+1):
             self.anneechoice.Append(str(annee), annee)
         self.anneechoice.SetStringSelection(str(today.year))
-        self.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.anneechoice)
         self.periodechoice = wx.Choice(self)
         for index, month in enumerate(months):
             self.periodechoice.Append(month, [index])
@@ -460,8 +459,9 @@ class StatistiquesFrequentationTab(AutoTab):
         self.periodechoice.SetStringSelection(months[today.month-1])
         self.periodechoice.Append("----") # TODO changer ça 
         self.periodechoice.Append(u"Année complète", range(0, 12))
-        self.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.periodechoice)
-        sizer.AddMany([(self.anneechoice, 0, 0), (self.periodechoice, 0, wx.LEFT, 5)])
+        for choice in (self.sitechoice, self.anneechoice, self.periodechoice):
+            self.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, choice)
+        sizer.AddMany([(self.sitechoice, 0, 0, 0), (self.anneechoice, 0, wx.LEFT, 5), (self.periodechoice, 0, wx.LEFT, 5)])
         self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 10)
         
         self.message = wx.lib.expando.ExpandoTextCtrl(self)
@@ -491,14 +491,35 @@ class StatistiquesFrequentationTab(AutoTab):
         self.result_sizer.AddMany([(wx.StaticText(self, -1, u'Coefficient de remplissage :'), 0, 0), (self.coefficient_remplissage, 0, wx.EXPAND)])       
         self.sizer.Add(self.result_sizer, 0, wx.EXPAND|wx.ALL, 10)
         self.SetSizer(self.sizer)
+        self.UpdateContents()
         self.Layout()
         
     def UpdateContents(self):
+        if len(creche.sites) > 1:
+            self.sitechoice.Show(True)
+            site_selected = self.sitechoice.GetSelection()
+            self.sitechoice.Clear()
+            for site in creche.sites:
+                self.sitechoice.Append(site.nom, site)
+            if site_selected < 0 or site_selected >= self.sitechoice.GetCount():
+                site_selected = 0
+            self.sitechoice.SetSelection(site_selected)                
+        else:
+            self.sitechoice.Show(False)
         self.EvtPeriodeChoice(None)
         
     def EvtPeriodeChoice(self, evt):
+        if len(creche.sites) > 1:
+            current_site = self.sitechoice.GetSelection()
+            site = self.sitechoice.GetClientData(current_site)
+        else:
+            site = None
+
         annee = self.anneechoice.GetClientData(self.anneechoice.GetSelection())
         periode = self.periodechoice.GetClientData(self.periodechoice.GetSelection())
+        if periode is None:
+            return
+        
         heures_contractualisees = 0.0
         heures_realisees = 0.0
         heures_facturees = 0.0
@@ -513,7 +534,8 @@ class StatistiquesFrequentationTab(AutoTab):
             heures_accueil += GetHeuresAccueil(annee, mois+1)
             for inscrit in creche.inscrits:
                 try:
-                    if inscrit.GetInscriptions(debut, fin):
+                    inscriptions = inscrit.GetInscriptions(debut, fin)
+                    if inscriptions and (site is None or inscriptions[0].site == site):
                         facture = Facture(inscrit, annee, mois+1)
                         heures_contractualisees += facture.heures_contractualisees
                         heures_realisees += facture.heures_realisees
@@ -557,6 +579,9 @@ class RelevesTab(AutoTab):
         today = datetime.date.today()
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
+        self.site_choice = wx.Choice(self, -1)
+        self.sizer.Add(self.site_choice, 0, wx.TOP|wx.BOTTOM, 5)
+        
         # Les coordonnees des parents
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Coordonnées des parents'), wx.HORIZONTAL)
         self.coords_date = wx.TextCtrl(self)
@@ -635,20 +660,43 @@ class RelevesTab(AutoTab):
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationPlanningDetaille, button)
         box_sizer.AddMany([(self.detail_start_date, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5), (wx.StaticText(self, -1, "-"), 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5), (self.detail_end_date, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5), (button, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5)])
         self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
-        
+
+        self.UpdateContents()        
         self.SetSizer(self.sizer)
 
+    def UpdateContents(self):
+        if len(creche.sites) > 1:
+            self.site_choice.Show(True)
+            site_selected = self.site_choice.GetSelection()
+            self.site_choice.Clear()
+            for site in creche.sites:
+                self.site_choice.Append(site.nom, site)
+            if site_selected < 0 or site_selected >= self.site_choice.GetCount():
+                site_selected = 0
+            self.site_choice.SetSelection(site_selected)                
+        else:
+            self.site_choice.Show(False)
+    
+    def GetSelectedSite(self):
+        if len(creche.sites) > 1:
+            current_site = self.site_choice.GetSelection()
+            return self.site_choice.GetClientData(current_site)
+        else:
+            return None
+            
     def EvtGenerationCoordonnees(self, evt):
+        site = self.GetSelectedSite()
         date = str2date(self.coords_date.GetValue())
-        DocumentDialog(self, CoordonneesModifications(date)).ShowModal()
+        DocumentDialog(self, CoordonneesModifications(site, date)).ShowModal()
 
     def EvtGenerationEtatsInscriptions(self, evt):
         date = str2date(self.inscriptions_date.GetValue())
         DocumentDialog(self, EtatsInscriptionsModifications(date)).ShowModal()
 
     def EvtGenerationEtatsTrimestriels(self, evt):
+        site = self.GetSelectedSite()
         annee = self.choice.GetClientData(self.choice.GetSelection())
-        DocumentDialog(self, EtatsTrimestrielsModifications(annee)).ShowModal()
+        DocumentDialog(self, EtatsTrimestrielsModifications(site, annee)).ShowModal()
         
     def EvtGenerationRapportFrequentation(self, evt):
         annee = self.choice.GetClientData(self.choice.GetSelection())
@@ -659,15 +707,17 @@ class RelevesTab(AutoTab):
         DocumentDialog(self, SyntheseFinanciereModifications(annee)).ShowModal()
 
     def EvtGenerationPlanningPresences(self, evt):
+        site = self.GetSelectedSite()
         date = self.weekchoice.GetClientData(self.weekchoice.GetSelection())
-        DocumentDialog(self, PlanningModifications(date)).ShowModal()
+        DocumentDialog(self, PlanningModifications(site, date)).ShowModal()
             
     def EvtGenerationPlanningDetaille(self, evt):
+        site = self.GetSelectedSite()
         start = self.detail_start_date.GetValue()
         end = self.detail_end_date.GetValue()
         if end is None:
             end = start
-        DocumentDialog(self, PlanningDetailleModifications((start, end))).ShowModal()
+        DocumentDialog(self, PlanningDetailleModifications(site, (start, end))).ShowModal()
         
 class AlertesTab(AutoTab):
     def __init__(self, parent):
