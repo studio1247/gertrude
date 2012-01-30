@@ -68,6 +68,16 @@ def GetValue(node):
                 result += child.wholeText
     return result
 
+def SetValue(node, value):
+    if node.nodeName == "table:table-cell":
+        node.setAttribute("office:value", str(value))
+    text_nodes = node.getElementsByTagName("text:p") + node.getElementsByTagName("text:a")
+    for text_node in text_nodes:
+        for child in text_node.childNodes:
+            if child.nodeType == child.TEXT_NODE:
+                child.replaceWholeText(str(value))
+                break
+
 def GetRepeat(node):
     if node.hasAttribute("table:number-columns-repeated"):
         return int(node.getAttribute("table:number-columns-repeated"))
@@ -543,6 +553,8 @@ class DocumentDialog(wx.Dialog):
                     message += '\n  '.join(errors[label])
                 dlg = wx.MessageDialog(self, message, 'Message', wx.OK|wx.ICON_WARNING)
         except IOError:
+            print sys.exc_info()
+            
             dlg = wx.MessageDialog(self, u"Impossible de sauver le document. Peut-être est-il déjà ouvert ?", 'Erreur', wx.OK|wx.ICON_WARNING)
             dlg.ShowModal()
             dlg.Destroy()

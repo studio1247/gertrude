@@ -30,6 +30,7 @@ from coordonnees_parents import CoordonneesModifications
 from etats_trimestriels import EtatsTrimestrielsModifications
 from planning_detaille import PlanningDetailleModifications
 from etats_presence import EtatsPresenceModifications
+from etats_places import EtatsPlacesModifications
 from etats_inscriptions import EtatsInscriptionsModifications
 from rapport_frequentation import RapportFrequentationModifications
 from synthese_financiere import SyntheseFinanciereModifications
@@ -602,13 +603,24 @@ class RelevesTab(AutoTab):
 
         # Les releves trimestriels
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés trimestriels'), wx.HORIZONTAL)
-        self.choice = wx.Choice(self)
+        choice = wx.Choice(self)
         button = wx.Button(self, -1, u'Génération')
         for year in range(first_date.year, today.year + 1):
-            self.choice.Append(u'Année %d' % year, year)
-        self.choice.SetSelection(today.year - first_date.year)
+            choice.Append(u'Année %d' % year, year)
+        choice.SetSelection(today.year - first_date.year)
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationEtatsTrimestriels, button)
-        box_sizer.AddMany([(self.choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        box_sizer.AddMany([(choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+        
+        # Les etats des places
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Etats des places'), wx.HORIZONTAL)
+        choice = wx.Choice(self)
+        button = wx.Button(self, -1, u'Génération')
+        for year in range(first_date.year, today.year + 1):
+            choice.Append(u'Année %d' % year, year)
+        choice.SetSelection(today.year - first_date.year)
+        self.Bind(wx.EVT_BUTTON, self.EvtGenerationEtatsPlaces, button)
+        box_sizer.AddMany([(choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
         
         # Les rapports de fréquentation
@@ -697,6 +709,11 @@ class RelevesTab(AutoTab):
         site = self.GetSelectedSite()
         annee = self.choice.GetClientData(self.choice.GetSelection())
         DocumentDialog(self, EtatsTrimestrielsModifications(site, annee)).ShowModal()
+        
+    def EvtGenerationEtatsPlaces(self, evt):
+        site = self.GetSelectedSite()
+        annee = self.choice.GetClientData(self.choice.GetSelection())
+        DocumentDialog(self, EtatsPlacesModifications(site, annee)).ShowModal()
         
     def EvtGenerationRapportFrequentation(self, evt):
         annee = self.choice.GetClientData(self.choice.GetSelection())
