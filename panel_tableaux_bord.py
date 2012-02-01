@@ -702,8 +702,9 @@ class RelevesTab(AutoTab):
         DocumentDialog(self, CoordonneesModifications(site, date)).ShowModal()
 
     def EvtGenerationEtatsInscriptions(self, evt):
+        site = self.GetSelectedSite()
         date = str2date(self.inscriptions_date.GetValue())
-        DocumentDialog(self, EtatsInscriptionsModifications(date)).ShowModal()
+        DocumentDialog(self, EtatsInscriptionsModifications(site, date)).ShowModal()
 
     def EvtGenerationEtatsTrimestriels(self, evt):
         site = self.GetSelectedSite()

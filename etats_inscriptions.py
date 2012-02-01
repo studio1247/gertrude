@@ -21,9 +21,10 @@ from facture import *
 from ooffice import *
 
 class EtatsInscriptionsModifications(object):
-    def __init__(self, date):
+    def __init__(self, site, date):
         self.multi = False
         self.template = 'Etats inscriptions.ods'
+        self.site = site
         if date is None:
             self.date = today
         else:
@@ -48,7 +49,7 @@ class EtatsInscriptionsModifications(object):
         
         for inscrit in creche.inscrits:
             inscription = inscrit.GetInscription(self.date)
-            if inscription:
+            if inscription and (not self.site or inscription.site == self.site):
                 ligne = template.cloneNode(1)                        
                 fields = GetInscritFields(inscrit) + GetInscriptionFields(inscription)
                 ReplaceFields(ligne, fields)
