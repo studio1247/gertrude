@@ -217,7 +217,8 @@ class FactureFinMois(object):
                 # On ne met dans la cotisation mensuelle que les heures realisees des heures du contrat
                 self.cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_supplementaires) * cotisation.montant_heure_garde
             elif self.heures_contractualisees:
-                prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees   
+                prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees
+                prorata = (prorata * cotisation.jours_ouvres) / jours_ouvres
                 self.cotisation_mensuelle += prorata 
                 self.total_contractualise += prorata
         
