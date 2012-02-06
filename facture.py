@@ -113,13 +113,14 @@ class FactureFinMois(object):
                             premier_jour_maladie = tmp = date
                             nombre_jours_ouvres_maladie = 0
                             while tmp > inscrit.inscriptions[0].debut:
-                                if not tmp in creche.jours_fermeture:
-                                    nombre_jours_ouvres_maladie += 1
                                 tmp -= datetime.timedelta(1)
-                                state = inscrit.getState(tmp)[0]
+                                states = inscrit.getState(tmp)
+                                state = states[0]
                                 if state == MALADE:
                                     premier_jour_maladie = tmp
-                                else:
+                                    if not tmp in creche.jours_fermeture:
+                                        nombre_jours_ouvres_maladie += 1
+                                elif states != (ABSENT, 0, 0, 0):
                                     break
                             if creche.traitement_maladie == DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_OUVRES:
                                 nb_jours_maladie = nombre_jours_ouvres_maladie
