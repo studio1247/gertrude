@@ -76,7 +76,7 @@ class FactureModifications(object):
             
                 # D'abord le tableau des presences du mois
                 empty_cells = facture.debut_recap.weekday()
-                if empty_cells > 4:
+                if "Week-end" in creche.feries and empty_cells > 4:
                     empty_cells -= 7
         
                 # Création d'un tableau de cells
