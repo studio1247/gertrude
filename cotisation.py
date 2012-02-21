@@ -179,7 +179,10 @@ class Cotisation(object):
                 if options & TRACES: print ' heures mensuelles : %f (%f)' % (self.heures_mois, self.heures_periode / self.nombre_factures)
             else:
                 # 47 pour Bois le roi
-                self.heures_periode = (52 - self.inscription.semaines_conges) * self.heures_semaine
+                if self.inscription.semaines_conges:
+                    self.heures_periode = (52 - self.inscription.semaines_conges) * self.heures_semaine
+                else:
+                    self.heures_periode = 52 * self.heures_semaine
                 self.heures_mois = self.heures_periode / 12
                 self.nombre_factures = 12 - len(creche.mois_sans_facture)
 
