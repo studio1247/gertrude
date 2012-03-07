@@ -241,9 +241,9 @@ class Cotisation(object):
                     tranche = self.enfants_a_charge
                     if inscrit.handicap:
                         tranche += 1
-                    if tranche > 5:
+                    if tranche >= 4:
                         self.taux_effort = 0.02
-                    elif tranche > 2:
+                    elif tranche == 3:
                         self.taux_effort = 0.03
                     elif tranche == 2:
                         self.taux_effort = 0.04
