@@ -730,8 +730,8 @@ class Creche(object):
             sql_connection.execute('UPDATE CRECHE SET formule_taux_horaire=?', (str(self.formule_taux_horaire),))
         self.conversion_formule_taux_horaire = self.GetFormuleConversion(self.formule_taux_horaire)
     
-    def eval_taux_horaire(self, mode, revenus, enfants, jours):
-        return self.EvalFormule(self.conversion_formule_taux_horaire, mode, revenus, enfants, jours)
+    def eval_taux_horaire(self, mode, revenus, enfants, jours, heures):
+        return self.EvalFormule(self.conversion_formule_taux_horaire, mode, revenus, enfants, jours, heures)
     
     def formule_taux_horaire_needs_revenus(self):
         if self.mode_facturation in (FACTURATION_FORFAIT_10H, FACTURATION_PSU, FACTURATION_PSU_TAUX_PERSONNALISES):
@@ -763,7 +763,7 @@ class Creche(object):
         else:
             return None
         
-    def EvalFormule(self, formule, mode, revenus, enfants, jours):
+    def EvalFormule(self, formule, mode, revenus, enfants, jours, heures):
         hg = MODE_HALTE_GARDERIE
         creche = MODE_CRECHE
         forfait = MODE_FORFAIT_HORAIRE
@@ -783,6 +783,7 @@ class Creche(object):
         mode = hg
         revenus = 20000
         jours = 5
+        heures = 60
         enfants = 1
         try:
             test = eval(formule[index][0])
@@ -796,8 +797,8 @@ class Creche(object):
             sql_connection.execute('UPDATE CRECHE SET formule_taux_effort=?', (str(self.formule_taux_effort),))
         self.conversion_formule_taux_effort = self.GetFormuleConversion(self.formule_taux_effort)
     
-    def eval_taux_effort(self, mode, revenus, enfants, jours):
-        return self.EvalFormule(self.conversion_formule_taux_effort, mode, revenus, enfants, jours)
+    def eval_taux_effort(self, mode, revenus, enfants, jours, heures):
+        return self.EvalFormule(self.conversion_formule_taux_effort, mode, revenus, enfants, jours, heures)
         
     def test_formule_taux_effort(self, index):
         return self.TestFormule(self.conversion_formule_taux_effort, index)
