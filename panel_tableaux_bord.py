@@ -456,7 +456,7 @@ class StatistiquesFrequentationTab(AutoTab):
             self.periodechoice.Append(month, [index])
         self.periodechoice.Append("----") # TODO changer ça 
         for index, trimestre in enumerate(trimestres):
-            self.periodechoice.Append("%s trimestre" % trimestre, [3*index, 3*index+1, 3*index+2])
+            self.periodechoice.Append(u"%s trimestre" % trimestre, [3*index, 3*index+1, 3*index+2])
         self.periodechoice.SetStringSelection(months[today.month-1])
         self.periodechoice.Append("----") # TODO changer ça 
         self.periodechoice.Append(u"Année complète", range(0, 12))
@@ -548,7 +548,7 @@ class StatistiquesFrequentationTab(AutoTab):
                     erreurs.append((inscrit, e))
                               
         if erreurs:
-            msg = "\n\n".join([u"%s %s:\n%s" % (inscrit.prenom, inscrit.nom, str(erreur)) for inscrit, erreur in erreurs])
+            msg = u"\n\n".join([u"%s %s:\n%s" % (inscrit.prenom, inscrit.nom, unicode(erreur)) for inscrit, erreur in erreurs])
             self.message.SetValue(msg)
             self.message.Show(True)
             self.presences_contrat_heures.SetValue("-")
