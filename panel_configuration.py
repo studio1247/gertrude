@@ -23,6 +23,7 @@ from sqlobjects import *
 import wx
 
 types_creche = [(u"Parental", TYPE_PARENTAL),
+                (u"Familial", TYPE_FAMILIAL),
                 (u"Associatif", TYPE_ASSOCIATIF),
                 (u"Municipal", TYPE_MUNICIPAL),
                 (u"Micro-crèche", TYPE_MICRO_CRECHE),
