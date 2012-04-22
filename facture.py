@@ -22,6 +22,7 @@ from cotisation import *
 class FactureFinMois(object):
     def __init__(self, inscrit, annee, mois, options=0):
         self.inscrit = inscrit
+        self.site = None
         self.annee = annee
         self.mois = mois
         self.debut_recap = datetime.date(annee, mois, 1)
@@ -49,6 +50,12 @@ class FactureFinMois(object):
         self.previsionnel = False
         self.cloture = False
         self.montant_heure_garde = 0.0
+        if self.debut_recap in inscrit.corrections:
+            self.correction = inscrit.corrections[self.debut_recap].valeur
+            self.libelle_correction = inscrit.corrections[self.debut_recap].libelle
+        else:
+            self.correction = 0.0
+            self.libelle_correction = ""
 
         jours_ouvres = 0
         jours_fermeture = 0
@@ -69,6 +76,7 @@ class FactureFinMois(object):
                 jours_ouvres += 1
                 inscription = inscrit.GetInscription(date)
                 if inscription:
+                    self.site = inscription.site
                     state, heures_reference, heures_realisees, heures_supplementaires = inscrit.getState(date)
                     
                     if last_cotisation and last_cotisation.Include(date):
@@ -253,7 +261,7 @@ class FactureFinMois(object):
             if inscription.frais_inscription and inscription.debut and inscription.debut >= self.debut_recap and inscription.debut <= self.fin_recap:
                 self.frais_inscription += inscription.frais_inscription 
         
-        self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction
+        self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction + self.correction
         self.total_facture = self.total + self.report_cotisation_mensuelle
         
         if options & TRACES:
@@ -313,7 +321,7 @@ class FactureDebutMoisContrat(FactureDebutMois):
         self.supplement = self.facture_precedente.supplement
         self.deduction = self.facture_precedente.deduction
         self.supplement_activites = self.facture_precedente.supplement_activites
-        self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction
+        self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction + self.correction
 
 class FactureDebutMoisPrevisionnel(FactureDebutMois):
     def __init__(self, inscrit, annee, mois, options=0):
@@ -332,7 +340,7 @@ class FactureDebutMoisPrevisionnel(FactureDebutMois):
                 self.supplement_activites += self.facture_precedente.supplement_activites - facture_cloturee.supplement_activites            
         
         self.cotisation_mensuelle += self.report_cotisation_mensuelle
-        self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction
+        self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction + self.corr
 
     def Cloture(self, date=None):
         if not self.cloture:

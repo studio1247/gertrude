@@ -635,6 +635,8 @@ class Creche(object):
         self.presences_supplementaires = True
         self.modes_inscription = MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5
         self.email = ''
+        self.smtp_server = ''
+        self.caf_email = ''
         self.type = TYPE_PARENTAL
         self.capacite = 0
         self.facturation_periode_adaptation = PERIODE_ADAPTATION_FACTUREE_NORMALEMENT
@@ -822,7 +824,7 @@ class Creche(object):
         
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'debut_pause', 'fin_pause', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'cloture_factures', 'arrondi_heures', 'gestion_maladie_hospitalisation', 'tri_planning'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'debut_pause', 'fin_pause', 'affichage_min', 'affichage_max', 'granularite', 'mois_payes', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'cloture_factures', 'arrondi_heures', 'gestion_maladie_hospitalisation', 'tri_planning', 'smtp_server', 'caf_email'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
@@ -1086,6 +1088,37 @@ class Frere_Soeur(object):
             print 'update', name
             sql_connection.execute('UPDATE FRATRIES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
+class Correction(SQLObject):
+    table = "CORRECTIONS"
+    
+    def __init__(self, inscrit, date, valeur=0, libelle="", idx=None):
+        self.idx = idx
+        self.inscrit = inscrit
+        self.date = date
+        self.valeur = valeur
+        self.libelle = libelle
+
+    def create(self):
+        print 'nouvelle correction'
+        result = sql_connection.execute('INSERT INTO CORRECTIONS (idx, inscrit, date, valeur, libelle) VALUES (NULL,?,?,?,?)', (self.inscrit.idx, self.date, self.valeur, self.libelle))
+        self.idx = result.lastrowid
+
+    def delete(self):
+        print 'suppression correction'
+        sql_connection.execute('DELETE FROM CORRECTIONS WHERE idx=?', (self.idx,))
+        self.idx = None
+
+    def __setattr__(self, name, value):
+        self.__dict__[name] = value
+        if name in ['valeur', 'libelle']:
+            if self.idx and (self.valeur or self.libelle):
+                print 'update', name
+                sql_connection.execute('UPDATE CORRECTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))
+            elif value and not self.idx:
+                self.create()
+            elif self.idx and not self.valeur and not self.libelle:
+                self.delete()
+
 class Inscrit(object):
     def __init__(self, creation=True):
         self.idx = None
@@ -1112,6 +1145,7 @@ class Inscrit(object):
         self.journees = {}
         self.jours_conges = {}
         self.factures_cloturees = {}
+        self.corrections = {}
 
         if creation:
             self.create()

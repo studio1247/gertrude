@@ -29,6 +29,7 @@ class AppelCotisationsModifications(object):
         self.debut, self.fin = date, getMonthEnd(date)
         self.options = options
         self.gauge = None
+        self.email = None
         
     def execute(self, filename, dom):
         if filename != 'content.xml':

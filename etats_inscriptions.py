@@ -31,6 +31,7 @@ class EtatsInscriptionsModifications(object):
             self.date = date
         self.default_output = u"Etats inscriptions %s.ods" % GetDateString(self.date, weekday=False)
         self.gauge = None
+        self.email = None
         
     def execute(self, filename, dom):
         if filename != 'content.xml':

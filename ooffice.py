@@ -19,6 +19,11 @@ import datetime, time
 import sys, os, zipfile
 import xml.dom.minidom
 import re, urllib
+import smtplib
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import wx, wx.lib.filebrowsebutton
 import traceback
 import unicodedata
@@ -487,10 +492,24 @@ class DocumentDialog(wx.Dialog):
             sizer.Add(self.sauver_ouvrir, 0, wx.LEFT|wx.RIGHT, 5)
         else:
             self.sauver_ouvrir = None
-#        self.ok = wx.Button(self, wx.ID_OK)
+
         self.sauver = wx.Button(self, -1, u"Sauver")
         self.Bind(wx.EVT_BUTTON, self.onSauver, self.sauver)
         sizer.Add(self.sauver, 0, wx.RIGHT, 5)
+        
+        if modifications.email:
+            self.adresse_envoi = None
+            self.sauver_envoyer = wx.Button(self, -1, u"Sauver et envoyer par email")
+            self.Bind(wx.EVT_BUTTON, self.onSauverEnvoyer, self.sauver_envoyer)
+            sizer.Add(self.sauver_envoyer, 0, wx.LEFT|wx.RIGHT, 5)
+            if not modifications.multi and not modifications.email_to:
+                self.sauver_envoyer.Disable()
+                
+            if creche.caf_email:
+                self.sauver_envoyer = wx.Button(self, -1, u"Sauver et envoyer par email à la CAF")
+                self.Bind(wx.EVT_BUTTON, self.onSauverEnvoyerCAF, self.sauver_envoyer)
+                sizer.Add(self.sauver_envoyer, 0, wx.LEFT|wx.RIGHT, 5)
+
         #btnsizer.Add(self.ok)
         btn = wx.Button(self, wx.ID_CANCEL)
         sizer.Add(btn, 0, wx.RIGHT, 5)
@@ -578,7 +597,59 @@ class DocumentDialog(wx.Dialog):
             if not result:
                 dlg = wx.MessageDialog(self, "Impossible d'ouvrir le document", 'Erreur', wx.OK|wx.ICON_WARNING)
                 dlg.ShowModal()
-                dlg.Destroy()               
+                dlg.Destroy()
+                
+    def onSauverEnvoyer(self, event):
+        self.onSauver(event)
+        if self.document_generated:
+            if self.modifications.multi:
+                simple_modifications = self.modifications.GetSimpleModifications(self.oo_filename)
+                for filename, modifs in simple_modifications:
+                    if pdf:
+                        oo_filename = filename
+                        filename, e = os.path.splitext(oo_filename)
+                        filename += ".pdf"
+                        convert_to_pdf(oo_filename, filename)
+                        os.remove(oo_filename)
+                    self.send_document(filename, GetTemplateFile(modifs.email_text), modifs.email_subject, modifs.email_to)
+            else:
+                self.send_document(self.filename, GetTemplateFile(self.modifications.email_text), self.modifications.email_subject, self.modifications.email_to)
+        
+    def onSauverEnvoyerCAF(self, event):
+        self.adresse_envoi = creche.caf_email
+        self.onSauverEnvoyer(event)
+        self.adresse_envoi = None
+
+    def send_document(self, filename, text, subject, to):
+        COMMASPACE = ', '
+    
+        if self.adresse_envoi:
+            to = [self.adresse_envoi]
+        
+        # Create the container (outer) email message.
+        msg = MIMEMultipart()
+        msg['Subject'] = subject
+        msg['From'] = creche.email
+        msg['To'] = COMMASPACE.join(to)
+    
+        fp = open(text)
+        doc = MIMEText(fp.read())
+        fp.close()
+        msg.attach(doc)
+        
+        fp = open(filename, 'rb')
+        doc = MIMEBase('application', 'octet-stream')
+        doc.set_payload(fp.read())
+        encoders.encode_base64(doc)
+        doc.add_header('Content-Disposition', 'attachment', filename=os.path.split(filename)[1])
+        fp.close()
+        msg.attach(doc)
+    
+        # Send the email via our own SMTP server.
+        s = smtplib.SMTP(creche.smtp_server)
+        s.sendmail(creche.email, to, msg.as_string())
+        s.quit()
+                
     
 if __name__ == '__main__':
     save_current_document('./document.odt')

@@ -43,6 +43,7 @@ class PlanningDetailleModifications(object):
             else:
                 self.default_output = "Planning presences %s-%s.odg" % (GetDateString(self.start, weekday=False), GetDateString(self.end, weekday=False))
         self.errors = {}
+        self.email = None
 
     def execute(self, filename, dom):
         if filename != 'content.xml':

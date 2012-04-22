@@ -34,6 +34,7 @@ class EtatsTrimestrielsModifications(object):
         self.annee = annee
         self.factures = {}
         self.errors = {}
+        self.email = None
 
     def execute(self, filename, dom):
         if filename == 'styles.xml':

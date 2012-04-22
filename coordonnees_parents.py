@@ -30,6 +30,7 @@ class CoordonneesModifications(object):
         else:
             self.date = date
         self.default_output = u"Coordonnees parents %s.ods" % GetDateString(self.date, weekday=False)
+        self.email = None
         
     def execute(self, filename, dom):
         # print dom.toprettyxml()

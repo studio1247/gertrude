@@ -27,13 +27,19 @@ class AttestationModifications(object):
         self.multi = False
         self.template = 'Attestation paiement.odt'
         if isinstance(who, list):
-            self.default_output = u"Attestations de paiement %s-%s %d.odt" % (months[debut.month - 1], months[fin.month - 1], debut.year)
+            self.email_subject = u"Attestations de paiement %s-%s %d" % (months[debut.month - 1], months[fin.month - 1], debut.year)
             self.inscrits = [inscrit for inscrit in creche.inscrits if inscrit.GetInscriptions(debut, fin)]
+            self.email_to = None
         else:
-            self.default_output = u"Attestation de paiement %s %s %s-%s %d.odt" % (who.prenom, who.nom, months[debut.month - 1], months[fin.month - 1], debut.year)
+            self.email_subject = u"Attestation de paiement %s %s %s-%s %d" % (who.prenom, who.nom, months[debut.month - 1], months[fin.month - 1], debut.year)
             self.inscrits = [who]
+            self.email_to = None
+            # TODO self.email_to = list(set([parent.email for parent in who.parents.values() if parent.email]))
+        self.default_output = self.email_subject + ".odt"
         self.debut, self.fin = debut, fin
-
+        self.email = True
+        self.email_text = "Accompagnement attestation paiement.txt"
+        
     def execute(self, filename, dom):
         if filename != 'content.xml':
             return None
@@ -57,9 +63,11 @@ class AttestationModifications(object):
             date = self.debut
             heures_facturees = 0.0
             total = 0.0
+            site = None
             try:
                 while date <= self.fin:
                     facture = Facture(inscrit, date.year, date.month)
+                    site = facture.site
                     if facture.total != 0:
                         if facture_debut is None:
                             facture_debut = date
@@ -82,7 +90,8 @@ class AttestationModifications(object):
                     ('directeur', directeur),
                     ('date', '%.2d/%.2d/%d' % (today.day, today.month, today.year)),
                     ('heures-facturees', '%.2f' % heures_facturees),
-                    ('total', '%.2f' % total)
+                    ('total', '%.2f' % total),
+                    ('site', GetNom(site))
                     ]
     
             if inscrit.sexe == 1:

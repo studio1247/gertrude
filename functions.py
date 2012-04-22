@@ -468,10 +468,13 @@ def GetFactureFields(facture):
                 ('heures-previsionnelles', GetHeureString(facture.heures_previsionnelles)),
                 ('supplement', facture.supplement, FIELD_EUROS),
                 ('deduction', '- %.2f' % facture.deduction),
+                ('correction', '%.2f' % facture.correction),
+                ('libelle-correction', facture.libelle_correction),
                 ('raison-deduction', facture.raison_deduction),
                 ('supplement-activites', facture.supplement_activites, FIELD_EUROS),
                 ('majoration', '%+.02f' % facture.majoration_mensuelle),
                 ('frais-inscription', '%+.02f' % facture.frais_inscription),
+                ('site', GetNom(facture.site)),
                 ('total', facture.total, FIELD_EUROS)]
     else:
         return [(label, '?') for label in [('mois', 'de-mois', 'de-mois-recap', 'date', 'numfact', 'montant-heure-garde', 'cotisation-mensuelle', 

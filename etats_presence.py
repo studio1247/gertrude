@@ -34,6 +34,7 @@ class EtatsPresenceModifications(object):
         self.default_output += ".ods"
         self.debut, self.fin, self.site, self.professeur, self.inscrit, self.selection = debut, fin, site, professeur, inscrit, selection
         self.gauge = None
+        self.email = None
         
     def execute(self, filename, dom):
         if filename != 'content.xml':

@@ -28,12 +28,55 @@ from controls import *
 from facture_mensuelle import FactureModifications
 from attestation_paiement import AttestationModifications
 from appel_cotisations import AppelCotisationsModifications
+from sqlobjects import Correction
 
-class FacturationPanel(GPanel):
-    bitmap = GetBitmapFile("facturation.png")
-    profil = PROFIL_TRESORIER
+class CorrectionsTab(AutoTab):
     def __init__(self, parent):
-        GPanel.__init__(self, parent, "Facturation")
+        AutoTab.__init__(self, parent)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        
+        # la selection du mois
+        self.monthchoice = wx.Choice(self)
+        date = getFirstMonday()
+        first_date = datetime.date(year=date.year, month=date.month, day=1) 
+        while date < last_date:
+            string = '%s %d' % (months[date.month - 1], date.year)
+            self.monthchoice.Append(string, date)
+            date = getNextMonthStart(date)
+        self.monthchoice.SetStringSelection('%s %d' % (months[today.month - 1], today.year))        
+        self.Bind(wx.EVT_CHOICE, self.EvtMonthChoice, self.monthchoice)
+        self.sizer.Add(self.monthchoice, 0, wx.EXPAND|wx.ALL, 5)
+        self.corrections_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer.Add(self.corrections_sizer, 0, wx.ALL, 5)
+        self.SetSizer(self.sizer)
+        self.UpdateContents()
+        self.Layout()
+        
+    def EvtMonthChoice(self, evt=None):
+        while len(self.corrections_sizer.GetChildren()):
+            sizer = self.corrections_sizer.GetItem(0)
+            sizer.DeleteWindows()
+            self.corrections_sizer.Detach(0)
+            
+        date = self.monthchoice.GetClientData(self.monthchoice.GetSelection())
+        for inscrit in creche.inscrits:
+            if inscrit.hasFacture(date): # TODO and date not in inscrit.factures_cloturees:
+                if not date in inscrit.corrections:
+                    inscrit.corrections[date] = Correction(inscrit, date)
+                sizer = wx.BoxSizer(wx.HORIZONTAL)
+                sizer.Add(wx.StaticText(self, -1, GetPrenomNom(inscrit), size=(200, -1)), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 15)
+                sizer.AddMany([(wx.StaticText(self, -1, u'Libellé :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, inscrit.corrections[date], 'libelle')])
+                sizer.AddMany([(wx.StaticText(self, -1, 'Valeur :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoNumericCtrl(self, inscrit.corrections[date], 'valeur', precision=2)])
+                self.corrections_sizer.Add(sizer)
+        AutoTab.UpdateContents(self)
+        self.sizer.FitInside(self)              
+
+    def UpdateContents(self):
+        self.EvtMonthChoice()
+        
+class FacturationTab(AutoTab):
+    def __init__(self, parent):
+        AutoTab.__init__(self, parent)
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.inscrits_choice = {}
         
@@ -85,7 +128,9 @@ class FacturationPanel(GPanel):
                            (self.recus_endchoice, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5),
                            (button, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)])
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
-        self.sizer.Add(sizer, 1, wx.EXPAND)
+        self.SetSizer(sizer)
+        self.UpdateContents()
+        self.Layout()
 
     def EvtFacturesInscritChoice(self, evt):
         selection = self.factures_monthchoice.GetStringSelection()
@@ -142,7 +187,7 @@ class FacturationPanel(GPanel):
         while date < today:
             if isinstance(inscrit, list) or inscrit.GetInscriptions(datetime.date(date.year, date.month, 1), getMonthEnd(date)):
                 if need_separator:
-                    self.recus_periodechoice.Append(50 * "-", None)
+                    self.recus_periodechoice.Append(30 * "-", None)
                     need_separator = False
                 self.recus_periodechoice.Append('%s %d' % (months[date.month - 1], date.year), (datetime.date(date.year, date.month, 1), getMonthEnd(date)))
             date = getNextMonthStart(date)
@@ -190,7 +235,7 @@ class FacturationPanel(GPanel):
         
         if len(inscrits) > 0 and len(autres) > 0:
             for choice in self.inscrits_choice.values():
-                choice.Append(50 * '-', None)
+                choice.Append(30 * '-', None)
         
         keys = autres.keys()
         keys.sort()
@@ -267,7 +312,28 @@ class FacturationPanel(GPanel):
         if self.recus_endchoice.IsEnabled():
             fin = self.recus_endchoice.GetClientData(self.recus_endchoice.GetSelection())[1]
         DocumentDialog(self, AttestationModifications(inscrits, debut, fin)).ShowModal()
+
+class FacturationNotebook(wx.Notebook):
+    def __init__(self, parent):
+        wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
+        self.AddPage(FacturationTab(self), "Edition")
+        self.AddPage(CorrectionsTab(self), u"Corrections")
+
+    def UpdateContents(self):
+        for page in range(self.GetPageCount()):
+            self.GetPage(page).UpdateContents()
         
+class FacturationPanel(GPanel):
+    bitmap = GetBitmapFile("facturation.png")
+    profil = PROFIL_TRESORIER
+    def __init__(self, parent):
+        GPanel.__init__(self, parent, u'Facturation')
+        self.notebook = FacturationNotebook(self)
+        self.sizer.Add(self.notebook, 1, wx.EXPAND)
+
+    def UpdateContents(self):
+        self.notebook.UpdateContents()
+                
 if __name__ == '__main__':
     import sys, os
     import config

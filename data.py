@@ -30,14 +30,8 @@ class HttpConnection(object):
         self.url = url
         self.filename = filename
         self.identity = identity
-        opener = urllib2.build_opener()
-        if auth_info:
-            password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-            password_mgr.add_password(None, url, auth_info[0], auth_info[1])
-            opener.add_handler(urllib2.HTTPBasicAuthHandler(password_mgr))
-        if proxy_info:
-            opener.add_handler(urllib2.ProxyHandler({"http" : "http://%(user)s:%(pass)s@%(host)s:%(port)d" % proxy_info}))
-        urllib2.install_opener(opener)
+        self.auth_info = auth_info
+        self.proxy_info = proxy_info
         if os.path.isfile(TOKEN_FILENAME):
             self.token = file(TOKEN_FILENAME).read()
         else:
@@ -77,6 +71,15 @@ class HttpConnection(object):
         return content_type, body
 
     def urlopen(self, action, body=None, headers=None):
+        opener = urllib2.build_opener()
+        if self.auth_info:
+            password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+            password_mgr.add_password(None, self.url, self.auth_info[0], self.auth_info[1])
+            opener.add_handler(urllib2.HTTPBasicAuthHandler(password_mgr))
+        if self.proxy_info:
+            opener.add_handler(urllib2.ProxyHandler({"http" : "http://%(user)s:%(pass)s@%(host)s:%(port)d" % self.proxy_info}))
+        urllib2.install_opener(opener)
+
         try:
             url = '%s?action=%s&identity=%s' % (self.url, action, self.identity)
             print url

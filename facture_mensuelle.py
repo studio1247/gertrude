@@ -33,11 +33,16 @@ class FactureModifications(object):
         self.multi = False
         self.inscrits = inscrits
         self.periode = periode
+        self.email = True
         if len(inscrits) > 1:
             self.default_output = u"Factures %s %d.odt" % (months[periode.month - 1], periode.year)
+            self.email_to = None
         else:
             who = inscrits[0]
-            self.default_output = u"Facture %s %s %s %d.odt" % (who.prenom, who.nom, months[periode.month - 1], periode.year)
+            self.email_subject = u"Facture %s %s %s %d" % (who.prenom, who.nom, months[periode.month - 1], periode.year)
+            self.email_text = "Accompagnement facture.txt"
+            self.email_to = list(set([parent.email for parent in who.parents.values() if parent.email]))
+            self.default_output = self.email_subject + ".odt"
 
         if IsTemplateFile("Facture mensuelle simple.odt"):
             self.template = "Facture mensuelle simple.odt"

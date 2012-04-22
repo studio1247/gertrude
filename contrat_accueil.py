@@ -25,6 +25,7 @@ class DocumentAccueilModifications(object):
     def __init__(self, who, date):
         self.inscrit = who
         self.date = date
+        self.email = None
 
     def GetFields(self):
         president = tresorier = directeur = ""
