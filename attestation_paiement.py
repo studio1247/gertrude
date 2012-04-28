@@ -28,7 +28,7 @@ class AttestationModifications(object):
         self.template = 'Attestation paiement.odt'
         if isinstance(who, list):
             self.email_subject = u"Attestations de paiement %s-%s %d" % (months[debut.month - 1], months[fin.month - 1], debut.year)
-            self.inscrits = [inscrit for inscrit in creche.inscrits if inscrit.GetInscriptions(debut, fin)]
+            self.inscrits = [inscrit for inscrit in who if inscrit.GetInscriptions(debut, fin)]
             self.email_to = None
         else:
             self.email_subject = u"Attestation de paiement %s %s %s-%s %d" % (who.prenom, who.nom, months[debut.month - 1], months[fin.month - 1], debut.year)

@@ -123,9 +123,9 @@ class FacturationTab(AutoTab):
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationRecu, button)
         box_sizer.AddMany([(self.inscrits_choice["recus"], 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5),
-                           (self.recus_periodechoice, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5),
+                           (self.recus_periodechoice, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5),
                            (wx.StaticText(self, -1, '-'), 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5),
-                           (self.recus_endchoice, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5),
+                           (self.recus_endchoice, 0, wx.EXPAND|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5),
                            (button, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)])
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
         self.SetSizer(sizer)
@@ -187,7 +187,7 @@ class FacturationTab(AutoTab):
         while date < today:
             if isinstance(inscrit, list) or inscrit.GetInscriptions(datetime.date(date.year, date.month, 1), getMonthEnd(date)):
                 if need_separator:
-                    self.recus_periodechoice.Append(30 * "-", None)
+                    self.recus_periodechoice.Append(20 * "-", None)
                     need_separator = False
                 self.recus_periodechoice.Append('%s %d' % (months[date.month - 1], date.year), (datetime.date(date.year, date.month, 1), getMonthEnd(date)))
             date = getNextMonthStart(date)
@@ -218,6 +218,16 @@ class FacturationTab(AutoTab):
         for choice in self.inscrits_choice.values():
             choice.Clear()
             choice.Append('Tous les enfants', creche.inscrits)
+            if len(creche.sites) > 1:
+                sites = { }
+                for inscrit in creche.inscrits:
+                    for inscription in inscrit.inscriptions:
+                        if inscription.site:
+                            if inscription.site not in sites:
+                                sites[inscription.site] = set()
+                            sites[inscription.site].add(inscrit)
+                for site in sites:
+                    choice.Append('Enfants du site ' + site.nom.strip(), list(sites[site]))
             
         inscrits = { }
         autres = { }
@@ -235,7 +245,7 @@ class FacturationTab(AutoTab):
         
         if len(inscrits) > 0 and len(autres) > 0:
             for choice in self.inscrits_choice.values():
-                choice.Append(30 * '-', None)
+                choice.Append(20 * '-', None)
         
         keys = autres.keys()
         keys.sort()
@@ -252,7 +262,7 @@ class FacturationTab(AutoTab):
         self.EvtRecusInscritChoice(None)
         
         self.Layout()
-
+        
     def EvtGenerationAppelCotisations(self, evt):
         periode = self.appels_monthchoice.GetClientData(self.appels_monthchoice.GetSelection())
         DocumentDialog(self, AppelCotisationsModifications(periode, options=NO_NOM)).ShowModal()
