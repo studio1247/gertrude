@@ -38,6 +38,7 @@ class AttestationModifications(object):
         self.default_output = self.email_subject + ".odt"
         self.debut, self.fin = debut, fin
         self.email = True
+        self.site = None
         self.email_text = "Accompagnement attestation paiement.txt"
         
     def execute(self, filename, dom):

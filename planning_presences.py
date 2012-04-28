@@ -32,6 +32,7 @@ class PlanningModifications(object):
         self.debut = debut
         self.metas = {"Format": 1, "Periodicite": 11}
         self.email = None
+        self.site = None
 
     def execute(self, filename, dom):
         if filename == 'meta.xml':
@@ -282,6 +283,7 @@ class PlanningDetailleModifications(object):
         self.debut = debut
         self.metas = {"Format": 1, "Periodicite": 11}
         self.email = None
+        self.site = None
         
 if __name__ == '__main__':
     import os

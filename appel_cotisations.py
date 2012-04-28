@@ -30,6 +30,7 @@ class AppelCotisationsModifications(object):
         self.options = options
         self.gauge = None
         self.email = None
+        self.site = None
         
     def execute(self, filename, dom):
         if filename != 'content.xml':

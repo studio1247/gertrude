@@ -35,6 +35,7 @@ class EtatsPlacesModifications(object):
         self.factures = {}
         self.errors = {}
         self.email = None
+        self.site = None
 
     def execute(self, filename, dom):
         print filename
