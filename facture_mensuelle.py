@@ -35,10 +35,12 @@ class FactureModifications(object):
         self.periode = periode
         self.email = True
         if len(inscrits) > 1:
+            self.site = inscrits[0].GetInscriptions(periode, None)[0].site
             self.default_output = u"Factures %s %d.odt" % (months[periode.month - 1], periode.year)
             self.email_to = None
         else:
             who = inscrits[0]
+            self.site = who.inscriptions[0].GetInscriptions(periode, None)[0].site
             self.email_subject = u"Facture %s %s %s %d" % (who.prenom, who.nom, months[periode.month - 1], periode.year)
             self.email_text = "Accompagnement facture.txt"
             self.email_to = list(set([parent.email for parent in who.parents.values() if parent.email]))

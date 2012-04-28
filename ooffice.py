@@ -295,7 +295,7 @@ def GenerateOODocument(modifications, filename=None, gauge=None):
         gauge.SetValue(0)
     if not filename:
         filename = unicodedata.normalize("NFKD", modifications.default_output).encode('ascii', 'ignore')
-    template = GetTemplateFile(modifications.template)
+    template = GetTemplateFile(modifications.template, modifications.site)
     errors = {}
     zip = zipfile.ZipFile(template, 'r')
     files = []

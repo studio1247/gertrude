@@ -192,18 +192,22 @@ def GetDepartement(cp):
     else:
         return ""
 
-def GetFile(filename, base):
+def GetFile(filename, site, base):
+    if site and site.nom:
+        path = "./%s/%s_%s" % (base, site.nom, filename)
+        if os.path.isfile(path):
+            return path
     path = "./%s/%s" % (base, filename)
     if os.path.isfile(path):
         return path
     else:
         return "./%s_dist/%s" % (base, filename)
     
-def GetBitmapFile(filename):
-    return GetFile(filename, "bitmaps")
+def GetBitmapFile(filename, site=None):
+    return GetFile(filename, site, "bitmaps")
 
-def GetTemplateFile(filename):
-    return GetFile(filename, "templates")
+def GetTemplateFile(filename, site=None):
+    return GetFile(filename, site, "templates")
 
 def IsTemplateFile(filename):
     path = "./templates/%s" % filename
