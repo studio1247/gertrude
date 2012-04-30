@@ -40,7 +40,7 @@ class FactureModifications(object):
             self.email_to = None
         else:
             who = inscrits[0]
-            self.site = who.inscriptions[0].GetInscriptions(periode, None)[0].site
+            self.site = who.GetInscriptions(periode, None)[0].site
             self.email_subject = u"Facture %s %s %s %d" % (who.prenom, who.nom, months[periode.month - 1], periode.year)
             self.email_text = "Accompagnement facture.txt"
             self.email_to = list(set([parent.email for parent in who.parents.values() if parent.email]))
