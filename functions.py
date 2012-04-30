@@ -199,6 +199,12 @@ def GetFile(filename, site, base):
         path = "./%s/%s_%s" % (base, site.nom, filename)
         if os.path.isfile(path):
             return path
+    try:
+        path = "./%s/%s_%s" % (base, creche.nom.lower(), filename)
+        if os.path.isfile(path):
+            return path
+    except:
+        pass
     path = "./%s/%s" % (base, filename)
     if os.path.isfile(path):
         return path
