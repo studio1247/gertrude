@@ -137,6 +137,7 @@ class Day(object):
                 self.remove_activity(None, None, value)
                 value -= PREVISIONNEL
                 self.insert_activity(None, None, value)
+        self.Save()
     
     def Save(self):
         self.last_heures = None
