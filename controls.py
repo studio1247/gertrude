@@ -61,6 +61,7 @@ class NumericCtrl(wx.TextCtrl):
         self.format   = '%.'+str(self.__prec)+'f'
         self.__val    = 0
         #if (value != None): self.__val = float(value)
+        self.__min, self.__max = None, None
         if (max != None): self.__max = float(max)
         if (min != None): self.__min = float(min)
       
@@ -87,7 +88,7 @@ class NumericCtrl(wx.TextCtrl):
         pos = wx.TextCtrl.GetSelection(self)[0]
         has_minus = '-' in entry
         if ((chr(key) == '.' and (self.__prec == 0 or '.' in entry)) or
-            (chr(key) == '-' and (has_minus or  pos != 0 or min >= 0)) or
+            (chr(key) == '-' and (has_minus or  pos != 0 or (self.__min is not None and self.__min >= 0))) or
             (chr(key) != '-' and  has_minus and pos == 0)):
             return
         # 4. allow digits, but not other characters
