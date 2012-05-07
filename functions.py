@@ -480,7 +480,7 @@ def GetFactureFields(facture):
                 ('heures-previsionnelles', GetHeureString(facture.heures_previsionnelles)),
                 ('supplement', facture.supplement, FIELD_EUROS),
                 ('deduction', '- %.2f' % facture.deduction),
-                ('correction', '%.2f' % facture.correction),
+                ('correction', facture.correction),
                 ('libelle-correction', facture.libelle_correction),
                 ('raison-deduction', facture.raison_deduction),
                 ('supplement-activites', facture.supplement_activites, FIELD_EUROS),
@@ -489,9 +489,9 @@ def GetFactureFields(facture):
                 ('site', GetNom(facture.site)),
                 ('total', facture.total, FIELD_EUROS)]
     else:
-        return [(label, '?') for label in [('mois', 'de-mois', 'de-mois-recap', 'date', 'numfact', 'montant-heure-garde', 'cotisation-mensuelle', 
+        return [(label, '?') for label in ('mois', 'de-mois', 'de-mois-recap', 'date', 'numfact', 'montant-heure-garde', 'cotisation-mensuelle', 
                                            'heures-contractualisees', 'heures-realisees', 'heures-contractualisees-realisees', 'heures-supplementaires', 'heures-previsionnelles', 
-                                           'supplement', 'deduction', 'raison-deduction', 'supplement-activites', 'majoration', 'total')]]
+                                           'supplement', 'deduction', 'raison-deduction', 'supplement-activites', 'majoration', 'total')]
     
 class ProgressHandler:
     def __init__(self, display_fn=None, gauge_fn=None, min=None, max=None):
