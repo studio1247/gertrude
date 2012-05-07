@@ -19,7 +19,7 @@ import datetime, time
 import sys, os, zipfile
 import xml.dom.minidom
 import re, urllib
-import smtplib
+import smtplib, poplib
 from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
@@ -534,10 +534,10 @@ class DocumentDialog(wx.Dialog):
         self.filename = self.fbb.GetValue()
         f, e = os.path.splitext(self.fbb.GetValue())
         if e == ".pdf":
-            pdf = True
+            self.pdf = True
             self.oo_filename = f + self.extension
         else:
-            pdf = False
+            self.pdf = False
             self.oo_filename = self.filename
             
         config.documents_directory = os.path.dirname(self.filename)
@@ -552,7 +552,7 @@ class DocumentDialog(wx.Dialog):
                         errors.update(GenerateHtmlDocument(modifs, filename=filename))
                     else:
                         errors.update(GenerateOODocument(modifs, filename=filename))
-                    if pdf:
+                    if self.pdf:
                         f, e = os.path.splitext(filename)
                         convert_to_pdf(filename, f+".pdf")
                         os.remove(filename)
@@ -561,7 +561,7 @@ class DocumentDialog(wx.Dialog):
                     errors = GenerateHtmlDocument(self.modifications, filename=self.oo_filename, gauge=self.gauge)
                 else:
                     errors = GenerateOODocument(self.modifications, filename=self.oo_filename, gauge=self.gauge)
-                if pdf:
+                if self.pdf:
                     convert_to_pdf(self.oo_filename, self.filename)
                     os.remove(self.oo_filename)
             self.document_generated = True
@@ -604,16 +604,32 @@ class DocumentDialog(wx.Dialog):
         if self.document_generated:
             if self.modifications.multi:
                 simple_modifications = self.modifications.GetSimpleModifications(self.oo_filename)
+                emails = '\n'.join([" - %s (%s)" % (modifs.email_subject, ", ".join(modifs.email_to)) for filename, modifs in simple_modifications])
+                dlg = wx.MessageDialog(self, u"Ces emails seront envoyés :\n" +emails, 'Confirmation', wx.OK|wx.CANCEL|wx.ICON_WARNING)
+                response = dlg.ShowModal()
+                dlg.Destroy()
+                if response != wx.ID_OK:
+                    return
+                
                 for filename, modifs in simple_modifications:
-                    if pdf:
+                    if self.pdf:
                         oo_filename = filename
                         filename, e = os.path.splitext(oo_filename)
                         filename += ".pdf"
                         convert_to_pdf(oo_filename, filename)
                         os.remove(oo_filename)
-                    self.send_document(filename, GetTemplateFile(modifs.email_text), modifs.email_subject, modifs.email_to)
+                    try:
+                        self.send_document(filename, GetTemplateFile(modifs.email_text), modifs.email_subject, modifs.email_to)
+                    except:
+                        pass
             else:
-                self.send_document(self.filename, GetTemplateFile(self.modifications.email_text), self.modifications.email_subject, self.modifications.email_to)
+                try:
+                    self.send_document(self.filename, GetTemplateFile(self.modifications.email_text), self.modifications.email_subject, self.modifications.email_to)
+                except Exception, e:
+                    dlg = wx.MessageDialog(self, u"Impossible d'envoyer le document\n%r" % e, 'Erreur', wx.OK|wx.ICON_WARNING)
+                    dlg.ShowModal()
+                    dlg.Destroy()
+                    
         
     def onSauverEnvoyerCAF(self, event):
         self.adresse_envoi = creche.caf_email
@@ -631,6 +647,7 @@ class DocumentDialog(wx.Dialog):
         msg['Subject'] = subject
         msg['From'] = creche.email
         msg['To'] = COMMASPACE.join(to)
+        msg['CC'] = creche.email
     
         fp = open(text)
         doc = MIMEText(fp.read())
@@ -644,13 +661,25 @@ class DocumentDialog(wx.Dialog):
         doc.add_header('Content-Disposition', 'attachment', filename=os.path.split(filename)[1])
         fp.close()
         msg.attach(doc)
-    
-        # Send the email via our own SMTP server.
-        s = smtplib.SMTP(creche.smtp_server)
-        s.sendmail(creche.email, to, msg.as_string())
+        
+        smtp_server = creche.smtp_server
+        port = 25
+        login = None
+        try:
+            if "/" in creche.smtp_server:
+                smtp_server, login, password = smtp_server.split("/")
+            if ":" in smtp_server:
+                smtp_server, port = smtp_server.split(":")
+                port = int(port)
+        except:
+            pass
+            
+        s = smtplib.SMTP(smtp_server, port)
+        if login:
+            s.login(login, password)
+        s.sendmail(creche.email, to + [creche.email], msg.as_string())
         s.quit()
-                
-    
+        
 if __name__ == '__main__':
     save_current_document('./document.odt')
     
