@@ -460,6 +460,12 @@ def GetInscriptionFields(inscription):
     return [('debut-contrat', inscription.debut),
             ('fin-contrat', inscription.fin),
             ('site', GetNom(inscription.site)),
+            ('nom-site', GetNom(inscription.site)),
+            ('adresse-site', inscription.site.adresse),
+            ('code-postal-site', GetCodePostal(inscription.site)),
+            ('ville-site', inscription.site.ville),
+            ('telephone-site', inscription.site.telephone),
+            ('capacite-site', inscription.site.capacite),
             ('professeur-prenom', GetPrenom(inscription.professeur)),
             ('professeur-nom', GetNom(inscription.professeur)),
             ]
