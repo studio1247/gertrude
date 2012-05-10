@@ -1093,11 +1093,13 @@ class Correction(SQLObject):
     table = "CORRECTIONS"
     
     def __init__(self, inscrit, date, valeur=0, libelle="", idx=None):
+        self.ready = False
         self.idx = idx
         self.inscrit = inscrit
         self.date = date
         self.valeur = valeur
         self.libelle = libelle
+        self.ready = True
 
     def create(self):
         print 'nouvelle correction'
@@ -1111,7 +1113,8 @@ class Correction(SQLObject):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['valeur', 'libelle']:
+        
+        if self.ready and name in ['valeur', 'libelle']:
             if self.idx and (self.valeur or self.libelle):
                 print 'update', name
                 sql_connection.execute('UPDATE CORRECTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))
