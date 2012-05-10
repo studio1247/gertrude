@@ -620,8 +620,10 @@ class DocumentDialog(wx.Dialog):
                         os.remove(oo_filename)
                     try:
                         self.send_document(filename, GetTemplateFile(modifs.email_text), modifs.email_subject, modifs.email_to)
-                    except:
-                        pass
+                    except Exception, e:
+                        dlg = wx.MessageDialog(self, u"Impossible d'envoyer le document\n%r" % e, 'Erreur', wx.OK|wx.ICON_WARNING)
+                        dlg.ShowModal()
+                        dlg.Destroy()
             else:
                 try:
                     self.send_document(self.filename, GetTemplateFile(self.modifications.email_text), self.modifications.email_subject, self.modifications.email_to)
