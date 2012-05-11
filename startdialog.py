@@ -23,7 +23,7 @@ from functions import *
 from config import LoadConfig, Load, Exit
 from asyncore import dispatcher
 import sys, time, socket
- 
+
 class Server(dispatcher):
     def __init__(self):
         dispatcher.__init__(self)
@@ -33,6 +33,7 @@ class Server(dispatcher):
 
 class StartDialog(wx.Dialog):
     def __init__(self, frame):
+        self.test_unicity = False
         self.loaded = False
         self.frame = frame
         wx.Dialog.__init__(self, None, -1, "Gertrude")
@@ -102,6 +103,16 @@ class StartDialog(wx.Dialog):
             self.info.AppendText("Erreur lors du chargement !\n")
             self.gauge.SetValue(100)
             return
+
+        if not self.test_unicity:
+            self.test_unicity = True
+            try:
+                Server()
+            except Exception, e:
+                # print e
+                self.info.AppendText(u"Gertrude est déjà lancée !\n")
+                self.gauge.SetValue(100)
+                return
                 
         if event.result is None:
             self.sizer.Hide(self.gauge)
@@ -117,14 +128,6 @@ class StartDialog(wx.Dialog):
             self.ok_button.SetFocus()
             self.sizer.Layout()
             self.sizer.Fit(self)
-            return
-
-        try:
-            Server()
-        except Exception, e:
-            # print e
-            self.info.AppendText(u"Gertrude est déjà lancée !\n")
-            self.gauge.SetValue(100)
             return
 
         if readonly:
