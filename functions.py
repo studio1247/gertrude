@@ -458,7 +458,7 @@ def GetInscritFields(inscrit):
 
 def GetInscriptionFields(inscription):
     if inscription.site:
-        site_adresse, site_ville = inscription.site.adresse, inscription.site.ville, inscription.site.telephone, inscription.site.capacite 
+        site_adresse, site_ville, site_telephone, site_capacite = inscription.site.adresse, inscription.site.ville, inscription.site.telephone, inscription.site.capacite 
     else:
         site_adresse, site_ville, site_telephone, site_capacite = creche.adresse, creche.ville, creche.telephone, creche.capacite
     return [('debut-contrat', inscription.debut),
