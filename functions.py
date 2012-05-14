@@ -457,15 +457,19 @@ def GetInscritFields(inscrit):
             ]
 
 def GetInscriptionFields(inscription):
+    if inscription.site:
+        site_adresse, site_ville = inscription.site.adresse, inscription.site.ville, inscription.site.telephone, inscription.site.capacite 
+    else:
+        site_adresse, site_ville, site_telephone, site_capacite = creche.adresse, creche.ville, creche.telephone, creche.capacite
     return [('debut-contrat', inscription.debut),
             ('fin-contrat', inscription.fin),
             ('site', GetNom(inscription.site)),
             ('nom-site', GetNom(inscription.site)),
-            ('adresse-site', inscription.site.adresse),
+            ('adresse-site', site_adresse),
             ('code-postal-site', GetCodePostal(inscription.site)),
-            ('ville-site', inscription.site.ville),
-            ('telephone-site', inscription.site.telephone),
-            ('capacite-site', inscription.site.capacite),
+            ('ville-site', site_ville),
+            ('telephone-site', site_telephone),
+            ('capacite-site', site_capacite),
             ('professeur-prenom', GetPrenom(inscription.professeur)),
             ('professeur-nom', GetNom(inscription.professeur)),
             ]
