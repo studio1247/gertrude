@@ -168,7 +168,7 @@ class HttpConnection(object):
        
     def do_upload(self):
         self.progress_handler.display("Envoi vers le serveur ...")
-        content_type, body = self.encode_multipart_formdata([], [("database", "./gertrude.db")])
+        content_type, body = self.encode_multipart_formdata([], [("database", self.filename)])
         headers = {"Content-Type": content_type, 'Content-Length': str(len(body))}
         return self.urlopen('upload', body, headers)
 
