@@ -127,8 +127,12 @@ class HttpConnection(object):
             return 1
         self.progress_handler.display(u"Libération du jeton ...")
         if not self.urlopen('rel_token'):
+            self.progress_handler.display(u"Libération du jeton refusée...")
+            time.sleep(3)
             return 0
         else:
+            self.progress_handler.display(u"Libération du jeton accordée...")
+            time.sleep(3)
             self.token = 0
             if os.path.exists(TOKEN_FILENAME):
                 os.remove(TOKEN_FILENAME)

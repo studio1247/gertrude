@@ -1122,6 +1122,7 @@ profiles = [("Administrateur", PROFIL_ALL),
             (u"Trésorier", PROFIL_TRESORIER),
             ("Inscriptions", PROFIL_INSCRIPTIONS),
             (u"Saisie présences", PROFIL_SAISIE_PRESENCES),
+            (u"Utilisateur lecture seule", PROFIL_LECTURE_SEULE),
             ]
 
 class UsersTab(AutoTab):

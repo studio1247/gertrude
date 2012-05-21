@@ -24,12 +24,17 @@ from config import LoadConfig, Load, Exit
 from asyncore import dispatcher
 import sys, time, socket
 
+server = None
+
 class Server(dispatcher):
     def __init__(self):
         dispatcher.__init__(self)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.bind(('', 50000))
         self.listen(1)
+        
+    def close(self):
+        dispatcher.close(self)
 
 class StartDialog(wx.Dialog):
     def __init__(self, frame):
@@ -107,7 +112,7 @@ class StartDialog(wx.Dialog):
         if not self.test_unicity:
             self.test_unicity = True
             try:
-                Server()
+                __builtin__.server = Server()
             except Exception, e:
                 # print e
                 self.info.AppendText(u"Gertrude est déjà lancée !\n")
@@ -197,6 +202,7 @@ class StartDialog(wx.Dialog):
         self.Destroy()
 
     def OnOk(self, evt):
+        global server
         if config.connection is None:
             self.sizer.Hide(self.creche_sizer)
             self.sizer.Hide(self.btnsizer)
@@ -215,7 +221,12 @@ class StartDialog(wx.Dialog):
 
         for user in creche.users:
             if login == user.login and password == user.password:
-                __builtin__.profil = user.profile
+                if user.profile == PROFIL_LECTURE_SEULE:
+                    __builtin__.server.close()
+                    __builtin__.profil = PROFIL_ALL
+                    __builtin__.readonly = True
+                else:
+                    __builtin__.profil = user.profile
                 self.StartFrame()
                 return
         else:
