@@ -319,7 +319,7 @@ class IdentitePanel(InscriptionsTab):
         self.inscrit = inscrit
         self.UpdateContents()
         InscriptionsTab.SetInscrit(self, inscrit)
-        self.nouveau_frere.Enable(self.inscrit is not None)
+        self.nouveau_frere.Enable(self.inscrit is not None and not readonly)
 
 class ParentsPanel(InscriptionsTab):
     def __init__(self, parent):
@@ -343,6 +343,8 @@ class ParentsPanel(InscriptionsTab):
             for item, value in (('Papa', 'papa'), ('Maman', 'maman'), ('Parent manquant', None)):
                 self.relations_items[-1].Append(item, value)
             self.relations_items[-1].index = index
+            if readonly:
+                self.relations_items[-1].Disable()
             self.Bind(wx.EVT_CHOICE, self.OnParentRelationChoice, self.relations_items[-1])
             sizer2.AddMany([(wx.StaticText(self, -1, 'Relation :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.relations_items[-1], 0, wx.EXPAND)])           
             self.parents_items[-1].extend([wx.StaticText(self, -1, u'Prénom :'), AutoTextCtrl(self, None, 'prenom')])           
@@ -450,7 +452,7 @@ class ParentsPanel(InscriptionsTab):
         self.inscrit = inscrit
         self.notes_parents_ctrl.SetInstance(inscrit)
         self.UpdateContents()
-        self.nouveau_referent.Enable(self.inscrit is not None)
+        self.nouveau_referent.Enable(self.inscrit is not None and not readonly)
 
     def referent_line_add(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -711,7 +713,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         if self.inscrit and self.periode is not None and self.periode != -1 and self.periode < len(self.inscrit.inscriptions):
             inscription = self.inscrit.inscriptions[self.periode]
             for obj in [self.duree_reference_choice, self.mode_accueil_choice, self.button_5_5, self.button_copy, self.validation_button]:
-                obj.Enable()
+                obj.Enable(not readonly)
             if creche.preinscriptions:
                 if inscription.preinscription:
                     self.validation_button.SetValue(False)
@@ -789,7 +791,7 @@ class CongesPanel(InscriptionsTab):
         self.inscrit = inscrit
         self.UpdateContents()
         InscriptionsTab.SetInscrit(self, inscrit)
-        self.nouveau_conge_button.Enable(self.inscrit is not None)
+        self.nouveau_conge_button.Enable(self.inscrit is not None and not readonly)
 
     def affiche_conges_creche(self):
         self.conges_creche_sizer.DeleteWindows()

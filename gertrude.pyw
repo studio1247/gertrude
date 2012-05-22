@@ -33,7 +33,7 @@ except:
 # Don't remove these 2 lines (mandatory for py2exe)
 import controls, zipfile, xml.dom.minidom, wx.html, ooffice
 
-VERSION = '0.89k'
+VERSION = '0.89l'
 
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):
@@ -322,9 +322,14 @@ class GertrudeFrame(wx.Frame):
 
     def OnSave(self, evt):
         self.SetStatusText("Enregistrement en cours ...")
-        Save(ProgressHandler(self.SetStatusText))
+        if readonly:
+            dlg = wx.MessageDialog(self, u"Gertrude est en lecture seule !", 'Erreur', wx.OK|wx.ICON_WARNING)
+            dlg.ShowModal()
+            dlg.Destroy()
+        else:
+            Save(ProgressHandler(self.SetStatusText))
         self.SetStatusText("")
-        
+
     def OnBackup(self, evt):
         self.SetStatusText("Copie de secours ...")
         Save(ProgressHandler(self.SetStatusText))
@@ -342,7 +347,7 @@ class GertrudeFrame(wx.Frame):
 
     def OnExit(self, evt):
         self.SetStatusText("Fermeture en cours ...")
-        if len(history) > 0:
+        if not readonly and len(history) > 0:
             dlg = wx.MessageDialog(self, "Voulez-vous enregistrer les changements ?", "Gertrude", wx.YES_NO|wx.YES_DEFAULT|wx.CANCEL|wx.ICON_QUESTION)
             result = dlg.ShowModal()
             dlg.Destroy()

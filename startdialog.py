@@ -24,7 +24,7 @@ from config import LoadConfig, Load, Exit
 from asyncore import dispatcher
 import sys, time, socket
 
-server = None
+__builtin__.server = None
 
 class Server(dispatcher):
     def __init__(self):
@@ -108,16 +108,6 @@ class StartDialog(wx.Dialog):
             self.info.AppendText("Erreur lors du chargement !\n")
             self.gauge.SetValue(100)
             return
-
-        if not self.test_unicity:
-            self.test_unicity = True
-            try:
-                __builtin__.server = Server()
-            except Exception, e:
-                # print e
-                self.info.AppendText(u"Gertrude est déjà lancée !\n")
-                self.gauge.SetValue(100)
-                return
                 
         if event.result is None:
             self.sizer.Hide(self.gauge)
@@ -146,6 +136,15 @@ class StartDialog(wx.Dialog):
                 __builtin__.force_token = True
                 thread.start_new_thread(self.Load, ())
                 return
+
+        if not self.test_unicity:
+            self.test_unicity = True
+            try:
+                __builtin__.server = Server()
+            except Exception, e:
+                # print e
+                self.info.AppendText(u"Gertrude est déjà lancée. Les données seront accessibles en lecture seule !\n")
+                __builtin__.readonly = True;
 
         self.loaded = True        
         sql_connection.open()
@@ -202,7 +201,6 @@ class StartDialog(wx.Dialog):
         self.Destroy()
 
     def OnOk(self, evt):
-        global server
         if config.connection is None:
             self.sizer.Hide(self.creche_sizer)
             self.sizer.Hide(self.btnsizer)
@@ -222,7 +220,8 @@ class StartDialog(wx.Dialog):
         for user in creche.users:
             if login == user.login and password == user.password:
                 if user.profile == PROFIL_LECTURE_SEULE:
-                    __builtin__.server.close()
+                    if __builtin__.server:
+                        __builtin__.server.close()
                     __builtin__.profil = PROFIL_ALL
                     __builtin__.readonly = True
                 else:

@@ -64,7 +64,7 @@ class PlanningGridWindow(BufferedWindow):
             self.draw_line = self.DrawNumbersLine
         else:
             self.draw_line = self.DrawActivitiesLine
-        if not options & READ_ONLY:
+        if not (options & READ_ONLY or readonly):
             self.SetCursor(wx.StockCursor(wx.CURSOR_PENCIL))        
             self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftButtonDown)
             self.Bind(wx.EVT_LEFT_UP, self.OnLeftButtonUp)
@@ -251,7 +251,7 @@ class PlanningGridWindow(BufferedWindow):
         self.curStartX = (posX / (creche.granularite/BASE_GRANULARITY)) * (creche.granularite/BASE_GRANULARITY)
         if self.curStartPos != 0 and self.curStartY < len(self.lines):
             line = self.lines[self.curStartY]
-            if not (isinstance(line, basestring) or line.readonly):
+            if not (isinstance(line, basestring) or line.readonly or readonly):
                 self.value = self.activity_combobox.activity.value
                 if creche.presences_previsionnelles and line.reference and line.date > datetime.date.today():
                     self.value |= PREVISIONNEL
@@ -359,7 +359,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def OnButtonPressed(self, event):
         button = event.GetEventObject()
         line = self.lines[button.line]
-        if not line.readonly:
+        if not (line.readonly or readonly):
             history.Append([Call(line.Restore, line.Backup())])        
             state = line.get_state()
             if state == VACANCES:
@@ -390,7 +390,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def OnActiviteCheckbox(self, event):
         button = event.GetEventObject()
         line = self.lines[button.line]
-        if not line.readonly:
+        if not (line.readonly or readonly):
             if event.Checked():
                 history.Append(None)
                 line.insert_activity(None, None, button.activite.value)
