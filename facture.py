@@ -207,7 +207,7 @@ class FactureFinMois(object):
                 self.heures_contractualisees += cotisation.heures_contractualisees
                 self.total_contractualise += cotisation.heures_contractualisees * cotisation.montant_heure_garde
                 if cotisation.nombre_jours_maladie_deduits > 0:
-                    self.deduction += montant * cotisation.nombre_jours_maladie_deduits / cotisation.jours_ouvres
+                    # retire parce que "montant" non defini ... self.deduction += montant * cotisation.nombre_jours_maladie_deduits / cotisation.jours_ouvres
                     heures_contractualisees = cotisation.heures_contractualisees * (cotisation.jours_ouvres - cotisation.nombre_jours_maladie_deduits) / cotisation.jours_ouvres
                 else:
                     heures_contractualisees = cotisation.heures_contractualisees
