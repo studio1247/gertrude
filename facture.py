@@ -284,7 +284,7 @@ class FactureFinMois(object):
             if date is None:
                 date = datetime.date(self.annee, self.mois, 1)
             self.cloture = True
-            self.inscrit.factures_cloturees[date] = self
+            del self.inscrit.factures_cloturees[date]
             if sql_connection:
                 print u'Suppression clôture', self.inscrit.idx, date
                 sql_connection.execute('DELETE FROM FACTURES where inscrit=? AND date=?', (self.inscrit.idx, date))

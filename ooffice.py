@@ -660,7 +660,7 @@ class DocumentDialog(wx.Dialog):
         doc = MIMEBase('application', 'octet-stream')
         doc.set_payload(fp.read())
         encoders.encode_base64(doc)
-        doc.add_header('Content-Disposition', 'attachment', filename=os.path.split(filename)[1])
+        doc.add_header('Content-Disposition', 'attachment', filename=unicode(os.path.split(filename)[1]).encode("latin-1"))
         fp.close()
         msg.attach(doc)
         
