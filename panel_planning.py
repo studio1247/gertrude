@@ -212,8 +212,6 @@ class PlanningPanel(GPanel):
             self.activity_choice.Show(False)
             self.activity_choice.Append(creche.activites[0].label, creche.activites[0])
         self.activity_choice.SetSelection(selected)
-        for row in range(self.notebook.GetPageCount()):
-            note = self.notebook.GetPage(row)
-            note.UpdateContents()
+        self.onChangeWeek()
         self.sizer.Layout()
 

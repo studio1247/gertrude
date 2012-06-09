@@ -22,7 +22,7 @@ import os, sys, imp, time, shutil, glob, thread, urllib2
 import wx, wx.lib.wordwrap
 from wx.lib import masked
 from startdialog import StartDialog
-from config import Liste, Load, Save, Restore, Exit, ProgressHandler
+from config import Liste, Load, Update, Save, Restore, Exit, ProgressHandler
 from functions import GetBitmapFile, today
 from alertes import CheckAlertes
 try:
@@ -33,7 +33,7 @@ except:
 # Don't remove these 2 lines (mandatory for py2exe)
 import controls, zipfile, xml.dom.minidom, wx.html, ooffice
 
-VERSION = '0.89m'
+VERSION = '0.89n'
 
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):
@@ -193,7 +193,19 @@ class GertrudeFrame(wx.Frame):
         thread.start_new_thread(self.CheckAlertes, ())
 
         self.Bind(wx.EVT_CLOSE, self.OnExit)
+        
+        self.timer = wx.Timer(self, -1)  # message will be sent to the panel
+        self.timer.Start(1000)  # x100 milliseconds
+        self.Bind(wx.EVT_TIMER, self.onUpdateTimer, self.timer)  # call the on_timer function
     
+    def onUpdateTimer(self, event):
+        if readonly:
+            _sql_connection, _creche = Update()
+            if _sql_connection and _creche:
+                __builtin__.sql_connection = _sql_connection
+                __builtin__.creche = _creche
+                self.listbook.UpdateContents()
+        
     def CheckAlertes(self):
         if creche.gestion_alertes:
             new_alertes, alertes_non_acquittees = CheckAlertes()

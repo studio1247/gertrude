@@ -199,6 +199,9 @@ class HttpConnection(object):
             result = None, 0
         return result
 
+    def Update(self):
+        return None, None
+    
     def Save(self, progress_handler=default_progress_handler):
         self.progress_handler = progress_handler
         return FileConnection(self.filename).Save() and self.upload()
@@ -235,8 +238,20 @@ class FileConnection(object):
             return connection.Liste()
         except:
             return []
-        
+    
+    def Update(self):
+        _sql_connection, _creche = None, None
+        try:
+            if self.file_mtime < os.stat(self.filename).st_mtime:
+                self.file_mtime = os.stat(self.filename).st_mtime
+                _sql_connection = SQLConnection(self.filename)
+                _creche = _sql_connection.Load(None)
+        except Exception, e:
+            print e
+        return _sql_connection, _creche
+    
     def Load(self, progress_handler=default_progress_handler):
+        self.file_mtime = os.stat(self.filename).st_mtime
         self.Backup(progress_handler)
         __builtin__.sql_connection = SQLConnection(self.filename)
         if not os.path.isfile(self.filename):

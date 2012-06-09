@@ -410,7 +410,8 @@ class SQLConnection(object):
         if not self.translate(progress_handler):
             return None
 
-        progress_handler.display(u"Chargement en mémoire de la base ...")
+        if progress_handler:
+            progress_handler.display(u"Chargement en mémoire de la base ...")
 
         cur = self.cursor()
 
@@ -619,7 +620,8 @@ class SQLConnection(object):
             progress_handler.display(u"Base de données plus récente que votre version de Gertrude !")
             return False
 
-        progress_handler.display(u"Conversion de la base de données (version %d => version %d) ..." % (version, VERSION))
+        if progress_handler:
+            progress_handler.display(u"Conversion de la base de données (version %d => version %d) ..." % (version, VERSION))
 
         if version < 1:
             cur.execute("""

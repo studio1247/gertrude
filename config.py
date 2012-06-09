@@ -174,6 +174,9 @@ def Save(progress_handler=default_progress_handler):
 def Restore(progress_handler=default_progress_handler):
     return config.connection.Restore(progress_handler)
 
+def Update():
+    return config.connection.Update()
+
 def Exit(progress_handler=default_progress_handler):
     SaveConfig(progress_handler)
     return config.connection.Exit(progress_handler)
