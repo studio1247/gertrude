@@ -226,8 +226,8 @@ class FactureFinMois(object):
                 self.cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_supplementaires) * cotisation.montant_heure_garde
             elif self.heures_contractualisees:
                 prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees
-                prorata = (prorata * cotisation.jours_ouvres) / jours_ouvres
-                self.cotisation_mensuelle += prorata 
+                # ne marche pas pour saint julien: prorata = (prorata * cotisation.jours_ouvres) / jours_ouvres
+                self.cotisation_mensuelle += prorata
                 self.total_contractualise += prorata
         
         self.heures_facturees = sum(self.heures_facturees_par_mode)
