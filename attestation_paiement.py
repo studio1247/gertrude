@@ -82,9 +82,14 @@ class AttestationModifications(object):
             
             if facture_debut is None:
                 continue
+            
+            last_inscription = None
+            for tmp in inscrit.inscriptions:
+                if not last_inscription or not last_inscription.fin or (tmp.fin and tmp.fin > last_inscription.fin):
+                    last_inscription = tmp 
                 
             # Les champs du recu
-            fields = GetCrecheFields(creche) +  GetInscritFields(inscrit) + [
+            fields = GetCrecheFields(creche) +  GetInscritFields(inscrit) + GetInscriptionFields(last_inscription) + [
                     ('de-debut', '%s %d' % (GetDeMoisStr(facture_debut.month - 1), facture_debut.year)),
                     ('de-fin', '%s %d' % (GetDeMoisStr(facture_fin.month - 1), facture_fin.year)),
                     ('tresorier', tresorier),
