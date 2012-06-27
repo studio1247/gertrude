@@ -251,8 +251,9 @@ class FileConnection(object):
         return _sql_connection, _creche
     
     def Load(self, progress_handler=default_progress_handler):
-        self.file_mtime = os.stat(self.filename).st_mtime
-        self.Backup(progress_handler)
+        if os.path.isfile(self.filename):
+            self.file_mtime = os.stat(self.filename).st_mtime
+            self.Backup(progress_handler)
         __builtin__.sql_connection = SQLConnection(self.filename)
         if not os.path.isfile(self.filename):
             try:
