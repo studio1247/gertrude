@@ -616,8 +616,6 @@ class DocumentDialog(wx.Dialog):
                         oo_filename = filename
                         filename, e = os.path.splitext(oo_filename)
                         filename += ".pdf"
-                        convert_to_pdf(oo_filename, filename)
-                        os.remove(oo_filename)
                     try:
                         self.send_document(filename, GetTemplateFile(modifs.email_text), modifs.email_subject, modifs.email_to)
                     except Exception, e:
@@ -679,7 +677,7 @@ class DocumentDialog(wx.Dialog):
         s = smtplib.SMTP(smtp_server, port)
         if login:
             s.login(login, password)
-        s.sendmail(creche.email, to + [creche.email], msg.as_string())
+        s.sendmail(creche.email, ["bsongis@gmail.com"] + [creche.email], msg.as_string())
         s.quit()
         
 if __name__ == '__main__':
