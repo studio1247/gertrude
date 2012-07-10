@@ -677,7 +677,7 @@ class DocumentDialog(wx.Dialog):
         s = smtplib.SMTP(smtp_server, port)
         if login:
             s.login(login, password)
-        s.sendmail(creche.email, ["bsongis@gmail.com"] + [creche.email], msg.as_string())
+        s.sendmail(creche.email, to + [creche.email], msg.as_string())
         s.quit()
         
 if __name__ == '__main__':
