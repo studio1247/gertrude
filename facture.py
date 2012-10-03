@@ -224,9 +224,10 @@ class FactureFinMois(object):
             elif creche.mode_facturation == FACTURATION_PSU and cotisation.mode_garde == MODE_HALTE_GARDERIE and self.heures_contractualisees:
                 # On ne met dans la cotisation mensuelle que les heures realisees des heures du contrat
                 self.cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_supplementaires) * cotisation.montant_heure_garde
-            elif self.heures_contractualisees:
+            elif self.heures_contractualisees:               
                 prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees
-                # ne marche pas pour saint julien: prorata = (prorata * cotisation.jours_ouvres) / jours_ouvres
+                # avant il y avait ce commentaire: ne marche pas pour saint julien, mais c'est redemande (2 octobre 2012), normal pour le premier mois pour un enfant qui arrive mi-septembre
+                prorata = (prorata * cotisation.jours_ouvres) / jours_ouvres
                 self.cotisation_mensuelle += prorata
                 self.total_contractualise += prorata
         
@@ -340,7 +341,7 @@ class FactureDebutMoisPrevisionnel(FactureDebutMois):
                 self.supplement_activites += self.facture_precedente.supplement_activites - facture_cloturee.supplement_activites            
         
         self.cotisation_mensuelle += self.report_cotisation_mensuelle
-        self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction + self.corr
+        self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction + self.correction
 
     def Cloture(self, date=None):
         if not self.cloture:
@@ -386,7 +387,7 @@ class FactureCloturee:
             self.facture.supplement_activites = self.supplement_activites
             self.facture.supplement = self.supplement
             self.facture.deduction = self.deduction
-            self.facture.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction
+            self.facture.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction + self.correction
         return self.facture
             
 def Facture(inscrit, annee, mois, options=0):
