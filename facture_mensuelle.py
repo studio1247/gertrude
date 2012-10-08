@@ -33,14 +33,18 @@ class FactureModifications(object):
         self.multi = False
         self.inscrits = inscrits
         self.periode = periode
+        self.periode_facturation = periode
+        if creche.temps_facturation != FACTURATION_FIN_MOIS:
+            self.periode_facturation = getMonthStart(periode - datetime.timedelta(1))
+            
         self.email = True
         if len(inscrits) > 1:
-            self.site = inscrits[0].GetInscriptions(periode, None)[0].site
+            self.site = inscrits[0].GetInscriptions(self.periode_facturation, None)[0].site
             self.default_output = u"Factures %s %d.odt" % (months[periode.month - 1], periode.year)
             self.email_to = None
         else:
             who = inscrits[0]
-            self.site = who.GetInscriptions(periode, None)[0].site
+            self.site = who.GetInscriptions(self.periode_facturation, None)[0].site
             self.email_subject = u"Facture %s %s %s %d" % (who.prenom, who.nom, months[periode.month - 1], periode.year)
             self.email_text = "Accompagnement facture.txt"
             self.email_to = list(set([parent.email for parent in who.parents.values() if parent and parent.email]))
