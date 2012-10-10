@@ -62,8 +62,8 @@ class FactureFinMois(object):
         cotisations_mensuelles = []
         heures_hebdomadaires = {}
         last_cotisation = None
-        
-        if creche.cloture_factures and today > self.fin_recap:
+               
+        if inscrit.hasFacture(self.debut_recap) and creche.cloture_factures and today > self.fin_recap:
             fin = self.debut_recap - datetime.timedelta(1)
             debut = getMonthStart(fin) 
             if inscrit.GetInscriptions(debut, fin) and debut not in inscrit.factures_cloturees and not debut.month in creche.mois_sans_facture:
@@ -195,42 +195,43 @@ class FactureFinMois(object):
                     
             date += datetime.timedelta(1)
 
-        for cotisation in cotisations_mensuelles:
-            if creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and cotisation.inscription.IsInPeriodeAdaptation(cotisation.debut):
-                if cotisation.inscription.mode == MODE_FORFAIT_HORAIRE:
-                    self.heures_facturees_par_mode[cotisation.mode_garde] += cotisation.heures_realisees 
-                self.cotisation_mensuelle += cotisation.heures_contractualisees * cotisation.montant_heure_garde
-                self.report_cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_contractualisees) * cotisation.montant_heure_garde                
-            elif cotisation.inscription.mode == MODE_FORFAIT_HORAIRE:
-                self.cotisation_mensuelle += cotisation.cotisation_mensuelle * cotisation.jours_ouvres / jours_ouvres
-                cotisation.heures_contractualisees = cotisation.inscription.forfait_heures_presence * cotisation.jours_ouvres / jours_ouvres
-                self.heures_contractualisees += cotisation.heures_contractualisees
-                self.total_contractualise += cotisation.heures_contractualisees * cotisation.montant_heure_garde
-                if cotisation.nombre_jours_maladie_deduits > 0:
-                    # retire parce que "montant" non defini ... self.deduction += montant * cotisation.nombre_jours_maladie_deduits / cotisation.jours_ouvres
-                    heures_contractualisees = cotisation.heures_contractualisees * (cotisation.jours_ouvres - cotisation.nombre_jours_maladie_deduits) / cotisation.jours_ouvres
-                else:
-                    heures_contractualisees = cotisation.heures_contractualisees
-                if cotisation.heures_realisees > heures_contractualisees:
-                    cotisation.heures_supplementaires = cotisation.heures_realisees - heures_contractualisees
-                    self.heures_facturees_par_mode[cotisation.mode_garde] += cotisation.heures_realisees 
-                    self.heures_supplementaires += cotisation.heures_supplementaires
-                    self.supplement += cotisation.heures_supplementaires * cotisation.montant_heure_garde
-                else:
-                    self.heures_facturees_par_mode[cotisation.mode_garde] += heures_contractualisees
-            elif creche.mode_facturation == FACTURATION_HORAIRES_REELS:
-                self.cotisation_mensuelle += cotisation.heures_contractualisees * cotisation.montant_heure_garde
-                self.report_cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_contractualisees) * cotisation.montant_heure_garde
-            elif creche.mode_facturation == FACTURATION_PSU and cotisation.mode_garde == MODE_HALTE_GARDERIE and self.heures_contractualisees:
-                # On ne met dans la cotisation mensuelle que les heures realisees des heures du contrat
-                self.cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_supplementaires) * cotisation.montant_heure_garde
-            elif self.heures_contractualisees:               
-                prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees
-                # avant il y avait ce commentaire: ne marche pas pour saint julien, mais c'est redemande (2 octobre 2012), normal pour le premier mois pour un enfant qui arrive mi-septembre
-                prorata = (prorata * cotisation.jours_ouvres) / jours_ouvres
-                self.cotisation_mensuelle += prorata
-                self.total_contractualise += prorata
-        
+        if inscrit.hasFacture(self.debut_recap):
+            for cotisation in cotisations_mensuelles:
+                if creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and cotisation.inscription.IsInPeriodeAdaptation(cotisation.debut):
+                    if cotisation.inscription.mode == MODE_FORFAIT_HORAIRE:
+                        self.heures_facturees_par_mode[cotisation.mode_garde] += cotisation.heures_realisees 
+                    self.cotisation_mensuelle += cotisation.heures_contractualisees * cotisation.montant_heure_garde
+                    self.report_cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_contractualisees) * cotisation.montant_heure_garde                
+                elif cotisation.inscription.mode == MODE_FORFAIT_HORAIRE:
+                    self.cotisation_mensuelle += cotisation.cotisation_mensuelle * cotisation.jours_ouvres / jours_ouvres
+                    cotisation.heures_contractualisees = cotisation.inscription.forfait_heures_presence * cotisation.jours_ouvres / jours_ouvres
+                    self.heures_contractualisees += cotisation.heures_contractualisees
+                    self.total_contractualise += cotisation.heures_contractualisees * cotisation.montant_heure_garde
+                    if cotisation.nombre_jours_maladie_deduits > 0:
+                        # retire parce que "montant" non defini ... self.deduction += montant * cotisation.nombre_jours_maladie_deduits / cotisation.jours_ouvres
+                        heures_contractualisees = cotisation.heures_contractualisees * (cotisation.jours_ouvres - cotisation.nombre_jours_maladie_deduits) / cotisation.jours_ouvres
+                    else:
+                        heures_contractualisees = cotisation.heures_contractualisees
+                    if cotisation.heures_realisees > heures_contractualisees:
+                        cotisation.heures_supplementaires = cotisation.heures_realisees - heures_contractualisees
+                        self.heures_facturees_par_mode[cotisation.mode_garde] += cotisation.heures_realisees 
+                        self.heures_supplementaires += cotisation.heures_supplementaires
+                        self.supplement += cotisation.heures_supplementaires * cotisation.montant_heure_garde
+                    else:
+                        self.heures_facturees_par_mode[cotisation.mode_garde] += heures_contractualisees
+                elif creche.mode_facturation == FACTURATION_HORAIRES_REELS:
+                    self.cotisation_mensuelle += cotisation.heures_contractualisees * cotisation.montant_heure_garde
+                    self.report_cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_contractualisees) * cotisation.montant_heure_garde
+                elif creche.mode_facturation == FACTURATION_PSU and cotisation.mode_garde == MODE_HALTE_GARDERIE and self.heures_contractualisees:
+                    # On ne met dans la cotisation mensuelle que les heures realisees des heures du contrat
+                    self.cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_supplementaires) * cotisation.montant_heure_garde
+                elif self.heures_contractualisees:               
+                    prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees
+                    # avant il y avait ce commentaire: ne marche pas pour saint julien, mais c'est redemande (2 octobre 2012), normal pour le premier mois pour un enfant qui arrive mi-septembre
+                    prorata = (prorata * cotisation.jours_ouvres) / jours_ouvres
+                    self.cotisation_mensuelle += prorata
+                    self.total_contractualise += prorata
+            
         self.heures_facturees = sum(self.heures_facturees_par_mode)
         if creche.temps_facturation == FACTURATION_FIN_MOIS:
             self.cotisation_mensuelle += self.report_cotisation_mensuelle

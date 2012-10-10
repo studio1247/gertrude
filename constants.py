@@ -42,6 +42,7 @@ TYPE_FAMILIAL = 6
 MODE_NORMAL = 0
 MODE_LIBERE_PLACE = 1
 MODE_SANS_HORAIRES = 2
+MODE_PRESENCE_NON_FACTUREE = 4
 
 # Granularité du planning dans la base
 BASE_GRANULARITY = 5 # 5 minutes
@@ -55,6 +56,13 @@ MODE_4_5 = 4
 MODE_3_5 = 8
 MODE_FORFAIT_HORAIRE = 16
 MODE_TEMPS_PARTIEL = 32
+
+ModeAccueilItems = [("Temps plein", MODE_5_5),
+                    ("Temps partiel", MODE_TEMPS_PARTIEL),
+                    (u"4/5èmes", MODE_4_5), 
+                    (u"3/5èmes", MODE_3_5), 
+                    ("Forfait horaire mensuel", MODE_FORFAIT_HORAIRE), 
+                    ("Halte-garderie", MODE_HALTE_GARDERIE)]
 
 # Modes de facturation
 FACTURATION_FORFAIT_10H = 0

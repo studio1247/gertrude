@@ -534,7 +534,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.UpdateProfesseurItems()
         sizer1.AddMany([(self.professeur_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.professeur_items[1], 0, wx.EXPAND)])
         
-        self.mode_accueil_choice = AutoChoiceCtrl(self, None, 'mode', items=[("Temps plein", MODE_5_5), ("Temps partiel", MODE_TEMPS_PARTIEL), (u"4/5èmes", MODE_4_5), (u"3/5èmes", MODE_3_5), ("Forfait horaire mensuel", MODE_FORFAIT_HORAIRE), ("Halte-garderie", MODE_HALTE_GARDERIE)])
+        self.mode_accueil_choice = AutoChoiceCtrl(self, None, 'mode', items=ModeAccueilItems)
         self.Bind(wx.EVT_CHOICE, self.onModeAccueilChoice, self.mode_accueil_choice)
         sizer1.AddMany([(wx.StaticText(self, -1, u"Mode d'accueil :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.mode_accueil_choice, 0, wx.EXPAND)])
         sizer1.AddMany([(wx.StaticText(self, -1, u"Frais d'inscription :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'frais_inscription', min=0, precision=2), 0, wx.EXPAND)])

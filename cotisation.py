@@ -181,10 +181,15 @@ class Cotisation(object):
                 # 47 pour Bois le roi
                 if self.inscription.semaines_conges:
                     self.heures_periode = (52 - self.inscription.semaines_conges) * self.heures_semaine
+                    print ' heures / periode : (52-%f) * %f = %f' % (self.inscription.semaines_conges, self.heures_semaine, self.heures_periode)
                 else:
                     self.heures_periode = 52 * self.heures_semaine
-                self.heures_mois = self.heures_periode / 12
+                    print ' 52 semaines'
                 self.nombre_factures = 12 - len(creche.mois_sans_facture)
+                print ' nombre de factures : %d' % self.nombre_factures
+                self.heures_mois = self.heures_periode / self.nombre_factures
+                print ' heures / mois : %f' % self.heures_mois
+                
 
         if self.jours_semaine == 5:
             self.str_mode_garde = u'plein temps'
@@ -277,7 +282,7 @@ class Cotisation(object):
             self.montant_heure_garde = self.assiette_mensuelle * self.taux_effort / 100
             if creche.mode_facturation in (FACTURATION_PSU, FACTURATION_PSU_TAUX_PERSONNALISES):
                 self.montant_heure_garde = round(self.montant_heure_garde, 2)
-                self.cotisation_mensuelle = self.heures_mois * self.montant_heure_garde
+                self.cotisation_mensuelle = self.heures_mois * self.montant_heure_garde * creche.mois_payes / 12
             else:
                 self.cotisation_mensuelle = self.assiette_mensuelle * self.taux_effort * self.heures_mois * creche.mois_payes / 12 / 100
         

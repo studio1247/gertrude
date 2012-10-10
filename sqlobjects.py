@@ -638,6 +638,7 @@ class Creche(object):
         self.email = ''
         self.smtp_server = ''
         self.caf_email = ''
+        self.mode_accueil_defaut = 0;
         self.type = TYPE_PARENTAL
         self.capacite = 0
         self.facturation_periode_adaptation = PERIODE_ADAPTATION_FACTUREE_NORMALEMENT
@@ -650,6 +651,7 @@ class Creche(object):
         self.cloture_factures = False
         self.arrondi_heures = SANS_ARRONDI
         self.gestion_maladie_hospitalisation = False
+        self.gestion_absences_non_prevenues = False
         self.tri_planning = TRI_PRENOM
         self.alertes = {}
         self.calcule_jours_conges()
@@ -985,7 +987,7 @@ class Inscription(SQLObject):
         self.sites_preinscription = []
         self.debut = None
         self.fin = None
-        self.mode = MODE_5_5
+        self.mode = 0
         self.duree_reference = duree_reference
         self.forfait_heures_presence = 0
         self.semaines_conges = 0
@@ -999,6 +1001,7 @@ class Inscription(SQLObject):
         self.heures_supplementaires = {}
 
         if creation:
+            self.mode = creche.mode_accueil_defaut
             self.create()
             if creche.modes_inscription == MODE_5_5:
                 for i in range(duree_reference):
