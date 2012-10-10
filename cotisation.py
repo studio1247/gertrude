@@ -181,14 +181,18 @@ class Cotisation(object):
                 # 47 pour Bois le roi
                 if self.inscription.semaines_conges:
                     self.heures_periode = (52 - self.inscription.semaines_conges) * self.heures_semaine
-                    print ' heures / periode : (52-%f) * %f = %f' % (self.inscription.semaines_conges, self.heures_semaine, self.heures_periode)
+                    if options & TRACES:
+                        print ' heures / periode : (52-%f) * %f = %f' % (self.inscription.semaines_conges, self.heures_semaine, self.heures_periode)
                 else:
                     self.heures_periode = 52 * self.heures_semaine
-                    print ' 52 semaines'
+                    if options & TRACES:
+                        print ' 52 semaines'
                 self.nombre_factures = 12 - len(creche.mois_sans_facture)
-                print ' nombre de factures : %d' % self.nombre_factures
+                if options & TRACES:
+                    print ' nombre de factures : %d' % self.nombre_factures
                 self.heures_mois = self.heures_periode / self.nombre_factures
-                print ' heures / mois : %f' % self.heures_mois
+                if options & TRACES:
+                    print ' heures / mois : %f' % self.heures_mois
                 
         if self.jours_semaine == 5:
             self.str_mode_garde = u'plein temps'
