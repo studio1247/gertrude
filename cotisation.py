@@ -190,7 +190,6 @@ class Cotisation(object):
                 self.heures_mois = self.heures_periode / self.nombre_factures
                 print ' heures / mois : %f' % self.heures_mois
                 
-
         if self.jours_semaine == 5:
             self.str_mode_garde = u'plein temps'
         else:
@@ -282,9 +281,9 @@ class Cotisation(object):
             self.montant_heure_garde = self.assiette_mensuelle * self.taux_effort / 100
             if creche.mode_facturation in (FACTURATION_PSU, FACTURATION_PSU_TAUX_PERSONNALISES):
                 self.montant_heure_garde = round(self.montant_heure_garde, 2)
-                self.cotisation_mensuelle = self.heures_mois * self.montant_heure_garde * creche.mois_payes / 12
+                self.cotisation_mensuelle = self.heures_mois * self.montant_heure_garde
             else:
-                self.cotisation_mensuelle = self.assiette_mensuelle * self.taux_effort * self.heures_mois * creche.mois_payes / 12 / 100
+                self.cotisation_mensuelle = self.assiette_mensuelle * self.taux_effort * self.heures_mois / 100
         
         if creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and self.inscription.IsInPeriodeAdaptation(self.date):
             self.cotisation_periode = 0.0
