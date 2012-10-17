@@ -121,7 +121,7 @@ class PAJETests(GertrudeTestCase):
         cotisation = Cotisation(inscrit, datetime.date(2010, 9, 6), NO_ADDRESS|NO_PARENTS)
         self.assertEquals(float("%.2f" % cotisation.cotisation_mensuelle), 1001.95)
         facture = Facture(inscrit, 2010, 9, NO_ADDRESS|NO_PARENTS)
-        self.assertEquals(float("%.2f" % facture.total), 1001.95)
+        self.assertEquals(float("%.2f" % facture.total), 834.96)
 
 class MarmousetsTests(GertrudeTestCase):
     def test_1(self):
