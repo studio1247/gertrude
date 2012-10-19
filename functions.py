@@ -382,6 +382,8 @@ def getActivityColor(value):
     if value < 0:
         if value == HOPITAL:
             value = MALADE
+        if value == ABSENCE_NON_PREVENUE:
+            value = VACANCES
         return creche.couleurs[value].couleur
     activity = value & ~(PREVISIONNEL|SUPPLEMENT|CLOTURE)
     if activity in creche.activites:
@@ -486,6 +488,7 @@ def GetFactureFields(facture):
                 ('cotisation-mensuelle', facture.cotisation_mensuelle, FIELD_EUROS),
                 ('heures-contractualisees', GetHeureString(facture.heures_contractualisees)),
                 ('heures-realisees', GetHeureString(facture.heures_realisees)),
+                ('heures-realisees-non-facturees', GetHeureString(facture.heures_realisees_non_facturees)),
                 ('heures-contractualisees-realisees', GetHeureString(facture.heures_realisees-facture.heures_supplementaires)),
                 ('heures-supplementaires', GetHeureString(facture.heures_supplementaires)),
                 ('heures-previsionnelles', GetHeureString(facture.heures_previsionnelles)),

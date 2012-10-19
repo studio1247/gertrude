@@ -21,11 +21,15 @@ from facture import *
 from cotisation import CotisationException
 from ooffice import *
 
+PRESENCE_NON_FACTUREE = 256
+
 couleurs = { SUPPLEMENT: 'A2',
              MALADE: 'B2',
              PRESENT: 'C2',
              VACANCES: 'D2',
-             ABSENT: 'E2'}
+             ABSENT: 'E2',
+             PRESENCE_NON_FACTUREE: 'A3'
+           }
 
 class FactureModifications(object):
     def __init__(self, inscrits, periode):
@@ -120,7 +124,10 @@ class FactureModifications(object):
                                 cell = cells[row][col]
                                 # ecriture de la date dans la cellule
                                 text_node = cell.getElementsByTagName('text:p')[0]
-                                if date in facture.jours_presence_selon_contrat:
+                                if date in facture.jours_presence_non_facturee:
+                                    state = PRESENCE_NON_FACTUREE
+                                    details = " (%s)" % GetHeureString(facture.jours_presence_non_facturee[date])
+                                elif date in facture.jours_presence_selon_contrat:
                                     state = PRESENT
                                     details = " (%s)" % GetHeureString(facture.jours_presence_selon_contrat[date])
                                 elif date in facture.jours_supplementaires:

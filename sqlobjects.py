@@ -237,6 +237,16 @@ class Day(object):
                 fin = end
         return debut, fin
     
+    def GetTotalActivitesPresenceNonFacturee(self):
+        result = 0.0
+        for start, end, value in self.activites:
+            if value in creche.activites:
+                activite = creche.activites[value]
+                if activite.mode == MODE_PRESENCE_NON_FACTUREE:
+                    result += (5.0 * GetDureeArrondie(start, end)) / 60
+        return result
+
+    
     def delete(self):
         print 'suppression jour'
         for start, end, value in self.activites.keys():
@@ -820,13 +830,13 @@ class Creche(object):
             if activite.mode == MODE_SANS_HORAIRES:
                 result.append(activite) 
         return result
-    
+        
     def GetAmplitudeHoraire(self):
         return self.fermeture - self.ouverture
         
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'debut_pause', 'fin_pause', 'affichage_min', 'affichage_max', 'granularite', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'cloture_factures', 'arrondi_heures', 'gestion_maladie_hospitalisation', 'tri_planning', 'smtp_server', 'caf_email'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'debut_pause', 'fin_pause', 'affichage_min', 'affichage_max', 'granularite', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'cloture_factures', 'arrondi_heures', 'gestion_maladie_hospitalisation', 'gestion_absences_non_prevenues', 'tri_planning', 'smtp_server', 'caf_email', 'mode_accueil_defaut'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
@@ -1358,6 +1368,18 @@ class Inscrit(object):
         else:
             return inscription.getReferenceDay(date).GetExtraActivites()
 
+    def GetTotalActivitesPresenceNonFacturee(self, date):
+        if date in creche.jours_fermeture:
+            return 0.0
+        inscription = self.GetInscription(date)
+        if inscription is None:
+            return 0.0
+        
+        if date in self.journees:
+            return self.journees[date].GetTotalActivitesPresenceNonFacturee()
+        else:
+            return inscription.getReferenceDay(date).GetTotalActivitesPresenceNonFacturee()
+        
     def __cmp__(self, other):
         if other is self: return 0
         if other is None: return 1

@@ -109,6 +109,7 @@ TRI_NOM = 1
 TRI_GROUPE = 2
 
 # Valeurs de présence
+ABSENCE_NON_PREVENUE = -4
 HOPITAL = -3
 MALADE = -2
 VACANCES = -1

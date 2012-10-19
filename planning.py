@@ -45,6 +45,7 @@ BUTTON_BITMAPS = { ABSENT: wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BIT
                    VACANCES: wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG),
                    MALADE: wx.Bitmap(GetBitmapFile("icone_maladie.png"), wx.BITMAP_TYPE_PNG),
                    HOPITAL: wx.Bitmap(GetBitmapFile("icone_hopital.png"), wx.BITMAP_TYPE_PNG),
+                   ABSENCE_NON_PREVENUE: wx.Bitmap(GetBitmapFile("icone_absence_non_prevenue.png"), wx.BITMAP_TYPE_PNG),
                    }
 
 class LigneConge(object):
@@ -363,6 +364,11 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             history.Append([Call(line.Restore, line.Backup())])        
             state = line.get_state()
             if state == VACANCES:
+                if creche.gestion_absences_non_prevenues:
+                    line.set_state(ABSENCE_NON_PREVENUE)
+                else:
+                    line.set_state(MALADE)
+            elif state == ABSENCE_NON_PREVENUE:
                 line.set_state(MALADE)
             elif state <= MALADE:
                 if state == MALADE and creche.gestion_maladie_hospitalisation:
