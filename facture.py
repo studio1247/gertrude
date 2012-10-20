@@ -35,6 +35,7 @@ class FactureFinMois(object):
         self.heures_contractualisees = 0.0
         self.heures_realisees = 0.0
         self.heures_realisees_non_facturees = 0.0
+        self.heures_facturees_non_realisees = 0.0
         self.heures_previsionnelles = 0.0
         self.total_contractualise = 0.0
         self.total_realise = 0.0
@@ -91,6 +92,7 @@ class FactureFinMois(object):
                         cotisation.heures_reference = heures_reference
                         cotisation.heures_realisees = 0.0
                         cotisation.heures_realisees_non_facturees = 0.0
+                        cotisation.heures_facturees_non_realisees = 0.0
                         cotisation.nombre_jours_maladie_deduits = 0
                         cotisation.heures_maladie = 0.0
                         cotisation.heures_contractualisees = 0.0
@@ -105,6 +107,8 @@ class FactureFinMois(object):
                     else:
                         heures_hebdomadaires[(cotisation.mode_inscription, cotisation.heures_semaine)] = 1
 
+                    heures_facturees_non_realisees = 0.0
+                    
                     if state == HOPITAL:
                         if heures_reference > 0:
                             self.jours_maladie.append(date)
@@ -160,6 +164,8 @@ class FactureFinMois(object):
                     elif state == VACANCES:
                         if heures_reference > 0:
                             self.jours_vacances.append(date)
+                    elif state == ABSENCE_NON_PREVENUE:
+                        heures_facturees_non_realisees = heures_reference
                     elif state > 0:
                         if state & PREVISIONNEL:
                             self.previsionnel = True
@@ -192,18 +198,20 @@ class FactureFinMois(object):
 
                     self.heures_realisees += heures_realisees
                     self.heures_realisees_non_facturees += heures_realisees_non_facturees
+                    self.heures_facturees_non_realisees += heures_facturees_non_realisees
                     cotisation.heures_realisees += heures_realisees
                     cotisation.heures_realisees_non_facturees += heures_realisees_non_facturees
+                    cotisation.heures_facturees_non_realisees += heures_facturees_non_realisees
                     
                     if cotisation.inscription.mode != MODE_FORFAIT_HORAIRE:
                         cotisation.heures_contractualisees += heures_reference
                         self.heures_contractualisees += heures_reference
                         if creche.mode_facturation == FACTURATION_HORAIRES_REELS or (creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date)) or (creche.mode_facturation == FACTURATION_PSU and cotisation.mode_garde == MODE_HALTE_GARDERIE):
-                            self.heures_facturees_par_mode[cotisation.mode_garde] += heures_realisees - heures_realisees_non_facturees
+                            self.heures_facturees_par_mode[cotisation.mode_garde] += heures_realisees - heures_realisees_non_facturees + heures_facturees_non_realisees
                             self.total_contractualise += heures_reference * cotisation.montant_heure_garde
                         else:
                             self.heures_facturees_par_mode[cotisation.mode_garde] += heures_reference + heures_supplementaires
-                    self.total_realise += (heures_realisees - heures_realisees_non_facturees) * cotisation.montant_heure_garde
+                    self.total_realise += (heures_realisees - heures_realisees_non_facturees ) * cotisation.montant_heure_garde
                     
             date += datetime.timedelta(1)
 
@@ -236,7 +244,7 @@ class FactureFinMois(object):
                     self.report_cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_realisees_non_facturees - cotisation.heures_contractualisees) * cotisation.montant_heure_garde
                 elif creche.mode_facturation == FACTURATION_PSU and cotisation.mode_garde == MODE_HALTE_GARDERIE and self.heures_contractualisees:
                     # On ne met dans la cotisation mensuelle que les heures realisees des heures du contrat
-                    self.cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_realisees_non_facturees - cotisation.heures_supplementaires) * cotisation.montant_heure_garde
+                    self.cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_realisees_non_facturees + cotisation.heures_facturees_non_realisees - cotisation.heures_supplementaires) * cotisation.montant_heure_garde
                 elif self.heures_contractualisees:         
                     prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees
                     # avant il y avait ce commentaire: ne marche pas pour saint julien, mais c'est redemande (2 octobre 2012), normal pour le premier mois pour un enfant qui arrive mi-septembre

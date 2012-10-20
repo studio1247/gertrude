@@ -1323,7 +1323,7 @@ class Inscrit(object):
         if date in self.journees:
             journee = self.journees[date]
             state = journee.get_state()
-            if state == MALADE or state == HOPITAL:
+            if state in (MALADE, HOPITAL, ABSENCE_NON_PREVENUE):
                 return state, heures_reference, 0, 0
             elif state in (ABSENT, VACANCES):
                 if inscription.mode == MODE_5_5 or ref_state:

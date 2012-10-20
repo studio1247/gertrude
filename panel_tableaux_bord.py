@@ -544,6 +544,14 @@ class StatistiquesFrequentationTab(AutoTab):
                         cotisations_contractualisees += facture.total_contractualise
                         cotisations_realisees += facture.total_realise
                         cotisations_facturees += facture.total_facture
+                        print inscrit.prenom, inscrit.nom
+                        print ' ', u"heures contractualisées", facture.heures_contractualisees
+                        print ' ', u"heures réalisées :", facture.heures_realisees
+                        print ' ', u"heures facturées :", facture.heures_facturees
+                        print ' ', u"total contractualisé", facture.total_contractualise
+                        print ' ', u"total réalisé :", facture.total_realise
+                        print ' ', u"total facturé :", facture.total_facture
+                        
                 except Exception, e:
                     erreurs.append((inscrit, e))
                               
