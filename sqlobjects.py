@@ -45,7 +45,7 @@ class Day(object):
                 self.commentaire_idx = result.lastrowid
             else:
                 print 'update commentaire'
-                result = sql_connection.execute('UPDATE COMMENTAIRES SET commentaire=? WHERE idx=?', (self.commentaire_idx, commentaire))
+                result = sql_connection.execute('UPDATE COMMENTAIRES SET commentaire=? WHERE idx=?', (commentaire, self.commentaire_idx))
 
     def SetActivity(self, start, end, value):
         self.last_heures = None
