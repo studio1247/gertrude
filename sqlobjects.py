@@ -33,7 +33,20 @@ class Day(object):
         self.activites_sans_horaires = {}
         self.last_heures = None
         self.readonly = False
-           
+        self.commentaire = ""
+        self.commentaire_idx = None
+                       
+    def setCommentaire(self, commentaire):
+        self.commentaire = commentaire
+        if sql_connection:
+            if self.commentaire_idx is None:
+                print 'nouveau commentaire'
+                result = sql_connection.execute('INSERT INTO COMMENTAIRES (idx, inscrit, date, commentaire) VALUES (NULL,?,?,?)', (self.inscrit_idx, self.date, commentaire))
+                self.commentaire_idx = result.lastrowid
+            else:
+                print 'update commentaire'
+                result = sql_connection.execute('UPDATE COMMENTAIRES SET commentaire=? WHERE idx=?', (self.commentaire_idx, commentaire))
+
     def SetActivity(self, start, end, value):
         self.last_heures = None
         activity_value = value & ~PREVISIONNEL

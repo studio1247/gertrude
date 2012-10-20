@@ -163,7 +163,7 @@ class PhoneCtrl(wx.TextCtrl):
 
         self.__digits = '0123456789'
 
-        this_sty = wx.TAB_TRAVERSAL| wx.TE_PROCESS_ENTER
+        # this_sty = wx.TAB_TRAVERSAL| wx.TE_PROCESS_ENTER
         kw = kwargs
 
 #        if kw.has_key('style'): this_sty = this_sty | kw['style']
@@ -707,20 +707,43 @@ class AutoRadioBox(wx.RadioBox, AutoMixin):
         self.SetSelection(value)
 
 class DatePickerCtrl(wx.DatePickerCtrl):
-  _GetValue = wx.DatePickerCtrl.GetValue
-  _SetValue = wx.DatePickerCtrl.SetValue
+    _GetValue = wx.DatePickerCtrl.GetValue
+    _SetValue = wx.DatePickerCtrl.SetValue
 
-  def GetValue(self):
-    if self._GetValue().IsValid():
-      return datetime.date(self._GetValue().GetYear(), self._GetValue().GetMonth()+1, self._GetValue().GetDay())
-    else:
-      return None
+    def GetValue(self):
+        if self._GetValue().IsValid():
+            return datetime.date(self._GetValue().GetYear(), self._GetValue().GetMonth()+1, self._GetValue().GetDay())
+        else:
+            return None
 
-  def SetValue(self, dt):
-    if dt is None:
-      self._SetValue(wx.DateTime())
-    else:
-      self._SetValue(wx.DateTimeFromDMY(dt.day, dt.month-1, dt.year))
+    def SetValue(self, dt):
+        if dt is None:
+            self._SetValue(wx.DateTime())
+        else:
+            self._SetValue(wx.DateTimeFromDMY(dt.day, dt.month-1, dt.year))
+
+class TextDialog(wx.Dialog):
+    def __init__(self, parent, titre, text):
+        wx.Dialog.__init__(self, parent, -1, titre, wx.DefaultPosition, wx.DefaultSize)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.textctrl = wx.TextCtrl(self, -1, text, style=wx.TAB_TRAVERSAL| wx.TE_PROCESS_ENTER)
+        self.Bind(wx.EVT_TEXT_ENTER, self.OnEnter, self.textctrl)
+        self.sizer.Add(self.textctrl, 0, wx.EXPAND|wx.ALL, 5)
+        self.btnsizer = wx.StdDialogButtonSizer()
+        btn = wx.Button(self, wx.ID_OK)
+        self.btnsizer.AddButton(btn)
+        btn = wx.Button(self, wx.ID_CANCEL)
+        self.btnsizer.AddButton(btn)
+        self.btnsizer.Realize()       
+        self.sizer.Add(self.btnsizer, 0, wx.ALL, 5)
+        self.SetSizer(self.sizer)
+        self.sizer.Fit(self)
+        
+    def GetText(self):
+        return self.textctrl.GetValue()
+    
+    def OnEnter(self, event):
+        self.EndModal(wx.ID_OK)
 
 class PeriodeDialog(wx.Dialog):
     def __init__(self, parent, periode):

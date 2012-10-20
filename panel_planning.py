@@ -21,9 +21,12 @@ from parameters import *
 from functions import *
 from sqlobjects import *
 from controls import *
-from planning import PlanningWidget, LigneConge
+from planning import PlanningWidget, COMMENTS, LigneConge
 
 class DayPlanningPanel(PlanningWidget):
+    def __init__(self, parent, activity_combobox):
+        PlanningWidget.__init__(self, parent, activity_combobox, COMMENTS)
+        
     def UpdateContents(self):
         if self.date in creche.jours_fermeture:
             conge = creche.jours_fermeture[self.date]

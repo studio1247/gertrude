@@ -25,7 +25,7 @@ from sqlobjects import *
 from facture import FactureCloturee
 import wx
 
-VERSION = 63
+VERSION = 64
 
 def getdate(s):
     if s is None:
@@ -281,6 +281,14 @@ class SQLConnection(object):
             regime INTEGER
           );""")
         
+        cur.execute("""
+          CREATE TABLE COMMENTAIRES(
+            idx INTEGER PRIMARY KEY,
+            inscrit INTEGER REFERENCES INSCRITS(idx),
+            date DATE,
+            commentaire VARCHAR
+          );""")
+
         cur.execute("""
           CREATE TABLE ACTIVITES(
             idx INTEGER PRIMARY KEY,
@@ -580,6 +588,15 @@ class SQLConnection(object):
                     inscrit.journees[key] = journee
                 # print inscrit.prenom, key, debut, fin, value
                 journee.add_activity(debut, fin, value, idx)
+            cur.execute('SELECT date, commentaire, idx FROM COMMENTAIRES WHERE inscrit=?', (inscrit.idx,))
+            for date, commentaire, idx in cur.fetchall():
+                key = getdate(date)
+                if key in inscrit.journees:
+                    journee = inscrit.journees[key]
+                else:
+                    journee = Journee(inscrit, key)
+                    inscrit.journees[key] = journee
+                journee.commentaire, journee.commentaire_idx = commentaire, idx
 
             cur.execute('SELECT idx, date, cotisation_mensuelle, total_contractualise, total_realise, total_facture, supplement_activites, supplement, deduction FROM FACTURES where inscrit=?', (inscrit.idx,))
             for idx, date, cotisation_mensuelle, total_contractualise, total_realise, total_facture, supplement_activites, supplement, deduction in cur.fetchall():
@@ -1211,6 +1228,15 @@ class SQLConnection(object):
             cur.execute("ALTER TABLE CRECHE ADD gestion_absences_non_prevenues BOOLEAN;")
             cur.execute("UPDATE CRECHE SET mode_accueil_defaut=?", (0,))            
             cur.execute("UPDATE CRECHE SET gestion_absences_non_prevenues=?", (False,))
+
+        if version < 64:
+            cur.execute("""
+                CREATE TABLE COMMENTAIRES(
+                  idx INTEGER PRIMARY KEY,
+                  inscrit INTEGER REFERENCES INSCRITS(idx),
+                  date DATE,
+                  commentaire VARCHAR
+                );""")
 
         if version < VERSION:
             try:
