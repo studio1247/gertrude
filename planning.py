@@ -379,6 +379,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             dlg.Destroy()
             if response == wx.ID_OK:
                 line.setCommentaire(dlg.GetText())
+                line.Save()
                 history.Append(None)
                 if line.insert is not None:
                     line.insert[line.key] = line
