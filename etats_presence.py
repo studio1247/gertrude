@@ -74,7 +74,7 @@ class EtatsPresenceModifications(object):
         dates = self.selection.keys()
         dates.sort()
         for date in dates:
-            for site, professeur, inscrit, heure_arrivee, heure_depart, heures in self.selection[date]:
+            for site, professeur, inscrit, heure_arrivee, heure_depart, heures, commentaire in self.selection[date]:
                 ligne = template.cloneNode(1)
                 fields = GetInscritFields(inscrit)
                 fields.extend([('date', date),
@@ -85,7 +85,8 @@ class EtatsPresenceModifications(object):
                                ('site', GetNom(site)),
                                ('professeur-prenom', GetPrenom(professeur)),
                                ('professeur-nom', GetNom(professeur)),
-                               ('heures', GetHeureString(heures))])
+                               ('heures', GetHeureString(heures)),
+                               ('commentaire', commentaire)])
                 ReplaceFields(ligne, fields)
                 table.insertBefore(ligne, template)
 

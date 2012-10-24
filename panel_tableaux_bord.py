@@ -397,7 +397,7 @@ class EtatsPresenceTab(AutoTab):
                                 journee = inscrit.getReferenceDay(date)
                             arrivee, depart = journee.GetPlageHoraire()
                             # print date, arrivee, depart, journee.activites
-                            selection[date].append((inscription.site, inscription.professeur, inscrit, arrivee, depart, realise))
+                            selection[date].append((inscription.site, inscription.professeur, inscrit, arrivee, depart, realise, journee.commentaire))
                         date += datetime.timedelta(1)
         return selection
     
@@ -409,7 +409,7 @@ class EtatsPresenceTab(AutoTab):
         dates = selection.keys()
         dates.sort()
         for date in dates:
-            for site, professeur, inscrit, heure_arrivee, heure_depart, heures in selection[date]:
+            for site, professeur, inscrit, heure_arrivee, heure_depart, heures, commentaire in selection[date]:
                 self.grid.AppendRows(1)
                 self.grid.SetCellValue(row, 0, date2str(date))
                 inscrit_column = 1
