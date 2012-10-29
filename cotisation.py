@@ -200,6 +200,7 @@ class Cotisation(object):
             self.str_mode_garde = u'%d/5èmes' % self.jours_semaine
         
         self.taux_effort = None
+        self.forfait_heures_presence = 0.0
         
         if creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
             self.montant_heure_garde = 0.0
@@ -208,8 +209,6 @@ class Cotisation(object):
         elif creche.mode_facturation == FACTURATION_HORAIRES_REELS:
             if self.inscription.mode == MODE_FORFAIT_HORAIRE:
                 self.forfait_heures_presence = self.inscription.forfait_heures_presence
-            else:
-                self.forfait_heures_presence = 0
             self.montant_heure_garde = creche.eval_taux_horaire(self.mode_garde, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine)
             if self.montant_heure_garde is None:
                 errors.append(u" - La formule de calcul du tarif horaire n'est pas correcte.")
