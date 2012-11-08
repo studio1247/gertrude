@@ -445,7 +445,7 @@ class ActivitesTab(AutoTab):
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, "Couleurs"), wx.VERTICAL)
         flex_sizer = wx.FlexGridSizer(0, 3, 3, 2)
         flex_sizer.AddGrowableCol(1, 1)
-        for label, activite, field in ((u"présences", creche.activites[0], "couleur"), (u"présences supplémentaires", creche.activites[0], "couleur_supplement"), (u"présences prévisionnelles", creche.activites[0], "couleur_previsionnel"), (u"absences pour congés", creche.couleurs[VACANCES], "couleur"), (u"absences pour maladie", creche.couleurs[MALADE], "couleur")):
+        for label, activite, field in ((u"présences", creche.activites[0], "couleur"), (u"présences supplémentaires", creche.activites[0], "couleur_supplement"), (u"présences prévisionnelles", creche.activites[0], "couleur_previsionnel"), (u"absences pour congés", creche.couleurs[VACANCES], "couleur"), (u"absences non prévenues", creche.couleurs[ABSENCE_NON_PREVENUE], "couleur"), (u"absences pour maladie", creche.couleurs[MALADE], "couleur")):
             color_button = wx.Button(self, -1, "", size=(20, 20))            
             r, g, b, a, h = couleur = getattr(activite, field)
             color_button.SetBackgroundColour(wx.Color(r, g, b))
@@ -500,6 +500,7 @@ class ActivitesTab(AutoTab):
         creche.activites[0].couleur_supplement = [5, 203, 28, 250, wx.SOLID]
         creche.activites[0].couleur_previsionnel = [5, 203, 28, 50, wx.SOLID]
         creche.couleurs[VACANCES].couleur = [0, 0, 255, 150, wx.SOLID]
+        creche.couleurs[ABSENCE_NON_PREVENUE].couleur = [0, 0, 255, 150, wx.SOLID]
         creche.couleurs[MALADE].couleur = [190, 35, 29, 150, wx.SOLID]
         for activite, field in [(creche.activites[0], "couleur"), (creche.activites[0], "couleur_supplement"), (creche.activites[0], "couleur_previsionnel")]:
             r, g, b, a, h = color = getattr(activite, field)
@@ -631,7 +632,9 @@ class ActivitesTab(AutoTab):
                 r, g, b = data.GetColour()
         couleur = r, g, b, a, h
         for field in obj.field:
-            setattr(obj.activite, field, couleur) 
+            setattr(obj.activite, field, couleur)
+            if obj.activite.idx is None:
+                obj.activite.create() 
         obj.SetBackgroundColour(wx.Color(r, g, b))
         self.UpdateHash(obj.hash_cb, couleur)
     
@@ -640,6 +643,8 @@ class ActivitesTab(AutoTab):
         obj = event.GetEventObject()
         for field in obj.field:
             setattr(obj.activite, field, obj.GetClientData(obj.GetSelection()))
+            if obj.activite.idx is None:
+                obj.activite.create()
 
 class ChargesTab(AutoTab, PeriodeMixin):
     def __init__(self, parent):

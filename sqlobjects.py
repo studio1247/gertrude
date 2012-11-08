@@ -470,12 +470,12 @@ class CongeInscrit(Conge):
 
 class Activite(object):
     last_value = 0
-    def __init__(self, creation=True, value=None):
+    def __init__(self, creation=True, value=None, couleur=None):
         self.idx = None
         self.label = ""
         self.value = value
         self.mode = 0
-        self.couleur = None
+        self.couleur = couleur
         self.couleur_supplement = None
         self.couleur_previsionnel = None
         self.tarif = 0
@@ -630,7 +630,7 @@ class Creche(object):
         self.users = []
         self.tarifs_speciaux = []
         self.groupes = []
-        self.couleurs = {}
+        self.couleurs = { ABSENCE_NON_PREVENUE: Activite(creation=False, couleur=[0, 0, 255, 150, wx.SOLID]) }
         self.activites = {}
         self.employes = []
         self.professeurs = []

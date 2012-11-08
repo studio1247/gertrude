@@ -382,8 +382,6 @@ def getActivityColor(value):
     if value < 0:
         if value == HOPITAL:
             value = MALADE
-        if value == ABSENCE_NON_PREVENUE:
-            value = VACANCES
         return creche.couleurs[value].couleur
     activity = value & ~(PREVISIONNEL|SUPPLEMENT|CLOTURE)
     if activity in creche.activites:
