@@ -488,6 +488,7 @@ def GetFactureFields(facture):
                 ('heures-realisees', GetHeureString(facture.heures_realisees)),
                 ('heures-realisees-non-facturees', GetHeureString(facture.heures_realisees_non_facturees)),
                 ('heures-contractualisees-realisees', GetHeureString(facture.heures_realisees-facture.heures_supplementaires)),
+                ('heures-facturees', GetHeureString(facture.heures_facturees),
                 ('heures-supplementaires', GetHeureString(facture.heures_supplementaires)),
                 ('heures-previsionnelles', GetHeureString(facture.heures_previsionnelles)),
                 ('supplement', facture.supplement, FIELD_EUROS),
