@@ -491,6 +491,9 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         for activite_sizer in self.activites_sizers:
             activite_sizer.Clear(True)
             activite_sizer.Layout()
+        if self.options & COMMENTS:
+            self.comments_sizer.Clear(True)
+            self.comments_sizer.Layout()
         self.labels_panel.SetMinSize((LABEL_WIDTH, 1))
         self.grid_panel.Disable(info)
         self.sizer.Layout()

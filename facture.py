@@ -44,6 +44,7 @@ class FactureFinMois(object):
         self.jours_presence_non_facturee = {}
         self.jours_presence_selon_contrat = {}
         self.jours_supplementaires = {}
+        self.jours_absence_non_prevenue = {}
         self.heures_supplementaires = 0.0
         self.jours_maladie = []
         self.jours_maladie_deduits = []
@@ -166,6 +167,7 @@ class FactureFinMois(object):
                             self.jours_vacances.append(date)
                     elif state == ABSENCE_NON_PREVENUE:
                         heures_facturees_non_realisees = heures_reference
+                        self.jours_absence_non_prevenue[date] = heures_reference
                     elif state > 0:
                         if state & PREVISIONNEL:
                             self.previsionnel = True

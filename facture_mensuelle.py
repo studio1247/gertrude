@@ -28,7 +28,8 @@ couleurs = { SUPPLEMENT: 'A2',
              PRESENT: 'C2',
              VACANCES: 'D2',
              ABSENT: 'E2',
-             PRESENCE_NON_FACTUREE: 'A3'
+             PRESENCE_NON_FACTUREE: 'A3',
+             ABSENCE_NON_PREVENUE: 'B3'
            }
 
 class FactureModifications(object):
@@ -127,6 +128,9 @@ class FactureModifications(object):
                                 if date in facture.jours_presence_non_facturee:
                                     state = PRESENCE_NON_FACTUREE
                                     details = " (%s)" % GetHeureString(facture.jours_presence_non_facturee[date])
+                                elif date in facture.jours_absence_non_prevenue:
+                                    state = ABSENCE_NON_PREVENUE
+                                    details = " (%s)" % GetHeureString(facture.jours_absence_non_prevenue[date])
                                 elif date in facture.jours_presence_selon_contrat:
                                     state = PRESENT
                                     details = " (%s)" % GetHeureString(facture.jours_presence_selon_contrat[date])
