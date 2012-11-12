@@ -39,6 +39,7 @@ class FactureFinMois(object):
         self.heures_previsionnelles = 0.0
         self.total_contractualise = 0.0
         self.total_realise = 0.0
+        self.total_realise_non_facture = 0.0
         self.supplement = 0.0
         self.deduction = 0.0
         self.jours_presence_non_facturee = {}
@@ -195,8 +196,7 @@ class FactureFinMois(object):
                     heures_realisees_non_facturees = inscrit.GetTotalActivitesPresenceNonFacturee(date)
                     if heures_realisees_non_facturees > 0 and heures_realisees == heures_realisees_non_facturees:
                         self.jours_presence_non_facturee[date] = heures_realisees_non_facturees
-                    self.deduction += heures_realisees_non_facturees * cotisation.montant_heure_garde
-                    self.raison_deduction.add("heures non facturées")      
+                    self.total_realise_non_facture += heures_realisees_non_facturees * cotisation.montant_heure_garde     
 
                     self.heures_realisees += heures_realisees
                     self.heures_realisees_non_facturees += heures_realisees_non_facturees
@@ -258,6 +258,8 @@ class FactureFinMois(object):
         if creche.temps_facturation == FACTURATION_FIN_MOIS:
             self.cotisation_mensuelle += self.report_cotisation_mensuelle
             self.report_cotisation_mensuelle = 0.0
+            
+        self.cotisation_mensuelle -= self.total_realise_non_facture
 
         # arrondi de tous les champs en euros
         self.cotisation_mensuelle = round(self.cotisation_mensuelle, 2)
