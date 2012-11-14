@@ -247,6 +247,7 @@ class FactureFinMois(object):
                 elif creche.mode_facturation == FACTURATION_PSU and cotisation.mode_garde == MODE_HALTE_GARDERIE and self.heures_contractualisees:
                     # On ne met dans la cotisation mensuelle que les heures realisees des heures du contrat
                     self.cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_realisees_non_facturees + cotisation.heures_facturees_non_realisees - cotisation.heures_supplementaires) * cotisation.montant_heure_garde
+                    # print '(', cotisation.heures_realisees, '-', cotisation.heures_realisees_non_facturees, '+', cotisation.heures_facturees_non_realisees, '-', cotisation.heures_supplementaires, ') *', cotisation.montant_heure_garde, '=', self.cotisation_mensuelle  
                 elif self.heures_contractualisees:         
                     prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees
                     # avant il y avait ce commentaire: ne marche pas pour saint julien, mais c'est redemande (2 octobre 2012), normal pour le premier mois pour un enfant qui arrive mi-septembre
@@ -258,8 +259,9 @@ class FactureFinMois(object):
         if creche.temps_facturation == FACTURATION_FIN_MOIS:
             self.cotisation_mensuelle += self.report_cotisation_mensuelle
             self.report_cotisation_mensuelle = 0.0
-            
-        self.cotisation_mensuelle -= self.total_realise_non_facture
+
+        # print self.total_realise_non_facture            
+        # self.cotisation_mensuelle -= self.total_realise_non_facture
 
         # arrondi de tous les champs en euros
         self.cotisation_mensuelle = round(self.cotisation_mensuelle, 2)
@@ -291,7 +293,7 @@ class FactureFinMois(object):
         self.total_facture = self.total + self.report_cotisation_mensuelle
         
         if options & TRACES:
-            print inscrit.prenom
+            print 'Facture de', inscrit.prenom, inscrit.nom, 'pour', months[mois], annee
             for var in ["heures_contractualisees", "heures_facturees", "heures_supplementaires", "cotisation_mensuelle", "supplement", "deduction", "total"]:
                 print " ", var, eval("self.%s" % var)
                 

@@ -76,7 +76,7 @@ class FactureModifications(object):
         
         for index, inscrit in enumerate(self.inscrits):
             try:
-                facture = Facture(inscrit, self.periode.year, self.periode.month)
+                facture = Facture(inscrit, self.periode.year, self.periode.month, options=TRACES)
             except CotisationException, e:
                 errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
                 continue
