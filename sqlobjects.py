@@ -630,7 +630,7 @@ class Creche(object):
         self.users = []
         self.tarifs_speciaux = []
         self.groupes = []
-        self.couleurs = { ABSENCE_NON_PREVENUE: Activite(creation=False, couleur=[0, 0, 255, 150, wx.SOLID]) }
+        self.couleurs = { ABSENCE_NON_PREVENUE: Activite(creation=False, value=ABSENCE_NON_PREVENUE, couleur=[0, 0, 255, 150, wx.SOLID]) }
         self.activites = {}
         self.employes = []
         self.professeurs = []

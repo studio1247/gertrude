@@ -495,6 +495,7 @@ class ActivitesTab(AutoTab):
         self.sizer.Layout()
         
     def OnCouleursDefaut(self, event):
+        history.Append(None)
         observers['activites'] = time.time()
         creche.activites[0].couleur = [5, 203, 28, 150, wx.SOLID]
         creche.activites[0].couleur_supplement = [5, 203, 28, 250, wx.SOLID]
@@ -612,6 +613,7 @@ class ActivitesTab(AutoTab):
         event.Skip()
         
     def onColorButton(self, event):
+        history.Append(None)
         observers['activites'] = time.time()
         obj = event.GetEventObject()
         r, g, b, a, h = couleur = getattr(obj.activite, obj.field[0])
@@ -639,6 +641,7 @@ class ActivitesTab(AutoTab):
         self.UpdateHash(obj.hash_cb, couleur)
     
     def onHashChange(self, event):
+        history.Append(None)
         observers['activites'] = time.time()
         obj = event.GetEventObject()
         for field in obj.field:
