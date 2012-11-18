@@ -603,15 +603,18 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.UpdateContents()
     
     def onModeAccueilChoice(self, event):
+        history.Append(None)
         self.inscrit.inscriptions[self.periode].mode = self.mode_accueil_choice.GetClientData(self.mode_accueil_choice.GetSelection())
         self.UpdateContents()        
         
     def onDureeReferenceChoice(self, event):
+        history.Append(None)
         duration = self.duree_reference_choice.GetClientData(self.duree_reference_choice.GetSelection())
         self.inscrit.inscriptions[self.periode].setReferenceDuration(duration)
         self.UpdateContents()
         
     def onMode_5_5(self, event):
+        history.Append(None)
         inscription = self.inscrit.inscriptions[self.periode]
         inscription.mode = MODE_5_5
         for i, day in enumerate(inscription.reference):
@@ -620,6 +623,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.UpdateContents()
     
     def onMondayCopy(self, event):
+        history.Append(None)
         inscription = self.inscrit.inscriptions[self.periode]
         for i, day in enumerate(inscription.reference):
             if i > 0 and JourSemaineAffichable(i):
