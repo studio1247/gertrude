@@ -240,7 +240,7 @@ def ReplaceFields(cellules, fields):
                                 elif isinstance(value, datetime.date):
                                     if len(nodes) == 1 and nodeText == tag:
                                         cellule.setAttribute("office:value-type", 'date')
-                                        cellule.setAttribute("office:date-value", '%d-%d-%d' % (value.year, value.month, value.day))
+                                        cellule.setAttribute("office:date-value", '%04d-%02d-%02d' % (value.year, value.month, value.day))
                                     nodeText = nodeText.replace(tag, text)
                                 else:
                                     nodeText = nodeText.replace(tag, text)
