@@ -837,6 +837,7 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, u"Durée de la carence :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'minimum_maladie', min=0, precision=0), 0, 0)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Traitement des absences pour hospitalisation :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'gestion_maladie_hospitalisation', [(u"Géré", True), (u"Non géré", False)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Traitement des absences non prévenues :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'gestion_absences_non_prevenues', [(u"Géré", True), (u"Non géré", False)]), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Traitement des départs anticipés :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'gestion_depart_anticipe', [(u"Géré", True), (u"Non géré", False)]), 0, wx.EXPAND)])        
         sizer.AddMany([(wx.StaticText(self, -1, u"Gestion d'alertes :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'gestion_alertes', [(u'Activée', True), (u'Désactivée', False)]), 0, wx.EXPAND)])
         self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 5)
         

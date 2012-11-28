@@ -674,6 +674,7 @@ class Creche(object):
         self.arrondi_heures = SANS_ARRONDI
         self.gestion_maladie_hospitalisation = False
         self.gestion_absences_non_prevenues = False
+        self.gestion_depart_anticipe = False
         self.tri_planning = TRI_PRENOM
         self.alertes = {}
         self.calcule_jours_conges()
@@ -849,7 +850,7 @@ class Creche(object):
         
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'debut_pause', 'fin_pause', 'affichage_min', 'affichage_max', 'granularite', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'cloture_factures', 'arrondi_heures', 'gestion_maladie_hospitalisation', 'gestion_absences_non_prevenues', 'tri_planning', 'smtp_server', 'caf_email', 'mode_accueil_defaut'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'debut_pause', 'fin_pause', 'affichage_min', 'affichage_max', 'granularite', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'capacite', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'cloture_factures', 'arrondi_heures', 'gestion_maladie_hospitalisation', 'gestion_absences_non_prevenues', 'gestion_depart_anticipe', 'tri_planning', 'smtp_server', 'caf_email', 'mode_accueil_defaut'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
@@ -1009,6 +1010,7 @@ class Inscription(SQLObject):
         self.sites_preinscription = []
         self.debut = None
         self.fin = None
+        self.depart = None
         self.mode = 0
         self.duree_reference = duree_reference
         self.forfait_heures_presence = 0
@@ -1068,7 +1070,7 @@ class Inscription(SQLObject):
     
     def create(self):
         print 'nouvelle inscription'
-        result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, mode, forfait_mensuel, frais_inscription, fin_periode_adaptation, duree_reference, forfait_heures_presence, semaines_conges) VALUES(NULL,?,?,?,?,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.mode, self.forfait_mensuel, self.frais_inscription, self.fin_periode_adaptation, self.duree_reference, self.forfait_heures_presence, self.semaines_conges))
+        result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, depart, mode, forfait_mensuel, frais_inscription, fin_periode_adaptation, duree_reference, forfait_heures_presence, semaines_conges) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.depart, self.mode, self.forfait_mensuel, self.frais_inscription, self.fin_periode_adaptation, self.duree_reference, self.forfait_heures_presence, self.semaines_conges))
         self.idx = result.lastrowid
         
     def delete(self):
@@ -1082,7 +1084,7 @@ class Inscription(SQLObject):
             value = value.idx
         elif name == "sites_preinscription":
             value = " ".join([str(value.idx) for value in value])
-        if name in ['debut', 'fin', 'mode', 'forfait_mensuel', 'frais_inscription', 'fin_periode_adaptation', 'duree_reference', 'forfait_heures_presence', 'semaines_conges', 'preinscription', 'site', 'sites_preinscription', 'professeur', 'groupe'] and self.idx:
+        if name in ['debut', 'fin', 'depart', 'mode', 'forfait_mensuel', 'frais_inscription', 'fin_periode_adaptation', 'duree_reference', 'forfait_heures_presence', 'semaines_conges', 'preinscription', 'site', 'sites_preinscription', 'professeur', 'groupe'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE INSCRIPTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))   
 
@@ -1263,7 +1265,7 @@ class Inscrit(object):
         
     def GetInscription(self, date, preinscription=False):
         for inscription in self.inscriptions:
-            if (preinscription or not creche.preinscriptions or not inscription.preinscription) and inscription.debut and date >= inscription.debut and (not inscription.fin or date <= inscription.fin):
+            if (preinscription or not creche.preinscriptions or not inscription.preinscription) and inscription.debut and date >= inscription.debut and (not inscription.fin or date <= inscription.fin) and (not inscription.depart or date <= inscription.depart):
                 return inscription
         return None
 
