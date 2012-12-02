@@ -248,9 +248,14 @@ class FactureFinMois(object):
                     # On ne met dans la cotisation mensuelle que les heures realisees des heures du contrat
                     self.cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_realisees_non_facturees + cotisation.heures_facturees_non_realisees - cotisation.heures_supplementaires) * cotisation.montant_heure_garde
                     # print '(', cotisation.heures_realisees, '-', cotisation.heures_realisees_non_facturees, '+', cotisation.heures_facturees_non_realisees, '-', cotisation.heures_supplementaires, ') *', cotisation.montant_heure_garde, '=', self.cotisation_mensuelle  
-                elif self.heures_contractualisees:         
+                elif creche.mode_facturation == FACTURATION_PSU and self.heures_contractualisees:
+                    prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees
+                    self.cotisation_mensuelle += prorata
+                    self.total_contractualise += prorata
+                elif self.heures_contractualisees:
                     prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees
                     # avant il y avait ce commentaire: ne marche pas pour saint julien, mais c'est redemande (2 octobre 2012), normal pour le premier mois pour un enfant qui arrive mi-septembre
+                    # ajoute FACTURATION_PSU bloc plus haut pour eviter 2* la regle de 3
                     prorata = (prorata * cotisation.jours_ouvres) / jours_ouvres
                     self.cotisation_mensuelle += prorata
                     self.total_contractualise += prorata

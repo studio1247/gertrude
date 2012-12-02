@@ -431,6 +431,7 @@ activity_modes = [("Normal", 0),
                   (u"Libère une place", MODE_LIBERE_PLACE),
                   (u"Sans horaires", MODE_SANS_HORAIRES),
                   (u"Présence non facturée", MODE_PRESENCE_NON_FACTUREE),
+                  (u"Sans horaire, systématique", MODE_SYSTEMATIQUE_SANS_HORAIRES)
                  ]
 
 class ActivitesTab(AutoTab):
@@ -513,7 +514,7 @@ class ActivitesTab(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, u'Libellé :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, 'activites[%d].label' % activity.value), 1, wx.EXPAND)])
         mode_choice = AutoChoiceCtrl(self, creche, 'activites[%d].mode' % activity.value, items=activity_modes, observers=['activites'])
         self.Bind(wx.EVT_CHOICE, self.onModeChoice, mode_choice)
-        sizer.AddMany([(wx.StaticText(self, -1, 'Mode :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (mode_choice, 1, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Mode :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (mode_choice, 0, 0)])
         color_button = mode_choice.color_button = wx.Button(self, -1, "", size=(20, 20))
         r, g, b, a, h = activity.couleur
         color_button.SetBackgroundColour(wx.Color(r, g, b))
