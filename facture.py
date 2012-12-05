@@ -298,7 +298,7 @@ class FactureFinMois(object):
         self.total_facture = self.total + self.report_cotisation_mensuelle
         
         if options & TRACES:
-            print 'Facture de', inscrit.prenom, inscrit.nom, 'pour', months[mois], annee
+            print 'Facture de', inscrit.prenom, inscrit.nom, 'pour', months[mois-1], annee
             for var in ["heures_contractualisees", "heures_facturees", "heures_supplementaires", "cotisation_mensuelle", "supplement", "deduction", "total"]:
                 print " ", var, eval("self.%s" % var)
                 
