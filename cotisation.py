@@ -31,6 +31,7 @@ NO_NOM = 2
 NO_REVENUS = 4
 NO_PARENTS = 8
 TRACES = 16
+NO_TEST_CLOTURE = 32
 
 def GetDateRevenus(date):
     if date < datetime.date(date.year, 9, 1) or date >= datetime.date(2008, 9, 1):
