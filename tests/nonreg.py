@@ -505,5 +505,19 @@ class BebebulTests(GertrudeTestCase):
         facture = Facture(inscrit, 2012, 10)
         self.assertEquals("%.2f" % facture.total, "18.73")
 
+    def test_adaptation_sur_presence_supplementaire(self):
+        inscrit = self.AddInscrit()
+        self.AddFrere(inscrit, datetime.date(2009, 8, 11))
+        self.AddFrere(inscrit, datetime.date(2012, 8, 18))
+        inscrit.parents["papa"].revenus[0].revenu = 42966.0
+        inscription = Inscription(inscrit, creation=False)
+        inscription.mode = MODE_HALTE_GARDERIE
+        inscription.debut = datetime.date(2012, 10, 1)
+        inscrit.inscriptions.append(inscription)
+        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 25), 105, 147) # 3h00
+        self.AddActivite(inscrit, datetime.date(2012, 10, 25), 105, 147, 1)    # 3h00 adaptation
+        facture = Facture(inscrit, 2012, 10)
+        self.assertEquals("%.2f" % facture.total, "0.00")
+
 if __name__ == '__main__':
     unittest.main()
