@@ -65,6 +65,9 @@ ModeAccueilItems = [("Temps plein", MODE_5_5),
                     ("Forfait horaire mensuel", MODE_FORFAIT_HORAIRE), 
                     ("Halte-garderie", MODE_HALTE_GARDERIE)]
 
+# Nombre de semaines de reference
+MAX_SEMAINES_REFERENCE = 10
+
 # Modes de facturation
 FACTURATION_FORFAIT_10H = 0
 FACTURATION_PSU = 1
@@ -126,4 +129,5 @@ FIELD_EUROS = 1
 #IDs de boutons
 ID_SYNCHRO = 10001
 ID_UNDO = 10002
+
 

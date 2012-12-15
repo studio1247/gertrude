@@ -546,7 +546,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         if creche.gestion_depart_anticipe:
             sizer1.AddMany([(wx.StaticText(self, -1, u"Date de départ anticipé :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'depart'), 0, wx.EXPAND)])
         self.duree_reference_choice = wx.Choice(self)
-        for item, data in [("1 semaine", 7)] + [("%d semaines" % (i+2), 7*(i+2)) for i in range(8-1)]:
+        for item, data in [("1 semaine", 7)] + [("%d semaines" % (i+2), 7*(i+2)) for i in range(MAX_SEMAINES_REFERENCE-1)]:
             self.duree_reference_choice.Append(item, data)
         self.Bind(wx.EVT_CHOICE, self.onDureeReferenceChoice, self.duree_reference_choice)
         sizer1.AddMany([(wx.StaticText(self, -1, u"Durée de la période de référence :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.duree_reference_choice, 0, wx.EXPAND)])

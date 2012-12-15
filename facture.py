@@ -33,6 +33,7 @@ class FactureFinMois(object):
         self.report_cotisation_mensuelle = 0.0
         self.heures_facturees_par_mode = [0.0] * 33
         self.heures_contractualisees = 0.0
+        self.heures_contractualisees_realisees = 0.0
         self.heures_realisees = 0.0
         self.heures_realisees_non_facturees = 0.0
         self.heures_facturees_non_realisees = 0.0
@@ -42,6 +43,8 @@ class FactureFinMois(object):
         self.total_realise_non_facture = 0.0
         self.supplement = 0.0
         self.deduction = 0.0
+        self.formule_supplement = []
+        self.formule_deduction = []
         self.jours_presence_non_facturee = {}
         self.jours_presence_selon_contrat = {}
         self.jours_supplementaires = {}
@@ -125,8 +128,10 @@ class FactureFinMois(object):
                         cotisation.heures_maladie += heures_reference
                         if creche.mode_facturation == FACTURATION_FORFAIT_10H:
                             self.deduction += 10 * cotisation.montant_heure_garde
+                            self.formule_deduction.append("10 * %.2f" % cotisation.montant_heure_garde)
                         elif inscription.mode != MODE_FORFAIT_HORAIRE:
-                            self.deduction += cotisation.montant_heure_garde * heures_reference                                
+                            self.deduction += cotisation.montant_heure_garde * heures_reference
+                            self.formule_deduction.append("%s * %.2f" % (GetHeureString(heures_reference), cotisation.montant_heure_garde))
                         self.raison_deduction.add('hospitalisation')
                     elif state == MALADE:
                         if heures_reference > 0:
@@ -166,8 +171,10 @@ class FactureFinMois(object):
                                 cotisation.heures_maladie += heures_reference
                                 if creche.mode_facturation == FACTURATION_FORFAIT_10H:
                                     self.deduction += 10 * cotisation.montant_heure_garde
+                                    self.formule_deduction.append("10 * %.2f" % cotisation.montant_heure_garde)
                                 elif inscription.mode != MODE_FORFAIT_HORAIRE:
-                                    self.deduction += cotisation.montant_heure_garde * heures_reference                                
+                                    self.deduction += cotisation.montant_heure_garde * heures_reference
+                                    self.formule_deduction.append("%s * %.2f" % (GetHeureString(heures_reference), cotisation.montant_heure_garde))
                                 self.raison_deduction.add('maladie > %dj consécutifs' % creche.minimum_maladie)
                     elif state == VACANCES:
                         if heures_reference > 0:
@@ -187,11 +194,13 @@ class FactureFinMois(object):
                         if heures_supplementaires_facturees > 0:
                             if creche.mode_facturation == FACTURATION_FORFAIT_10H:
                                 self.supplement += 10 * cotisation.montant_heure_garde
+                                self.formule_supplement.append("10 * %.2f" % cotisation.montant_heure_garde)
                             else:
                                 cotisation.heures_supplementaires += heures_supplementaires_facturees
                                 self.heures_supplementaires += heures_supplementaires_facturees
                                 if creche.mode_facturation != FACTURATION_HORAIRES_REELS and (creche.facturation_periode_adaptation != FACTURATION_HORAIRES_REELS or not cotisation.inscription.IsInPeriodeAdaptation(date)):
                                     self.supplement += cotisation.montant_heure_garde * heures_supplementaires_facturees
+                                    self.formule_supplement.append("%s * %.2f" % (GetHeureString(heures_supplementaires_facturees), cotisation.montant_heure_garde))
 
                     if creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE or (creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION and inscription.IsInPeriodeAdaptation(date)):
                         activites = inscrit.GetExtraActivites(date)
@@ -213,6 +222,7 @@ class FactureFinMois(object):
                     if cotisation.inscription.mode != MODE_FORFAIT_HORAIRE:
                         cotisation.heures_contractualisees += heures_reference
                         self.heures_contractualisees += heures_reference
+                        self.heures_contractualisees_realisees += min(heures_reference, heures_realisees)
                         if creche.mode_facturation == FACTURATION_HORAIRES_REELS or (creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date)) or (creche.mode_facturation == FACTURATION_PSU and cotisation.mode_garde == MODE_HALTE_GARDERIE):
                             self.heures_facturees_par_mode[cotisation.mode_garde] += heures_realisees - heures_realisees_non_facturees + heures_facturees_non_realisees
                             self.total_contractualise += heures_reference * cotisation.montant_heure_garde
@@ -244,6 +254,7 @@ class FactureFinMois(object):
                         self.heures_facturees_par_mode[cotisation.mode_garde] += cotisation.heures_realisees - cotisation.heures_realisees_non_facturees
                         self.heures_supplementaires += cotisation.heures_supplementaires
                         self.supplement += cotisation.heures_supplementaires * cotisation.montant_heure_garde
+                        self.formule_supplement.append("%s * %.2f" % (GetHeureString(cotisation.heures_supplementaires), cotisation.montant_heure_garde))
                     else:
                         self.heures_facturees_par_mode[cotisation.mode_garde] += heures_contractualisees
                 elif creche.mode_facturation == FACTURATION_HORAIRES_REELS:
@@ -278,8 +289,10 @@ class FactureFinMois(object):
         self.cotisation_mensuelle = round(self.cotisation_mensuelle, 2)
         self.report_cotisation_mensuelle = round(self.report_cotisation_mensuelle, 2)
         self.supplement = round(self.supplement, 2)
+        self.formule_supplement = ' + '.join(self.formule_supplement)
         self.supplement_activites = round(self.supplement_activites, 2)
         self.deduction = round(self.deduction, 2)
+        self.formule_deduction = ' + '.join(self.formule_deduction)
         if self.raison_deduction:
             self.raison_deduction = "(" + ", ".join(self.raison_deduction) + ")"
         else:
