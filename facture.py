@@ -73,13 +73,12 @@ class FactureFinMois(object):
         if options & TRACES:
             print '\nFacture de', inscrit.prenom, inscrit.nom, 'pour', months[mois-1], annee
                
-        if not (options & NO_TEST_CLOTURE):
-            if inscrit.hasFacture(self.debut_recap) and creche.cloture_factures and today > self.fin_recap:
-                fin = self.debut_recap - datetime.timedelta(1)
-                debut = getMonthStart(fin) 
-                if inscrit.GetInscriptions(debut, fin) and debut not in inscrit.factures_cloturees and not debut.month in creche.mois_sans_facture:
-                    error = u"La facture du mois " + GetDeMoisStr(debut.month-1) + " " + str(debut.year) + u" n'est pas clôturée"
-                    raise CotisationException([error])
+        if inscrit.hasFacture(self.debut_recap) and creche.cloture_factures and today > self.fin_recap:
+            fin = self.debut_recap - datetime.timedelta(1)
+            debut = getMonthStart(fin)
+            if inscrit.GetInscriptions(debut, fin) and debut not in inscrit.factures_cloturees and not debut.month in creche.mois_sans_facture and self.debut_recap >= first_date:
+                error = u"La facture du mois " + GetDeMoisStr(debut.month-1) + " " + str(debut.year) + u" n'est pas clôturée"
+                raise CotisationException([error])
 
         date = self.debut_recap
         while date.month == mois:
