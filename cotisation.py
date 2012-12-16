@@ -152,8 +152,8 @@ class Cotisation(object):
                 self.heures_fermeture_creche = 0.0
                 self.heures_accueil_non_facture = 0.0
                 self.conges_inscription = []
-                date = self.debut
-                while date <= self.fin:
+                date = self.inscription.debut
+                while date <= self.inscription.fin:
                     heures = self.inscription.getReferenceDay(date).GetNombreHeures()
                     if heures:
                         if date in creche.jours_fermeture:
@@ -173,7 +173,7 @@ class Cotisation(object):
                 self.heures_periode = math.ceil(self.heures_periode)
                 if options & TRACES: print ' heures periode :', self.heures_periode
 
-                self.nombre_factures = GetNombreFactures(self.debut, self.fin)
+                self.nombre_factures = GetNombreFactures(self.inscription.debut, self.inscription.fin)
                 if options & TRACES: print ' nombres de factures :', self.nombre_factures
                 self.heures_mois = math.ceil(self.heures_periode / self.nombre_factures)
                 if options & TRACES: print ' heures mensuelles : %f (%f)' % (self.heures_mois, self.heures_periode / self.nombre_factures)
