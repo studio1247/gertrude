@@ -205,10 +205,12 @@ class IdentitePanel(InscriptionsTab):
         sizer2 = wx.FlexGridSizer(0, 2, 5, 10)
         self.sizer2 = sizer2
         sizer2.AddGrowableCol(1, 1)
-        ctrl = AutoTextCtrl(self, None, 'prenom')
-        self.Bind(wx.EVT_TEXT, self.EvtChangementPrenom, ctrl)
-        sizer2.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.ALIGN_CENTER_VERTICAL), (ctrl, 0, wx.EXPAND)])
-        sizer2.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'nom'), 0, wx.EXPAND)])
+        prenom_ctrl = AutoTextCtrl(self, None, 'prenom')
+        self.Bind(wx.EVT_TEXT, self.EvtChangementPrenomNom, prenom_ctrl)
+        nom_ctrl = AutoTextCtrl(self, None, 'nom')
+        self.Bind(wx.EVT_TEXT, self.EvtChangementPrenomNom, nom_ctrl)
+        sizer2.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.ALIGN_CENTER_VERTICAL), (prenom_ctrl, 0, wx.EXPAND)])
+        sizer2.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.ALIGN_CENTER_VERTICAL), (nom_ctrl, 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, 'Sexe :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoChoiceCtrl(self, None, 'sexe', items=[(u"Garçon", 1), ("Fille", 2)]), 0, wx.EXPAND)])
         sizer3 = wx.BoxSizer(wx.HORIZONTAL)
         self.age_ctrl = wx.TextCtrl(self, -1)
@@ -261,9 +263,9 @@ class IdentitePanel(InscriptionsTab):
         sizer.DeleteWindows()
         self.fratries_sizer.Detach(index)
         
-    def EvtChangementPrenom(self, event):
+    def EvtChangementPrenomNom(self, event):
         event.GetEventObject().onText(event)
-        self.parent.EvtChangementPrenom(event)
+        self.parent.EvtChangementPrenomNom(event)
 
     def EvtChangementDateNaissance(self, event):
         date_naissance = self.date_naissance_ctrl.GetValue()
@@ -881,7 +883,7 @@ class InscriptionsNotebook(wx.Notebook):
 
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.onPageChanged)  
             
-    def EvtChangementPrenom(self, event):
+    def EvtChangementPrenomNom(self, event):
         self.parent.ChangePrenom(self.inscrit)
 
     def onPageChanged(self, event):

@@ -25,7 +25,7 @@ from sqlobjects import *
 from facture import FactureCloturee
 import wx
 
-VERSION = 65
+VERSION = 66
 
 def getdate(s):
     if s is None:
@@ -273,6 +273,16 @@ class SQLConnection(object):
           );""")
 
         cur.execute("""
+          CREATE TABLE REF_JOURNEES_SALARIES(
+            idx INTEGER PRIMARY KEY,
+            reference INTEGER REFERENCES INSCRIPTIONS(idx),
+            day INTEGER,
+            value INTEGER,
+            debut INTEGER,
+            fin INTEGER
+          );""")
+
+        cur.execute("""
           CREATE TABLE REVENUS(
             idx INTEGER PRIMARY KEY,
             parent INTEGER REFERENCES PARENTS(idx),
@@ -300,6 +310,17 @@ class SQLConnection(object):
             debut INTEGER,
             fin INTEGER
           );""")
+        
+        cur.execute("""
+          CREATE TABLE ACTIVITES_SALARIES(
+            idx INTEGER PRIMARY KEY,
+            salarie INTEGER REFERENCES EMPLOYES(idx),
+            date DATE,
+            value INTEGER,
+            debut INTEGER,
+            fin INTEGER
+          );""")
+
 
         cur.execute("""
           CREATE TABLE DATA(
@@ -333,6 +354,15 @@ class SQLConnection(object):
             label VARCHAR
           );""")
         
+        cur.execute("""
+          CREATE TABLE CONGES_SALARIES(
+            idx INTEGER PRIMARY KEY,
+            salarie INTEGER REFERENCES EMPLOYES(idx),
+            debut VARCHAR,
+            fin VARCHAR,
+            label VARCHAR
+          );""")
+
         cur.execute("""  
           CREATE TABLE ALERTES (
             idx INTEGER PRIMARY KEY,
@@ -494,20 +524,45 @@ class SQLConnection(object):
                 creche.activites[activity.value] = activity
                 
         cur.execute('SELECT prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, email, diplomes, idx FROM EMPLOYES')
-        for employe_entry in cur.fetchall():
-            employe = Employe(creation=False)
-            employe.prenom, employe.nom, employe.telephone_domicile, employe.telephone_domicile_notes, employe.telephone_portable, employe.telephone_portable_notes, employe.email, employe.diplomes, employe.idx = employe_entry
-            creche.employes.append(employe)
-            cur.execute('SELECT debut, fin, site, fonction, idx FROM CONTRATS WHERE employe=?', (employe.idx,))
+        for salarie_entry in cur.fetchall():
+            salarie = Salarie(creation=False)
+            salarie.prenom, salarie.nom, salarie.telephone_domicile, salarie.telephone_domicile_notes, salarie.telephone_portable, salarie.telephone_portable_notes, salarie.email, salarie.diplomes, salarie.idx = salarie_entry
+            creche.salaries.append(salarie)
+            cur.execute('SELECT debut, fin, site, fonction, idx FROM CONTRATS WHERE employe=?', (salarie.idx,))
             for debut, fin, site_idx, fonction, idx in cur.fetchall():
-                contrat = Contrat(employe, creation=False)
+                contrat = Contrat(salarie, creation=False)
                 site = None
                 for s in creche.sites:
                     if s.idx == site_idx:
                         site = s
                         break
                 contrat.debut, contrat.fin, contrat.site, contrat.fonction, contrat.idx = getdate(debut), getdate(fin), site, fonction, idx
-                employe.contrats.append(contrat)
+                salarie.contrats.append(contrat)
+                
+            for contrat in salarie.contrats:
+                cur.execute('SELECT day, value, debut, fin, idx FROM REF_JOURNEES_SALARIES WHERE reference=?', (contrat.idx,))
+                for day, value, debut, fin, idx in cur.fetchall():
+                    reference_day = contrat.reference[day]
+                    reference_day.add_activity(debut, fin, value, idx)
+                    # print inscrit.prenom, inscrit.prenom, day, debut, fin, value
+                    
+            cur.execute('SELECT date, value, debut, fin, idx FROM ACTIVITES_SALARIES WHERE salarie=?', (salarie.idx,))
+            for date, value, debut, fin, idx in cur.fetchall():
+                key = getdate(date)
+                if key in salarie.journees:
+                    journee = salarie.journees[key]
+                else:
+                    journee = JourneeSalarie(salarie, key)
+                    salarie.journees[key] = journee
+                # print salarie.prenom, salarie.nom, key, debut, fin, value
+                journee.add_activity(debut, fin, value, idx)
+                    
+            cur.execute('SELECT debut, fin, label, idx FROM CONGES_SALARIES WHERE salarie=?', (salarie.idx,))
+            for conges_entry in cur.fetchall():
+                conge = CongeSalarie(salarie, creation=False)
+                conge.debut, conge.fin, conge.label, conge.idx = conges_entry
+                salarie.conges.append(conge)
+            salarie.calcule_jours_conges(creche)
 
         cur.execute('SELECT prenom, nom, entree, sortie, idx FROM PROFESSEURS')
         for professeur_entry in cur.fetchall():
@@ -633,6 +688,8 @@ class SQLConnection(object):
         except:
             version = 0
 
+        version = 65
+        
         if version == VERSION:
             return True
 
@@ -843,7 +900,7 @@ class SQLConnection(object):
                 inscription.idx = idx
                 periode_reference = eval(periode_reference)
                 for weekday in range(5):
-                    day = ReferenceDay(inscription, weekday)
+                    day = JourneeReferenceInscription(inscription, weekday)
                     for i, tranche in enumerate(tranches):
                         debut, fin = tranche
                         if periode_reference[weekday][i]:
@@ -1245,7 +1302,39 @@ class SQLConnection(object):
             cur.execute("UPDATE CRECHE SET gestion_depart_anticipe=?", (False,))
             cur.execute("ALTER TABLE INSCRIPTIONS ADD depart DATE;")           
             cur.execute("UPDATE INSCRIPTIONS SET depart=?", (None,))
-            
+        
+        if version < 66:    
+#            cur.execute("""
+#              CREATE TABLE REF_JOURNEES_<(
+#                idx INTEGER PRIMARY KEY,
+#                reference INTEGER REFERENCES INSCRIPTIONS(idx),
+#                day INTEGER,
+#                value INTEGER,
+#                debut INTEGER,
+#                fin INTEGER
+#              );""")
+
+#            cur.execute("""
+#              CREATE TABLE CONGES_SALARIES(
+#                idx INTEGER PRIMARY KEY,
+#                salarie INTEGER REFERENCES EMPLOYES(idx),
+#                debut VARCHAR,
+#                fin VARCHAR,
+#                label VARCHAR
+#              );""")
+           
+#            cur.execute("""
+#              CREATE TABLE ACTIVITES_SALARIES(
+#                idx INTEGER PRIMARY KEY,
+#                salarie INTEGER REFERENCES EMPLOYES(idx),
+#                date DATE,
+#                value INTEGER,
+#                debut INTEGER,
+#                fin INTEGER
+#              );""")
+
+            pass
+
         if version < VERSION:
             try:
                 cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))

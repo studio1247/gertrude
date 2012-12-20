@@ -70,7 +70,7 @@ class SitesPlanningPanel(PlanningWidget):
                         if date in inscrit.journees:
                             line = inscrit.journees[date]
                         else:
-                            line = inscrit.getReferenceDay(date)
+                            line = inscrit.getJourneeReference(date)
                         if len(creche.sites) > 1:
                             if inscription.site and inscription.site in day_lines:
                                 site_line = day_lines[inscription.site]
@@ -394,7 +394,7 @@ class EtatsPresenceTab(AutoTab):
                             if date in inscrit.journees:
                                 journee = inscrit.journees[date]
                             else:
-                                journee = inscrit.getReferenceDay(date)
+                                journee = inscrit.getJourneeReference(date)
                             arrivee, depart = journee.GetPlageHoraire()
                             # print date, arrivee, depart, journee.activites
                             selection[date].append((inscription.site, inscription.professeur, inscrit, arrivee, depart, realise, journee.commentaire))

@@ -41,7 +41,7 @@ class DayPlanningPanel(PlanningWidget):
         else:
             self.SetInfo("")
         
-        lines = []
+        lignes_enfants = []
         for inscrit in creche.inscrits:
             inscription = inscrit.GetInscription(self.date)
             if inscription is not None and (len(creche.sites) <= 1 or inscription.site is self.site):
@@ -49,24 +49,25 @@ class DayPlanningPanel(PlanningWidget):
                     line = LigneConge(inscrit.jours_conges[self.date].label)
                 elif self.date in inscrit.journees:
                     line = inscrit.journees[self.date]
-                    line.reference = inscription.getReferenceDay(self.date)
+                    line.reference = inscription.getJourneeReference(self.date)
                     line.insert = None
                 else:
-                    line = inscription.getReferenceDayCopy(self.date)
+                    line = inscription.getJourneeReferenceCopy(self.date)
                     line.insert = inscrit.journees
                     line.key = self.date
                 line.label = GetPrenomNom(inscrit)
                 line.inscription = inscription
+                line.nocomments = False
                 if creche.temps_facturation == FACTURATION_FIN_MOIS:
                     date = getMonthStart(self.date)
                 else:
                     date = getNextMonthStart(self.date)
                 if date in inscrit.factures_cloturees:
                     line.readonly = True
-                lines.append(line)
+                lignes_enfants.append(line)
         if creche.tri_planning == TRI_GROUPE:
             groupes = {}
-            for line in lines:
+            for line in lignes_enfants:
                 groupe = line.inscription.groupe
                 if groupe not in groupes:
                     groupes[groupe] = []
@@ -83,16 +84,34 @@ class DayPlanningPanel(PlanningWidget):
                     return cmp(one.ordre, two.ordre)
 
             keys.sort(tri)
-            lines = []
+            lignes_enfants = []
             for key in keys:
                 groupes[key].sort(key=lambda line: line.label)
                 if key:
                     groupes[key].insert(0, key.nom)                   
-                lines.extend(groupes[key])
+                lignes_enfants.extend(groupes[key])
         else:
-            lines.sort(key=lambda line: line.label)    
+            lignes_enfants.sort(key=lambda line: line.label)    
                  
-        self.SetLines(lines)
+        lignes_salaries = []
+        for salarie in creche.salaries:
+            contrat = salarie.GetContrat(self.date)
+            if contrat is not None and (len(creche.sites) <= 1 or contrat.site is self.site):
+                if self.date in salarie.journees:
+                    line = salarie.journees[self.date]
+                    line.reference = contrat.getJourneeReference(self.date)
+                    line.insert = None
+                else:
+                    line = contrat.getJourneeReferenceCopy(self.date)
+                    line.insert = salarie.journees
+                    line.key = self.date
+                line.label = GetPrenomNom(salarie)
+                line.contrat = contrat
+                line.nocomments = True
+                lignes_salaries.append(line)
+        lignes_salaries.sort(key=lambda line: line.label)    
+
+        self.SetLines(lignes_enfants + [None] + lignes_salaries)
 
     def SetData(self, site, date):
         self.site = site
@@ -204,7 +223,7 @@ class PlanningPanel(GPanel):
         if creche.HasActivitesAvecHoraires():
             self.activity_choice.Show(True)
             for i, activity in enumerate(creche.activites.values()):
-                if activity.mode != MODE_SANS_HORAIRES:
+                if activity.mode not in (MODE_SANS_HORAIRES, MODE_SYSTEMATIQUE_SANS_HORAIRES):
                     self.activity_choice.Append(activity.label, activity)
                     try:
                         if self.activity_choice.activity.value == activity.value:

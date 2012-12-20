@@ -202,7 +202,7 @@ class PlanningModifications(object):
                     if date in inscrit.journees:
                         journee = inscrit.journees[date]
                     else:
-                        journee = inscrit.getReferenceDayCopy(date)
+                        journee = inscrit.getJourneeReferenceCopy(date)
                     for t in range(2):
                         cell += 1
                         if journee and IsPresentDuringTranche(journee, tranches[t][0]*12, tranches[t][1]*12):
@@ -266,7 +266,7 @@ class PlanningModifications(object):
                         if date in inscrit.journees:
                             journee = inscrit.journees[date]
                         else:
-                            journee = inscrit.getReferenceDayCopy(date)
+                            journee = inscrit.getJourneeReferenceCopy(date)
                     for t in range(3):
                         cellule = cellules.item(1 + semaine * 17 + jour * 3 + t)
                         if inscrit and journee:

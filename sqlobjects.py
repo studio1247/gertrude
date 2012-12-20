@@ -239,6 +239,11 @@ class Day(object):
                 result.add(value & ~PREVISIONNEL)
         for value in self.activites_sans_horaires.keys():
             result.add(value)
+        if self.activites:
+            for key in creche.activites:
+                activite = creche.activites[key]
+                if activite.mode == MODE_SYSTEMATIQUE_SANS_HORAIRES:
+                    result.add(key) 
         return result
     
     def GetPlageHoraire(self):
@@ -279,7 +284,7 @@ class Day(object):
                 sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.table, (self.activites[(start, end, value)],))
             del self.activites[(start, end, value)]  
 
-class ReferenceDay(Day):
+class JourneeReferenceInscription(Day):
     table = "REF_ACTIVITIES"
     nom = u"activité de référence"
     
@@ -291,6 +296,25 @@ class ReferenceDay(Day):
     def insert_activity(self, start, end, value):
         print 'nouvelle activite de reference (%r, %r %d)' % (start, end, value), 
         result = sql_connection.execute('INSERT INTO REF_ACTIVITIES (idx, reference, day, value, debut, fin) VALUES (NULL,?,?,?,?,?)', (self.inscription.idx, self.day, value, start, end))
+        idx = result.lastrowid
+        if start is None and end is None:
+            self.activites_sans_horaires[value] = idx
+        else:
+            self.activites[(start, end, value)] = idx   
+        print idx    
+
+class JourneeReferenceSalarie(Day):
+    table = "REF_JOURNEES_SALARIES"
+    nom = u"journée de référence (salarié)"
+    
+    def __init__(self, contrat, day):
+        Day.__init__(self)
+        self.contrat = contrat
+        self.day = day
+
+    def insert_activity(self, start, end, value):
+        print 'salarie : nouvelle activite de reference (%r, %r %d)' % (start, end, value), 
+        result = sql_connection.execute('INSERT INTO REF_JOURNEES_SALARIES (idx, reference, day, value, debut, fin) VALUES (NULL,?,?,?,?,?)', (self.contrat.idx, self.day, value, start, end))
         idx = result.lastrowid
         if start is None and end is None:
             self.activites_sans_horaires[value] = idx
@@ -314,6 +338,32 @@ class Journee(Day):
         if sql_connection:
             print 'nouvelle activite (%r, %r, %d)' % (start, end, value),
             result = sql_connection.execute('INSERT INTO ACTIVITES (idx, inscrit, date, value, debut, fin) VALUES (NULL,?,?,?,?,?)', (self.inscrit_idx, self.date, value, start, end))
+            idx = result.lastrowid
+            print idx
+        else:
+            idx = None
+        if start is None and end is None:
+            self.activites_sans_horaires[value] = idx
+        else:
+            self.activites[(start, end, value)] = idx           
+        return idx
+
+class JourneeSalarie(Day):
+    table = "ACTIVITES_SALARIES"
+    nom = u"activité salarié"
+    
+    def __init__(self, salarie, date, reference=None):
+        Day.__init__(self)
+        self.salarie_idx = salarie.idx
+        self.date = date
+        self.previsionnel = 0
+        if reference:
+            self.Copy(reference, creche.presences_previsionnelles)
+
+    def insert_activity(self, start, end, value): 
+        if sql_connection:
+            print 'nouvelle activite (%r, %r, %d)' % (start, end, value),
+            result = sql_connection.execute('INSERT INTO ACTIVITES_SALARIES (idx, salarie, date, value, debut, fin) VALUES (NULL,?,?,?,?,?)', (self.salarie_idx, self.date, value, start, end))
             idx = result.lastrowid
             print idx
         else:
@@ -467,7 +517,15 @@ class CongeInscrit(Conge):
         print 'nouveau conge'
         result = sql_connection.execute('INSERT INTO %s (idx, inscrit, debut, fin, label) VALUES (NULL,?,?,?,?)' % self.__table__, (self.parent.idx, self.debut, self.fin, self.label))
         self.idx = result.lastrowid
-
+        
+class CongeSalarie(Conge):
+    __table__ = "CONGES_SALARIES"
+    
+    def create(self):
+        print 'nouveau conge salarie'
+        result = sql_connection.execute('INSERT INTO %s (idx, salarie, debut, fin, label) VALUES (NULL,?,?,?,?)' % self.__table__, (self.parent.idx, self.debut, self.fin, self.label))
+        self.idx = result.lastrowid
+        
 class Activite(object):
     last_value = 0
     def __init__(self, creation=True, value=None, couleur=None):
@@ -509,20 +567,70 @@ class Activite(object):
                 value = str(value)
             sql_connection.execute('UPDATE ACTIVITIES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
-class Contrat(object):
-    def __init__(self, employe, creation=True):
-        self.idx = None
-        self.employe = employe
+class PeriodeReference(SQLObject):
+    def __init__(self, type, duree_reference=7):
+        self.type = type
         self.debut = None
         self.fin = None
+        self.duree_reference = duree_reference
+        self.reference = []
+        for i in range(duree_reference):
+            self.reference.append(self.type(self, i))
+
+    def setReferenceDuration(self, duration):
+        if duration > self.duree_reference:
+            for i in range(self.duree_reference, duration):
+                self.reference.append(self.type(self, i))
+        else:
+            for i in range(duration, self.duree_reference):
+                self.reference[i].delete()
+            self.reference = self.reference[0:duration]
+        self.duree_reference = duration
+    
+    def getJourneeReference(self, date):
+        if self.duree_reference > 7:
+            return self.reference[((date - self.debut).days + self.debut.weekday()) % self.duree_reference]
+        else:
+            return self.reference[date.weekday()]
+
+    def GetJoursHeuresReference(self):
+        jours = 0
+        heures = 0.0
+        for i in range(self.duree_reference):
+            if JourSemaineAffichable(i) and self.reference[i].get_state() & PRESENT:
+                jours += 1
+                heures += self.reference[i].GetNombreHeures()
+        return jours, heures
+
+class Contrat(PeriodeReference):
+    def __init__(self, salarie, duree_reference=7, creation=True):
+        self.idx = None
+        self.salarie = salarie
         self.site = None
         self.fonction = ''
+        PeriodeReference.__init__(self, JourneeReferenceSalarie, duree_reference)
         if creation:
             self.create()
 
+    def getJourneeReferenceCopy(self, date):
+        reference = self.getJourneeReference(date)
+        result = JourneeSalarie(self.salarie, date, reference)
+        result.reference = reference
+        return result
+
+    def setReferenceDuration(self, duration):
+        if duration > self.duree_reference:
+            for i in range(self.duree_reference, duration):
+                self.reference.append(JourneeReferenceInscription(self, i))
+        else:
+            for i in range(duration, self.duree_reference):
+                self.reference[i].delete()
+            self.reference = self.reference[0:duration]
+        self.duree_reference = duration
+
     def create(self):
         print 'nouveau contrat'
-        result = sql_connection.execute('INSERT INTO CONTRATS (idx, employe, debut, fin, site, fonction) VALUES (NULL,?,?,?,?,?)', (self.employe.idx, self.debut, self.fin, self.site, self.fonction))
+        result = sql_connection.execute('INSERT INTO CONTRATS (idx, employe, debut, fin, site, fonction) VALUES (NULL,?,?,?,?,?)', (self.salarie.idx, self.debut, self.fin, self.site, self.fonction))
         self.idx = result.lastrowid
 
     def delete(self):
@@ -537,7 +645,7 @@ class Contrat(object):
             print 'update', name
             sql_connection.execute('UPDATE CONTRATS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
-class Employe(object):
+class Salarie(object):
     def __init__(self, creation=True):
         self.idx = None
         self.prenom = ""
@@ -549,17 +657,70 @@ class Employe(object):
         self.email = ""
         self.diplomes = ''
         self.contrats = []
+        self.conges = []
+        self.journees = {}
+        self.jours_conges = {}
         if creation:
             self.create()
 
+    def GetContrat(self, date):
+        for contrat in self.contrats:
+            if contrat.debut and date >= contrat.debut and (not contrat.fin or date <= contrat.fin):
+                return contrat
+        return None
+    
+    def GetInscription(self, date):
+        # proxy...
+        return self.GetContrat(date)
+
+    def add_conge(self, conge, calcule=True):
+        self.conges.append(conge)
+        if calcule:
+            self.calcule_jours_conges()
+            
+    def calcule_jours_conges(self, parent=None):
+        if parent is None:
+            parent = creche
+        self.jours_conges = {}
+
+        def add_periode(debut, fin, conge):
+            date = debut
+            while date <= fin:
+                if date not in parent.jours_fermeture:
+                    self.jours_conges[date] = conge
+                date += datetime.timedelta(1)
+
+        for conge in self.conges:
+            try:
+                count = conge.debut.count('/')
+                if count == 2:
+                    debut = str2date(conge.debut)
+                    if conge.fin.strip() == "":
+                        fin = debut
+                    else:
+                        fin = str2date(conge.fin)
+                    add_periode(debut, fin, conge)
+                elif count == 1:
+                    for year in range(first_date.year, last_date.year + 1):
+                        debut = str2date(conge.debut, year)
+                        if conge.fin.strip() == "":
+                            fin = debut
+                        else:
+                            fin = str2date(conge.fin, year)
+                        add_periode(debut, fin, conge)
+            except:
+                pass
+
     def create(self):
-        print 'nouvel employe'
+        print 'nouveau salarie'
         result = sql_connection.execute('INSERT INTO EMPLOYES (idx, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, email, diplomes) VALUES(NULL,?,?,?,?,?,?,?,?)', (self.prenom, self.nom, self.telephone_domicile, self.telephone_domicile_notes, self.telephone_portable, self.telephone_portable_notes, self.email, self.diplomes))
         self.idx = result.lastrowid
 
     def delete(self):
-        print 'suppression employe'
+        print 'suppression salarie'
         sql_connection.execute('DELETE FROM EMPLOYES WHERE idx=?', (self.idx,))
+        for obj in self.inscriptions + self.journees.values():
+            obj.delete()
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
@@ -632,7 +793,7 @@ class Creche(object):
         self.groupes = []
         self.couleurs = { ABSENCE_NON_PREVENUE: Activite(creation=False, value=ABSENCE_NON_PREVENUE, couleur=[0, 0, 255, 150, wx.SOLID]) }
         self.activites = {}
-        self.employes = []
+        self.salaries = []
         self.professeurs = []
         self.feries = {}
         self.conges = []
@@ -785,7 +946,7 @@ class Creche(object):
                 if condition == "":
                     condition = "True"
                 else:
-                    condition = condition.lower().replace(" et ", " and ").replace(" ou ", " or ").replace("!=", "<>").replace("=", "==").replace("<>", "!=")
+                    condition = condition.lower().replace(" et ", " and ").replace(" ou ", " or ").replace("!=", "__<>").replace("<=", "__<eq").replace(">=", "__>eq").replace("=", "==").replace("__<>", "!=").replace("__<eq", "<=").replace("__>eq", ">=")
                 result.append([condition, cas[1], cas[0]])
             return result
         else:
@@ -831,12 +992,15 @@ class Creche(object):
     def test_formule_taux_effort(self, index):
         return self.TestFormule(self.conversion_formule_taux_effort, index)
         
+    def GetActivitesAvecHoraires(self):
+        result = []
+        for activite in self.activites.values():
+            if activite.mode not in (MODE_SANS_HORAIRES, MODE_SYSTEMATIQUE_SANS_HORAIRES):
+                result.append(activite) 
+        return result
+
     def HasActivitesAvecHoraires(self):
-        count = len(self.activites)
-        for activity in self.activites.values():
-            if activity.mode == MODE_SANS_HORAIRES:
-                count -= 1 
-        return count > 1
+        return len(self.GetActivitesAvecHoraires()) > 1 
     
     def GetActivitesSansHoraires(self):
         result = []
@@ -998,8 +1162,8 @@ class Groupe(SQLObject):
         if name in ['nom', 'ordre'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE GROUPES SET %s=? WHERE idx=?' % name, (value, self.idx))
-    
-class Inscription(SQLObject):
+
+class Inscription(PeriodeReference):
     table = "INSCRIPTIONS"
     def __init__(self, inscrit, duree_reference=7, creation=True):
         self.idx = None
@@ -1008,16 +1172,11 @@ class Inscription(SQLObject):
         self.preinscription = False
         self.site = None
         self.sites_preinscription = []
-        self.debut = None
-        self.fin = None
         self.depart = None
         self.mode = 0
-        self.duree_reference = duree_reference
         self.forfait_heures_presence = 0
         self.semaines_conges = 0
-        self.reference = []
-        for i in range(duree_reference):
-            self.reference.append(ReferenceDay(self, i))
+        PeriodeReference.__init__(self, JourneeReferenceInscription, duree_reference)
         self.fin_periode_adaptation = None
         self.professeur = None
         self.forfait_mensuel = 0.0
@@ -1031,43 +1190,18 @@ class Inscription(SQLObject):
                 for i in range(duree_reference):
                     if i % 7 < 5:
                         self.reference[i].set_state(PRESENT)
-    
-    def setReferenceDuration(self, duration):
-        if duration > self.duree_reference:
-            for i in range(self.duree_reference, duration):
-                self.reference.append(ReferenceDay(self, i))
-        else:
-            for i in range(duration, self.duree_reference):
-                self.reference[i].delete()
-            self.reference = self.reference[0:duration]
-        self.duree_reference = duration
-    
-    def getReferenceDay(self, date):
-        if self.duree_reference > 7:
-            return self.reference[((date - self.debut).days + self.debut.weekday()) % self.duree_reference]
-        else:
-            return self.reference[date.weekday()]
-        
-    def getReferenceDayCopy(self, date):
-        reference = self.getReferenceDay(date)
+
+    def getJourneeReferenceCopy(self, date):
+        reference = self.getJourneeReference(date)
         result = Journee(self.inscrit, date, reference)
         result.reference = reference
         return result
-        
+            
     def IsInPeriodeAdaptation(self, date):
         if self.debut is None or self.fin_periode_adaptation is None:
             return False
         return date >= self.debut and date <= self.fin_periode_adaptation
-    
-    def GetJoursHeuresReference(self):
-        jours = 0
-        heures = 0.0
-        for i in range(self.duree_reference):
-            if JourSemaineAffichable(i) and self.reference[i].get_state() & PRESENT:
-                jours += 1
-                heures += self.reference[i].GetNombreHeures()
-        return jours, heures
-    
+        
     def create(self):
         print 'nouvelle inscription'
         result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, depart, mode, forfait_mensuel, frais_inscription, fin_periode_adaptation, duree_reference, forfait_heures_presence, semaines_conges) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.depart, self.mode, self.forfait_mensuel, self.frais_inscription, self.fin_periode_adaptation, self.duree_reference, self.forfait_heures_presence, self.semaines_conges))
@@ -1306,17 +1440,17 @@ class Inscrit(object):
                 return True
         return False
 
-    def getReferenceDay(self, date):
+    def getJourneeReference(self, date):
         inscription = self.GetInscription(date)
         if inscription:
-            return inscription.getReferenceDay(date)
+            return inscription.getJourneeReference(date)
         else:
             return None
         
-    def getReferenceDayCopy(self, date):
+    def getJourneeReferenceCopy(self, date):
         inscription = self.GetInscription(date)
         if inscription:
-            return inscription.getReferenceDayCopy(date)
+            return inscription.getJourneeReferenceCopy(date)
         else:
             return None
 
@@ -1332,7 +1466,7 @@ class Inscrit(object):
         if inscription is None:
             return ABSENT, 0, 0, 0
         
-        reference = self.getReferenceDay(date)
+        reference = self.getJourneeReference(date)
         heures_reference = reference.GetNombreHeures()
         ref_state = reference.get_state()
         if date in self.journees:
@@ -1381,7 +1515,7 @@ class Inscrit(object):
         if date in self.journees:
             return self.journees[date].GetExtraActivites()
         else:
-            return inscription.getReferenceDay(date).GetExtraActivites()
+            return inscription.getJourneeReference(date).GetExtraActivites()
 
     def GetTotalActivitesPresenceNonFacturee(self, date):
         if date in creche.jours_fermeture:
@@ -1393,7 +1527,7 @@ class Inscrit(object):
         if date in self.journees:
             return self.journees[date].GetTotalActivitesPresenceNonFacturee()
         else:
-            return inscription.getReferenceDay(date).GetTotalActivitesPresenceNonFacturee()
+            return inscription.getJourneeReference(date).GetTotalActivitesPresenceNonFacturee()
         
     def __cmp__(self, other):
         if other is self: return 0

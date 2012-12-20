@@ -369,12 +369,12 @@ def GetLines(site, date, inscrits, presence=False):
             if date in inscrit.journees:
                 line = inscrit.journees[date]
             else:
-                line = inscription.getReferenceDayCopy(date)
+                line = inscription.getJourneeReferenceCopy(date)
             line.nom = inscrit.nom
             line.prenom = inscrit.prenom
             line.label = GetPrenomNom(inscrit)
             line.inscription = inscription
-            line.reference = inscription.getReferenceDay(date)
+            line.reference = inscription.getJourneeReference(date)
             lines.append(line)
     return lines
 
@@ -402,22 +402,24 @@ class Summary(list):
 def GetActivitiesSummary(creche, lines):
     activites = {}
     activites_sans_horaires = {}
-    for activite in creche.activites:
-        if creche.activites[activite].mode == MODE_SANS_HORAIRES:
-            activites_sans_horaires[activite] = 0
-        else:
-            activites[activite] = Summary(creche.activites[activite].label)
+    for key in creche.activites:
+        activite = creche.activites[key]
+        if activite.mode == MODE_SANS_HORAIRES:
+            activites_sans_horaires[key] = 0
+        elif activite.mode != MODE_SYSTEMATIQUE_SANS_HORAIRES:
+            activites[key] = Summary(activite.label)
         
     for line in lines:
-        for start, end, value in line.activites:
-            if value < PREVISIONNEL+CLOTURE:
-                value &= ~(PREVISIONNEL+CLOTURE)
-                if value in creche.activites:
-                    for i in range(start, end):
-                        if value in activites:
-                            activites[value][i] += 1
-        for key in line.activites_sans_horaires:            
-            activites_sans_horaires[key] += 1
+        if line is not None:
+            for start, end, value in line.activites:
+                if value < PREVISIONNEL+CLOTURE:
+                    value &= ~(PREVISIONNEL+CLOTURE)
+                    if value in creche.activites:
+                        for i in range(start, end):
+                            if value in activites:
+                                activites[value][i] += 1
+            for key in line.activites_sans_horaires:            
+                activites_sans_horaires[key] += 1
     return activites, activites_sans_horaires
 
 def GetCrecheFields(creche):
@@ -484,7 +486,7 @@ def GetFactureFields(facture):
                 ('numfact', '%03d%04d%02d' % (facture.inscrit.idx, facture.annee, facture.mois)),
                 ('montant-heure-garde', facture.montant_heure_garde, FIELD_EUROS),
                 ('cotisation-mensuelle', facture.cotisation_mensuelle, FIELD_EUROS),
-                ('heures-cotisation-mensuelle', GetHeureString(facture.cotisation_mensuelle/facture.montant_heure_garde)),
+                ('heures-cotisation-mensuelle', GetHeureString(facture.heures_cotisation_mensuelle)),
                 ('heures-contractualisees', GetHeureString(facture.heures_contractualisees)),
                 ('heures-realisees', GetHeureString(facture.heures_realisees)),
                 ('heures-realisees-non-facturees', GetHeureString(facture.heures_realisees_non_facturees)),

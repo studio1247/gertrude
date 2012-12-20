@@ -286,6 +286,10 @@ class FactureFinMois(object):
 
         # arrondi de tous les champs en euros
         self.cotisation_mensuelle = round(self.cotisation_mensuelle, 2)
+        if self.montant_heure_garde == 0:
+            self.heures_cotisation_mensuelle = 0
+        else:
+            self.heures_cotisation_mensuelle = self.cotisation_mensuelle / self.montant_heure_garde
         self.report_cotisation_mensuelle = round(self.report_cotisation_mensuelle, 2)
         self.supplement = round(self.supplement, 2)
         self.formule_supplement = ' + '.join(self.formule_supplement)
@@ -402,7 +406,7 @@ class FactureDebutMoisPrevisionnel(FactureDebutMois):
                     journee = self.inscrit.journees[date]
                     journee.CloturePrevisionnel()
                 elif not (date in creche.jours_fermeture or date in self.inscrit.jours_conges):
-                    journee = self.inscrit.getReferenceDayCopy(date)
+                    journee = self.inscrit.getJourneeReferenceCopy(date)
                     if journee:
                         self.inscrit.journees[date] = journee
                         journee.CloturePrevisionnel()

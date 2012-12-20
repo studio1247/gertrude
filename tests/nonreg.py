@@ -237,6 +237,7 @@ class LoupandisesTests(GertrudeTestCase):
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
         inscription.debut = datetime.date(2010, 9, 6)
+        inscription.fin = datetime.date(2010, 12, 31)
         inscription.fin_periode_adaptation = datetime.date(2010, 11, 30)
         inscription.reference[1].add_activity(141, 201, 0, -1)
         inscription.reference[3].add_activity(165, 201, 0, -1)

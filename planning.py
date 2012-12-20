@@ -146,7 +146,11 @@ class PlanningGridWindow(BufferedWindow):
         dc.EndDrawing()
 
     def DrawActivitiesLine(self, dc, index, line):
-        if isinstance(line, LigneConge):
+        if line is None:
+            dc.SetBrush(wx.ClientDC(self).GetBackground())
+            dc.SetPen(wx.TRANSPARENT_PEN)
+            dc.DrawRectangle(0, index*LINE_HEIGHT, dc.GetSize()[0], 30)
+        elif isinstance(line, LigneConge):
             dc.SetPen(wx.BLACK_PEN)
             dc.DrawText(line.info, 100, 7 + index * LINE_HEIGHT)
         elif not isinstance(line, basestring):
@@ -337,6 +341,7 @@ class PlanningGridWindow(BufferedWindow):
 class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, activity_combobox, options):
         self.options = options
+        self.bulle_bitmap = wx.Bitmap(GetBitmapFile("bulle.png"))
         width = (creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH + LABEL_WIDTH + 27
         if not options & NO_ICONS:
             width += ICONS_WIDTH
@@ -450,7 +455,9 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             
     def UpdateButton(self, index):
         line = self.lines[index]
-        if isinstance(line, LigneConge):
+        if line is None:
+            state = None
+        elif isinstance(line, LigneConge):
             state = VACANCES
         elif not isinstance(line, basestring):
             state = line.get_state()
@@ -461,13 +468,22 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                     state |= PRESENT
         panel = self.buttons_sizer.GetItem(index).GetWindow()
         button = panel.button
-        if isinstance(line, basestring):
-            panel.SetWindowStyle(wx.NO_BORDER)
+        if line is None or isinstance(line, basestring):
             button.Show(False)
         else:
-            panel.SetWindowStyle(wx.SUNKEN_BORDER)
             button.Show(True)
             button.SetBitmapLabel(BUTTON_BITMAPS[state])
+            
+        if self.options & COMMENTS:
+            bulle_button = self.comments_sizer.GetItem(index).GetWindow()
+            if line is None or isinstance(line, basestring) or line.nocomments:
+                bulle_button.Disable()
+                bulle_button.SetBitmapLabel(wx.EmptyBitmap(0,0))
+            else:
+                bulle_button.Enable()
+                bulle_button.SetBitmapLabel(self.bulle_bitmap)
+
+                
         
     def UpdateCheckboxes(self, index):
         line = self.lines[index]
@@ -547,17 +563,17 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                     self.comments_sizer.Detach(i-1)
             for i in range(previous_count, count):
                 if not self.options & NO_ICONS:
-                    panel = wx.Panel(self, style=wx.SUNKEN_BORDER)
+                    panel = wx.Panel(self)
                     panel.SetMinSize((LINE_HEIGHT, LINE_HEIGHT))
                     self.buttons_sizer.Add(panel)
-                    panel.button = wx.BitmapButton(panel, -1, BUTTON_BITMAPS[PRESENT], size=(-1, 28), style=wx.NO_BORDER)
+                    panel.button = wx.BitmapButton(panel, -1, BUTTON_BITMAPS[PRESENT], size=(27, 27))
                     panel.button.line = i
                     self.Bind(wx.EVT_BUTTON, self.OnButtonPressed, panel.button)
                     sizer = wx.BoxSizer(wx.VERTICAL)
                     sizer.Add(panel.button)
                     panel.SetSizer(sizer)
                 if self.options & COMMENTS:
-                    comment_button = wx.BitmapButton(self, -1, wx.Bitmap(GetBitmapFile("bulle.png")), style=wx.NO_BORDER)
+                    comment_button = wx.BitmapButton(self, -1, self.bulle_bitmap, style=wx.NO_BORDER)
                     comment_button.SetMinSize((-1, LINE_HEIGHT))
                     comment_button.line = i
                     self.Bind(wx.EVT_BUTTON, self.OnCommentButtonPressed, comment_button)
@@ -594,7 +610,9 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         font = wx.Font(8, wx.SWISS, wx.NORMAL, wx.NORMAL)
         dc.SetFont(font)
         for i, line in enumerate(self.lines):
-            if isinstance(line, basestring):
+            if line is None:
+                pass
+            elif isinstance(line, basestring):
                 rect = wx.Rect(0, 5 + i * LINE_HEIGHT, 75, LINE_HEIGHT-8)
                 try:
                     dc.SetPen(wx.Pen(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE)))
@@ -618,9 +636,10 @@ class PlanningSummaryPanel(BufferedWindow):
         BufferedWindow.__init__(self, parent, size=(-1, 2+20*self.activities_count))
 
     def UpdateContents(self):
-        if self.activities_count != len(creche.activites) - len(creche.GetActivitesSansHoraires()):
-            self.activities_count = len(creche.activites) - len(creche.GetActivitesSansHoraires())
-            self.SetMinSize((-1, 2+20*self.activities_count))
+        new_activitites_count = len(creche.GetActivitesAvecHoraires())
+        if self.activities_count != new_activitites_count:
+            self.activities_count = new_activitites_count
+            self.SetMinSize((-1, 2+20*new_activitites_count))
             self.GetParent().sizer.Layout()
             
         lines = self.GetParent().GetSummaryLines()

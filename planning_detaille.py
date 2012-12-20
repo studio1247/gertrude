@@ -73,8 +73,11 @@ class PlanningDetailleModifications(object):
                     day += datetime.timedelta(1)
                     continue
                 
-                lines = GetLines(self.site, day, creche.inscrits)
-                pages_count = 1 + (len(lines) - 1) / lines_max
+                lines_enfants = GetLines(self.site, day, creche.inscrits)
+                lines_salaries = GetLines(self.site, day, creche.salaries)
+                lines = lines_enfants + [None] + lines_salaries
+                
+                pages_count = 1 + (len(lines)) / lines_max
                 for page_index in range(pages_count):
                     lines_count = min(lines_max, len(lines)-page_index*lines_max)
                     page = template.cloneNode(1)
@@ -101,28 +104,39 @@ class PlanningDetailleModifications(object):
                         page.appendChild(node)
                         h += creche.granularite / BASE_GRANULARITY
                     
-                    # les enfants
+                    # les enfants et salaries
                     for i in range(lines_count):
-                        line = lines[i+lines_max*page_index]
-                        node = shapes["libelle"].cloneNode(1)
-                        node.setAttribute('svg:x', '%fcm' % left)
-                        node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
-                        node.setAttribute('svg:width', '%fcm' % labels_width)
-                        fields = [('nom', line.nom),
-                                  ('prenom', line.prenom),
-                                  ('label', line.label)]
-                        ReplaceTextFields(node, fields)
-                        page.appendChild(node)
-                        for a, b, v in line.activites:
-                            if v >= 0:
-                                v = v & (~PREVISIONNEL)
-                                # print a,b,v
-                                node = shapes["activite-%d" % v].cloneNode(1)
-                                node.setAttribute('svg:x', '%fcm' % (left + labels_width + float(a-affichage_min) * step))
-                                node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
-                                node.setAttribute('svg:width', '%fcm' % ((b-a)*step))
-                                ReplaceTextFields(node, [('texte', '')])
+                        line_idx = i+lines_max*page_index
+                        line = lines[line_idx]
+                        if line is None:
+                            # ligne séparatrice
+                            if "separateur" in shapes:
+                                node = shapes["separateur"].cloneNode(1)
+                                node.setAttribute('svg:x1', '%fcm' % left)
+                                node.setAttribute('svg:y1', '%fcm' % (0.25 + top + line_height * line_idx))
+                                node.setAttribute('svg:x2', '%fcm' % (21.0-right))
+                                node.setAttribute('svg:y2', '%fcm' % (0.25 + top + line_height * line_idx))
                                 page.appendChild(node)
+                        else:
+                            node = shapes["libelle"].cloneNode(1)
+                            node.setAttribute('svg:x', '%fcm' % left)
+                            node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
+                            node.setAttribute('svg:width', '%fcm' % labels_width)
+                            fields = [('nom', line.nom),
+                                      ('prenom', line.prenom),
+                                      ('label', line.label)]
+                            ReplaceTextFields(node, fields)
+                            page.appendChild(node)
+                            for a, b, v in line.activites:
+                                if v >= 0:
+                                    v = v & (~PREVISIONNEL)
+                                    # print a,b,v
+                                    node = shapes["activite-%d" % v].cloneNode(1)
+                                    node.setAttribute('svg:x', '%fcm' % (left + labels_width + float(a-affichage_min) * step))
+                                    node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
+                                    node.setAttribute('svg:width', '%fcm' % ((b-a)*step))
+                                    ReplaceTextFields(node, [('texte', '')])
+                                    page.appendChild(node)
                                 
                     if page_index+1 == pages_count:
                         # ligne séparatrice
@@ -136,7 +150,7 @@ class PlanningDetailleModifications(object):
                         
                         # le récapitulatif par activité
                         i = lines_count
-                        summary = GetActivitiesSummary(creche, lines)[0]
+                        summary = GetActivitiesSummary(creche, lines_enfants)[0]
                         for activity in summary.keys():
                             i += 1
                             if activity == 0:
@@ -238,7 +252,7 @@ class PlanningDetailleModifications(object):
                 if date in inscrit.journees:
                     journee = inscrit.journees[date]
                 else:
-                    journee = inscrit.getReferenceDayCopy(date)
+                    journee = inscrit.getJourneeReferenceCopy(date)
                 for t in range(2):
                     if journee and IsPresentDuringTranche(journee, tranches[t][0]*12, tranches[t][1]*12):
                         heures = HeuresTranche(journee, tranches[t][0]*12, tranches[t][1]*12)

@@ -137,7 +137,7 @@ class FacturationTab(AutoTab):
         self.factures_monthchoice.Clear()
         inscrit = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
         date = getFirstMonday()
-        while date <= today:
+        while date <= datetime.date.today():
             if not date.month in creche.mois_sans_facture and (isinstance(inscrit, list) or inscrit.hasFacture(date)):
                 self.factures_monthchoice.Append('%s %d' % (months[date.month - 1], date.year), date)
             date = getNextMonthStart(date)

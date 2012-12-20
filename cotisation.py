@@ -153,8 +153,11 @@ class Cotisation(object):
                 self.heures_accueil_non_facture = 0.0
                 self.conges_inscription = []
                 date = self.inscription.debut
+                if self.inscription.fin is None:
+                    errors.append(u" - La période d'inscription n'a pas de fin.")
+                    raise CotisationException(errors)
                 while date <= self.inscription.fin:
-                    heures = self.inscription.getReferenceDay(date).GetNombreHeures()
+                    heures = self.inscription.getJourneeReference(date).GetNombreHeures()
                     if heures:
                         if date in creche.jours_fermeture:
                             if creche.jours_fermeture[date].options == ACCUEIL_NON_FACTURE:

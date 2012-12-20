@@ -187,140 +187,6 @@ class CrecheTab(AutoTab):
         self.GetParent().DisplayProfesseursTab(value==TYPE_GARDERIE_PERISCOLAIRE)
         event.Skip()
 
-class EmployesTab(AutoTab):
-    def __init__(self, parent):
-        global delbmp
-        delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
-        AutoTab.__init__(self, parent)
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.employes_sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sites = [(site.nom, site) for site in creche.sites]
-        self.site_ctrls = {}
-        for employe in creche.employes:
-            self.affiche_employe(employe)
-        self.sizer.Add(self.employes_sizer, 0, wx.EXPAND|wx.ALL, 5)
-        button_add = wx.Button(self, -1, u'Nouvel employé')
-        if readonly:
-            button_add.Disable()        
-        self.sizer.Add(button_add, 0, wx.ALL, 5)
-        self.Bind(wx.EVT_BUTTON, self.ajoute_employe, button_add)
-        self.SetSizer(self.sizer)
-
-    def affiche_employe(self, employe):
-        static = wx.StaticBox(self)
-        vsizer = wx.StaticBoxSizer(static, wx.VERTICAL)
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddMany([(wx.StaticText(self, -1, u'Prénom :', size=(50,-1)), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, employe, 'prenom'), 1, wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, 'Nom :', size=(50,-1)), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, employe, 'nom'), 1, wx.EXPAND)])
-        delbutton = wx.BitmapButton(self, -1, delbmp)
-        delbutton.employe = employe
-        delbutton.static = static
-        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
-        self.Bind(wx.EVT_BUTTON, self.retire_employe, delbutton)
-        vsizer.Add(sizer, 0, wx.TOP, 5)
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddMany([(wx.StaticText(self, -1, u"Domicile :", size=(50,-1)), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoPhoneCtrl(self, employe, 'telephone_domicile'))])
-        sizer.AddMany([(wx.StaticText(self, -1, u"Portable :", size=(50,-1)), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoPhoneCtrl(self, employe, 'telephone_portable'))])
-        sizer.AddMany([(wx.StaticText(self, -1, u"Email :", size=(50,-1)), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, employe, 'email'), 1)])
-        vsizer.Add(sizer, 0, wx.TOP+wx.EXPAND, 3)
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddMany([(wx.StaticText(self, -1, u"Diplômes :", size=(50,-1)), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoComboBox(self, employe, 'diplomes', choices=["CAP petite enfance", u"Auxiliaire puéricultrice", "EJE", u"Puéricultrice", "Sans objet"]), 1)])
-        vsizer.Add(sizer, 0, wx.TOP+wx.BOTTOM+wx.EXPAND, 3)
-        contrats_sizer = wx.BoxSizer(wx.VERTICAL)
-        self.site_ctrls[employe.idx] = []
-        for contrat in employe.contrats:
-            self.affiche_contrat(employe, contrat, contrats_sizer)
-        vsizer.Add(contrats_sizer, 1, wx.EXPAND)
-        button = wx.Button(self, -1, 'Nouveau contrat')
-        button.employe, button.sizer = employe, contrats_sizer
-        vsizer.Add(button, 0, wx.ALL, 5)
-        self.Bind(wx.EVT_BUTTON, self.ajoute_contrat, button)
-        self.employes_sizer.Add(vsizer, 0, wx.EXPAND|wx.BOTTOM, 5)
-        if readonly:
-            button.Disable()
-            delbutton.Disable()
-        
-    def affiche_contrat(self, employe, contrat, vsizer):
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddMany([(wx.StaticText(self, -1, 'Debut :', size=(50,-1)), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), AutoDateCtrl(self, contrat, 'debut')])
-        sizer.AddMany([(wx.StaticText(self, -1, 'Fin :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), AutoDateCtrl(self, contrat, 'fin')])
-        static = wx.StaticText(self, -1, u'Site :')
-        self.site_ctrls[employe.idx].append(static)
-        site_ctrl = AutoChoiceCtrl(self, contrat, 'site', self.sites)
-        self.site_ctrls[employe.idx].append(site_ctrl)
-        if len(self.sites) < 2:
-            site_ctrl.Show(False)
-            static.Show(False)
-        sizer.AddMany([(static, 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), site_ctrl])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Fonction :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, contrat, 'fonction'), 1)])
-        delbutton = wx.BitmapButton(self, -1, delbmp)
-        delbutton.employe, delbutton.contrat, delbutton.sizer, delbutton.psizer = employe, contrat, sizer, vsizer
-        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
-        self.Bind(wx.EVT_BUTTON, self.retire_contrat, delbutton)
-        vsizer.Add(sizer, 1, wx.TOP+wx.EXPAND, 3)
-        
-    def ajoute_contrat(self, event):
-        obj = event.GetEventObject()
-        history.Append(Delete(obj.employe.contrats, -1))
-        contrat = Contrat(obj.employe)
-        obj.employe.contrats.append(contrat)
-        self.affiche_contrat(obj.employe, contrat, obj.sizer)
-        self.sizer.FitInside(self)
-        self.Refresh()
-
-    def retire_contrat(self, event):
-        obj = event.GetEventObject()
-        for i, contrat in enumerate(obj.employe.contrats):
-            if contrat is obj.contrat:
-                history.Append(Insert(obj.employe.contrats, i, contrat))
-                obj.psizer.Detach(i)
-                contrat.delete()
-                del self.site_ctrls[obj.employe.idx][i]
-                del obj.employe.contrats[i]
-                obj.sizer.DeleteWindows()
-                break
-        self.sizer.FitInside(self)
-        self.Refresh()
-        
-    def ajoute_employe(self, event):
-        history.Append(Delete(creche.employes, -1))
-        employe = Employe()
-        creche.employes.append(employe)
-        self.affiche_employe(employe)        
-        self.sizer.FitInside(self)
-    
-    def retire_employe(self, event):
-        obj = event.GetEventObject()
-        for i, employe in enumerate(creche.employes):
-            if employe == obj.employe:
-                history.Append(Insert(creche.employes, i, employe))
-                sizer = self.employes_sizer.GetItem(i)
-                obj.static.Destroy()
-                sizer.DeleteWindows()
-                self.employes_sizer.Detach(i)
-                del self.site_ctrls[employe.idx]
-                employe.delete()
-                del creche.employes[i]
-                self.sizer.FitInside(self)
-                self.Refresh()
-                break
-    
-    def UpdateContents(self):
-        sites = [(site.nom, site) for site in creche.sites]
-        if sites != self.sites:
-            self.sites = sites
-            if len(sites) > 1:
-                for ctrls in self.site_ctrls.values():
-                    for ctrl in ctrls:
-                        ctrl.Show(True)
-                        if isinstance(ctrl, AutoChoiceCtrl):
-                            ctrl.SetItems(sites)
-            else:
-                for ctrls in self.site_ctrls.values():
-                    for ctrl in ctrls:
-                        ctrl.Show(False)
-            self.Layout()
-
 class ProfesseursTab(AutoTab):
     def __init__(self, parent):
         global delbmp
@@ -422,7 +288,7 @@ class ResponsabilitesTab(AutoTab, PeriodeMixin):
     
     def GetNomsSalaries(self, periode):
         noms = []
-        for salarie in creche.employes:
+        for salarie in creche.salaries:
             noms.append(GetPrenomNom(salarie))
         noms.sort(cmp=lambda x,y: cmp(x.lower(), y.lower()))
         return noms
@@ -1259,7 +1125,6 @@ class ParametresNotebook(wx.Notebook):
     def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
         self.AddPage(CrecheTab(self), 'Structure')
-        self.AddPage(EmployesTab(self), u'Employés')
         self.professeurs_tab = ProfesseursTab(self)
         if creche.type == TYPE_GARDERIE_PERISCOLAIRE:
             self.AddPage(self.professeurs_tab, 'Professeurs')
