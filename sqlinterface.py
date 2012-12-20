@@ -275,7 +275,7 @@ class SQLConnection(object):
         cur.execute("""
           CREATE TABLE REF_JOURNEES_SALARIES(
             idx INTEGER PRIMARY KEY,
-            reference INTEGER REFERENCES INSCRIPTIONS(idx),
+            reference INTEGER REFERENCES CONTRATS(idx),
             day INTEGER,
             value INTEGER,
             debut INTEGER,
@@ -687,9 +687,7 @@ class SQLConnection(object):
             version = int(cur.fetchall()[0][0])
         except:
             version = 0
-
-        version = 65
-        
+       
         if version == VERSION:
             return True
 
@@ -1304,36 +1302,34 @@ class SQLConnection(object):
             cur.execute("UPDATE INSCRIPTIONS SET depart=?", (None,))
         
         if version < 66:    
-#            cur.execute("""
-#              CREATE TABLE REF_JOURNEES_<(
-#                idx INTEGER PRIMARY KEY,
-#                reference INTEGER REFERENCES INSCRIPTIONS(idx),
-#                day INTEGER,
-#                value INTEGER,
-#                debut INTEGER,
-#                fin INTEGER
-#              );""")
+            cur.execute("""
+              CREATE TABLE REF_JOURNEES_SALARIES(
+                idx INTEGER PRIMARY KEY,
+                reference INTEGER REFERENCES CONTRATS(idx),
+                day INTEGER,
+                value INTEGER,
+                debut INTEGER,
+                fin INTEGER
+              );""")
 
-#            cur.execute("""
-#              CREATE TABLE CONGES_SALARIES(
-#                idx INTEGER PRIMARY KEY,
-#                salarie INTEGER REFERENCES EMPLOYES(idx),
-#                debut VARCHAR,
-#                fin VARCHAR,
-#                label VARCHAR
-#              );""")
+            cur.execute("""
+              CREATE TABLE CONGES_SALARIES(
+                idx INTEGER PRIMARY KEY,
+                salarie INTEGER REFERENCES EMPLOYES(idx),
+                debut VARCHAR,
+                fin VARCHAR,
+                label VARCHAR
+              );""")
            
-#            cur.execute("""
-#              CREATE TABLE ACTIVITES_SALARIES(
-#                idx INTEGER PRIMARY KEY,
-#                salarie INTEGER REFERENCES EMPLOYES(idx),
-#                date DATE,
-#                value INTEGER,
-#                debut INTEGER,
-#                fin INTEGER
-#              );""")
-
-            pass
+            cur.execute("""
+              CREATE TABLE ACTIVITES_SALARIES(
+                idx INTEGER PRIMARY KEY,
+                salarie INTEGER REFERENCES EMPLOYES(idx),
+                date DATE,
+                value INTEGER,
+                debut INTEGER,
+                fin INTEGER
+              );""")
 
         if version < VERSION:
             try:
