@@ -71,6 +71,9 @@ class Cotisation(object):
         else:
             self.debut, self.fin = self.inscription.debut, self.inscription.fin
         
+        if options & TRACES:
+            print u"\nCotisation de %s au %s (%s - %s) :" % (GetPrenomNom(inscrit), date, self.debut, self.fin)
+
         self.revenus_parents = []
         if creche.formule_taux_horaire_needs_revenus():
             self.date_revenus = GetDateRevenus(self.date)
@@ -90,14 +93,22 @@ class Cotisation(object):
                             abattement = None
                         self.revenus_parents.append((parent, revenus_parent.revenu, abattement))
             
+
+            if options & TRACES:
+                print u" assiette annuelle :", self.assiette_annuelle
+            
             self.bareme_caf = Select(creche.baremes_caf, self.date)
             if self.bareme_caf:
                 if self.assiette_annuelle > self.bareme_caf.plafond:
                     self.AjustePeriode(self.bareme_caf)
                     self.assiette_annuelle = self.bareme_caf.plafond
+                    if options & TRACES: print u" plafond CAF appliqué :", self.assiette_annuelle
                 elif self.assiette_annuelle < self.bareme_caf.plancher:
                     self.AjustePeriode(self.bareme_caf)
                     self.assiette_annuelle = self.bareme_caf.plancher
+                    if options & TRACES: print u" plancher CAF appliqué :", self.assiette_annuelle
+            else:
+                if options & TRACES: print " pas de barème CAF"
                     
             self.assiette_mensuelle = self.assiette_annuelle / 12
         else:
@@ -131,7 +142,6 @@ class Cotisation(object):
             raise CotisationException(errors)
         
         if options & TRACES:
-            print u"\nCotisation de %s au %s (%s - %s) :" % (GetPrenomNom(inscrit), date, self.debut, self.fin)
             print u" heures hebdomadaires (réelles) :", self.heures_reelles_semaine
                 
         if creche.mode_facturation == FACTURATION_FORFAIT_10H:
@@ -174,7 +184,7 @@ class Cotisation(object):
                     date += datetime.timedelta(1)
                 
                 self.heures_periode = math.ceil(self.heures_periode)
-                if options & TRACES: print ' heures periode :', self.heures_periode
+                if options & TRACES: print u' heures période :', self.heures_periode
 
                 self.nombre_factures = GetNombreFactures(self.inscription.debut, self.inscription.fin)
                 if options & TRACES: print ' nombres de factures :', self.nombre_factures

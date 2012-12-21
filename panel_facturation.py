@@ -146,15 +146,16 @@ class FacturationTab(AutoTab):
         
     def EvtFacturesMonthChoice(self, evt=None):
         date = self.factures_monthchoice.GetClientData(self.factures_monthchoice.GetSelection())
-        inscrits = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
-        if not isinstance(inscrits, list):
-            inscrits = [inscrits]
-        for inscrit in inscrits:
-            if inscrit.hasFacture(date) and date not in inscrit.factures_cloturees:
-                self.cloture_button.Enable()
-                break
-        else:
-            self.cloture_button.Disable()
+        if date:
+            inscrits = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
+            if not isinstance(inscrits, list):
+                inscrits = [inscrits]
+            for inscrit in inscrits:
+                if inscrit.hasFacture(date) and date not in inscrit.factures_cloturees:
+                    self.cloture_button.Enable()
+                    break
+            else:
+                self.cloture_button.Disable()
 
     def EvtRecusInscritChoice(self, evt):
         self.recus_periodechoice.Clear()
@@ -314,7 +315,10 @@ class FacturationTab(AutoTab):
 
     def EvtGenerationFacture(self, evt):
         inscrits, periode = self.__get_facturation_inscrits_periode()
-        DocumentDialog(self, FactureModifications(inscrits, periode)).ShowModal()
+        if len(inscrits) > 0:
+            DocumentDialog(self, FactureModifications(inscrits, periode)).ShowModal()
+        else:
+            wx.MessageDialog(self, u'Aucune facture pour cette période', 'Message', wx.OK|wx.ICON_WARNING).ShowModal()
 
     def EvtGenerationRecu(self, evt):
         inscrits = self.inscrits_choice["recus"].GetClientData(self.inscrits_choice["recus"].GetSelection())
