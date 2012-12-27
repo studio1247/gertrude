@@ -614,8 +614,11 @@ class SQLConnection(object):
             for inscription in inscrit.inscriptions:
                 cur.execute('SELECT day, value, debut, fin, idx FROM REF_ACTIVITIES WHERE reference=?', (inscription.idx,))
                 for day, value, debut, fin, idx in cur.fetchall():
-                    reference_day = inscription.reference[day]
-                    reference_day.add_activity(debut, fin, value, idx)
+                    try:
+                        reference_day = inscription.reference[day]
+                        reference_day.add_activity(debut, fin, value, idx)
+                    except Exception, e:
+                        print inscrit.prenom, inscrit.nom, day, debut, fin, value, e
                     # print inscrit.prenom, day, debut, fin, value
             cur.execute('SELECT debut, fin, label, idx FROM CONGES_INSCRITS WHERE inscrit=?', (inscrit.idx,))
             for conges_entry in cur.fetchall():
