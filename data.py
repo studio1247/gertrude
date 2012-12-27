@@ -17,7 +17,7 @@
 
 import __builtin__
 import os.path, shutil, time
-import urllib2, mimetypes
+import urllib2, mimetypes, uuid
 import ConfigParser
 from sqlinterface import SQLConnection
 from functions import *
@@ -175,6 +175,124 @@ class HttpConnection(object):
         content_type, body = self.encode_multipart_formdata([], [("database", self.filename)])
         headers = {"Content-Type": content_type, 'Content-Length': str(len(body))}
         return self.urlopen('upload', body, headers)
+
+    def upload(self):
+        if not self.has_token():
+            self.progress_handler.display(u"Pas de jeton présent => pas d'envoi vers le serveur.")
+            return 0
+        return self.do_upload()
+
+    def Liste(self, progress_handler=default_progress_handler):
+        self.progress_handler = progress_handler
+        if self.do_download():
+            return FileConnection(self.filename).Liste(progress_handler)
+        else:
+            return []
+        
+    def Load(self, progress_handler=default_progress_handler):
+        self.progress_handler = progress_handler
+        if self.download():
+            result = FileConnection(self.filename).Load(progress_handler)
+        elif self.do_download():
+            result = FileConnection(self.filename).Load(progress_handler)[0], 1
+        else:
+            result = None, 0
+        return result
+
+    def Update(self):
+        return None, None
+    
+    def Save(self, progress_handler=default_progress_handler):
+        self.progress_handler = progress_handler
+        return FileConnection(self.filename).Save() and self.upload()
+
+    def Restore(self, progress_handler=default_progress_handler):
+        self.progress_handler = progress_handler
+        return FileConnection(self.filename).Restore()
+    
+    def Exit(self, progress_handler=default_progress_handler):
+        self.progress_handler = progress_handler
+        return FileConnection(self.filename).Save() and self.rel_token()
+
+class SharedFileConnection(object):
+    def __init__(self, url, filename, identity):
+        self.url = url
+        self.token_url = self.url + ".token"
+        self.filename = filename
+        if identity:
+            self.identity = identity
+        else:
+            self.identity = uuid.uuid4()
+        self.token = self.read_token(TOKEN_FILENAME)
+        self.progress_handler = default_progress_handler
+    
+    def read_token(self, filename):
+        try:
+            return file(filename).read()
+        except:
+            return None
+            
+    def has_token(self):
+        self.progress_handler.display(u"Vérification du jeton ...")
+        return self.token and self.token == self.read_token(self.token_url)
+
+    def get_token(self):
+        self.progress_handler.display(u"Récupération du jeton ...")
+        if force_token or self.read_token(self.token_url) is None:
+            self.token = self.identity
+            file(TOKEN_FILENAME, 'w').write(self.token)
+            file(self.token_url, 'w').write(self.token)
+            return 1
+        else:
+            return 0
+
+    def rel_token(self):
+        if not self.token:
+            return 1
+        self.progress_handler.display(u"Libération du jeton ...")
+        if self.read_token(self.token_url) == self.token:
+            os.remove(self.token_url)
+            os.remove(TOKEN_FILENAME)
+            self.progress_handler.display(u"Libération du jeton accordée...")
+            time.sleep(2)
+            self.token = None
+            return 1
+        else:
+            self.progress_handler.display(u"Libération du jeton refusée...")
+            time.sleep(2)
+            return 0
+
+    def do_download(self):
+        self.progress_handler.display(u"Téléchargement de la base ...")
+        if os.path.isfile(self.url):
+            shutil.copyfile(self.url, self.filename)
+        else:
+            self.progress_handler.display(u'Pas de base présente sur le serveur.')
+            if os.path.isfile(self.filename):
+                self.progress_handler.display("Utilisation de la base locale ...")
+        return 1
+
+    def download(self):       
+        if self.has_token():
+            self.progress_handler.display(u"Jeton déjà pris => pas de download")
+            return 1
+        elif self.get_token():
+            self.progress_handler.set(30)
+            if self.do_download():
+                self.progress_handler.set(90)
+                return 1
+            else:
+                self.progress_handler.set(90)
+                self.rel_token()
+                self.progress_handler.display(u"Le download a échoué")
+                return 0
+        else:
+            self.progress_handler.display("Impossible de prendre le jeton.")
+            return 0
+       
+    def do_upload(self):
+        shutil.copyfile(self.filename, self.url)
+        return 1
 
     def upload(self):
         if not self.has_token():

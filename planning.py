@@ -491,7 +491,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             checkbox = activite_sizer.GetItem(index).GetWindow()
             if isinstance(line, LigneConge):
                 checkbox.Disable()
-            elif not isinstance(line, basestring):
+            elif not isinstance(line, basestring) and line is not None:
                 checkbox.Enable()
                 checkbox.SetValue(checkbox.activite.value in line.activites_sans_horaires)
 

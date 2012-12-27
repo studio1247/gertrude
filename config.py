@@ -20,7 +20,7 @@ import sys, os.path, shutil, time
 import urllib2
 import ConfigParser
 from functions import *
-from data import FileConnection, HttpConnection
+from data import FileConnection, SharedFileConnection, HttpConnection
 
 CONFIG_FILENAME = "gertrude.ini"
 DEFAULT_SECTION = "gertrude"
@@ -109,6 +109,13 @@ def getDatabase(parser, section):
         except:
             proxy_info = None
         database.connection = HttpConnection(url, filename, identity, auth_info, proxy_info)
+    elif url.startswith("file://"):
+        try:
+            identity = parser.get(section, "identity")
+        except:
+            identity = datetime.time()
+        database.connection = SharedFileConnection(url[7:], filename, identity)
+        
     return database
     
 def LoadConfig(progress_handler=default_progress_handler):
