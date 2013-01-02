@@ -572,9 +572,9 @@ class AutoTimeCtrl(TimeCtrl, AutoMixin):
     def onText(self, event):
         value = self.GetValue()
         try:
-          self.AutoChange(float(value[:2]) + float(value[3:5]) / 60)
+            self.AutoChange(float(value[:2]) + float(value[3:5]) / 60)
         except:
-          pass
+            pass
         event.Skip()
 
 class AutoNumericCtrl(NumericCtrl, AutoMixin):

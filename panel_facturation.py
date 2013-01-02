@@ -347,26 +347,4 @@ class FacturationPanel(GPanel):
 
     def UpdateContents(self):
         self.notebook.UpdateContents()
-                
-if __name__ == '__main__':
-    import sys, os
-    import config
-    from data import *
-    Load()
-
-##    for inscrit in creche.inscrits:
-##        if inscrit.prenom == 'Soen':
-##            GenereAttestationPaiement('recu soen.ods', inscrit, datetime.date(2007, 4, 1), datetime.date(2007, 9, 1))
-##            print u'Fichier "recu soen.ods" généré'
-##
-##    sys.exit(0)
-##    GenereAppelCotisations('appel cotisations.ods', datetime.date(2007, 8, 1))
-##    print u'Fichier "appel cotisations.ods" généré'
-    
-    for inscrit in creche.inscrits:
-        if inscrit.prenom == 'Germain':
-            GenereFactureMensuelle('basile.ods', inscrit, datetime.date(2007, 7, 1))
-            print u'Fichier "basile.ods" généré'
-
-
 

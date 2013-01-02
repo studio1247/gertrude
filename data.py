@@ -222,7 +222,7 @@ class SharedFileConnection(object):
         if identity:
             self.identity = identity
         else:
-            self.identity = uuid.uuid4()
+            self.identity = str(uuid.uuid4())
         self.token = self.read_token(TOKEN_FILENAME)
         self.progress_handler = default_progress_handler
     
