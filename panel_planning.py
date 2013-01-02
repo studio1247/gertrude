@@ -58,6 +58,7 @@ class DayPlanningPanel(PlanningWidget):
                 line.label = GetPrenomNom(inscrit)
                 line.inscription = inscription
                 line.nocomments = False
+                line.summary = True
                 if creche.temps_facturation == FACTURATION_FIN_MOIS:
                     date = getMonthStart(self.date)
                 else:
@@ -108,6 +109,7 @@ class DayPlanningPanel(PlanningWidget):
                 line.label = GetPrenomNom(salarie)
                 line.contrat = contrat
                 line.nocomments = True
+                line.summary = False
                 lignes_salaries.append(line)
         lignes_salaries.sort(key=lambda line: line.label)    
 

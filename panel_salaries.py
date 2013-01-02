@@ -199,6 +199,7 @@ class PlanningReferenceSalariePanel(PlanningWidget):
                     line.insert = None
                     line.label = days[day % 7]
                     line.reference = None
+                    line.summary = True
                     lines.append(line)
         self.SetLines(lines)
 

@@ -33,7 +33,7 @@ DRAW_NUMBERS = 16
 COMMENTS = 32
 
 # Elements size
-LABEL_WIDTH = 105 # px
+LABEL_WIDTH = 130 # px
 ICONS_WIDTH = 33 # px
 COLUMN_WIDTH = 48 / (60 / BASE_GRANULARITY) # px
 LINE_HEIGHT = 30 # px
@@ -482,16 +482,14 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             else:
                 bulle_button.Enable()
                 bulle_button.SetBitmapLabel(self.bulle_bitmap)
-
-                
         
     def UpdateCheckboxes(self, index):
         line = self.lines[index]
         for activite_sizer in self.activites_sizers:
             checkbox = activite_sizer.GetItem(index).GetWindow()
-            if isinstance(line, LigneConge):
+            if isinstance(line, LigneConge) or line is None:
                 checkbox.Disable()
-            elif not isinstance(line, basestring) and line is not None:
+            elif not isinstance(line, basestring):
                 checkbox.Enable()
                 checkbox.SetValue(checkbox.activite.value in line.activites_sans_horaires)
 
@@ -752,7 +750,7 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
     def GetSummaryLines(self):
         lines = []
         for line in self.lines:
-            if not isinstance(line, LigneConge) and not isinstance(line, basestring):
+            if line is not None and not isinstance(line, LigneConge) and not isinstance(line, basestring) and line.summary:
                 lines.append(line)
         return lines
 

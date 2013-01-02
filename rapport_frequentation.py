@@ -43,7 +43,8 @@ class RapportFrequentationModifications(object):
                        "colonne-total-jours-ouverture": 7,
                        "ligne-total-heures-presence": 3,
                        "ligne-total-jours-ouverture": -1,
-                       "ligne-recap-jours-ouverture": -1 }
+                       "ligne-recap-jours-ouverture": -1,
+                       "colonne-annee-heures-facturees": -1 }
     
     def execute(self, filename, dom):
         fields = GetCrecheFields(creche)
@@ -73,6 +74,7 @@ class RapportFrequentationModifications(object):
             
             inscrits_annee = {}
             jours_mois = []
+            total_heures_facturees = {}
 
             # les 12 mois
             colonne_jour = self.metas['colonne-jour']
@@ -126,6 +128,10 @@ class RapportFrequentationModifications(object):
                         date = datetime.date(debut.year, debut.month, jour)
                         state, heures_reference, heures_realisees, heures_supplementaires = inscrit.getState(date)
                         heures_facturees = heures_reference + heures_supplementaires
+                        if inscrit in total_heures_facturees:
+                            total_heures_facturees[inscrit] += heures_facturees
+                        else:
+                            total_heures_facturees[inscrit] = heures_facturees
                         if not heures_facturees:
                             heures_facturees = ""
                         if not heures_realisees:
@@ -173,7 +179,7 @@ class RapportFrequentationModifications(object):
             for i, inscrit in enumerate(keys):
                 line = template.cloneNode(1)
                 table.insertBefore(line, template)
-                ReplaceFields(line, GetInscritFields(inscrit))
+                ReplaceFields(line, GetInscritFields(inscrit) + [("total-heures-facturees", total_heures_facturees[inscrit])])
                 cells = line.getElementsByTagName("table:table-cell")
                 cells[colonne_annee].setAttribute("table:formula", "of:=SUM(%s)" % ';'.join(["[%s]" % c for c in inscrits_annee[inscrit].values()]))
                 if i == 0 and self.metas['colonne-total-jours-ouverture'] >= 0:
@@ -189,7 +195,8 @@ class RapportFrequentationModifications(object):
                         else:
                             cell.setAttribute("table:formula", "of:=0")
                         line.insertBefore(cell, cell_template)
-                    line.removeChild(cell_template) 
+                    line.removeChild(cell_template)
+                
             table.removeChild(template)
             
             ligne_recap = self.metas["ligne-recap-jours-ouverture"]
