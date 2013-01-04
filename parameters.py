@@ -17,6 +17,7 @@
 
 import datetime
 from paques import getPaquesDate
+import __builtin__
 
 def getWeekDays(year, weekday):
     result = []
@@ -33,7 +34,7 @@ def getWeekEnds(year):
 
 # Période de visualisation
 today = datetime.date.today()
-first_date = today - datetime.timedelta(24*30)
+__builtin__.first_date = today - datetime.timedelta(24*30)
 last_date = today + datetime.timedelta(24*30)
 
 # Jours fériés

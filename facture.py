@@ -270,9 +270,11 @@ class FactureFinMois(object):
                     self.total_contractualise += prorata
                 elif self.heures_contractualisees:
                     prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees
+                    # ajoute FACTURATION_PSU bloc plus haut pour eviter 2 * la regle de 3
                     # avant il y avait ce commentaire: ne marche pas pour saint julien, mais c'est redemande (2 octobre 2012), normal pour le premier mois pour un enfant qui arrive mi-septembre
-                    # ajoute FACTURATION_PSU bloc plus haut pour eviter 2* la regle de 3
-                    prorata = (prorata * cotisation.jours_ouvres) / jours_ouvres
+                    # avec le test suivant on devrait etre bon, parce que sinon on effectue la regle de 3 dans la cotisation + ici
+                    if not cotisation.prorata_effectue:
+                        prorata = (prorata * cotisation.jours_ouvres) / jours_ouvres
                     self.cotisation_mensuelle += prorata
                     self.total_contractualise += prorata
             

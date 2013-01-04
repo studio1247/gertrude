@@ -128,11 +128,11 @@ class HttpConnection(object):
         self.progress_handler.display(u"Libération du jeton ...")
         if not self.urlopen('rel_token'):
             self.progress_handler.display(u"Libération du jeton refusée...")
-            time.sleep(3)
+            time.sleep(1)
             return 0
         else:
             self.progress_handler.display(u"Libération du jeton accordée...")
-            time.sleep(3)
+            time.sleep(1)
             self.token = 0
             if os.path.exists(TOKEN_FILENAME):
                 os.remove(TOKEN_FILENAME)
@@ -254,12 +254,12 @@ class SharedFileConnection(object):
             os.remove(self.token_url)
             os.remove(TOKEN_FILENAME)
             self.progress_handler.display(u"Libération du jeton accordée...")
-            time.sleep(2)
+            time.sleep(1)
             self.token = None
             return 1
         else:
             self.progress_handler.display(u"Libération du jeton refusée...")
-            time.sleep(2)
+            time.sleep(1)
             return 0
 
     def do_download(self):

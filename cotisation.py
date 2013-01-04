@@ -214,6 +214,7 @@ class Cotisation(object):
         
         self.taux_effort = None
         self.forfait_heures_presence = 0.0
+        self.prorata_effectue = False
         
         if creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
             self.montant_heure_garde = 0.0
@@ -228,14 +229,16 @@ class Cotisation(object):
                 raise CotisationException(errors)
             self.cotisation_periode = None
             self.cotisation_mensuelle = self.montant_heure_garde * self.forfait_heures_presence
-        elif creche.mode_facturation == FACTURATION_PAJE:       
+        elif creche.mode_facturation == FACTURATION_PAJE:
             self.montant_heure_garde = creche.eval_taux_horaire(self.mode_garde, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine)
+            if options & TRACES: print " montant heure de garde (PAJE) :", self.montant_heure_garde 
             if self.montant_heure_garde is None:
                 errors.append(u" - La formule de calcul du tarif horaire n'est pas correcte.")
                 raise CotisationException(errors)
             if self.inscription.fin:
                 self.semaines_periode = min(52, ((self.inscription.fin - self.inscription.debut).days + 6) / 7)
                 self.nombre_factures = min(12 - len(creche.mois_sans_facture), GetNombreFactures(self.inscription.debut, self.inscription.fin))
+                self.prorata_effectue = True
             else:
                 self.semaines_periode = 52
                 self.nombre_factures = 12 - len(creche.mois_sans_facture)
@@ -244,6 +247,7 @@ class Cotisation(object):
             else:                
                 self.semaines_conges = 0
             self.cotisation_periode = self.montant_heure_garde * self.heures_semaine * (self.semaines_periode - self.semaines_conges)
+            if options & TRACES: print " cotisation periode :", self.montant_heure_garde, '*', self.heures_semaine, '* (', self.semaines_periode, '-', self.semaines_conges, ') =', self.cotisation_periode
             self.cotisation_mensuelle = self.cotisation_periode / self.nombre_factures
         else:
             if self.enfants_a_charge > 1:
