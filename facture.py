@@ -221,7 +221,7 @@ class FactureFinMois(object):
                     if cotisation.inscription.mode != MODE_FORFAIT_HORAIRE:
                         cotisation.heures_contractualisees += heures_reference
                         self.heures_contractualisees += heures_reference
-                        self.heures_contractualisees_realisees += min(heures_reference, heures_realisees)
+                        self.heures_contractualisees_realisees += heures_realisees - heures_supplementaires        
                         if creche.mode_facturation == FACTURATION_HORAIRES_REELS or (creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date)) or (creche.mode_facturation == FACTURATION_PSU and cotisation.mode_garde == MODE_HALTE_GARDERIE):
                             self.heures_facturees_par_mode[cotisation.mode_garde] += heures_realisees - heures_realisees_non_facturees + heures_facturees_non_realisees
                             self.total_contractualise += heures_reference * cotisation.montant_heure_garde
@@ -322,8 +322,8 @@ class FactureFinMois(object):
         self.total_facture = self.total + self.report_cotisation_mensuelle
         
         if options & TRACES:
-            for var in ["heures_contractualisees", "heures_facturees", "heures_supplementaires", "heures_realisees_non_facturees", "cotisation_mensuelle", "supplement", "deduction", "total"]:
-                print "", var, eval("self.%s" % var)  
+            for var in ["heures_contractualisees", "heures_facturees", "heures_supplementaires", "heures_contractualisees_realisees", "heures_realisees_non_facturees", "cotisation_mensuelle", "supplement", "deduction", "total"]:
+                print "", var, ':', eval("self.%s" % var)  
                 
     def Cloture(self, date=None):
         if not self.cloture:
