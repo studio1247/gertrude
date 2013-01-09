@@ -31,6 +31,7 @@ PRESENCES_ONLY = 4
 NO_BOTTOM_LINE = 8
 DRAW_NUMBERS = 16
 COMMENTS = 32
+TWO_PARTS = 64
 
 # Elements size
 LABEL_WIDTH = 130 # px
@@ -38,6 +39,10 @@ ICONS_WIDTH = 33 # px
 COLUMN_WIDTH = 48 / (60 / BASE_GRANULARITY) # px
 LINE_HEIGHT = 30 # px
 CHECKBOX_WIDTH = 20 # px
+
+# How lines are handled in the summary line
+SUMMARY_NUM = 1
+SUMMARY_DEN = 2
 
 BUTTON_BITMAPS = { ABSENT: wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG),
                    ABSENT+PREVISIONNEL: wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG),
@@ -213,7 +218,7 @@ class PlanningGridWindow(BufferedWindow):
                 if x == fin:
                     nv = 0
                 else:
-                    nv = line[x]
+                    nv = line[x][0]
                 if nv != v:
                     if v != 0:
                         rect = wx.Rect(pos+3+(a-debut)*COLUMN_WIDTH, 2 + index * LINE_HEIGHT, (x-a)*COLUMN_WIDTH-1, LINE_HEIGHT-1)
@@ -671,13 +676,6 @@ class PlanningSummaryPanel(BufferedWindow):
 
     def DrawLine(self, dc, index, activity):
         line = self.activites[activity]
-        r, g, b, t, s = getActivityColor(activity)
-        try:
-            dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
-            dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
-        except:
-            dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
-            dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
 
         pos = LABEL_WIDTH
         if not self.options & NO_ICONS:
@@ -688,20 +686,33 @@ class PlanningSummaryPanel(BufferedWindow):
         debut_pause = int(creche.debut_pause * (60 / BASE_GRANULARITY))
         fin_pause = int(creche.fin_pause * (60 / BASE_GRANULARITY))
         x = debut
-        v = 0
+        v, w = 0, 0
         a = 0
         while x <= fin:
             if x == fin:
-                nv = 0
+                nv, nw = 0, 0
             else:
-                nv = line[x]
-            if nv != v:
+                nv, nw = line[x]
+
+            if (self.options & TWO_PARTS) and activity == 0 and (nw == 0 or nv > creche.capacite or float(nv)/nw > 6.5):
+                nw = activity|SUPPLEMENT
+            else:
+                nw = activity
+                
+            if nv != v or nw != w:
                 if v != 0:
                     rect = wx.Rect(pos+3+(a-debut)*COLUMN_WIDTH, 2 + index * 20, (x-a)*COLUMN_WIDTH-1, 19)
+                    r, g, b, t, s = getActivityColor(w)
+                    try:
+                        dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
+                        dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
+                    except:
+                        dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
+                        dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
                     dc.DrawRoundedRectangleRect(rect, 4)
                     dc.DrawText(str(v), pos + 4 - 4*len(str(v)) + (float(x+a)/2-debut)*COLUMN_WIDTH, 4 + index * 20)
-                a = x    
-                v = nv
+                a = x
+                v, w = nv, nw
             x += 1
             if debut_pause and x > debut_pause and x < fin_pause:
                 x = fin_pause

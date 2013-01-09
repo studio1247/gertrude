@@ -375,6 +375,7 @@ def GetLines(site, date, inscrits, presence=False):
             line.label = GetPrenomNom(inscrit)
             line.inscription = inscription
             line.reference = inscription.getJourneeReference(date)
+            line.summary = 1 # TODO SUMMARY_NUM
             lines.append(line)
     return lines
 
@@ -397,7 +398,8 @@ def getActivityColor(value):
 class Summary(list):
     def __init__(self, label):
         self.label = label
-        self.extend([0] * DAY_SIZE)
+        for i in range(DAY_SIZE):
+            self.append([0, 0])
             
 def GetActivitiesSummary(creche, lines):
     activites = {}
@@ -417,7 +419,7 @@ def GetActivitiesSummary(creche, lines):
                     if value in creche.activites:
                         for i in range(start, end):
                             if value in activites:
-                                activites[value][i] += 1
+                                activites[value][i][line.summary-1] += 1
             for key in line.activites_sans_horaires:            
                 activites_sans_horaires[key] += 1
     return activites, activites_sans_horaires

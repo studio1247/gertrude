@@ -246,16 +246,3 @@ class EtatsTrimestrielsModifications(object):
             else:
                 fields.append(('total', sum(total)))
         ReplaceFields(ligne, fields)
-
-if __name__ == '__main__':
-    import os
-    from config import *
-    from data import *
-    LoadConfig()
-    Load()
-            
-    today = datetime.date.today()
-
-    filename = 'etats_trimestriels_%d.ods' % (today.year - 1)
-    print GenerateOODocument(EtatsTrimestrielsModifications(None, today.year - 1), filename)
-    print u'Fichier %s généré' % filename

@@ -53,14 +53,14 @@ class SitesPlanningPanel(PlanningWidget):
                 for site in creche.sites:
                     line = Summary(site.nom)
                     for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
-                        line[i] = site.capacite
+                        line[i][0] = site.capacite
                     day_lines[site] = line
                     lines.append(line)
             else:
                 site_line = Summary(days[week_day])
                 if isinstance(creche.capacite, int):
                     for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
-                        site_line[i] = creche.capacite
+                        site_line[i][0] = creche.capacite
                 lines.append(site_line)
             
             for inscrit in creche.inscrits:
@@ -79,7 +79,7 @@ class SitesPlanningPanel(PlanningWidget):
                         for start, end, value in line.activites:
                             if value in (0, PREVISIONNEL):
                                 for i in range(start, end):
-                                    site_line[i] -= 1
+                                    site_line[i][0] -= 1
 
         self.SetLines(lines)
 

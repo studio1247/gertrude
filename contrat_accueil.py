@@ -240,34 +240,3 @@ class FraisGardeModifications(DocumentAccueilModifications):
             table.removeChild(lignes[14])
             
         return {} 
-            
-
-if __name__ == '__main__':
-    import os
-    from config import *
-    from data import *
-    LoadConfig()
-    Load()
-            
-    today = datetime.date.today()
-    inscrit = None
-    for inscrit in creche.inscrits:
-        try:
-            if inscrit.GetInscription(today) and Cotisation(inscrit, today): 
-                break
-        except:
-            pass
-
-    filename = 'contrat-1.odt'
-    try:
-        GenerateOODocument(ContratAccueilModifications(inscrit, today), filename)
-        print u'Fichier %s généré' % filename
-    except CotisationException, e:
-        print e.errors
-        
-    filename = 'frais-1.ods'
-    try:
-        GenerateOODocument(FraisGardeModifications(inscrit, today), filename)
-        print u'Fichier %s généré' % filename
-    except CotisationException, e:
-        print e.errors

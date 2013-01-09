@@ -104,27 +104,14 @@ class CoordonneesModifications(object):
             if table.getAttribute('table:name') == 'Employes':
                 template = table.getElementsByTagName('table:table-row')[0]
                 #print template.toprettyxml()
-                for employe in creche.employes:
+                for salarie in creche.salaries:
                     if 1: # TODO
                         line = template.cloneNode(1)
-                        ReplaceTextFields(line, [('prenom', employe.prenom),
-                                                 ('nom', employe.nom),
-                                                 ('domicile', employe.telephone_domicile),
-                                                 ('portable', employe.telephone_portable)])
+                        ReplaceTextFields(line, [('prenom', salarie.prenom),
+                                                 ('nom', salarie.nom),
+                                                 ('domicile', salarie.telephone_domicile),
+                                                 ('portable', salarie.telephone_portable)])
                         table.insertBefore(line, template)
                 table.removeChild(template)
 
         return None
-
-if __name__ == '__main__':
-    import os
-    from config import *
-    from data import *
-    LoadConfig()
-    Load()
-
-    today = datetime.date.today()
-
-    filename = 'coordonneesparent.ods'
-    print GenerateOODocument(CoordonneesModifications(today), filename)
-    print u'Fichier %s généré' % filename

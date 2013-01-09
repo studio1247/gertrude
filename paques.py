@@ -30,6 +30,3 @@ def getPaquesDate(year):
     else:
         return datetime.date(year, 4, d + e - 9)
 
-if __name__ == '__main__':
-    for year in range(2000, 2050):
-        print getPaquesDate(year)

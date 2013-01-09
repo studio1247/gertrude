@@ -202,10 +202,3 @@ def Liste(progress_handler=default_progress_handler):
             for entry in database.connection.Liste(progress_handler):
                 result[entry] = database
     return result
-        
-if __name__ == '__main__':
-    LoadConfig()
-    print config.databases
-    l = Liste().keys()
-    print l
-    print 'tri :', sorted(l)

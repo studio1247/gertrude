@@ -168,24 +168,30 @@ class PlanningDetailleModifications(object):
                             page.appendChild(node)
                             line = summary[activity]
                             x = affichage_min
-                            v = 0
+                            v, w = 0, 0
                             a = 0
                             while x <= affichage_max:
                                 if x == affichage_max:
-                                    nv = 0
+                                    nv, nw = 0, 0
                                 else:
-                                    nv = line[x]
-                                if nv != v:
+                                    nv, nw = line[x]
+                                    
+                                if activity == 0 and (nw == 0 or nv > creche.capacite or float(nv)/nw > 6.5):
+                                    nw = activity|SUPPLEMENT
+                                else:
+                                    nw = activity
+                                    
+                                if nv != v or nw != w:
                                     if v != 0:
                                         # print a, x, v
-                                        node = shapes["activite-%d" % activity].cloneNode(1)
+                                        node = shapes["activite-%d" % w].cloneNode(1)
                                         node.setAttribute('svg:x', '%fcm' % (left + labels_width + (float(a-affichage_min) * step)))
                                         node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
                                         node.setAttribute('svg:width', '%fcm' % (float(x-a)*step))
                                         ReplaceTextFields(node, [('texte', '%d' % v)])
                                         page.appendChild(node)
                                     a = x    
-                                    v = nv
+                                    v, w = nv, nw
                                 x += creche.granularite / BASE_GRANULARITY
         
                     fields = [('nom-creche', creche.nom)]
@@ -282,21 +288,4 @@ class PlanningDetailleModifications(object):
                     formule = formule.replace('8', '%d' % (6+len(inscriptions)))
                     cellule.setAttribute('table:formula', formule)
                     
-        return None    
-
-if __name__ == '__main__':
-    import os
-    from config import *
-    from data import *
-    LoadConfig()
-    Load()
-            
-    today = datetime.date.today()
-
-    filename = 'planning-details-1.ods'
-    try:
-        GenerateOODocument(PlanningDetailleModifications((datetime.date(2011, 9, 16), datetime.date(2009, 2, 20))), filename)
-        print u'Fichier %s généré' % filename
-    except CotisationException, e:
-        print e.errors
-
+        return None

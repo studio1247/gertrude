@@ -501,7 +501,7 @@ class ReferencePlanningPanel(PlanningWidget):
                     line.insert = None
                     line.label = days[day % 7]
                     line.reference = None
-                    line.summary = True
+                    line.summary = SUMMARY_NUM
                     lines.append(line)
         self.SetLines(lines)
 

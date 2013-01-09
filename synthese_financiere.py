@@ -98,17 +98,3 @@ class SyntheseFinanciereModifications(object):
  
         return self.errors
 
- 
-
-if __name__ == '__main__':
-    import os
-    from config import *
-    from data import *
-    LoadConfig()
-    Load()
-            
-    today = datetime.date.today()
-
-    filename = 'synthese_financiere_%d.ods' % (today.year - 1)
-    print GenerateOODocument(SyntheseFinanciereModifications(today.year - 1), filename)
-    print u'Fichier %s généré' % filename

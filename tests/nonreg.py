@@ -7,13 +7,18 @@ import sqlinterface
 from sqlobjects import *
 from cotisation import *
 from facture import Facture
+from planning_detaille import PlanningDetailleModifications
+from coordonnees_parents import CoordonneesModifications
+from ooffice import GenerateOODocument
 
 __builtin__.first_date = datetime.date(2010, 1, 1) 
 
 class GertrudeTestCase(unittest.TestCase):
     def setUp(self):
         __builtin__.creche = Creche()
-
+        creche.activites[0] = activite = Activite(creation=False)
+        activite.value, activite.mode = 0, MODE_NORMAL
+        
     def AddJourFerie(self, label):
         conge = Conge(creche, creation=False)
         conge.debut = label
@@ -39,6 +44,7 @@ class GertrudeTestCase(unittest.TestCase):
         inscrit = Inscrit(creation=False)
         inscrit.prenom, inscrit.nom = 'Gertrude', 'GPL'
         self.AddParents(inscrit)
+        creche.inscrits.append(inscrit)
         return inscrit
     
     def AddActivite(self, inscrit, date, debut, fin, activite):
@@ -63,12 +69,10 @@ class DatabaseTests(unittest.TestCase):
             os.remove(filename)
         con = sqlinterface.SQLConnection(filename)
         con.Create()
-        
+
 class PlanningTests(GertrudeTestCase):
     def setUp(self):
         GertrudeTestCase.setUp(self)
-        creche.activites[0] = activite = Activite(creation=False)
-        activite.value, activite.mode = 0, MODE_NORMAL
         creche.activites[1] = activite = Activite(creation=False)
         activite.value, activite.mode = 1, MODE_LIBERE_PLACE
         creche.activites[2] = activite = Activite(creation=False)
@@ -92,6 +96,43 @@ class PlanningTests(GertrudeTestCase):
         day.SetActivity(2, 8, 0)
         self.assertEquals(len(day.activites), 2)
 
+class DocumentsTests(GertrudeTestCase):
+    def setUp(self):
+        GertrudeTestCase.setUp(self)
+        self.pwd = os.getcwd()
+        os.chdir("..")
+        creche.mode_facturation = FACTURATION_PAJE
+        creche.formule_taux_horaire = [["", 6.70]]
+        creche.update_formule_taux_horaire(changed=False)
+        bureau = Bureau(creation=False)
+        bureau.debut = datetime.date(2010, 1, 1)
+        creche.bureaux.append(bureau)
+        for i in range(10):
+            inscrit = self.AddInscrit()
+            inscription = Inscription(inscrit, creation=False)
+            inscription.debut, inscription.fin = datetime.date(2010, 9, 6), datetime.date(2011, 7, 27)
+            inscription.reference[0].add_activity(96, 180, 0, -1)
+            inscription.reference[1].add_activity(96, 180, 0, -1)
+            inscription.reference[2].add_activity(96, 180, 0, -1)
+            inscription.reference[3].add_activity(96, 180, 0, -1)
+            inscription.reference[4].add_activity(96, 180, 0, -1)
+            inscrit.inscriptions.append(inscription)
+    
+    def tearDown(self):
+        os.chdir(self.pwd)
+                    
+    def test_planning_detaille(self):
+        modifications = PlanningDetailleModifications(None, (datetime.date(2010, 9, 7), datetime.date(2010, 9, 30)))
+        errors = GenerateOODocument(modifications, filename="./test.odg", gauge=None)
+        self.assertEquals(len(errors), 0)
+        os.unlink("./test.odg")
+        
+    def test_coordonnees_parents(self):
+        modifications = CoordonneesModifications(None, datetime.date(2010, 9, 7))
+        errors = GenerateOODocument(modifications, filename="./test.odt", gauge=None)
+        self.assertEquals(len(errors), 0)
+        os.unlink("./test.odt")
+        
 class PAJETests(GertrudeTestCase):
     def test_pas_de_taux_horaire(self):
         creche.mode_facturation = FACTURATION_PAJE

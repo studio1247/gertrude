@@ -416,6 +416,14 @@ class FactureDebutMoisPrevisionnel(FactureDebutMois):
                 date += datetime.timedelta(1)
             FactureFinMois.Cloture(self)       
 
+def CreateFacture(inscrit, annee, mois, options=0):
+    if creche.temps_facturation == FACTURATION_FIN_MOIS:
+        return FactureFinMois(inscrit, annee, mois, options)
+    elif creche.temps_facturation == FACTURATION_DEBUT_MOIS_CONTRAT:
+        return FactureDebutMoisContrat(inscrit, annee, mois, options)
+    else:
+        return FactureDebutMoisPrevisionnel(inscrit, annee, mois, options)
+
 class FactureCloturee:
     def __init__(self, inscrit, date, cotisation_mensuelle, total_contractualise, total_realise, total_facture, supplement_activites, supplement, deduction):
         self.inscrit = inscrit
@@ -431,10 +439,7 @@ class FactureCloturee:
         
     def Restore(self):
         if not self.facture:
-            if self.date.day == 1:
-                self.facture = FactureDebutMois(self.inscrit, self.date.year, self.date.month)
-            else:
-                self.facture = FactureFinMois(self.inscrit, self.date.year, self.date.month)
+            self.facture = CreateFacture(self.inscrit, self.date.year, self.date.month)
             self.facture.cotisation_mensuelle = self.cotisation_mensuelle
             self.facture.total_contractualise = self.total_contractualise
             self.facture.total_realise = self.total_realise
@@ -444,15 +449,11 @@ class FactureCloturee:
             self.facture.deduction = self.deduction
             self.facture.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction + self.facture.correction
         return self.facture
-            
+    
 def Facture(inscrit, annee, mois, options=0):
     date = datetime.date(annee, mois, 1)
     if date in inscrit.factures_cloturees:
         return inscrit.factures_cloturees[date].Restore()        
-    elif creche.temps_facturation == FACTURATION_FIN_MOIS:
-        return FactureFinMois(inscrit, annee, mois, options)
-    elif creche.temps_facturation == FACTURATION_DEBUT_MOIS_CONTRAT:
-        return FactureDebutMoisContrat(inscrit, annee, mois, options)
     else:
-        return FactureDebutMoisPrevisionnel(inscrit, annee, mois, options)           
-
+        return CreateFacture(inscrit, annee, mois, options)
+    

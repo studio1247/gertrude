@@ -21,11 +21,11 @@ from parameters import *
 from functions import *
 from sqlobjects import *
 from controls import *
-from planning import PlanningWidget, COMMENTS, LigneConge
+from planning import PlanningWidget, LigneConge, COMMENTS, TWO_PARTS, SUMMARY_NUM, SUMMARY_DEN
 
 class DayPlanningPanel(PlanningWidget):
     def __init__(self, parent, activity_combobox):
-        PlanningWidget.__init__(self, parent, activity_combobox, COMMENTS)
+        PlanningWidget.__init__(self, parent, activity_combobox, COMMENTS+TWO_PARTS)
         
     def UpdateContents(self):
         if self.date in creche.jours_fermeture:
@@ -58,7 +58,7 @@ class DayPlanningPanel(PlanningWidget):
                 line.label = GetPrenomNom(inscrit)
                 line.inscription = inscription
                 line.nocomments = False
-                line.summary = True
+                line.summary = SUMMARY_NUM
                 if creche.temps_facturation == FACTURATION_FIN_MOIS:
                     date = getMonthStart(self.date)
                 else:
@@ -109,7 +109,7 @@ class DayPlanningPanel(PlanningWidget):
                 line.label = GetPrenomNom(salarie)
                 line.contrat = contrat
                 line.nocomments = True
-                line.summary = False
+                line.summary = SUMMARY_DEN
                 lignes_salaries.append(line)
         lignes_salaries.sort(key=lambda line: line.label)    
 

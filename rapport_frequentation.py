@@ -73,6 +73,7 @@ class RapportFrequentationModifications(object):
             tables = spreadsheet.getElementsByTagName("table:table")
             
             inscrits_annee = {}
+            inscrits_annee_details = {}
             jours_mois = []
             total_heures_facturees = {}
 
@@ -146,9 +147,11 @@ class RapportFrequentationModifications(object):
                         jours_mois.append("%s.%s2" % (months[mois-1], GetColumnName(self.metas['colonne-jours-ouverture']-1+len(jours))))
                         for cell in line_template.getElementsByTagName("table:table-cell")[len(jours)+3:]:
                             line_template.removeChild(cell)
-                    if not inscrit in inscrits_annee:
-                        inscrits_annee[inscrit] = {}
-                    inscrits_annee[inscrit][mois] = "%s.%s%d" % (months[mois-1], GetColumnName(colonne_jour+len(jours)), i+2)
+                    key = GetPrenomNom(inscrit)
+                    if key not in inscrits_annee:
+                        inscrits_annee[key] = inscrit
+                        inscrits_annee_details[key] = {}
+                    inscrits_annee_details[key][mois] = "%s.%s%d" % (months[mois-1], GetColumnName(colonne_jour+len(jours)), i+2)
                 table.removeChild(line_template)
                 last_line = 1 + len(inscrits)
                 for i, cell in enumerate(sum_line.getElementsByTagName("table:table-cell")[1:2+len(jours)]):
@@ -175,13 +178,14 @@ class RapportFrequentationModifications(object):
                     
             template = lines[1]
             keys = inscrits_annee.keys()
-            keys.sort(lambda x, y: cmp(x.nom.lower(), y.nom.lower()))
-            for i, inscrit in enumerate(keys):
+            keys.sort()
+            for i, key in enumerate(keys):
+                inscrit = inscrits_annee[key] 
                 line = template.cloneNode(1)
                 table.insertBefore(line, template)
                 ReplaceFields(line, GetInscritFields(inscrit) + [("total-heures-facturees", total_heures_facturees[inscrit])])
                 cells = line.getElementsByTagName("table:table-cell")
-                cells[colonne_annee].setAttribute("table:formula", "of:=SUM(%s)" % ';'.join(["[%s]" % c for c in inscrits_annee[inscrit].values()]))
+                cells[colonne_annee].setAttribute("table:formula", "of:=SUM(%s)" % ';'.join(["[%s]" % c for c in inscrits_annee_details[key].values()]))
                 if i == 0 and self.metas['colonne-total-jours-ouverture'] >= 0:
                     cells[self.metas['colonne-total-jours-ouverture']].setAttribute("table:formula", "of:=SUM(%s)" % ';'.join(["[%s]" % m for m in jours_mois]))
                     for cell in template.getElementsByTagName("table:table-cell")[colonne_annee+1:]:
@@ -190,8 +194,8 @@ class RapportFrequentationModifications(object):
                     cell_template = cells[colonne_mois]
                     for m in range(1, 13):
                         cell = cell_template.cloneNode(1)
-                        if m in inscrits_annee[inscrit]:
-                            cell.setAttribute("table:formula", "of:=%s" % inscrits_annee[inscrit][m])
+                        if m in inscrits_annee_details[key]:
+                            cell.setAttribute("table:formula", "of:=%s" % inscrits_annee_details[key][m])
                         else:
                             cell.setAttribute("table:formula", "of:=0")
                         line.insertBefore(cell, cell_template)
@@ -229,16 +233,3 @@ class RapportFrequentationModifications(object):
                 demi_journees_reelles_cell.setAttribute("table:formula", "of:=J2*I2*C%d" % (6+len(keys)))
                
         return self.errors
-
-if __name__ == '__main__':
-    import os
-    from config import *
-    from data import *
-    LoadConfig()
-    Load()
-            
-    today = datetime.date.today()
-
-    filename = 'rapport_frequentation_%d.ods' % (today.year)
-    print 'erreurs :', GenerateOODocument(RapportFrequentationModifications(today.year), filename)
-    print u'Fichier %s généré' % filename

@@ -285,18 +285,3 @@ class PlanningDetailleModifications(object):
         self.email = None
         self.site = None
         
-if __name__ == '__main__':
-    import os
-    from config import *
-    from data import *
-    LoadConfig()
-    Load()
-            
-    today = datetime.date.today()
-
-    filename = 'planning-1.ods'
-    try:
-        GenerateOODocument(PlanningModifications(datetime.date(2011, 9, 5)), filename)
-        print u'Fichier %s généré' % filename
-    except CotisationException, e:
-        print e.errors

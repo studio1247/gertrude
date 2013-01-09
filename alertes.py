@@ -51,12 +51,3 @@ def CheckAlertes():
     alertes_non_acquittees = [alerte for alerte in creche.alertes.values() if not alerte.acquittement]
     alertes_non_acquittees.sort(key=lambda alerte: alerte.date)    
     return nouvelles_alertes, alertes_non_acquittees
-    
-if __name__ == '__main__':
-    import os
-    from config import *
-    from data import *
-    LoadConfig()
-    Load()
-    
-    CheckAlarms()

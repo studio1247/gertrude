@@ -680,12 +680,3 @@ class DocumentDialog(wx.Dialog):
         s.sendmail(creche.email, to + [creche.email], msg.as_string())
         s.quit()
         
-if __name__ == '__main__':
-    save_current_document('./document.odt')
-    
-#    filename = '.\\templates_dist\\Appel cotisations.ods'
-#    oo_open(filename)
-#    
-#    pdffilename = ''.join([os.path.splitext(filename)[0], ".pdf"])
-#    convert_to_pdf(filename, pdffilename)
-#    pdf_open(pdffilename)
