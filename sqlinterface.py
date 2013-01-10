@@ -25,7 +25,7 @@ from sqlobjects import *
 from facture import FactureCloturee
 import wx
 
-VERSION = 66
+VERSION = 67
 
 def getdate(s):
     if s is None:
@@ -161,7 +161,8 @@ class SQLConnection(object):
             site INTEGER REFERENCES SITES(idx),
             debut DATE,
             fin DATE,
-            fonction VARCHAR
+            fonction VARCHAR,
+            duree_reference INTEGER
           );""")
 
         cur.execute("""
@@ -528,9 +529,9 @@ class SQLConnection(object):
             salarie = Salarie(creation=False)
             salarie.prenom, salarie.nom, salarie.telephone_domicile, salarie.telephone_domicile_notes, salarie.telephone_portable, salarie.telephone_portable_notes, salarie.email, salarie.diplomes, salarie.idx = salarie_entry
             creche.salaries.append(salarie)
-            cur.execute('SELECT debut, fin, site, fonction, idx FROM CONTRATS WHERE employe=?', (salarie.idx,))
-            for debut, fin, site_idx, fonction, idx in cur.fetchall():
-                contrat = Contrat(salarie, creation=False)
+            cur.execute('SELECT debut, fin, site, fonction, duree_reference, idx FROM CONTRATS WHERE employe=?', (salarie.idx,))
+            for debut, fin, site_idx, fonction, duree_reference, idx in cur.fetchall():
+                contrat = Contrat(salarie, duree_reference, creation=False)
                 site = None
                 for s in creche.sites:
                     if s.idx == site_idx:
@@ -1333,6 +1334,11 @@ class SQLConnection(object):
                 debut INTEGER,
                 fin INTEGER
               );""")
+
+        if version < 67:
+            cur.execute("ALTER TABLE CONTRATS ADD duree_reference INTEGER;")
+            cur.execute('UPDATE CONTRATS SET duree_reference=?', (7,))
+            cur.execute('DELETE FROM REF_JOURNEES_SALARIES where day>6')
 
         if version < VERSION:
             try:

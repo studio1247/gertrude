@@ -618,19 +618,9 @@ class Contrat(PeriodeReference):
         result.reference = reference
         return result
 
-    def setReferenceDuration(self, duration):
-        if duration > self.duree_reference:
-            for i in range(self.duree_reference, duration):
-                self.reference.append(JourneeReferenceInscription(self, i))
-        else:
-            for i in range(duration, self.duree_reference):
-                self.reference[i].delete()
-            self.reference = self.reference[0:duration]
-        self.duree_reference = duration
-
     def create(self):
         print 'nouveau contrat'
-        result = sql_connection.execute('INSERT INTO CONTRATS (idx, employe, debut, fin, site, fonction) VALUES (NULL,?,?,?,?,?)', (self.salarie.idx, self.debut, self.fin, self.site, self.fonction))
+        result = sql_connection.execute('INSERT INTO CONTRATS (idx, employe, debut, fin, site, fonction, duree_reference) VALUES (NULL,?,?,?,?,?,N)', (self.salarie.idx, self.debut, self.fin, self.site, self.fonction, self.duree_reference))
         self.idx = result.lastrowid
 
     def delete(self):
@@ -639,7 +629,7 @@ class Contrat(PeriodeReference):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['debut', 'fin', 'site', 'fonction'] and self.idx:
+        if name in ['debut', 'fin', 'site', 'fonction', 'duree_reference'] and self.idx:
             if name == 'site':
                 value = value.idx
             print 'update', name
