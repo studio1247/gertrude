@@ -150,7 +150,7 @@ class FactureFinMois(object):
                                 elif states != (ABSENT, 0, 0, 0):
                                     break
                             if creche.traitement_maladie == DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_OUVRES:
-                                nb_jours_maladie = nombre_jours_ouvres_maladie
+                                nb_jours_maladie = nombre_jours_ouvres_maladie + 1
                             elif creche.traitement_maladie == DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES:
                                 nb_jours_maladie = (date - premier_jour_maladie).days + 1
                             else:
