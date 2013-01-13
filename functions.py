@@ -63,14 +63,12 @@ def getNextMonthStart(date):
 def GetHeureString(value):
     if value is None:
         return ""
-    elif isinstance(value, int):
-        minutes = value * 5;
-        heures = minutes / 60
-        minutes -= heures * 60
-    else:
-        heures = int(value)
-        minutes = (value - heures) * 60
-    return "%dh%02d" % (heures, round(minutes))
+    if not isinstance(value, int):
+        value = round(value * 12)
+    minutes = value * 5;
+    heures = minutes / 60
+    minutes -= heures * 60
+    return "%dh%02d" % (heures, minutes)
 
 def GetAgeString(naissance):
     if naissance:
