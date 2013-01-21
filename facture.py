@@ -130,7 +130,7 @@ class FactureFinMois(object):
                             self.formule_deduction.append("10 * %.2f" % cotisation.montant_heure_garde)
                         elif inscription.mode != MODE_FORFAIT_HORAIRE:
                             self.deduction += cotisation.montant_heure_garde * heures_reference
-                            self.formule_deduction.append("%s * %.2f" % (GetHeureString(heures_reference), cotisation.montant_heure_garde))
+                            self.formule_deduction.append(u"%s * %.2f" % (GetHeureString(heures_reference), cotisation.montant_heure_garde))
                         self.raison_deduction.add('hospitalisation')
                     elif state == MALADE:
                         if heures_reference > 0:
@@ -174,7 +174,7 @@ class FactureFinMois(object):
                                 elif inscription.mode != MODE_FORFAIT_HORAIRE:
                                     self.deduction += cotisation.montant_heure_garde * heures_reference
                                     self.formule_deduction.append("%s * %.2f" % (GetHeureString(heures_reference), cotisation.montant_heure_garde))
-                                self.raison_deduction.add('maladie > %dj consécutifs' % creche.minimum_maladie)
+                                self.raison_deduction.add(u"maladie > %dj consécutifs" % creche.minimum_maladie)
                     elif state == VACANCES:
                         if heures_reference > 0:
                             self.jours_vacances.append(date)
