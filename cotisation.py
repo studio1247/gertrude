@@ -99,11 +99,11 @@ class Cotisation(object):
             
             self.bareme_caf = Select(creche.baremes_caf, self.date)
             if self.bareme_caf:
-                if self.assiette_annuelle > self.bareme_caf.plafond:
+                if self.bareme_caf.plafond and self.assiette_annuelle > self.bareme_caf.plafond:
                     self.AjustePeriode(self.bareme_caf)
                     self.assiette_annuelle = self.bareme_caf.plafond
                     if options & TRACES: print u" plafond CAF appliqué :", self.assiette_annuelle
-                elif self.assiette_annuelle < self.bareme_caf.plancher:
+                elif self.bareme_caf.plancher and self.assiette_annuelle < self.bareme_caf.plancher:
                     self.AjustePeriode(self.bareme_caf)
                     self.assiette_annuelle = self.bareme_caf.plancher
                     if options & TRACES: print u" plancher CAF appliqué :", self.assiette_annuelle

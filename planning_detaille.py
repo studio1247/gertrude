@@ -184,11 +184,20 @@ class PlanningDetailleModifications(object):
                                 if nv != v or nw != w:
                                     if v != 0:
                                         # print a, x, v
-                                        node = shapes["activite-%d" % w].cloneNode(1)
-                                        node.setAttribute('svg:x', '%fcm' % (left + labels_width + (float(a-affichage_min) * step)))
-                                        node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
-                                        node.setAttribute('svg:width', '%fcm' % (float(x-a)*step))
-                                        ReplaceTextFields(node, [('texte', '%d' % v)])
+                                        key = "activite-%d" % w
+                                        if key in shapes:
+                                            node = shapes[key].cloneNode(1)
+                                        else:
+                                            key = "activite-%d" % (w & ~SUPPLEMENT)
+                                            if key in shapes:
+                                                node = shapes[key].cloneNode(1)
+                                            else:
+                                                node = None
+                                        if node:
+                                            node.setAttribute('svg:x', '%fcm' % (left + labels_width + (float(a-affichage_min) * step)))
+                                            node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
+                                            node.setAttribute('svg:width', '%fcm' % (float(x-a)*step))
+                                            ReplaceTextFields(node, [('texte', '%d' % v)])
                                         page.appendChild(node)
                                     a = x    
                                     v, w = nv, nw
