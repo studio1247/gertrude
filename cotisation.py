@@ -261,19 +261,7 @@ class Cotisation(object):
                     errors.append(u" - La formule de calcul du taux d'effort n'est pas correcte.")
                     raise CotisationException(errors)
             else:
-                if creche.type == TYPE_FAMILIAL:
-                    tranche = self.enfants_a_charge
-                    if inscrit.handicap:
-                        tranche += 1
-                    if tranche > 5:
-                        self.taux_effort = 0.02
-                    elif tranche > 2:
-                        self.taux_effort = 0.03
-                    elif tranche == 2:
-                        self.taux_effort = 0.04
-                    else:
-                        self.taux_effort = 0.05
-                elif creche.type == TYPE_PARENTAL:
+                if creche.type == TYPE_PARENTAL and date.year < 2013:
                     tranche = self.enfants_a_charge
                     if inscrit.handicap:
                         tranche += 1
@@ -285,8 +273,20 @@ class Cotisation(object):
                         self.taux_effort = 0.04
                     else:
                         self.taux_effort = 0.05
+                elif creche.type == TYPE_FAMILIAL or creche.type == TYPE_PARENTAL:
+                    tranche = self.enfants_a_charge
+                    if inscrit.handicap:
+                        tranche += 1
+                    if tranche > 5:
+                        self.taux_effort = 0.02
+                    elif tranche > 2:
+                        self.taux_effort = 0.03
+                    elif tranche == 2:
+                        self.taux_effort = 0.04
+                    else:
+                        self.taux_effort = 0.05
                 else:
-                    if self.enfants_a_charge > 5:
+                    if self.enfants_a_charge > 7:
                         self.taux_effort = 0.02
                     elif self.enfants_a_charge > 3:
                         self.taux_effort = 0.03
