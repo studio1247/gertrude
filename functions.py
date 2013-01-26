@@ -64,7 +64,7 @@ def GetHeureString(value):
     if value is None:
         return ""
     if not isinstance(value, int):
-        value = round(value * 12)
+        value = int(round(value * 12))
     minutes = value * 5;
     heures = minutes / 60
     minutes -= heures * 60
