@@ -329,26 +329,23 @@ def GenerateOODocument(modifications, filename=None, gauge=None):
         gauge.SetValue(100)
     return errors
 
-def GenerateHtmlDocument(modifications, filename=None, gauge=None):
+def GenerateTextDocument(modifications, filename=None, gauge=None):
     if gauge:
         gauge.SetValue(0)
     if not filename:
         filename = unicodedata.normalize("NFKD", modifications.default_output).encode('ascii', 'ignore')
     template = GetTemplateFile(modifications.template)
-    html = file(template, 'r').read()
+    text = file(template, 'r').read()
     if gauge:
         modifications.gauge = gauge
         gauge.SetValue(5)
         
-    html = modifications.execute(html)
-    if not isinstance(html, basestring):
-        return html 
-
-    file(filename, 'w').write(html)
+    text, errors = modifications.execute(text)
+    file(filename, 'w').write(text)
     if gauge:
         gauge.SetValue(100)
         
-    return {}
+    return errors
 
 def getOOoContext():
     import win32com.client
@@ -433,7 +430,16 @@ def pdf_open(filename):
         except Exception, e:
             print "Impossible de lancer acrobat reader ; prochain essai dans 2s ...", e
     return 0
-   
+
+def IsOODocument(filename):
+    return not (filename.endswith(".html") or filename.endswith(".txt"))
+
+def GenerateDocument(modifications, filename, gauge=None):
+    if IsOODocument(filename):
+        return GenerateOODocument(modifications, filename, gauge)
+    else:
+        return GenerateTextDocument(modifications, filename, gauge)
+                           
 class DocumentDialog(wx.Dialog):
     def __init__(self, parent, modifications):
         self.modifications = modifications
@@ -456,7 +462,9 @@ class DocumentDialog(wx.Dialog):
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.Add(wx.StaticText(self, -1, "Format :"), 0, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 5)
-        if sys.platform == 'win32':
+        if not IsOODocument(modifications.template):
+            self.format = wx.Choice(self, -1, choices=["Texte"])
+        elif sys.platform == 'win32':
             self.format = wx.Choice(self, -1, choices=["OpenOffice", "PDF"])
         else:
             self.format = wx.Choice(self, -1, choices=["OpenOffice"])
@@ -548,19 +556,13 @@ class DocumentDialog(wx.Dialog):
                 simple_modifications = self.modifications.GetSimpleModifications(self.oo_filename)
                 for i, (filename, modifs) in enumerate(simple_modifications):
                     self.gauge.SetValue((100 * i) / len(simple_modifications))
-                    if filename.endswith(".html"):
-                        errors.update(GenerateHtmlDocument(modifs, filename=filename))
-                    else:
-                        errors.update(GenerateOODocument(modifs, filename=filename))
+                    errors.update(GenerateDocument(modifs, filename=filename))
                     if self.pdf:
                         f, e = os.path.splitext(filename)
                         convert_to_pdf(filename, f+".pdf")
                         os.remove(filename)
             else:
-                if self.oo_filename.endswith(".html"):
-                    errors = GenerateHtmlDocument(self.modifications, filename=self.oo_filename, gauge=self.gauge)
-                else:
-                    errors = GenerateOODocument(self.modifications, filename=self.oo_filename, gauge=self.gauge)
+                errors = GenerateDocument(self.modifications, filename=self.oo_filename, gauge=self.gauge)
                 if self.pdf:
                     convert_to_pdf(self.oo_filename, self.filename)
                     os.remove(self.oo_filename)

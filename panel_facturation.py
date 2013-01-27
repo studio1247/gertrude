@@ -26,6 +26,7 @@ from facture import *
 from ooffice import *
 from controls import *
 from facture_mensuelle import FactureModifications
+from export_compta import ExportComptaModifications
 from attestation_paiement import AttestationModifications
 from appel_cotisations import AppelCotisationsModifications
 from sqlobjects import Correction
@@ -106,6 +107,10 @@ class FacturationTab(AutoTab):
         button2 = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationFacture, button2)
         box_sizer.AddMany([(self.inscrits_choice["factures"], 1, wx.ALL|wx.EXPAND, 5), (self.factures_monthchoice, 1, wx.ALL|wx.EXPAND, 5), (self.cloture_button, 0, wx.ALL, 5), (button2, 0, wx.ALL, 5)])
+        if IsTemplateFile("Export compta.txt"):
+            exportButton = wx.Button(self, -1, u'Export compta')
+            self.Bind(wx.EVT_BUTTON, self.EvtExportCompta, exportButton)
+            box_sizer.Add(exportButton, 0, wx.ALL, 5)
         if 0:
             self.decloture_button = wx.Button(self, -1, u'Dé-clôture')
             self.Bind(wx.EVT_BUTTON, self.EvtDeclotureFacture, self.decloture_button)
@@ -326,6 +331,11 @@ class FacturationTab(AutoTab):
         if self.recus_endchoice.IsEnabled():
             fin = self.recus_endchoice.GetClientData(self.recus_endchoice.GetSelection())[1]
         DocumentDialog(self, AttestationModifications(inscrits, debut, fin)).ShowModal()
+        
+    def EvtExportCompta(self, evt):
+        inscrits, periode = self.__get_facturation_inscrits_periode()
+        if len(inscrits) > 0:
+            DocumentDialog(self, ExportComptaModifications(inscrits, periode)).ShowModal()
 
 class FacturationNotebook(wx.Notebook):
     def __init__(self, parent):
