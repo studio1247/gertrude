@@ -138,7 +138,7 @@ class GertrudeListbook(Listbook):
 
 class GertrudeFrame(wx.Frame):
     def __init__(self, progress_handler):
-        wx.Frame.__init__(self, None, -1, "Gertrude v%s" % VERSION, wx.DefaultPosition, (920, 600))
+        wx.Frame.__init__(self, None, -1, "Gertrude v%s" % VERSION, wx.DefaultPosition, (1000, 600))
 
         # Icon
         icon = wx.Icon(GetBitmapFile('gertrude.ico'), wx.BITMAP_TYPE_ICO)
@@ -393,7 +393,7 @@ class GertrudeFrame(wx.Frame):
         info = wx.AboutDialogInfo()
         info.Name = "Gertrude"
         info.Version = VERSION
-        info.Copyright = "(C) 2005-2010 Bertrand Songis"
+        info.Copyright = "(C) 2005-2013 Bertrand Songis"
         info.Description = wx.lib.wordwrap.wordwrap(
             u"Gertrude est un logiciel libre adapté aux besoins de gestion des crèches et haltes-garderies en France.\n\n"
             u"Développé pour une crèche parentale rennaise début 2005, il a été adapté de 2007 à 2010 pour d’autres crèches ; il est désormais accessible à tous.\n\n"

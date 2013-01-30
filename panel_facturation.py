@@ -305,8 +305,10 @@ class FacturationTab(AutoTab):
         errors = {}
         for inscrit in inscrits:
             try:
-                facture = Facture(inscrit, periode.year, periode.month)
-                facture.Decloture()
+                date = datetime.date(periode.year, periode.month, 1)
+                if date in inscrit.factures_cloturees:
+                    facture = inscrit.factures_cloturees[date]
+                    facture.Decloture()
             except CotisationException, e:
                 errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
                 continue

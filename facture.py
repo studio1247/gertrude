@@ -334,18 +334,7 @@ class FactureFinMois(object):
             if sql_connection:
                 sql_connection.execute('INSERT INTO FACTURES (idx, inscrit, date, cotisation_mensuelle, total_contractualise, total_realise, total_facture, supplement_activites, supplement, deduction) VALUES (NULL,?,?,?,?,?,?,?,?,?)', (self.inscrit.idx, date, self.cotisation_mensuelle, self.total_contractualise, self.total_realise, self.total_facture, self.supplement_activites, self.supplement, self.deduction))
                 history.append(None)
-            
-    def Decloture(self, date=None):
-        if not self.cloture:
-            if date is None:
-                date = datetime.date(self.annee, self.mois, 1)
-            self.cloture = True
-            del self.inscrit.factures_cloturees[date]
-            if sql_connection:
-                print u'Suppression clôture', self.inscrit.idx, date
-                sql_connection.execute('DELETE FROM FACTURES where inscrit=? AND date=?', (self.inscrit.idx, date))
-                history.append(None)
-            
+
     def Restore(self):
         return self
     
@@ -449,6 +438,15 @@ class FactureCloturee:
             self.facture.deduction = self.deduction
             self.facture.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction + self.facture.correction
         return self.facture
+    
+    def Decloture(self):
+        self.cloture = True
+        del self.inscrit.factures_cloturees[self.date]
+        if sql_connection:
+            print u'Suppression clôture', self.inscrit.idx, self.date
+            sql_connection.execute('DELETE FROM FACTURES where inscrit=? AND date=?', (self.inscrit.idx, self.date))
+            history.append(None)
+
     
 def Facture(inscrit, annee, mois, options=0):
     date = datetime.date(annee, mois, 1)
