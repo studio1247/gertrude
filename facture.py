@@ -133,6 +133,8 @@ class FactureFinMois(object):
                             self.formule_deduction.append(u"%s * %.2f" % (GetHeureString(heures_reference), cotisation.montant_heure_garde))
                         self.raison_deduction.add('hospitalisation')
                     elif state == MALADE:
+                        if options & TRACES:
+                            print "jour maladie", date
                         if heures_reference > 0:
                             self.jours_maladie.append(date)
                         if creche.mode_facturation != FACTURATION_HORAIRES_REELS or inscription.mode == MODE_FORFAIT_HORAIRE:
@@ -164,6 +166,7 @@ class FactureFinMois(object):
                                         break
                                 nb_jours_maladie = (dernier_jour_maladie - premier_jour_maladie).days + 1
                             
+                            if options & TRACES: print "nombre de jours : %d (minimum=%d)" % (nb_jours_maladie, creche.minimum_maladie)
                             if nb_jours_maladie > creche.minimum_maladie:
                                 self.jours_maladie_deduits.append(date)
                                 cotisation.nombre_jours_maladie_deduits += 1
