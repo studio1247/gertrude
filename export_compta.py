@@ -75,7 +75,7 @@ class ExportComptaModifications(object):
             
             for i in range(3):
                 if i== 0:
-                    fields['numero-compte'] = "511%s" % inscrit.nom.upper()[:5]
+                    fields['numero-compte'] = "411%s" % inscrit.nom.upper()[:5]
                     fields['debit'] = facture.total
                     fields['credit'] = 0
                     fields['activite'] = ""
