@@ -45,16 +45,30 @@ class DayPlanningPanel(PlanningWidget):
         for inscrit in creche.inscrits:
             inscription = inscrit.GetInscription(self.date)
             if inscription is not None and (len(creche.sites) <= 1 or inscription.site is self.site):
-                if self.date in inscrit.jours_conges:
+                if creche.conges_inscription == GESTION_CONGES_INSCRIPTION_SIMPLE and self.date in inscrit.jours_conges:
                     line = LigneConge(inscrit.jours_conges[self.date].label)
                 elif self.date in inscrit.journees:
                     line = inscrit.journees[self.date]
-                    line.reference = inscription.getJourneeReference(self.date)
+                    if creche.conges_inscription == GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT and self.date in inscrit.jours_conges:
+                        line.reference = JourneeReferenceInscription(None, 0)
+                        if not line.commentaire:
+                            line.commentaire = inscrit.jours_conges[self.date].label
+                    else:
+                        line.reference = inscription.getJourneeReference(self.date)
                     line.insert = None
-                else:
-                    line = inscription.getJourneeReferenceCopy(self.date)
+                elif creche.conges_inscription == GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT and self.date in inscrit.jours_conges:
+                    reference = JourneeReferenceInscription(None, 0)
+                    line = Journee(inscrit, self.date, reference)
+                    line.reference = reference
+                    line.commentaire = inscrit.jours_conges[self.date].label
                     line.insert = inscrit.journees
                     line.key = self.date
+                else:
+                    line = inscription.getJourneeReferenceCopy(self.date)
+                    line.reference = inscription.getJourneeReference(self.date)
+                    line.insert = inscrit.journees
+                    line.key = self.date
+
                 line.label = GetPrenomNom(inscrit)
                 line.inscription = inscription
                 line.nocomments = False

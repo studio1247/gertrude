@@ -82,7 +82,7 @@ class FactureFinMois(object):
 
         date = self.debut_recap
         while date.month == mois:
-            if not (date in creche.jours_fermeture or date in inscrit.jours_conges):
+            if not date in creche.jours_fermeture and (creche.conges_inscription != GESTION_CONGES_INSCRIPTION_SIMPLE or not date in inscrit.jours_conges):
                 jours_ouvres += 1
                 inscription = inscrit.GetInscription(date)
                 if inscription:
