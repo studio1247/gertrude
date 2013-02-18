@@ -30,10 +30,10 @@ class GertrudeTestCase(unittest.TestCase):
         conge.options = options
         creche.add_conge(conge)
     
-    def AddParents(self, inscrit):
+    def AddParents(self, inscrit, salaire=30000.0):
         inscrit.parents["papa"] = papa = Parent(inscrit, creation=False)
         revenu = Revenu(papa, creation=False)
-        revenu.debut, revenu.revenu = datetime.date(2008, 1, 1), 30000.0
+        revenu.debut, revenu.revenu = datetime.date(2008, 1, 1), salaire
         papa.revenus.append(revenu)
         inscrit.parents["maman"] = maman = Parent(inscrit, creation=False)
         revenu = Revenu(maman, creation=False)
@@ -267,7 +267,41 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         facture = Facture(inscrit, 2010, 9)
         self.assertEquals(facture.total_contractualise, 248.75)
         self.assertEquals(facture.total_facture, 248.75)
+
+class PetitsMoussesTests(GertrudeTestCase):
+    def setUp(self):
+        GertrudeTestCase.setUp(self)
+        creche.mode_facturation = FACTURATION_PSU
+        creche.temps_facturation = FACTURATION_FIN_MOIS
+        for label in ("Week-end", "1er janvier", "14 juillet", "1er novembre", "11 novembre", u"Lundi de Pâques", "Jeudi de l'Ascension", u"Lundi de Pentecôte"):
+            self.AddJourFerie(label)
+        self.AddConge(u"Août", options=MOIS_SANS_FACTURE)
+        bareme = BaremeCAF(creation=False)
+        bareme.debut, bareme.plancher, bareme.plafond = datetime.date(2013, 1, 1), 6876.00, 56665.32
+        creche.baremes_caf.append(bareme)
         
+    def test_1janv_15fev(self):
+        inscrit = self.AddInscrit()
+        self.AddParents(inscrit, 57312.0)
+        inscription = Inscription(inscrit, creation=False)
+        inscription.debut = datetime.date(2013, 1, 1)
+        inscription.fin = datetime.date(2013, 2, 15)
+        inscription.semaines_conges = 5
+        inscription.reference[0].add_activity(102, 222, 0, -1)
+        inscription.reference[3].add_activity(102, 222, 0, -1)
+        inscription.reference[4].add_activity(102, 222, 0, -1)
+        inscrit.inscriptions.append(inscription)
+        cotisation = Cotisation(inscrit, datetime.date(2013, 1, 1), options=TRACES)
+        self.assertEquals(float("%.2f" % cotisation.heures_semaine), 30.0)
+        self.assertEquals(float("%.2f" % cotisation.heures_mois), 128.18)
+        self.assertEquals(cotisation.nombre_factures, 11)
+        self.assertEquals(float("%.2f" % cotisation.cotisation_mensuelle), 302.51)
+        facture = Facture(inscrit, 2013, 1, NO_ADDRESS|NO_PARENTS)
+        self.assertEquals(float("%.2f" % facture.total), 302.51)
+        facture = Facture(inscrit, 2013, 2, NO_ADDRESS|NO_PARENTS)
+        self.assertEquals(float("%.2f" % facture.total), 166.38)
+        
+
 class LoupandisesTests(GertrudeTestCase):
     def test_facture_periode_adaptation(self):
         creche.mode_facturation = FACTURATION_PSU
