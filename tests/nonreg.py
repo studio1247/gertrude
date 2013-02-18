@@ -291,7 +291,7 @@ class PetitsMoussesTests(GertrudeTestCase):
         inscription.reference[3].add_activity(102, 222, 0, -1)
         inscription.reference[4].add_activity(102, 222, 0, -1)
         inscrit.inscriptions.append(inscription)
-        cotisation = Cotisation(inscrit, datetime.date(2013, 1, 1), options=TRACES)
+        cotisation = Cotisation(inscrit, datetime.date(2013, 1, 1))
         self.assertEquals(float("%.2f" % cotisation.heures_semaine), 30.0)
         self.assertEquals(float("%.2f" % cotisation.heures_mois), 128.18)
         self.assertEquals(cotisation.nombre_factures, 11)
