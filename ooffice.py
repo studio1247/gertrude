@@ -621,14 +621,14 @@ class DocumentDialog(wx.Dialog):
                     try:
                         self.send_document(filename, GetTemplateFile(modifs.email_text), modifs.email_subject, modifs.email_to)
                     except Exception, e:
-                        dlg = wx.MessageDialog(self, u"Impossible d'envoyer le document\n%r" % e, 'Erreur', wx.OK|wx.ICON_WARNING)
+                        dlg = wx.MessageDialog(self, u"Impossible d'envoyer le document %s\n%r" % (filename, e), 'Erreur', wx.OK|wx.ICON_WARNING)
                         dlg.ShowModal()
                         dlg.Destroy()
             else:
                 try:
                     self.send_document(self.filename, GetTemplateFile(self.modifications.email_text), self.modifications.email_subject, self.modifications.email_to)
                 except Exception, e:
-                    dlg = wx.MessageDialog(self, u"Impossible d'envoyer le document\n%r" % e, 'Erreur', wx.OK|wx.ICON_WARNING)
+                    dlg = wx.MessageDialog(self, u"Impossible d'envoyer le document %s\n%r" % (self.filename, e), 'Erreur', wx.OK|wx.ICON_WARNING)
                     dlg.ShowModal()
                     dlg.Destroy()
                     
@@ -651,10 +651,13 @@ class DocumentDialog(wx.Dialog):
         msg['To'] = COMMASPACE.join(to)
         msg['CC'] = creche.email
     
-        fp = open(text)
-        doc = MIMEText(fp.read())
-        fp.close()
-        msg.attach(doc)
+        try:
+            fp = open(text)
+            doc = MIMEText(fp.read())
+            fp.close()
+            msg.attach(doc)
+        except:
+            pass            
         
         fp = open(filename, 'rb')
         doc = MIMEBase('application', 'octet-stream')

@@ -202,7 +202,7 @@ class FactureFinMois(object):
                                 self.heures_supplementaires += heures_supplementaires_facturees
                                 if creche.mode_facturation != FACTURATION_HORAIRES_REELS and (creche.facturation_periode_adaptation != FACTURATION_HORAIRES_REELS or not cotisation.inscription.IsInPeriodeAdaptation(date)):
                                     self.supplement += cotisation.montant_heure_garde * heures_supplementaires_facturees
-                                    self.formule_supplement.append("%s * %.2f" % (GetHeureString(heures_supplementaires_facturees), cotisation.montant_heure_garde))
+                                    self.formule_supplement.append(u"%s * %.2f" % (GetHeureString(heures_supplementaires_facturees), cotisation.montant_heure_garde))
 
                     if creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE or (creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION and inscription.IsInPeriodeAdaptation(date)):
                         activites = inscrit.GetExtraActivites(date)
