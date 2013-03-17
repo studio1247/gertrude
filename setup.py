@@ -28,7 +28,7 @@ if sys.platform == 'win32':
         if os.path.isdir(directory):
             shutil.rmtree(directory)
             
-    os.system("c:\Python26\python.exe c:\Python26\pyinstaller\Build.py gertrude.spec")
+    os.system("C:\Python27\python.exe c:\Python27\pyinstaller-2.0\pyinstaller.py gertrude.spec")
    
     issfile = "setup.iss"
     path, name = os.path.split(issfile)
