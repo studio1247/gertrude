@@ -51,7 +51,8 @@ Source: "dist\gertrude\*.ini.dist";              DestDir: "{app}";              
 Source: "dist\gertrude\*.php";                   DestDir: "{app}";                     Flags: ignoreversion
 Source: "dist\gertrude\*.dll";                   DestDir: "{app}";                     Flags: ignoreversion
 Source: "dist\gertrude\*.pyd";                   DestDir: "{app}";                     Flags: ignoreversion
-Source: "dist\gertrude\*.manifest";              DestDir: "{app}";                     Flags: ignoreversion
+Source: "dist\gertrude\Microsoft.VC90.CRT\*.*";  DestDir: "{app}\Microsoft.VC90.CRT";  Flags: ignoreversion
+Source: "dist\gertrude\Microsoft.VC90.MFC\*.*";  DestDir: "{app}\Microsoft.VC90.CRT";  Flags: ignoreversion
 
 ; ---> Subdirectories
 Source: "dist\gertrude\bitmaps_dist\*";          DestDir: "{app}\bitmaps_dist";        Flags: ignoreversion recursesubdirs createallsubdirs
