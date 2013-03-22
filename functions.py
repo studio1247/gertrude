@@ -418,8 +418,9 @@ def GetActivitiesSummary(creche, lines):
                         for i in range(start, end):
                             if value in activites:
                                 activites[value][i][line.summary-1] += 1
-            for key in line.activites_sans_horaires:            
-                activites_sans_horaires[key] += 1
+            for key in line.activites_sans_horaires:
+                if key in activites_sans_horaires:
+                    activites_sans_horaires[key] += 1
     return activites, activites_sans_horaires
 
 def GetCrecheFields(creche):
