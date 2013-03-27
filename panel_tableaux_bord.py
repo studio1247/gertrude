@@ -611,47 +611,47 @@ class RelevesTab(AutoTab):
 
         # Les releves trimestriels
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés trimestriels'), wx.HORIZONTAL)
-        choice = wx.Choice(self)
+        self.releves_choice = wx.Choice(self)
         button = wx.Button(self, -1, u'Génération')
         for year in range(first_date.year, today.year + 1):
-            choice.Append(u'Année %d' % year, year)
-        choice.SetSelection(today.year - first_date.year)
+            self.releves_choice.Append(u'Année %d' % year, year)
+        self.releves_choice.SetSelection(today.year - first_date.year)
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationEtatsTrimestriels, button)
-        box_sizer.AddMany([(choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        box_sizer.AddMany([(self.releves_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
         
         # Les etats des places
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Etats des places'), wx.HORIZONTAL)
-        choice = wx.Choice(self)
+        self.places_choice = wx.Choice(self)
         button = wx.Button(self, -1, u'Génération')
         for year in range(first_date.year, today.year + 1):
-            choice.Append(u'Année %d' % year, year)
-        choice.SetSelection(today.year - first_date.year)
+            self.places_choice.Append(u'Année %d' % year, year)
+        self.places_choice.SetSelection(today.year - first_date.year)
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationEtatsPlaces, button)
-        box_sizer.AddMany([(choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        box_sizer.AddMany([(self.places_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
         
         # Les rapports de fréquentation
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Rapports de fréquentation'), wx.HORIZONTAL)
-        self.choice = wx.Choice(self)
+        self.rapports_choice = wx.Choice(self)
         button = wx.Button(self, -1, u'Génération')
         for year in range(first_date.year, today.year + 1):
-            self.choice.Append(u'Année %d' % year, year)
-        self.choice.SetSelection(today.year - first_date.year)
+            self.rapports_choice.Append(u'Année %d' % year, year)
+        self.rapports_choice.SetSelection(today.year - first_date.year)
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationRapportFrequentation, button)
-        box_sizer.AddMany([(self.choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        box_sizer.AddMany([(self.rapports_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
         
         # Les synthèses financières
         if IsTemplateFile("Synthese financiere.ods"):
             box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Synthèse financière'), wx.HORIZONTAL)
-            self.choice = wx.Choice(self)
+            self.syntheses_choice = wx.Choice(self)
             button = wx.Button(self, -1, u'Génération')
             for year in range(first_date.year, today.year + 1):
-                self.choice.Append(u'Année %d' % year, year)
-            self.choice.SetSelection(today.year - first_date.year)
+                self.syntheses_choice.Append(u'Année %d' % year, year)
+            self.syntheses_choice.SetSelection(today.year - first_date.year)
             self.Bind(wx.EVT_BUTTON, self.EvtGenerationSyntheseFinanciere, button)
-            box_sizer.AddMany([(self.choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            box_sizer.AddMany([(self.syntheses_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
         # Les plannings de presence enfants
@@ -716,20 +716,20 @@ class RelevesTab(AutoTab):
 
     def EvtGenerationEtatsTrimestriels(self, evt):
         site = self.GetSelectedSite()
-        annee = self.choice.GetClientData(self.choice.GetSelection())
+        annee = self.releves_choice.GetClientData(self.releves_choice.GetSelection())
         DocumentDialog(self, EtatsTrimestrielsModifications(site, annee)).ShowModal()
         
     def EvtGenerationEtatsPlaces(self, evt):
         site = self.GetSelectedSite()
-        annee = self.choice.GetClientData(self.choice.GetSelection())
+        annee = self.places_choice.GetClientData(self.places_choice.GetSelection())
         DocumentDialog(self, EtatsPlacesModifications(site, annee)).ShowModal()
         
     def EvtGenerationRapportFrequentation(self, evt):
-        annee = self.choice.GetClientData(self.choice.GetSelection())
+        annee = self.rapports_choice.GetClientData(self.rapports_choice.GetSelection())
         DocumentDialog(self, RapportFrequentationModifications(annee)).ShowModal()
         
     def EvtGenerationSyntheseFinanciere(self, evt):
-        annee = self.choice.GetClientData(self.choice.GetSelection())
+        annee = self.syntheses_choice.GetClientData(self.syntheses_choice.GetSelection())
         DocumentDialog(self, SyntheseFinanciereModifications(annee)).ShowModal()
 
     def EvtGenerationPlanningPresences(self, evt):
