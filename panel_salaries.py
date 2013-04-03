@@ -246,7 +246,7 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
         self.SetSizer(sizer)
         self.UpdateContents()
         
-    def nouveauContrat(self): # TODO les autres pareil ...
+    def nouveauContrat(self, param): # TODO les autres pareil ...
         contrat = Contrat(self.salarie)
         return contrat
 

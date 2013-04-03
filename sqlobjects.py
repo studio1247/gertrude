@@ -620,7 +620,7 @@ class Contrat(PeriodeReference):
 
     def create(self):
         print 'nouveau contrat'
-        result = sql_connection.execute('INSERT INTO CONTRATS (idx, employe, debut, fin, site, fonction, duree_reference) VALUES (NULL,?,?,?,?,?,N)', (self.salarie.idx, self.debut, self.fin, self.site, self.fonction, self.duree_reference))
+        result = sql_connection.execute('INSERT INTO CONTRATS (idx, employe, debut, fin, site, fonction, duree_reference) VALUES (NULL,?,?,?,?,?,?)', (self.salarie.idx, self.debut, self.fin, self.site, self.fonction, self.duree_reference))
         self.idx = result.lastrowid
 
     def delete(self):
@@ -709,7 +709,7 @@ class Salarie(object):
     def delete(self):
         print 'suppression salarie'
         sql_connection.execute('DELETE FROM EMPLOYES WHERE idx=?', (self.idx,))
-        for obj in self.inscriptions + self.journees.values():
+        for obj in self.contrats + self.journees.values():
             obj.delete()
 
     def __setattr__(self, name, value):
