@@ -120,9 +120,23 @@ class DayPlanningPanel(PlanningWidget):
                     line = contrat.getJourneeReferenceCopy(self.date)
                     line.insert = salarie.journees
                     line.key = self.date
+                line.salarie = salarie
                 line.label = GetPrenomNom(salarie)
                 line.contrat = contrat
                 line.nocomments = True
+                def GetHeuresSalarie(line):
+                    date = line.date - datetime.timedelta(line.date.weekday())
+                    heures_semaine = 0
+                    for i in range(7):
+                        if date == line.date:
+                            heures_semaine += line.GetNombreHeures()
+                        elif date in line.salarie.journees:
+                            heures_semaine += line.salarie.journees[date].GetNombreHeures()
+                        else:
+                            heures_semaine += line.contrat.getJourneeReference(date).GetNombreHeures()
+                        date += datetime.timedelta(1)
+                    return GetHeureString(line.GetNombreHeures()) + '/' + GetHeureString(heures_semaine)
+                line.GetDynamicText = GetHeuresSalarie
                 line.summary = SUMMARY_DEN
                 lignes_salaries.append(line)
         lignes_salaries.sort(key=lambda line: line.label)    
