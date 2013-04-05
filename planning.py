@@ -567,8 +567,10 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                     sizer.GetItem(i-1).DeleteWindows()
                     sizer.Detach(i-1)
                 if self.options & COMMENTS:
-                    self.comments_sizer.GetItem(i-1).DeleteWindows()
-                    self.comments_sizer.Detach(i-1)
+                    self.comments_sizer.GetItem(2*i-2).DeleteWindows()
+                    self.comments_sizer.Detach(2*i-2)
+                    self.comments_sizer.GetItem(2*i-2).DeleteWindows()
+                    self.comments_sizer.Detach(2*i-2)
             for i in range(previous_count, count):
                 if not self.options & NO_ICONS:
                     panel = wx.Panel(self)
