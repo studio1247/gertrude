@@ -56,8 +56,11 @@ class PlanningDetailleModifications(object):
             affichage_min = int(creche.affichage_min * 60 / BASE_GRANULARITY)
             affichage_max = int(creche.affichage_max * 60 / BASE_GRANULARITY)
             step = (21.0-left-right-labels_width) / (affichage_max - affichage_min)
-            
-            drawing = dom.getElementsByTagName('office:drawing').item(0)
+           
+            drawing = dom.getElementsByTagName('office:drawing').item(0)            
+            if not drawing:
+                drawing = dom.getElementsByTagName('office:presentation').item(0)
+                
             template = drawing.getElementsByTagName("draw:page").item(0)
             # print template.toprettyxml()
             shapes = getNamedShapes(template)
