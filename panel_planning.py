@@ -207,9 +207,13 @@ class PlanningPanel(GPanel):
                 else:
                     planning_panel.SetData(None, date)
                 self.notebook.AddPage(planning_panel, GetDateString(date))
-
+        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.onChangeWeekday, self.notebook)
         self.sizer.Layout()
+        
 
+    def onChangeWeekday(self, evt=None):
+        self.notebook.GetCurrentPage().UpdateDrawing()
+        
     def onChangeWeek(self, evt=None):
         if len(creche.sites) > 1:
             self.current_site = self.site_choice.GetSelection()

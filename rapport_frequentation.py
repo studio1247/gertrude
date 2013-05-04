@@ -100,6 +100,7 @@ class RapportFrequentationModifications(object):
                 column_template = columns[colonne_jour]
                 lines = table.getElementsByTagName("table:table-row")
                 first_line = lines[0]
+                ReplaceTextFields(first_line, [('mois', months[mois-1])])
                 line_template = lines[1]
                 sum_line = lines[2]
                 cell_template = line_template.getElementsByTagName("table:table-cell")[colonne_jour]

@@ -764,6 +764,10 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
         if self.summary_panel:
             self.summary_panel.UpdateContents()
         self.Refresh()
+    
+    def UpdateDrawing(self):
+        for i in range(len(self.lines)):
+            self.internal_panel.UpdateLine(i)
         
     def UpdateLine(self, index):
         if self.summary_panel:
