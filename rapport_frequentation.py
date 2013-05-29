@@ -26,7 +26,7 @@ template_first_line = 4
 template_lines_count = 8
 
 class RapportFrequentationModifications(object):
-    def __init__(self, annee):
+    def __init__(self, site, annee):
         self.multi = False
         self.template = 'Rapport frequentation.ods'
         self.default_output = "Rapport frequentation %d.ods" % annee
@@ -34,7 +34,7 @@ class RapportFrequentationModifications(object):
         self.factures = {}
         self.errors = {}
         self.email = None
-        self.site = None
+        self.site = site
         self.metas = { "colonne-jour": 2,
                        "colonne-mois": -1,
                        "colonne-annee": 4,
@@ -86,7 +86,7 @@ class RapportFrequentationModifications(object):
                 if fin > today:
                     break
     
-                inscrits = GetInscrits(debut, fin)
+                inscrits = GetInscrits(debut, fin, self.site)
                 inscrits.sort(lambda x, y: cmp(x.nom.lower(), y.nom.lower()))
                 if not inscrits:
                     continue

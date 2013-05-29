@@ -533,6 +533,7 @@ class StatistiquesFrequentationTab(AutoTab):
             debut = datetime.date(annee, mois+1, 1)
             fin = getMonthEnd(debut)
             heures_accueil += GetHeuresAccueil(annee, mois+1)
+            print "Statistiques %s %d" % (months[mois], annee)
             for inscrit in creche.inscrits:
                 try:
                     inscriptions = inscrit.GetInscriptions(debut, fin)
@@ -725,8 +726,9 @@ class RelevesTab(AutoTab):
         DocumentDialog(self, EtatsPlacesModifications(site, annee)).ShowModal()
         
     def EvtGenerationRapportFrequentation(self, evt):
+        site = self.GetSelectedSite()
         annee = self.rapports_choice.GetClientData(self.rapports_choice.GetSelection())
-        DocumentDialog(self, RapportFrequentationModifications(annee)).ShowModal()
+        DocumentDialog(self, RapportFrequentationModifications(site, annee)).ShowModal()
         
     def EvtGenerationSyntheseFinanciere(self, evt):
         annee = self.syntheses_choice.GetClientData(self.syntheses_choice.GetSelection())

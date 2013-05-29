@@ -60,6 +60,7 @@ class AttestationModifications(object):
             doc.removeChild(template)
         
         for inscrit in self.inscrits:
+            print GetPrenomNom(inscrit)
             facture_debut = facture_fin = None
             date = self.debut
             heures_facturees = 0.0
@@ -73,6 +74,7 @@ class AttestationModifications(object):
                         if facture_debut is None:
                             facture_debut = date
                         facture_fin = getMonthEnd(date)
+                        print ' ', date, facture.total
                         total += facture.total
                         heures_facturees += facture.heures_facturees
                     date = getNextMonthStart(date)
