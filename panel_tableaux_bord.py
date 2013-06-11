@@ -521,6 +521,8 @@ class StatistiquesFrequentationTab(AutoTab):
         if periode is None:
             return
         
+        heures_contrat = 0.0
+        heures_facture = 0.0
         heures_contractualisees = 0.0
         heures_realisees = 0.0
         heures_facturees = 0.0
@@ -528,6 +530,7 @@ class StatistiquesFrequentationTab(AutoTab):
         cotisations_realisees = 0.0
         cotisations_facturees = 0.0
         heures_accueil = 0.0
+        total = 0.0
         erreurs = []
         for mois in periode:
             debut = datetime.date(annee, mois+1, 1)
@@ -539,16 +542,19 @@ class StatistiquesFrequentationTab(AutoTab):
                     inscriptions = inscrit.GetInscriptions(debut, fin)
                     if inscriptions and (site is None or inscriptions[0].site == site):
                         facture = Facture(inscrit, annee, mois+1)
+                        heures_contrat += facture.heures_contrat
+                        heures_facture += facture.heures_facture
                         heures_contractualisees += facture.heures_contractualisees
                         heures_realisees += facture.heures_realisees
                         heures_facturees += facture.heures_facturees
                         cotisations_contractualisees += facture.total_contractualise
                         cotisations_realisees += facture.total_realise
                         cotisations_facturees += facture.total_facture
+                        total += facture.total
                         print inscrit.prenom, inscrit.nom, facture.date
-                        print ' ', u"heures contractualisées", facture.heures_contractualisees
+                        print ' ', u"heures contractualisées :", facture.heures_contractualisees, facture.heures_contrat
                         print ' ', u"heures réalisées :", facture.heures_realisees
-                        print ' ', u"heures facturées :", facture.heures_facturees
+                        print ' ', u"heures facturées :", facture.heures_facturees, facture.heures_facture
                         print ' ', u"total contractualisé", facture.total_contractualise
                         print ' ', u"total réalisé :", facture.total_realise
                         print ' ', u"total facturé :", facture.total_facture
@@ -569,9 +575,16 @@ class StatistiquesFrequentationTab(AutoTab):
             self.coefficient_remplissage.SetValue("-")
         else:
             self.message.Show(False)
-            self.presences_contrat_heures.SetValue("%.2f heures" % heures_contractualisees)
+            if creche.nom == "Dessine moi un mouton":
+                presences_contrat_heures = heures_contrat
+                presences_facturees_heures = heures_facture
+            else:
+                presences_contrat_heures = heures_contractualisees
+                presences_facturees_heures = heures_facturees
+                                
+            self.presences_contrat_heures.SetValue("%.2f heures" % presences_contrat_heures)
             self.presences_realisees_heures.SetValue("%.2f heures" % heures_realisees)
-            self.presences_facturees_heures.SetValue("%.2f heures" % heures_facturees)
+            self.presences_facturees_heures.SetValue("%.2f heures" % presences_facturees_heures)
             self.presences_contrat_euros.SetValue(u"%.2f €" % cotisations_contractualisees)
             self.presences_realisees_euros.SetValue(u"%.2f €" % cotisations_realisees)
             self.presences_facturees_euros.SetValue(u"%.2f €" % cotisations_facturees)

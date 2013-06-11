@@ -1479,15 +1479,15 @@ class Inscrit(object):
                 
                 for start, end, value in journee.activites:
                     if value == 0:
-                        duration = GetDureeArrondie(start, end)
-                        heures_realisees += tranche * duration
+                        heures_realisees += tranche * GetDureeArrondie(start, end)
+                        supp = 0.0
                         for s, e, v in reference.activites:
                             if v == 0:
-                                a = max(s, start)
-                                b = min(e, end)
-                                if a < b:
-                                    duration -= GetDureeArrondie(a, b)
-                        heures_supplementaires += tranche * duration 
+                                if start < s:
+                                    supp += GetDureeArrondie(start, min(s, end))
+                                if end > e:
+                                    supp += GetDureeArrondie(max(e, start), end)
+                        heures_supplementaires += tranche * supp 
                 return PRESENT, heures_reference, heures_realisees, heures_supplementaires
         else:
             if ref_state:
