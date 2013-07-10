@@ -498,8 +498,10 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                 if line is None or ((self.options & COMMENTS) and line.nocomments):
                     checkbox.Hide()
                 elif isinstance(line, LigneConge):
+                    checkbox.Show()
                     checkbox.Disable()
                 elif not isinstance(line, basestring):
+                    checkbox.Show()
                     checkbox.Enable()
                     checkbox.SetValue(checkbox.activite.value in line.activites_sans_horaires)
 
