@@ -1481,13 +1481,18 @@ class Inscrit(object):
                     if value == 0:
                         heures_realisees += tranche * GetDureeArrondie(start, end)
                         supp = 0.0
+                        found = False
                         for s, e, v in reference.activites:
                             if v == 0:
+                                found = True
                                 if start < s:
                                     supp += GetDureeArrondie(start, min(s, end))
                                 if end > e:
                                     supp += GetDureeArrondie(max(e, start), end)
-                        heures_supplementaires += tranche * supp 
+                        if not found:
+                            supp = GetDureeArrondie(start, end)
+                        heures_supplementaires += tranche * supp
+                         
                 return PRESENT, heures_reference, heures_realisees, heures_supplementaires
         else:
             if ref_state:
