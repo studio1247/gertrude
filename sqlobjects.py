@@ -1485,10 +1485,8 @@ class Inscrit(object):
                         for s, e, v in reference.activites:
                             if v == 0:
                                 found = True
-                                if start < s:
-                                    supp += GetDureeArrondie(start, min(s, end))
-                                if end > e:
-                                    supp += GetDureeArrondie(max(e, start), end)
+                                if start < s or end > e:
+                                    supp += GetDureeArrondie(min(s, start), max(e, end)) - GetDureeArrondie(s, e)
                         if not found:
                             supp = GetDureeArrondie(start, end)
                         heures_supplementaires += tranche * supp

@@ -207,7 +207,8 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         GertrudeTestCase.setUp(self)
         creche.mode_facturation = FACTURATION_PSU
         creche.temps_facturation = FACTURATION_FIN_MOIS
-        creche.facturation_jours_feries = JOURS_FERIES_DEDUITS_ANNUELLEMENT 
+        creche.facturation_jours_feries = JOURS_FERIES_DEDUITS_ANNUELLEMENT
+        creche.arrondi_heures = ARRONDI_HEURE
         for label in ("Week-end", "1er janvier", "14 juillet", "1er novembre", "11 novembre", u"Lundi de Pâques", "Jeudi de l'Ascension", u"Lundi de Pentecôte"):
             self.AddJourFerie(label)
         self.AddConge("30/07/2010", options=ACCUEIL_NON_FACTURE)
@@ -267,6 +268,19 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         facture = Facture(inscrit, 2010, 9)
         self.assertEquals(facture.total_contractualise, 248.75)
         self.assertEquals(facture.total_facture, 248.75)
+
+    def test_heures_supp_sur_arrondi(self):
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit, creation=False)
+        inscription.debut = datetime.date(2010, 1, 1)
+        inscription.fin = datetime.date(2010, 12, 31)
+        inscription.reference[2].add_activity(96, 150, 0, -1)
+        inscrit.inscriptions.append(inscription)
+        cotisation = Cotisation(inscrit, datetime.date(2010, 9, 1))
+        self.assertEquals(float("%.2f" % cotisation.heures_semaine), 5.0)
+        self.AddJourneePresence(inscrit, datetime.date(2010, 9, 8), 96, 204)
+        facture = Facture(inscrit, 2010, 9)
+        self.assertEquals(facture.heures_supplementaires, 4.0)
 
 class PetitsMoussesTests(GertrudeTestCase):
     def setUp(self):
