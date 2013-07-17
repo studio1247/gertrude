@@ -288,7 +288,7 @@ else:
             self.SetBackgroundColour(wx.WHITE)
         else:
             if self.mois:
-                r = str2date(str, today.year)
+                r = str2date(str, day=1)
             else:
                 r = str2date(str)
             if r:

@@ -219,12 +219,15 @@ def IsTemplateFile(filename):
     path = "./templates/%s" % filename
     return os.path.isfile(path)
 
-def str2date(str, year=None):
-    day = str.strip()
-    if year and str.count('/') == 1:
-        day += '/%d' % year
+def str2date(s, year=None, day=None):
+    s = s.strip()
+    if s.count('/') == 1:
+        if year:
+            s += '/%d' % year
+        elif day:
+            s = '01/' + s
     try:
-        (jour, mois, annee) = map(lambda x: int(x), day.split('/'))
+        (jour, mois, annee) = map(lambda x: int(x), s.split('/'))
         if annee < 1900:
             return None
         else:
