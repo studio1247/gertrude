@@ -282,6 +282,19 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         facture = Facture(inscrit, 2010, 9)
         self.assertEquals(facture.heures_supplementaires, 4.0)
 
+    def test_heures_supp_2_plages_horaires_sur_1_jour(self):
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit, creation=False)
+        inscription.debut = datetime.date(2010, 1, 1)
+        inscription.fin = datetime.date(2010, 12, 31)
+        inscription.reference[2].add_activity(102, 222, 0, -1)
+        inscrit.inscriptions.append(inscription)
+        cotisation = Cotisation(inscrit, datetime.date(2010, 9, 1))
+        # self.assertEquals(float("%.2f" % cotisation.heures_semaine), 5.0)
+        self.AddJourneePresence(inscrit, datetime.date(2010, 9, 8), 88, 94)
+        facture = Facture(inscrit, 2010, 9)
+        self.assertEquals(facture.heures_supplementaires, 1.0)
+
 class PetitsMoussesTests(GertrudeTestCase):
     def setUp(self):
         GertrudeTestCase.setUp(self)

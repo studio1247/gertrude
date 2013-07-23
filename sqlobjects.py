@@ -1491,7 +1491,9 @@ class Inscrit(object):
                         for s, e, v in reference.activites:
                             if v == 0:
                                 found = True
-                                if start < s or end > e:
+                                if end < s or start > e:
+                                    supp += GetDureeArrondie(start, end)
+                                elif start < s or end > e:
                                     supp += GetDureeArrondie(min(s, start), max(e, end)) - GetDureeArrondie(s, e)
                         if not found:
                             supp = GetDureeArrondie(start, end)
