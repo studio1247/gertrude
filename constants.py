@@ -105,6 +105,7 @@ ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION = 3
 # Options des conges
 ACCUEIL_NON_FACTURE = 1 #  jours de nettoyage par exemple
 MOIS_SANS_FACTURE = 2 # si présence dans cette periode (mois d'août par exemple), elle est répartie sur les autres mois de l'année
+MOIS_FACTURE_UNIQUEMENT_HEURES_SUPP = 4 # si présence dans cette periode (mois d'août par exemple), le contrat réparti sur les autres mois de l'année, seules les suppléments / déductions sont facturés
 
 # Modes d'arrondi des heures de presence
 SANS_ARRONDI = 0

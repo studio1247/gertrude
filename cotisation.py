@@ -38,14 +38,28 @@ def GetDateRevenus(date):
     else:
         return datetime.date(date.year-1, 1, 1)
     
-def GetNombreFactures(debut, fin):
+def GetNombreFacturesContrat(debut, fin):
     nombre_factures = 0
     date = debut
     while date <= fin:
-        if date.year not in creche.mois_sans_facture.keys() or date.month not in creche.mois_sans_facture[date.year]:
+        if IsContratFacture(date):
             nombre_factures += 1
         date = getNextMonthStart(date)
     return nombre_factures
+
+def GetNombreMoisSansFactureContrat(annee):
+    result = 0
+    if annee in creche.mois_sans_facture.keys():
+        result += len(creche.mois_sans_facture[annee])
+    if annee in creche.mois_facture_uniquement_heures_supp.keys():
+        result += len(creche.mois_facture_uniquement_heures_supp[annee])
+    return result    
+
+def IsFacture(date):
+    return date.year not in creche.mois_sans_facture.keys() or date.month not in creche.mois_sans_facture[date.year]
+
+def IsContratFacture(date):
+    return IsFacture(date) and (date.year not in creche.mois_facture_uniquement_heures_supp.keys() or date.month not in creche.mois_facture_uniquement_heures_supp[date.year])
                 
 class Cotisation(object):
     def __init__(self, inscrit, date, options=0):
@@ -148,16 +162,12 @@ class Cotisation(object):
             self.heures_semaine = 10.0 * self.jours_semaine
             self.heures_mois = self.heures_semaine * 4
             self.heures_periode = self.heures_mois * 12
-            self.nombre_factures = 12
-            if self.date.year in creche.mois_sans_facture.keys():
-                self.nombre_factures -= len(creche.mois_sans_facture[self.date.year])                
+            self.nombre_factures = 12 - GetNombreMoisSansFactureContrat(self.date.year)
         elif creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
             self.heures_semaine = self.heures_reelles_semaine
             self.heures_mois = self.heures_semaine * 4
             self.heures_periode = self.heures_mois * 12
-            self.nombre_factures = 12
-            if self.date.year in creche.mois_sans_facture.keys():
-                self.nombre_factures -= len(creche.mois_sans_facture[self.date.year])
+            self.nombre_factures = 12 - GetNombreMoisSansFactureContrat(self.date.year)
         else:                
             self.heures_semaine = self.heures_reelles_semaine
                         
@@ -190,7 +200,7 @@ class Cotisation(object):
                 self.heures_periode = math.ceil(self.heures_periode)
                 if options & TRACES: print u' heures période :', self.heures_periode
 
-                self.nombre_factures = GetNombreFactures(self.inscription.debut, self.inscription.fin)
+                self.nombre_factures = GetNombreFacturesContrat(self.inscription.debut, self.inscription.fin)
                 if options & TRACES: print ' nombres de factures :', self.nombre_factures
                 self.heures_mois = math.ceil(self.heures_periode / self.nombre_factures)
                 if options & TRACES: print ' heures mensuelles : %f (%f)' % (self.heures_mois, self.heures_periode / self.nombre_factures)
@@ -204,9 +214,7 @@ class Cotisation(object):
                     self.heures_periode = 52 * self.heures_semaine
                     if options & TRACES:
                         print ' 52 semaines'
-                self.nombre_factures = 12
-                if self.date.year in creche.mois_sans_facture.keys():
-                    self.nombre_factures -= len(creche.mois_sans_facture[self.date.year])                                   
+                self.nombre_factures = 12 - GetNombreMoisSansFactureContrat(self.date.year)
                 if options & TRACES:
                     print ' nombre de factures : %d' % self.nombre_factures
                 self.heures_mois = self.heures_periode / self.nombre_factures
@@ -243,16 +251,12 @@ class Cotisation(object):
                 raise CotisationException(errors)
             if self.inscription.fin:
                 self.semaines_periode = min(52, ((self.inscription.fin - self.inscription.debut).days + 6) / 7)
-                self.nombre_factures = 12
-                if self.date.year in creche.mois_sans_facture.keys():
-                    self.nombre_factures -= len(creche.mois_sans_facture[self.date.year])
-                self.nombre_factures = min(self.nombre_factures, GetNombreFactures(self.inscription.debut, self.inscription.fin))
+                self.nombre_factures = 12 - GetNombreMoisSansFactureContrat(self.date.year)
+                self.nombre_factures = min(self.nombre_factures, GetNombreFacturesContrat(self.inscription.debut, self.inscription.fin))
                 self.prorata_effectue = True
             else:
                 self.semaines_periode = 52
-                self.nombre_factures = 12
-                if self.date.year in creche.mois_sans_facture.keys():
-                    self.nombre_factures -= len(creche.mois_sans_facture[self.date.year])
+                self.nombre_factures = 12 - GetNombreMoisSansFactureContrat(self.date.year)
             if type(self.inscription.semaines_conges) == int:
                 self.semaines_conges = self.inscription.semaines_conges
             else:                

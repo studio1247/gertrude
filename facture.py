@@ -78,7 +78,7 @@ class FactureFinMois(object):
         if inscrit.hasFacture(self.debut_recap) and creche.cloture_factures and today > self.fin_recap:
             fin = self.debut_recap - datetime.timedelta(1)
             debut = getMonthStart(fin)
-            if inscrit.GetInscriptions(debut, fin) and debut not in inscrit.factures_cloturees and (debut.year not in creche.mois_sans_facture.keys() or debut.month not in creche.mois_sans_facture[debut.year]) and self.debut_recap >= first_date:
+            if inscrit.GetInscriptions(debut, fin) and debut not in inscrit.factures_cloturees and IsFacture(debut) and self.debut_recap >= first_date:
                 error = u"La facture du mois " + GetDeMoisStr(debut.month-1) + " " + str(debut.year) + u" n'est pas clôturée"
                 raise CotisationException([error])
 
@@ -299,7 +299,10 @@ class FactureFinMois(object):
         # self.cotisation_mensuelle -= self.total_realise_non_facture
 
         # arrondi de tous les champs en euros
-        self.cotisation_mensuelle = round(self.cotisation_mensuelle, 2)
+        if IsContratFacture(self.debut_recap):
+            self.cotisation_mensuelle = round(self.cotisation_mensuelle, 2)
+        else:
+            self.cotisation_mensuelle = 0.0
         if self.montant_heure_garde == 0:
             self.heures_cotisation_mensuelle = 0
         else:

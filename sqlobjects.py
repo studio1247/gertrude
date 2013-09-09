@@ -835,8 +835,10 @@ class Creche(object):
         self.jours_fete = set()
         self.jours_weekend = []
         self.mois_sans_facture = {}
+        self.mois_facture_uniquement_heures_supp = {}
         for year in range(first_date.year, last_date.year + 1):
             self.mois_sans_facture[year] = set()
+            self.mois_facture_uniquement_heures_supp[year] = set()
             for label, func, enable in jours_fermeture:
                 if label in self.feries:
                     tmp = func(year)
@@ -873,6 +875,21 @@ class Creche(object):
                         mois = int(conge.debut)
                         for key in self.mois_sans_facture:
                             self.mois_sans_facture[key].add(mois)
+                    except:
+                        pass
+            elif conge.options == MOIS_FACTURE_UNIQUEMENT_HEURES_SUPP:
+                date = str2date(conge.debut, day=1)
+                if date and date.year in self.mois_facture_uniquement_heures_supp.keys():
+                    self.mois_facture_uniquement_heures_supp[date.year].add(date.month)
+                elif conge.debut in months:
+                    mois = months.index(conge.debut) + 1
+                    for key in self.mois_facture_uniquement_heures_supp:
+                        self.mois_facture_uniquement_heures_supp[key].add(mois)
+                else:
+                    try:
+                        mois = int(conge.debut)
+                        for key in self.mois_facture_uniquement_heures_supp:
+                            self.mois_facture_uniquement_heures_supp[key].add(mois)
                     except:
                         pass
             else:
