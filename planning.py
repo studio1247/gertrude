@@ -620,7 +620,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             
     def OnPaint(self, event):
         dc = wx.PaintDC(self.labels_panel)
-        self.labels_panel.PrepareDC(dc)
+        # seems removed in wxPython 2.9 self.labels_panel.PrepareDC(dc)
         dc.BeginDrawing()
         dc.SetTextForeground("BLACK")
         font = wx.Font(8, wx.SWISS, wx.NORMAL, wx.NORMAL)
@@ -784,7 +784,7 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
 
     def OnPaint(self, event):
         dc = wx.PaintDC(self.scale_window)
-        self.scale_window.PrepareDC(dc)
+        # seems removed in wxPython 2.9 self.scale_window.PrepareDC(dc)
         dc.BeginDrawing()
         dc.SetBrush(wx.GREY_BRUSH)
         dc.SetPen(wx.GREY_PEN)
