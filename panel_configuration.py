@@ -315,7 +315,7 @@ class ActivitesTab(AutoTab):
         for label, activite, field in ((u"présences", creche.activites[0], "couleur"), (u"présences supplémentaires", creche.activites[0], "couleur_supplement"), (u"présences prévisionnelles", creche.activites[0], "couleur_previsionnel"), (u"absences pour congés", creche.couleurs[VACANCES], "couleur"), (u"absences non prévenues", creche.couleurs[ABSENCE_NON_PREVENUE], "couleur"), (u"absences pour maladie", creche.couleurs[MALADE], "couleur")):
             color_button = wx.Button(self, -1, "", size=(20, 20))            
             r, g, b, a, h = couleur = getattr(activite, field)
-            color_button.SetBackgroundColour(wx.Color(r, g, b))
+            color_button.SetBackgroundColour(wx.Colour(r, g, b))
             self.Bind(wx.EVT_BUTTON, self.onColorButton, color_button)
             color_button.hash_cb = HashComboBox(self)
             if readonly:
@@ -372,7 +372,7 @@ class ActivitesTab(AutoTab):
         creche.couleurs[MALADE].couleur = [190, 35, 29, 150, wx.SOLID]
         for activite, field in [(creche.activites[0], "couleur"), (creche.activites[0], "couleur_supplement"), (creche.activites[0], "couleur_previsionnel")]:
             r, g, b, a, h = color = getattr(activite, field)
-            self.color_buttons[(0, field)].SetBackgroundColour(wx.Color(r, g, b))
+            self.color_buttons[(0, field)].SetBackgroundColour(wx.Colour(r, g, b))
             self.UpdateHash(self.color_buttons[(0, field)].hash_cb, color)        
 
     def line_add(self, activity):
@@ -383,7 +383,7 @@ class ActivitesTab(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, 'Mode :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (mode_choice, 0, 0)])
         color_button = mode_choice.color_button = wx.Button(self, -1, "", size=(20, 20))
         r, g, b, a, h = activity.couleur
-        color_button.SetBackgroundColour(wx.Color(r, g, b))
+        color_button.SetBackgroundColour(wx.Colour(r, g, b))
         self.Bind(wx.EVT_BUTTON, self.onColorButton, color_button)
         color_button.static = wx.StaticText(self, -1, 'Couleur :')
         color_button.hash_cb = HashComboBox(self)
@@ -504,7 +504,7 @@ class ActivitesTab(AutoTab):
             setattr(obj.activite, field, couleur)
             if obj.activite.idx is None:
                 obj.activite.create() 
-        obj.SetBackgroundColour(wx.Color(r, g, b))
+        obj.SetBackgroundColour(wx.Colour(r, g, b))
         self.UpdateHash(obj.hash_cb, couleur)
     
     def onHashChange(self, event):

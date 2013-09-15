@@ -1,5 +1,5 @@
 [gertrude]
-database=gertrude.db
+database = gertrude.db
 ;url = http://monsite.free.fr/gertrude.php
 ;login = monlogin
 ;password = monpassword
