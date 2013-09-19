@@ -58,9 +58,11 @@ class SitesPlanningPanel(PlanningWidget):
                     lines.append(line)
             else:
                 site_line = Summary(days[week_day])
-                if isinstance(creche.capacite, int):
-                    for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
-                        site_line[i][0] = creche.capacite
+                for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
+                    site_line[i][0] = 0
+                for start, end, value in creche.tranches_capacite.activites:
+                    for i in range(start, end):
+                        site_line[i][0] = value
                 lines.append(site_line)
             
             for inscrit in creche.inscrits:

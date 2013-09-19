@@ -42,7 +42,7 @@ class EtatsTrimestrielsModifications(object):
                       ('adresse-creche', creche.adresse),
                       ('code-postal-creche', str(creche.code_postal)),
                       ('ville-creche', creche.ville),
-                      ('capacite', creche.capacite),
+                      ('capacite', creche.GetCapacite()),
                      ]
             ReplaceTextFields(dom, fields)
             return []

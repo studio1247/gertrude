@@ -21,6 +21,7 @@ from constants import *
 from controls import *
 from sqlobjects import *
 import wx
+from planning import LinePlanningWidget
 
 types_creche = [(u"Parental", TYPE_PARENTAL),
                 (u"Familial", TYPE_FAMILIAL),
@@ -67,7 +68,7 @@ class CrecheTab(AutoTab):
         type_structure_choice = AutoChoiceCtrl(self, creche, 'type', items=types_creche)
         self.Bind(wx.EVT_CHOICE, self.onTypeStructureChoice, type_structure_choice)
         sizer2.AddMany([wx.StaticText(self, -1, 'Type :'), (type_structure_choice, 0, wx.EXPAND)])
-        sizer2.AddMany([wx.StaticText(self, -1, u'Capacité :'), (AutoNumericCtrl(self, creche, 'capacite', precision=0), 0, wx.EXPAND)])
+        sizer2.AddMany([wx.StaticText(self, -1, u'Capacité :'), (LinePlanningWidget(self, creche.tranches_capacite), 0, wx.EXPAND)])       
         self.sizer.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
         
         self.sites_box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, "Sites"), wx.VERTICAL)

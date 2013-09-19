@@ -131,10 +131,7 @@ def GetJoursOuvres(annee, mois):
     return jours_ouvres        
 
 def GetHeuresAccueil(annee, mois):
-    if isinstance(creche.capacite, int):
-        return GetJoursOuvres(annee, mois) * (creche.fermeture - creche.ouverture) * creche.capacite
-    else:
-        return 0
+    return GetJoursOuvres(annee, mois) * (creche.fermeture - creche.ouverture) * creche.GetCapacite()
     
 def GetInitialesPrenom(person):
     if person.prenom:
@@ -433,8 +430,8 @@ def GetCrecheFields(creche):
             ('ville-creche', creche.ville),
             ('telephone-creche', creche.telephone),
             ('email-creche', creche.email),
-            ('capacite', creche.capacite),
-            ('capacite-creche', creche.capacite),
+            ('capacite', creche.GetCapacite()),
+            ('capacite-creche', creche.GetCapacite()),
             ('amplitude-horaire', creche.GetAmplitudeHoraire()),
            ]
     
@@ -467,7 +464,7 @@ def GetInscriptionFields(inscription):
     if inscription.site:
         site_adresse, site_ville, site_telephone, site_capacite = inscription.site.adresse, inscription.site.ville, inscription.site.telephone, inscription.site.capacite 
     else:
-        site_adresse, site_ville, site_telephone, site_capacite = creche.adresse, creche.ville, creche.telephone, creche.capacite
+        site_adresse, site_ville, site_telephone, site_capacite = creche.adresse, creche.ville, creche.telephone, creche.GetCapacite()
     return [('debut-contrat', inscription.debut),
             ('fin-contrat', inscription.fin),
             ('site', GetNom(inscription.site)),
