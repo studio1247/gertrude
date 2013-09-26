@@ -188,7 +188,7 @@ class CongesPanel(SalariesTab):
 
 class PlanningReferenceSalariePanel(PlanningWidget):
     def __init__(self, parent, activity_choice):
-        PlanningWidget.__init__(self, parent, activity_choice, options=NO_ICONS|NO_ACTIVITES|PRESENCES_ONLY)
+        PlanningWidget.__init__(self, parent, activity_choice, options=NO_ICONS|PRESENCES_ONLY)
         
     def UpdateContents(self):
         lines = []

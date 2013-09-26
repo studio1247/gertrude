@@ -395,7 +395,9 @@ def getActivityColor(value):
         
 class Summary(list):
     def __init__(self, label):
+        self.options = 0
         self.label = label
+        self.GetDynamicText = None
         for i in range(DAY_SIZE):
             self.append([0, 0])
             

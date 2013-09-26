@@ -25,7 +25,7 @@ from sqlobjects import *
 from facture import FactureCloturee
 import wx
 
-VERSION = 68
+VERSION = 69
 
 def getdate(s):
     if s is None:
@@ -141,6 +141,23 @@ class SQLConnection(object):
             plafond INTEGER
           );""")
 
+        cur.execute("""  
+          CREATE TABLE RESERVATAIRES (
+            idx INTEGER PRIMARY KEY,
+            debut DATE,
+            fin DATE,
+            nom VARCHAR,
+            adresse VARCHAR,
+            code_postal INTEGER,
+            ville VARCHAR,
+            telephone VARCHAR,
+            email VARCHAR,
+            places INTEGER,
+            heures_jour FLOAT,
+            heures_semaine FLOAT,
+            options INTEGER
+          );""")
+
         cur.execute("""
           CREATE TABLE ACTIVITIES(
             idx INTEGER PRIMARY KEY,
@@ -246,6 +263,7 @@ class SQLConnection(object):
             idx INTEGER PRIMARY KEY,
             inscrit INTEGER REFERENCES INSCRITS(idx),
             preinscription BOOLEAN,
+            reservataire INTEGER REFERENCES RESERVATAIRES(idx),
             groupe INTEGER REFERENCES GROUPES(idx),
             forfait_mensuel FLOAT,
             frais_inscription FLOAT,
@@ -501,6 +519,13 @@ class SQLConnection(object):
             # print user.login, user.password
             creche.users.append(user)
 
+        cur.execute('SELECT debut, fin, nom, adresse, code_postal, ville, telephone, email, places, heures_jour, heures_semaine, options, idx FROM RESERVATAIRES')
+        for reservataire_entry in cur.fetchall():
+            reservataire = Reservataire(creation=False)
+            debut, fin, reservataire.nom, reservataire.adresse, reservataire.code_postal, reservataire.ville, reservataire.telephone, reservataire.email, reservataire.places, reservataire.heures_jour, reservataire.heures_semaine, reservataire.options, idx = reservataire_entry
+            reservataire.debut, reservataire.fin, reservataire.idx = debut, fin, idx
+            creche.reservataires.append(reservataire)
+
         cur.execute('SELECT label, reduction, pourcentage, valeur, idx FROM TARIFSSPECIAUX')
         for tarifs_entry in cur.fetchall():
             tarif = TarifSpecial(creation=False)
@@ -606,8 +631,8 @@ class SQLConnection(object):
                 referent = Referent(inscrit, creation=False)
                 referent.prenom, referent.nom, referent.telephone, referent.idx = referent_entry
                 inscrit.referents.append(referent)
-            cur.execute('SELECT idx, debut, fin, depart, mode, groupe, forfait_mensuel, frais_inscription, fin_periode_adaptation, duree_reference, forfait_heures_presence, semaines_conges, preinscription, site, sites_preinscription, professeur, groupe FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
-            for idx, debut, fin, depart, mode, groupe, forfait_mensuel, frais_inscription, fin_periode_adaptation, duree_reference, forfait_heures_presence, semaines_conges, preinscription, site, sites_preinscription, professeur, groupe in cur.fetchall():
+            cur.execute('SELECT idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, fin_periode_adaptation, duree_reference, forfait_heures_presence, semaines_conges, preinscription, site, sites_preinscription, professeur FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
+            for idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, fin_periode_adaptation, duree_reference, forfait_heures_presence, semaines_conges, preinscription, site, sites_preinscription, professeur in cur.fetchall():
                 inscription = Inscription(inscrit, duree_reference, creation=False)
                 for tmp in creche.sites:
                     if site == tmp.idx:
@@ -615,6 +640,9 @@ class SQLConnection(object):
                 for tmp in creche.groupes:
                     if groupe == tmp.idx:
                         inscription.groupe = tmp
+                for tmp in creche.reservataires:
+                    if reservataire == tmp.idx:
+                        inscription.reservataire = tmp
                 if sites_preinscription:
                     for site_preinscription in sites_preinscription.split():
                         site_preinscription = int(site_preinscription)
@@ -1370,6 +1398,25 @@ class SQLConnection(object):
             else:
                 start, end = int(ouverture*(60 / BASE_GRANULARITY)), int(fermeture*(60 / BASE_GRANULARITY))
                 cur.execute('INSERT INTO CAPACITE (idx, value, debut, fin) VALUES (NULL,?,?,?)', (capacite, start, end))
+
+        if version < 69:
+            cur.execute("""  
+              CREATE TABLE RESERVATAIRES (
+                idx INTEGER PRIMARY KEY,
+                debut DATE,
+                fin DATE,
+                nom VARCHAR,
+                adresse VARCHAR,
+                code_postal INTEGER,
+                ville VARCHAR,
+                telephone VARCHAR,
+                email VARCHAR,
+                places INTEGER,
+                heures_jour FLOAT,
+                heures_semaine FLOAT,
+                options INTEGER
+              );""")
+            cur.execute("ALTER TABLE INSCRIPTIONS ADD reservataire INTEGER REFERENCES RESERVATAIRES(idx)")
 
         if version < VERSION:
             try:

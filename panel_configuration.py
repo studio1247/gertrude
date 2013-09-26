@@ -20,6 +20,7 @@ import datetime, time
 from constants import *
 from controls import *
 from sqlobjects import *
+from config import *
 import wx
 from planning import LinePlanningWidget
 
@@ -50,10 +51,9 @@ class CrecheTab(AutoTab):
     def __init__(self, parent):
         global delbmp
         delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
-
-        AutoTab.__init__(self, parent)
         observers['sites'] = 0
         observers['groupes'] = 0
+        AutoTab.__init__(self, parent)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         sizer2 = wx.FlexGridSizer(0, 2, 5, 5)
         sizer2.AddGrowableCol(1, 1)
@@ -170,6 +170,7 @@ class CrecheTab(AutoTab):
             ordre = creche.groupes[-1].ordre + 1
         creche.groupes.append(Groupe(ordre))
         self.line_groupe_add(len(creche.groupes) - 1)
+        self.sizer.FitInside(self)
         self.sizer.Layout()
 
     def remove_groupe(self, event):
@@ -191,6 +192,7 @@ class CrecheTab(AutoTab):
 class ProfesseursTab(AutoTab):
     def __init__(self, parent):
         global delbmp
+        observers['professeurs'] = 0
         delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
         AutoTab.__init__(self, parent)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -208,10 +210,10 @@ class ProfesseursTab(AutoTab):
 
     def affiche_professeur(self, professeur):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, professeur, 'prenom'), 0, wx.ALIGN_CENTER_VERTICAL)])
-        sizer.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, professeur, 'nom'), 0, wx.ALIGN_CENTER_VERTICAL)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Entrée :', size=(50,-1)), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), AutoDateCtrl(self, professeur, 'entree')])
-        sizer.AddMany([(wx.StaticText(self, -1, 'Sortie :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), AutoDateCtrl(self, professeur, 'sortie')])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, professeur, 'prenom', observers=['professeurs']), 0, wx.ALIGN_CENTER_VERTICAL)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, professeur, 'nom', observers=['professeurs']), 0, wx.ALIGN_CENTER_VERTICAL)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Entrée :', size=(50,-1)), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), AutoDateCtrl(self, professeur, 'entree', observers=['professeurs'])])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Sortie :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), AutoDateCtrl(self, professeur, 'sortie', observers=['professeurs'])])
         delbutton = wx.BitmapButton(self, -1, delbmp, style=wx.NO_BORDER)
         delbutton.professeur, delbutton.sizer = professeur, sizer
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
@@ -219,6 +221,7 @@ class ProfesseursTab(AutoTab):
         self.professeurs_sizer.Add(sizer)
 
     def ajoute_professeur(self, event):
+        observers['professeurs'] = time.time()
         history.Append(Delete(creche.professeurs, -1))
         professeur = Professeur()
         creche.professeurs.append(professeur)
@@ -226,6 +229,7 @@ class ProfesseursTab(AutoTab):
         self.sizer.FitInside(self)
         
     def retire_professeur(self, event):
+        observers['professeurs'] = time.time()
         obj = event.GetEventObject()
         for i, professeur in enumerate(creche.professeurs):
             if professeur == obj.professeur:
@@ -651,6 +655,80 @@ class JoursFermeturePanel(AutoTab):
             del creche.feries[label]
             conge.delete()            
         history.Append(None)
+
+class ReservatairesTab(AutoTab):
+    def __init__(self, parent):
+        AutoTab.__init__(self, parent)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.reservataires_sizer = wx.BoxSizer(wx.VERTICAL)
+        for i, reservataire in enumerate(creche.reservataires):
+            self.line_add(i)
+        self.sizer.Add(self.reservataires_sizer, 0, wx.ALL, 5)
+        button_add = wx.Button(self, -1, u'Nouveau réservataire')
+        if readonly:
+            button_add.Disable()
+        self.sizer.Add(button_add, 0, wx.EXPAND+wx.TOP, 5)
+        self.Bind(wx.EVT_BUTTON, self.reservataire_add, button_add)
+        observers['reservataires'] = 0
+#        sizer2 = wx.BoxSizer(wx.HORIZONTAL)
+#        sizer2.AddMany([(wx.StaticText(self, -1, u'Nombre de semaines de congés déduites :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'semaines_conges', min=0, precision=0), 0, wx.EXPAND)])
+#        self.sizer.Add(sizer2, 0, wx.EXPAND+wx.TOP, 5)
+        sizer.Add(self.sizer, 0, wx.EXPAND+wx.ALL, 5)
+        self.SetSizer(sizer)
+
+    def UpdateContents(self):
+        for i in range(len(self.reservataires_sizer.GetChildren()), len(creche.reservataires)):
+            self.line_add(i)
+        for i in range(len(creche.reservataires), len(self.reservataires_sizer.GetChildren())):
+            self.line_del()
+        self.sizer.Layout()
+        AutoTab.UpdateContents(self)
+
+    def line_add(self, index):
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.AddMany([(wx.StaticText(self, -1, 'Debut :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, creche, 'reservataires[%d].debut' % index, mois=True, observers=['reservataires'])])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Fin :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, creche, 'reservataires[%d].fin' % index, mois=True, observers=['reservataires'])])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Nom :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, creche, 'reservataires[%d].nom' % index, observers=['reservataires'])])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Adresse :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, creche, 'reservataires[%d].adresse' % index, observers=['reservataires'])])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Code Postal :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoNumericCtrl(self, creche, 'reservataires[%d].code_postal' % index, precision=0, observers=['reservataires'])])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Ville :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, creche, 'reservataires[%d].ville' % index, observers=['reservataires'])])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Téléphone :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoPhoneCtrl(self, creche, 'reservataires[%d].telephone' % index, observers=['reservataires'])])
+        sizer.AddMany([(wx.StaticText(self, -1, 'E-mail :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, creche, 'reservataires[%d].email' % index, observers=['reservataires'])])
+        
+        # sizer.AddMany([(wx.StaticText(self, -1, u'Options :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'reservataires[%d].options' % index, [(u'Congé', 0), (u'Accueil non facturé', ACCUEIL_NON_FACTURE), (u'Pas de facture pendant ce mois', MOIS_SANS_FACTURE), (u'Uniquement supplément/déduction', MOIS_FACTURE_UNIQUEMENT_HEURES_SUPP)], observers=['reservataires']), 0, wx.EXPAND)])
+        delbutton = wx.BitmapButton(self, -1, delbmp)
+        if readonly:
+            delbutton.Disable()
+        delbutton.index = index
+        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
+        self.Bind(wx.EVT_BUTTON, self.reservataire_del, delbutton)
+        self.reservataires_sizer.Add(sizer)
+
+    def line_del(self):
+        index = len(self.reservataires_sizer.GetChildren()) - 1
+        sizer = self.reservataires_sizer.GetItem(index)
+        sizer.DeleteWindows()
+        self.reservataires_sizer.Detach(index)
+
+    def reservataire_add(self, event):
+        observers['reservataires'] = time.time()
+        history.Append(Delete(creche.reservataires, -1))
+        creche.reservataires.append(Reservataire())
+        self.line_add(len(creche.reservataires) - 1)
+        self.sizer.FitInside(self)
+        self.sizer.Layout()
+
+    def reservataire_del(self, event):
+        observers['reservataires'] = time.time()
+        index = event.GetEventObject().index
+        history.Append(Insert(creche.reservataires, index, creche.reservataires[index]))
+        self.line_del()
+        creche.reservataires[index].delete()
+        del creche.reservataires[index]
+        self.sizer.FitInside(self)
+        self.sizer.Layout()
+        self.UpdateContents()
 
 class ParametersPanel(AutoTab):
     def __init__(self, parent):
@@ -1158,6 +1236,8 @@ class ParametresNotebook(wx.Notebook):
             self.taux_effort_panel.Show(False)
             self.taux_effort_panel_displayed = 0
         self.AddPage(UsersTab(self), u'Utilisateurs et mots de passe')
+        if config.options & RESERVATAIRES:
+            self.AddPage(ReservatairesTab(self), u'Réservataires')
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
     def OnPageChanged(self, event):

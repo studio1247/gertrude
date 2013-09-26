@@ -33,7 +33,7 @@ except:
 # Don't remove these 2 lines (mandatory for py2exe)
 import controls, zipfile, xml.dom.minidom, wx.html, ooffice
 
-VERSION = '0.93a'
+VERSION = '0.93b'
 
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):
@@ -138,7 +138,7 @@ class GertrudeListbook(Listbook):
 
 class GertrudeFrame(wx.Frame):
     def __init__(self, progress_handler):
-        wx.Frame.__init__(self, None, -1, "Gertrude v%s" % VERSION, wx.DefaultPosition, (1000, 600))
+        wx.Frame.__init__(self, None, -1, "Gertrude v%s" % VERSION, wx.DefaultPosition, config.window_size)
 
         # Icon
         icon = wx.Icon(GetBitmapFile('gertrude.ico'), wx.BITMAP_TYPE_ICO)
@@ -196,6 +196,7 @@ class GertrudeFrame(wx.Frame):
         self.Bind(EVT_ALERT_EVENT, self.OnAlertAvailable)
         thread.start_new_thread(self.CheckAlertes, ())
 
+        self.Bind(wx.EVT_SIZE, self.OnResize)
         self.Bind(wx.EVT_CLOSE, self.OnExit)
         
         self.timer = wx.Timer(self, -1)  # message will be sent to the panel
@@ -361,6 +362,10 @@ class GertrudeFrame(wx.Frame):
                 zip.write(f)
         self.SetStatusText("")
 
+    def OnResize(self, evt):
+        config.window_size = evt.GetSize()
+        evt.Skip()
+        
     def OnExit(self, evt):
         self.SetStatusText("Fermeture en cours ...")
         if not readonly and len(history) > 0:

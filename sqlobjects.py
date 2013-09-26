@@ -29,6 +29,8 @@ class Day(object):
     table = None
     reference = None
     exclusive = False
+    options = 0
+    GetDynamicText = None
     
     def __init__(self):
         self.activites = {}
@@ -517,6 +519,42 @@ class User(object):
             print 'update', name
             sql_connection.execute('UPDATE USERS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
+class Reservataire(SQLObject):
+    table = "RESERVATAIRES"
+    
+    def __init__(self, creation=True):
+        self.idx = None
+        self.debut = None
+        self.fin = None
+        self.nom = ""
+        self.adresse = ""
+        self.code_postal = ""
+        self.ville = ""
+        self.telephone = ""
+        self.email = ""
+        self.places = 0
+        self.heures_jour = 0.0
+        self.heures_semaine = 0.0
+        self.options = 0
+
+        if creation:
+            self.create()
+
+    def create(self):
+        print 'nouveau reservataire'
+        result = sql_connection.execute('INSERT INTO RESERVATAIRES (idx, debut, fin, nom, places, heures_jour, heures_semaine, options) VALUES (NULL,?,?,?,?,?,?,?)', (self.debut, self.fin, self.nom, self.places, self.heures_jour, self.heures_semaine, self.options))
+        self.idx = result.lastrowid
+
+    def delete(self):
+        print 'suppression reservataire'
+        sql_connection.execute('DELETE FROM RESERVATAIRES WHERE idx=?', (self.idx,))
+
+    def __setattr__(self, name, value):
+        self.__dict__[name] = value
+        if name in ['debut', 'fin', 'nom', 'places', 'heures_jour', 'heures_semaine', 'options'] and self.idx:
+            print 'update', name
+            sql_connection.execute('UPDATE RESERVATAIRES SET %s=? WHERE idx=?' % name, (value, self.idx))
+
 class Conge(object):
     __table__ = "CONGES"
     
@@ -815,6 +853,7 @@ class Creche(object):
         self.ville = ''
         self.telephone = ''
         self.sites = []
+        self.reservataires = []
         self.users = []
         self.tarifs_speciaux = []
         self.groupes = []
@@ -1066,7 +1105,6 @@ class Creche(object):
         result = 0.0
         for start, end, value in self.tranches_capacite.activites:
             result += value * (end - start)
-        print result, self.GetAmplitudeHoraire()
         return result / 12 / self.GetAmplitudeHoraire()
         
     def __setattr__(self, name, value):
@@ -1225,6 +1263,7 @@ class Inscription(PeriodeReference):
     def __init__(self, inscrit, duree_reference=7, creation=True):
         self.idx = None
         self.inscrit = inscrit
+        self.reservataire = None
         self.groupe = None
         self.preinscription = False
         self.site = None
@@ -1271,11 +1310,11 @@ class Inscription(PeriodeReference):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ('site', 'professeur', 'groupe') and self.idx:
+        if name in ('site', 'professeur', 'reservataire', 'groupe') and value is not None and self.idx:
             value = value.idx
         elif name == "sites_preinscription":
             value = " ".join([str(value.idx) for value in value])
-        if name in ['debut', 'fin', 'depart', 'mode', 'forfait_mensuel', 'frais_inscription', 'fin_periode_adaptation', 'duree_reference', 'forfait_heures_presence', 'semaines_conges', 'preinscription', 'site', 'sites_preinscription', 'professeur', 'groupe'] and self.idx:
+        if name in ['debut', 'fin', 'depart', 'mode', 'forfait_mensuel', 'frais_inscription', 'fin_periode_adaptation', 'duree_reference', 'forfait_heures_presence', 'semaines_conges', 'preinscription', 'site', 'sites_preinscription', 'professeur', 'reservataire', 'groupe'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE INSCRIPTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))   
 

@@ -20,7 +20,7 @@ from buffered_window import BufferedWindow
 import datetime, time
 from constants import *
 from controls import getActivityColor, TextDialog
-from functions import GetActivitiesSummary, GetBitmapFile
+from functions import GetActivitiesSummary, GetBitmapFile, GetHeureString
 from sqlobjects import Day
 from history import *
 
@@ -32,9 +32,10 @@ NO_BOTTOM_LINE = 8
 DRAW_NUMBERS = 16
 COMMENTS = 32
 TWO_PARTS = 64
-NO_ACTIVITES = 128
+ACTIVITES = 128
 NO_LABELS = 256
 DRAW_VALUES = 512
+SUMMARY_PERCENT = 1024
 
 # Elements size
 LABEL_WIDTH = 130 # px
@@ -61,6 +62,7 @@ class LigneConge(object):
     def __init__(self, info):
         self.info = info
         self.readonly = True
+        self.options = 0
 
 class PlanningGridWindow(BufferedWindow):
     def __init__(self, parent, activity_combobox, options):
@@ -155,7 +157,7 @@ class PlanningGridWindow(BufferedWindow):
 
     def DrawActivitiesLine(self, dc, index, line):
         if line is None:
-            dc.SetBrush(wx.ClientDC(self).GetBackground())
+            dc.SetBrush(wx.WHITE_BRUSH)
             dc.SetPen(wx.TRANSPARENT_PEN)
             dc.DrawRectangle(0, index*LINE_HEIGHT, dc.GetSize()[0], 30)
         elif isinstance(line, LigneConge):
@@ -368,6 +370,7 @@ class PlanningGridWindow(BufferedWindow):
 class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, activity_combobox, options):
         self.options = options
+        self.activites_count = 0
         self.bulle_bitmap = wx.Bitmap(GetBitmapFile("bulle.png"))
         width = (creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH + 27
         if not options & NO_LABELS:
@@ -388,15 +391,10 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             self.sizer.Add(self.buttons_sizer, 0, wx.EXPAND|wx.RIGHT, 2)
         self.grid_panel = PlanningGridWindow(self, activity_combobox, options)
         self.sizer.Add(self.grid_panel, 0, wx.EXPAND)
-        self.last_activites_observer = 0
-        if not options & NO_ACTIVITES:
-            self.activites_sizer = wx.BoxSizer(wx.HORIZONTAL)
-            self.activites_sizers = []
-            self.sizer.Add(self.activites_sizer)
-        if options & COMMENTS:
-            self.comments_sizer = wx.BoxSizer(wx.VERTICAL)
-            self.sizer.Add(self.comments_sizer)
-        
+        self.last_activites_observer = None
+        self.right_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer.Add(self.right_sizer)
+        self.activites_sizers = []      
         self.SetSizer(self.sizer)
         self.SetupScrolling(scroll_x = False)
 
@@ -473,64 +471,72 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                 self.GetParent().summary_panel.UpdateContents()
 
     def UpdateLine(self, index):
-        if not self.options & NO_ICONS:
-            self.UpdateButton(index)
-        if not self.options & DRAW_NUMBERS:
-            self.UpdateCheckboxes(index)
-        self.GetParent().UpdateLine(index)
-            
-    def UpdateButton(self, index):
         line = self.lines[index]
-        if line is None:
-            state = None
-        elif isinstance(line, LigneConge):
-            state = VACANCES
-        elif not isinstance(line, basestring):
-            state = line.get_state()
-            if state > 0:
-                activities_state = state & ~(PRESENT|PREVISIONNEL)
-                if activities_state:
-                    state &= ~activities_state
-                    state |= PRESENT
-        panel = self.buttons_sizer.GetItem(index).GetWindow()
-        button = panel.button
-        if line is None or isinstance(line, basestring):
-            button.Show(False)
-        else:
-            button.Show(True)
-            button.SetBitmapLabel(BUTTON_BITMAPS[state])
-            
+        right_sizer = self.right_sizer.GetItem(index).GetSizer()
+        if not self.options & NO_ICONS:
+            self.UpdateIcon(index)
+        ctrl_index = 0
+        if self.options & ACTIVITES:
+            self.UpdateActivites(index)
+            ctrl_index += 1
         if self.options & COMMENTS:
-            bulle_button = self.comments_sizer.GetItem(index*2).GetWindow()
-            text_ctrl = self.comments_sizer.GetItem(index*2+1).GetWindow()
-            text_ctrl.Hide()
-            if line is None or isinstance(line, basestring):
-                bulle_button.Hide()
-                text_ctrl.Show()
-                text_ctrl.SetLabel("")
-            elif line.nocomments:
-                bulle_button.Hide()
-                text_ctrl.Show()
-                text_ctrl.SetLabel(line.GetDynamicText(line))
+            bulle_button = right_sizer.GetItem(ctrl_index).GetWindow()
+            ctrl_index += 1
+            if line is None or isinstance(line, basestring) or not line.options & COMMENTS:
+                bulle_button.Show(False)
             else:
-                bulle_button.Show()
+                bulle_button.Show(True)
                 bulle_button.Enable()
                 bulle_button.SetBitmapLabel(self.bulle_bitmap)
-            
-    def UpdateCheckboxes(self, index):
+        text_ctrl = right_sizer.GetItem(ctrl_index).GetWindow()
+        if line is None or isinstance(line, basestring) or not line.GetDynamicText:
+            text = None
+        else:
+            text = line.GetDynamicText(line)
+        if text:
+            text_ctrl.SetWindowStyle(wx.BORDER)
+            text_ctrl.SetLabel(line.GetDynamicText(line))
+        else:
+            text_ctrl.SetWindowStyle(wx.NO_BORDER)
+            text_ctrl.SetLabel("")
+        
+        self.GetParent().UpdateLine(index)
+    
+    def UpdateIcon(self, index):
         line = self.lines[index]
-        if not self.options & NO_ACTIVITES:
-            for activite_sizer in self.activites_sizers:
-                checkbox = activite_sizer.GetItem(index).GetWindow()
-                if line is None or ((self.options & COMMENTS) and line.nocomments):
-                    checkbox.Hide()
-                elif isinstance(line, LigneConge):
-                    checkbox.Show()
-                    checkbox.Disable()
-                elif not isinstance(line, basestring):
-                    checkbox.Show()
-                    checkbox.Enable()
-                    checkbox.SetValue(checkbox.activite.value in line.activites_sans_horaires)
+        button = self.buttons_sizer.GetItem(index).GetWindow().button
+        right_sizer = self.right_sizer.GetItem(index).GetSizer()
+        text_ctrl = right_sizer.GetItem(2).GetWindow()
+        activites_sizer = self.activites_sizers[index]
+        if line is None or isinstance(line, basestring):
+            button.Hide()
+        else:
+            if isinstance(line, LigneConge):
+                state = VACANCES
+            else:
+                state = line.get_state()
+                if state > 0:
+                    activities_state = state & ~(PRESENT|PREVISIONNEL)
+                    if activities_state:
+                        state &= ~activities_state
+                        state |= PRESENT
+            button.SetBitmapLabel(BUTTON_BITMAPS[state])
+            button.Show(True)
+            
+    def UpdateActivites(self, index):
+        line = self.lines[index]
+        activites_sizer = self.activites_sizers[index]
+        for item in activites_sizer.GetChildren():
+            checkbox = item.GetWindow()
+            if line is None or isinstance(line, basestring) or not line.options & ACTIVITES:
+                checkbox.Hide()
+            elif isinstance(line, LigneConge):
+                checkbox.Show()
+                checkbox.Disable()
+            else:
+                checkbox.Show()
+                checkbox.Enable()
+                checkbox.SetValue(checkbox.activite.value in line.activites_sans_horaires)
 
     def SetInfo(self, info):
         self.grid_panel.SetInfo(info)
@@ -540,13 +546,8 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         self.SetScrollPos(wx.VERTICAL, 0)
         if not self.options & NO_ICONS:
             self.buttons_sizer.Clear(True)
-            self.buttons_sizer.Layout()
-        for activite_sizer in self.activites_sizers:
-            activite_sizer.Clear(True)
-            activite_sizer.Layout()
-        if self.options & COMMENTS:
-            self.comments_sizer.Clear(True)
-            self.comments_sizer.Layout()
+        self.right_sizer.Clear(True)
+        self.activites_sizers = []
         if not self.options & NO_LABELS:
             self.labels_panel.SetMinSize((LABEL_WIDTH, 1))
             self.labels_panel.Refresh()
@@ -556,34 +557,29 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         self.GetParent().sizer.Layout()
         self.grid_panel.UpdateDrawing()
         
-        
     def SetLines(self, lines):
         previous_count = len(self.lines)
         self.lines = lines
         count = len(self.lines)
         
-        if not self.options & NO_ACTIVITES and not self.options & DRAW_NUMBERS and (self.last_activites_observer == 0 or ('activites' in observers and observers['activites'] > self.last_activites_observer)):
-            activites = creche.GetActivitesSansHoraires()
-            activites_count = len(activites)
-            previous_activites_count = len(self.activites_sizers)
-            for i in range(previous_activites_count, activites_count, -1):
-                self.activites_sizers[-1].DeleteWindows()
-                del self.activites_sizers[-1]
-            for i in range(previous_activites_count, activites_count):
-                self.activites_sizers.append(wx.BoxSizer(wx.VERTICAL))
-                self.activites_sizers[-1].SetMinSize((CHECKBOX_WIDTH, -1))
-                self.activites_sizer.Add(self.activites_sizers[-1], 0, wx.EXPAND|wx.LEFT, 5)
-                for i in range(previous_count):
+        activites = creche.GetActivitesSansHoraires()
+        activites_count = len(activites)
+        
+        if self.options & ACTIVITES and (self.last_activites_observer is None or ('activites' in observers and observers['activites'] > self.last_activites_observer)):
+            if 'activites' in observers:
+                self.last_activites_observer = observers['activites']
+            for j, sizer in enumerate(self.activites_sizers):
+                for i in range(self.activites_count, activites_count, -1):
+                    sizer.GetItem(i-1).DeleteWindows()
+                    sizer.Detach(i-1)
+                for i in range(self.activites_count, activites_count):
                     checkbox = wx.CheckBox(self, -1, "", size=(CHECKBOX_WIDTH, LINE_HEIGHT))
-                    self.activites_sizers[-1].Add(checkbox)
+                    sizer.Add(checkbox, 0, wx.EXPAND|wx.LEFT, 5)
                     checkbox.line = i
                     self.Bind(wx.EVT_CHECKBOX, self.OnActiviteCheckbox, checkbox)
-            
-            for i, activite in enumerate(activites):
-                sizer = self.activites_sizers[i] 
-                sizer.activite = activite
-                for child in sizer.GetChildren():
-                    child.GetWindow().activite = activite
+                for i, activite in enumerate(activites):
+                    sizer.GetItem(i).GetWindow().activite = activite      
+            self.activites_count = activites_count
          
         self.grid_panel.SetLines(lines)        
 
@@ -594,14 +590,10 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                 if not self.options & NO_ICONS:
                     self.buttons_sizer.GetItem(i-1).DeleteWindows()
                     self.buttons_sizer.Detach(i-1)
-                for sizer in self.activites_sizers:
-                    sizer.GetItem(i-1).DeleteWindows()
-                    sizer.Detach(i-1)
-                if self.options & COMMENTS:
-                    self.comments_sizer.GetItem(2*i-2).DeleteWindows()
-                    self.comments_sizer.Detach(2*i-2)
-                    self.comments_sizer.GetItem(2*i-2).DeleteWindows()
-                    self.comments_sizer.Detach(2*i-2)
+                right_sizer = self.right_sizer.GetItem(i-1)
+                right_sizer.DeleteWindows()
+                self.right_sizer.Detach(i-1)
+                del self.activites_sizers[-1]
             for i in range(previous_count, count):
                 if not self.options & NO_ICONS:
                     panel = wx.Panel(self)
@@ -613,24 +605,32 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                     sizer = wx.BoxSizer(wx.VERTICAL)
                     sizer.Add(panel.button)
                     panel.SetSizer(sizer)
+                    
+                line_sizer = wx.BoxSizer(wx.HORIZONTAL)
+                line_sizer.SetMinSize((-1, LINE_HEIGHT))
+                
+                if self.options & ACTIVITES:
+                    activites_sizer = wx.BoxSizer(wx.HORIZONTAL)
+                    for activite in activites: 
+                        checkbox = wx.CheckBox(self, -1, "", size=(CHECKBOX_WIDTH, LINE_HEIGHT))
+                        activites_sizer.Add(checkbox, 0, wx.EXPAND|wx.LEFT, 5)
+                        checkbox.activite = activite
+                        checkbox.line = i
+                        self.Bind(wx.EVT_CHECKBOX, self.OnActiviteCheckbox, checkbox)
+                    line_sizer.Add(activites_sizer, 0, wx.LEFT, 5)
+                    self.activites_sizers.append(activites_sizer)
+
                 if self.options & COMMENTS:
                     comment_button = wx.BitmapButton(self, -1, self.bulle_bitmap, style=wx.NO_BORDER)
                     comment_button.SetMinSize((-1, LINE_HEIGHT))
                     comment_button.line = i
                     self.Bind(wx.EVT_BUTTON, self.OnCommentButtonPressed, comment_button)
-                    self.comments_sizer.Add(comment_button)
-                    text_ctrl = wx.StaticText(self, -1, style=wx.NO_BORDER)
-                    text_ctrl.SetMinSize((-1, LINE_HEIGHT))
-                    self.comments_sizer.Add(text_ctrl)
-                    # sizer.Layout()
-                    # self.buttons_sizer.Layout()
-                if not self.options & NO_ACTIVITES:
-                    for sizer in self.activites_sizers:
-                        checkbox = wx.CheckBox(self, -1, "", size=(CHECKBOX_WIDTH, LINE_HEIGHT))
-                        sizer.Add(checkbox)
-                        checkbox.activite = sizer.activite
-                        checkbox.line = i
-                        self.Bind(wx.EVT_CHECKBOX, self.OnActiviteCheckbox, checkbox)
+                    line_sizer.Add(comment_button)
+                
+                text_ctrl = wx.StaticText(self, -1, style=wx.NO_BORDER)
+                line_sizer.Add(text_ctrl, 0, wx.LEFT|wx.TOP, 7)
+                
+                self.right_sizer.Add(line_sizer)
                    
             if not self.options & NO_LABELS:
                 self.labels_panel.SetMinSize((LABEL_WIDTH, LINE_HEIGHT*count - 1))
@@ -639,10 +639,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             self.GetParent().sizer.Layout()
 
         for i in range(count):
-            if not self.options & NO_ICONS:
-                self.UpdateButton(i)
-            if not self.options & DRAW_NUMBERS:
-                self.UpdateCheckboxes(i)
+            self.UpdateLine(i)
         
         self.grid_panel.UpdateDrawing()
         if not self.options & NO_LABELS:
@@ -651,7 +648,6 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             
     def OnPaint(self, event):
         dc = wx.PaintDC(self.labels_panel)
-        # seems removed in wxPython 2.9 self.labels_panel.PrepareDC(dc)
         dc.BeginDrawing()
         dc.SetTextForeground("BLACK")
         font = wx.Font(8, wx.SWISS, wx.NORMAL, wx.NORMAL)
@@ -703,19 +699,22 @@ class PlanningSummaryPanel(BufferedWindow):
         except:
             pass
         
+        # summary pour les activités avec horaire 
         for i, activity in enumerate(self.activites.keys()):
             dc.DrawText(self.activites[activity].label, 5, 6 + i * 20)
             self.DrawLine(dc, i, activity)
-            
-        dc.SetPen(wx.BLACK_PEN)
-        # dc.SetBrush(wx.WHITE_BRUSH)
-        for i, count in enumerate(self.activites_sans_horaires.values()):
-            x = 689+i*25
-            if not (self.options & NO_ICONS):
-                x += ICONS_WIDTH
-            rect = wx.Rect(x, 2, 20, 19)
-            dc.DrawRoundedRectangleRect(rect, 4)
-            dc.DrawText(str(count), x + 4, 5)
+        
+        # summary pour les activités sans horaire
+        if self.options & ACTIVITES:
+            dc.SetPen(wx.BLACK_PEN)
+            dc.SetBrush(wx.GREY_BRUSH)
+            for i, count in enumerate(self.activites_sans_horaires.values()):
+                x = (creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH + LABEL_WIDTH + i*25 + 10
+                if not (self.options & NO_ICONS):
+                    x += ICONS_WIDTH
+                rect = wx.Rect(x, 2, 20, 19)
+                dc.DrawRoundedRectangleRect(rect, 4)
+                dc.DrawText(str(count), x + 4, 5)
         dc.EndDrawing()
 
     def DrawLine(self, dc, index, activity):
@@ -732,11 +731,13 @@ class PlanningSummaryPanel(BufferedWindow):
         x = debut
         v, w = 0, 0
         a = 0
+        total = 0
         while x <= fin:
             if x == fin:
                 nv, nw = 0, 0
             else:
                 nv, nw = line[x]
+                total += nv
 
             if (self.options & TWO_PARTS) and activity == 0 and (nw == 0 or nv > creche.GetCapacite() or float(nv)/nw > 6.5):
                 nw = activity|SUPPLEMENT
@@ -747,6 +748,7 @@ class PlanningSummaryPanel(BufferedWindow):
                 if v != 0:
                     rect = wx.Rect(pos+3+(a-debut)*COLUMN_WIDTH, 2 + index * 20, (x-a)*COLUMN_WIDTH-1, 19)
                     r, g, b, t, s = getActivityColor(w)
+                    text = str(v)
                     try:
                         dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
                         dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
@@ -754,13 +756,31 @@ class PlanningSummaryPanel(BufferedWindow):
                         dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
                         dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
                     dc.DrawRoundedRectangleRect(rect, 4)
-                    dc.DrawText(str(v), pos + 4 - 4*len(str(v)) + (float(x+a)/2-debut)*COLUMN_WIDTH, 4 + index * 20)
+                    dc.DrawText(text, pos + 4 - 4*len(text) + (float(x+a)/2-debut)*COLUMN_WIDTH, 4 + index * 20)
                 a = x
                 v, w = nv, nw
             x += 1
             if debut_pause and x > debut_pause and x < fin_pause:
                 x = fin_pause
                 debut += fin_pause - debut_pause - (60 / BASE_GRANULARITY)
+        
+        if activity == 0:
+            x = (creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH + pos + 10 + 6
+            if self.options & ACTIVITES:
+                x += len(self.activites_sans_horaires) * 25
+            if self.options & COMMENTS:
+                x += 15
+            y = 4 + index * 20
+            total = float(total) * BASE_GRANULARITY
+            text = GetHeureString(total / 60)
+            if self.options & SUMMARY_PERCENT:
+                den = creche.GetCapacite() * creche.GetAmplitudeHoraire() * 60
+                text += " / " + "%.1f" % (total * 100 / den) + "%"
+            dc.SetPen(wx.BLACK_PEN)
+            dc.SetBrush(wx.WHITE_BRUSH)
+            w, h = dc.GetTextExtent(text)
+            dc.DrawRectangle(x, y, w+5, 15)
+            dc.DrawText(text, x+2, y+1)
             
         
 class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
@@ -852,7 +872,7 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
                 affichage_min += fin_pause - debut_pause - (60 / BASE_GRANULARITY)
         
         # les noms des activités en oblique
-        if not self.options & NO_ACTIVITES:
+        if self.options & ACTIVITES:
             activites = creche.GetActivitesSansHoraires()
             font = wx.Font(8, wx.SWISS, wx.NORMAL, wx.NORMAL)
             dc.SetFont(font)
@@ -868,5 +888,5 @@ class LinePlanningWidget(PlanningWidget):
         PlanningWidget.__init__(self, parent, None, options|NO_BOTTOM_LINE|NO_LABELS|NO_ICONS|DRAW_VALUES)
         self.line = line
         self.SetLines([self.line])
-        self.SetMinSize((-1, 58))
+        self.SetMinSize((-1, 60))
         

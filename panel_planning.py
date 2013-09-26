@@ -21,11 +21,11 @@ from parameters import *
 from functions import *
 from sqlobjects import *
 from controls import *
-from planning import PlanningWidget, LigneConge, COMMENTS, TWO_PARTS, SUMMARY_NUM, SUMMARY_DEN
+from planning import PlanningWidget, LigneConge, COMMENTS, ACTIVITES, TWO_PARTS, SUMMARY_NUM, SUMMARY_DEN, SUMMARY_PERCENT
 
 class DayPlanningPanel(PlanningWidget):
     def __init__(self, parent, activity_combobox):
-        PlanningWidget.__init__(self, parent, activity_combobox, COMMENTS+TWO_PARTS)
+        PlanningWidget.__init__(self, parent, activity_combobox, COMMENTS|ACTIVITES|TWO_PARTS|SUMMARY_PERCENT)
         
     def UpdateContents(self):
         if self.date in creche.jours_fermeture:
@@ -71,8 +71,20 @@ class DayPlanningPanel(PlanningWidget):
 
                 line.label = GetPrenomNom(inscrit)
                 line.inscription = inscription
-                line.nocomments = False
+                line.options |= COMMENTS|ACTIVITES
                 line.summary = SUMMARY_NUM
+                def GetHeuresEnfant(line):
+                    date = line.date - datetime.timedelta(line.date.weekday())
+                    heures = 0
+                    for i in range(7):
+                        if date == line.date:
+                            heures = line.GetNombreHeures()
+                        date += datetime.timedelta(1)
+                    if heures > 0:
+                        return GetHeureString(heures)
+                    else:
+                        return None
+                line.GetDynamicText = GetHeuresEnfant
                 if creche.temps_facturation == FACTURATION_FIN_MOIS:
                     date = getMonthStart(self.date)
                 else:
@@ -123,7 +135,6 @@ class DayPlanningPanel(PlanningWidget):
                 line.salarie = salarie
                 line.label = GetPrenomNom(salarie)
                 line.contrat = contrat
-                line.nocomments = True
                 def GetHeuresSalarie(line):
                     date = line.date - datetime.timedelta(line.date.weekday())
                     heures_semaine = 0
@@ -142,7 +153,9 @@ class DayPlanningPanel(PlanningWidget):
                 lignes_salaries.append(line)
         lignes_salaries.sort(key=lambda line: line.label)    
 
-        self.SetLines(lignes_enfants + [None] + lignes_salaries)
+        if lignes_salaries:
+            lignes_enfants.append(None)
+        self.SetLines(lignes_enfants + lignes_salaries)           
 
     def SetData(self, site, date):
         self.site = site

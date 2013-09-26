@@ -24,6 +24,7 @@ from planning import *
 from cotisation import *
 from ooffice import *
 from contrat_accueil import ContratAccueilModifications, FraisGardeModifications
+from config import RESERVATAIRES
 
 def ParseHtml(filename, context):
     locals().update(context.__dict__)
@@ -490,7 +491,7 @@ class ParentsPanel(InscriptionsTab):
 
 class ReferencePlanningPanel(PlanningWidget):
     def __init__(self, parent, activity_choice):
-        PlanningWidget.__init__(self, parent, activity_choice, options=NO_ICONS|PRESENCES_ONLY)
+        PlanningWidget.__init__(self, parent, activity_choice, options=NO_ICONS|PRESENCES_ONLY|ACTIVITES)
         
     def UpdateContents(self):
         lines = []
@@ -502,6 +503,7 @@ class ReferencePlanningPanel(PlanningWidget):
                     line.label = days[day % 7]
                     line.reference = None
                     line.summary = SUMMARY_NUM
+                    line.options |= ACTIVITES
                     lines.append(line)
         self.SetLines(lines)
 
@@ -529,6 +531,11 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         sizer1.AddMany([(self.sites_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.sites_items[1], 0, wx.EXPAND)])
         sizer1.AddMany([(self.sites_items[2], 0, wx.ALIGN_CENTER_VERTICAL), (self.sites_items[3], 0, wx.EXPAND)])
         
+        if config.options & RESERVATAIRES:
+            self.reservataire_items = wx.StaticText(self, -1, u"Réservataire :"), AutoChoiceCtrl(self, None, 'reservataire')
+            self.UpdateReservataireItems()
+            sizer1.AddMany([(self.reservataire_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.reservataire_items[1], 0, wx.EXPAND)])
+            
         self.groupe_items = wx.StaticText(self, -1, u"Groupe :"), AutoChoiceCtrl(self, None, 'groupe')
         self.UpdateGroupeItems()
         sizer1.AddMany([(self.groupe_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.groupe_items[1], 0, wx.EXPAND)])
@@ -635,18 +642,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
                 day.Copy(inscription.reference[0], False)
                 day.Save()
         self.UpdateContents()
-    
-    def UpdateSiteItems(self):
-        if len(creche.sites) > 1:
-            items = [(site.nom, site) for site in creche.sites]
-            self.sites_items[1].SetItems(items)
-            for nom, site in items:
-                self.sites_items[3].Append(nom)
-        else:
-            for item in self.sites_items:
-                item.Show(False)
-        self.last_site_observer = time.time()
-        
+            
     def OnCheckPreinscriptionSite(self, event):
         index = event.GetSelection()
         object = event.GetEventObject()
@@ -658,7 +654,29 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         else:
             inscription.sites_preinscription.remove(site)
         inscription.sites_preinscription = inscription.sites_preinscription
+
+    def UpdateSiteItems(self):
+        if len(creche.sites) > 1:
+            items = [(site.nom, site) for site in creche.sites]
+            self.sites_items[1].SetItems(items)
+            for nom, site in items:
+                self.sites_items[3].Append(nom)
+        else:
+            for item in self.sites_items:
+                item.Show(False)
+        self.last_site_observer = time.time()
     
+    def UpdateReservataireItems(self):
+        if len(creche.reservataires) > 0:
+            reservataires = [("----", None)] + [(reservataire.nom, reservataire) for reservataire in creche.reservataires]
+            self.reservataire_items[1].SetItems(reservataires)
+            for item in self.reservataire_items:
+                item.Show(True)
+        else:
+            for item in self.reservataire_items:
+                item.Show(False)
+        self.last_reservataire_observer = time.time()
+
     def UpdateGroupeItems(self):
         if len(creche.groupes) > 0:
             groupes = [("----", None)] + [(groupe.nom, groupe) for groupe in creche.groupes]
@@ -668,7 +686,8 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         else:
             for item in self.groupe_items:
                 item.Show(False)
-                
+        self.last_groupe_observer = time.time()
+
     def UpdateProfesseurItems(self):
         if creche.type == TYPE_GARDERIE_PERISCOLAIRE and len(creche.professeurs) > 0:
             professeurs = [("%s %s" % (professeur.prenom, professeur.nom), professeur) for professeur in creche.professeurs]
@@ -678,11 +697,17 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         else:
             for item in self.professeur_items:
                 item.Show(False)
+        self.last_professeur_observer = time.time()
                 
     def UpdateContents(self):
         if 'sites' in observers and observers['sites'] > self.last_site_observer:
             self.UpdateSiteItems()
-        self.UpdateProfesseurItems()
+        if 'groupes' in observers and observers['groupes'] > self.last_groupe_observer:
+            self.UpdateGroupeItems()
+        if 'reservataires' in observers and observers['reservataires'] > self.last_reservataire_observer:
+            self.UpdateReservataireItems()
+        if 'professeurs' in observers and observers['professeurs'] > self.last_professeur_observer:
+            self.UpdateProfesseurItems()
 
         InscriptionsTab.UpdateContents(self)
         self.mode_accueil_choice.Enable(creche.modes_inscription != MODE_5_5)

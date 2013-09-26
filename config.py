@@ -26,6 +26,8 @@ CONFIG_FILENAME = "gertrude.ini"
 DEFAULT_SECTION = "gertrude"
 DEFAULT_DATABASE = "gertrude.db"
 
+RESERVATAIRES = 1
+
 class Database(object):
     def __init__(self, section=None, filename=DEFAULT_DATABASE):
         self.section = section
@@ -36,9 +38,28 @@ class Config(object):
     def __init__(self):
         self.databases = {}
         self.connection = None
+        self.options = 0
 
 __builtin__.config = Config()
 
+def getOptions(parser):
+    options = 0
+    try:
+        str = parser.get(DEFAULT_SECTION, "options")
+        if "reservataires" in str:
+            options |= RESERVATAIRES
+    except:
+        pass
+    return options
+
+def getWindowSize(parser):
+    try:
+        window_width = int(parser.get(DEFAULT_SECTION, "window-width"))
+        window_height = int(parser.get(DEFAULT_SECTION, "window-height"))
+        return window_width, window_height
+    except:
+        return (1000, 600)
+    
 def getDefaultDocumentsDirectory():
     if sys.platform == 'win32':
         try:
@@ -131,6 +152,11 @@ def LoadConfig(progress_handler=default_progress_handler):
     else:
         progress_handler.display(u"Pas de fichier %s. Utilisation de la configuration par défaut." % CONFIG_FILENAME)
 
+    config.original_window_size = getWindowSize(parser)
+    config.window_size = config.original_window_size
+    
+    config.options = getOptions(parser)
+
     config.original_documents_directory = getDocumentsDirectory(parser)
     config.documents_directory = config.original_documents_directory
     
@@ -152,6 +178,9 @@ def LoadConfig(progress_handler=default_progress_handler):
         
 def SaveConfig(progress_handler):
     parameters = {}
+    if config.window_size != config.original_window_size:
+        parameters["window-width"] = str(config.window_size[0])
+        parameters["window-height"] = str(config.window_size[1])
     if config.documents_directory != config.original_documents_directory:
         parameters["documents-directory"] = config.documents_directory
     if config.backups_directory != config.original_backups_directory:
