@@ -775,7 +775,8 @@ class PlanningSummaryPanel(BufferedWindow):
             text = GetHeureString(total / 60)
             if self.options & SUMMARY_PERCENT:
                 den = creche.GetCapacite() * creche.GetAmplitudeHoraire() * 60
-                text += " / " + "%.1f" % (total * 100 / den) + "%"
+                if den > 0:
+                    text += " / " + "%.1f" % (total * 100 / den) + "%"
             dc.SetPen(wx.BLACK_PEN)
             dc.SetBrush(wx.WHITE_BRUSH)
             w, h = dc.GetTextExtent(text)
