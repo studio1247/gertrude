@@ -21,11 +21,11 @@ from parameters import *
 from functions import *
 from sqlobjects import *
 from controls import *
-from planning import PlanningWidget, LigneConge, COMMENTS, ACTIVITES, TWO_PARTS, SUMMARY_NUM, SUMMARY_DEN, SUMMARY_PERCENT
+from planning import PlanningWidget, LigneConge, COMMENTS, ACTIVITES, TWO_PARTS, SUMMARY_NUM, SUMMARY_DEN
 
 class DayPlanningPanel(PlanningWidget):
     def __init__(self, parent, activity_combobox):
-        PlanningWidget.__init__(self, parent, activity_combobox, COMMENTS|ACTIVITES|TWO_PARTS|SUMMARY_PERCENT)
+        PlanningWidget.__init__(self, parent, activity_combobox, COMMENTS|ACTIVITES|TWO_PARTS)
         
     def UpdateContents(self):
         if self.date in creche.jours_fermeture:
@@ -74,12 +74,7 @@ class DayPlanningPanel(PlanningWidget):
                 line.options |= COMMENTS|ACTIVITES
                 line.summary = SUMMARY_NUM
                 def GetHeuresEnfant(line):
-                    date = line.date - datetime.timedelta(line.date.weekday())
-                    heures = 0
-                    for i in range(7):
-                        if date == line.date:
-                            heures = line.GetNombreHeures()
-                        date += datetime.timedelta(1)
+                    heures = line.GetNombreHeures()
                     if heures > 0:
                         return GetHeureString(heures)
                     else:
@@ -92,6 +87,7 @@ class DayPlanningPanel(PlanningWidget):
                 if date in inscrit.factures_cloturees:
                     line.readonly = True
                 lignes_enfants.append(line)
+                
         if creche.tri_planning == TRI_GROUPE:
             groupes = {}
             for line in lignes_enfants:
@@ -155,7 +151,23 @@ class DayPlanningPanel(PlanningWidget):
 
         if lignes_salaries:
             lignes_enfants.append(None)
-        self.SetLines(lignes_enfants + lignes_salaries)           
+        self.SetLines(lignes_enfants + lignes_salaries)
+        
+    def GetSummaryDynamicText(self):
+        heures = 0.0
+        for line in self.lines:
+            if line is None:
+                break
+            heures += line.GetNombreHeures()
+        
+        if heures > 0:
+            text = GetHeureString(heures)
+            den = creche.GetCapacite() * creche.GetAmplitudeHoraire()
+            if den > 0:
+                text += " / " + "%.1f" % (heures * 100 / den) + "%"
+            return text 
+        else:
+            return None
 
     def SetData(self, site, date):
         self.site = site

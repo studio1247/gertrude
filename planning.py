@@ -35,7 +35,6 @@ TWO_PARTS = 64
 ACTIVITES = 128
 NO_LABELS = 256
 DRAW_VALUES = 512
-SUMMARY_PERCENT = 1024
 
 # Elements size
 LABEL_WIDTH = 130 # px
@@ -672,6 +671,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
 
 class PlanningSummaryPanel(BufferedWindow):
     def __init__(self, parent, options):
+        self.parent = parent
         self.options = options
         self.activities_count = len(creche.activites) - len(creche.GetActivitesSansHoraires())
         self.activites = {}
@@ -715,6 +715,23 @@ class PlanningSummaryPanel(BufferedWindow):
                 rect = wx.Rect(x, 2, 20, 19)
                 dc.DrawRoundedRectangleRect(rect, 4)
                 dc.DrawText(str(count), x + 4, 5)
+        
+        # total horaire + pourcentage remplissage
+        text = self.parent.GetSummaryDynamicText()
+        if text: 
+            x = (creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH + LABEL_WIDTH + 10 + 6
+            if not self.options & NO_ICONS:
+                x += ICONS_WIDTH
+            if self.options & ACTIVITES:
+                x += len(self.activites_sans_horaires) * 25
+            if self.options & COMMENTS:
+                x += 15
+            dc.SetPen(wx.BLACK_PEN)
+            dc.SetBrush(wx.WHITE_BRUSH)
+            w, h = dc.GetTextExtent(text)
+            dc.DrawRectangle(x, 4, w+5, 15)
+            dc.DrawText(text, x+2, 5)
+            
         dc.EndDrawing()
 
     def DrawLine(self, dc, index, activity):
@@ -731,13 +748,11 @@ class PlanningSummaryPanel(BufferedWindow):
         x = debut
         v, w = 0, 0
         a = 0
-        total = 0
         while x <= fin:
             if x == fin:
                 nv, nw = 0, 0
             else:
                 nv, nw = line[x]
-                total += nv
 
             if (self.options & TWO_PARTS) and activity == 0 and (nw == 0 or nv > creche.GetCapacite() or float(nv)/nw > 6.5):
                 nw = activity|SUPPLEMENT
@@ -763,31 +778,13 @@ class PlanningSummaryPanel(BufferedWindow):
             if debut_pause and x > debut_pause and x < fin_pause:
                 x = fin_pause
                 debut += fin_pause - debut_pause - (60 / BASE_GRANULARITY)
-        
-        if activity == 0:
-            x = (creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH + pos + 10 + 6
-            if self.options & ACTIVITES:
-                x += len(self.activites_sans_horaires) * 25
-            if self.options & COMMENTS:
-                x += 15
-            y = 4 + index * 20
-            total = float(total) * BASE_GRANULARITY
-            text = GetHeureString(total / 60)
-            if self.options & SUMMARY_PERCENT:
-                den = creche.GetCapacite() * creche.GetAmplitudeHoraire() * 60
-                if den > 0:
-                    text += " / " + "%.1f" % (total * 100 / den) + "%"
-            dc.SetPen(wx.BLACK_PEN)
-            dc.SetBrush(wx.WHITE_BRUSH)
-            w, h = dc.GetTextExtent(text)
-            dc.DrawRectangle(x, y, w+5, 15)
-            dc.DrawText(text, x+2, y+1)
             
         
 class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, activity_combobox=None, options=0):
         wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, id=-1, style=wx.LB_DEFAULT)
         self.options = options
+        self.lines = []
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.scale_window = wx.Window(self, -1, size=(-1, 25))
         self.sizer.Add(self.scale_window, 0, wx.EXPAND)
@@ -803,6 +800,9 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
         self.sizer.Layout()
         self.scale_window.Bind(wx.EVT_PAINT, self.OnPaint)
 
+    def GetSummaryDynamicText(self):
+        return None
+    
     def SetInfo(self, info):
         self.internal_panel.SetInfo(info)
         

@@ -234,7 +234,7 @@ class Day(object):
                 self.last_heures = 0.0
                 return self.last_heures
             elif value == 0:
-                self.last_heures += 5.0 * GetDureeArrondie(start, end)
+                self.last_heures += 5.0 * self.GetDureeArrondie(start, end)
         if creche.mode_facturation == FACTURATION_FORFAIT_10H:
             self.last_heures = 10.0 * (self.last_heures > 0)
         else:
@@ -284,7 +284,7 @@ class Day(object):
             if value in creche.activites:
                 activite = creche.activites[value]
                 if activite.mode == MODE_PRESENCE_NON_FACTUREE:
-                    result += (5.0 * GetDureeArrondie(start, end)) / 60
+                    result += (5.0 * self.GetDureeArrondie(start, end)) / 60
         return result
 
     
@@ -315,6 +315,7 @@ class JourneeCapacite(Day):
     def __init__(self):
         Day.__init__(self)
         self.insert = None
+        self.GetDureeArrondie = GetDureeArrondieEnfant
 
     def insert_activity(self, start, end, value):
         print u'nouvelle tranche horaire de capacité (%r, %r %d)' % (start, end, value), 
@@ -331,6 +332,7 @@ class JourneeReferenceInscription(Day):
         Day.__init__(self)
         self.inscription = inscription
         self.day = day
+        self.GetDureeArrondie = GetDureeArrondieEnfant
 
     def insert_activity(self, start, end, value):
         print 'nouvelle activite de reference (%r, %r %d)' % (start, end, value), 
@@ -350,6 +352,7 @@ class JourneeReferenceSalarie(Day):
         Day.__init__(self)
         self.contrat = contrat
         self.day = day
+        self.GetDureeArrondie = GetDureeArrondieSalarie
 
     def insert_activity(self, start, end, value):
         print 'salarie : nouvelle activite de reference (%r, %r %d)' % (start, end, value), 
@@ -370,6 +373,7 @@ class Journee(Day):
         self.inscrit_idx = inscrit.idx
         self.date = date
         self.previsionnel = 0
+        self.GetDureeArrondie = GetDureeArrondieEnfant
         if reference:
             self.Copy(reference, creche.presences_previsionnelles)
 
@@ -396,6 +400,7 @@ class JourneeSalarie(Day):
         self.salarie_idx = salarie.idx
         self.date = date
         self.previsionnel = 0
+        self.GetDureeArrondie = GetDureeArrondieSalarie
         if reference:
             self.Copy(reference, creche.presences_previsionnelles)
 
@@ -875,6 +880,7 @@ class Creche(object):
         self.affichage_max = 19.0
         self.granularite = 15
         self.minimum_maladie = 15
+        self.periode_revenus = REVENUS_YM2
         self.mode_facturation = FACTURATION_FORFAIT_10H
         self.temps_facturation = FACTURATION_FIN_MOIS
         self.conges_inscription = 0
@@ -899,6 +905,7 @@ class Creche(object):
         self.gestion_alertes = False
         self.cloture_factures = False
         self.arrondi_heures = SANS_ARRONDI
+        self.arrondi_heures_salaries = SANS_ARRONDI
         self.gestion_maladie_hospitalisation = False
         self.gestion_absences_non_prevenues = False
         self.gestion_depart_anticipe = False
@@ -1109,7 +1116,7 @@ class Creche(object):
         
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'debut_pause', 'fin_pause', 'affichage_min', 'affichage_max', 'granularite', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'cloture_factures', 'arrondi_heures', 'gestion_maladie_hospitalisation', 'gestion_absences_non_prevenues', 'gestion_depart_anticipe', 'tri_planning', 'smtp_server', 'caf_email', 'mode_accueil_defaut'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'debut_pause', 'fin_pause', 'affichage_min', 'affichage_max', 'granularite', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'periode_revenus', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'cloture_factures', 'arrondi_heures', 'arrondi_heures_salaries', 'gestion_maladie_hospitalisation', 'gestion_absences_non_prevenues', 'gestion_depart_anticipe', 'tri_planning', 'smtp_server', 'caf_email', 'mode_accueil_defaut'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
@@ -1585,18 +1592,18 @@ class Inscrit(object):
                 
                 for start, end, value in journee.activites:
                     if value == 0:
-                        heures_realisees += tranche * GetDureeArrondie(start, end)
+                        heures_realisees += tranche * GetDureeArrondieEnfant(start, end)
                         supp = 0.0
                         found = False
                         for s, e, v in reference.activites:
                             if v == 0:
                                 found = True
                                 if end < s or start > e:
-                                    supp += GetDureeArrondie(start, end)
+                                    supp += GetDureeArrondieEnfant(start, end)
                                 elif start < s or end > e:
-                                    supp += GetDureeArrondie(min(s, start), max(e, end)) - GetDureeArrondie(s, e)
+                                    supp += GetDureeArrondieEnfant(min(s, start), max(e, end)) - GetDureeArrondieEnfant(s, e)
                         if not found:
-                            supp = GetDureeArrondie(start, end)
+                            supp = GetDureeArrondieEnfant(start, end)
                         heures_supplementaires += tranche * supp
                          
                 return PRESENT, heures_reference, heures_realisees, heures_supplementaires

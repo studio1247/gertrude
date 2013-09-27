@@ -97,12 +97,22 @@ def GetDateString(date, weekday=True):
     else:
         return date_str
     
-def GetDureeArrondie(start, end):
+def GetDureeArrondieEnfant(start, end):
     if creche.arrondi_heures == ARRONDI_HEURE_ARRIVEE_DEPART:
         return (((end + 11) / 12) - (start / 12)) * 12  
  #   elif creche.arrondi_heures == ARRONDI_HEURE_SUPERIEURE:
   #      return ((end-start+11) / 12) * 12
     elif creche.arrondi_heures == ARRONDI_HEURE:
+        return ((end-start+11) / 12) * 12
+    else:
+        return end - start
+
+def GetDureeArrondieSalarie(start, end):
+    if creche.arrondi_heures_salaries == ARRONDI_HEURE_ARRIVEE_DEPART:
+        return (((end + 11) / 12) - (start / 12)) * 12  
+ #   elif creche.arrondi_heures == ARRONDI_HEURE_SUPERIEURE:
+  #      return ((end-start+11) / 12) * 12
+    elif creche.arrondi_heures_salaries == ARRONDI_HEURE:
         return ((end-start+11) / 12) * 12
     else:
         return end - start
