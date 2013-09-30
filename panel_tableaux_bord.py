@@ -34,6 +34,7 @@ from etats_places import EtatsPlacesModifications
 from etats_inscriptions import EtatsInscriptionsModifications
 from rapport_frequentation import RapportFrequentationModifications
 from synthese_financiere import SyntheseFinanciereModifications
+from doc_releve_salaries import ReleveSalariesModifications
 from facture import Facture
 from planning import *
 from sqlobjects import Day
@@ -791,6 +792,92 @@ class AlertesTab(AutoTab):
             self.grid.SetCellValue(row, 2, alerte.texte)
 
         self.grid.ForceRefresh()
+
+class SalariesTab(AutoTab):
+    def __init__(self, parent):
+        AutoTab.__init__(self, parent)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        self.salaries_choice = {}
+        
+        # Les Etats mensuels des salariés
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés mensuels'), wx.HORIZONTAL)
+        self.salaries_choice["releves"] = wx.Choice(self)
+        self.releves_monthchoice = wx.Choice(self)
+        self.Bind(wx.EVT_CHOICE, self.EvtRelevesSalarieChoice, self.salaries_choice["releves"])
+        self.Bind(wx.EVT_CHOICE, self.EvtRelevesMonthChoice, self.releves_monthchoice)
+        button = wx.Button(self, -1, u'Génération')
+        self.Bind(wx.EVT_BUTTON, self.EvtGenerationReleve, button)
+        box_sizer.AddMany([(self.salaries_choice["releves"], 1, wx.ALL|wx.EXPAND, 5), (self.releves_monthchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+
+        self.SetSizer(sizer)
+        self.UpdateContents()
+        self.Layout()
+
+    def EvtRelevesSalarieChoice(self, evt):
+        selection = self.releves_monthchoice.GetStringSelection()
+        self.releves_monthchoice.Clear()
+        salarie = self.salaries_choice["releves"].GetClientData(self.salaries_choice["releves"].GetSelection())
+        date = getFirstMonday()
+        while date <= datetime.date.today():
+            if isinstance(salarie, list) or salarie.GetContrat(date):
+                self.releves_monthchoice.Append('%s %d' % (months[date.month - 1], date.year), date)
+            date = getNextMonthStart(date)
+        self.releves_monthchoice.SetSelection(self.releves_monthchoice.GetCount()-1)
+        self.EvtRelevesMonthChoice()
+        
+    def EvtRelevesMonthChoice(self, evt=None):
+        pass
+    
+    def UpdateContents(self):
+        for choice in self.salaries_choice.values():
+            choice.Clear()
+            choice.Append(u'Tous les salariés', creche.salaries)
+            
+        salaries = { }
+        autres = { }
+        for salarie in creche.salaries:
+            if salarie.GetContrat(datetime.date.today()) != None:
+                salaries[GetPrenomNom(salarie)] = salarie
+            else:
+                autres[GetPrenomNom(salarie)] = salarie
+        
+        keys = salaries.keys()
+        keys.sort()
+        for key in keys:
+            for choice in self.salaries_choice.values():
+                choice.Append(key, salaries[key])
+        
+        if len(salaries) > 0 and len(autres) > 0:
+            for choice in self.salaries_choice.values():
+                choice.Append(20 * '-', None)
+        
+        keys = autres.keys()
+        keys.sort()
+        for key in keys:
+            for choice in self.salaries_choice.values():
+                choice.Append(key, autres[key])
+            
+        for choice in self.salaries_choice.values():
+            choice.SetSelection(0)
+        
+        self.EvtRelevesSalarieChoice(None)
+        
+        self.Layout()
+        
+    def __get_releves_salaries_periode(self):
+        salaries = self.salaries_choice["releves"].GetClientData(self.salaries_choice["releves"].GetSelection())
+        periode = self.releves_monthchoice.GetClientData(self.releves_monthchoice.GetSelection())
+        if isinstance(salaries, list):
+            salaries = [salarie for salarie in salaries if salarie.GetContrat(periode)]
+        else:
+            salaries = [salaries]
+        return salaries, periode
+
+    def EvtGenerationReleve(self, evt):
+        salaries, periode = self.__get_releves_salaries_periode()
+        DocumentDialog(self, ReleveSalariesModifications(salaries, periode)).ShowModal()
+        
                 
 class TableauxDeBordNotebook(wx.Notebook):
     def __init__(self, parent):
@@ -799,6 +886,7 @@ class TableauxDeBordNotebook(wx.Notebook):
         self.AddPage(EtatsPresenceTab(self), u"Etats de présence")
         self.AddPage(StatistiquesFrequentationTab(self), u'Statistiques de fréquentation')
         self.AddPage(RelevesTab(self), u'Edition de relevés')
+        self.AddPage(SalariesTab(self), u'Salariés')
         if creche.gestion_alertes:
             self.AddPage(AlertesTab(self), u'Alertes')
 

@@ -26,8 +26,6 @@ CONFIG_FILENAME = "gertrude.ini"
 DEFAULT_SECTION = "gertrude"
 DEFAULT_DATABASE = "gertrude.db"
 
-RESERVATAIRES = 1
-
 class Database(object):
     def __init__(self, section=None, filename=DEFAULT_DATABASE):
         self.section = section

@@ -20,7 +20,6 @@ import datetime, time
 from constants import *
 from controls import *
 from sqlobjects import *
-from config import *
 import wx
 from planning import LinePlanningWidget
 

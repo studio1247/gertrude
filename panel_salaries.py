@@ -338,6 +338,7 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
             for obj in [self.duree_reference_choice, self.button_copy]:
                 obj.Disable()
 
+    
 class SalariesNotebook(wx.Notebook):
     def __init__(self, parent, *args, **kwargs):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT, *args, **kwargs)      

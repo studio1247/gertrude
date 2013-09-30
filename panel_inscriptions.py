@@ -24,7 +24,6 @@ from planning import *
 from cotisation import *
 from ooffice import *
 from contrat_accueil import ContratAccueilModifications, FraisGardeModifications
-from config import RESERVATAIRES
 
 def ParseHtml(filename, context):
     locals().update(context.__dict__)
@@ -365,7 +364,11 @@ class ParentsPanel(InscriptionsTab):
             if profil & PROFIL_TRESORIER:
                 panel = PeriodePanel(self, 'revenus')
                 self.parents_items[-1].append(panel)
-                revenus_sizer = wx.StaticBoxSizer(wx.StaticBox(panel, -1, u"Revenus et régime d'appartenance"), wx.VERTICAL)
+                if creche.periode_revenus == REVENUS_CAFPRO:
+                    titre = u"Revenus CAFPRO et régime d'appartenance"
+                else:
+                    titre = u"Revenus et régime d'appartenance"
+                revenus_sizer = wx.StaticBoxSizer(wx.StaticBox(panel, -1, titre), wx.VERTICAL)
                 revenus_sizer.Add(PeriodeChoice(panel, Revenu), 0, wx.EXPAND|wx.ALL, 5)
                 revenus_gridsizer = wx.FlexGridSizer(0, 2, 5, 10)
                 revenus_gridsizer.AddGrowableCol(1, 1)
