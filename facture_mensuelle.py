@@ -22,6 +22,7 @@ from cotisation import CotisationException
 from ooffice import *
 
 PRESENCE_NON_FACTUREE = 256
+CONGES = 257
 
 couleurs = { SUPPLEMENT: 'A2',
              MALADE: 'B2',
@@ -29,7 +30,8 @@ couleurs = { SUPPLEMENT: 'A2',
              VACANCES: 'D2',
              ABSENT: 'E2',
              PRESENCE_NON_FACTUREE: 'A3',
-             ABSENCE_NON_PREVENUE: 'B3'
+             ABSENCE_NON_PREVENUE: 'B3',
+             CONGES: 'C3'
            }
 
 class FactureModifications(object):
@@ -139,6 +141,8 @@ class FactureModifications(object):
                                     details = " (%s)" % GetHeureString(facture.jours_supplementaires[date])
                                 elif date in facture.jours_maladie:
                                     state = MALADE
+                                elif inscrit.isDateConge(date):
+                                    state = CONGES
                                 elif date in facture.jours_vacances:
                                     state = VACANCES
                                 else:

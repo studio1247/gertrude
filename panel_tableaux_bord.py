@@ -90,6 +90,56 @@ class SitesPlanningPanel(PlanningWidget):
         self.semaine = semaine
         self.UpdateContents()
         
+class ReservatairesPlanningPanel(PlanningWidget):
+    def UpdateContents(self):          
+        first_monday = getFirstMonday()
+        lines = []
+        for week_day in range(7):
+            date = first_monday + datetime.timedelta(self.semaine * 7 + week_day)
+            if date in creche.jours_fermeture:
+                continue
+            
+            day_lines = {}
+            lines.append(days[week_day])
+            places_reservees = 0
+            for reservataire in creche.reservataires:
+                line = Summary(reservataire.nom)
+                for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
+                    line[i][0] = reservataire.places
+                day_lines[reservataire] = line
+                places_reservees += reservataire.places
+                lines.append(line)
+            line = Summary("Autres")
+            for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
+                line[i][0] = 0
+            for start, end, value in creche.tranches_capacite.activites:
+                for i in range(start, end):
+                    line[i][0] = max(0, value-places_reservees)
+            day_lines[None] = line
+            lines.append(line)
+            
+            for inscrit in creche.inscrits:
+                if date not in inscrit.jours_conges:
+                    inscription = inscrit.GetInscription(date)
+                    if inscription is not None:
+                        if date in inscrit.journees:
+                            line = inscrit.journees[date]
+                        else:
+                            line = inscrit.getJourneeReference(date)
+                        if inscription.reservataire and inscription.reservataire in day_lines:
+                            reservataire_line = day_lines[inscription.reservataire]
+                        else:
+                            reservataire_line = day_lines[None]
+                        for start, end, value in line.activites:
+                            if value in (0, PREVISIONNEL):
+                                for i in range(start, end):
+                                    reservataire_line[i][0] -= 1
+
+        self.SetLines(lines)
+
+    def SetData(self, semaine):
+        self.semaine = semaine
+        self.UpdateContents()
 
 class PlacesDisponiblesTab(AutoTab):
     def __init__(self, parent):
@@ -120,7 +170,10 @@ class PlacesDisponiblesTab(AutoTab):
         self.Bind(wx.EVT_CHOICE, self.onChangeWeek, self.week_choice)
         self.sizer.Add(sizer, 0, wx.EXPAND)
                 
-        self.planning_panel = SitesPlanningPanel(self, options=DRAW_NUMBERS|NO_ICONS|NO_BOTTOM_LINE|READ_ONLY)
+        if config.options & RESERVATAIRES:
+            self.planning_panel = ReservatairesPlanningPanel(self, options=DRAW_NUMBERS|NO_ICONS|NO_BOTTOM_LINE|READ_ONLY)
+        else:
+            self.planning_panel = SitesPlanningPanel(self, options=DRAW_NUMBERS|NO_ICONS|NO_BOTTOM_LINE|READ_ONLY)
         self.planning_panel.SetData(semaine)          
         self.sizer.Add(self.planning_panel, 1, wx.EXPAND)
         self.sizer.Layout()
