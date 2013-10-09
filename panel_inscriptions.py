@@ -964,16 +964,24 @@ class InscriptionsPanel(GPanel):
     def UpdateContents(self):
         self.notebook.UpdateContents()
 
+    def __add_in_array(self, array, id, cell):
+        key, i = id, 0
+        while key in array:
+            i += 1
+            key = id + " (%d)" % i  
+        array[key] = cell
+            
     def InitInscrits(self, selected=None):
         self.choice.Clear()
 
         inscrits = { }
         autres = { }
         for inscrit in creche.inscrits:
+            key = GetPrenomNom(inscrit)
             if inscrit.GetInscription(datetime.date.today(), preinscription=True) != None:
-                inscrits[GetPrenomNom(inscrit)] = inscrit
+                self.__add_in_array(inscrits, key, inscrit)
             else:
-                autres[GetPrenomNom(inscrit)] = inscrit
+                self.__add_in_array(autres, key, inscrit)
         
         keys = inscrits.keys()
         keys.sort()
