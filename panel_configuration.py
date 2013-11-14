@@ -1111,6 +1111,7 @@ class TauxEffortPanel(AutoTab):
         history.Append(None)    
 
 profiles = [("Administrateur", PROFIL_ALL),
+            ("Equipe", PROFIL_ALL-PROFIL_ADMIN),
             ("Bureau", PROFIL_BUREAU),
             (u"Trésorier", PROFIL_TRESORIER),
             ("Inscriptions", PROFIL_INSCRIPTIONS),

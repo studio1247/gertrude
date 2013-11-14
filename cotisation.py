@@ -290,7 +290,7 @@ class Cotisation(object):
                         self.taux_effort = 0.04
                     else:
                         self.taux_effort = 0.05
-                elif creche.type == TYPE_FAMILIAL or creche.type == TYPE_PARENTAL:
+                elif creche.type == TYPE_FAMILIAL or creche.type == TYPE_PARENTAL or creche.type == TYPE_MICRO_CRECHE:
                     tranche = self.enfants_a_charge
                     if inscrit.handicap:
                         tranche += 1
