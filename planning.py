@@ -435,8 +435,10 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                 elif line.HasPrevisionnelCloture():
                     line.RestorePrevisionnelCloture(creche.presences_previsionnelles and line.date > datetime.date.today())
                 else:
-                    line.Copy(line.reference, creche.presences_previsionnelles and line.date > datetime.date.today())
+                    reference = line.reference
+                    line.Copy(reference, creche.presences_previsionnelles and line.date > datetime.date.today())
                     line.Save()
+                    line.reference = reference
             elif line.date <= datetime.date.today() and state & PREVISIONNEL:
                 line.Confirm()
             else:
