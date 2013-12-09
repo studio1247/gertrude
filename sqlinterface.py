@@ -1392,7 +1392,7 @@ class SQLConnection(object):
                 debut INTEGER,
                 fin INTEGER
               );""")
-            if debut_pause and fin_pause:
+            if debut_pause > ouverture and fin_pause > debut_pause and fermeture > fin_pause:
                 start, end = int(ouverture*(60 / BASE_GRANULARITY)), int(debut_pause*(60 / BASE_GRANULARITY))
                 cur.execute('INSERT INTO CAPACITE (idx, value, debut, fin) VALUES (NULL,?,?,?)', (capacite, start, end))
                 start, end = int(fin_pause*(60 / BASE_GRANULARITY)), int(fermeture*(60 / BASE_GRANULARITY))
