@@ -11,7 +11,7 @@ AppUpdatesURL=http://gertrude.creches.free.fr
 VersionInfoVersion={#GertrudeVersion}
 VersionInfoCompany=Bertrand Songis
 VersionInfoProductName=Gertrude
-AppCopyright=Copyright © 2005-2009 - Bertrand Songis
+AppCopyright=Copyright © 2005-2014 - Bertrand Songis
 
 DefaultDirName={pf}\Gertrude
 DefaultGroupName=Gertrude
