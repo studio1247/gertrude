@@ -35,8 +35,7 @@ class DocumentAccueilModifications(object):
             president = bureau.president
             tresorier = bureau.tresorier
             directeur = bureau.directeur
-            
-        
+
         bareme_caf = Select(creche.baremes_caf, self.date)
         try:
             plancher_caf = "%.2f" % bareme_caf.plancher
@@ -71,6 +70,7 @@ class DocumentAccueilModifications(object):
                 ('plafond-caf', plafond_caf),
                 ('nombre-factures', self.cotisation.nombre_factures),
                 ('semaines-type', len(inscription.reference) / 7),
+                ('jours-semaine', self.cotisation.jours_semaine),
                 ('heures-semaine', GetHeureString(self.cotisation.heures_semaine)),
                 ('heures-mois', GetHeureString(self.cotisation.heures_mois)),
                 ('heures-periode', GetHeureString(self.cotisation.heures_periode)),
@@ -192,13 +192,14 @@ class ContratAccueilModifications(DocumentAccueilModifications):
                         for textNode in clone.getElementsByTagName("text:p"):
                             for child in textNode.childNodes:
                                 text = child.wholeText
-                                for i in range(5):
+                                for i in range(7):
                                     text = text.replace("[%d]" % i, "[%d]" % (i+semaine*7))
                                 child.replaceWholeText(text)
                         table.insertBefore(clone, rows[-1])
                 # print table.toprettyxml()
                 break;
-            
+        
+        print doc.toprettyxml()
         ReplaceTextFields(doc, fields)
         return {}
     

@@ -107,7 +107,8 @@ class ReservatairesPlanningPanel(PlanningWidget):
                 for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
                     line[i][0] = reservataire.places
                 day_lines[reservataire] = line
-                places_reservees += reservataire.places
+                if reservataire.places:
+                    places_reservees += reservataire.places
                 lines.append(line)
             line = Summary("Autres")
             for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
@@ -170,7 +171,7 @@ class PlacesDisponiblesTab(AutoTab):
         self.Bind(wx.EVT_CHOICE, self.onChangeWeek, self.week_choice)
         self.sizer.Add(sizer, 0, wx.EXPAND)
                 
-        if config.options & RESERVATAIRES:
+        if (config.options & RESERVATAIRES) and len(creche.reservataires) > 0:
             self.planning_panel = ReservatairesPlanningPanel(self, options=DRAW_NUMBERS|NO_ICONS|NO_BOTTOM_LINE|READ_ONLY)
         else:
             self.planning_panel = SitesPlanningPanel(self, options=DRAW_NUMBERS|NO_ICONS|NO_BOTTOM_LINE|READ_ONLY)

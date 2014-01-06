@@ -247,7 +247,10 @@ class PlanningGridWindow(BufferedWindow):
                         s = str(int(v))
                         dc.DrawText(s, pos + 4 - 4*len(s) + (float(x+a)/2-debut)*COLUMN_WIDTH, 7 + index * LINE_HEIGHT)
                     a = x    
-                    v = nv
+                    if nv:
+                        v = nv
+                    else:
+                        v = 0
                 x += 1
                 if debut_pause and x > debut_pause and x < fin_pause:
                     a = x = fin_pause
