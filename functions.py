@@ -97,23 +97,15 @@ def GetDateString(date, weekday=True):
     else:
         return date_str
     
-def GetDureeArrondieEnfant(start, end):
-    if creche.arrondi_heures == ARRONDI_HEURE_ARRIVEE_DEPART:
+def GetDureeArrondie(mode, start, end):
+    if mode == ARRONDI_HEURE_ARRIVEE_DEPART:
         return (((end + 11) / 12) - (start / 12)) * 12  
- #   elif creche.arrondi_heures == ARRONDI_HEURE_SUPERIEURE:
+ #   elif mode == ARRONDI_HEURE_SUPERIEURE:
   #      return ((end-start+11) / 12) * 12
-    elif creche.arrondi_heures == ARRONDI_HEURE:
+    elif mode == ARRONDI_HEURE:
         return ((end-start+11) / 12) * 12
-    else:
-        return end - start
-
-def GetDureeArrondieSalarie(start, end):
-    if creche.arrondi_heures_salaries == ARRONDI_HEURE_ARRIVEE_DEPART:
-        return (((end + 11) / 12) - (start / 12)) * 12  
- #   elif creche.arrondi_heures == ARRONDI_HEURE_SUPERIEURE:
-  #      return ((end-start+11) / 12) * 12
-    elif creche.arrondi_heures_salaries == ARRONDI_HEURE:
-        return ((end-start+11) / 12) * 12
+    elif mode == ARRONDI_DEMI_HEURE:
+        return ((end-start+5) / 6) * 6
     else:
         return end - start
     
@@ -492,34 +484,40 @@ def GetInscriptionFields(inscription):
 
 def GetFactureFields(facture):
     if facture:
-        return [('mois', '%s %d' % (months[facture.mois - 1], facture.annee)),
-                ('de-mois', '%s %d' % (GetDeMoisStr(facture.mois - 1), facture.annee)),
-                ('de-mois-recap', '%s %d' % (GetDeMoisStr(facture.debut_recap.month - 1), facture.debut_recap.year)),
-                ('date', '%.2d/%.2d/%d' % (facture.date.day, facture.mois, facture.annee)),
-                ('numfact', '%03d%04d%02d' % (facture.inscrit.idx, facture.annee, facture.mois)),
-                ('montant-heure-garde', facture.montant_heure_garde, FIELD_EUROS),
-                ('cotisation-mensuelle', facture.cotisation_mensuelle, FIELD_EUROS),
-                ('heures-cotisation-mensuelle', GetHeureString(facture.heures_cotisation_mensuelle)),
-                ('heures-contractualisees', GetHeureString(facture.heures_contractualisees)),
-                ('heures-realisees', GetHeureString(facture.heures_realisees)),
-                ('heures-realisees-non-facturees', GetHeureString(facture.heures_realisees_non_facturees)),
-                ('heures-facturees-non-realisees', GetHeureString(facture.heures_facturees_non_realisees)),
-                ('heures-contractualisees-realisees', GetHeureString(facture.heures_contractualisees_realisees)),
-                ('heures-facturees', GetHeureString(facture.heures_facturees)),
-                ('heures-supplementaires', GetHeureString(facture.heures_supplementaires)),
-                ('heures-previsionnelles', GetHeureString(facture.heures_previsionnelles)),
-                ('supplement', facture.supplement, FIELD_EUROS),
-                ('formule-supplement', facture.formule_supplement),
-                ('deduction', '- %.2f' % facture.deduction),
-                ('formule-deduction', facture.formule_deduction),
-                ('correction', facture.correction),
-                ('libelle-correction', facture.libelle_correction),
-                ('raison-deduction', facture.raison_deduction),
-                ('supplement-activites', facture.supplement_activites, FIELD_EUROS),
-                ('majoration', '%+.02f' % facture.majoration_mensuelle),
-                ('frais-inscription', '%+.02f' % facture.frais_inscription),
-                ('site', GetNom(facture.site)),
-                ('total', facture.total, FIELD_EUROS)]
+        taux_effort = 0.0
+        if facture.taux_effort:
+            taux_effort = facture.taux_effort
+        result = [('mois', '%s %d' % (months[facture.mois - 1], facture.annee)),
+                  ('de-mois', '%s %d' % (GetDeMoisStr(facture.mois - 1), facture.annee)),
+                  ('de-mois-recap', '%s %d' % (GetDeMoisStr(facture.debut_recap.month - 1), facture.debut_recap.year)),
+                  ('date', '%.2d/%.2d/%d' % (facture.date.day, facture.mois, facture.annee)),
+                  ('numfact', '%03d%04d%02d' % (facture.inscrit.idx, facture.annee, facture.mois)),
+                  ('montant-heure-garde', facture.montant_heure_garde, FIELD_EUROS),
+                  ('cotisation-mensuelle', facture.cotisation_mensuelle, FIELD_EUROS),
+                  ('heures-cotisation-mensuelle', GetHeureString(facture.heures_cotisation_mensuelle)),
+                  ('heures-contractualisees', GetHeureString(facture.heures_contractualisees)),
+                  ('heures-realisees', GetHeureString(facture.heures_realisees)),
+                  ('heures-realisees-non-facturees', GetHeureString(facture.heures_realisees_non_facturees)),
+                  ('heures-facturees-non-realisees', GetHeureString(facture.heures_facturees_non_realisees)),
+                  ('heures-contractualisees-realisees', GetHeureString(facture.heures_contractualisees_realisees)),
+                  ('heures-facturees', GetHeureString(facture.heures_facturees)),
+                  ('heures-supplementaires', GetHeureString(facture.heures_supplementaires)),
+                  ('heures-maladie', GetHeureString(facture.heures_maladie)),
+                  ('heures-previsionnelles', GetHeureString(facture.heures_previsionnelles)),
+                  ('taux-effort', '%.2f' % taux_effort),
+                  ('supplement', facture.supplement, FIELD_EUROS),
+                  ('formule-supplement', facture.formule_supplement),
+                  ('deduction', '- %.2f' % facture.deduction),
+                  ('formule-deduction', facture.formule_deduction),
+                  ('correction', facture.correction),
+                  ('libelle-correction', facture.libelle_correction),
+                  ('raison-deduction', facture.raison_deduction),
+                  ('supplement-activites', facture.supplement_activites, FIELD_EUROS),
+                  ('majoration', '%+.02f' % facture.majoration_mensuelle),
+                  ('frais-inscription', '%+.02f' % facture.frais_inscription),
+                  ('site', GetNom(facture.site)),
+                  ('total', facture.total, FIELD_EUROS)]
+        return result
     else:
         return [(label, '?') for label in ('mois', 'de-mois', 'de-mois-recap', 'date', 'numfact', 'montant-heure-garde', 'cotisation-mensuelle', 
                                            'heures-contractualisees', 'heures-realisees', 'heures-contractualisees-realisees', 'heures-supplementaires', 'heures-previsionnelles', 

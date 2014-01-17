@@ -28,6 +28,7 @@ from ooffice import *
 from planning_presences import PlanningModifications
 from coordonnees_parents import CoordonneesModifications
 from etats_trimestriels import EtatsTrimestrielsModifications
+from releves_detailles import RelevesDetaillesModifications
 from planning_detaille import PlanningDetailleModifications
 from etats_presence import EtatsPresenceModifications
 from etats_places import EtatsPlacesModifications
@@ -691,6 +692,17 @@ class RelevesTab(AutoTab):
         box_sizer.AddMany([(self.releves_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
         
+        # Les relevés détaillés
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés annuels détaillés'), wx.HORIZONTAL)
+        self.releves_detailles_choice = wx.Choice(self)
+        button = wx.Button(self, -1, u'Génération')
+        for year in range(first_date.year, today.year + 1):
+            self.releves_detailles_choice.Append(u'Année %d' % year, year)
+        self.releves_detailles_choice.SetSelection(today.year - first_date.year)
+        self.Bind(wx.EVT_BUTTON, self.EvtGenerationRelevesDetailles, button)
+        box_sizer.AddMany([(self.releves_detailles_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+        
         # Les etats des places
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Etats des places'), wx.HORIZONTAL)
         self.places_choice = wx.Choice(self)
@@ -789,6 +801,11 @@ class RelevesTab(AutoTab):
         site = self.GetSelectedSite()
         annee = self.releves_choice.GetClientData(self.releves_choice.GetSelection())
         DocumentDialog(self, EtatsTrimestrielsModifications(site, annee)).ShowModal()
+    
+    def EvtGenerationRelevesDetailles(self, evt):
+        site = self.GetSelectedSite()
+        annee = self.releves_choice.GetClientData(self.releves_choice.GetSelection())
+        DocumentDialog(self, RelevesDetaillesModifications(site, annee)).ShowModal()
         
     def EvtGenerationEtatsPlaces(self, evt):
         site = self.GetSelectedSite()

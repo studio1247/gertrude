@@ -38,13 +38,7 @@ class EtatsTrimestrielsModifications(object):
 
     def execute(self, filename, dom):
         if filename == 'styles.xml':
-            fields = [('nom-creche', creche.nom),
-                      ('adresse-creche', creche.adresse),
-                      ('code-postal-creche', str(creche.code_postal)),
-                      ('ville-creche', creche.ville),
-                      ('capacite', creche.GetCapacite()),
-                     ]
-            ReplaceTextFields(dom, fields)
+            ReplaceTextFields(dom, GetCrecheFields(creche))
             return []
 
         elif filename == 'content.xml':

@@ -43,6 +43,7 @@ class FactureFinMois(object):
         self.total_contractualise = 0.0
         self.total_realise = 0.0
         self.total_realise_non_facture = 0.0
+        self.taux_effort = 0.0
         self.supplement = 0.0
         self.deduction = 0.0
         self.formule_supplement = []
@@ -113,6 +114,7 @@ class FactureFinMois(object):
                         cotisation.heures_supplementaires = 0.0
                         cotisations_mensuelles.append(cotisation)
                         last_cotisation = cotisation
+                        self.taux_effort = cotisation.taux_effort
                         self.montant_heure_garde = cotisation.montant_heure_garde
                         if options & TRACES: print u" cotisation mensuelle à partir de %s" % date, cotisation.cotisation_mensuelle
                     
@@ -290,7 +292,7 @@ class FactureFinMois(object):
                     self.heures_contrat += prorata_heures
                     
         self.heures_facture = self.heures_contrat + self.heures_supplementaires - self.heures_maladie
-        self.heures_facturees = sum(self.heures_facturees_par_mode)
+        self.heures_facturees = sum(self.heures_facturees_par_mode) - self.heures_maladie
         if creche.temps_facturation == FACTURATION_FIN_MOIS:
             self.cotisation_mensuelle += self.report_cotisation_mensuelle
             self.report_cotisation_mensuelle = 0.0

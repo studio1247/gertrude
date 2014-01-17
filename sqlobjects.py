@@ -234,7 +234,7 @@ class Day(object):
                 self.last_heures = 0.0
                 return self.last_heures
             elif value == 0:
-                self.last_heures += 5.0 * self.GetDureeArrondie(start, end)
+                self.last_heures += 5.0 * GetDureeArrondie(eval('creche.'+self.mode_arrondi), start, end)
         if creche.mode_facturation == FACTURATION_FORFAIT_10H:
             self.last_heures = 10.0 * (self.last_heures > 0)
         else:
@@ -284,7 +284,7 @@ class Day(object):
             if value in creche.activites:
                 activite = creche.activites[value]
                 if activite.mode == MODE_PRESENCE_NON_FACTUREE:
-                    result += (5.0 * self.GetDureeArrondie(start, end)) / 60
+                    result += (5.0 * GetDureeArrondie(eval('creche.'+self.mode_arrondi), start, end)) / 60
         return result
 
     
@@ -315,7 +315,7 @@ class JourneeCapacite(Day):
     def __init__(self):
         Day.__init__(self)
         self.insert = None
-        self.GetDureeArrondie = GetDureeArrondieEnfant
+        self.mode_arrondi = 'arrondi_heures'
 
     def insert_activity(self, start, end, value):
         print u'nouvelle tranche horaire de capacité (%r, %r %d)' % (start, end, value), 
@@ -332,7 +332,7 @@ class JourneeReferenceInscription(Day):
         Day.__init__(self)
         self.inscription = inscription
         self.day = day
-        self.GetDureeArrondie = GetDureeArrondieEnfant
+        self.mode_arrondi = 'arrondi_heures'
 
     def insert_activity(self, start, end, value):
         print 'nouvelle activite de reference (%r, %r %d)' % (start, end, value), 
@@ -352,7 +352,7 @@ class JourneeReferenceSalarie(Day):
         Day.__init__(self)
         self.contrat = contrat
         self.day = day
-        self.GetDureeArrondie = GetDureeArrondieSalarie
+        self.mode_arrondi = 'arrondi_heures_salaries'
 
     def insert_activity(self, start, end, value):
         print 'salarie : nouvelle activite de reference (%r, %r %d)' % (start, end, value), 
@@ -373,7 +373,7 @@ class Journee(Day):
         self.inscrit_idx = inscrit.idx
         self.date = date
         self.previsionnel = 0
-        self.GetDureeArrondie = GetDureeArrondieEnfant
+        self.mode_arrondi = 'arrondi_heures'
         if reference:
             self.Copy(reference, creche.presences_previsionnelles)
 
@@ -400,7 +400,7 @@ class JourneeSalarie(Day):
         self.salarie_idx = salarie.idx
         self.date = date
         self.previsionnel = 0
-        self.GetDureeArrondie = GetDureeArrondieSalarie
+        self.mode_arrondi = 'arrondi_heures_salaries'
         if reference:
             self.Copy(reference, creche.presences_previsionnelles)
 
@@ -905,6 +905,7 @@ class Creche(object):
         self.gestion_alertes = False
         self.cloture_factures = False
         self.arrondi_heures = SANS_ARRONDI
+        self.arrondi_facturation = SANS_ARRONDI
         self.arrondi_heures_salaries = SANS_ARRONDI
         self.gestion_maladie_hospitalisation = False
         self.gestion_absences_non_prevenues = False
@@ -1595,18 +1596,18 @@ class Inscrit(object):
                 
                 for start, end, value in journee.activites:
                     if value == 0:
-                        heures_realisees += tranche * GetDureeArrondieEnfant(start, end)
+                        heures_realisees += tranche * GetDureeArrondie(creche.arrondi_heures, start, end)
                         supp = 0.0
                         found = False
                         for s, e, v in reference.activites:
                             if v == 0:
                                 found = True
                                 if end < s or start > e:
-                                    supp += GetDureeArrondieEnfant(start, end)
+                                    supp += GetDureeArrondie(creche.arrondi_heures, start, end)
                                 elif start < s or end > e:
-                                    supp += GetDureeArrondieEnfant(min(s, start), max(e, end)) - GetDureeArrondieEnfant(s, e)
+                                    supp += GetDureeArrondie(creche.arrondi_heures, min(s, start), max(e, end)) - GetDureeArrondie(creche.arrondi_heures, s, e)
                         if not found:
-                            supp = GetDureeArrondieEnfant(start, end)
+                            supp = GetDureeArrondie(creche.arrondi_heures, start, end)
                         heures_supplementaires += tranche * supp
                          
                 return PRESENT, heures_reference, heures_realisees, heures_supplementaires

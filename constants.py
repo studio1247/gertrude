@@ -115,6 +115,7 @@ MOIS_FACTURE_UNIQUEMENT_HEURES_SUPP = 4 # si présence dans cette periode (mois 
 SANS_ARRONDI = 0
 ARRONDI_HEURE = 1
 ARRONDI_HEURE_ARRIVEE_DEPART = 2
+ARRONDI_DEMI_HEURE = 3
 
 # Modes de tri des enfants sur le planning
 TRI_PRENOM = 0
