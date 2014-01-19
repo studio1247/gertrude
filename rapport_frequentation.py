@@ -128,18 +128,17 @@ class RapportFrequentationModifications(object):
                     cells = line.getElementsByTagName("table:table-cell")
                     for j, jour in enumerate(jours):
                         date = datetime.date(debut.year, debut.month, jour)
-                        state, heures_reference, heures_realisees, heures_supplementaires = inscrit.getState(date)
-                        heures_facturees = heures_reference + heures_supplementaires
+                        state = inscrit.getState(date)
                         if inscrit in total_heures_facturees:
-                            total_heures_facturees[inscrit] += heures_facturees
+                            total_heures_facturees[inscrit] += state.heures_facturees
                         else:
-                            total_heures_facturees[inscrit] = heures_facturees
-                        if not heures_facturees:
-                            heures_facturees = ""
-                        if not heures_realisees:
-                            heures_realisees = ""
-                        ReplaceFields(cells[colonne_jour+j], [('heures-realisees', heures_realisees),
-                                                              ('heures-facturees', heures_facturees)])
+                            total_heures_facturees[inscrit] = state.heures_facturees
+                        if not state.heures_facturees:
+                            state.heures_facturees = ""
+                        if not state.heures_realisees:
+                            state.heures_realisees = ""
+                        ReplaceFields(cells[colonne_jour+j], [('heures-realisees', state.heures_realisees),
+                                                              ('heures-facturees', state.heures_facturees)])
                     total_cell = cells[len(jours)+colonne_jour]
                     total_cell.setAttribute("table:formula", "of:=SUM([.%s%d:.%s%d])" % (GetColumnName(colonne_jour), i+2, GetColumnName(colonne_jour-1+len(jours)), i+2))
                     if i == 0:

@@ -112,7 +112,7 @@ class PlanningModifications(object):
                 else:
                     tableau[inscription.professeur] = [inscription]
             def GetState(inscription, delta):
-                state = inscription.inscrit.getState(self.debut + datetime.timedelta(delta))[0]
+                state = inscription.inscrit.getState(self.debut + datetime.timedelta(delta)).state
                 if state <= 0:
                     return 0
                 else:

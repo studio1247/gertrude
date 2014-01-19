@@ -445,8 +445,8 @@ class EtatsPresenceTab(AutoTab):
                     else:
                         date_fin = fin
                     while date <= date_fin:
-                        state, contrat, realise, supplementaire = inscrit.getState(date)
-                        if state > 0 and state & PRESENT:
+                        state = inscrit.getState(date)
+                        if state.state > 0 and state.state & PRESENT:
                             if date not in selection:
                                 selection[date] = []
                             if date in inscrit.journees:
@@ -455,7 +455,7 @@ class EtatsPresenceTab(AutoTab):
                                 journee = inscrit.getJourneeReference(date)
                             arrivee, depart = journee.GetPlageHoraire()
                             # print date, arrivee, depart, journee.activites
-                            selection[date].append((inscription.site, inscription.professeur, inscrit, arrivee, depart, realise, journee.commentaire))
+                            selection[date].append((inscription.site, inscription.professeur, inscrit, arrivee, depart, state.heures_realisees, journee.commentaire))
                         date += datetime.timedelta(1)
         return selection
     

@@ -349,7 +349,7 @@ def GenerateTextDocument(modifications, filename=None, gauge=None):
 
 def getOOoContext():
     import win32com.client
-    objServiceManager = win32com.client.dynamic.Dispatch("com.sun.star.ServiceManager")
+    objServiceManager = win32com.client.Dispatch("com.sun.star.ServiceManager")
     objServiceManager._FlagAsMethod("CreateInstance")
     objServiceManager._FlagAsMethod("Bridge_GetStruct")
     corereflection = objServiceManager.CreateInstance("com.sun.star.reflection.CoreReflection")
@@ -368,11 +368,16 @@ def oo_open(filename):
     if sys.platform == 'win32':
         filename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(filename)).encode("latin-1"))])
         # print filename
-        StarDesktop, objServiceManager, corereflection = getOOoContext()
-        document = StarDesktop.LoadComponentFromURL(filename, "_blank", 0,
-            MakePropertyValues(objServiceManager,
-                        [["ReadOnly", False],
-                        ["Hidden", False]]))
+        try:
+            StarDesktop, objServiceManager, corereflection = getOOoContext()
+            document = StarDesktop.LoadComponentFromURL(filename, "_blank", 0,
+                         MakePropertyValues(objServiceManager,
+                           [["ReadOnly", False],
+                           ["Hidden", False]]))
+        except Exception, e:
+            dlg = wx.MessageDialog(None, u"Impossible d'ouvrir le document\n%r" % e, 'Erreur', wx.OK|wx.ICON_WARNING)
+            dlg.ShowModal()
+            dlg.Destroy()
     else:
         os.system("ooffice %s" % filename.replace(" ", "\ "))
     return 1

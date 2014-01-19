@@ -209,6 +209,7 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         creche.temps_facturation = FACTURATION_FIN_MOIS
         creche.facturation_jours_feries = JOURS_FERIES_DEDUITS_ANNUELLEMENT
         creche.arrondi_heures = ARRONDI_HEURE
+        creche.arrondi_facturation = ARRONDI_HEURE
         for label in ("Week-end", "1er janvier", "14 juillet", "1er novembre", "11 novembre", u"Lundi de Pâques", "Jeudi de l'Ascension", u"Lundi de Pentecôte"):
             self.AddJourFerie(label)
         self.AddConge("30/07/2010", options=ACCUEIL_NON_FACTURE)
@@ -521,7 +522,7 @@ class MonPetitBijouTests(GertrudeTestCase):
         self.assertEquals(facture.total, 1520.0)
         self.AddJourneePresence(inscrit, datetime.date(2011, 3, 7), 90, 189) # 8h15 
         self.AddJourneePresence(inscrit, datetime.date(2011, 3, 8), 90, 189) # 8h15 
-        facture = Facture(inscrit, 2011, 3)
+        facture = Facture(inscrit, 2011, 3, options=TRACES)
         self.assertEquals(facture.total, 1520.0 - 2*1.75*9.5)
         
     def test_periode_adaptation(self):

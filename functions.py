@@ -363,7 +363,7 @@ def GetLines(site, date, inscrits, presence=False):
         if inscription and (site is None or inscription.site == site):
             # print inscrit.prenom, 
             if presence:
-                state = inscrit.getState(date)[0]
+                state = inscrit.getState(date).state
                 if state < 0 or not state & PRESENT:
                     continue 
             if date in inscrit.journees:
@@ -394,7 +394,45 @@ def getActivityColor(value):
             return creche.activites[activity].couleur
     else:
         return 0, 0, 0, 0, 100
-        
+
+def GetUnionHeures(journee, reference):
+    result = []
+    for start, end, value in journee.activites:
+        if value == 0:
+            result.append((start, end))
+    for start, end, value in reference.activites:
+        if value == 0:
+            result.append((start, end))
+    
+    again = True
+    while again:
+        again = False
+        union = result[:]
+        result = []
+        for start, end in union:
+            found = False
+            for i, (s, e) in enumerate(result):
+                if end < s or start > e:
+                    pass
+                elif start >= s and end <= e:
+                    found = True
+                elif start <= s or end >= e:
+                    result[i] = (min(s, start), max(e, end))
+                    found = True
+            if not found:
+                result.append((start, end))
+            else:
+                again = True
+
+    return result
+
+class State(object):
+    def __init__(self, state, heures_contractualisees=.0, heures_realisees=.0, heures_facturees=.0):
+        self.state = state
+        self.heures_contractualisees = heures_contractualisees
+        self.heures_realisees = heures_realisees 
+        self.heures_facturees = heures_facturees 
+                
 class Summary(list):
     def __init__(self, label):
         self.options = 0

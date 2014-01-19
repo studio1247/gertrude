@@ -225,7 +225,7 @@ class Day(object):
                 return PRESENT|PREVISIONNEL
         return state
         
-    def GetNombreHeures(self):
+    def GetNombreHeures(self, facturation=False):
 #        if self.last_heures is not None:
 #            return self.last_heures
         self.last_heures = 0.0
@@ -234,7 +234,11 @@ class Day(object):
                 self.last_heures = 0.0
                 return self.last_heures
             elif value == 0:
-                self.last_heures += 5.0 * GetDureeArrondie(eval('creche.'+self.mode_arrondi), start, end)
+                if facturation:
+                    mode_arrondi = creche.arrondi_facturation
+                else:
+                    mode_arrondi = eval('creche.'+self.mode_arrondi)
+                self.last_heures += 5.0 * GetDureeArrondie(mode_arrondi, start, end)
         if creche.mode_facturation == FACTURATION_FORFAIT_10H:
             self.last_heures = 10.0 * (self.last_heures > 0)
         else:
@@ -1117,7 +1121,7 @@ class Creche(object):
         
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'debut_pause', 'fin_pause', 'affichage_min', 'affichage_max', 'granularite', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'periode_revenus', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'cloture_factures', 'arrondi_heures', 'arrondi_heures_salaries', 'gestion_maladie_hospitalisation', 'gestion_absences_non_prevenues', 'gestion_depart_anticipe', 'tri_planning', 'smtp_server', 'caf_email', 'mode_accueil_defaut'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'debut_pause', 'fin_pause', 'affichage_min', 'affichage_max', 'granularite', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'periode_revenus', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'cloture_factures', 'arrondi_heures', 'arrondi_facturation', 'arrondi_heures_salaries', 'gestion_maladie_hospitalisation', 'gestion_absences_non_prevenues', 'gestion_depart_anticipe', 'tri_planning', 'smtp_server', 'caf_email', 'mode_accueil_defaut'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
@@ -1449,7 +1453,8 @@ class Inscrit(object):
         print 'suppression inscrit'
         sql_connection.execute('DELETE FROM INSCRITS WHERE idx=?', (self.idx,))
         for obj in self.parents.values() + self.freres_soeurs + self.referents + self.inscriptions + self.journees.values():
-            obj.delete()
+            if obj is not None:
+                obj.delete()
 
     def __setattr__(self, name, value):
         if name in self.__dict__:
@@ -1566,59 +1571,52 @@ class Inscrit(object):
 
     def getState(self, date):
         """Retourne les infos sur une journée
-
         \param date la journée
-        \return (état, heures contractualisées, heures realisées, heures supplémentaires)
         """
         if self.isDateConge(date):
-            return ABSENT, 0, 0, 0
+            return State(ABSENT)
+        
         inscription = self.GetInscription(date)
         if inscription is None:
-            return ABSENT, 0, 0, 0
+            return State(ABSENT)
         
         reference = self.getJourneeReference(date)
         heures_reference = reference.GetNombreHeures()
-        ref_state = reference.get_state()
+        ref_state = reference.get_state()  # TODO on peut s'en passer ?
+        
         if date in self.journees:
             journee = self.journees[date]
-            state = journee.get_state()
+            state = journee.get_state() # TODO on peut s'en passer ?
             if state in (MALADE, HOPITAL, ABSENCE_NON_PREVENUE):
-                return state, heures_reference, 0, 0
+                return State(state, heures_reference, 0, heures_reference)
             elif state in (ABSENT, VACANCES):
                 if inscription.mode == MODE_5_5 or ref_state:
-                    return VACANCES, heures_reference, 0, 0
+                    return State(VACANCES, heures_reference, 0, heures_reference)
                 else:
-                    return ABSENT, heures_reference, 0, 0
+                    return State(ABSENT, heures_reference, 0, heures_reference)
             else: # PRESENT
                 heures_supplementaires = 0.0
                 tranche = 5.0 / 60
                 heures_realisees = 0.0
-                
+                heures_facturees = 0.0
+
                 for start, end, value in journee.activites:
                     if value == 0:
-                        heures_realisees += tranche * GetDureeArrondie(creche.arrondi_heures, start, end)
-                        supp = 0.0
-                        found = False
-                        for s, e, v in reference.activites:
-                            if v == 0:
-                                found = True
-                                if end < s or start > e:
-                                    supp += GetDureeArrondie(creche.arrondi_heures, start, end)
-                                elif start < s or end > e:
-                                    supp += GetDureeArrondie(creche.arrondi_heures, min(s, start), max(e, end)) - GetDureeArrondie(creche.arrondi_heures, s, e)
-                        if not found:
-                            supp = GetDureeArrondie(creche.arrondi_heures, start, end)
-                        heures_supplementaires += tranche * supp
+                        heures_realisees += tranche * GetDureeArrondie(creche.arrondi_heures, start, end)                
+                
+                union = GetUnionHeures(journee, reference)
+                for start, end in union:
+                    heures_facturees += tranche * GetDureeArrondie(creche.arrondi_facturation, start, end)
                          
-                return PRESENT, heures_reference, heures_realisees, heures_supplementaires
+                return State(PRESENT, heures_reference, heures_realisees, heures_facturees)
         else:
             if ref_state:
                 if creche.presences_previsionnelles:
-                    return PRESENT|PREVISIONNEL, heures_reference, heures_reference, 0
+                    return State(PRESENT|PREVISIONNEL, heures_reference, heures_reference, heures_reference)
                 else:
-                    return PRESENT, heures_reference, heures_reference, 0
+                    return State(PRESENT, heures_reference, heures_reference, heures_reference)
             else:
-                return ABSENT, 0, 0, 0
+                return State(ABSENT)
             
     def GetExtraActivites(self, date):
         if date in creche.jours_fermeture:
