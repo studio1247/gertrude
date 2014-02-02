@@ -633,7 +633,7 @@ class StatistiquesFrequentationTab(AutoTab):
             self.coefficient_remplissage.SetValue("-")
         else:
             self.message.Show(False)
-            if creche.nom == "Dessine moi un mouton":
+            if creche.nom == "Dessine moi un mouton" or (config.options & HEURES_CONTRAT):
                 presences_contrat_heures = heures_contrat
                 presences_facturees_heures = heures_facture
             else:

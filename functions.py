@@ -534,6 +534,7 @@ def GetFactureFields(facture):
                   ('cotisation-mensuelle', facture.cotisation_mensuelle, FIELD_EUROS),
                   ('heures-cotisation-mensuelle', GetHeureString(facture.heures_cotisation_mensuelle)),
                   ('heures-contractualisees', GetHeureString(facture.heures_contractualisees)),
+                  ('heures-contrat', GetHeureString(facture.heures_contrat)),
                   ('heures-realisees', GetHeureString(facture.heures_realisees)),
                   ('heures-realisees-non-facturees', GetHeureString(facture.heures_realisees_non_facturees)),
                   ('heures-facturees-non-realisees', GetHeureString(facture.heures_facturees_non_realisees)),
