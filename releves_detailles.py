@@ -44,17 +44,16 @@ class RelevesDetaillesModifications(object):
             after = lines[13]
             for line in template:
                 feuille.removeChild(line)
-            for inscription in GetInscriptions(datetime.date(self.annee, 1, 1), datetime.date(self.annee, 12, 31)):
-                if not self.site or inscription.site == self.site:
-                    for i, line in enumerate(template):
-                        try:
-                            facture = Facture(inscription.inscrit, self.annee, i+1)
-                        except CotisationException, e:
-                            facture = None
-                            self.errors[GetPrenomNom(inscription.inscrit)] = e.errors                            
-                        clone = line.cloneNode(1)
-                        ReplaceTextFields(clone, GetInscritFields(inscription.inscrit))
-                        if facture:
-                            ReplaceTextFields(clone, GetFactureFields(facture))
-                        feuille.insertBefore(clone, after)
+            for inscrit in GetInscrits(datetime.date(self.annee, 1, 1), datetime.date(self.annee, 12, 31)):
+                for i, line in enumerate(template):
+                    try:
+                        facture = Facture(inscrit, self.annee, i+1)
+                    except CotisationException, e:
+                        facture = None
+                        self.errors[GetPrenomNom(inscrit)] = e.errors                            
+                    clone = line.cloneNode(1)
+                    ReplaceTextFields(clone, GetInscritFields(inscrit))
+                    if facture:
+                        ReplaceTextFields(clone, GetFactureFields(facture))
+                    feuille.insertBefore(clone, after)
             return self.errors
