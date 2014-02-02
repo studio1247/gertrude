@@ -330,10 +330,14 @@ class FactureFinMois(object):
                 else:
                     self.majoration_mensuelle += tarif.valeur
                 
-        self.frais_inscription = 0.0    
+        self.frais_inscription = 0.0
+        self.frais_inscription_reservataire = 0.0    
         for inscription in self.inscrit.inscriptions:
             if inscription.frais_inscription and inscription.debut and inscription.debut >= self.debut_recap and inscription.debut <= self.fin_recap:
-                self.frais_inscription += inscription.frais_inscription 
+                if inscription.reservataire:
+                    self.frais_inscription_reservataire += inscription.frais_inscription
+                else:
+                    self.frais_inscription += inscription.frais_inscription 
         
         self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction + self.correction
         self.total_facture = self.total + self.report_cotisation_mensuelle

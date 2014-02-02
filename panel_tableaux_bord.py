@@ -804,7 +804,7 @@ class RelevesTab(AutoTab):
     
     def EvtGenerationRelevesDetailles(self, evt):
         site = self.GetSelectedSite()
-        annee = self.releves_choice.GetClientData(self.releves_choice.GetSelection())
+        annee = self.releves_detailles_choice.GetClientData(self.releves_detailles_choice.GetSelection())
         DocumentDialog(self, RelevesDetaillesModifications(site, annee)).ShowModal()
         
     def EvtGenerationEtatsPlaces(self, evt):

@@ -73,8 +73,8 @@ class ExportComptaModifications(object):
                       'mois': months[date.month-1].lower(),
                       }
             
-            for i in range(3):
-                if i== 0:
+            for i in range(5):
+                if i==0:
                     fields['numero-compte'] = "411%s" % inscrit.nom.upper()[:5]
                     fields['debit'] = facture.total
                     fields['credit'] = 0
@@ -88,13 +88,29 @@ class ExportComptaModifications(object):
                     fields['activite'] = 'garde'
                     fields['plan-analytique'] = "SITES" 
                     fields['poste-analytique'] = site
-                else:
+                elif i==2:
                     fields['numero-compte'] = 70710000
                     fields['debit'] = 0
                     fields['credit'] = facture.supplement_activites
                     fields['activite'] = 'activites'
                     fields['plan-analytique'] = "SITES"
                     fields['poste-analytique'] = site
+                elif i==3 and facture.frais_inscription_reservataire:
+                    fields['numero-compte'] = "411RESERVATAIRE"
+                    fields['debit'] = facture.frais_inscription_reservataire
+                    fields['credit'] = 0
+                    fields['activite'] = ""
+                    fields['plan-analytique'] = ""
+                    fields['poste-analytique'] = ""
+                elif i==4 and facture.frais_inscription_reservataire:
+                    fields['numero-compte'] = 70820000
+                    fields['debit'] = 0
+                    fields['credit'] = facture.frais_inscription_reservataire
+                    fields['activite'] = "frais_inscription"
+                    fields['plan-analytique'] = "SITES"
+                    fields['poste-analytique'] = site
+                else:
+                    break
             
                 line = template
                 for field in fields:
