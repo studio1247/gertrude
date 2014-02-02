@@ -100,10 +100,10 @@ def GetDateString(date, weekday=True):
 def GetDureeArrondie(mode, start, end):
     if mode == ARRONDI_HEURE_ARRIVEE_DEPART:
         return (((end + 11) / 12) - (start / 12)) * 12  
- #   elif mode == ARRONDI_HEURE_SUPERIEURE:
-  #      return ((end-start+11) / 12) * 12
     elif mode == ARRONDI_HEURE:
         return ((end-start+11) / 12) * 12
+    elif mode == ARRONDI_HEURE_MARGE_DEMI_HEURE:
+        return ((end-start+5) / 12) * 12
     elif mode == ARRONDI_DEMI_HEURE:
         return ((end-start+5) / 6) * 6
     else:
