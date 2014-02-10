@@ -431,7 +431,10 @@ class State(object):
         self.state = state
         self.heures_contractualisees = heures_contractualisees
         self.heures_realisees = heures_realisees 
-        self.heures_facturees = heures_facturees 
+        self.heures_facturees = heures_facturees
+        
+    def __str__(self):
+        return "state:%d, contrat:%f, realise:%f, facture:%f" % (self.state, self.heures_contractualisees, self.heures_realisees, self.heures_facturees) 
                 
 class Summary(list):
     def __init__(self, label):

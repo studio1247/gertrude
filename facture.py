@@ -91,6 +91,7 @@ class FactureFinMois(object):
                 if inscription:
                     self.site = inscription.site
                     inscritState = inscrit.getState(date)
+                    # print date, str(inscritState)
                     state, heures_reference, heures_realisees, heures_facturees = inscritState.state, inscritState.heures_contractualisees, inscritState.heures_realisees, inscritState.heures_facturees
                     heures_facturees_non_realisees = 0.0
                     heures_realisees_non_facturees = inscrit.GetTotalActivitesPresenceNonFacturee(date)
