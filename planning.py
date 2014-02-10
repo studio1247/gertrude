@@ -62,6 +62,9 @@ class LigneConge(object):
         self.info = info
         self.readonly = True
         self.options = 0
+    
+    def GetNombreHeures(self):
+        return 0.0
 
 class PlanningGridWindow(BufferedWindow):
     def __init__(self, parent, activity_combobox, options):
