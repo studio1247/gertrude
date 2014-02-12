@@ -18,7 +18,7 @@
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import __builtin__
-import os, sys, imp, time, shutil, glob, thread, urllib2
+import os, sys, imp, time, locale, shutil, glob, thread, urllib2
 import wx, wx.lib.wordwrap
 from wx.lib import masked
 from startdialog import StartDialog
@@ -33,7 +33,7 @@ except:
 # Don't remove these 2 lines (mandatory for py2exe)
 import controls, zipfile, xml.dom.minidom, wx.html, ooffice
 
-VERSION = '0.93h'
+VERSION = '0.93i'
 
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):
@@ -431,6 +431,10 @@ class MyApp(wx.App):
         return True
 
 if __name__ == '__main__':
+#     if sys.platform == 'win32':
+#         locale.setlocale(locale.LC_ALL, 'fra_fra')
+#     else:
+#         locale.setlocale(locale.LC_ALL, 'fr_FR')
     app = MyApp(False)
     app.MainLoop()
 

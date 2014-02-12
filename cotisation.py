@@ -329,18 +329,26 @@ class Cotisation(object):
         self.majoration_mensuelle = 0.0
         for tarif in creche.tarifs_speciaux:
             if self.inscrit.tarifs & (1<<tarif.idx):
-                if tarif.pourcentage:
+                if tarif.unite == TARIF_SPECIAL_UNITE_EUROS:
+                    cotisation_diff = tarif.valeur
+                    heure_garde_diff = 0.0
+                elif tarif.unite == TARIF_SPECIAL_UNITE_POURCENTAGE:
                     cotisation_diff = (self.cotisation_mensuelle * tarif.valeur) / 100
                     heure_garde_diff = (self.montant_heure_garde * tarif.valeur) / 100
                 else:
-                    cotisation_diff = tarif.valeur
-                    heure_garde_diff = 0.0
-                if tarif.reduction:
+                    cotisation_diff = tarif.valeur * self.heures_mois 
+                    heure_garde_diff = tarif.valeur
+                
+                if tarif.type == TARIF_SPECIAL_REDUCTION:
                     self.majoration_mensuelle -= cotisation_diff
                     self.montant_heure_garde -= heure_garde_diff
-                else:
+                elif tarif.type == TARIF_SPECIAL_MAJORATION:
                     self.majoration_mensuelle += cotisation_diff
                     self.montant_heure_garde += heure_garde_diff
+                else:
+                    self.cotisation_mensuelle = cotisation_diff
+                    self.montant_heure_garde = heure_garde_diff
+                    
         self.cotisation_mensuelle += self.majoration_mensuelle
         if options & TRACES: print " cotisation mensuelle :", self.cotisation_mensuelle
     

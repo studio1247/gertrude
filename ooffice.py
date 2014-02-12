@@ -15,8 +15,8 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import datetime, time
-import sys, os, zipfile
+import datetime, time, locale
+import sys, os, types, zipfile
 import xml.dom.minidom
 import re, urllib
 import smtplib, poplib
@@ -28,6 +28,8 @@ import wx, wx.lib.filebrowsebutton
 import traceback
 import unicodedata
 from functions import *
+
+NumberTypes = (types.IntType, types.LongType, types.FloatType, types.ComplexType)
 
 def GetText(value):
     if isinstance(value, basestring):
@@ -140,11 +142,14 @@ def RemoveColumn(rows, index):
                 else:
                     cell.setAttribute("table:number-columns-repeated", str(repeat-1))
                 break    
-     
+            
 def ReplaceTextFields(dom, fields):
     for i, field in enumerate(fields):
-        if len(field) == 3 and field[2] == FIELD_EUROS:
-            fields[i] = (field[0], "%.2f" % field[1])
+        if len(field) == 3 and (field[2] & FIELD_EUROS):
+            if field[2] & FIELD_SIGN:
+                fields[i] = (field[0], locale.format("%+.2f", field[1]))
+            else:
+                fields[i] = (field[0], locale.format("%.2f", field[1]))
 
     evalFields(fields)
     #print dom.toprettyxml()

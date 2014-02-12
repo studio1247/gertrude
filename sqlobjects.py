@@ -1228,15 +1228,15 @@ class TarifSpecial(SQLObject):
     def __init__(self, creation=True):
         self.idx = None
         self.label = ""
-        self.reduction = False
-        self.pourcentage = False
+        self.type = TARIF_SPECIAL_MAJORATION
+        self.unite = TARIF_SPECIAL_UNITE_EUROS
         self.valeur = 0.0
         if creation:
             self.create()
         
     def create(self):
         print 'nouveau tarif special'
-        result = sql_connection.execute('INSERT INTO TARIFSSPECIAUX (idx, label, reduction, pourcentage, valeur) VALUES(NULL,?,?,?,?)', (self.label, self.reduction, self.pourcentage, self.valeur))
+        result = sql_connection.execute('INSERT INTO TARIFSSPECIAUX (idx, label, type, unite, valeur) VALUES(NULL,?,?,?,?)', (self.label, self.type, self.unite, self.valeur))
         self.idx = result.lastrowid
         
     def delete(self):
@@ -1244,7 +1244,7 @@ class TarifSpecial(SQLObject):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['label', 'reduction', 'pourcentage', 'valeur'] and self.idx:
+        if name in ['label', 'type', 'unite', 'valeur'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE TARIFSSPECIAUX SET %s=? WHERE idx=?' % name, (value, self.idx))
     

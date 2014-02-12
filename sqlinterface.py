@@ -25,7 +25,7 @@ from sqlobjects import *
 from facture import FactureCloturee
 import wx
 
-VERSION = 71
+VERSION = 72
 
 def getdate(s):
     if s is None:
@@ -441,8 +441,8 @@ class SQLConnection(object):
           CREATE TABLE TARIFSSPECIAUX (
             idx INTEGER PRIMARY KEY,
             label VARCHAR,
-            reduction BOOLEAN,
-            pourcentage BOOLEAN,
+            type INTEGER,
+            unite INTEGER,
             valeur FLOAT
           );""")
             
@@ -529,10 +529,10 @@ class SQLConnection(object):
             reservataire.debut, reservataire.fin, reservataire.idx = debut, fin, idx
             creche.reservataires.append(reservataire)
 
-        cur.execute('SELECT label, reduction, pourcentage, valeur, idx FROM TARIFSSPECIAUX')
+        cur.execute('SELECT label, type, unite, valeur, idx FROM TARIFSSPECIAUX')
         for tarifs_entry in cur.fetchall():
             tarif = TarifSpecial(creation=False)
-            tarif.label, tarif.reduction, tarif.pourcentage, tarif.valeur, tarif.idx = tarifs_entry
+            tarif.label, tarif.type, tarif.unite, tarif.valeur, tarif.idx = tarifs_entry
             creche.tarifs_speciaux.append(tarif)
             
         cur.execute('SELECT debut, fin, label, options, idx FROM CONGES')
@@ -1433,6 +1433,14 @@ class SQLConnection(object):
             cur.execute("ALTER TABLE CRECHE ADD arrondi_facturation INTEGER")
             cur.execute('UPDATE CRECHE SET arrondi_facturation=?', (arrondi_heures,))
 
+        if version < 72:
+            cur.execute("ALTER TABLE TARIFSSPECIAUX ADD type INTEGER")
+            cur.execute("ALTER TABLE TARIFSSPECIAUX ADD unite INTEGER")
+            cur.execute('UPDATE TARIFSSPECIAUX SET type=?', (0,))
+            cur.execute('UPDATE TARIFSSPECIAUX SET unite=?', (0,))
+            cur.execute('UPDATE TARIFSSPECIAUX SET type=? WHERE reduction=?', (1, True))
+            cur.execute('UPDATE TARIFSSPECIAUX SET unite=? WHERE pourcentage=?', (1, True))
+            
         if version < VERSION:
             try:
                 cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))

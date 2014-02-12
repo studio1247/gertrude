@@ -549,14 +549,14 @@ def GetFactureFields(facture):
                   ('taux-effort', '%.2f' % taux_effort),
                   ('supplement', facture.supplement, FIELD_EUROS),
                   ('formule-supplement', facture.formule_supplement),
-                  ('deduction', '- %.2f' % facture.deduction),
+                  ('deduction', -facture.deduction, FIELD_EUROS|FIELD_SIGN),
                   ('formule-deduction', facture.formule_deduction),
-                  ('correction', facture.correction),
+                  ('correction', facture.correction, FIELD_EUROS),
                   ('libelle-correction', facture.libelle_correction),
                   ('raison-deduction', facture.raison_deduction),
                   ('supplement-activites', facture.supplement_activites, FIELD_EUROS),
-                  ('majoration', '%+.02f' % facture.majoration_mensuelle),
-                  ('frais-inscription', '%+.02f' % facture.frais_inscription),
+                  ('majoration', facture.majoration_mensuelle, FIELD_EUROS|FIELD_SIGN),
+                  ('frais-inscription', facture.frais_inscription, FIELD_EUROS|FIELD_SIGN),
                   ('site', GetNom(facture.site)),
                   ('total', facture.total, FIELD_EUROS)]
         return result
