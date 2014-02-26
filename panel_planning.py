@@ -158,7 +158,8 @@ class DayPlanningPanel(PlanningWidget):
         for line in self.lines:
             if line is None:
                 break
-            heures += line.GetNombreHeures()
+            elif not isinstance(line, basestring):
+                heures += line.GetNombreHeures()
         
         if heures > 0:
             text = GetHeureString(heures)
