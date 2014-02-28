@@ -650,9 +650,9 @@ class StatistiquesFrequentationTab(AutoTab):
             if heures_accueil:
                 coeff_remplissage = (100.0 * heures_facturees) / heures_accueil
             self.coefficient_remplissage.SetValue(u"%.1f %%" % coeff_remplissage)
-            
-        self.Layout()       
+
         self.sizer.FitInside(self)
+        self.Layout()
 
 class RelevesTab(AutoTab):
     def __init__(self, parent):
