@@ -259,7 +259,7 @@ def ReplaceFields(cellules, fields):
     return result
 
 def IncrementFormulas(cellules, row=0, column=0):
-    formula_gure = re.compile("\[\.([A-Z]+)([0-9]+)\]")
+    formula_gure = re.compile("\.([A-Z]+)([0-9]+)")
     if cellules.__class__ == xml.dom.minidom.Element:
         cellules = cellules.getElementsByTagName("table:table-cell")
     for cellule in cellules:
@@ -269,8 +269,8 @@ def IncrementFormulas(cellules, row=0, column=0):
             while mo is not None:
                 mo = formula_gure.search(formula)
                 if mo:
-                    formula = formula.replace(mo.group(0), "[_.%s%d_]" % (GetColumnName(GetColumnIndex(mo.group(1))+column), int(mo.group(2))+row))
-            formula = formula.replace('[_', '[').replace('_]', ']')
+                    formula = formula.replace(mo.group(0), ".___%s%d" % (GetColumnName(GetColumnIndex(mo.group(1))+column), int(mo.group(2))+row))
+            formula = formula.replace('.___', '.')
             cellule.setAttribute("table:formula", formula)
             
 def getNamedShapes(dom):

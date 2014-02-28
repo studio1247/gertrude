@@ -48,25 +48,28 @@ class ReleveSalariesModifications(object):
                 ]
         day = self.periode
         weekday = day.weekday()
-        if weekday >= 1 or weekday <= 4:
+        if weekday >= 5:
+            day += datetime.timedelta(7 - weekday)
+        elif weekday >= 1 or weekday <= 4:
             day -= datetime.timedelta(weekday)
-        semaine = 0
-        while day.year <= self.periode.year and day.month <= self.periode.month:
-            semaine += 1
+        semaines = 0
+        while day.year < self.periode.year or (day.year == self.periode.year and day.month <= self.periode.month):
+            semaines += 1
             for i in range(7):
-                contrat = salarie.GetContrat(day)
-                if contrat is not None:
-                    if day in salarie.journees:
-                        heures = salarie.journees[day].GetNombreHeures()
+                if day.month == self.periode.month:
+                    contrat = salarie.GetContrat(day)
+                    if contrat is not None:
+                        if day in salarie.journees:
+                            heures = salarie.journees[day].GetNombreHeures()
+                        else:
+                            heures = contrat.getJourneeReference(day).GetNombreHeures()
                     else:
-                        heures = contrat.getJourneeReference(day).GetNombreHeures()
+                        heures = 0
                 else:
-                    heures = 0
-                if heures == 0:
                     heures = ""
-                fields.append(("%s-%d" % (days[i].lower(), semaine), heures))                    
+                fields.append(("%s-%d" % (days[i].lower(), semaines), heures))                    
                 day += datetime.timedelta(1)
-        return fields
+        return semaines, fields
 
     def execute(self, filename, dom):
         if filename != 'content.xml':
@@ -84,13 +87,13 @@ class ReleveSalariesModifications(object):
 
         inc = 0
         for salarie in self.salaries:
+            semaines, fields = self.GetFields(salarie)
             lignes = []
             for l, line in enumerate(template):
-                clone = line.cloneNode(1)
-                lignes.append(clone)
-                IncrementFormulas(clone, row=+inc)
-                table.insertBefore(clone, last_line)
-                        
-            fields = self.GetFields(salarie)
+                if l == LINES-1 or l < LINES-1-(5-semaines)*2:
+                    clone = line.cloneNode(1)
+                    lignes.append(clone)
+                    IncrementFormulas(clone, row=+inc)
+                    table.insertBefore(clone, last_line)
             ReplaceFields(lignes, fields)
-            inc += LINES
+            inc += LINES - (5-semaines) * 2
