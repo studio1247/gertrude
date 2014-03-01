@@ -258,7 +258,17 @@ def ReplaceFields(cellules, fields):
                         
     return result
 
-def IncrementFormulas(cellules, row=0, column=0):
+def ReplaceFormulas(cellules, old, new):
+    if cellules.__class__ == xml.dom.minidom.Element:
+        cellules = cellules.getElementsByTagName("table:table-cell")
+    for cellule in cellules:
+        if cellule.hasAttribute("table:formula"):
+            formula = cellule.getAttribute("table:formula")
+            print formula
+            formula = formula.replace(old, new)
+            cellule.setAttribute("table:formula", formula)
+    
+def IncrementFormulas(cellules, row=0, column=0, delta=0):
     formula_gure = re.compile("\.([A-Z]+)([0-9]+)")
     if cellules.__class__ == xml.dom.minidom.Element:
         cellules = cellules.getElementsByTagName("table:table-cell")

@@ -93,7 +93,10 @@ class ReleveSalariesModifications(object):
                 if l == LINES-1 or l < LINES-1-(5-semaines)*2:
                     clone = line.cloneNode(1)
                     lignes.append(clone)
-                    IncrementFormulas(clone, row=+inc)
+                    if l == LINES-1:
+                        ReplaceFormulas(clone, "SUM([.G8:.G16])", "SUM([.G%d:.G%d])" % (8+inc, 8+inc+2*(semaines-1)))
+                    else:
+                        IncrementFormulas(clone, row=+inc)
                     table.insertBefore(clone, last_line)
             ReplaceFields(lignes, fields)
             inc += LINES - (5-semaines) * 2
