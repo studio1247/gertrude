@@ -3,7 +3,10 @@
 $token_filename = "./.token";
 $db_filename = "./gertrude.db";
 
-$token = $_GET["token"];
+if (isset($_GET["token"]))
+  $token = $_GET["token"];
+else
+  $token = NULL;
 
 // pour free.fr
 function wa_flock($f, $mode) {
@@ -123,6 +126,7 @@ function execute($action) {
   }
 }
 
-echo execute($_GET["action"]);
+if (isset($_GET["action"]))
+  echo execute($_GET["action"]);
 
 ?>
