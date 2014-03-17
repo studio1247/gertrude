@@ -195,6 +195,55 @@ class InscriptionsTab(AutoTab):
         for ctrl in self.ctrls:
             ctrl.SetInstance(inscrit)
 
+def getPictoBitmap(index, size=64):
+    if isinstance(index, int):
+        index = chr(ord('a')+index)
+    bitmap = wx.Bitmap(GetBitmapFile("pictos/%c.png" % index), wx.BITMAP_TYPE_PNG)
+    image = wx.ImageFromBitmap(bitmap)
+    image = image.Scale(size, size, wx.IMAGE_QUALITY_HIGH)
+    return wx.BitmapFromImage(image)
+    
+class CombinaisonDialog(wx.Dialog):
+    def __init__(self, parent):
+        wx.Dialog.__init__(self, parent, -1, "Nouvelle combinaison", wx.DefaultPosition, wx.DefaultSize)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        gridSizer = wx.FlexGridSizer(5, 4, 5, 5)
+        self.combinaison= []
+        for i in range(20):
+            picto = wx.BitmapButton(self, -1, getPictoBitmap(i), style=wx.BU_EXACTFIT)
+            picto.picto = chr(ord('a')+i)
+            self.Bind(wx.EVT_BUTTON, self.onPressPicto, picto)
+            gridSizer.Add(picto)            
+        self.sizer.Add(gridSizer, 0, wx.EXPAND|wx.ALL, 5)
+
+        self.combinaisonPanel = wx.Panel(self, style=wx.SUNKEN_BORDER)
+        self.combinaisonPanel.SetMinSize((-1, 30))
+        self.combinaisonSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.combinaisonPanel.SetSizer(self.combinaisonSizer)
+        self.sizer.Add(self.combinaisonPanel, 0, wx.EXPAND)
+        
+        btnsizer = wx.StdDialogButtonSizer()
+        btn = wx.Button(self, wx.ID_OK)
+        btnsizer.AddButton(btn)
+        btn = wx.Button(self, wx.ID_CANCEL)
+        btnsizer.AddButton(btn)
+        btnsizer.Realize()       
+        self.sizer.Add(btnsizer, 0, wx.ALL, 5)
+        self.SetSizer(self.sizer)
+        self.sizer.Fit(self)
+    
+    def onPressPicto(self, event):
+        sender = event.GetEventObject()
+        picto = sender.picto
+        self.combinaison.append(picto)       
+        bmp = getPictoBitmap(picto, size=32)
+        button = wx.BitmapButton(self.combinaisonPanel, -1, bmp, style=wx.BU_EXACTFIT)
+        self.combinaisonSizer.Add(button, 0, wx.LEFT, 5)
+        self.combinaisonSizer.Layout()
+    
+    def getCombinaison(self):
+        return "".join(self.combinaison)
+
 class IdentitePanel(InscriptionsTab):
     def __init__(self, parent):
         InscriptionsTab.__init__(self, parent)
@@ -228,8 +277,12 @@ class IdentitePanel(InscriptionsTab):
         sizer2.AddMany([(wx.StaticText(self, -1, u'Numéro de sécurité sociale :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'numero_securite_sociale'), 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, u"Numéro d'allocataire CAF :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'numero_allocataire_caf'), 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, u"Enfant handicapé :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoCheckBox(self, None, 'handicap'), 0, wx.EXPAND)])
-        self.tarifs_sizer = wx.BoxSizer(wx.VERTICAL)
 ##        sizer2.AddMany([(wx.StaticText(self, -1, 'Date de marche :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'marche'), 0, wx.EXPAND)])
+        self.sizer.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
+        
+        self.tarifs_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer.Add(self.tarifs_sizer, 0, wx.EXPAND|wx.ALL, 5)
+        
         sizer3 = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Frères et soeurs'), wx.VERTICAL)
         self.fratries_sizer = wx.BoxSizer(wx.VERTICAL)
         sizer3.Add(self.fratries_sizer, 0, wx.EXPAND+wx.RIGHT+wx.LEFT+wx.TOP, 10)
@@ -237,14 +290,41 @@ class IdentitePanel(InscriptionsTab):
         self.nouveau_frere.Disable()
         sizer3.Add(self.nouveau_frere, 0, wx.RIGHT+wx.LEFT+wx.BOTTOM, 10)
         self.Bind(wx.EVT_BUTTON, self.EvtNouveauFrere, self.nouveau_frere)
-        
-        self.sizer.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
-        self.sizer.Add(self.tarifs_sizer, 0, wx.EXPAND|wx.ALL, 5)
         self.sizer.Add(sizer3, 0, wx.EXPAND|wx.ALL, 5)
+
+        if config.options & TABLETTE: 
+            tabletteSizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Tablette'), wx.VERTICAL)
+            internalSizer = wx.BoxSizer(wx.HORIZONTAL)
+            self.combinaisonSizer = wx.BoxSizer(wx.HORIZONTAL)
+            internalSizer.Add(self.combinaisonSizer)
+            settingsbmp = wx.Bitmap(GetBitmapFile("settings.png"), wx.BITMAP_TYPE_PNG)
+            button = wx.BitmapButton(self, -1, settingsbmp)
+            self.Bind(wx.EVT_BUTTON, self.onModifyCombinaison, button)           
+            internalSizer.Add(button, 0, wx.LEFT, 10)
+            tabletteSizer.Add(internalSizer, 0, wx.TOP|wx.BOTTOM, 10)
+            self.sizer.Add(tabletteSizer, 0, wx.EXPAND|wx.ALL, 5)
 
         self.SetSizer(self.sizer)
         self.sizer.FitInside(self)
 
+    def onModifyCombinaison(self, event):
+        dlg = CombinaisonDialog(self)
+        res = dlg.ShowModal()
+        if res == wx.ID_OK:
+            self.inscrit.combinaison = dlg.getCombinaison()
+            self.UpdateCombinaison()
+        dlg.Destroy()        
+        
+    def UpdateCombinaison(self):
+        if config.options & TABLETTE: 
+            self.combinaisonSizer.DeleteWindows()
+            for letter in self.inscrit.combinaison:
+                bitmap = getPictoBitmap(letter, size=32)
+                picto = wx.StaticBitmap(self, -1, bitmap)
+                self.combinaisonSizer.Add(picto, 0, wx.LEFT, 10)
+            self.combinaisonSizer.Layout()
+            self.sizer.Layout()
+        
     def frere_line_add(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, self.inscrit, 'freres_soeurs[%d].prenom' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
@@ -314,6 +394,7 @@ class IdentitePanel(InscriptionsTab):
             freres_count = 0
         for i in range(freres_count, len(self.fratries_sizer.GetChildren())):
             self.frere_line_del()
+        self.UpdateCombinaison()
         AutoTab.UpdateContents(self)
         self.sizer.FitInside(self)
         
@@ -364,12 +445,17 @@ class ParentsPanel(InscriptionsTab):
             if profil & PROFIL_TRESORIER:
                 panel = PeriodePanel(self, 'revenus')
                 self.parents_items[-1].append(panel)
-                if creche.periode_revenus == REVENUS_CAFPRO:
+                if not creche.formule_taux_horaire_needs_revenus():
+                    titre = u"Régime d'appartenance"
+                    defaultPeriode = today.year
+                elif creche.periode_revenus == REVENUS_CAFPRO:
                     titre = u"Revenus CAFPRO et régime d'appartenance"
+                    defaultPeriode = today.year
                 else:
                     titre = u"Revenus et régime d'appartenance"
+                    defaultPeriode = today.year-2
                 revenus_sizer = wx.StaticBoxSizer(wx.StaticBox(panel, -1, titre), wx.VERTICAL)
-                revenus_sizer.Add(PeriodeChoice(panel, Revenu), 0, wx.EXPAND|wx.ALL, 5)
+                revenus_sizer.Add(PeriodeChoice(panel, Revenu, default=defaultPeriode), 0, wx.EXPAND|wx.ALL, 5)
                 revenus_gridsizer = wx.FlexGridSizer(0, 2, 5, 10)
                 revenus_gridsizer.AddGrowableCol(1, 1)
                 revenus_gridsizer.AddMany([(wx.StaticText(panel, -1, 'Revenus annuels bruts :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(panel, None, 'revenu', precision=2), 0, wx.EXPAND)])
@@ -380,7 +466,7 @@ class ParentsPanel(InscriptionsTab):
                         item.Show(False)
                 choice = AutoChoiceCtrl(panel, None, 'regime')
                 self.regimes_choices.append(choice)
-                for i, regime in enumerate([u'Pas de sélection', u'Régime général', u'Régime de la fonction publique', u'Régime MSA', u'Régime EDF-GDF', u'Régime RATP', u'Régime Pêche maritime', u'Régime Marins du Commerce']):
+                for i, regime in enumerate([u'Pas de sélection', u'Régime général', u'Régime de la fonction publique', u'Régime MSA', u'Régime EDF-GDF', u'Régime RATP', u'Régime Pêche maritime', u'Régime Marins du Commerce', u'Régime RSI']):
                     choice.Append(regime, i)
                 revenus_gridsizer.AddMany([wx.StaticText(panel, -1, u"Régime d'appartenance :"), (choice, 0, wx.EXPAND)])
                 revenus_sizer.Add(revenus_gridsizer, 0, wx.ALL|wx.EXPAND, 5)

@@ -25,7 +25,7 @@ from sqlobjects import *
 from facture import FactureCloturee
 import wx
 
-VERSION = 72
+VERSION = 73
 
 def getdate(s):
     if s is None:
@@ -223,7 +223,8 @@ class SQLConnection(object):
             marche BOOLEAN,
             photo VARCHAR,
             notes VARCHAR,
-            notes_parents VARCHAR
+            notes_parents VARCHAR,
+            combinaison VARCHAR
           );""")
 
         cur.execute("""
@@ -616,13 +617,13 @@ class SQLConnection(object):
             professeur.idx = idx
             creche.professeurs.append(professeur)
 
-        cur.execute('SELECT idx, prenom, nom, sexe, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, marche, notes, photo FROM INSCRITS')
-        for idx, prenom, nom, sexe, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, marche, notes, photo in cur.fetchall():
+        cur.execute('SELECT idx, prenom, nom, sexe, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, marche, notes, photo, combinaison FROM INSCRITS')
+        for idx, prenom, nom, sexe, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, marche, notes, photo, combinaison in cur.fetchall():
             if photo:
                 photo = binascii.a2b_base64(photo)
             inscrit = Inscrit(creation=False)
             creche.inscrits.append(inscrit)
-            inscrit.prenom, inscrit.nom, inscrit.sexe, inscrit.naissance, inscrit.adresse, inscrit.code_postal, inscrit.ville, inscrit.numero_securite_sociale, inscrit.numero_allocataire_caf, inscrit.handicap, inscrit.tarifs, inscrit.marche, inscrit.notes, inscrit.photo, inscrit.idx = prenom, nom, sexe, getdate(naissance), adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, getdate(marche), notes, photo, idx
+            inscrit.prenom, inscrit.nom, inscrit.sexe, inscrit.naissance, inscrit.adresse, inscrit.code_postal, inscrit.ville, inscrit.numero_securite_sociale, inscrit.numero_allocataire_caf, inscrit.handicap, inscrit.tarifs, inscrit.marche, inscrit.notes, inscrit.photo, inscrit.combinaison, inscrit.idx = prenom, nom, sexe, getdate(naissance), adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, getdate(marche), notes, photo, combinaison, idx
             cur.execute('SELECT prenom, naissance, entree, sortie, idx FROM FRATRIES WHERE inscrit=?', (inscrit.idx,))
             for frere_entry in cur.fetchall():
                 frere = Frere_Soeur(inscrit, creation=False)
@@ -1440,7 +1441,11 @@ class SQLConnection(object):
             cur.execute('UPDATE TARIFSSPECIAUX SET unite=?', (0,))
             cur.execute('UPDATE TARIFSSPECIAUX SET type=? WHERE reduction=?', (1, True))
             cur.execute('UPDATE TARIFSSPECIAUX SET unite=? WHERE pourcentage=?', (1, True))
-            
+
+        if version < 73:
+            cur.execute("ALTER TABLE INSCRITS ADD combinaison VARCHAR;")
+            cur.execute('UPDATE INSCRITS SET combinaison=?', ("",))
+
         if version < VERSION:
             try:
                 cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))

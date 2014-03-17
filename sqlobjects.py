@@ -1409,6 +1409,7 @@ class Inscrit(object):
         self.tarifs = 0
         self.marche = None
         self.photo = None
+        self.combinaison = ""
         self.notes = ""
         self.notes_parents = ""
         self.freres_soeurs = []
@@ -1465,7 +1466,7 @@ class Inscrit(object):
         self.__dict__[name] = value
         if name == 'photo' and value:
             value = binascii.b2a_base64(value)
-        if name in ['prenom', 'nom', 'sexe', 'naissance', 'adresse', 'code_postal', 'ville', 'numero_securite_sociale', 'numero_allocataire_caf', 'handicap', 'tarifs', 'marche', 'photo', 'notes', 'notes_parents'] and self.idx:
+        if name in ['prenom', 'nom', 'sexe', 'naissance', 'adresse', 'code_postal', 'ville', 'numero_securite_sociale', 'numero_allocataire_caf', 'handicap', 'tarifs', 'marche', 'photo', 'combinaison', 'notes', 'notes_parents'] and self.idx:
             print 'update', name, (old_value, value)
             sql_connection.execute('UPDATE INSCRITS SET %s=? WHERE idx=?' % name, (value, self.idx))
 

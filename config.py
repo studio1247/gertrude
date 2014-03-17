@@ -48,6 +48,8 @@ def getOptions(parser):
             options |= RESERVATAIRES
         if "heures-contrat" in str:
             options |= HEURES_CONTRAT
+        if "tablette" in str:
+            options |= TABLETTE
     except:
         pass
     return options

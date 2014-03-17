@@ -770,10 +770,11 @@ class PeriodeDialog(wx.Dialog):
         self.sizer.Fit(self)
 
 class PeriodeChoice(wx.BoxSizer):
-    def __init__(self, parent, constructor):
+    def __init__(self, parent, constructor, default=None):
         wx.BoxSizer.__init__(self, wx.HORIZONTAL)
         self.parent = parent
         self.constructor = constructor
+        self.defaultPeriode = default
         self.instance = None
 
         self.periodechoice = wx.Choice(parent, size=(220,-1))
@@ -827,6 +828,10 @@ class PeriodeChoice(wx.BoxSizer):
             new_periode.debut = last_periode.fin + datetime.timedelta(1)
             if last_periode.debut.day == new_periode.debut.day and last_periode.debut.month == new_periode.debut.month:
                 new_periode.fin = datetime.date(last_periode.fin.year+new_periode.debut.year-last_periode.debut.year, last_periode.fin.month, last_periode.fin.day)
+        elif self.defaultPeriode:
+            new_periode.debut = datetime.date(self.defaultPeriode, 1, 1)
+            new_periode.fin = datetime.date(self.defaultPeriode, 12, 31)
+            
         self.instance.append(new_periode)
         self.periodechoice.Append(periodestr(new_periode))
         self.periodechoice.SetSelection(self.periode)
