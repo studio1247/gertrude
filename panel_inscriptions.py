@@ -217,7 +217,7 @@ class CombinaisonDialog(wx.Dialog):
         self.sizer.Add(gridSizer, 0, wx.EXPAND|wx.ALL, 5)
 
         self.combinaisonPanel = wx.Panel(self, style=wx.SUNKEN_BORDER)
-        self.combinaisonPanel.SetMinSize((-1, 30))
+        self.combinaisonPanel.SetMinSize((-1, 36))
         self.combinaisonSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.combinaisonPanel.SetSizer(self.combinaisonSizer)
         self.sizer.Add(self.combinaisonPanel, 0, wx.EXPAND)
@@ -237,7 +237,7 @@ class CombinaisonDialog(wx.Dialog):
         picto = sender.picto
         self.combinaison.append(picto)       
         bmp = getPictoBitmap(picto, size=32)
-        button = wx.BitmapButton(self.combinaisonPanel, -1, bmp, style=wx.BU_EXACTFIT)
+        button = wx.StaticBitmap(self.combinaisonPanel, -1, bmp)
         self.combinaisonSizer.Add(button, 0, wx.LEFT, 5)
         self.combinaisonSizer.Layout()
     
