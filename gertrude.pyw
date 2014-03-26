@@ -101,33 +101,33 @@ class GertrudeListbook(Listbook):
         panels = []
         progress_handler.display("Chargement de l'outil Inscriptions ...")
         import panel_inscriptions
-        panels.append(panel_inscriptions.InscriptionsPanel(self))
+        panels.append(panel_inscriptions.InscriptionsPanel)
         progress_handler.set(14)
         progress_handler.display("Chargement de l'outil Planning ...")
         import panel_planning
-        panels.append(panel_planning.PlanningPanel(self))
+        panels.append(panel_planning.PlanningPanel)
         progress_handler.set(28)
         progress_handler.display("Chargement de l'outil Facturation ...")
         import panel_facturation
-        panels.append(panel_facturation.FacturationPanel(self))
+        panels.append(panel_facturation.FacturationPanel)
         progress_handler.set(42)
         progress_handler.display(u"Chargement de l'outil Salariés ...")
         import panel_salaries
-        panels.append(panel_salaries.SalariesPanel(self))
+        panels.append(panel_salaries.SalariesPanel)
         progress_handler.set(56)
         progress_handler.display(u"Chargement de l'outil Tableaux de bord ...")
         import panel_tableaux_bord
-        panels.append(panel_tableaux_bord.TableauxDeBordPanel(self))
+        panels.append(panel_tableaux_bord.TableauxDeBordPanel)
         progress_handler.set(70)
         progress_handler.display(u"Chargement de l'outil Configuration ...")
         import panel_configuration
-        panels.append(panel_configuration.ConfigurationPanel(self))
+        panels.append(panel_configuration.ConfigurationPanel)
         progress_handler.set(84)
         for panel in panels:
             if panel.profil & profil:
-                self.AddPage(panel, panel.bitmap)
+                self.AddPage(panel(self), panel.bitmap)
         self.Draw()
-
+ 
     def OnPageChanged(self, event):
         Listbook.OnPageChanged(self, event)
         self.GetPage(event.GetSelection()).UpdateContents()

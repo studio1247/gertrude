@@ -37,6 +37,7 @@ TYPE_GARDERIE_PERISCOLAIRE = 3
 TYPE_MICRO_CRECHE = 4
 TYPE_ASSISTANTE_MATERNELLE = 5
 TYPE_FAMILIAL = 6
+TYPE_MULTI_ACCUEIL = 7
 
 # Modes des activités
 MODE_NORMAL = 0
@@ -44,6 +45,11 @@ MODE_LIBERE_PLACE = 1
 MODE_SANS_HORAIRES = 2
 MODE_PRESENCE_NON_FACTUREE = 4
 MODE_SYSTEMATIQUE_SANS_HORAIRES = 5
+
+# Propriétaires des activités
+ACTIVITY_OWNER_ALL = 0
+ACTIVITY_OWNER_ENFANTS = 1
+ACTIVITY_OWNER_SALARIES = 2
 
 # Granularité du planning dans la base
 BASE_GRANULARITY = 5 # 5 minutes
@@ -57,13 +63,15 @@ MODE_4_5 = 4
 MODE_3_5 = 8
 MODE_FORFAIT_HORAIRE = 16
 MODE_TEMPS_PARTIEL = 32
+MODE_ACCUEIL_URGENCE = 64
 
 ModeAccueilItems = [("Temps plein", MODE_5_5),
                     ("Temps partiel", MODE_TEMPS_PARTIEL),
                     (u"4/5èmes", MODE_4_5), 
                     (u"3/5èmes", MODE_3_5), 
                     ("Forfait horaire mensuel", MODE_FORFAIT_HORAIRE), 
-                    ("Halte-garderie", MODE_HALTE_GARDERIE)]
+                    ("Halte-garderie", MODE_HALTE_GARDERIE),
+                    ("Accueil urgence", MODE_ACCUEIL_URGENCE)]
 
 # Nombre de semaines de reference
 MAX_SEMAINES_REFERENCE = 10

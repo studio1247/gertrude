@@ -316,12 +316,13 @@ class IdentitePanel(InscriptionsTab):
         dlg.Destroy()        
         
     def UpdateCombinaison(self):
-        if config.options & TABLETTE: 
+        if self.inscrit and config.options & TABLETTE: 
             self.combinaisonSizer.DeleteWindows()
-            for letter in self.inscrit.combinaison:
-                bitmap = getPictoBitmap(letter, size=32)
-                picto = wx.StaticBitmap(self, -1, bitmap)
-                self.combinaisonSizer.Add(picto, 0, wx.LEFT, 10)
+            if self.inscrit.combinaison:
+                for letter in self.inscrit.combinaison:
+                    bitmap = getPictoBitmap(letter, size=32)
+                    picto = wx.StaticBitmap(self, -1, bitmap)
+                    self.combinaisonSizer.Add(picto, 0, wx.LEFT, 10)
             self.combinaisonSizer.Layout()
             self.sizer.Layout()
         

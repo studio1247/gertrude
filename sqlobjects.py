@@ -434,6 +434,9 @@ class Bureau(SQLObject):
         self.tresorier = ""
         self.secretaire = ""
         self.directeur = ""
+        self.gerant = ""
+        self.directeur_adjoint = ""
+        self.comptable = ""
 
         if creation:
             self.create()
@@ -449,7 +452,7 @@ class Bureau(SQLObject):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['debut', 'fin', 'president', 'vice_president', 'tresorier', 'secretaire', 'directeur'] and self.idx:
+        if name in ['debut', 'fin', 'president', 'vice_president', 'tresorier', 'secretaire', 'directeur', 'gerant', 'directeur_adjoint', 'comptable'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE BUREAUX SET %s=? WHERE idx=?' % name, (value, self.idx))
 
@@ -616,11 +619,12 @@ class Activite(object):
         self.idx = None
         self.label = ""
         self.value = value
-        self.mode = 0
+        self.mode = MODE_NORMAL
         self.couleur = couleur
         self.couleur_supplement = None
         self.couleur_previsionnel = None
         self.tarif = 0
+        self.owner = ACTIVITY_OWNER_ALL
         if creation:
             self.create()
 
@@ -633,7 +637,7 @@ class Activite(object):
                 value += 1
             Activite.last_value = self.value = value
         print self.value
-        result = sql_connection.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel, tarif) VALUES(NULL,?,?,?,?,?,?,?)', (self.label, self.value, self.mode, str(self.couleur), str(self.couleur_supplement), str(self.couleur_previsionnel), self.tarif))
+        result = sql_connection.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel, tarif, owner) VALUES(NULL,?,?,?,?,?,?,?,?)', (self.label, self.value, self.mode, str(self.couleur), str(self.couleur_supplement), str(self.couleur_previsionnel), self.tarif, self.owner))
         self.idx = result.lastrowid
 
     def delete(self):
@@ -645,7 +649,7 @@ class Activite(object):
             self.__dict__[name] = eval(value)
         else:
             self.__dict__[name] = value
-        if name in ['label', 'value', 'mode', 'couleur', "couleur_supplement", "couleur_previsionnel", "tarif"] and self.idx:
+        if name in ['label', 'value', 'mode', 'couleur', "couleur_supplement", "couleur_previsionnel", "tarif", "owner"] and self.idx:
             print 'update', name, value
             if name in ("couleur", "couleur_supplement", "couleur_previsionnel") and not isinstance(value, basestring):
                 value = str(value)
@@ -907,6 +911,7 @@ class Creche(object):
         self.formule_taux_effort = None
         self.conversion_formule_taux_effort = None
         self.gestion_alertes = False
+        self.age_maximum = 3
         self.cloture_factures = False
         self.arrondi_heures = SANS_ARRONDI
         self.arrondi_facturation = SANS_ARRONDI
@@ -1020,8 +1025,8 @@ class Creche(object):
             sql_connection.execute('UPDATE CRECHE SET formule_taux_horaire=?', (str(self.formule_taux_horaire),))
         self.conversion_formule_taux_horaire = self.GetFormuleConversion(self.formule_taux_horaire)
     
-    def eval_taux_horaire(self, mode, revenus, enfants, jours, heures, reservataire):
-        return self.EvalFormule(self.conversion_formule_taux_horaire, mode, revenus, enfants, jours, heures, reservataire)
+    def eval_taux_horaire(self, mode, handicap, revenus, enfants, jours, heures, reservataire):
+        return self.EvalFormule(self.conversion_formule_taux_horaire, mode, handicap, revenus, enfants, jours, heures, reservataire)
     
     def formule_taux_horaire_needs_revenus(self):
         if self.mode_facturation in (FACTURATION_FORFAIT_10H, FACTURATION_PSU, FACTURATION_PSU_TAUX_PERSONNALISES):
@@ -1053,10 +1058,11 @@ class Creche(object):
         else:
             return None
         
-    def EvalFormule(self, formule, mode, revenus, enfants, jours, heures, reservataire):
+    def EvalFormule(self, formule, mode, handicap, revenus, enfants, jours, heures, reservataire):
         hg = MODE_HALTE_GARDERIE
         creche = MODE_CRECHE
         forfait = MODE_FORFAIT_HORAIRE
+        urgence = MODE_ACCUEIL_URGENCE
         try:
             for cas in formule:
                 if eval(cas[0]):
@@ -1070,6 +1076,8 @@ class Creche(object):
         hg = MODE_HALTE_GARDERIE
         creche = MODE_CRECHE
         forfait = MODE_FORFAIT_HORAIRE
+        urgence = MODE_ACCUEIL_URGENCE
+        handicap = False
         mode = hg
         revenus = 20000
         jours = 5
@@ -1088,8 +1096,8 @@ class Creche(object):
             sql_connection.execute('UPDATE CRECHE SET formule_taux_effort=?', (str(self.formule_taux_effort),))
         self.conversion_formule_taux_effort = self.GetFormuleConversion(self.formule_taux_effort)
     
-    def eval_taux_effort(self, mode, revenus, enfants, jours, heures, reservataire):
-        return self.EvalFormule(self.conversion_formule_taux_effort, mode, revenus, enfants, jours, heures, reservataire)
+    def eval_taux_effort(self, mode, handicap, revenus, enfants, jours, heures, reservataire):
+        return self.EvalFormule(self.conversion_formule_taux_effort, mode, handicap, revenus, enfants, jours, heures, reservataire)
         
     def test_formule_taux_effort(self, index):
         return self.TestFormule(self.conversion_formule_taux_effort, index)
@@ -1122,7 +1130,7 @@ class Creche(object):
         
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'debut_pause', 'fin_pause', 'affichage_min', 'affichage_max', 'granularite', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'periode_revenus', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'cloture_factures', 'arrondi_heures', 'arrondi_facturation', 'arrondi_heures_salaries', 'gestion_maladie_hospitalisation', 'gestion_absences_non_prevenues', 'gestion_depart_anticipe', 'tri_planning', 'smtp_server', 'caf_email', 'mode_accueil_defaut'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'debut_pause', 'fin_pause', 'affichage_min', 'affichage_max', 'granularite', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'periode_revenus', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'age_maximum', 'cloture_factures', 'arrondi_heures', 'arrondi_facturation', 'arrondi_heures_salaries', 'gestion_maladie_hospitalisation', 'gestion_absences_non_prevenues', 'gestion_depart_anticipe', 'tri_planning', 'smtp_server', 'caf_email', 'mode_accueil_defaut'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 

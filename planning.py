@@ -57,6 +57,9 @@ BUTTON_BITMAPS = { ABSENT: wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BIT
                    ABSENCE_NON_PREVENUE: wx.Bitmap(GetBitmapFile("icone_absence_non_prevenue.png"), wx.BITMAP_TYPE_PNG),
                    }
 
+def getPlanningWidth():
+    return (creche.affichage_max - creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH
+
 class LigneConge(object):
     def __init__(self, info):
         self.info = info
@@ -161,7 +164,11 @@ class PlanningGridWindow(BufferedWindow):
         if line is None:
             dc.SetBrush(wx.WHITE_BRUSH)
             dc.SetPen(wx.TRANSPARENT_PEN)
-            dc.DrawRectangle(0, index*LINE_HEIGHT, dc.GetSize()[0], 30)
+            width = getPlanningWidth()
+            y = 14+index*LINE_HEIGHT
+            dc.DrawRectangle(1, index*LINE_HEIGHT, width-3, 30)
+            dc.SetPen(wx.BLACK_PEN)
+            dc.DrawLine(50, y, width-50, y)
         elif isinstance(line, LigneConge):
             dc.SetPen(wx.BLACK_PEN)
             dc.DrawText(line.info, 100, 7 + index * LINE_HEIGHT)
@@ -317,7 +324,7 @@ class PlanningGridWindow(BufferedWindow):
             else:
                 line_copy.ClearActivity(start, end, self.value)
 
-            bmp = wx.EmptyBitmap((creche.affichage_max-creche.affichage_min)*(60 / BASE_GRANULARITY)*COLUMN_WIDTH+1, 3*LINE_HEIGHT)
+            bmp = wx.EmptyBitmap(getPlanningWidth()+1, 3*LINE_HEIGHT)
             lineDC = wx.MemoryDC()
             lineDC.SelectObject(bmp)
             lineDC.SetBackground(wx.ClientDC(self).GetBackground())
@@ -334,7 +341,7 @@ class PlanningGridWindow(BufferedWindow):
             if self.curStartY < len(self.lines) - 1:
                 self.draw_line(lineGCDC, 2, self.lines[self.curStartY+1])
             lineGCDC.EndDrawing()
-            wx.ClientDC(self).Blit(0, self.curStartY*LINE_HEIGHT, (creche.affichage_max-creche.affichage_min)*(60 / BASE_GRANULARITY)*COLUMN_WIDTH+1, LINE_HEIGHT+1, lineDC, 0, LINE_HEIGHT)
+            wx.ClientDC(self).Blit(0, self.curStartY*LINE_HEIGHT, getPlanningWidth()+1, LINE_HEIGHT+1, lineDC, 0, LINE_HEIGHT)
 
     def OnLeftButtonUp(self, event):
         if self.state is not None:
@@ -377,7 +384,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         self.options = options
         self.activites_count = 0
         self.bulle_bitmap = wx.Bitmap(GetBitmapFile("bulle.png"))
-        width = (creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH + 27
+        width = getPlanningWidth() + 27
         if not options & NO_LABELS:
             width += LABEL_WIDTH
         if not options & NO_ICONS:
@@ -717,7 +724,7 @@ class PlanningSummaryPanel(BufferedWindow):
             dc.SetPen(wx.BLACK_PEN)
             dc.SetBrush(wx.GREY_BRUSH)
             for i, count in enumerate(self.activites_sans_horaires.values()):
-                x = (creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH + LABEL_WIDTH + i*25 + 10
+                x = getPlanningWidth() + LABEL_WIDTH + i*25 + 10
                 if not (self.options & NO_ICONS):
                     x += ICONS_WIDTH
                 rect = wx.Rect(x, 2, 20, 19)
@@ -727,7 +734,7 @@ class PlanningSummaryPanel(BufferedWindow):
         # total horaire + pourcentage remplissage
         text = self.parent.GetSummaryDynamicText()
         if text: 
-            x = (creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH + LABEL_WIDTH + 10 + 6
+            x = getPlanningWidth() + LABEL_WIDTH + 10 + 6
             if not self.options & NO_ICONS:
                 x += ICONS_WIDTH
             if self.options & ACTIVITES:

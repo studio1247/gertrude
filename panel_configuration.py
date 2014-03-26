@@ -28,6 +28,7 @@ types_creche = [(u"Parental", TYPE_PARENTAL),
                 (u"Associatif", TYPE_ASSOCIATIF),
                 (u"Municipal", TYPE_MUNICIPAL),
                 (u"Micro-crèche", TYPE_MICRO_CRECHE),
+                (u"Multi-accueil", TYPE_MULTI_ACCUEIL),
                 (u"Assistante maternelle", TYPE_ASSISTANTE_MATERNELLE),
                 (u"Garderie périscolaire", TYPE_GARDERIE_PERISCOLAIRE)]
 
@@ -251,16 +252,29 @@ class ResponsabilitesTab(AutoTab, PeriodeMixin):
         sizer2 = wx.FlexGridSizer(0, 2, 5, 5)
         sizer2.AddGrowableCol(1, 1)
         self.responsables_ctrls = []
-        self.responsables_ctrls.append(AutoComboBox(self, None, 'president'))
-        sizer2.AddMany([wx.StaticText(self, -1, u'Président(e) :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
-        self.responsables_ctrls.append(AutoComboBox(self, None, 'vice_president'))
-        sizer2.AddMany([wx.StaticText(self, -1, u'Vice président(e) :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
-        self.responsables_ctrls.append(AutoComboBox(self, None, 'tresorier'))
-        sizer2.AddMany([wx.StaticText(self, -1, u'Trésorier(ère) :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
-        self.responsables_ctrls.append(AutoComboBox(self, None, 'secretaire'))        
-        sizer2.AddMany([wx.StaticText(self, -1, u'Secrétaire :'), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
-        self.directeur_ctrl = AutoComboBox(self, None, 'directeur')        
-        sizer2.AddMany([wx.StaticText(self, -1, u'Directeur(trice) :'), (self.directeur_ctrl, 0, wx.EXPAND)])
+        if creche.type == TYPE_MULTI_ACCUEIL:
+            self.gerant_ctrl = AutoComboBox(self, None, 'gerant')
+            sizer2.AddMany([(wx.StaticText(self, -1, u'Gérant(e) :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.gerant_ctrl, 0, wx.EXPAND)])
+            self.directeur_ctrl = AutoComboBox(self, None, 'directeur')        
+            sizer2.AddMany([(wx.StaticText(self, -1, u'Directeur(trice) :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.directeur_ctrl, 0, wx.EXPAND)])
+            self.directeur_adjoint_ctrl = AutoComboBox(self, None, 'directeur_adjoint')        
+            sizer2.AddMany([(wx.StaticText(self, -1, u'Directeur(trice) adjoint(e) :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.directeur_adjoint_ctrl, 0, wx.EXPAND)])
+            self.comptable_ctrl = AutoComboBox(self, None, 'comptable')        
+            sizer2.AddMany([(wx.StaticText(self, -1, u'Comptable :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.comptable_ctrl, 0, wx.EXPAND)])
+            self.secretaire_ctrl = AutoComboBox(self, None, 'secretaire')        
+            sizer2.AddMany([(wx.StaticText(self, -1, u'Secrétaire :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.secretaire_ctrl, 0, wx.EXPAND)])
+        else:
+            self.gerant_ctrl = None
+            self.responsables_ctrls.append(AutoComboBox(self, None, 'president'))
+            sizer2.AddMany([(wx.StaticText(self, -1, u'Président(e) :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
+            self.responsables_ctrls.append(AutoComboBox(self, None, 'vice_president'))
+            sizer2.AddMany([(wx.StaticText(self, -1, u'Vice président(e) :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
+            self.responsables_ctrls.append(AutoComboBox(self, None, 'tresorier'))
+            sizer2.AddMany([(wx.StaticText(self, -1, u'Trésorier(ère) :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
+            self.responsables_ctrls.append(AutoComboBox(self, None, 'secretaire'))        
+            sizer2.AddMany([(wx.StaticText(self, -1, u'Secrétaire :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.responsables_ctrls[-1], 0, wx.EXPAND)])
+            self.directeur_ctrl = AutoComboBox(self, None, 'directeur')        
+            sizer2.AddMany([(wx.StaticText(self, -1, u'Directeur(trice) :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.directeur_ctrl, 0, wx.EXPAND)])
         sizer.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(sizer)
 
@@ -274,11 +288,20 @@ class ResponsabilitesTab(AutoTab, PeriodeMixin):
                 current_periode = eval("self.instance.%s[-1]" % self.member)
             else:
                 current_periode = eval("self.instance.%s[%d]" % (self.member, periode))
-            parents = self.GetNomsParents(current_periode)
-            for ctrl in self.responsables_ctrls:
-                ctrl.SetItems(parents)
+            
             salaries = self.GetNomsSalaries(current_periode)
-            self.directeur_ctrl.SetItems(salaries)
+            
+            if self.gerant_ctrl:
+                self.gerant_ctrl.SetItems(salaries)
+                self.directeur_ctrl.SetItems(salaries)
+                self.directeur_adjoint_ctrl.SetItems(salaries)
+                self.comptable_ctrl.SetItems(salaries)                
+                self.secretaire_ctrl.SetItems(salaries)
+            else:
+                parents = self.GetNomsParents(current_periode)
+                for ctrl in self.responsables_ctrls:
+                    ctrl.SetItems(parents)
+                self.directeur_ctrl.SetItems(salaries)
         PeriodeMixin.SetInstance(self, instance, periode)
 
     def GetNomsParents(self, periode):
@@ -303,6 +326,11 @@ activity_modes = [("Normal", 0),
                   (u"Présence non facturée", MODE_PRESENCE_NON_FACTUREE),
                   (u"Sans horaire, systématique", MODE_SYSTEMATIQUE_SANS_HORAIRES)
                  ]
+
+activity_ownership = [(u"Enfants et Salariés", ACTIVITY_OWNER_ALL),
+                      (u"Enfants", ACTIVITY_OWNER_ENFANTS),
+                      (u"Salariés", ACTIVITY_OWNER_SALARIES)
+                     ]
 
 class ActivitesTab(AutoTab):
     def __init__(self, parent):
@@ -788,6 +816,7 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, u'Traitement des absences non prévenues :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'gestion_absences_non_prevenues', [(u"Géré", True), (u"Non géré", False)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Traitement des départs anticipés :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'gestion_depart_anticipe', [(u"Géré", True), (u"Non géré", False)]), 0, wx.EXPAND)])        
         sizer.AddMany([(wx.StaticText(self, -1, u"Gestion d'alertes :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'gestion_alertes', [(u'Activée', True), (u'Désactivée', False)]), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u"Age maximum des enfants :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'age_maximum', min=0, max=5, precision=0), 0, wx.EXPAND)])
         self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 5)
         
         self.tarifs_box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u"Tarifs spéciaux"), wx.VERTICAL)
@@ -1296,7 +1325,7 @@ class ParametresNotebook(wx.Notebook):
 
 class ConfigurationPanel(GPanel):
     bitmap = GetBitmapFile("configuration.png")
-    profil = PROFIL_BUREAU
+    profil = PROFIL_ADMIN
     def __init__(self, parent):
         GPanel.__init__(self, parent, 'Configuration')
         self.notebook = ParametresNotebook(self)

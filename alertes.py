@@ -26,8 +26,8 @@ def GetAlertes():
     for inscription in GetInscriptions(today, today):
         inscrit = inscription.inscrit
         if inscrit.naissance:
-            date = GetDateMinus(inscrit.naissance, years=-3, months=3)
-            texte = "%s %s a 3 ans le %02d/%02d/%04d" % (inscrit.prenom, inscrit.nom, inscrit.naissance.day, inscrit.naissance.month, inscrit.naissance.year+3)      
+            date = GetDateMinus(inscrit.naissance, years=-creche.age_maximum, months=3)
+            texte = "%s %s a %d ans le %02d/%02d/%04d" % (inscrit.prenom, inscrit.nom, creche.age_maximum, inscrit.naissance.day, inscrit.naissance.month, inscrit.naissance.year+creche.age_maximum)      
             alertes.append((date, texte))
         if inscription.debut and inscription.debut.year != today.year:
             date = datetime.date(today.year, inscription.debut.month, inscription.debut.day)
