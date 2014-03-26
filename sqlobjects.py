@@ -1025,8 +1025,8 @@ class Creche(object):
             sql_connection.execute('UPDATE CRECHE SET formule_taux_horaire=?', (str(self.formule_taux_horaire),))
         self.conversion_formule_taux_horaire = self.GetFormuleConversion(self.formule_taux_horaire)
     
-    def eval_taux_horaire(self, mode, handicap, revenus, enfants, jours, heures, reservataire):
-        return self.EvalFormule(self.conversion_formule_taux_horaire, mode, handicap, revenus, enfants, jours, heures, reservataire)
+    def eval_taux_horaire(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom):
+        return self.EvalFormule(self.conversion_formule_taux_horaire, mode, handicap, revenus, enfants, jours, heures, reservataire, nom)
     
     def formule_taux_horaire_needs_revenus(self):
         if self.mode_facturation in (FACTURATION_FORFAIT_10H, FACTURATION_PSU, FACTURATION_PSU_TAUX_PERSONNALISES):
@@ -1058,7 +1058,7 @@ class Creche(object):
         else:
             return None
         
-    def EvalFormule(self, formule, mode, handicap, revenus, enfants, jours, heures, reservataire):
+    def EvalFormule(self, formule, mode, handicap, revenus, enfants, jours, heures, reservataire, nom):
         hg = MODE_HALTE_GARDERIE
         creche = MODE_CRECHE
         forfait = MODE_FORFAIT_HORAIRE
@@ -1084,6 +1084,7 @@ class Creche(object):
         heures = 60
         enfants = 1
         reservataire = False
+        nom = "gertrude"
         try:
             test = eval(formule[index][0])
             return True
@@ -1096,8 +1097,8 @@ class Creche(object):
             sql_connection.execute('UPDATE CRECHE SET formule_taux_effort=?', (str(self.formule_taux_effort),))
         self.conversion_formule_taux_effort = self.GetFormuleConversion(self.formule_taux_effort)
     
-    def eval_taux_effort(self, mode, handicap, revenus, enfants, jours, heures, reservataire):
-        return self.EvalFormule(self.conversion_formule_taux_effort, mode, handicap, revenus, enfants, jours, heures, reservataire)
+    def eval_taux_effort(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom):
+        return self.EvalFormule(self.conversion_formule_taux_effort, mode, handicap, revenus, enfants, jours, heures, reservataire, nom)
         
     def test_formule_taux_effort(self, index):
         return self.TestFormule(self.conversion_formule_taux_effort, index)

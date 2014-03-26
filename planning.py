@@ -670,7 +670,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             if line is None:
                 pass
             elif isinstance(line, basestring):
-                rect = wx.Rect(0, 5 + i * LINE_HEIGHT, 75, LINE_HEIGHT-8)
+                rect = wx.Rect(1, 5 + i * LINE_HEIGHT, 125, LINE_HEIGHT-8)
                 try:
                     dc.SetPen(wx.Pen(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE)))
                     dc.SetBrush(wx.Brush(wx.Colour(128, 128, 128, 128), wx.SOLID))
