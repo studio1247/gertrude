@@ -393,6 +393,8 @@ def oo_open(filename):
             dlg = wx.MessageDialog(None, u"Impossible d'ouvrir le document\n%r" % e, 'Erreur', wx.OK|wx.ICON_WARNING)
             dlg.ShowModal()
             dlg.Destroy()
+    elif sys.platform == "darwin":
+        os.system("/Applications/OpenOffice.app/Contents/MacOS/soffice %s" % filename.replace(" ", "\ "))
     else:
         os.system("ooffice %s" % filename.replace(" ", "\ "))
     return 1
@@ -609,7 +611,7 @@ class DocumentDialog(wx.Dialog):
         if dlg:
             dlg.ShowModal()
             dlg.Destroy()
-        self.Destroy()
+        self.EndModal(wx.ID_OK)
         
     def onSauverOuvrir(self, event):
         self.onSauver(event)

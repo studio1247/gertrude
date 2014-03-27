@@ -982,3 +982,8 @@ class ActivityComboBox(HashComboBox):
         evt.Skip()
 
 __builtin__.observers = {}
+
+if sys.platform == "darwin":
+    MACOS_MARGIN = 1
+else:
+    MACOS_MARGIN = 0
