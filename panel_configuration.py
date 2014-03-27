@@ -1324,6 +1324,7 @@ class ParametresNotebook(wx.Notebook):
         self.Layout()
 
 class ConfigurationPanel(GPanel):
+    name = "Configuration"
     bitmap = GetBitmapFile("configuration.png")
     profil = PROFIL_ADMIN
     def __init__(self, parent):

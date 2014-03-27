@@ -966,6 +966,7 @@ class TableauxDeBordNotebook(wx.Notebook):
             self.GetPage(page).UpdateContents()
         
 class TableauxDeBordPanel(GPanel):
+    name = "Tableaux de bord"
     bitmap = GetBitmapFile("tableaux-bord.png")
     profil = PROFIL_ALL
     def __init__(self, parent):

@@ -368,6 +368,7 @@ class SalariesNotebook(wx.Notebook):
         self.GetCurrentPage().UpdateContents()
             
 class SalariesPanel(GPanel):
+    name = u"Salariés"
     bitmap = GetBitmapFile("salaries.png")
     profil = PROFIL_ALL
     def __init__(self, parent):

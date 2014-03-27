@@ -1024,8 +1024,10 @@ class InscriptionsNotebook(wx.Notebook):
         self.GetCurrentPage().UpdateContents()
             
 class InscriptionsPanel(GPanel):
+    name = "Inscriptions"
     bitmap = GetBitmapFile("inscriptions.png")
     profil = PROFIL_ALL
+    
     def __init__(self, parent):
         GPanel.__init__(self, parent, "Inscriptions")
 

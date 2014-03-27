@@ -177,6 +177,7 @@ class DayPlanningPanel(PlanningWidget):
         
 
 class PlanningPanel(GPanel):
+    name = "Planning"
     bitmap = GetBitmapFile("planning.png")
     profil = PROFIL_ALL
 

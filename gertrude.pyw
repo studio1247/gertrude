@@ -99,32 +99,22 @@ class GertrudeListbook(Listbook):
     def __init__(self, parent, progress_handler):
         Listbook.__init__(self, parent, id=-1, style=wx.LB_DEFAULT, pos=(10, 10))
         panels = []
-        progress_handler.display("Chargement de l'outil Inscriptions ...")
         import panel_inscriptions
         panels.append(panel_inscriptions.InscriptionsPanel)
-        progress_handler.set(14)
-        progress_handler.display("Chargement de l'outil Planning ...")
         import panel_planning
         panels.append(panel_planning.PlanningPanel)
-        progress_handler.set(28)
-        progress_handler.display("Chargement de l'outil Facturation ...")
         import panel_facturation
         panels.append(panel_facturation.FacturationPanel)
-        progress_handler.set(42)
-        progress_handler.display(u"Chargement de l'outil Salariés ...")
         import panel_salaries
         panels.append(panel_salaries.SalariesPanel)
-        progress_handler.set(56)
-        progress_handler.display(u"Chargement de l'outil Tableaux de bord ...")
         import panel_tableaux_bord
         panels.append(panel_tableaux_bord.TableauxDeBordPanel)
-        progress_handler.set(70)
-        progress_handler.display(u"Chargement de l'outil Configuration ...")
         import panel_configuration
         panels.append(panel_configuration.ConfigurationPanel)
-        progress_handler.set(84)
-        for panel in panels:
+        for i, panel in enumerate(panels):
             if panel.profil & profil:
+                progress_handler.set(10+80*i/len(panels))
+                progress_handler.display(u"Chargement de l'outil %s ..." % panel.name)
                 self.AddPage(panel(self), panel.bitmap)
         self.Draw()
  

@@ -350,6 +350,7 @@ class FacturationNotebook(wx.Notebook):
             self.GetPage(page).UpdateContents()
         
 class FacturationPanel(GPanel):
+    name = "Facturation"
     bitmap = GetBitmapFile("facturation.png")
     profil = PROFIL_TRESORIER
     def __init__(self, parent):
