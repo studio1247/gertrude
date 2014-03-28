@@ -25,7 +25,7 @@ from sqlobjects import *
 from facture import FactureCloturee
 import wx
 
-VERSION = 74
+VERSION = 75
 
 def getdate(s):
     if s is None:
@@ -229,7 +229,8 @@ class SQLConnection(object):
             photo VARCHAR,
             notes VARCHAR,
             notes_parents VARCHAR,
-            combinaison VARCHAR
+            combinaison VARCHAR,
+            categorie INTEGER REFERENCES CATEGORIES(idx)
           );""")
 
         cur.execute("""
@@ -444,6 +445,12 @@ class SQLConnection(object):
           );""")        
 
         cur.execute("""
+          CREATE TABLE CATEGORIES (
+            idx INTEGER PRIMARY KEY,
+            nom VARCHAR
+          );""")        
+
+        cur.execute("""
           CREATE TABLE TARIFSSPECIAUX (
             idx INTEGER PRIMARY KEY,
             label VARCHAR,
@@ -511,6 +518,12 @@ class SQLConnection(object):
             groupe.nom, groupe.ordre, groupe.idx = groupe_entry
             creche.groupes.append(groupe)
         
+        cur.execute('SELECT nom, idx from CATEGORIES')
+        for categorie_entry in cur.fetchall():
+            categorie = Categorie(creation=False)
+            categorie.nom, categorie.idx = categorie_entry
+            creche.categories.append(categorie)
+
         cur.execute('SELECT value, debut, fin, idx FROM CAPACITE')
         for value, debut, fin, idx in cur.fetchall():
             creche.tranches_capacite.add_activity(debut, fin, value, idx)
@@ -622,13 +635,13 @@ class SQLConnection(object):
             professeur.idx = idx
             creche.professeurs.append(professeur)
 
-        cur.execute('SELECT idx, prenom, nom, sexe, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, marche, notes, photo, combinaison FROM INSCRITS')
-        for idx, prenom, nom, sexe, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, marche, notes, photo, combinaison in cur.fetchall():
+        cur.execute('SELECT idx, prenom, nom, sexe, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, marche, notes, photo, combinaison, categorie FROM INSCRITS')
+        for idx, prenom, nom, sexe, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, marche, notes, photo, combinaison, categorie in cur.fetchall():
             if photo:
                 photo = binascii.a2b_base64(photo)
             inscrit = Inscrit(creation=False)
             creche.inscrits.append(inscrit)
-            inscrit.prenom, inscrit.nom, inscrit.sexe, inscrit.naissance, inscrit.adresse, inscrit.code_postal, inscrit.ville, inscrit.numero_securite_sociale, inscrit.numero_allocataire_caf, inscrit.handicap, inscrit.tarifs, inscrit.marche, inscrit.notes, inscrit.photo, inscrit.combinaison, inscrit.idx = prenom, nom, sexe, getdate(naissance), adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, getdate(marche), notes, photo, combinaison, idx
+            inscrit.prenom, inscrit.nom, inscrit.sexe, inscrit.naissance, inscrit.adresse, inscrit.code_postal, inscrit.ville, inscrit.numero_securite_sociale, inscrit.numero_allocataire_caf, inscrit.handicap, inscrit.tarifs, inscrit.marche, inscrit.notes, inscrit.photo, inscrit.combinaison, inscrit.categorie, inscrit.idx = prenom, nom, sexe, getdate(naissance), adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, getdate(marche), notes, photo, combinaison, categorie, idx
             cur.execute('SELECT prenom, naissance, entree, sortie, idx FROM FRATRIES WHERE inscrit=?', (inscrit.idx,))
             for frere_entry in cur.fetchall():
                 frere = Frere_Soeur(inscrit, creation=False)
@@ -1459,6 +1472,14 @@ class SQLConnection(object):
             cur.execute('UPDATE ACTIVITIES SET owner=0;')
             cur.execute("ALTER TABLE CRECHE ADD age_maximum INTEGER")
             cur.execute('UPDATE CRECHE SET age_maximum=?', (3,))
+
+        if version < 75:
+            cur.execute("""
+              CREATE TABLE CATEGORIES (
+                idx INTEGER PRIMARY KEY,
+                nom VARCHAR
+              );""")        
+            cur.execute("ALTER TABLE INSCRITS ADD categorie INTEGER REFERENCES CATEGORIES(idx)")
 
         if version < VERSION:
             try:

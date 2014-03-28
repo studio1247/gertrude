@@ -276,6 +276,12 @@ class IdentitePanel(InscriptionsTab):
         sizer2.AddMany([(wx.StaticText(self, -1, 'Ville :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.ville_ctrl, 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, u'Numéro de sécurité sociale :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'numero_securite_sociale'), 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, u"Numéro d'allocataire CAF :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'numero_allocataire_caf'), 0, wx.EXPAND)])
+
+        if config.options & CATEGORIES:
+            self.categorie_items = wx.StaticText(self, -1, u"Catégorie :"), AutoChoiceCtrl(self, None, 'categorie')  
+            sizer2.AddMany([(self.categorie_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.categorie_items[1], 0, wx.EXPAND)])
+            self.UpdateCategorieItems()
+
         sizer2.AddMany([(wx.StaticText(self, -1, u"Enfant handicapé :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoCheckBox(self, None, 'handicap'), 0, wx.EXPAND)])
 ##        sizer2.AddMany([(wx.StaticText(self, -1, 'Date de marche :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'marche'), 0, wx.EXPAND)])
         self.sizer.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
@@ -314,6 +320,17 @@ class IdentitePanel(InscriptionsTab):
             self.inscrit.combinaison = dlg.getCombinaison()
             self.UpdateCombinaison()
         dlg.Destroy()        
+
+    def UpdateCategorieItems(self):
+        if len(creche.categories) > 0:
+            categories = [("----", None)] + [(categorie.nom, categorie) for categorie in creche.categories]
+            self.categorie_items[1].SetItems(categories)
+            for item in self.categorie_items:
+                item.Show(True)
+        else:
+            for item in self.categorie_items:
+                item.Show(False)
+        self.last_categorie_observer = time.time()
         
     def UpdateCombinaison(self):
         if self.inscrit and config.options & TABLETTE: 
@@ -396,6 +413,9 @@ class IdentitePanel(InscriptionsTab):
         for i in range(freres_count, len(self.fratries_sizer.GetChildren())):
             self.frere_line_del()
         self.UpdateCombinaison()
+        if 'categories' in observers and observers['categories'] > self.last_categorie_observer:
+            self.UpdateCategorieItems()
+
         AutoTab.UpdateContents(self)
         self.sizer.FitInside(self)
         

@@ -95,6 +95,19 @@ class CrecheTab(AutoTab):
         self.Bind(wx.EVT_BUTTON, self.add_groupe, button_add)
         self.sizer.Add(self.groupes_box_sizer, 0, wx.EXPAND|wx.ALL, 5)
         
+        if config.options & CATEGORIES:
+            self.categories_box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u"Catégories"), wx.VERTICAL)
+            self.categories_sizer = wx.BoxSizer(wx.VERTICAL)
+            for i, categorie in enumerate(creche.categories):
+                self.line_categorie_add(i)
+            self.categories_box_sizer.Add(self.categories_sizer, 0, wx.EXPAND|wx.ALL, 5)
+            button_add = wx.Button(self, -1, u'Nouvelle catégorie')
+            if readonly:
+                button_add.Disable()
+            self.categories_box_sizer.Add(button_add, 0, wx.ALL, 5)
+            self.Bind(wx.EVT_BUTTON, self.add_categorie, button_add)
+            self.sizer.Add(self.categories_box_sizer, 0, wx.EXPAND|wx.ALL, 5)
+
         self.SetSizer(self.sizer)
 
     def UpdateContents(self):
@@ -180,6 +193,39 @@ class CrecheTab(AutoTab):
         self.line_groupe_del()
         creche.groupes[index].delete()
         del creche.groupes[index]
+        self.sizer.FitInside(self)
+        self.UpdateContents()
+        
+    def line_categorie_add(self, index):
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, 'categories[%d].nom' % index, observers=['categories']), 1, wx.EXPAND)])
+        delbutton = wx.BitmapButton(self, -1, delbmp)
+        delbutton.index = index
+        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
+        self.Bind(wx.EVT_BUTTON, self.remove_categorie, delbutton)
+        self.categories_sizer.Add(sizer, 0, wx.EXPAND|wx.BOTTOM, 5)
+
+    def line_categorie_del(self):
+        index = len(self.categories_sizer.GetChildren()) - 1
+        sizer = self.categories_sizer.GetItem(index)
+        sizer.DeleteWindows()
+        self.categories_sizer.Detach(index)
+
+    def add_categorie(self, event):
+        observers['categories'] = time.time()
+        history.Append(Delete(creche.categories, -1))
+        creche.categories.append(Categorie())
+        self.line_categorie_add(len(creche.categories) - 1)
+        self.sizer.FitInside(self)
+        self.sizer.Layout()
+
+    def remove_categorie(self, event):
+        observers['categories'] = time.time()
+        index = event.GetEventObject().index
+        history.Append(Insert(creche.categories, index, creche.categories[index]))
+        self.line_categorie_del()
+        creche.categories[index].delete()
+        del creche.categories[index]
         self.sizer.FitInside(self)
         self.UpdateContents()
         

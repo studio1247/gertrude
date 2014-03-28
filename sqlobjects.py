@@ -870,6 +870,7 @@ class Creche(object):
         self.users = []
         self.tarifs_speciaux = []
         self.groupes = []
+        self.categories = []
         self.couleurs = { ABSENCE_NON_PREVENUE: Activite(creation=False, value=ABSENCE_NON_PREVENUE, couleur=[0, 0, 255, 150, wx.SOLID]) }
         self.activites = {}
         self.salaries = []
@@ -1280,6 +1281,28 @@ class Groupe(SQLObject):
             print 'update', name, value
             sql_connection.execute('UPDATE GROUPES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
+class Categorie(SQLObject):
+    table = "CATEGORIES"
+    def __init__(self, creation=True):
+        self.idx = None
+        self.nom = ""
+        if creation:
+            self.create()
+        
+    def create(self):
+        print 'nouvelle categorie'
+        result = sql_connection.execute('INSERT INTO CATEGORIES (idx, nom) VALUES(NULL,?)', (self.nom, ))
+        self.idx = result.lastrowid
+        
+    def delete(self):
+        SQLObject.delete(self)
+
+    def __setattr__(self, name, value):
+        self.__dict__[name] = value
+        if name in ['nom'] and self.idx:
+            print 'update', name, value
+            sql_connection.execute('UPDATE CATEGORIES SET %s=? WHERE idx=?' % name, (value, self.idx))
+
 class Inscription(PeriodeReference):
     table = "INSCRIPTIONS"
     def __init__(self, inscrit, duree_reference=7, creation=True):
@@ -1415,6 +1438,7 @@ class Inscrit(object):
         self.numero_securite_sociale = ""
         self.numero_allocataire_caf = ""
         self.handicap = False
+        self.categorie = None
         self.tarifs = 0
         self.marche = None
         self.photo = None
@@ -1455,10 +1479,11 @@ class Inscrit(object):
 
     def create(self):
         print 'nouvel inscrit'
-        result = sql_connection.execute('INSERT INTO INSCRITS (idx, prenom, nom, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, marche, photo, notes, notes_parents) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', (self.prenom, self.nom, self.naissance, self.adresse, self.code_postal, self.ville, self.numero_securite_sociale, self.numero_allocataire_caf, self.handicap, self.tarifs, self.marche, self.photo, self.notes, self.notes_parents))
+        result = sql_connection.execute('INSERT INTO INSCRITS (idx, prenom, nom, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, marche, photo, notes, notes_parents, combinaison, categorie) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', (self.prenom, self.nom, self.naissance, self.adresse, self.code_postal, self.ville, self.numero_securite_sociale, self.numero_allocataire_caf, self.handicap, self.tarifs, self.marche, self.photo, self.notes, self.notes_parents, self.combinaison, self.categorie))
         self.idx = result.lastrowid
         for obj in self.parents.values() + self.freres_soeurs + self.referents + self.inscriptions: # TODO + self.presences.values():
-            if obj: obj.create()
+            if obj:
+                obj.create()
         
     def delete(self):
         print 'suppression inscrit'
@@ -1475,7 +1500,9 @@ class Inscrit(object):
         self.__dict__[name] = value
         if name == 'photo' and value:
             value = binascii.b2a_base64(value)
-        if name in ['prenom', 'nom', 'sexe', 'naissance', 'adresse', 'code_postal', 'ville', 'numero_securite_sociale', 'numero_allocataire_caf', 'handicap', 'tarifs', 'marche', 'photo', 'combinaison', 'notes', 'notes_parents'] and self.idx:
+        elif name in ('categorie', ) and value is not None and self.idx:
+            value = value.idx
+        if name in ['prenom', 'nom', 'sexe', 'naissance', 'adresse', 'code_postal', 'ville', 'numero_securite_sociale', 'numero_allocataire_caf', 'handicap', 'tarifs', 'marche', 'photo', 'combinaison', 'notes', 'notes_parents', 'categorie'] and self.idx:
             print 'update', name, (old_value, value)
             sql_connection.execute('UPDATE INSCRITS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
