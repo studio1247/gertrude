@@ -863,6 +863,7 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, u'Traitement des départs anticipés :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'gestion_depart_anticipe', [(u"Géré", True), (u"Non géré", False)]), 0, wx.EXPAND)])        
         sizer.AddMany([(wx.StaticText(self, -1, u"Gestion d'alertes :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'gestion_alertes', [(u'Activée', True), (u'Désactivée', False)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u"Age maximum des enfants :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'age_maximum', min=0, max=5, precision=0), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Alerte dépassement capacité dans les plannings :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'alerte_depassement_planning', [(u"Activée", True), (u"Désactivée", False)]), 0, wx.EXPAND)])        
         self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 5)
         
         self.tarifs_box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u"Tarifs spéciaux"), wx.VERTICAL)

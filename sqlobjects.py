@@ -320,6 +320,7 @@ class JourneeCapacite(Day):
         Day.__init__(self)
         self.insert = None
         self.mode_arrondi = 'arrondi_heures'
+        self.summary = None
 
     def insert_activity(self, start, end, value):
         print u'nouvelle tranche horaire de capacité (%r, %r %d)' % (start, end, value), 
@@ -920,6 +921,7 @@ class Creche(object):
         self.gestion_maladie_hospitalisation = False
         self.gestion_absences_non_prevenues = False
         self.gestion_depart_anticipe = False
+        self.alerte_depassement_planning = False
         self.tri_planning = TRI_PRENOM
         self.alertes = {}
         self.calcule_jours_conges()
@@ -1124,15 +1126,22 @@ class Creche(object):
     def GetAmplitudeHoraire(self):
         return self.fermeture - self.ouverture
     
-    def GetCapacite(self):
-        result = 0.0
-        for start, end, value in self.tranches_capacite.activites:
-            result += value * (end - start)
-        return result / 12 / self.GetAmplitudeHoraire()
+    def GetCapacite(self, tranche=None):
+        if tranche is None:
+            result = 0.0
+            for start, end, value in self.tranches_capacite.activites:
+                result += value * (end - start)
+            return result / 12 / self.GetAmplitudeHoraire()
+        else:
+            for start, end, value in self.tranches_capacite.activites:
+                if tranche >= start and tranche < end:
+                    return value
+            else:
+                return 0
         
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'debut_pause', 'fin_pause', 'affichage_min', 'affichage_max', 'granularite', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'periode_revenus', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'age_maximum', 'cloture_factures', 'arrondi_heures', 'arrondi_facturation', 'arrondi_heures_salaries', 'gestion_maladie_hospitalisation', 'gestion_absences_non_prevenues', 'gestion_depart_anticipe', 'tri_planning', 'smtp_server', 'caf_email', 'mode_accueil_defaut'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'debut_pause', 'fin_pause', 'affichage_min', 'affichage_max', 'granularite', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'periode_revenus', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'age_maximum', 'cloture_factures', 'arrondi_heures', 'arrondi_facturation', 'arrondi_heures_salaries', 'gestion_maladie_hospitalisation', 'gestion_absences_non_prevenues', 'gestion_depart_anticipe', 'alerte_depassement_planning', 'tri_planning', 'smtp_server', 'caf_email', 'mode_accueil_defaut'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 

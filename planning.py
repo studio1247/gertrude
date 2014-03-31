@@ -21,7 +21,7 @@ import datetime, time
 from constants import *
 from controls import getActivityColor, TextDialog
 from functions import GetActivitiesSummary, GetBitmapFile, GetHeureString
-from sqlobjects import Day
+from sqlobjects import Day, JourneeCapacite
 from history import *
 
 # PlanningWidget options
@@ -376,8 +376,20 @@ class PlanningGridWindow(BufferedWindow):
                 line.insert = None
 
             self.GetParent().UpdateLine(self.curStartY)
-            self.state = None
             self.UpdateDrawing()
+            
+            if self.state > 0 and self.value == 0 and creche.alerte_depassement_planning:
+                lines = self.GetParent().GetParent().GetSummaryLines()
+                activites, activites_sans_horaires = GetActivitiesSummary(creche, lines)
+                for i in range(start, end):
+                    if activites[0][i][0] > creche.GetCapacite(i):
+                        dlg = wx.MessageDialog(None, u"Dépassement de la capacité sur ce créneau horaire !", "Attention", wx.OK|wx.ICON_WARNING)
+                        dlg.ShowModal()
+                        dlg.Destroy()
+                        break
+                    
+            self.state = None
+ 
 
 class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, activity_combobox, options):
@@ -896,8 +908,6 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
                 dc.DrawRotatedText(activite.label, i*25 + 10 + offset + (affichage_max - affichage_min) * COLUMN_WIDTH, 12, 18)
             
         dc.EndDrawing()
-
-from sqlobjects import JourneeCapacite
 
 class LinePlanningWidget(PlanningWidget):
     def __init__(self, parent, line, options=0):
