@@ -143,7 +143,8 @@ def RemoveColumn(rows, index):
                     cell.setAttribute("table:number-columns-repeated", str(repeat-1))
                 break    
             
-def ReplaceTextFields(dom, fields):
+def ReplaceTextFields(dom, _fields):
+    fields = _fields[:]
     for i, field in enumerate(fields):
         if len(field) == 3 and (field[2] & FIELD_EUROS):
             if field[2] & FIELD_SIGN:
@@ -199,7 +200,8 @@ def ReplaceTextFields(dom, fields):
                 except Exception, e:
                     print e
 
-def ReplaceFields(cellules, fields):        
+def ReplaceFields(cellules, _fields):
+    fields = _fields[:]        
     evalFields(fields)
     
     # Si l'argument est une ligne ...
