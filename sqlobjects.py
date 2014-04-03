@@ -158,7 +158,7 @@ class Day(object):
         for start, end, value in backup:
             self.add_activity(start, end, value, None)
         self.Save()
-    
+
     def Confirm(self):
         self.last_heures = None
         for start, end, value in self.activites.keys():
@@ -1138,7 +1138,14 @@ class Creche(object):
                     return value
             else:
                 return 0
-        
+
+    def GetInscrit(self, idx):
+        for inscrit in self.inscrits:
+            if inscrit.idx == idx:
+                return inscrit
+        else:
+            return None
+                
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'debut_pause', 'fin_pause', 'affichage_min', 'affichage_max', 'granularite', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'periode_revenus', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'age_maximum', 'cloture_factures', 'arrondi_heures', 'arrondi_facturation', 'arrondi_heures_salaries', 'gestion_maladie_hospitalisation', 'gestion_absences_non_prevenues', 'gestion_depart_anticipe', 'alerte_depassement_planning', 'tri_planning', 'smtp_server', 'caf_email', 'mode_accueil_defaut'] and self.idx:

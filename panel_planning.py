@@ -220,6 +220,14 @@ class PlanningPanel(GPanel):
         # La combobox pour la selection de l'outil (si activités)
         self.activity_choice = ActivityComboBox(self)
         sizer.Add(self.activity_choice, 0, wx.ALIGN_CENTER_VERTICAL)
+        
+        # Le bouton de synchro tablette
+        if config.options & TABLETTE:
+            bmp = wx.Bitmap(GetBitmapFile("tablette.png"), wx.BITMAP_TYPE_PNG)
+            button = wx.BitmapButton(self, -1, bmp, style=wx.NO_BORDER)
+            sizer.Add(button, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
+            self.Bind(wx.EVT_BUTTON, self.onTabletteSynchro, button)
+
         self.sizer.Add(sizer, 0, wx.EXPAND)
         
         # le notebook pour les jours de la semaine
@@ -269,6 +277,42 @@ class PlanningPanel(GPanel):
     def onNextWeek(self, evt):
         self.week_choice.SetSelection(self.week_choice.GetSelection() + 1)
         self.onChangeWeek()
+
+    def onTabletteSynchro(self, evt):
+        journal = config.connection.LoadJournal()
+        
+        array = {}
+        for line in journal.split("\n"):
+            try:
+                label, idx, date = line.split()
+                idx = int(idx)
+                date = time.strptime(date, "%Y-%m-%d@%H:%M")
+                if idx not in array:
+                    array[idx] = []
+                if label == "Arrivee":
+                    array[idx].append([date])
+                elif label == "Depart":
+                    array[idx][-1].append(date)
+            except Exception, e:
+                pass
+            
+        for key in array:
+            inscrit = creche.GetInscrit(key)
+            if inscrit:
+                for periode in array[key]:
+                    if len(periode) == 2:
+                        start, end = periode
+                        date = datetime.date(start.tm_year, start.tm_mon, start.tm_mday)
+                        s = start.tm_hour * 12 + start.tm_min / creche.granularite * (creche.granularite/BASE_GRANULARITY)
+                        e = end.tm_hour * 12 + (end.tm_min+creche.granularite-1) / creche.granularite * (creche.granularite/BASE_GRANULARITY)
+                        if date in inscrit.journees:
+                            inscrit.journees[date].remove_activities(0|PREVISIONNEL)
+                        else:
+                            inscrit.journees[date] = Journee(inscrit, date)
+                        inscrit.journees[date].SetActivity(s, e, 0)
+                        history.Append(None)
+        
+        self.UpdateContents()
         
     def UpdateContents(self):
         if len(creche.sites) > 1:

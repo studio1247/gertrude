@@ -625,11 +625,11 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                     panel = wx.Panel(self)
                     panel.SetMinSize((LINE_HEIGHT, LINE_HEIGHT))
                     self.buttons_sizer.Add(panel)
-                    panel.button = wx.BitmapButton(panel, -1, BUTTON_BITMAPS[PRESENT], size=(27, 27))
+                    panel.button = wx.BitmapButton(panel, -1, BUTTON_BITMAPS[PRESENT], size=(30, 30), style=wx.NO_BORDER)
                     panel.button.line = i
                     self.Bind(wx.EVT_BUTTON, self.OnButtonPressed, panel.button)
                     sizer = wx.BoxSizer(wx.VERTICAL)
-                    sizer.Add(panel.button)
+                    sizer.Add(panel.button, 0, wx.LEFT, 2)
                     panel.SetSizer(sizer)
                     
                 line_sizer = wx.BoxSizer(wx.HORIZONTAL)

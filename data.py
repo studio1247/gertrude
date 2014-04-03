@@ -198,6 +198,9 @@ class HttpConnection(object):
         else:
             result = None, 0
         return result
+    
+    def LoadJournal(self):
+        return self.urlopen('journal')
 
     def Update(self):
         return None, None
