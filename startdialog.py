@@ -208,7 +208,7 @@ class StartDialog(wx.Dialog):
             self.sizer.Layout()
             self.sizer.Fit(self)
             section = self.creche_ctrl.GetStringSelection()
-            self.info.AppendText(u"Structure %s sélectionnée...\n" % section)
+            self.info.AppendText(u"Structure %s sélectionnée.\n" % section)
             config.default_database = section
             config.connection = config.databases[section].connection
             thread.start_new_thread(self.Load, (section, ))

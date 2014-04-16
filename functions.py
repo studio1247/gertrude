@@ -381,8 +381,10 @@ def GetLines(site, date, inscrits, presence=False):
 
 def getActivityColor(value):
     if value < 0:
-        if value == HOPITAL:
+        if value == HOPITAL or value == MALADE_SANS_JUSTIFICATIF:
             value = MALADE
+        if value == ABSENCE_CONGE_SANS_PREAVIS:
+            value = VACANCES
         return creche.couleurs[value].couleur
     activity = value & ~(PREVISIONNEL|SUPPLEMENT|CLOTURE)
     if activity in creche.activites:

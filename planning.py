@@ -54,7 +54,9 @@ BUTTON_BITMAPS = { ABSENT: wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BIT
                    VACANCES: wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG),
                    MALADE: wx.Bitmap(GetBitmapFile("icone_maladie.png"), wx.BITMAP_TYPE_PNG),
                    HOPITAL: wx.Bitmap(GetBitmapFile("icone_hopital.png"), wx.BITMAP_TYPE_PNG),
+                   MALADE_SANS_JUSTIFICATIF: wx.Bitmap(GetBitmapFile("icone_maladie_sans_justificatif.png"), wx.BITMAP_TYPE_PNG),
                    ABSENCE_NON_PREVENUE: wx.Bitmap(GetBitmapFile("icone_absence_non_prevenue.png"), wx.BITMAP_TYPE_PNG),
+                   ABSENCE_CONGE_SANS_PREAVIS: wx.Bitmap(GetBitmapFile("icone_absence_sans_preavis.png"), wx.BITMAP_TYPE_PNG),
                    }
 
 def getPlanningWidth():
@@ -440,30 +442,38 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         
                 self.grid_panel.UpdateLine(button.line)
                 self.UpdateLine(button.line)
-            
+
     def OnButtonPressed(self, event):
         button = event.GetEventObject()
         line = self.lines[button.line]
         if not (line.readonly or readonly):
             history.Append([Call(line.Restore, line.Backup())])        
             state = line.get_state()
-            if state == VACANCES:
-                if creche.gestion_absences_non_prevenues:
-                    line.set_state(ABSENCE_NON_PREVENUE)
+            
+            
+            if state <= 0:
+                order = [VACANCES, ABSENCE_CONGE_SANS_PREAVIS, ABSENCE_NON_PREVENUE, MALADE, HOPITAL, MALADE_SANS_JUSTIFICATIF, PRESENT]
+                if not creche.gestion_preavis_conges:
+                    order.remove(ABSENCE_CONGE_SANS_PREAVIS)
+                if not creche.gestion_absences_non_prevenues:
+                    order.remove(ABSENCE_NON_PREVENUE)
+                if not creche.gestion_maladie_hospitalisation:
+                    order.remove(HOPITAL)
+                if not creche.gestion_maladie_sans_justificatif:
+                    order.remove(MALADE_SANS_JUSTIFICATIF)
+
+                index = order.index(state)
+                newstate = order[(index+1) % len(order)]
+                if newstate == PRESENT:
+                    if line.HasPrevisionnelCloture():
+                        line.RestorePrevisionnelCloture(creche.presences_previsionnelles and line.date > datetime.date.today())
+                    else:
+                        reference = line.reference
+                        line.Copy(reference, creche.presences_previsionnelles and line.date > datetime.date.today())
+                        line.Save()
+                        line.reference = reference
                 else:
-                    line.set_state(MALADE)
-            elif state == ABSENCE_NON_PREVENUE:
-                line.set_state(MALADE)
-            elif state <= MALADE:
-                if state == MALADE and creche.gestion_maladie_hospitalisation:
-                    line.set_state(HOPITAL)
-                elif line.HasPrevisionnelCloture():
-                    line.RestorePrevisionnelCloture(creche.presences_previsionnelles and line.date > datetime.date.today())
-                else:
-                    reference = line.reference
-                    line.Copy(reference, creche.presences_previsionnelles and line.date > datetime.date.today())
-                    line.Save()
-                    line.reference = reference
+                    line.set_state(newstate)
             elif line.date <= datetime.date.today() and state & PREVISIONNEL:
                 line.Confirm()
             else:

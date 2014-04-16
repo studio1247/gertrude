@@ -26,11 +26,14 @@ CONGES = 257
 
 couleurs = { SUPPLEMENT: 'A2',
              MALADE: 'B2',
+             HOPITAL: 'B2',
+             MALADE_SANS_JUSTIFICATIF: 'B2',
              PRESENT: 'C2',
              VACANCES: 'D2',
              ABSENT: 'E2',
              PRESENCE_NON_FACTUREE: 'A3',
              ABSENCE_NON_PREVENUE: 'B3',
+             ABSENCE_CONGE_SANS_PREAVIS: 'B3',
              CONGES: 'C3'
            }
 

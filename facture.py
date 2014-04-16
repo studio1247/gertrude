@@ -126,11 +126,14 @@ class FactureFinMois(object):
                         heures_hebdomadaires[(cotisation.mode_inscription, cotisation.heures_semaine)] = 1
                                         
                     if state == HOPITAL:
+                        if options & TRACES:
+                            print "jour maladie hospitalisation", date                        
                         if heures_reference > 0:
                             self.jours_maladie.append(date)
                         self.jours_maladie_deduits.append(date)
                         cotisation.nombre_jours_maladie_deduits += 1
                         cotisation.heures_maladie += heures_reference
+                        self.heures_facturees_par_mode[cotisation.mode_garde] -= heures_reference
                         if creche.mode_facturation == FACTURATION_FORFAIT_10H:
                             self.deduction += 10 * cotisation.montant_heure_garde
                             self.formule_deduction.append("10 * %.2f" % cotisation.montant_heure_garde)
@@ -138,12 +141,12 @@ class FactureFinMois(object):
                             self.deduction += cotisation.montant_heure_garde * heures_reference
                             self.formule_deduction.append(u"%s * %.2f" % (GetHeureString(heures_reference), cotisation.montant_heure_garde))
                         self.raison_deduction.add('hospitalisation')
-                    elif state == MALADE:
+                    elif state == MALADE or state == MALADE_SANS_JUSTIFICATIF:
                         if options & TRACES:
                             print "jour maladie", date
                         if heures_reference > 0:
                             self.jours_maladie.append(date)
-                        if creche.mode_facturation != FACTURATION_HORAIRES_REELS or inscription.mode == MODE_FORFAIT_HORAIRE:
+                        if state == MALADE and (creche.mode_facturation != FACTURATION_HORAIRES_REELS or inscription.mode == MODE_FORFAIT_HORAIRE):
                             # recherche du premier et du dernier jour
                             premier_jour_maladie = tmp = date
                             nombre_jours_ouvres_maladie = 0
@@ -186,7 +189,12 @@ class FactureFinMois(object):
                     elif state == VACANCES:
                         if heures_reference > 0:
                             self.jours_vacances.append(date)
-                    elif state == ABSENCE_NON_PREVENUE:
+                        if creche.gestion_preavis_conges:
+                            self.heures_facturees_par_mode[cotisation.mode_garde] -= heures_reference
+                            self.deduction += cotisation.montant_heure_garde * heures_reference
+                            self.formule_deduction.append("%s * %.2f" % (GetHeureString(heures_reference), cotisation.montant_heure_garde))
+                            self.raison_deduction.add(u"absence prévenue")
+                    elif state == ABSENCE_NON_PREVENUE or state == ABSENCE_CONGE_SANS_PREAVIS:
                         heures_facturees_non_realisees = heures_reference
                         self.jours_absence_non_prevenue[date] = heures_reference
                     elif state > 0:
