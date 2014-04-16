@@ -450,8 +450,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             history.Append([Call(line.Restore, line.Backup())])        
             state = line.get_state()
             
-            
-            if state <= 0:
+            if state < 0:
                 order = [VACANCES, ABSENCE_CONGE_SANS_PREAVIS, ABSENCE_NON_PREVENUE, MALADE, HOPITAL, MALADE_SANS_JUSTIFICATIF, PRESENT]
                 if not creche.gestion_preavis_conges:
                     order.remove(ABSENCE_CONGE_SANS_PREAVIS)
