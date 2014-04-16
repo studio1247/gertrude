@@ -34,6 +34,7 @@ class HttpConnection(object):
         self.proxy_info = proxy_info
         if os.path.isfile(TOKEN_FILENAME):
             self.token = file(TOKEN_FILENAME).read()
+            self.check_token()
         else:
             self.token = 0
         self.progress_handler = default_progress_handler
@@ -110,12 +111,20 @@ class HttpConnection(object):
         self.progress_handler.display(u"Vérification du jeton ...")
         return self.token and self.urlopen('has_token')
 
+    def check_token(self):
+        try:
+            if '<' in self.token or '>' in self.token or '&' in self.token:
+                self.token = 0
+        except:
+            self.token = 0
+                
     def get_token(self):
         self.progress_handler.display(u"Récupération du jeton ...")
         if force_token:
             self.token = self.urlopen('force_token')
         else:
             self.token = self.urlopen('get_token')
+        self.check_token()
         if not self.token:
             return 0
         else:
