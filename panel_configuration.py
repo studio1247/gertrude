@@ -818,22 +818,15 @@ class ParametersPanel(AutoTab):
         self.fermeture_cb.check_function = self.fermeture_check
         self.Bind(wx.EVT_CHOICE, self.onOuverture, self.ouverture_cb)
         self.Bind(wx.EVT_CHOICE, self.onOuverture, self.fermeture_cb)
-        sizer2.AddMany([(self.ouverture_cb, 0, wx.EXPAND), (self.ouverture_cb.spin, 0, wx.EXPAND), (wx.StaticText(self, -1, '-'), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10), (self.fermeture_cb, 0, wx.EXPAND), (self.fermeture_cb.spin, 0, wx.EXPAND)])
+        sizer2.AddMany([(self.ouverture_cb, 1, wx.EXPAND), (self.ouverture_cb.spin, 0, wx.EXPAND), (wx.StaticText(self, -1, '-'), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10), (self.fermeture_cb, 1, wx.EXPAND), (self.fermeture_cb.spin, 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Heures d\'ouverture :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (sizer2, 0, wx.EXPAND)])
         sizer2 = wx.BoxSizer(wx.HORIZONTAL)
         self.affichage_min_cb = AutoTimeCtrl(self, creche, "affichage_min")
         self.affichage_max_cb = AutoTimeCtrl(self, creche, "affichage_max")
         self.Bind(wx.EVT_CHOICE, self.onAffichage, self.affichage_min_cb)
         self.Bind(wx.EVT_CHOICE, self.onAffichage, self.affichage_max_cb)
-        sizer2.AddMany([(self.affichage_min_cb, 0, wx.EXPAND), (self.affichage_min_cb.spin, 0, wx.EXPAND), (wx.StaticText(self, -1, '-'), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10), (self.affichage_max_cb, 0, wx.EXPAND), (self.affichage_max_cb.spin, 0, wx.EXPAND)])
+        sizer2.AddMany([(self.affichage_min_cb, 1, wx.EXPAND), (self.affichage_min_cb.spin, 0, wx.EXPAND), (wx.StaticText(self, -1, '-'), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10), (self.affichage_max_cb, 1, wx.EXPAND), (self.affichage_max_cb.spin, 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Heures affichées sur le planning :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (sizer2, 0, wx.EXPAND)])
-        sizer2 = wx.BoxSizer(wx.HORIZONTAL)
-        self.debut_pause_cb = AutoTimeCtrl(self, creche, "debut_pause")
-        self.fin_pause_cb = AutoTimeCtrl(self, creche, "fin_pause")
-        self.Bind(wx.EVT_CHOICE, self.onPause, self.debut_pause_cb)
-        self.Bind(wx.EVT_CHOICE, self.onPause, self.fin_pause_cb)
-        sizer2.AddMany([(self.debut_pause_cb, 0, wx.EXPAND), (self.debut_pause_cb.spin, 0, wx.EXPAND), (wx.StaticText(self, -1, '-'), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10), (self.fin_pause_cb, 0, wx.EXPAND), (self.fin_pause_cb.spin, 0, wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Interruption (plage non affichée) :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (sizer2, 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Granularité du planning :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'granularite', [('10 minutes', 10), ('1/4 heure', 15), ('1/2 heure', 30), ('1 heure', 60)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u"Ordre d'affichage sur le planning :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'tri_planning', [(u'Par prénom', TRI_PRENOM), ('Par nom', TRI_NOM), ('Par groupe', TRI_GROUPE)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Préinscriptions :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'preinscriptions', [(u'Géré', True), (u'Non géré', False)]), 0, wx.EXPAND)])
@@ -867,7 +860,19 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, u"Age maximum des enfants :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'age_maximum', min=0, max=5, precision=0), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Alerte dépassement capacité dans les plannings :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'alerte_depassement_planning', [(u"Activée", True), (u"Désactivée", False)]), 0, wx.EXPAND)])        
         self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 5)
-        
+
+        self.plages_box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u"Plages horaires spéciales"), wx.VERTICAL)
+        self.plages_sizer = wx.BoxSizer(wx.VERTICAL)
+        for i, plage in enumerate(creche.plages_horaires):
+            self.line_plage_add(i)
+        self.plages_box_sizer.Add(self.plages_sizer, 0, wx.EXPAND|wx.ALL, 5)
+        button_add = wx.Button(self, -1, u'Nouvelle plage horaire')
+        if readonly:
+            button_add.Disable()        
+        self.plages_box_sizer.Add(button_add, 0, wx.ALL, 5)
+        self.Bind(wx.EVT_BUTTON, self.add_plage, button_add)
+        self.sizer.Add(self.plages_box_sizer, 0, wx.EXPAND|wx.ALL, 5)
+                
         self.tarifs_box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u"Tarifs spéciaux"), wx.VERTICAL)
         self.tarifs_sizer = wx.BoxSizer(wx.VERTICAL)
         for i, tarif in enumerate(creche.tarifs_speciaux):
@@ -881,6 +886,44 @@ class ParametersPanel(AutoTab):
         self.sizer.Add(self.tarifs_box_sizer, 0, wx.EXPAND|wx.ALL, 5)
         
         self.SetSizer(self.sizer)
+
+    def line_plage_add(self, index):
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        debut_ctrl = AutoTimeCtrl(self, creche, 'plages_horaires[%d].debut' % index, observers=['plages'])
+        fin_ctrl = AutoTimeCtrl(self, creche, 'plages_horaires[%d].fin' % index, observers=['plages']) 
+        sizer.AddMany([(wx.StaticText(self, -1, u'Plage horaire :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (debut_ctrl, 1, wx.EXPAND), (debut_ctrl.spin, 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'-'), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10), (fin_ctrl, 1, wx.EXPAND), (fin_ctrl.spin, 0, wx.EXPAND)])
+        sizer.AddMany([(AutoChoiceCtrl(self, creche, 'plages_horaires[%d].flags' % index, items=[("Fermeture", PLAGE_FERMETURE), (u"Insécable", PLAGE_INSECABLE)]), 1, wx.LEFT|wx.EXPAND, 5)])
+        delbutton = wx.BitmapButton(self, -1, delbmp)
+        delbutton.index = index
+        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
+        self.Bind(wx.EVT_BUTTON, self.remove_plage, delbutton)
+        self.plages_sizer.Add(sizer, 0, wx.EXPAND|wx.BOTTOM, 5)
+        if readonly:
+            delbutton.Disable()
+
+    def line_plage_del(self):
+        index = len(self.plages_sizer.GetChildren()) - 1
+        sizer = self.plages_sizer.GetItem(index)
+        sizer.DeleteWindows()
+        self.plages_sizer.Detach(index)
+
+    def add_plage(self, event):
+        observers['plages'] = time.time()
+        history.Append(Delete(creche.plages_horaires, -1))
+        creche.plages_horaires.append(PlageHoraire())
+        self.line_plage_add(len(creche.plages_horaires) - 1)
+        self.sizer.FitInside(self)
+
+    def remove_plage(self, event):
+        observers['plages'] = time.time()
+        index = event.GetEventObject().index
+        history.Append(Insert(creche.plages_horaires, index, creche.plages_horaires[index]))
+        self.line_plage_del()
+        creche.plages_horaires[index].delete()
+        del creche.plages_horaires[index]
+        self.sizer.FitInside(self)
+        self.UpdateContents()
     
     def line_tarif_add(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)

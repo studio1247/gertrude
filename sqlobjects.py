@@ -201,18 +201,12 @@ class Day(object):
                 self.insert_activity(start, end, value-CLOTURE)
             else:
                 self.insert_activity(start, end, value-PREVISIONNEL-CLOTURE)
-    
+
     def set_state(self, state):
         self.last_heures = None
         self.remove_all_activities()
-        if creche.debut_pause and creche.fin_pause:
-            start, end = int(creche.ouverture*(60 / BASE_GRANULARITY)), int(creche.debut_pause*(60 / BASE_GRANULARITY))
-            self.insert_activity(start, end, state)
-            start, end = int(creche.fin_pause*(60 / BASE_GRANULARITY)), int(creche.fermeture*(60 / BASE_GRANULARITY))
-            self.insert_activity(start, end, state)
-        else:
-            start, end = int(creche.ouverture*(60 / BASE_GRANULARITY)), int(creche.fermeture*(60 / BASE_GRANULARITY))
-            self.insert_activity(start, end, state)
+        for debut, fin in creche.GetPlagesOuvertureArray():
+            self.insert_activity(debut, fin, state)
         
     def get_state(self):
         state = ABSENT
@@ -870,6 +864,7 @@ class Creche(object):
         self.reservataires = []
         self.users = []
         self.tarifs_speciaux = []
+        self.plages_horaires = []
         self.groupes = []
         self.categories = []
         self.couleurs = { ABSENCE_NON_PREVENUE: Activite(creation=False, value=ABSENCE_NON_PREVENUE, couleur=[0, 0, 255, 150, wx.SOLID]) }
@@ -884,8 +879,6 @@ class Creche(object):
         self.inscrits = []
         self.ouverture = 7.75
         self.fermeture = 18.5
-        self.debut_pause = 0.0
-        self.fin_pause = 0.0
         self.affichage_min = 7.75
         self.affichage_max = 19.0
         self.granularite = 15
@@ -1127,6 +1120,31 @@ class Creche(object):
         
     def GetAmplitudeHoraire(self):
         return self.fermeture - self.ouverture
+
+    def GetPlagesOuvertureArray(self, affichage=False, conversion=True):
+        if affichage:
+            result = [(self.affichage_min, self.affichage_max)]
+        else:
+            result = [(self.ouverture, self.fermeture)]
+        for plage in self.plages_horaires:
+            if plage.flags == PLAGE_FERMETURE and plage.debut and plage.fin > plage.debut:
+                for i, (debut, fin) in enumerate(result):
+                    if plage.debut > debut and plage.fin < fin:
+                        result[i] = (debut, plage.debut)
+                        result.insert(i+1, (plage.fin, fin))
+                        break
+        if conversion:
+            result = [(int(debut*(60 / BASE_GRANULARITY)), int(fin*(60 / BASE_GRANULARITY))) for debut, fin in result]
+        return result
+    
+    def GetPlagesArray(self, plage_type, conversion=True):
+        result = []
+        for plage in self.plages_horaires:
+            if plage.flags == plage_type and plage.debut and plage.fin > plage.debut:
+                result.append((plage.debut, plage.fin))
+        if conversion:
+            result = [(int(debut*(60 / BASE_GRANULARITY)), int(fin*(60 / BASE_GRANULARITY))) for debut, fin in result]
+        return result
     
     def GetCapacite(self, tranche=None):
         if tranche is None:
@@ -1150,7 +1168,7 @@ class Creche(object):
                 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'debut_pause', 'fin_pause', 'affichage_min', 'affichage_max', 'granularite', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'periode_revenus', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'age_maximum', 'cloture_factures', 'arrondi_heures', 'arrondi_facturation', 'arrondi_heures_salaries', 'gestion_maladie_hospitalisation', 'gestion_absences_non_prevenues', 'gestion_maladie_sans_justificatif', 'gestion_preavis_conges', 'gestion_depart_anticipe', 'alerte_depassement_planning', 'tri_planning', 'smtp_server', 'caf_email', 'mode_accueil_defaut'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'periode_revenus', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'age_maximum', 'cloture_factures', 'arrondi_heures', 'arrondi_facturation', 'arrondi_heures_salaries', 'gestion_maladie_hospitalisation', 'gestion_absences_non_prevenues', 'gestion_maladie_sans_justificatif', 'gestion_preavis_conges', 'gestion_depart_anticipe', 'alerte_depassement_planning', 'tri_planning', 'smtp_server', 'caf_email', 'mode_accueil_defaut'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
@@ -1275,6 +1293,30 @@ class TarifSpecial(SQLObject):
         if name in ['label', 'type', 'unite', 'valeur'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE TARIFSSPECIAUX SET %s=? WHERE idx=?' % name, (value, self.idx))
+    
+class PlageHoraire(SQLObject):
+    table = "PLAGESHORAIRES"
+    def __init__(self, creation=True):
+        self.idx = None
+        self.debut = 0
+        self.fin = 0
+        self.flags = 0
+        if creation:
+            self.create()
+        
+    def create(self):
+        print 'nouvelle plage horaire'
+        result = sql_connection.execute('INSERT INTO PLAGESHORAIRES (idx, debut, fin, flags) VALUES(NULL,?,?,?)', (self.debut, self.fin, self.flags))
+        self.idx = result.lastrowid
+        
+    def delete(self):
+        SQLObject.delete(self)
+
+    def __setattr__(self, name, value):
+        self.__dict__[name] = value
+        if name in ['debut', 'fin', 'flags'] and self.idx:
+            print 'update', name, value
+            sql_connection.execute('UPDATE PLAGESHORAIRES SET %s=? WHERE idx=?' % name, (value, self.idx))
     
 class Groupe(SQLObject):
     table = "GROUPES"

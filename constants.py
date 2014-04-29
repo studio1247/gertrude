@@ -167,3 +167,7 @@ RESERVATAIRES = 1 << 0
 HEURES_CONTRAT = 1 << 1
 TABLETTE = 1 << 2
 CATEGORIES = 1 << 3
+
+# Atributs de plages horaires spéciales
+PLAGE_FERMETURE = 0
+PLAGE_INSECABLE = 1
