@@ -318,7 +318,9 @@ class PlanningGridWindow(BufferedWindow):
         result = [(start, end)]        
         for start, end in self.plages_fermeture:
             for i, (debut, fin) in enumerate(result):
-                if start > debut and end < fin:
+                if debut >= start and fin <= end:
+                    del result[i]
+                elif start > debut and end < fin:
                     result[i] = (debut, start)
                     result.insert(i+1, (end, fin))
                     break
