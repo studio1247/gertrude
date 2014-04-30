@@ -379,6 +379,34 @@ def GetLines(site, date, inscrits, presence=False):
             lines.append(line)
     return lines
 
+def TrieParGroupes(lines):
+    groupes = {}
+    for line in lines:
+        groupe = line.inscription.groupe
+        if groupe not in groupes:
+            groupes[groupe] = []
+        groupes[groupe].append(line)
+    
+    keys = groupes.keys()
+    
+    def tri(one, two):
+        if one is None:
+            return -1
+        elif two is None:
+            return 1
+        else:
+            return cmp(one.ordre, two.ordre)
+
+    keys.sort(tri)
+    lines = []
+    for key in keys:
+        groupes[key].sort(key=lambda line: line.label)
+        if key:
+            groupes[key].insert(0, key.nom)                   
+        lines.extend(groupes[key])
+
+    return lines
+
 def getActivityColor(value):
     if value < 0:
         if value == HOPITAL or value == MALADE_SANS_JUSTIFICATIF:
@@ -457,7 +485,7 @@ def GetActivitiesSummary(creche, lines):
             activites[key] = Summary(activite.label)
         
     for line in lines:
-        if line is not None:
+        if line is not None and not isinstance(line, basestring):
             for start, end, value in line.activites:
                 if value < PREVISIONNEL+CLOTURE:
                     value &= ~(PREVISIONNEL+CLOTURE)

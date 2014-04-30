@@ -66,8 +66,9 @@ class PlanningDetailleModifications(object):
             shapes = getNamedShapes(template)
             # print shapes
             for shape in shapes.keys():
-                if shape in ["legende-heure", "ligne-heure", "ligne-quart-heure", "libelle", "separateur"] or shape.startswith("activite-"):
-                    template.removeChild(shapes[shape])
+                if shape in ["legende-heure", "ligne-heure", "ligne-quart-heure", "libelle", "separateur", "category"] or shape.startswith("activite-"):
+                    if shape in shapes:
+                        template.removeChild(shapes[shape])
             drawing.removeChild(template)
         
             day = self.start
@@ -77,7 +78,11 @@ class PlanningDetailleModifications(object):
                     continue
                 
                 lines_enfants = GetLines(self.site, day, creche.inscrits)
+                if creche.tri_planning == TRI_GROUPE:
+                    lines_enfants = TrieParGroupes(lines_enfants)
+                    
                 lines_salaries = GetLines(self.site, day, creche.salaries)
+                
                 lines = lines_enfants + [None] + lines_salaries
                 
                 pages_count = 1 + (len(lines)) / lines_max
@@ -119,6 +124,13 @@ class PlanningDetailleModifications(object):
                                 node.setAttribute('svg:y1', '%fcm' % (0.25 + top + line_height * line_idx))
                                 node.setAttribute('svg:x2', '%fcm' % (21.0-right))
                                 node.setAttribute('svg:y2', '%fcm' % (0.25 + top + line_height * line_idx))
+                                page.appendChild(node)
+                        elif isinstance(line, basestring):
+                            if "category" in shapes:
+                                node = shapes["category"].cloneNode(1)
+                                node.setAttribute('svg:x', '%fcm' % left)
+                                node.setAttribute('svg:y', '%fcm' % (0.20+ top + line_height * i))
+                                ReplaceTextFields(node, [('category', line)])
                                 page.appendChild(node)
                         else:
                             node = shapes["libelle"].cloneNode(1)

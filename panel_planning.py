@@ -91,30 +91,7 @@ class DayPlanningPanel(PlanningWidget):
                 lignes_enfants.append(line)
                 
         if creche.tri_planning == TRI_GROUPE:
-            groupes = {}
-            for line in lignes_enfants:
-                groupe = line.inscription.groupe
-                if groupe not in groupes:
-                    groupes[groupe] = []
-                groupes[groupe].append(line)
-            
-            keys = groupes.keys()
-            
-            def tri(one, two):
-                if one is None:
-                    return -1
-                elif two is None:
-                    return 1
-                else:
-                    return cmp(one.ordre, two.ordre)
-
-            keys.sort(tri)
-            lignes_enfants = []
-            for key in keys:
-                groupes[key].sort(key=lambda line: line.label)
-                if key:
-                    groupes[key].insert(0, key.nom)                   
-                lignes_enfants.extend(groupes[key])
+            lignes_enfants = TrieParGroupes(lignes_enfants)
         else:
             lignes_enfants.sort(key=lambda line: line.label)    
                  
