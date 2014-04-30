@@ -22,6 +22,8 @@ from functions import *
 from sqlobjects import *
 from controls import *
 from planning import PlanningWidget, LigneConge, COMMENTS, ACTIVITES, TWO_PARTS, SUMMARY_NUM, SUMMARY_DEN
+from ooffice import *
+from planning_detaille import PlanningDetailleModifications
 
 class DayPlanningPanel(PlanningWidget):
     def __init__(self, parent, activity_combobox):
@@ -44,7 +46,7 @@ class DayPlanningPanel(PlanningWidget):
         lignes_enfants = []
         for inscrit in creche.inscrits:
             inscription = inscrit.GetInscription(self.date)
-            if inscription is not None and (len(creche.sites) <= 1 or inscription.site is self.site):
+            if inscription is not None and (len(creche.sites) <= 1 or inscription.site is self.site) and (self.groupe is None or inscription.groupe == self.groupe):
                 if creche.conges_inscription == GESTION_CONGES_INSCRIPTION_SIMPLE and self.date in inscrit.jours_conges:
                     line = LigneConge(inscrit.jours_conges[self.date].label)
                 elif self.date in inscrit.journees:
@@ -170,8 +172,9 @@ class DayPlanningPanel(PlanningWidget):
         else:
             return None
 
-    def SetData(self, site, date):
+    def SetData(self, site, groupe, date):
         self.site = site
+        self.groupe = groupe
         self.date = date
         self.UpdateContents()
         
@@ -217,10 +220,22 @@ class PlanningPanel(GPanel):
         self.week_choice.SetSelection(semaine)
         self.Bind(wx.EVT_CHOICE, self.onChangeWeek, self.week_choice)
         
+        # La combobox pour la selection du groupe (si groupes)
+        self.groupe_choice = wx.Choice(self, -1)
+        sizer.Add(self.groupe_choice, 0, wx.ALIGN_CENTER_VERTICAL)
+        self.Bind(wx.EVT_CHOICE, self.onChangeGroupeDisplayed, self.groupe_choice)
+        self.UpdateGroupeCombobox()
+        
         # La combobox pour la selection de l'outil (si activités)
         self.activity_choice = ActivityComboBox(self)
         sizer.Add(self.activity_choice, 0, wx.ALIGN_CENTER_VERTICAL)
         
+        # Le bouton d'impression
+        bmp = wx.Bitmap(GetBitmapFile("printer.png"), wx.BITMAP_TYPE_PNG)
+        button = wx.BitmapButton(self, -1, bmp, style=wx.NO_BORDER)
+        sizer.Add(button, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
+        self.Bind(wx.EVT_BUTTON, self.onPrintPlanning, button)
+            
         # Le bouton de synchro tablette
         if config.options & TABLETTE:
             bmp = wx.Bitmap(GetBitmapFile("tablette.png"), wx.BITMAP_TYPE_PNG)
@@ -238,23 +253,53 @@ class PlanningPanel(GPanel):
                 date = first_monday + datetime.timedelta(semaine * 7 + week_day)
                 planning_panel = DayPlanningPanel(self.notebook, self.activity_choice)
                 if len(creche.sites) > 1:
-                    planning_panel.SetData(creche.sites[0], date)
+                    planning_panel.SetData(creche.sites[0], None, date)
                 else:
-                    planning_panel.SetData(None, date)
+                    planning_panel.SetData(None, None, date)
                 self.notebook.AddPage(planning_panel, GetDateString(date))
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.onChangeWeekday, self.notebook)
         self.sizer.Layout()
-        
+    
+    def UpdateGroupeCombobox(self):
+        if len(creche.groupes) > 0:
+            self.groupe_choice.Clear()
+            for groupe, value in [("Tous groupes", None)] + [(groupe.nom, groupe) for groupe in creche.groupes]:
+                self.groupe_choice.Append(groupe, value)
+            self.groupe_choice.SetSelection(0)
+            self.groupe_choice.Show(True)
+        else:
+            self.groupe_choice.Show(False)
+        self.last_groupe_observer = time.time()
 
+    def onPrintPlanning(self, evt):
+        site = self.GetSelectedSite()
+        week_selection = self.week_choice.GetSelection()
+        start = self.week_choice.GetClientData(week_selection)
+        end = start + datetime.timedelta(6)
+        DocumentDialog(self, PlanningDetailleModifications(site, (start, end))).ShowModal()
+
+    def onChangeGroupeDisplayed(self, evt):
+        self.onChangeWeek(None)
+    
     def onChangeWeekday(self, evt=None):
         self.notebook.GetCurrentPage().UpdateDrawing()
-        
-    def onChangeWeek(self, evt=None):
+    
+    def GetSelectedSite(self):
         if len(creche.sites) > 1:
             self.current_site = self.site_choice.GetSelection()
-            site = self.site_choice.GetClientData(self.current_site)
+            return self.site_choice.GetClientData(self.current_site)
         else:
-            site = None        
+            return None    
+            
+    def onChangeWeek(self, evt=None):
+        site = self.GetSelectedSite()
+
+        if len(creche.groupes) > 1:
+            self.current_groupe = self.groupe_choice.GetSelection()
+            groupe = self.groupe_choice.GetClientData(self.current_groupe)
+        else:
+            groupe = None        
+        
         week_selection = self.week_choice.GetSelection()
         self.previous_button.Enable(week_selection is not 0)
         self.next_button.Enable(week_selection is not self.week_choice.GetCount() - 1)
@@ -265,7 +310,7 @@ class PlanningPanel(GPanel):
                 day = monday + datetime.timedelta(week_day)
                 self.notebook.SetPageText(page_index, GetDateString(day))
                 note = self.notebook.GetPage(page_index)
-                note.SetData(site, day)
+                note.SetData(site, groupe, day)
                 page_index += 1
         self.notebook.SetSelection(0)
         self.sizer.Layout()
@@ -340,6 +385,10 @@ class PlanningPanel(GPanel):
             self.activity_choice.Show(False)
             self.activity_choice.Append(creche.activites[0].label, creche.activites[0])
         self.activity_choice.SetSelection(selected)
+        
+        if 'groupes' in observers and observers['groupes'] > self.last_groupe_observer:
+            self.UpdateGroupeCombobox()
+            
         self.onChangeWeek()
         self.sizer.Layout()
 
