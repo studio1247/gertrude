@@ -1073,60 +1073,80 @@ class InscriptionsPanel(GPanel):
     def UpdateContents(self):
         self.notebook.UpdateContents()
 
-    def __add_in_array(self, array, id, cell):
-        key, i = id, 0
-        while key in array:
-            i += 1
-            key = id + " (%d)" % i  
-        array[key] = cell
+    def __add_in_array(self, array, cell):
+        if isinstance(cell, basestring):
+            return '[%s]' % cell
+
+        key = GetPrenomNom(cell)
+        if key.isspace():
+            key = 'Nouvelle inscription'
+        count = array.count(key)
+        array.append(key)
+        if count > 0:
+            key = key + " (%d)" % count
+        return '  ' + key 
+
+    def __add_in_inscrits_choice(self, inscrits):
+        array = []
+        for inscrit in inscrits:
+            key = self.__add_in_array(array, inscrit)
+            self.choice.Append(key, inscrit)
             
     def InitInscrits(self, selected=None):
         self.choice.Clear()
 
-        inscrits = { }
-        autres = { }
+        inscrits = []
+        autres = []
         for inscrit in creche.inscrits:
-            key = GetPrenomNom(inscrit)
             if inscrit.GetInscription(datetime.date.today(), preinscription=True) != None:
-                self.__add_in_array(inscrits, key, inscrit)
+                inscrits.append(inscrit)
             else:
-                self.__add_in_array(autres, key, inscrit)
+                autres.append(inscrit)
         
-        keys = inscrits.keys()
-        keys.sort()
-        for key in keys:
-            self.choice.Append(key, inscrits[key])
+        if (config.options & RESERVATAIRES) and len(creche.reservataires):
+            inscrits = TrieParReservataires(inscrits)
+        else:
+            if len(inscrits) > 0 and len(autres) > 0:
+                self.choice.Append("[Inscrits]", None)
+            inscrits.sort(key=lambda inscrit: GetPrenomNom(inscrit))
+
+        self.__add_in_inscrits_choice(inscrits)        
         
         if len(inscrits) > 0 and len(autres) > 0:
-            self.choice.Append(150 * '-', None)
-        
-        keys = autres.keys()
-        keys.sort()
-        for key in keys:
-            self.choice.Append(key, autres[key])
+            self.choice.Append("[Anciens]", None)
+
+        autres.sort(key=lambda inscrit: GetPrenomNom(inscrit))
+
+        self.__add_in_inscrits_choice(autres)        
 
         if len(creche.inscrits) > 0 and selected != None and selected in creche.inscrits:
             self.SelectInscrit(selected)
-        elif len(creche.inscrits) > 0:
-            self.SelectInscrit(self.choice.GetClientData(0))
         else:
-            self.SelectInscrit(None)
+            for i in range(self.choice.GetCount()):
+                inscrit = self.choice.GetClientData(i)
+                if isinstance(inscrit, Inscrit):
+                    self.SelectInscrit(inscrit)
+                    break
+            else:
+                self.SelectInscrit(None)
 
     def EvtInscritChoice(self, evt):
         ctrl = evt.GetEventObject()
         selected = ctrl.GetSelection()
         inscrit = ctrl.GetClientData(selected)
-        if inscrit:
+        if isinstance(inscrit, Inscrit):
+            self.inscrit_selected = selected
             self.delbutton.Enable()
             self.notebook.SetInscrit(inscrit)
         else:
-            ctrl.SetSelection(0)
+            ctrl.SetSelection(self.inscrit_selected)
             self.EvtInscritChoice(evt)
 
     def SelectInscrit(self, inscrit):
         if inscrit:
             for i in range(self.choice.GetCount()):
                 if self.choice.GetClientData(i) == inscrit:
+                    self.inscrit_selected = i
                     self.choice.SetSelection(i)
                     break
         else:
@@ -1136,9 +1156,8 @@ class InscriptionsPanel(GPanel):
     def EvtInscritAddButton(self, evt):
         history.Append(Delete(creche.inscrits, -1))
         inscrit = Inscrit()
-        self.choice.Insert('Nouvelle inscription', 0, inscrit)
-        self.choice.SetSelection(0)
         creche.inscrits.append(inscrit)
+        self.InitInscrits(inscrit)
         self.notebook.SetInscrit(inscrit)
         self.notebook.SetSelection(0) # Selectionne la page identite
 
@@ -1167,6 +1186,6 @@ class InscriptionsPanel(GPanel):
             if inscritId.isspace():
                 inscritId = 'Nouvelle inscription'
             selection = self.choice.GetSelection()
-            self.choice.SetString(selection, inscritId)
+            self.choice.SetString(selection, '  ' + inscritId)
             self.choice.SetSelection(selection)
                                 

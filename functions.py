@@ -379,6 +379,40 @@ def GetLines(site, date, inscrits, presence=False):
             lines.append(line)
     return lines
 
+def TrieParReservataires(inscrits):
+    reservataires = {}
+    for inscrit in inscrits:
+        if len(inscrit.inscriptions):
+            reservataire = inscrit.inscriptions[0].reservataire
+        else:
+            reservataire = None
+        if reservataire not in reservataires:
+            reservataires[reservataire] = []
+        reservataires[reservataire].append(inscrit)
+        
+    keys = reservataires.keys()
+    
+    def tri(one, two):
+        if one is None:
+            return -1
+        elif two is None:
+            return 1
+        else:
+            return cmp(one.nom, two.nom)
+        
+    keys.sort(tri)
+    lines = []
+    for key in keys:
+        reservataires[key].sort(key=lambda inscrit: GetPrenomNom(inscrit))
+        if key:
+            reservataires[key].insert(0, key.nom)
+        else:
+            reservataires[key].insert(0, u'Pas de réservataire')
+        lines.extend(reservataires[key])
+
+    return lines
+
+        
 def TrieParGroupes(lines):
     groupes = {}
     for line in lines:

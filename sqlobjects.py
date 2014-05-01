@@ -1741,8 +1741,10 @@ class Inscrit(object):
             return inscription.getJourneeReference(date).GetTotalActivitesPresenceNonFacturee()
         
     def __cmp__(self, other):
-        if other is self: return 0
-        if other is None: return 1
+        if other is self:
+            return 0
+        if not isinstance(other, Inscrit):
+            return 1
         return cmp("%s %s" % (self.prenom, self.nom), "%s %s" % (other.prenom, other.nom))
 
 class Alerte(object):
