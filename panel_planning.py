@@ -23,7 +23,7 @@ from sqlobjects import *
 from controls import *
 from planning import PlanningWidget, LigneConge, COMMENTS, ACTIVITES, TWO_PARTS, SUMMARY_NUM, SUMMARY_DEN
 from ooffice import *
-from planning_detaille import PlanningDetailleModifications
+from doc_planning_detaille import PlanningDetailleModifications
 
 class DayPlanningPanel(PlanningWidget):
     def __init__(self, parent, activity_combobox):

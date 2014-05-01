@@ -25,10 +25,10 @@ from functions import *
 from facture import *
 from ooffice import *
 from controls import *
-from facture_mensuelle import FactureModifications
+from doc_facture_mensuelle import FactureModifications
 from export_compta import ExportComptaModifications
-from attestation_paiement import AttestationModifications
-from appel_cotisations import AppelCotisationsModifications
+from doc_attestation_paiement import AttestationModifications
+from doc_appel_cotisations import AppelCotisationsModifications
 from sqlobjects import Correction
 
 class CorrectionsTab(AutoTab):

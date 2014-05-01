@@ -23,7 +23,7 @@ from controls import *
 from planning import *
 from cotisation import *
 from ooffice import *
-from contrat_accueil import ContratAccueilModifications, FraisGardeModifications
+from doc_contrat_accueil import ContratAccueilModifications, FraisGardeModifications
 
 def ParseHtml(filename, context):
     locals().update(context.__dict__)
