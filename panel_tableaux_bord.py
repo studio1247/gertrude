@@ -25,13 +25,13 @@ from constants import *
 from functions import *
 from controls import *
 from ooffice import *
-from doc_planning_presences import PlanningModifications
+from doc_planning import PlanningModifications
 from doc_coordonnees_parents import CoordonneesModifications
 from doc_etats_trimestriels import EtatsTrimestrielsModifications
-from doc_releve_detaille import RelevesDetaillesModifications
+from doc_releve_detaille import ReleveDetailleModifications
 from doc_planning_detaille import PlanningDetailleModifications
 from doc_etat_presences import EtatsPresenceModifications
-from doc_etat_places import EtatsPlacesModifications
+from doc_etat_places import EtatPlacesModifications
 from doc_etats_inscriptions import EtatsInscriptionsModifications
 from doc_rapport_frequentation import RapportFrequentationModifications
 from doc_synthese_financiere import SyntheseFinanciereModifications
@@ -805,12 +805,12 @@ class RelevesTab(AutoTab):
     def EvtGenerationRelevesDetailles(self, evt):
         site = self.GetSelectedSite()
         annee = self.releves_detailles_choice.GetClientData(self.releves_detailles_choice.GetSelection())
-        DocumentDialog(self, RelevesDetaillesModifications(site, annee)).ShowModal()
+        DocumentDialog(self, ReleveDetailleModifications(site, annee)).ShowModal()
         
     def EvtGenerationEtatsPlaces(self, evt):
         site = self.GetSelectedSite()
         annee = self.places_choice.GetClientData(self.places_choice.GetSelection())
-        DocumentDialog(self, EtatsPlacesModifications(site, annee)).ShowModal()
+        DocumentDialog(self, EtatPlacesModifications(site, annee)).ShowModal()
         
     def EvtGenerationRapportFrequentation(self, evt):
         site = self.GetSelectedSite()

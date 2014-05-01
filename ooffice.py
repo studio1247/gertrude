@@ -49,7 +49,7 @@ def GetColumnIndex(name):
     if len(name) == 1:
         return ord(name) - 65
     elif len(name) == 2:
-        return (ord(name[0]) - 64) * 26 + (ord(name[0]) - 65)    
+        return (ord(name[0]) - 64) * 26 + (ord(name[1]) - 65)    
                     
 def evalFields(fields):
     for i, field in enumerate(fields[:]):
@@ -153,7 +153,7 @@ def ReplaceTextFields(dom, _fields):
                 fields[i] = (field[0], locale.format("%.2f", field[1]))
 
     evalFields(fields)
-    #print dom.toprettyxml()
+    # print dom.toprettyxml()
 
     if dom.__class__ == xml.dom.minidom.Element and dom.nodeName in ["text:p", "text:span"]:
         nodes = [dom] + dom.getElementsByTagName("text:span")
@@ -193,7 +193,7 @@ def ReplaceTextFields(dom, _fields):
                                     node.parentNode.removeChild(node)
                                 else:
                                     replace = True
-                                    nodeText = nodeText.replace(tag, text)
+                                    nodeText = nodeText.replace(tag, str(text))
                         
                     if replace:
                         child.replaceWholeText(nodeText)
@@ -266,12 +266,16 @@ def ReplaceFormulas(cellules, old, new):
     for cellule in cellules:
         if cellule.hasAttribute("table:formula"):
             formula = cellule.getAttribute("table:formula")
-            print formula
             formula = formula.replace(old, new)
             cellule.setAttribute("table:formula", formula)
-    
-def IncrementFormulas(cellules, row=0, column=0, delta=0):
-    formula_gure = re.compile("\.([A-Z]+)([0-9]+)")
+
+FLAG_SUM_MAX = 1
+def IncrementFormulas(cellules, row=0, column=0, flags=0):
+    if flags & FLAG_SUM_MAX:
+        prefix = ":"
+    else:
+        prefix = ""
+    formula_gure = re.compile("%s\.([A-Z]+)([0-9]+)" % prefix)
     if cellules.__class__ == xml.dom.minidom.Element:
         cellules = cellules.getElementsByTagName("table:table-cell")
     for cellule in cellules:
@@ -281,7 +285,7 @@ def IncrementFormulas(cellules, row=0, column=0, delta=0):
             while mo is not None:
                 mo = formula_gure.search(formula)
                 if mo:
-                    formula = formula.replace(mo.group(0), ".___%s%d" % (GetColumnName(GetColumnIndex(mo.group(1))+column), int(mo.group(2))+row))
+                    formula = formula.replace(mo.group(0), "%s.___%s%d" % (prefix, GetColumnName(GetColumnIndex(mo.group(1))+column), int(mo.group(2))+row))
             formula = formula.replace('.___', '.')
             cellule.setAttribute("table:formula", formula)
             

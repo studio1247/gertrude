@@ -25,7 +25,7 @@ template_total_lines_count = 19
 template_first_line = 4
 template_lines_count = 8
 
-class EtatsPlacesModifications(object):
+class EtatPlacesModifications(object):
     def __init__(self, site, annee):
         self.multi = False
         self.template = 'Etats places.ods'
@@ -38,7 +38,6 @@ class EtatsPlacesModifications(object):
         self.site = None
 
     def execute(self, filename, dom):
-        print filename
         if filename == 'styles.xml':
             fields = GetCrecheFields(creche)
             ReplaceTextFields(dom, fields)

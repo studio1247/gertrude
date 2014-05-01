@@ -21,8 +21,6 @@ from facture import *
 from cotisation import CotisationException
 from ooffice import *
 
-
-
 class PlanningModifications(object):
     def __init__(self, site, debut):
         self.multi = False

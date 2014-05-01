@@ -38,25 +38,25 @@ DRAW_VALUES = 512
 
 # Elements size
 LABEL_WIDTH = 130 # px
-ICONS_WIDTH = 33 # px
+ICONS_WIDTH = 50 # px
 COLUMN_WIDTH = 48 / (60 / BASE_GRANULARITY) # px
-LINE_HEIGHT = 30 # px
+LINE_HEIGHT = 32 # px
 CHECKBOX_WIDTH = 20 # px
 
 # How lines are handled in the summary line
 SUMMARY_NUM = 1
 SUMMARY_DEN = 2
 
-BUTTON_BITMAPS = { ABSENT: wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG),
-                   ABSENT+PREVISIONNEL: wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG),
-                   PRESENT: wx.Bitmap(GetBitmapFile("icone_presence.png"), wx.BITMAP_TYPE_PNG),
-                   PRESENT+PREVISIONNEL: wx.Bitmap(GetBitmapFile("icone_presence_prev.png"), wx.BITMAP_TYPE_PNG),
-                   VACANCES: wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG),
-                   MALADE: wx.Bitmap(GetBitmapFile("icone_maladie.png"), wx.BITMAP_TYPE_PNG),
-                   HOPITAL: wx.Bitmap(GetBitmapFile("icone_hopital.png"), wx.BITMAP_TYPE_PNG),
-                   MALADE_SANS_JUSTIFICATIF: wx.Bitmap(GetBitmapFile("icone_maladie_sans_justificatif.png"), wx.BITMAP_TYPE_PNG),
-                   ABSENCE_NON_PREVENUE: wx.Bitmap(GetBitmapFile("icone_absence_non_prevenue.png"), wx.BITMAP_TYPE_PNG),
-                   ABSENCE_CONGE_SANS_PREAVIS: wx.Bitmap(GetBitmapFile("icone_absence_sans_preavis.png"), wx.BITMAP_TYPE_PNG),
+BUTTON_BITMAPS = { ABSENT: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), u'Absent'),
+                   ABSENT+PREVISIONNEL: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), u'Congés'),
+                   PRESENT: (wx.Bitmap(GetBitmapFile("icone_presence.png"), wx.BITMAP_TYPE_PNG), u'Présent'),
+                   PRESENT+PREVISIONNEL: (wx.Bitmap(GetBitmapFile("icone_presence_prev.png"), wx.BITMAP_TYPE_PNG), u'Présent'),
+                   VACANCES: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), u'Congés'),
+                   MALADE: (wx.Bitmap(GetBitmapFile("icone_maladie.png"), wx.BITMAP_TYPE_PNG), u'Malade'),
+                   HOPITAL: (wx.Bitmap(GetBitmapFile("icone_hopital.png"), wx.BITMAP_TYPE_PNG), u'Maladie avec hospitalisation'),
+                   MALADE_SANS_JUSTIFICATIF: (wx.Bitmap(GetBitmapFile("icone_maladie_sans_justificatif.png"), wx.BITMAP_TYPE_PNG), u'Maladie sans justificatif'),
+                   ABSENCE_NON_PREVENUE: (wx.Bitmap(GetBitmapFile("icone_absence_non_prevenue.png"), wx.BITMAP_TYPE_PNG), u'Absence non prévenue'),
+                   ABSENCE_CONGE_SANS_PREAVIS: (wx.Bitmap(GetBitmapFile("icone_absence_sans_preavis.png"), wx.BITMAP_TYPE_PNG), u'Congés sans préavis'),
                    }
 
 def getPlanningWidth():
@@ -578,7 +578,9 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                     if activities_state:
                         state &= ~activities_state
                         state |= PRESENT
-            button.SetBitmapLabel(BUTTON_BITMAPS[state])
+            bitmap, tooltip = BUTTON_BITMAPS[state]
+            button.SetBitmapLabel(bitmap)
+            button.SetToolTip(wx.ToolTip(tooltip))
             button.Show(True)
             
     def UpdateActivites(self, index):
@@ -655,9 +657,9 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             for i in range(previous_count, count):
                 if not self.options & NO_ICONS:
                     panel = wx.Panel(self)
-                    panel.SetMinSize((LINE_HEIGHT, LINE_HEIGHT))
+                    panel.SetMinSize((46, LINE_HEIGHT))
                     self.buttons_sizer.Add(panel)
-                    panel.button = wx.BitmapButton(panel, -1, BUTTON_BITMAPS[PRESENT], size=(30, 30), style=wx.NO_BORDER)
+                    panel.button = wx.BitmapButton(panel, -1, BUTTON_BITMAPS[PRESENT][0], size=(45, LINE_HEIGHT), style=wx.NO_BORDER)
                     panel.button.line = i
                     self.Bind(wx.EVT_BUTTON, self.OnButtonPressed, panel.button)
                     sizer = wx.BoxSizer(wx.VERTICAL)
