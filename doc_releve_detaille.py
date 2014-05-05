@@ -32,6 +32,58 @@ class ReleveDetailleModifications(object):
         self.email = None
         self.metas = {}
 
+    def GenerateOptimomesTable(self, inscrits, (feuille, lines), agemin=0, agemax=0):
+        template_first, template, after = lines[0], lines[1], lines[2]
+        feuille.removeChild(template)
+
+        count = 0
+        for inscrit in inscrits:
+            if (agemin or agemax) and not isinstance(inscrit.naissance, datetime.date):
+                self.errors[GetPrenomNom(inscrit)] = ["Date de naissance incorrecte"]
+                continue
+            if agemax:
+                anniversaireMax = datetime.date(inscrit.naissance.year+agemax, inscrit.naissance.month, inscrit.naissance.day)
+                if anniversaireMax <= datetime.date(self.annee, 1, 1):
+                    continue
+            if agemin:
+                anniversaireMin = datetime.date(inscrit.naissance.year+agemin, inscrit.naissance.month, inscrit.naissance.day)
+                if anniversaireMin > datetime.date(self.annee, 12, 1):
+                    continue
+            
+            if count == 0:
+                clone = template_first
+            else:
+                clone = template.cloneNode(1)
+                feuille.insertBefore(clone, after)
+
+            fields = GetInscritFields(inscrit)
+            ReplaceFields(clone, fields)
+            if count > 1:
+                IncrementFormulas(clone, row=+count-1)
+            
+            for mois in range(12):
+                fields = [('heures-facturees', 0), ('heures-realisees', 0), ('total', 0)]
+                date = datetime.date(self.annee, mois+1, 1)
+                if date <= today and (not agemin or date >= anniversaireMin) and (not agemax or date < anniversaireMax):
+                    try:
+                        facture = Facture(inscrit, self.annee, mois+1)
+                        fields = [('heures-facturees', facture.heures_facture), ('heures-realisees', facture.heures_realisees), ('total', facture.total)]
+                    except CotisationException, e:
+                        self.errors[GetPrenomNom(inscrit)] = e.errors
+                if count == 0:
+                    cells = clone.getElementsByTagName("table:table-cell")[3+mois*3:6+mois*3]
+                else:
+                    cells = clone.getElementsByTagName("table:table-cell")[2+mois*3:5+mois*3]
+                ReplaceFields(cells, fields)
+                
+            count += 1
+        
+        first_cell = template_first.getElementsByTagName("table:table-cell").item(0)
+        first_cell.setAttribute("table:number-rows-spanned", str(count))
+        IncrementFormulas(after, row=+count-2, flags=FLAG_SUM_MAX)
+        for line in lines[3:]:
+            IncrementFormulas(line, row=+count-2)
+
     def execute(self, filename, dom):
         if filename == 'meta.xml':
             metas = dom.getElementsByTagName('meta:user-defined')
@@ -55,41 +107,9 @@ class ReleveDetailleModifications(object):
                 feuille = spreadsheet.getElementsByTagName("table:table").item(0)
                 lines = feuille.getElementsByTagName("table:table-row")
                 ReplaceTextFields(lines[0], [('date-debut', datetime.date(self.annee, 1, 1)), ('date-fin', datetime.date(self.annee, 12, 31))])
-                template_m4_first = lines[4]
-                template_m4 = lines[5]
-                feuille.removeChild(template_m4)
-                after_m4 = lines[6]
                 inscrits = GetInscrits(datetime.date(self.annee, 1, 1), datetime.date(self.annee, 12, 31))
-                for i, inscrit in enumerate(inscrits):
-                    fields = GetInscritFields(inscrit)
-                    
-                    if i == 0:
-                        clone = template_m4_first
-                        first_cell = clone.getElementsByTagName("table:table-cell").item(0)
-                        first_cell.setAttribute("table:number-rows-spanned", str(len(inscrits)))
-                    else:
-                        clone = template_m4.cloneNode(1)
-                        feuille.insertBefore(clone, after_m4)
-
-                    ReplaceFields(clone, fields)
-                    if i > 1:
-                        IncrementFormulas(clone, row=+i-1)
-                    
-                    for mois in range(12):
-                        fields = [('heures-facturees', 0), ('heures-realisees', 0), ('total', 0)]
-                        if datetime.date(self.annee, mois+1, 1) <= today:
-                            try:
-                                facture = Facture(inscrit, self.annee, mois+1)
-                                fields = [('heures-facturees', facture.heures_facture), ('heures-realisees', facture.heures_realisees), ('total', facture.total)]
-                            except CotisationException, e:
-                                self.errors[GetPrenomNom(inscrit)] = e.errors
-                        if i==0:
-                            cells = clone.getElementsByTagName("table:table-cell")[3+mois*3:6+mois*3]
-                        else:
-                            cells = clone.getElementsByTagName("table:table-cell")[2+mois*3:5+mois*3]
-                        ReplaceFields(cells, fields)
-                        
-                IncrementFormulas(after_m4, row=+len(inscrits)-2, flags=FLAG_SUM_MAX)                    
+                self.GenerateOptimomesTable(inscrits, (feuille, lines[4:]), agemax=4)
+                self.GenerateOptimomesTable(inscrits, (feuille, lines[7:]), agemin=4)
             else:
                 spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
                 feuille = spreadsheet.getElementsByTagName("table:table").item(0)
