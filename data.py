@@ -78,7 +78,10 @@ class HttpConnection(object):
             password_mgr.add_password(None, self.url, self.auth_info[0], self.auth_info[1])
             opener.add_handler(urllib2.HTTPBasicAuthHandler(password_mgr))
         if self.proxy_info:
-            opener.add_handler(urllib2.ProxyHandler({"http" : "http://%(user)s:%(pass)s@%(host)s:%(port)d" % self.proxy_info}))
+            if 'user' in self.proxy_info:
+                opener.add_handler(urllib2.ProxyHandler({"http" : "http://%(user)s:%(pass)s@%(host)s:%(port)d" % self.proxy_info}))
+            else:
+                opener.add_handler(urllib2.ProxyHandler({"http" : "http://%(host)s:%(port)d" % self.proxy_info}))
         urllib2.install_opener(opener)
 
         try:

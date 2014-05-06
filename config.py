@@ -125,12 +125,18 @@ def getDatabase(parser, section):
             identity = parser.get(section, "identity")
         except:
             identity = ""
+        proxy_info = { }
         try:
             proxy_info = { 'host' : parser.get(DEFAULT_SECTION, "proxy-host"),
                            'port' : int(parser.get(DEFAULT_SECTION, "proxy-port")),
-                           'user' : parser.get(DEFAULT_SECTION, "proxy-user"),
-                           'pass' : parser.get(DEFAULT_SECTION, "proxy-pass")
                          }
+            try:
+                proxy_user_info = {'user' : parser.get(DEFAULT_SECTION, "proxy-user"),
+                                   'pass' : parser.get(DEFAULT_SECTION, "proxy-pass")
+                                  }
+                proxy_info.extend(proxy_user_info)
+            except:
+                pass
         except:
             proxy_info = None
         database.connection = HttpConnection(url, filename, identity, auth_info, proxy_info)
