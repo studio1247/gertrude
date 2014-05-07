@@ -193,7 +193,9 @@ def ReplaceTextFields(dom, _fields):
                                     node.parentNode.removeChild(node)
                                 else:
                                     replace = True
-                                    nodeText = nodeText.replace(tag, str(text))
+                                    if not isinstance(text, basestring):
+                                        text = str(text)
+                                    nodeText = nodeText.replace(tag, text)
                         
                     if replace:
                         child.replaceWholeText(nodeText)
