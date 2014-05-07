@@ -535,6 +535,7 @@ def GetCrecheFields(creche):
     return [('nom-creche', creche.nom),
             ('adresse-creche', creche.adresse),
             ('code-postal-creche', GetCodePostal(creche)),
+            ('departement-creche', GetDepartement(creche.code_postal)),
             ('ville-creche', creche.ville),
             ('telephone-creche', creche.telephone),
             ('email-creche', creche.email),
@@ -554,18 +555,44 @@ def GetCodePostal(what):
         return "%.05d" % what.code_postal
     except:
         return ""
-    
+
+def GetInscritSexe(inscrit):
+    if inscrit.sexe == 1:
+        return u"Garçon"
+    else:
+        return "Fille"
+
+def GetTelephone(inscrit):
+    result = []
+    for key in inscrit.parents:
+        if inscrit.parents[key].telephone_domicile:
+            result.append(inscrit.parents[key].telephone_domicile)
+        if inscrit.parents[key].telephone_portable:
+            result.append(inscrit.parents[key].telephone_portable)
+    return ", ".join(set(result))
+
+def GetEmail(inscrit):
+    result = []
+    for key in inscrit.parents:
+        if inscrit.parents[key].email:
+            result.append(inscrit.parents[key].email)
+    return ", ".join(result)
+            
 def GetInscritFields(inscrit):
     return [('adresse', inscrit.adresse),
             ('prenom', inscrit.prenom),
             ('nom', inscrit.nom),
+            ('sexe', GetInscritSexe(inscrit)),
+            ('adresse', inscrit.adresse),
             ('code-postal', GetCodePostal(inscrit)),
             ('ville', inscrit.ville),
             ('naissance', inscrit.naissance),
             ('age', GetAgeString(inscrit.naissance)),
             ('numero-securite-sociale', inscrit.numero_securite_sociale),
             ('numero-allocataire-caf', inscrit.numero_allocataire_caf),
-            ('parents', GetParentsString(inscrit))
+            ('parents', GetParentsString(inscrit)),
+            ('telephone', GetTelephone(inscrit)),
+            ('email', GetEmail(inscrit)),
             ]
 
 def GetInscriptionFields(inscription):
@@ -585,6 +612,18 @@ def GetInscriptionFields(inscription):
             ('professeur-prenom', GetPrenom(inscription.professeur)),
             ('professeur-nom', GetNom(inscription.professeur)),
             ]
+
+def GetCotisationFields(cotisation):
+    return [('nombre-factures', cotisation.nombre_factures),
+            ('jours-semaine', cotisation.jours_semaine),
+            ('heures-semaine', GetHeureString(cotisation.heures_semaine)),
+            ('heures-mois', GetHeureString(cotisation.heures_mois)),
+            ('heures-periode', GetHeureString(cotisation.heures_periode)),
+            ('cotisation-mensuelle', "%.02f" % cotisation.cotisation_mensuelle),
+            ('enfants-a-charge', cotisation.enfants_a_charge),            
+            ('annee-debut', cotisation.debut.year),
+            ('annee-fin', cotisation.debut.year+1),
+           ]
 
 def GetFactureFields(facture):
     if facture:

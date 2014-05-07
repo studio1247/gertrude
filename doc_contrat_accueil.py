@@ -47,44 +47,20 @@ class DocumentAccueilModifications(object):
         inscription = self.inscrit.GetInscription(self.date, preinscription=True)
         self.cotisation = Cotisation(self.inscrit, self.date)
         
-        fields = [('nom-creche', creche.nom),
-                ('adresse-creche', creche.adresse),
-                ('code-postal-creche', str(creche.code_postal)),
-                ('departement-creche', GetDepartement(creche.code_postal)),
-                ('ville-creche', creche.ville),
-                ('telephone-creche', creche.telephone),
-                ('email-creche', creche.email),
-                ('prenom', self.inscrit.prenom),
-                ('nom', self.inscrit.nom),
-                ('parents', GetParentsString(self.inscrit)),
-                ('adresse', self.inscrit.adresse),
-                ('code-postal', self.inscrit.code_postal),
-                ('ville', self.inscrit.ville),
-                ('numero-securite-sociale', self.inscrit.numero_securite_sociale),
-                ('numero-allocataire-caf', self.inscrit.numero_allocataire_caf),
-                ('naissance', self.inscrit.naissance),
-                ('president', president),
-                ('tresorier', tresorier),
-                ('directeur', directeur),
-                ('plancher-caf', plancher_caf),
-                ('plafond-caf', plafond_caf),
-                ('nombre-factures', self.cotisation.nombre_factures),
-                ('semaines-type', len(inscription.reference) / 7),
-                ('jours-semaine', self.cotisation.jours_semaine),
-                ('heures-semaine', GetHeureString(self.cotisation.heures_semaine)),
-                ('heures-mois', GetHeureString(self.cotisation.heures_mois)),
-                ('heures-periode', GetHeureString(self.cotisation.heures_periode)),
-                ('cotisation-mensuelle', "%.02f" % self.cotisation.cotisation_mensuelle),
-                ('date', '%.2d/%.2d/%d' % (self.date.day, self.date.month, self.date.year)),
-                ('debut-inscription', inscription.debut),
-                ('fin-inscription', inscription.fin),
-                ('annee-debut', self.cotisation.debut.year),
-                ('annee-fin', self.cotisation.debut.year+1),
-                ('permanences', self.GetPermanences(inscription)),
-                ('enfants-a-charge', self.cotisation.enfants_a_charge),
-                ('carence-maladie', creche.minimum_maladie),
-                ('IsPresentDuringTranche', self.IsPresentDuringTranche),
-                ]
+        fields = GetCrecheFields(creche) + GetInscritFields(self.inscrit) + GetCotisationFields(self.cotisation)
+        fields += [ ('president', president),
+                    ('tresorier', tresorier),
+                    ('directeur', directeur),
+                    ('plancher-caf', plancher_caf),
+                    ('plafond-caf', plafond_caf),
+                    ('semaines-type', len(inscription.reference) / 7),
+                    ('date', '%.2d/%.2d/%d' % (self.date.day, self.date.month, self.date.year)),
+                    ('debut-inscription', inscription.debut),
+                    ('fin-inscription', inscription.fin),
+                    ('permanences', self.GetPermanences(inscription)),
+                    ('carence-maladie', creche.minimum_maladie),
+                    ('IsPresentDuringTranche', self.IsPresentDuringTranche),
+                    ]
         
         if creche.mode_facturation != FACTURATION_FORFAIT_MENSUEL:
             fields.append(('montant-heure-garde', self.cotisation.montant_heure_garde))
@@ -199,7 +175,7 @@ class ContratAccueilModifications(DocumentAccueilModifications):
                 # print table.toprettyxml()
                 break;
         
-        print doc.toprettyxml()
+        # print doc.toprettyxml()
         ReplaceTextFields(doc, fields)
         return {}
     
