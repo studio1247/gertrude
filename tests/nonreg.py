@@ -7,8 +7,8 @@ import sqlinterface
 from sqlobjects import *
 from cotisation import *
 from facture import Facture
-from planning_detaille import PlanningDetailleModifications
-from coordonnees_parents import CoordonneesModifications
+from doc_planning_detaille import PlanningDetailleModifications
+from doc_coordonnees_parents import CoordonneesModifications
 from ooffice import GenerateOODocument
 
 __builtin__.first_date = datetime.date(2010, 1, 1) 
