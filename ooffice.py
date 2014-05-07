@@ -154,7 +154,8 @@ def ReplaceTextFields(dom, _fields):
 
     evalFields(fields)
     # print dom.toprettyxml()
-
+    # print fields
+    
     if dom.__class__ == xml.dom.minidom.Element and dom.nodeName in ["text:p", "text:span"]:
         nodes = [dom] + dom.getElementsByTagName("text:span")
     else:
