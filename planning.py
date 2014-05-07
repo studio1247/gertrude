@@ -103,10 +103,11 @@ class PlanningGridWindow(BufferedWindow):
     def SetLines(self, lines):
         self.lines = lines
         self.SetMinSize((int((creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH + 1), LINE_HEIGHT * len(self.lines) - 1))
-        if self.last_plages_observer is None and ('plages' in observers and observers['plages'] > self.last_plages_observer):
+        if self.last_plages_observer is None or ('plages' in observers and observers['plages'] > self.last_plages_observer):
             self.plages_fermeture = creche.GetPlagesArray(PLAGE_FERMETURE, conversion=True)
             self.plages_insecables = creche.GetPlagesArray(PLAGE_INSECABLE, conversion=True)
-            self.last_plages_observer = observers['plages']
+            if 'plages' in observers:
+                self.last_plages_observer = observers['plages']
             
     def UpdateLine(self, index):
         self.UpdateDrawing()
@@ -134,10 +135,20 @@ class PlanningGridWindow(BufferedWindow):
             dc.DrawLine(x, 0,  x, height)
             heure += creche.granularite / BASE_GRANULARITY
 
+        try:
+            dc = wx.GCDC(dc)
+        except:
+            pass
+        
         dc.SetPen(wx.LIGHT_GREY_PEN)
         dc.SetBrush(wx.LIGHT_GREY_BRUSH)
         for debut, fin in self.plages_fermeture:
             dc.DrawRectangle(1 + (debut-affichage_min) * COLUMN_WIDTH, 0, (fin-debut) * COLUMN_WIDTH - 1, height)
+        dc.SetPen(wx.TRANSPARENT_PEN)            
+        dc.SetBrush(wx.Brush(wx.Colour(250, 250, 0, 100)))
+        for debut, fin in self.plages_insecables:
+            dc.DrawRectangle(1 + (debut-affichage_min) * COLUMN_WIDTH, 0, (fin-debut) * COLUMN_WIDTH - 1, height)
+            
             
     def Draw(self, dc):
         dc.BeginDrawing()
@@ -657,9 +668,9 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             for i in range(previous_count, count):
                 if not self.options & NO_ICONS:
                     panel = wx.Panel(self)
-                    panel.SetMinSize((46, LINE_HEIGHT))
+                    panel.SetMinSize((48, LINE_HEIGHT))
                     self.buttons_sizer.Add(panel)
-                    panel.button = wx.BitmapButton(panel, -1, BUTTON_BITMAPS[PRESENT][0], size=(45, LINE_HEIGHT), style=wx.NO_BORDER)
+                    panel.button = wx.BitmapButton(panel, -1, BUTTON_BITMAPS[PRESENT][0], size=(47, LINE_HEIGHT), style=wx.NO_BORDER)
                     panel.button.line = i
                     self.Bind(wx.EVT_BUTTON, self.OnButtonPressed, panel.button)
                     sizer = wx.BoxSizer(wx.VERTICAL)

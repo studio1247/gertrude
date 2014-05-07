@@ -250,10 +250,11 @@ class PlanningPanel(GPanel):
 
     def onPrintPlanning(self, evt):
         site = self.GetSelectedSite()
+        groupe = self.GetSelectedGroupe()
         week_selection = self.week_choice.GetSelection()
         start = self.week_choice.GetClientData(week_selection)
         end = start + datetime.timedelta(6)
-        DocumentDialog(self, PlanningDetailleModifications(site, (start, end))).ShowModal()
+        DocumentDialog(self, PlanningDetailleModifications((start, end), site, groupe)).ShowModal()
 
     def onChangeGroupeDisplayed(self, evt):
         self.onChangeWeek(None)
@@ -267,15 +268,17 @@ class PlanningPanel(GPanel):
             return self.site_choice.GetClientData(self.current_site)
         else:
             return None    
+
+    def GetSelectedGroupe(self):
+        if len(creche.groupes) > 1:
+            self.current_groupe = self.groupe_choice.GetSelection()
+            return self.groupe_choice.GetClientData(self.current_groupe)
+        else:
+            return None        
             
     def onChangeWeek(self, evt=None):
         site = self.GetSelectedSite()
-
-        if len(creche.groupes) > 1:
-            self.current_groupe = self.groupe_choice.GetSelection()
-            groupe = self.groupe_choice.GetClientData(self.current_groupe)
-        else:
-            groupe = None        
+        groupe = self.GetSelectedGroupe()
         
         week_selection = self.week_choice.GetSelection()
         self.previous_button.Enable(week_selection is not 0)

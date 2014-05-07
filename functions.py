@@ -354,14 +354,13 @@ def GetInscrits(debut, fin, site=None):
     indexes = getPresentsIndexes(None, (debut, fin), site=site)
     return [creche.inscrits[i] for i in indexes]
 
-def GetLines(site, date, inscrits, presence=False):
+def GetLines(date, inscrits, presence=False, site=None, groupe=None):
     lines = []
     for inscrit in inscrits:
         if date in inscrit.jours_conges:
-            continue           
+            continue
         inscription = inscrit.GetInscription(date)
-        if inscription and (site is None or inscription.site == site):
-            # print inscrit.prenom, 
+        if inscription and (site is None or inscription.site == site) and (groupe is None or inscription.groupe == groupe):
             if presence:
                 state = inscrit.getState(date).state
                 if state < 0 or not state & PRESENT:

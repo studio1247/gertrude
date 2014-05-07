@@ -122,7 +122,7 @@ class DocumentsTests(GertrudeTestCase):
         os.chdir(self.pwd)
                     
     def test_planning_detaille(self):
-        modifications = PlanningDetailleModifications(None, (datetime.date(2010, 9, 7), datetime.date(2010, 9, 30)))
+        modifications = PlanningDetailleModifications((datetime.date(2010, 9, 7), datetime.date(2010, 9, 30)))
         errors = GenerateOODocument(modifications, filename="./test.odg", gauge=None)
         self.assertEquals(len(errors), 0)
         os.unlink("./test.odg")

@@ -149,7 +149,7 @@ class PlanningModifications(object):
             jour = 0
             while date < fin:
                 template = lignes[4+3*jour]
-                lignes_presence = GetLines(self.site, date, creche.inscrits, presence=True)
+                lignes_presence = GetLines(date, creche.inscrits, presence=True, site=self.site)
                 for i, presence in enumerate(lignes_presence):
                     if i == 0:
                         row = lignes[3+3*jour]
@@ -273,13 +273,4 @@ class PlanningModifications(object):
                         else:
                             ReplaceFields([cellule], [('p', '')])
 
-class PlanningDetailleModifications(object):
-    def __init__(self, debut):
-        self.multi = False
-        self.template = 'Planning.ods'
-        self.default_output = "Planning %s.ods" % str(debut)
-        self.debut = debut
-        self.metas = {"Format": 1, "Periodicite": 11}
-        self.email = None
-        self.site = None
         

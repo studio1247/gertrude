@@ -36,6 +36,7 @@ from doc_etats_inscriptions import EtatsInscriptionsModifications
 from doc_rapport_frequentation import RapportFrequentationModifications
 from doc_synthese_financiere import SyntheseFinanciereModifications
 from doc_releve_salaries import ReleveSalariesModifications
+from doc_etat_presence_mensuel import EtatPresenceMensuelModifications
 from facture import Facture
 from planning import *
 from sqlobjects import Day
@@ -111,12 +112,12 @@ class ReservatairesPlanningPanel(PlanningWidget):
                 if reservataire.places:
                     places_reservees += reservataire.places
                 lines.append(line)
-            line = Summary("Autres")
+            line = Summary("[Structure]")
             for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
                 line[i][0] = 0
             for start, end, value in creche.tranches_capacite.activites:
                 for i in range(start, end):
-                    line[i][0] = max(0, value-places_reservees)
+                    line[i][0] = max(0, value)
             day_lines[None] = line
             lines.append(line)
             
@@ -124,18 +125,17 @@ class ReservatairesPlanningPanel(PlanningWidget):
                 if date not in inscrit.jours_conges:
                     inscription = inscrit.GetInscription(date)
                     if inscription is not None:
-                        if date in inscrit.journees:
-                            line = inscrit.journees[date]
-                        else:
-                            line = inscrit.getJourneeReference(date)
+                        line = inscrit.getJournee(date)
                         if inscription.reservataire and inscription.reservataire in day_lines:
                             reservataire_line = day_lines[inscription.reservataire]
                         else:
-                            reservataire_line = day_lines[None]
+                            reservataire_line = None
                         for start, end, value in line.activites:
                             if value in (0, PREVISIONNEL):
                                 for i in range(start, end):
-                                    reservataire_line[i][0] -= 1
+                                    day_lines[None][i][0] -= 1
+                                    if reservataire_line is not None:
+                                        reservataire_line[i][0] -= 1
 
         self.SetLines(lines)
 
@@ -725,6 +725,19 @@ class RelevesTab(AutoTab):
         box_sizer.AddMany([(self.rapports_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
         
+        if IsTemplateFile("Etat presence mensuel.ods"):
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Etat de présence mensuel'), wx.HORIZONTAL)
+            self.etat_presence_mensuesl_choice = wx.Choice(self)
+            button = wx.Button(self, -1, u'Génération')
+            date = first_date
+            while date < last_date:
+                self.etat_presence_mensuesl_choice.Append(u'%s %d' % (months[date.month-1], date.year), date)
+                date = getNextMonthStart(date)
+            self.etat_presence_mensuesl_choice.SetSelection((today.year - first_date.year)*12 + today.month - first_date.month)
+            self.Bind(wx.EVT_BUTTON, self.EvtGenerationEtatPresenceMensuel, button)
+            box_sizer.AddMany([(self.etat_presence_mensuesl_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+        
         # Les synthèses financières
         if IsTemplateFile("Synthese financiere.ods"):
             box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Synthèse financière'), wx.HORIZONTAL)
@@ -817,6 +830,11 @@ class RelevesTab(AutoTab):
         annee = self.rapports_choice.GetClientData(self.rapports_choice.GetSelection())
         DocumentDialog(self, RapportFrequentationModifications(site, annee)).ShowModal()
         
+    def EvtGenerationEtatPresenceMensuel(self, evt):
+        site = self.GetSelectedSite()
+        date = self.etat_presence_mensuesl_choice.GetClientData(self.etat_presence_mensuesl_choice.GetSelection())
+        DocumentDialog(self, EtatPresenceMensuelModifications(site, date)).ShowModal()
+        
     def EvtGenerationSyntheseFinanciere(self, evt):
         annee = self.syntheses_choice.GetClientData(self.syntheses_choice.GetSelection())
         DocumentDialog(self, SyntheseFinanciereModifications(annee)).ShowModal()
@@ -832,7 +850,7 @@ class RelevesTab(AutoTab):
         end = self.detail_end_date.GetValue()
         if end is None:
             end = start
-        DocumentDialog(self, PlanningDetailleModifications(site, (start, end))).ShowModal()
+        DocumentDialog(self, PlanningDetailleModifications((start, end), site)).ShowModal()
         
 class AlertesTab(AutoTab):
     def __init__(self, parent):

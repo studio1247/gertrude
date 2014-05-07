@@ -808,6 +808,7 @@ class ParametersPanel(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
         observers['tarifs'] = 0
+        observers['plages'] = 0
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         sizer = wx.FlexGridSizer(0, 2, 5, 5)
         sizer.AddGrowableCol(1, 1)
@@ -893,7 +894,7 @@ class ParametersPanel(AutoTab):
         fin_ctrl = AutoTimeCtrl(self, creche, 'plages_horaires[%d].fin' % index, observers=['plages']) 
         sizer.AddMany([(wx.StaticText(self, -1, u'Plage horaire :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (debut_ctrl, 1, wx.EXPAND), (debut_ctrl.spin, 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'-'), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10), (fin_ctrl, 1, wx.EXPAND), (fin_ctrl.spin, 0, wx.EXPAND)])
-        sizer.AddMany([(AutoChoiceCtrl(self, creche, 'plages_horaires[%d].flags' % index, items=[("Fermeture", PLAGE_FERMETURE), (u"Insécable", PLAGE_INSECABLE)]), 1, wx.LEFT|wx.EXPAND, 5)])
+        sizer.AddMany([(AutoChoiceCtrl(self, creche, 'plages_horaires[%d].flags' % index, items=[("Fermeture", PLAGE_FERMETURE), (u"Insécable", PLAGE_INSECABLE)], observers=['plages']), 1, wx.LEFT|wx.EXPAND, 5)])
         delbutton = wx.BitmapButton(self, -1, delbmp)
         delbutton.index = index
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)

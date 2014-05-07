@@ -29,9 +29,10 @@ line_height = 0.75
 lines_max = 25
     
 class PlanningDetailleModifications(object):
-    def __init__(self, site, periode):
+    def __init__(self, periode, site=None, groupe=None):
         self.multi = False
         self.site = site
+        self.groupe = groupe
         self.start, self.end = periode
         if IsTemplateFile("Planning detaille.ods"):
             self.template = 'Planning detaille.ods'
@@ -65,10 +66,9 @@ class PlanningDetailleModifications(object):
             # print template.toprettyxml()
             shapes = getNamedShapes(template)
             # print shapes
-            for shape in shapes.keys():
+            for shape in shapes:
                 if shape in ["legende-heure", "ligne-heure", "ligne-quart-heure", "libelle", "separateur", "category"] or shape.startswith("activite-"):
-                    if shape in shapes:
-                        template.removeChild(shapes[shape])
+                    template.removeChild(shapes[shape])
             drawing.removeChild(template)
         
             day = self.start
@@ -77,13 +77,16 @@ class PlanningDetailleModifications(object):
                     day += datetime.timedelta(1)
                     continue
                 
-                lines_enfants = GetLines(self.site, day, creche.inscrits)
+                lines_enfants = GetLines(day, creche.inscrits, site=self.site, groupe=self.groupe)
                 if creche.tri_planning == TRI_GROUPE:
                     lines_enfants = TrieParGroupes(lines_enfants)
                     
-                lines_salaries = GetLines(self.site, day, creche.salaries)
+                lines_salaries = GetLines(day, creche.salaries, site=self.site)
                 
-                lines = lines_enfants + [None] + lines_salaries
+                if lines_salaries:
+                    lines = lines_enfants + [None] + lines_salaries
+                else:
+                    lines = lines_enfants
                 
                 pages_count = 1 + (len(lines)) / lines_max
                 for page_index in range(pages_count):

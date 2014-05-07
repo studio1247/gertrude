@@ -1667,6 +1667,19 @@ class Inscrit(object):
     def isDateConge(self, date):
         return date in creche.jours_fermeture or (creche.conges_inscription != GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT and date in self.jours_conges)
 
+    def getJournee(self, date):
+        if self.isDateConge(date):
+            return None
+        
+        inscription = self.GetInscription(date)
+        if inscription is None:
+            return None
+        
+        if date in self.journees:
+            return self.journees[date]
+        else:
+            return self.getJourneeReference(date)
+        
     def getState(self, date):
         """Retourne les infos sur une journée
         \param date la journée
