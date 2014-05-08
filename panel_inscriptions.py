@@ -289,10 +289,10 @@ class IdentitePanel(InscriptionsTab):
         self.tarifs_sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.tarifs_sizer, 0, wx.EXPAND|wx.ALL, 5)
         
-        sizer3 = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Frères et soeurs'), wx.VERTICAL)
+        sizer3 = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Frères et sœurs'), wx.VERTICAL)
         self.fratries_sizer = wx.BoxSizer(wx.VERTICAL)
         sizer3.Add(self.fratries_sizer, 0, wx.EXPAND+wx.RIGHT+wx.LEFT+wx.TOP, 10)
-        self.nouveau_frere = wx.Button(self, -1, u'Nouveau frère ou nouvelle soeur')
+        self.nouveau_frere = wx.Button(self, -1, u'Ajouter un frère ou une sœur')
         self.nouveau_frere.Disable()
         sizer3.Add(self.nouveau_frere, 0, wx.RIGHT+wx.LEFT+wx.BOTTOM, 10)
         self.Bind(wx.EVT_BUTTON, self.EvtNouveauFrere, self.nouveau_frere)
