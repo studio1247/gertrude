@@ -17,3 +17,5 @@ perms.py
 csv.py
 split.py
 *.txt
+*.pyc
+
