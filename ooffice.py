@@ -711,10 +711,14 @@ class DocumentDialog(wx.Dialog):
                 port = int(port)
         except:
             pass
-            
-        s = smtplib.SMTP(smtp_server, port)
-        if login:
-            s.login(login, password)
-        s.sendmail(creche.email, to + [creche.email], msg.as_string())
-        s.quit()
+        
+        if 1:    
+            s = smtplib.SMTP(smtp_server, port)
+            if login:
+                s.login(login, password)
+            s.sendmail(creche.email, to + [creche.email], msg.as_string())
+            s.quit()
+        else:
+            print u"From: %s, To:" % creche.email, to + [creche.email]
+            print msg.as_string()[:1200], '...'
         
