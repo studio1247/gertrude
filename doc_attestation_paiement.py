@@ -24,21 +24,26 @@ from ooffice import *
 
 class AttestationModifications(object):
     def __init__(self, who, debut, fin):
-        self.multi = False
         self.template = 'Attestation paiement.odt'
         if isinstance(who, list):
             self.inscrits = [inscrit for inscrit in who if inscrit.GetInscriptions(debut, fin)]
             self.email_subject = u"Attestations de paiement %s-%s %d" % (months[debut.month - 1], months[fin.month - 1], debut.year)
+            self.default_output = u"Attestation de paiement <prenom> <nom> %s-%s %d.odt" % (months[debut.month - 1], months[fin.month - 1], debut.year)
             self.email_to = None
+            self.multi = True
         else:
             self.inscrits = [who]
             self.email_subject = u"Attestation de paiement %s %s %s-%s %d" % (who.prenom, who.nom, months[debut.month - 1], months[fin.month - 1], debut.year)
+            self.default_output = self.email_subject + ".odt"
             self.email_to = list(set([parent.email for parent in who.parents.values() if parent and parent.email]))
-        self.default_output = self.email_subject + ".odt"
+            self.multi = False
         self.debut, self.fin = debut, fin
         self.email = True
         self.site = None
         self.email_text = "Accompagnement attestation paiement.txt"
+
+    def GetSimpleModifications(self, filename):
+        return [(filename.replace("<prenom>", inscrit.prenom).replace("<nom>", inscrit.nom), AttestationModifications(inscrit, self.debut, self.fin)) for inscrit in self.inscrits]
         
     def execute(self, filename, dom):
         if filename != 'content.xml':

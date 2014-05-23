@@ -640,7 +640,9 @@ class DocumentDialog(wx.Dialog):
             if self.modifications.multi:
                 simple_modifications = self.modifications.GetSimpleModifications(self.oo_filename)
                 emails = '\n'.join([" - %s (%s)" % (modifs.email_subject, ", ".join(modifs.email_to)) for filename, modifs in simple_modifications])
-                dlg = wx.MessageDialog(self, u"Ces emails seront envoyés :\n" +emails, 'Confirmation', wx.OK|wx.CANCEL|wx.ICON_WARNING)
+                if len(emails) > 1000:
+                    emails = emails[:1000] + "\n..."
+                dlg = wx.MessageDialog(self, u"Ces emails seront envoyés :\n" + emails, 'Confirmation', wx.OK|wx.CANCEL|wx.ICON_WARNING)
                 response = dlg.ShowModal()
                 dlg.Destroy()
                 if response != wx.ID_OK:
