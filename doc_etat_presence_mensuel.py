@@ -59,8 +59,15 @@ class EtatPresenceMensuelModifications(object):
             date = self.date
             while date.month == self.date.month:
                 journee = inscrit.getJournee(date)
-                cantine += 1
-                garderie += 1
+                if journee:
+                    if journee.GetActivity(8.0):
+                        garderie += 1
+                    if journee.GetActivity(12.5):
+                        cantine += 1
+                    if journee.GetActivity(13.5):
+                        garderie += 1
+                    if journee.GetActivity(18.0):
+                        garderie += 1
                 date += datetime.timedelta(days=1)
             
             ligne = template.cloneNode(1)

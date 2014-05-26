@@ -303,7 +303,16 @@ class Day(object):
             if self.activites[(start, end, value)] is not None:
                 print 'suppression %s %d' % (self.nom, self.activites[(start, end, value)])
                 sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.table, (self.activites[(start, end, value)],))
-            del self.activites[(start, end, value)]  
+            del self.activites[(start, end, value)]
+            
+    def GetActivity(self, heure):
+        if not isinstance(heure, int):
+            heure = int(round(heure * 12))
+        for start, end, value in self.activites:
+            if start <= heure and heure < end:
+                return self.activites[(start, end, value)]
+        else:
+            return None
 
 class JourneeCapacite(Day):
     table = "CAPACITE"
