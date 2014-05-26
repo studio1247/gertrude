@@ -97,17 +97,17 @@ class RapportFrequentationModifications(object):
                         inscriptions = inscrit.GetInscriptions(debut, fin)
                         if inscriptions and (self.site is None or inscriptions[0].site == self.site):
                             facture = Facture(inscrit, self.annee, mois+1)
-                            heures_realisees = facture.heures_realisees
+                            facture_heures_realisees = facture.heures_realisees
                             if config.options & HEURES_CONTRAT:
-                                heures_facturees = facture.heures_facture
+                                facture_heures_facturees = facture.heures_facture
                             else:
-                                heures_facturees = facture.heures_facturees
+                                facture_heures_facturees = facture.heures_facturees
                             if inscrit.categorie:
                                 nom = inscrit.categorie.nom.lower()
-                                heures_realisees[nom] += heures_realisees 
-                                heures_facturees[nom] += heures_facturees 
-                            total_heures_realisees += heures_realisees
-                            total_heures_facturees += heures_facturees
+                                heures_realisees[nom] += facture_heures_realisees 
+                                heures_facturees[nom] += facture_heures_facturees 
+                            total_heures_realisees += facture_heures_realisees
+                            total_heures_facturees += facture_heures_facturees
 
                     taux_remplissage = 0.0
                     if heures_accueil:
