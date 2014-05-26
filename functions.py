@@ -565,16 +565,17 @@ def GetInscritSexe(inscrit):
 def GetTelephone(inscrit):
     result = []
     for key in inscrit.parents:
-        if inscrit.parents[key].telephone_domicile:
-            result.append(inscrit.parents[key].telephone_domicile)
-        if inscrit.parents[key].telephone_portable:
-            result.append(inscrit.parents[key].telephone_portable)
+        if inscrit.parents[key]:
+            if inscrit.parents[key].telephone_domicile:
+                result.append(inscrit.parents[key].telephone_domicile)
+            if inscrit.parents[key].telephone_portable:
+                result.append(inscrit.parents[key].telephone_portable)
     return ", ".join(set(result))
 
 def GetEmail(inscrit):
     result = []
     for key in inscrit.parents:
-        if inscrit.parents[key].email:
+        if inscrit.parents[key] and inscrit.parents[key].email:
             result.append(inscrit.parents[key].email)
     return ", ".join(result)
             
