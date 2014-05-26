@@ -63,8 +63,6 @@ class RapportFrequentationModifications(object):
                     self.metas[name] = int(value)
                 else:
                     self.metas[name] = value
-            
-                print name, value
             return None        
 
         elif filename == 'content.xml':
