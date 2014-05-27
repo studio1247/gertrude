@@ -838,6 +838,7 @@ class ParametersPanel(AutoTab):
         mode_facturation_choice = AutoChoiceCtrl(self, creche, 'mode_facturation', modes_facturation)
         self.Bind(wx.EVT_CHOICE, self.onModeFacturationChoice, mode_facturation_choice)
         sizer.AddMany([(wx.StaticText(self, -1, u'Mode de facturation :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (mode_facturation_choice, 1, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, ''), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'mensualisation', [(u'Avec mensualisation', True), (u'Sans mensualisation', False)]), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, ''), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'temps_facturation', temps_facturation), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Revenus pris en compte :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'periode_revenus', [(u'Année N-2', REVENUS_YM2), (u'CAFPRO', REVENUS_CAFPRO)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u"Clôture des factures :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'cloture_factures', [(u'Activée', True), (u'Désactivée', False)]), 0, wx.EXPAND)])

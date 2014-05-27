@@ -25,7 +25,7 @@ from sqlobjects import *
 from facture import FactureCloturee
 import wx
 
-VERSION = 78
+VERSION = 79
 
 def getdate(s):
     if s is None:
@@ -89,6 +89,7 @@ class SQLConnection(object):
             periode_revenus INTEGER,
             mode_facturation INTEGER,
             temps_facturation INTEGER,
+            mensualisation BOOLEAN,
             conges_inscription INTEGER,
             tarification_activites INTEGER,
             traitement_maladie INTEGER,
@@ -111,7 +112,8 @@ class SQLConnection(object):
             gestion_maladie_sans_justificatif BOOLEAN,
             gestion_preavis_conges BOOLEAN,
             gestion_depart_anticipe BOOLEAN,
-            alerte_depassement_planning BOOLEAN
+            alerte_depassement_planning BOOLEAN,
+            last_tablette_synchro VARCHAR
           );""")
         
         cur.execute("""
@@ -471,8 +473,8 @@ class SQLConnection(object):
         for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", u"15 août", "1er novembre", "11 novembre", u"25 décembre", u"Lundi de Pâques", "Jeudi de l'Ascension"):
             cur.execute("INSERT INTO CONGES (idx, debut) VALUES (NULL, ?)", (label, ))
         cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
-        cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, preinscriptions, presences_previsionnelles, presences_supplementaires, modes_inscription, minimum_maladie, email, type, periode_revenus, mode_facturation, temps_facturation, conges_inscription, tarification_activites, traitement_maladie, facturation_jours_feries, facturation_periode_adaptation, formule_taux_horaire, formule_taux_effort, gestion_alertes, age_maximum, cloture_factures, arrondi_heures, arrondi_facturation, arrondi_heures_salaries, gestion_maladie_hospitalisation, tri_planning, smtp_server, caf_email, mode_accueil_defaut, gestion_absences_non_prevenues, gestion_maladie_sans_justificatif, gestion_preavis_conges, gestion_depart_anticipe, alerte_depassement_planning) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-                     ("","","","","",7.75,18.5,7.75,19.0,15,False,False,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,3,"",TYPE_PARENTAL,REVENUS_YM2,FACTURATION_PSU,FACTURATION_FIN_MOIS,0,0,DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES,JOURS_FERIES_NON_DEDUITS,PERIODE_ADAPTATION_FACTUREE_NORMALEMENT,"None","None",False,3,False,SANS_ARRONDI,SANS_ARRONDI,SANS_ARRONDI,False,0,"","",0,False,False,False,False,False))
+        cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, preinscriptions, presences_previsionnelles, presences_supplementaires, modes_inscription, minimum_maladie, email, type, periode_revenus, mode_facturation, temps_facturation, mensualisation, conges_inscription, tarification_activites, traitement_maladie, facturation_jours_feries, facturation_periode_adaptation, formule_taux_horaire, formule_taux_effort, gestion_alertes, age_maximum, cloture_factures, arrondi_heures, arrondi_facturation, arrondi_heures_salaries, gestion_maladie_hospitalisation, tri_planning, smtp_server, caf_email, mode_accueil_defaut, gestion_absences_non_prevenues, gestion_maladie_sans_justificatif, gestion_preavis_conges, gestion_depart_anticipe, alerte_depassement_planning, last_tablette_synchro) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                     ("","","","","",7.75,18.5,7.75,19.0,15,False,False,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,3,"",TYPE_PARENTAL,REVENUS_YM2,FACTURATION_PSU,FACTURATION_FIN_MOIS,True,0,0,DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES,JOURS_FERIES_NON_DEDUITS,PERIODE_ADAPTATION_FACTUREE_NORMALEMENT,"None","None",False,3,False,SANS_ARRONDI,SANS_ARRONDI,SANS_ARRONDI,False,0,"","",0,False,False,False,False,False,""))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2006, 9, 1), datetime.date(2007, 8, 31),  6547.92, 51723.60))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2007, 9, 1), datetime.date(2008, 12, 31), 6660.00, 52608.00))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2009, 1, 1), datetime.date(2009, 12, 31), 6876.00, 53400.00))
@@ -510,11 +512,11 @@ class SQLConnection(object):
 
         cur = self.cursor()
 
-        cur.execute('SELECT nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, preinscriptions, presences_previsionnelles, presences_supplementaires, modes_inscription, minimum_maladie, email, type, periode_revenus, mode_facturation, temps_facturation, conges_inscription, tarification_activites, traitement_maladie, facturation_jours_feries, facturation_periode_adaptation, formule_taux_horaire, formule_taux_effort, gestion_alertes, age_maximum, cloture_factures, arrondi_heures, arrondi_facturation, arrondi_heures_salaries, gestion_maladie_hospitalisation, tri_planning, smtp_server, caf_email, mode_accueil_defaut, gestion_absences_non_prevenues, gestion_maladie_sans_justificatif, gestion_preavis_conges, gestion_depart_anticipe, alerte_depassement_planning, idx FROM CRECHE')
+        cur.execute('SELECT nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, preinscriptions, presences_previsionnelles, presences_supplementaires, modes_inscription, minimum_maladie, email, type, periode_revenus, mode_facturation, mensualisation, temps_facturation, conges_inscription, tarification_activites, traitement_maladie, facturation_jours_feries, facturation_periode_adaptation, formule_taux_horaire, formule_taux_effort, gestion_alertes, age_maximum, cloture_factures, arrondi_heures, arrondi_facturation, arrondi_heures_salaries, gestion_maladie_hospitalisation, tri_planning, smtp_server, caf_email, mode_accueil_defaut, gestion_absences_non_prevenues, gestion_maladie_sans_justificatif, gestion_preavis_conges, gestion_depart_anticipe, alerte_depassement_planning, last_tablette_synchro, idx FROM CRECHE')
         creche_entry = cur.fetchall()
         if len(creche_entry) > 0:
             creche = Creche()
-            creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.telephone, creche.ouverture, creche.fermeture, creche.affichage_min, creche.affichage_max, creche.granularite, creche.preinscriptions, creche.presences_previsionnelles, creche.presences_supplementaires, creche.modes_inscription, creche.minimum_maladie, creche.email, creche.type, creche.periode_revenus, creche.mode_facturation, creche.temps_facturation, creche.conges_inscription, creche.tarification_activites, creche.traitement_maladie, creche.facturation_jours_feries, creche.facturation_periode_adaptation, formule_taux_horaire, formule_taux_effort, creche.gestion_alertes, creche.age_maximum, creche.cloture_factures, creche.arrondi_heures, creche.arrondi_facturation, creche.arrondi_heures_salaries, creche.gestion_maladie_hospitalisation, creche.tri_planning, creche.smtp_server, creche.caf_email, creche.mode_accueil_defaut, creche.gestion_absences_non_prevenues, creche.gestion_maladie_sans_justificatif, creche.gestion_preavis_conges, creche.gestion_depart_anticipe, creche.alerte_depassement_planning, idx = creche_entry[0]
+            creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.telephone, creche.ouverture, creche.fermeture, creche.affichage_min, creche.affichage_max, creche.granularite, creche.preinscriptions, creche.presences_previsionnelles, creche.presences_supplementaires, creche.modes_inscription, creche.minimum_maladie, creche.email, creche.type, creche.periode_revenus, creche.mode_facturation, creche.mensualisation, creche.temps_facturation, creche.conges_inscription, creche.tarification_activites, creche.traitement_maladie, creche.facturation_jours_feries, creche.facturation_periode_adaptation, formule_taux_horaire, formule_taux_effort, creche.gestion_alertes, creche.age_maximum, creche.cloture_factures, creche.arrondi_heures, creche.arrondi_facturation, creche.arrondi_heures_salaries, creche.gestion_maladie_hospitalisation, creche.tri_planning, creche.smtp_server, creche.caf_email, creche.mode_accueil_defaut, creche.gestion_absences_non_prevenues, creche.gestion_maladie_sans_justificatif, creche.gestion_preavis_conges, creche.gestion_depart_anticipe, creche.alerte_depassement_planning, creche.last_tablette_synchro, idx = creche_entry[0]
             creche.formule_taux_horaire, creche.formule_taux_effort, creche.idx = eval(formule_taux_horaire), eval(formule_taux_effort), idx
         else:
             creche = Creche()
@@ -1521,6 +1523,12 @@ class SQLConnection(object):
               );""")
             if debut_pause != 0 and fin_pause != 0:
                 cur.execute('INSERT INTO PLAGESHORAIRES (idx, debut, fin, flags) VALUES (NULL,?,?,?)', (debut_pause, fin_pause, PLAGE_FERMETURE))                    
+
+        if version < 79:
+            cur.execute("ALTER TABLE CRECHE ADD mensualisation BOOLEAN;")
+            cur.execute("UPDATE CRECHE SET mensualisation=?", (True,))
+            cur.execute("ALTER TABLE CRECHE ADD last_tablette_synchro VARCHAR;")
+            cur.execute("UPDATE CRECHE SET last_tablette_synchro=?", ("",))
 
         if version < VERSION:
             try:

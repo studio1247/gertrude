@@ -894,6 +894,7 @@ class Creche(object):
         self.minimum_maladie = 15
         self.periode_revenus = REVENUS_YM2
         self.mode_facturation = FACTURATION_FORFAIT_10H
+        self.mensualisation = True
         self.temps_facturation = FACTURATION_FIN_MOIS
         self.conges_inscription = 0
         self.tarification_activites = ACTIVITES_NON_FACTUREES
@@ -927,6 +928,7 @@ class Creche(object):
         self.gestion_depart_anticipe = False
         self.alerte_depassement_planning = False
         self.tri_planning = TRI_PRENOM
+        self.last_tablette_synchro = ""
         self.alertes = {}
         self.calcule_jours_conges()
 
@@ -1177,7 +1179,7 @@ class Creche(object):
                 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'periode_revenus', 'mode_facturation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'age_maximum', 'cloture_factures', 'arrondi_heures', 'arrondi_facturation', 'arrondi_heures_salaries', 'gestion_maladie_hospitalisation', 'gestion_absences_non_prevenues', 'gestion_maladie_sans_justificatif', 'gestion_preavis_conges', 'gestion_depart_anticipe', 'alerte_depassement_planning', 'tri_planning', 'smtp_server', 'caf_email', 'mode_accueil_defaut'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'periode_revenus', 'mode_facturation', 'mensualisation', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'age_maximum', 'cloture_factures', 'arrondi_heures', 'arrondi_facturation', 'arrondi_heures_salaries', 'gestion_maladie_hospitalisation', 'gestion_absences_non_prevenues', 'gestion_maladie_sans_justificatif', 'gestion_preavis_conges', 'gestion_depart_anticipe', 'alerte_depassement_planning', 'tri_planning', 'smtp_server', 'caf_email', 'mode_accueil_defaut', 'last_tablette_synchro'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
