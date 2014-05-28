@@ -58,6 +58,7 @@ class DayPlanningPanel(PlanningWidget):
                     else:
                         line.reference = inscription.getJourneeReference(self.date)
                     line.insert = None
+                    line.key = self.date
                 elif creche.conges_inscription == GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT and self.date in inscrit.jours_conges:
                     reference = JourneeReferenceInscription(None, 0)
                     line = Journee(inscrit, self.date, reference)
@@ -131,7 +132,7 @@ class DayPlanningPanel(PlanningWidget):
         if lignes_salaries:
             lignes_enfants.append(None)
         self.SetLines(lignes_enfants + lignes_salaries)
-        
+    
     def GetSummaryDynamicText(self):
         heures = 0.0
         for line in self.lines:

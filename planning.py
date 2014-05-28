@@ -57,6 +57,7 @@ BUTTON_BITMAPS = { ABSENT: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BI
                    MALADE_SANS_JUSTIFICATIF: (wx.Bitmap(GetBitmapFile("icone_maladie_sans_justificatif.png"), wx.BITMAP_TYPE_PNG), u'Maladie sans justificatif'),
                    ABSENCE_NON_PREVENUE: (wx.Bitmap(GetBitmapFile("icone_absence_non_prevenue.png"), wx.BITMAP_TYPE_PNG), u'Absence non prévenue'),
                    ABSENCE_CONGE_SANS_PREAVIS: (wx.Bitmap(GetBitmapFile("icone_absence_sans_preavis.png"), wx.BITMAP_TYPE_PNG), u'Congés sans préavis'),
+                   CONGES_DEPASSEMENT: (wx.Bitmap(GetBitmapFile("icone_conges_depassement.png"), wx.BITMAP_TYPE_PNG), u'Absence non déductible (dépassement)'),
                    }
 
 def getPlanningWidth():
@@ -589,6 +590,10 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                     if activities_state:
                         state &= ~activities_state
                         state |= PRESENT
+                elif state == VACANCES and line.inscription:
+                    if line.inscription.IsNombreSemainesCongesAtteint(line.key):
+                        state = CONGES_DEPASSEMENT
+                    
             bitmap, tooltip = BUTTON_BITMAPS[state]
             button.SetBitmapLabel(bitmap)
             button.SetToolTip(wx.ToolTip(tooltip))

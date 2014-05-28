@@ -1408,7 +1408,21 @@ class Inscription(PeriodeReference):
         result = Journee(self.inscrit, date, reference)
         result.reference = reference
         return result
-            
+    
+    def IsNombreSemainesCongesAtteint(self, jalon):
+        if self.debut:
+            restant = self.semaines_conges * self.GetJoursHeuresReference()[0]
+            date = self.debut
+            while date < jalon:
+                state = self.inscrit.getState(date)
+                if state.state == VACANCES:
+                    # print date
+                    restant -= 1
+                    if restant <= 0:
+                        return True
+                date += datetime.timedelta(1)
+        return False
+    
     def IsInPeriodeAdaptation(self, date):
         if self.debut is None or self.fin_periode_adaptation is None:
             return False

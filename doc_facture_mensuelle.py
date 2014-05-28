@@ -33,6 +33,7 @@ couleurs = { SUPPLEMENT: 'A2',
              ABSENT: 'E2',
              PRESENCE_NON_FACTUREE: 'A3',
              ABSENCE_NON_PREVENUE: 'B3',
+             CONGES_DEPASSEMENT: 'D3',
              ABSENCE_CONGE_SANS_PREAVIS: 'B3',
              CONGES: 'C3'
            }
@@ -135,7 +136,7 @@ class FactureModifications(object):
                                     details = " (%s)" % GetHeureString(facture.jours_presence_non_facturee[date])
                                 elif date in facture.jours_absence_non_prevenue:
                                     state = ABSENCE_NON_PREVENUE
-                                    details = " (%s)" % GetHeureString(facture.jours_absence_non_prevenue[date])
+                                    details = " (%s)" % GetHeureString(facture.jours_absence_non_prevenue[date])                                    
                                 elif date in facture.jours_presence_selon_contrat:
                                     state = PRESENT
                                     details = " (%s)" % GetHeureString(facture.jours_presence_selon_contrat[date])
@@ -146,8 +147,11 @@ class FactureModifications(object):
                                     state = MALADE
                                 elif inscrit.isDateConge(date):
                                     state = CONGES
-                                elif date in facture.jours_vacances:
+                                elif date in facture.jours_conges_non_factures:
                                     state = VACANCES
+                                elif date in facture.jours_vacances:
+                                    state = CONGES_DEPASSEMENT
+                                    print "depassement", date
                                 else:
                                     state = ABSENT
                                 text_node.firstChild.replaceWholeText('%d%s' % (date.day, details))

@@ -56,6 +56,7 @@ class FactureFinMois(object):
         self.jours_maladie = []
         self.jours_maladie_deduits = []
         self.jours_vacances = []
+        self.jours_conges_non_factures = []
         self.raison_deduction = set()
         self.supplement_activites = 0.0
         self.previsionnel = False
@@ -189,7 +190,8 @@ class FactureFinMois(object):
                     elif state == VACANCES:
                         if heures_reference > 0:
                             self.jours_vacances.append(date)
-                        if creche.gestion_preavis_conges:
+                        if (not creche.mensualisation and not inscription.IsNombreSemainesCongesAtteint(date)) or creche.gestion_preavis_conges:
+                            self.jours_conges_non_factures.append(date)
                             self.heures_facturees_par_mode[cotisation.mode_garde] -= heures_reference
                             self.deduction += cotisation.montant_heure_garde * heures_reference
                             self.formule_deduction.append("%s * %.2f" % (GetHeureString(heures_reference), cotisation.montant_heure_garde))
@@ -390,6 +392,7 @@ class FactureDebutMois(FactureFinMois):
         self.heures_supplementaires = self.facture_precedente.heures_supplementaires
         self.jours_maladie = self.facture_precedente.jours_maladie
         self.jours_maladie_deduits = self.facture_precedente.jours_maladie_deduits
+        self.jours_conges_non_factures = self.facture_precedente.jours_conges_non_factures
         self.jours_vacances = self.facture_precedente.jours_vacances
         self.raison_deduction = self.facture_precedente.raison_deduction
         self.previsionnel |= self.facture_precedente.previsionnel
