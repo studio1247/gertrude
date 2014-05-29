@@ -38,7 +38,7 @@ if sys.platform == 'win32':
         if os.path.isfile(exe):
             os.remove(exe)
         os.rename("./Output/setup.exe", exe)
-        print u"Fichier %s créé" % exe
+        print u"File %s generated!" % exe
         
 elif "linux" in sys.platform:
     if not os.path.exists("./gertrude.py"):
