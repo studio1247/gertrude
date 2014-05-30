@@ -66,7 +66,7 @@ class RapportFrequentationModifications(object):
             return None        
 
         elif filename == 'content.xml':
-            if self.metas["Format"] == 1:
+            if "Format" in self.metas and self.metas["Format"] == 1:
                 ReplaceFields(dom, fields)
                 spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
                 feuille = spreadsheet.getElementsByTagName("table:table").item(0)

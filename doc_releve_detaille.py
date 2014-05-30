@@ -102,7 +102,7 @@ class ReleveDetailleModifications(object):
             return []
 
         elif filename == 'content.xml':
-            if self.metas['Format'] == "Optimomes":
+            if 'Format' in self.metas and self.metas['Format'] == "Optimomes":
                 spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
                 feuille = spreadsheet.getElementsByTagName("table:table").item(0)
                 lines = feuille.getElementsByTagName("table:table-row")
