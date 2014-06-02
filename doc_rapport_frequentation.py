@@ -94,18 +94,21 @@ class RapportFrequentationModifications(object):
                     for inscrit in inscrits:
                         inscriptions = inscrit.GetInscriptions(debut, fin)
                         if inscriptions and (self.site is None or inscriptions[0].site == self.site):
-                            facture = Facture(inscrit, self.annee, mois+1)
-                            facture_heures_realisees = facture.heures_realisees
-                            if config.options & HEURES_CONTRAT:
-                                facture_heures_facturees = facture.heures_facture
-                            else:
-                                facture_heures_facturees = facture.heures_facturees
-                            if inscrit.categorie:
-                                nom = inscrit.categorie.nom.lower()
-                                heures_realisees[nom] += facture_heures_realisees 
-                                heures_facturees[nom] += facture_heures_facturees 
-                            total_heures_realisees += facture_heures_realisees
-                            total_heures_facturees += facture_heures_facturees
+                            try:
+                                facture = Facture(inscrit, self.annee, mois+1)
+                                facture_heures_realisees = facture.heures_realisees
+                                if config.options & HEURES_CONTRAT:
+                                    facture_heures_facturees = facture.heures_facture
+                                else:
+                                    facture_heures_facturees = facture.heures_facturees
+                                if inscrit.categorie:
+                                    nom = inscrit.categorie.nom.lower()
+                                    heures_realisees[nom] += facture_heures_realisees 
+                                    heures_facturees[nom] += facture_heures_facturees 
+                                total_heures_realisees += facture_heures_realisees
+                                total_heures_facturees += facture_heures_facturees
+                            except CotisationException, e:
+                                self.errors[GetPrenomNom(inscrit)] = e.errors
 
                     taux_remplissage = 0.0
                     if heures_accueil:
