@@ -543,11 +543,17 @@ class AutoTextCtrl(wx.TextCtrl, AutoMixin):
     def __init__(self, parent, instance, member, fixed_instance=False, observers=[], *args, **kwargs):
         wx.TextCtrl.__init__(self, parent, -1, *args, **kwargs)
         AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
+        
+    def __del__(self):
+        AutoMixin.__del__(self)
 
 class AutoComboBox(wx.ComboBox, AutoMixin):
     def __init__(self, parent, instance, member, fixed_instance=False, observers=[], *args, **kwargs):
         wx.ComboBox.__init__(self, parent, -1, *args, **kwargs)
         AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
+
+    def __del__(self):
+        AutoMixin.__del__(self)
         
 class AutoDateCtrl(DateCtrl, AutoMixin):
     def __init__(self, parent, instance, member, fixed_instance=False, observers=[], *args, **kwargs):
@@ -556,12 +562,18 @@ class AutoDateCtrl(DateCtrl, AutoMixin):
         # self.Bind(wx.EVT_DATE_CHANGED, self.onText, self)
         # DateCtrl.__init__(self, parent, -1, *args, **kwargs)
         # AutoMixin.__init__(self, parent, instance, member)
+
+    def __del__(self):
+        AutoMixin.__del__(self)
         
 class AutoTimeCtrl(TimeCtrl, AutoMixin):
     def __init__(self, parent, instance, member, fixed_instance=False, observers=[], *args, **kwargs):
         TimeCtrl.__init__(self, parent)
         AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
         self.SetMin("05:00")
+
+    def __del__(self):
+        AutoMixin.__del__(self)
         
     def SetValue(self, value):
         if isinstance(value, float):
@@ -582,10 +594,16 @@ class AutoNumericCtrl(NumericCtrl, AutoMixin):
         NumericCtrl.__init__(self, parent, *args, **kwargs)
         AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
 
+    def __del__(self):
+        AutoMixin.__del__(self)
+
 class AutoPhoneCtrl(PhoneCtrl, AutoMixin):
     def __init__(self, parent, instance, member, fixed_instance=False, observers=[], *args, **kwargs):
         PhoneCtrl.__init__(self, parent, -1, *args, **kwargs)
         AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
+
+    def __del__(self):
+        AutoMixin.__del__(self)
 
 class AutoChoiceCtrl(wx.Choice, AutoMixin):
     def __init__(self, parent, instance, member, items=None, fixed_instance=False, observers=[], *args, **kwargs):
@@ -595,6 +613,9 @@ class AutoChoiceCtrl(wx.Choice, AutoMixin):
             self.SetItems(items)
         AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
         parent.Bind(wx.EVT_CHOICE, self.onChoice, self)
+
+    def __del__(self):
+        AutoMixin.__del__(self)
 
     def Append(self, item, clientData):
         index = wx.Choice.Append(self, item, clientData)
@@ -640,6 +661,9 @@ class AutoCheckBox(wx.CheckBox, AutoMixin):
         AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
         parent.Bind(wx.EVT_CHECKBOX, self.EvtCheckbox, self)
 
+    def __del__(self):
+        AutoMixin.__del__(self)
+
     def EvtCheckbox(self, event):
         previous_value = eval('self.instance.%s' % self.member)
         if event.Checked():
@@ -658,6 +682,9 @@ class AutoBinaryChoiceCtrl(wx.Choice, AutoMixin):
             self.SetItems(items)
         AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
         parent.Bind(wx.EVT_CHOICE, self.onChoice, self)
+
+    def __del__(self):
+        AutoMixin.__del__(self)
     
     def Append(self, item, clientData):
         index = wx.Choice.Append(self, item, clientData)
@@ -699,6 +726,9 @@ class AutoRadioBox(wx.RadioBox, AutoMixin):
         wx.RadioBox.__init__(self, parent, -1, label=label, choices=choices, *args, **kwargs)
         AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
         parent.Bind(wx.EVT_RADIOBOX, self.EvtRadiobox, self)
+
+    def __del__(self):
+        AutoMixin.__del__(self)
 
     def EvtRadiobox(self, event):
         self.AutoChange(event.GetInt())
