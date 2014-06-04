@@ -307,36 +307,71 @@ class PlanningPanel(GPanel):
     def onTabletteSynchro(self, evt):
         journal = config.connection.LoadJournal()
         
+        class PeriodePresence(object):
+            def __init__(self, date, arrivee, depart=None):
+                self.date = date
+                self.arrivee = arrivee
+                self.depart = depart
+        
         array = {}
-        for line in journal.split("\n"):
+        lines = journal.split("\n")
+        
+        index = -1
+        if len(creche.last_tablette_synchro) > 20:
+            try:
+                index = lines.index(creche.last_tablette_synchro)
+            except:
+                pass
+
+        for line in lines[index+1:]:
             try:
                 label, idx, date = line.split()
                 idx = int(idx)
-                date = time.strptime(date, "%Y-%m-%d@%H:%M")
+                tm = time.strptime(date, "%Y-%m-%d@%H:%M")
+                date = datetime.date(tm.tm_year, tm.tm_mon, tm.tm_mday)
                 if idx not in array:
                     array[idx] = []
                 if label == "Arrivee":
-                    array[idx].append([date])
+                    arrivee = tm.tm_hour * 12 + tm.tm_min / creche.granularite * (creche.granularite/BASE_GRANULARITY)
+                    array[idx].append(PeriodePresence(date, arrivee))
                 elif label == "Depart":
-                    array[idx][-1].append(date)
+                    depart = tm.tm_hour * 12 + (tm.tm_min+creche.granularite-1) / creche.granularite * (creche.granularite/BASE_GRANULARITY)
+                    last = array[idx][-1]
+                    if last.date == date and last.arrivee:
+                        last.depart = depart
+                    else:
+                        array[idx].append(PeriodePresence(date, None, depart))
+                creche.last_tablette_synchro = line
             except Exception, e:
                 pass
-            
+        
+        errors = []            
         for key in array:
             inscrit = creche.GetInscrit(key)
             if inscrit:
                 for periode in array[key]:
-                    if len(periode) == 2:
-                        start, end = periode
-                        date = datetime.date(start.tm_year, start.tm_mon, start.tm_mday)
-                        s = start.tm_hour * 12 + start.tm_min / creche.granularite * (creche.granularite/BASE_GRANULARITY)
-                        e = end.tm_hour * 12 + (end.tm_min+creche.granularite-1) / creche.granularite * (creche.granularite/BASE_GRANULARITY)
-                        if date in inscrit.journees:
-                            inscrit.journees[date].remove_activities(0|PREVISIONNEL)
-                        else:
-                            inscrit.journees[date] = Journee(inscrit, date)
-                        inscrit.journees[date].SetActivity(s, e, 0)
-                        history.Append(None)
+                    if not periode.arrivee:
+                        reference = inscrit.getJournee(periode.date)
+                        periode.arrivee = reference.GetPlageHoraire()[0]
+                        errors.append(u"%s : Pas d'arrivée enregistrée le %s" % (GetPrenomNom(inscrit), periode.date))
+                    elif not periode.depart:
+                        reference = inscrit.getJournee(date)
+                        periode.depart = reference.GetPlageHoraire()[-1]
+                        errors.append(u"%s : Pas de départ enregistré le %s" % (GetPrenomNom(inscrit), periode.date))
+                    
+                    if periode.date in inscrit.journees:
+                        inscrit.journees[periode.date].remove_activities(0)
+                        inscrit.journees[periode.date].remove_activities(0|PREVISIONNEL)
+                    else:
+                        inscrit.journees[periode.date] = Journee(inscrit, periode.date)
+                    inscrit.journees[periode.date].SetActivity(periode.arrivee, periode.depart, 0)
+                    history.Append(None)
+            else:
+                errors.append(u"Inscrit %d: Inconnu!" % key)
+        if errors:
+            dlg = wx.MessageDialog(None, u"\n".join(errors), u'Erreurs de saisie tablette', wx.OK|wx.ICON_WARNING)
+            dlg.ShowModal()
+            dlg.Destroy()
         
         self.UpdateContents()
         
