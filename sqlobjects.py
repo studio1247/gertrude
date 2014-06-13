@@ -1034,8 +1034,8 @@ class Creche(object):
             sql_connection.execute('UPDATE CRECHE SET formule_taux_horaire=?', (str(self.formule_taux_horaire),))
         self.conversion_formule_taux_horaire = self.GetFormuleConversion(self.formule_taux_horaire)
     
-    def eval_taux_horaire(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom):
-        return self.EvalFormule(self.conversion_formule_taux_horaire, mode, handicap, revenus, enfants, jours, heures, reservataire, nom)
+    def eval_taux_horaire(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois):
+        return self.EvalFormule(self.conversion_formule_taux_horaire, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois)
     
     def formule_taux_horaire_needs_revenus(self):
         if self.mode_facturation in (FACTURATION_FORFAIT_10H, FACTURATION_PSU, FACTURATION_PSU_TAUX_PERSONNALISES):
@@ -1067,7 +1067,7 @@ class Creche(object):
         else:
             return None
         
-    def EvalFormule(self, formule, mode, handicap, revenus, enfants, jours, heures, reservataire, nom):
+    def EvalFormule(self, formule, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois):
         hg = MODE_HALTE_GARDERIE
         creche = MODE_CRECHE
         forfait = MODE_FORFAIT_HORAIRE
@@ -1087,10 +1087,14 @@ class Creche(object):
         forfait = MODE_FORFAIT_HORAIRE
         urgence = MODE_ACCUEIL_URGENCE
         handicap = False
+        chomage = 0
+        conge_parental = 0
         mode = hg
         revenus = 20000
         jours = 5
         heures = 60
+        heures_mois = 60*4.33
+        parents = 2
         enfants = 1
         reservataire = False
         nom = "gertrude"
@@ -1106,8 +1110,8 @@ class Creche(object):
             sql_connection.execute('UPDATE CRECHE SET formule_taux_effort=?', (str(self.formule_taux_effort),))
         self.conversion_formule_taux_effort = self.GetFormuleConversion(self.formule_taux_effort)
     
-    def eval_taux_effort(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom):
-        return self.EvalFormule(self.conversion_formule_taux_effort, mode, handicap, revenus, enfants, jours, heures, reservataire, nom)
+    def eval_taux_effort(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois):
+        return self.EvalFormule(self.conversion_formule_taux_effort, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois)
         
     def test_formule_taux_effort(self, index):
         return self.TestFormule(self.conversion_formule_taux_effort, index)
@@ -1191,6 +1195,7 @@ class Revenu(object):
         self.fin = None
         self.revenu = ''
         self.chomage = False
+        self.conge_parental = False
         self.regime = 0
 
         if creation:
@@ -1198,7 +1203,7 @@ class Revenu(object):
 
     def create(self):
         print 'nouveau revenu'
-        result = sql_connection.execute('INSERT INTO REVENUS (idx, parent, debut, fin, revenu, chomage, regime) VALUES(NULL,?,?,?,?,?,?)', (self.parent.idx, self.debut, self.fin, self.revenu, self.chomage, self.regime))
+        result = sql_connection.execute('INSERT INTO REVENUS (idx, parent, debut, fin, revenu, chomage, conge_parental, regime) VALUES(NULL,?,?,?,?,?,?,?)', (self.parent.idx, self.debut, self.fin, self.revenu, self.chomage, self.conge_parental, self.regime))
         self.idx = result.lastrowid
         
     def delete(self):
@@ -1207,7 +1212,7 @@ class Revenu(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['debut', 'fin', 'revenu', 'chomage', 'regime'] and self.idx:
+        if name in ['debut', 'fin', 'revenu', 'chomage', 'conge_parental', 'regime'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE REVENUS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
