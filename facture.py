@@ -190,7 +190,7 @@ class FactureFinMois(object):
                     elif state == VACANCES:
                         if heures_reference > 0:
                             self.jours_vacances.append(date)
-                        if (not creche.mensualisation and not inscription.IsNombreSemainesCongesAtteint(date)) or creche.gestion_preavis_conges:
+                        if (creche.repartition==REPARTITION_SANS_MENSUALISATION and not inscription.IsNombreSemainesCongesAtteint(date)) or creche.gestion_preavis_conges:
                             self.jours_conges_non_factures.append(date)
                             self.heures_facturees_par_mode[cotisation.mode_garde] -= heures_reference
                             self.deduction += cotisation.montant_heure_garde * heures_reference
@@ -252,7 +252,7 @@ class FactureFinMois(object):
         if inscrit.hasFacture(self.debut_recap):
             for cotisation in cotisations_mensuelles:
                 self.heures_maladie += cotisation.heures_maladie
-                if not creche.mensualisation:
+                if creche.repartition == REPARTITION_SANS_MENSUALISATION:
                     self.cotisation_mensuelle += cotisation.heures_contractualisees * cotisation.montant_heure_garde
                     self.total_contractualise += cotisation.heures_contractualisees * cotisation.montant_heure_garde
                 elif creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and cotisation.inscription.IsInPeriodeAdaptation(cotisation.debut):
@@ -287,8 +287,11 @@ class FactureFinMois(object):
                         self.cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_realisees_non_facturees + cotisation.heures_facturees_non_realisees - cotisation.heures_supplementaires) * cotisation.montant_heure_garde
                         # print '(', cotisation.heures_realisees, '-', cotisation.heures_realisees_non_facturees, '+', cotisation.heures_facturees_non_realisees, '-', cotisation.heures_supplementaires, ') *', cotisation.montant_heure_garde, '=', self.cotisation_mensuelle  
                 elif creche.mode_facturation == FACTURATION_PSU and self.heures_contractualisees:
-                    prorata = cotisation.cotisation_mensuelle * cotisation.jours_ouvres / jours_ouvres
                     prorata_heures = cotisation.heures_mois * cotisation.jours_ouvres / jours_ouvres
+                    if not cotisation.prorata_effectue:
+                        prorata = cotisation.cotisation_mensuelle * cotisation.jours_ouvres / jours_ouvres
+                    else:
+                        prorata = cotisation.cotisation_mensuelle
                     self.cotisation_mensuelle += prorata
                     self.total_contractualise += prorata
                     self.heures_contrat += prorata_heures
