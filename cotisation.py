@@ -218,7 +218,7 @@ class Cotisation(object):
                     if self.inscription.fin is None:
                         errors.append(u" - La période d'inscription n'a pas de fin.")
                         raise CotisationException(errors)
-                    self.semaines_periode = (self.inscription.fin - self.inscription.debut).days / 7
+                    self.semaines_periode = (6 + (self.inscription.fin - self.inscription.debut).days) / 7
                     self.nombre_factures = GetNombreFacturesContrat(self.inscription.debut, self.inscription.fin)
                     self.prorata_effectue = True
                 else:
