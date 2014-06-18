@@ -93,27 +93,29 @@ class Cotisation(object):
         self.revenus_parents = []
         self.chomage = 0
         self.conge_parental = 0
-        if creche.formule_taux_horaire_needs_revenus():
-            self.date_revenus = GetDateRevenus(self.date)
-            self.assiette_annuelle = 0.0
-            for parent in inscrit.parents.values():
-                if parent:
-                    revenus_parent = Select(parent.revenus, self.date_revenus)
-                    if revenus_parent is None or revenus_parent.revenu == '':
-                        errors.append(u" - Les déclarations de revenus de %s sont incomplètes." % parent.relation)
+        self.date_revenus = GetDateRevenus(self.date)
+        self.assiette_annuelle = 0.0
+        for parent in inscrit.parents.values():
+            if parent:
+                revenus_parent = Select(parent.revenus, self.date_revenus)
+                if creche.formule_taux_horaire_needs_revenus() and (revenus_parent is None or revenus_parent.revenu == ''): 
+                    errors.append(u" - Les déclarations de revenus de %s sont incomplètes." % parent.relation)
+                elif revenus_parent:
+                    if revenus_parent.revenu:
+                        revenu = float(revenus_parent.revenu)
                     else:
-                        self.AjustePeriode((GetYearStart(self.date), GetYearEnd(self.date)))
-                        self.assiette_annuelle += float(revenus_parent.revenu)
-                        if revenus_parent.chomage:
-                            abattement = 0.3 * float(revenus_parent.revenu)
-                            self.assiette_annuelle -= abattement
-                            self.chomage += 1
-                        else:
-                            abattement = None
-                        if revenus_parent.conge_parental:
-                            self.conge_parental += 1
-                        self.revenus_parents.append((parent, revenus_parent.revenu, abattement))
-            
+                        revenu = 0.0
+                    self.AjustePeriode((GetYearStart(self.date), GetYearEnd(self.date)))
+                    self.assiette_annuelle += revenu
+                    if revenus_parent.chomage:
+                        abattement = 0.3 * revenu
+                        self.assiette_annuelle -= abattement
+                        self.chomage += 1
+                    else:
+                        abattement = None
+                    if revenus_parent.conge_parental:
+                        self.conge_parental += 1
+                    self.revenus_parents.append((parent, revenu, abattement))
 
             if options & TRACES:
                 print u" assiette annuelle :", self.assiette_annuelle
