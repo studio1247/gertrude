@@ -117,27 +117,23 @@ class Cotisation(object):
                         self.conge_parental += 1
                     self.revenus_parents.append((parent, revenu, abattement))
 
-            if options & TRACES:
-                print u" assiette annuelle :", self.assiette_annuelle
+        if options & TRACES:
+            print u" assiette annuelle :", self.assiette_annuelle
             
-            self.bareme_caf = Select(creche.baremes_caf, self.date)
-            if self.bareme_caf:
-                if self.bareme_caf.plafond and self.assiette_annuelle > self.bareme_caf.plafond:
-                    self.AjustePeriode(self.bareme_caf)
-                    self.assiette_annuelle = self.bareme_caf.plafond
-                    if options & TRACES: print u" plafond CAF appliqué :", self.assiette_annuelle
-                elif self.bareme_caf.plancher and self.assiette_annuelle < self.bareme_caf.plancher:
-                    self.AjustePeriode(self.bareme_caf)
-                    self.assiette_annuelle = self.bareme_caf.plancher
-                    if options & TRACES: print u" plancher CAF appliqué :", self.assiette_annuelle
-            else:
-                if options & TRACES: print " pas de barème CAF"
-                    
-            self.assiette_mensuelle = self.assiette_annuelle / 12
+        self.bareme_caf = Select(creche.baremes_caf, self.date)
+        if self.bareme_caf:
+            if self.bareme_caf.plafond and self.assiette_annuelle > self.bareme_caf.plafond:
+                self.AjustePeriode(self.bareme_caf)
+                self.assiette_annuelle = self.bareme_caf.plafond
+                if options & TRACES: print u" plafond CAF appliqué :", self.assiette_annuelle
+            elif self.bareme_caf.plancher and self.assiette_annuelle < self.bareme_caf.plancher:
+                self.AjustePeriode(self.bareme_caf)
+                self.assiette_annuelle = self.bareme_caf.plancher
+                if options & TRACES: print u" plancher CAF appliqué :", self.assiette_annuelle
         else:
-            self.date_revenus = None
-            self.assiette_annuelle = None
-            self.assiette_mensuelle = None
+            if options & TRACES: print u" pas de barème CAF"
+                    
+        self.assiette_mensuelle = self.assiette_annuelle / 12
         
         if creche.modes_inscription == MODE_5_5:
             self.mode_garde = MODE_5_5 # TODO a renommer en mode_inscription

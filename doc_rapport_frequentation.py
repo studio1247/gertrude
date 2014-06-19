@@ -95,7 +95,7 @@ class RapportFrequentationModifications(object):
                         inscriptions = inscrit.GetInscriptions(debut, fin)
                         if inscriptions and (self.site is None or inscriptions[0].site == self.site):
                             try:
-                                facture = Facture(inscrit, self.annee, mois+1)
+                                facture = Facture(inscrit, self.annee, mois)
                                 facture_heures_realisees = facture.heures_realisees
                                 if config.options & HEURES_CONTRAT:
                                     facture_heures_facturees = facture.heures_facture
