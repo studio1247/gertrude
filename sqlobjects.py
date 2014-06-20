@@ -19,6 +19,7 @@ import datetime, binascii
 from constants import *
 from parameters import *
 from functions import *
+from cotisation import GetDateRevenus
 
 class SQLObject(object):
     def delete(self):
@@ -1188,11 +1189,11 @@ class Creche(object):
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
 class Revenu(object):
-    def __init__(self, parent, creation=True):
+    def __init__(self, parent, debut=None, fin=None, creation=True):
         self.parent = parent
         self.idx = None
-        self.debut = None
-        self.fin = None
+        self.debut = debut
+        self.fin = fin
         self.revenu = ''
         self.chomage = False
         self.conge_parental = False
@@ -1236,7 +1237,9 @@ class Parent(object):
 
         if creation:
             self.create()
-            self.revenus.append(Revenu(self))
+            debut = GetDateRevenus(today)
+            fin = datetime.date(debut.year, 12, 31)
+            self.revenus.append(Revenu(self, debut, fin))
 
     def create(self):
         print 'nouveau parent'
