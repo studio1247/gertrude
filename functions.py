@@ -132,8 +132,12 @@ def GetJoursOuvres(annee, mois):
         date += datetime.timedelta(1)
     return jours_ouvres        
 
-def GetHeuresAccueil(annee, mois):
-    return GetJoursOuvres(annee, mois) * (creche.fermeture - creche.ouverture) * creche.GetCapacite()
+def GetHeuresAccueil(annee, mois, site):
+    if site is not None:
+        capacite = site.capacite
+    else:
+        capacite = creche.GetCapacite()
+    return GetJoursOuvres(annee, mois) * (creche.fermeture - creche.ouverture) * capacite
     
 def GetInitialesPrenom(person):
     if person.prenom:

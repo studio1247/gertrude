@@ -593,7 +593,7 @@ class StatistiquesFrequentationTab(AutoTab):
         for mois in periode:
             debut = datetime.date(annee, mois+1, 1)
             fin = getMonthEnd(debut)
-            heures_accueil += GetHeuresAccueil(annee, mois+1)
+            heures_accueil += GetHeuresAccueil(annee, mois+1, site)
             print "Statistiques %s %d" % (months[mois], annee)
             for inscrit in creche.inscrits:
                 try:
