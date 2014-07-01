@@ -54,7 +54,7 @@ class SyntheseFinanciereModifications(object):
             fields = GetCrecheFields(creche) + GetTarifsHorairesFields(creche)
             fields.append(("annee", self.annee))
             for mois in range(1, 13):
-                heures_accueil = GetHeuresAccueil(self.annee, mois)
+                heures_accueil = GetHeuresAccueil(self.annee, mois, self.site)
                 heures_facturees = 0.0
                 heures_facturees_par_mode = [0.0] * 33
                 cotisations_facturees = 0.0

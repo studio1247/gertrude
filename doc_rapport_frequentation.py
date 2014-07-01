@@ -81,7 +81,7 @@ class RapportFrequentationModifications(object):
                     if fin > today:
                         break
 
-                    heures_accueil = GetHeuresAccueil(self.annee, mois)
+                    heures_accueil = GetHeuresAccueil(self.annee, mois, self.site)
                     heures_realisees = {}
                     heures_facturees = {}
                     for categorie in creche.categories:
