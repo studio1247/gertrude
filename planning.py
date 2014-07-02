@@ -590,9 +590,12 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                     if activities_state:
                         state &= ~activities_state
                         state |= PRESENT
-                elif state == VACANCES and line.inscription:
-                    if line.inscription.IsNombreSemainesCongesAtteint(line.key):
-                        state = CONGES_DEPASSEMENT
+                elif state == VACANCES:
+                    try:
+                        if line.inscription.IsNombreSemainesCongesAtteint(line.key):
+                            state = CONGES_DEPASSEMENT
+                    except:
+                        pass
                     
             bitmap, tooltip = BUTTON_BITMAPS[state]
             button.SetBitmapLabel(bitmap)
