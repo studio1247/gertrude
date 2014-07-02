@@ -33,7 +33,7 @@ except:
 # Don't remove these 2 lines (mandatory for py2exe)
 import controls, zipfile, xml.dom.minidom, wx.html, ooffice
 
-VERSION = '0.95n'
+VERSION = '0.95o'
 
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):
