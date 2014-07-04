@@ -111,7 +111,7 @@ class FacturationTab(AutoTab):
             exportButton = wx.Button(self, -1, u'Export compta')
             self.Bind(wx.EVT_BUTTON, self.EvtExportCompta, exportButton)
             box_sizer.Add(exportButton, 0, wx.ALL, 5)
-        if 0:
+        if config.options & DECLOTURE:
             self.decloture_button = wx.Button(self, -1, u'Dé-clôture')
             self.Bind(wx.EVT_BUTTON, self.EvtDeclotureFacture, self.decloture_button)
             box_sizer.Add(self.decloture_button, 0, wx.ALL, 5)

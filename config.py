@@ -52,6 +52,8 @@ def getOptions(parser):
             options |= HEURES_CONTRAT
         if "tablette" in str:
             options |= TABLETTE
+        if "decloture" in str:
+            options |= DECLOTURE
     except:
         pass
     return options
