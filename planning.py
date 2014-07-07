@@ -35,6 +35,7 @@ TWO_PARTS = 64
 ACTIVITES = 128
 NO_LABELS = 256
 DRAW_VALUES = 512
+DEPASSEMENT_CAPACITE = 1024
 
 # Elements size
 LABEL_WIDTH = 130 # px
@@ -413,7 +414,7 @@ class PlanningGridWindow(BufferedWindow):
             self.GetParent().UpdateLine(self.curStartY)
             self.UpdateDrawing()
             
-            if self.state > 0 and self.value == 0 and creche.alerte_depassement_planning:
+            if self.GetParent().GetParent().options & DEPASSEMENT_CAPACITE and self.state > 0 and self.value == 0 and creche.alerte_depassement_planning:
                 lines = self.GetParent().GetParent().GetSummaryLines()
                 activites, activites_sans_horaires = GetActivitiesSummary(creche, lines)
                 for start, end in self.GetPlagesSelectionnees():                        
@@ -672,7 +673,8 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                 right_sizer = self.right_sizer.GetItem(i-1)
                 right_sizer.DeleteWindows()
                 self.right_sizer.Detach(i-1)
-                del self.activites_sizers[-1]
+                if self.options & ACTIVITES:
+                    del self.activites_sizers[-1]
             for i in range(previous_count, count):
                 if not self.options & NO_ICONS:
                     panel = wx.Panel(self)

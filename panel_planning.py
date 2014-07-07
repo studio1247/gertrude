@@ -21,13 +21,13 @@ from parameters import *
 from functions import *
 from sqlobjects import *
 from controls import *
-from planning import PlanningWidget, LigneConge, COMMENTS, ACTIVITES, TWO_PARTS, SUMMARY_NUM, SUMMARY_DEN
+from planning import PlanningWidget, LigneConge, COMMENTS, ACTIVITES, TWO_PARTS, DEPASSEMENT_CAPACITE, SUMMARY_NUM, SUMMARY_DEN
 from ooffice import *
 from doc_planning_detaille import PlanningDetailleModifications
 
 class DayPlanningPanel(PlanningWidget):
     def __init__(self, parent, activity_combobox):
-        PlanningWidget.__init__(self, parent, activity_combobox, COMMENTS|ACTIVITES|TWO_PARTS)
+        PlanningWidget.__init__(self, parent, activity_combobox, COMMENTS|ACTIVITES|TWO_PARTS|DEPASSEMENT_CAPACITE)
         
     def UpdateContents(self):
         if self.date in creche.jours_fermeture:
