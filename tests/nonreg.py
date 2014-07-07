@@ -522,7 +522,7 @@ class MonPetitBijouTests(GertrudeTestCase):
         self.assertEquals(facture.total, 1520.0)
         self.AddJourneePresence(inscrit, datetime.date(2011, 3, 7), 90, 189) # 8h15 
         self.AddJourneePresence(inscrit, datetime.date(2011, 3, 8), 90, 189) # 8h15 
-        facture = Facture(inscrit, 2011, 3, options=TRACES)
+        facture = Facture(inscrit, 2011, 3)
         self.assertEquals(facture.total, 1520.0 - 2*1.75*9.5)
         
     def test_periode_adaptation(self):

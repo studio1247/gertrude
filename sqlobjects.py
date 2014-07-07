@@ -1035,8 +1035,8 @@ class Creche(object):
             sql_connection.execute('UPDATE CRECHE SET formule_taux_horaire=?', (str(self.formule_taux_horaire),))
         self.conversion_formule_taux_horaire = self.GetFormuleConversion(self.formule_taux_horaire)
     
-    def eval_taux_horaire(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois):
-        return self.EvalFormule(self.conversion_formule_taux_horaire, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois)
+    def eval_taux_horaire(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois):
+        return self.EvalFormule(self.conversion_formule_taux_horaire, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois)
     
     def formule_taux_horaire_needs_revenus(self):
         if self.mode_facturation in (FACTURATION_FORFAIT_10H, FACTURATION_PSU, FACTURATION_PSU_TAUX_PERSONNALISES):
@@ -1068,19 +1068,21 @@ class Creche(object):
         else:
             return None
         
-    def EvalFormule(self, formule, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois):
+    def EvalFormule(self, formule, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois):
         hg = MODE_HALTE_GARDERIE
         creche = MODE_CRECHE
         forfait = MODE_FORFAIT_HORAIRE
         urgence = MODE_ACCUEIL_URGENCE
         try:
             for cas in formule:
-                if eval(cas[0]):
+                if heure_mois is None and "heure_mois" in cas[0]:
+                    return None
+                elif eval(cas[0]):
                     return cas[1]
             else:
-                return None
+                raise "Aucune condition ne matche"
         except:
-            return None
+            raise "Erreur dans la formule"
         
     def TestFormule(self, formule, index):
         hg = MODE_HALTE_GARDERIE
@@ -1095,6 +1097,7 @@ class Creche(object):
         jours = 5
         heures = 60
         heures_mois = 60*4.33
+        heure_mois = heures_mois
         parents = 2
         enfants = 1
         reservataire = False
@@ -1111,8 +1114,8 @@ class Creche(object):
             sql_connection.execute('UPDATE CRECHE SET formule_taux_effort=?', (str(self.formule_taux_effort),))
         self.conversion_formule_taux_effort = self.GetFormuleConversion(self.formule_taux_effort)
     
-    def eval_taux_effort(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois):
-        return self.EvalFormule(self.conversion_formule_taux_effort, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois)
+    def eval_taux_effort(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois):
+        return self.EvalFormule(self.conversion_formule_taux_effort, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois)
         
     def test_formule_taux_effort(self, index):
         return self.TestFormule(self.conversion_formule_taux_effort, index)
