@@ -62,12 +62,15 @@ class FactureFinMois(object):
         self.previsionnel = False
         self.cloture = False
         self.montant_heure_garde = 0.0
+        self.correction = 0.0
+        self.libelle_correction = ""
         if self.debut_recap in inscrit.corrections:
-            self.correction = inscrit.corrections[self.debut_recap].valeur
-            self.libelle_correction = inscrit.corrections[self.debut_recap].libelle
-        else:
-            self.correction = 0.0
-            self.libelle_correction = ""
+            try:
+                if inscrit.corrections[self.debut_recap].valeur:
+                    self.correction = float(inscrit.corrections[self.debut_recap].valeur)
+                    self.libelle_correction = inscrit.corrections[self.debut_recap].libelle
+            except:
+                print "Warning", GetPrenomNom(inscrit), ": correction invalide", inscrit.corrections[self.debut_recap].valeur
 
         jours_ouvres = 0
         cotisations_mensuelles = []
