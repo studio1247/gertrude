@@ -539,7 +539,6 @@ class DocumentDialog(wx.Dialog):
         sizer.Add(self.sauver, 0, wx.RIGHT, 5)
         
         if modifications.email:
-            self.adresse_envoi = None
             self.sauver_envoyer = wx.Button(self, -1, u"Sauver et envoyer par email")
             self.Bind(wx.EVT_BUTTON, self.onSauverEnvoyer, self.sauver_envoyer)
             sizer.Add(self.sauver_envoyer, 0, wx.LEFT|wx.RIGHT, 5)
@@ -669,15 +668,20 @@ class DocumentDialog(wx.Dialog):
                     
         
     def onSauverEnvoyerCAF(self, event):
-        self.adresse_envoi = creche.caf_email
-        self.onSauverEnvoyer(event)
-        self.adresse_envoi = None
+        self.modifications.multi = False
+        self.onSauver(event)
+        if self.document_generated:
+            try:
+                filename = self.filename.replace(" <prenom> <nom>", "")
+                os.rename(self.filename, filename)
+                self.send_document(filename, GetTemplateFile(self.modifications.email_text[:-4]+" CAF"+self.modifications.email_text[-4:]), self.modifications.email_subject, [creche.caf_email])
+            except Exception, e:
+                dlg = wx.MessageDialog(self, u"Impossible d'envoyer le document %s\n%r" % (self.filename, e), 'Erreur', wx.OK|wx.ICON_WARNING)
+                dlg.ShowModal()
+                dlg.Destroy()
 
     def send_document(self, filename, text, subject, to):
         COMMASPACE = ', '
-    
-        if self.adresse_envoi:
-            to = [self.adresse_envoi]
         
         # Create the container (outer) email message.
         msg = MIMEMultipart()

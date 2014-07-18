@@ -51,13 +51,13 @@ class FactureModifications(object):
         self.email = True
         if len(inscrits) > 1:
             self.site = inscrits[0].GetInscriptions(self.periode_facturation, None)[0].site
+            self.email_subject = u"Factures %s %d" % (months[periode.month - 1], periode.year)
             self.default_output = u"Factures %s %d.odt" % (months[periode.month - 1], periode.year)
             self.email_to = None
         else:
             who = inscrits[0]
             self.site = who.GetInscriptions(self.periode_facturation, None)[0].site
             self.email_subject = u"Facture %s %s %s %d" % (who.prenom, who.nom, months[periode.month - 1], periode.year)
-            self.email_text = "Accompagnement facture.txt"
             self.email_to = list(set([parent.email for parent in who.parents.values() if parent and parent.email]))
             self.default_output = self.email_subject + ".odt"
 
@@ -66,6 +66,8 @@ class FactureModifications(object):
             if len(inscrits) > 1:
                 self.multi = True
                 self.default_output = u"Facture <prenom> <nom> %s %d.odt" % (months[periode.month - 1], periode.year)
+        
+        self.email_text = "Accompagnement facture.txt"
 
     def GetSimpleModifications(self, filename):
         return [(filename.replace("<prenom>", inscrit.prenom).replace("<nom>", inscrit.nom), FactureModifications([inscrit], self.periode)) for inscrit in self.inscrits]
