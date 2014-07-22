@@ -1427,9 +1427,11 @@ class Inscription(PeriodeReference):
             if self.semaines_conges:
                 restant = self.semaines_conges * self.GetJoursHeuresReference()[0]
             else:
-                print GetPrenomNom(self.inscrit)
+                # print GetPrenomNom(self.inscrit)
                 restant = 0
             date = self.debut
+            if self.fin_periode_adaptation:
+                date = self.fin_periode_adaptation + datetime.timedelta(1)
             while date < jalon:
                 state = self.inscrit.getState(date)
                 if state.state == VACANCES:
