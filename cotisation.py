@@ -34,8 +34,10 @@ TRACES = 16
 
 def GetDateRevenus(date):
     if creche.periode_revenus == REVENUS_CAFPRO:
-        return datetime.date(date.year, 1, 1)
-    elif date < datetime.date(date.year, 9, 1) or date >= datetime.date(2008, 9, 1):
+        return datetime.date(date.year, date.month, date.day)
+    elif date >= datetime.date(2008, 9, 1):
+        return datetime.date(date.year-2, date.month, date.day)
+    elif date < datetime.date(date.year, 9, 1):
         return datetime.date(date.year-2, 1, 1)
     else:
         return datetime.date(date.year-1, 1, 1)
