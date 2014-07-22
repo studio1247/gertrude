@@ -16,7 +16,7 @@
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import datetime, time, locale
-import sys, os, types, zipfile
+import sys, os, shutil, types, zipfile
 import xml.dom.minidom
 import re, urllib
 import smtplib, poplib
@@ -423,18 +423,21 @@ def convert_to_pdf(filename, pdffilename):
         filtername = "calc_pdf_Export"
     else:
         filtername = "writer_pdf_Export"
-    filename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(filename)).encode("utf8"))])
-    pdffilename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(pdffilename)).encode("utf8"))])
-    StarDesktop, objServiceManager, corereflection = getOOoContext()
-    document = StarDesktop.LoadComponentFromURL(filename, "_blank", 0,
-        MakePropertyValues(objServiceManager,
-                    [["ReadOnly", True],
-                    ["Hidden", True]]))
-    document.storeToUrl( pdffilename,
-        MakePropertyValues(objServiceManager,
-                    [["CompressMode", 1],
-                    ["FilterName", filtername]]))
-    document.close(False)
+    if sys.platform == 'win32':
+        filename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(filename)).encode("utf8"))])
+        pdffilename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(pdffilename)).encode("utf8"))])
+        StarDesktop, objServiceManager, corereflection = getOOoContext()
+        document = StarDesktop.LoadComponentFromURL(filename, "_blank", 0,
+            MakePropertyValues(objServiceManager,
+                        [["ReadOnly", True],
+                        ["Hidden", True]]))
+        document.storeToUrl( pdffilename,
+            MakePropertyValues(objServiceManager,
+                        [["CompressMode", 1],
+                        ["FilterName", filtername]]))
+        document.close(False)
+    else:
+        shutil.copy(filename, pdffilename)
 
 DDE_ACROBAT_STRINGS = ["AcroviewR11", "AcroviewR10", "acroview"]
 dde_server = None
@@ -572,7 +575,7 @@ class DocumentDialog(wx.Dialog):
         if self.sauver_ouvrir:
             self.sauver_ouvrir.Disable()
         self.filename = self.fbb.GetValue()
-        f, e = os.path.splitext(self.fbb.GetValue())
+        f, e = os.path.splitext(self.filename)
         if e == ".pdf":
             self.pdf = True
             self.oo_filename = f + self.extension
@@ -594,6 +597,8 @@ class DocumentDialog(wx.Dialog):
                         convert_to_pdf(filename, f+".pdf")
                         os.remove(filename)
             else:
+                self.filename = self.filename.replace(" <prenom> <nom>", "")
+                self.oo_filename = self.oo_filename.replace(" <prenom> <nom>", "")
                 errors = GenerateDocument(self.modifications, filename=self.oo_filename, gauge=self.gauge)
                 if self.pdf:
                     convert_to_pdf(self.oo_filename, self.filename)
@@ -607,7 +612,6 @@ class DocumentDialog(wx.Dialog):
                 dlg = wx.MessageDialog(self, message, 'Message', wx.OK|wx.ICON_WARNING)
         except IOError:
             print sys.exc_info()
-            
             dlg = wx.MessageDialog(self, u"Impossible de sauver le document. Peut-être est-il déjà ouvert ?", 'Erreur', wx.OK|wx.ICON_WARNING)
             dlg.ShowModal()
             dlg.Destroy()
@@ -672,9 +676,7 @@ class DocumentDialog(wx.Dialog):
         self.onSauver(event)
         if self.document_generated:
             try:
-                filename = self.filename.replace(" <prenom> <nom>", "")
-                os.rename(self.filename, filename)
-                self.send_document(filename, GetTemplateFile(self.modifications.email_text[:-4]+" CAF"+self.modifications.email_text[-4:]), self.modifications.email_subject, [creche.caf_email])
+                self.send_document(self.filename, GetTemplateFile(self.modifications.email_text[:-4]+" CAF"+self.modifications.email_text[-4:]), self.modifications.email_subject, [creche.caf_email])
             except Exception, e:
                 dlg = wx.MessageDialog(self, u"Impossible d'envoyer le document %s\n%r" % (self.filename, e), 'Erreur', wx.OK|wx.ICON_WARNING)
                 dlg.ShowModal()
