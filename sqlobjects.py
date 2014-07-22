@@ -1069,6 +1069,7 @@ class Creche(object):
             return None
         
     def EvalFormule(self, formule, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois):
+        # print 'EvalFormule', 'mode=%d' % mode, handicap, 'revenus=%f' % revenus, 'enfants=%d' % enfants, 'jours=%d' % jours, 'heures=%f' % heures, reservataire, nom, 'parents=%d' % parents, chomage, conge_parental, 'heures_mois=%f' % heures_mois, heure_mois
         hg = MODE_HALTE_GARDERIE
         creche = MODE_CRECHE
         forfait = MODE_FORFAIT_HORAIRE
@@ -1078,6 +1079,7 @@ class Creche(object):
                 if heure_mois is None and "heure_mois" in cas[0]:
                     return None
                 elif eval(cas[0]):
+                    # print cas[0], cas[1]
                     return cas[1]
             else:
                 raise "Aucune condition ne matche"
