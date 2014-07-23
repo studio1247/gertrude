@@ -27,13 +27,20 @@ class AttestationModifications(object):
         self.template = 'Attestation paiement.odt'
         if isinstance(who, list):
             self.inscrits = [inscrit for inscrit in who if inscrit.GetInscriptions(debut, fin)]
-            self.email_subject = u"Attestations de paiement %s-%s %d" % (months[debut.month - 1], months[fin.month - 1], debut.year)
-            self.default_output = u"Attestation de paiement <prenom> <nom> %s-%s %d.odt" % (months[debut.month - 1], months[fin.month - 1], debut.year)
+            if debut.year == fin.year and debut.month == fin.month:
+                self.email_subject = u"Attestations de paiement %s %d" % (months[debut.month - 1], debut.year)
+                self.default_output = u"Attestation de paiement <prenom> <nom> %s %d.odt" % (months[debut.month - 1], debut.year)
+            else:
+                self.email_subject = u"Attestations de paiement %s-%s %d" % (months[debut.month - 1], months[fin.month - 1], debut.year)
+                self.default_output = u"Attestation de paiement <prenom> <nom> %s-%s %d.odt" % (months[debut.month - 1], months[fin.month - 1], debut.year)
             self.email_to = None
             self.multi = True
         else:
             self.inscrits = [who]
-            self.email_subject = u"Attestation de paiement %s %s %s-%s %d" % (who.prenom, who.nom, months[debut.month - 1], months[fin.month - 1], debut.year)
+            if debut.year == fin.year and debut.month == fin.month:
+                self.email_subject = u"Attestation de paiement %s %s %s %d" % (who.prenom, who.nom, months[debut.month - 1], debut.year)
+            else:
+                self.email_subject = u"Attestation de paiement %s %s %s-%s %d" % (who.prenom, who.nom, months[debut.month - 1], months[fin.month - 1], debut.year)
             self.default_output = self.email_subject + ".odt"
             self.email_to = list(set([parent.email for parent in who.parents.values() if parent and parent.email]))
             self.multi = False
