@@ -17,7 +17,7 @@
  <table cellspacing="0" cellpadding="4" border="0">
   <tr>
    <td>Tarif horaire appliqu&eacute; (A)</td>
-   <td>= <var value="'%.02f' % montant_heure_garde"/> &euro;</td>
+   <td>= <var value="' / '.join(['%.02f&amp;euro;' % montant for montant in montants_heure_garde])"/></td>
   </tr>
   <tr>
    <td>Heures de garde hebdomadaires (B)</td>

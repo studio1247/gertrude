@@ -66,18 +66,27 @@ def IsContratFacture(date):
     return IsFacture(date) and (date.year not in creche.mois_facture_uniquement_heures_supp.keys() or date.month not in creche.mois_facture_uniquement_heures_supp[date.year])
                 
 class Cotisation(object):
-    def CalculeFraisGarde(self, heures, heures_mois):
-        if self.montant_heure_garde is not None:
+    def CalculeFraisGarde(self, heures):
+        return self.CalculeFraisGardeComplete(heures, heures)[0]
+    
+    def CalculeFraisGardeComplete(self, heures, heures_mois):
+        if self.montant_heure_garde is not None and len(self.montants_heure_garde) <= 1:
             result = self.montant_heure_garde * heures
+            tarifs = [self.montant_heure_garde]
         else:
             result = 0.0
+            tarifs = set()
             heure = 0.0
-            multiplier = heures/heures_mois
+            if heures_mois == 0:
+                multiplier = 1
+            else:
+                multiplier = heures/heures_mois
             while heure < heures_mois:
                 montant_heure_garde = creche.eval_taux_horaire(self.mode_garde, self.inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, self.inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, heure)
                 result += multiplier * montant_heure_garde * min(1.0, heures_mois-heure)
+                tarifs.add(montant_heure_garde)
                 heure += 1.0
-        return result
+        return result, tarifs
 
     def __init__(self, inscrit, date, options=0):
         self.inscrit = inscrit
@@ -268,6 +277,7 @@ class Cotisation(object):
         
         self.taux_effort = None
         self.forfait_heures_presence = 0.0
+        self.montants_heure_garde = []
         
         if creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
             self.montant_heure_garde = 0.0
@@ -283,7 +293,7 @@ class Cotisation(object):
                 errors.append(u" - La formule de calcul du tarif horaire n'est pas correcte.")
                 raise CotisationException(errors)
             self.cotisation_periode = None
-            self.cotisation_mensuelle = self.CalculeFraisGarde(self.forfait_heures_presence, self.heures_mois)                    
+            self.cotisation_mensuelle, self.montants_heure_garde = self.CalculeFraisGardeComplete(self.forfait_heures_presence, self.heures_mois)                    
         elif creche.mode_facturation == FACTURATION_PAJE:
             try:
                 self.montant_heure_garde = creche.eval_taux_horaire(self.mode_garde, self.inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, self.inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, None)
@@ -303,7 +313,7 @@ class Cotisation(object):
                 self.semaines_conges = self.inscription.semaines_conges
             else:                
                 self.semaines_conges = 0
-            self.cotisation_periode = self.CalculeFraisGarde(self.heures_semaine * (self.semaines_periode - self.semaines_conges), self.heures_mois)
+            self.cotisation_periode, self.montants_heure_garde = self.CalculeFraisGardeComplete(self.heures_semaine * (self.semaines_periode - self.semaines_conges), self.heures_mois)
             if self.montant_heure_garde is None:
                 self.montant_heure_garde = creche.eval_taux_horaire(self.mode_garde, self.inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, self.inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, self.heures_mois)
             if options & TRACES:

@@ -245,10 +245,10 @@ class FactureFinMois(object):
                         self.heures_contractualisees_realisees += min(heures_realisees, heures_reference)        
                         if creche.mode_facturation == FACTURATION_HORAIRES_REELS or (creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date)) or (creche.mode_facturation == FACTURATION_PSU and cotisation.mode_garde == MODE_HALTE_GARDERIE):
                             self.heures_facturees_par_mode[cotisation.mode_garde] += heures_realisees - heures_realisees_non_facturees + heures_facturees_non_realisees
-                            self.total_contractualise += heures_reference * cotisation.montant_heure_garde
+                            self.total_contractualise += cotisation.CalculeFraisGarde(heures_reference)
                         else:
                             self.heures_facturees_par_mode[cotisation.mode_garde] += heures_facturees - heures_realisees_non_facturees
-                    self.total_realise += (heures_realisees - heures_realisees_non_facturees) * cotisation.montant_heure_garde
+                    self.total_realise += cotisation.CalculeFraisGarde(heures_realisees - heures_realisees_non_facturees)
                     
             date += datetime.timedelta(1)
 
@@ -261,8 +261,8 @@ class FactureFinMois(object):
                 elif creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and cotisation.inscription.IsInPeriodeAdaptation(cotisation.debut):
                     if cotisation.inscription.mode == MODE_FORFAIT_HORAIRE:
                         self.heures_facturees_par_mode[cotisation.mode_garde] += cotisation.heures_realisees - cotisation.heures_realisees_non_facturees
-                    self.cotisation_mensuelle += cotisation.heures_contractualisees * cotisation.montant_heure_garde
-                    self.report_cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_realisees_non_facturees - cotisation.heures_contractualisees) * cotisation.montant_heure_garde                
+                    self.cotisation_mensuelle += cotisation.CalculeFraisGarde(cotisation.heures_contractualisees)
+                    self.report_cotisation_mensuelle += cotisation.CalculeFraisGarde(cotisation.heures_realisees - cotisation.heures_realisees_non_facturees) - self.cotisation_mensuelle
                 elif cotisation.inscription.mode == MODE_FORFAIT_HORAIRE:
                     self.cotisation_mensuelle += cotisation.cotisation_mensuelle * cotisation.jours_ouvres / jours_ouvres
                     cotisation.heures_contractualisees = cotisation.inscription.forfait_heures_presence * cotisation.jours_ouvres / jours_ouvres
