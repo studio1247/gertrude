@@ -146,7 +146,7 @@ def RemoveColumn(rows, index):
 def ReplaceTextFields(dom, _fields):
     fields = _fields[:]
     for i, field in enumerate(fields):
-        if len(field) == 3 and (field[2] & FIELD_EUROS):
+        if len(field) == 3 and (field[2] & FIELD_EUROS) and field[1] is not None:
             if field[2] & FIELD_SIGN:
                 fields[i] = (field[0], locale.format("%+.2f", field[1]))
             else:

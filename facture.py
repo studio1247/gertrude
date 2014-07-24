@@ -20,6 +20,24 @@ from constants import *
 from cotisation import *
 
 class FactureFinMois(object):
+    def CalculeDeduction(self, cotisation, heures):
+        deduction = cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees) - cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees-heures)
+        cotisation.heures_mois_ajustees -= heures
+        self.deduction += deduction 
+        if cotisation.montant_heure_garde:
+            self.formule_deduction.append("%s * %.2f" % (GetHeureString(heures), cotisation.montant_heure_garde))
+        else:
+            self.formule_deduction.append("%s = %.2f" % (GetHeureString(heures), deduction))
+            
+    def CalculeSupplement(self, cotisation, heures):
+        supplement = cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees+heures) - cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees)
+        cotisation.heures_mois_ajustees += heures
+        self.supplement += supplement
+        if cotisation.montant_heure_garde is not None:
+            self.formule_supplement.append(u"%s * %.2f" % (GetHeureString(heures), cotisation.montant_heure_garde))
+        else:
+            self.formule_supplement.append(u"%s = %.2f" % (GetHeureString(heures), supplement))
+
     def __init__(self, inscrit, annee, mois, options=0):
         self.inscrit = inscrit
         self.site = None
@@ -110,6 +128,7 @@ class FactureFinMois(object):
                     else:
                         cotisation = Cotisation(inscrit, date, options=NO_ADDRESS|self.options)
                         cotisation.jours_ouvres = 1
+                        cotisation.heures_mois_ajustees = cotisation.heures_mois
                         cotisation.heures_reference = heures_reference
                         cotisation.heures_realisees = 0.0
                         cotisation.heures_realisees_non_facturees = 0.0
@@ -139,11 +158,9 @@ class FactureFinMois(object):
                         cotisation.heures_maladie += heures_reference
                         self.heures_facturees_par_mode[cotisation.mode_garde] -= heures_reference
                         if creche.mode_facturation == FACTURATION_FORFAIT_10H:
-                            self.deduction += 10 * cotisation.montant_heure_garde
-                            self.formule_deduction.append("10 * %.2f" % cotisation.montant_heure_garde)
+                            self.CalculeDeduction(cotisation, 10)
                         elif inscription.mode != MODE_FORFAIT_HORAIRE:
-                            self.deduction += cotisation.montant_heure_garde * heures_reference
-                            self.formule_deduction.append(u"%s * %.2f" % (GetHeureString(heures_reference), cotisation.montant_heure_garde))
+                            self.CalculeDeduction(cotisation, heures_reference)
                         self.raison_deduction.add('hospitalisation')
                     elif state == MALADE or state == MALADE_SANS_JUSTIFICATIF:
                         if options & TRACES:
@@ -184,11 +201,9 @@ class FactureFinMois(object):
                                 cotisation.nombre_jours_maladie_deduits += 1
                                 cotisation.heures_maladie += heures_reference
                                 if creche.mode_facturation == FACTURATION_FORFAIT_10H:
-                                    self.deduction += 10 * cotisation.montant_heure_garde
-                                    self.formule_deduction.append("10 * %.2f" % cotisation.montant_heure_garde)
+                                    self.CalculeDeduction(cotisation, 10)
                                 elif inscription.mode != MODE_FORFAIT_HORAIRE:
-                                    self.deduction += cotisation.montant_heure_garde * heures_reference
-                                    self.formule_deduction.append("%s * %.2f" % (GetHeureString(heures_reference), cotisation.montant_heure_garde))
+                                    self.CalculeDeduction(cotisation, heures_reference)
                                 self.raison_deduction.add(u"maladie > %dj consécutifs" % creche.minimum_maladie)
                     elif state == VACANCES:
                         if heures_reference > 0:
@@ -196,8 +211,7 @@ class FactureFinMois(object):
                         if (creche.repartition==REPARTITION_SANS_MENSUALISATION and not inscription.IsNombreSemainesCongesAtteint(date)) or creche.gestion_preavis_conges:
                             self.jours_conges_non_factures.append(date)
                             self.heures_facturees_par_mode[cotisation.mode_garde] -= heures_reference
-                            self.deduction += cotisation.montant_heure_garde * heures_reference
-                            self.formule_deduction.append("%s * %.2f" % (GetHeureString(heures_reference), cotisation.montant_heure_garde))
+                            self.CalculeDeduction(cotisation, heures_reference)
                             self.raison_deduction.add(u"absence prévenue")
                     elif state == ABSENCE_NON_PREVENUE or state == ABSENCE_CONGE_SANS_PREAVIS:
                         heures_facturees_non_realisees = heures_reference
@@ -213,14 +227,12 @@ class FactureFinMois(object):
                             
                         if heures_supplementaires_facturees > 0:
                             if creche.mode_facturation == FACTURATION_FORFAIT_10H:
-                                self.supplement += 10 * cotisation.montant_heure_garde
-                                self.formule_supplement.append("10 * %.2f" % cotisation.montant_heure_garde)
+                                self.CalculeSupplement(cotisation, 10)
                             else:
                                 cotisation.heures_supplementaires += heures_supplementaires_facturees
                                 self.heures_supplementaires += heures_supplementaires_facturees
                                 if creche.mode_facturation != FACTURATION_HORAIRES_REELS and (creche.facturation_periode_adaptation != FACTURATION_HORAIRES_REELS or not cotisation.inscription.IsInPeriodeAdaptation(date)):
-                                    self.supplement += cotisation.montant_heure_garde * heures_supplementaires_facturees
-                                    self.formule_supplement.append(u"%s * %.2f" % (GetHeureString(heures_supplementaires_facturees), cotisation.montant_heure_garde))
+                                    self.CalculeSupplement(cotisation, heures_supplementaires_facturees)
 
                     if creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE or (creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION and inscription.IsInPeriodeAdaptation(date)):
                         activites = inscrit.GetExtraActivites(date)
@@ -230,7 +242,8 @@ class FactureFinMois(object):
 
                     if heures_realisees_non_facturees > 0 and heures_realisees == heures_realisees_non_facturees:
                         self.jours_presence_non_facturee[date] = heures_realisees_non_facturees
-                    self.total_realise_non_facture += heures_realisees_non_facturees * cotisation.montant_heure_garde     
+
+                    self.total_realise_non_facture += cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees+heures_realisees_non_facturees) - cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees)
 
                     self.heures_realisees += heures_realisees
                     self.heures_realisees_non_facturees += heures_realisees_non_facturees
@@ -277,8 +290,7 @@ class FactureFinMois(object):
                         cotisation.heures_supplementaires = cotisation.heures_realisees - cotisation.heures_realisees_non_facturees - heures_contractualisees
                         self.heures_facturees_par_mode[cotisation.mode_garde] += cotisation.heures_realisees - cotisation.heures_realisees_non_facturees
                         self.heures_supplementaires += cotisation.heures_supplementaires
-                        self.supplement += cotisation.heures_supplementaires * cotisation.montant_heure_garde
-                        self.formule_supplement.append("%s * %.2f" % (GetHeureString(cotisation.heures_supplementaires), cotisation.montant_heure_garde))
+                        self.CalculeSupplement(cotisation, cotisation.heures_supplementaires)
                     else:
                         self.heures_facturees_par_mode[cotisation.mode_garde] += heures_contractualisees
                 elif creche.mode_facturation == FACTURATION_HORAIRES_REELS:
@@ -325,7 +337,7 @@ class FactureFinMois(object):
             self.cotisation_mensuelle = round(self.cotisation_mensuelle, 2)
         else:
             self.cotisation_mensuelle = 0.0
-        if self.montant_heure_garde == 0:
+        if not self.montant_heure_garde:
             self.heures_cotisation_mensuelle = 0
         else:
             self.heures_cotisation_mensuelle = self.cotisation_mensuelle / self.montant_heure_garde

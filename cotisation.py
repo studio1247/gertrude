@@ -70,7 +70,7 @@ class Cotisation(object):
         return self.CalculeFraisGardeComplete(heures, heures)[0]
     
     def CalculeFraisGardeComplete(self, heures, heures_mois):
-        if self.montant_heure_garde is not None and len(self.montants_heure_garde) <= 1:
+        if self.montant_heure_garde is not None:
             result = self.montant_heure_garde * heures
             tarifs = [self.montant_heure_garde]
         else:
@@ -314,8 +314,6 @@ class Cotisation(object):
             else:                
                 self.semaines_conges = 0
             self.cotisation_periode, self.montants_heure_garde = self.CalculeFraisGardeComplete(self.heures_semaine * (self.semaines_periode - self.semaines_conges), self.heures_mois)
-            if self.montant_heure_garde is None:
-                self.montant_heure_garde = creche.eval_taux_horaire(self.mode_garde, self.inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, self.inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, self.heures_mois)
             if options & TRACES:
                 print " heures periode :", self.heures_semaine, '* (', self.semaines_periode, '-', self.semaines_conges, ')'  
                 print " cotisation periode :", self.cotisation_periode
