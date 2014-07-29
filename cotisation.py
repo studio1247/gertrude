@@ -301,7 +301,11 @@ class Cotisation(object):
             except:
                 errors.append(u" - La formule de calcul du tarif horaire n'est pas correcte.")
                 raise CotisationException(errors)
-            if self.inscription.fin:
+            if creche.repartition == REPARTITION_MENSUALISATION_DEBUT_FIN_INCLUS:
+                self.semaines_periode = ((self.inscription.fin - self.inscription.debut).days + 6) / 7
+                self.nombre_factures = GetNombreFacturesContrat(self.inscription.debut, self.inscription.fin)
+                self.prorata_effectue = True
+            elif self.inscription.fin:
                 self.semaines_periode = min(52, ((self.inscription.fin - self.inscription.debut).days + 6) / 7)
                 self.nombre_factures = 12 - GetNombreMoisSansFactureContrat(self.date.year)
                 self.nombre_factures = min(self.nombre_factures, GetNombreFacturesContrat(self.inscription.debut, self.inscription.fin))
