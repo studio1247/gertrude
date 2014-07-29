@@ -25,7 +25,7 @@ from sqlobjects import *
 from facture import FactureCloturee
 import wx
 
-VERSION = 81
+VERSION = 82
 
 def getdate(s):
     if s is None:
@@ -433,6 +433,13 @@ class SQLConnection(object):
           );""")
         
         cur.execute("""
+          CREATE TABLE NUMEROS_FACTURE (
+            idx INTEGER PRIMARY KEY,
+            date DATE,
+            valeur INTEGER
+          );""")
+        
+        cur.execute("""
           CREATE TABLE CORRECTIONS (
             idx INTEGER PRIMARY KEY,
             inscrit INTEGER REFERENCES INSCRITS(idx),
@@ -723,6 +730,12 @@ class SQLConnection(object):
                     revenu = Revenu(parent, creation=False)
                     revenu.debut, revenu.fin, revenu.revenu, revenu.chomage, revenu.conge_parental, revenu.regime, idx = revenu_entry
                     revenu.debut, revenu.fin, revenu.idx = getdate(revenu.debut), getdate(revenu.fin), idx
+                    if 0:
+                        # convertit N-2 en CAFPRO
+                        if revenu.debut:
+                            revenu.debut = datetime.date(revenu.debut.year+2, revenu.debut.month, revenu.debut.day)
+                        if revenu.fin:
+                            revenu.fin = datetime.date(revenu.fin.year+2, revenu.fin.month, revenu.fin.day)
                     parent.revenus.append(revenu)
             cur.execute('SELECT date, value, debut, fin, idx FROM ACTIVITES WHERE inscrit=?', (inscrit.idx,))
             for date, value, debut, fin, idx in cur.fetchall():
@@ -754,6 +767,11 @@ class SQLConnection(object):
                 date = getdate(date)
                 inscrit.corrections[date] = Correction(inscrit, date, valeur, libelle, idx)
 
+        cur.execute('SELECT idx, date, valeur FROM NUMEROS_FACTURE')
+        for idx, date, valeur in cur.fetchall():
+            date = getdate(date)
+            creche.numeros_facture[date] = NumeroFacture(date, valeur, idx)
+                
         cur.execute('SELECT idx, debut, fin, president, vice_president, tresorier, secretaire, directeur, gerant, directeur_adjoint, comptable FROM BUREAUX')
         for idx, debut, fin, president, vice_president, tresorier, secretaire, directeur, gerant, directeur_adjoint, comptable in cur.fetchall():
             bureau = Bureau(creation=False)
@@ -1536,6 +1554,14 @@ class SQLConnection(object):
         if version < 81:
             cur.execute("ALTER TABLE CRECHE ADD repartition INTEGER;")
             cur.execute("UPDATE CRECHE SET repartition=?", (REPARTITION_MENSUALISATION,))          
+
+        if version < 82:
+            cur.execute("""
+              CREATE TABLE NUMEROS_FACTURE (
+                idx INTEGER PRIMARY KEY,
+                date DATE,
+                valeur INTEGER
+              );""")
             
         if version < VERSION:
             try:

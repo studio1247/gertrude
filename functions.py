@@ -59,6 +59,13 @@ def getNextMonthStart(date):
         return datetime.date(date.year+1, 1, 1)
     else:
         return datetime.date(date.year, date.month+1, 1)
+    
+def getTrimestreStart(date):
+    return datetime.date(date.year, 1 + 3 * ((date.month-1)/3), 1)    
+
+def getTrimestreEnd(date):
+    nextTrimestre = getTrimestreStart(date) + datetime.timedelta(80)
+    return getTrimestreStart(nextTrimestre) - datetime.timedelta(1)    
 
 def GetHeureString(value):
     if value is None:
@@ -154,7 +161,17 @@ def GetNom(person):
         return person.nom
     else:
         return ""
-    
+
+def GetNom4P1(person, array):
+    if person:
+        result = person.nom[:4].upper()
+        noms = [p.nom[:4].upper() for p in array]
+        if noms.count(result) > 1 and len(person.prenom) > 0:
+            result += person.prenom[0].upper()
+        return result
+    else:
+        return ""
+        
 def GetPrenom(person):
     if person:
         return person.prenom
@@ -639,7 +656,6 @@ def GetFactureFields(facture):
                   ('de-mois', '%s %d' % (GetDeMoisStr(facture.mois - 1), facture.annee)),
                   ('de-mois-recap', '%s %d' % (GetDeMoisStr(facture.debut_recap.month - 1), facture.debut_recap.year)),
                   ('date', '%.2d/%.2d/%d' % (facture.date.day, facture.mois, facture.annee)),
-                  ('numfact', '%03d%04d%02d' % (facture.inscrit.idx, facture.annee, facture.mois)),
                   ('montant-heure-garde', facture.montant_heure_garde, FIELD_EUROS),
                   ('cotisation-mensuelle', facture.cotisation_mensuelle, FIELD_EUROS),
                   ('heures-cotisation-mensuelle', GetHeureString(facture.heures_cotisation_mensuelle)),
@@ -666,6 +682,13 @@ def GetFactureFields(facture):
                   ('frais-inscription', facture.frais_inscription, FIELD_EUROS|FIELD_SIGN),
                   ('site', GetNom(facture.site)),
                   ('total', facture.total, FIELD_EUROS)]
+        if config.numfact:
+            result.append(('numfact', config.numfact % {"inscritid": facture.inscrit.idx, "numero": facture.numero, "annee": facture.annee, "mois": facture.mois}))
+        else:
+            result.append(('numfact', '%03d%04d%02d' % (facture.inscrit.idx, facture.annee, facture.mois)))
+        if config.codeclient:
+            result.append(('codeclient', config.codeclient % {"inscritid": facture.inscrit.idx, "nom": facture.inscrit.nom, "prenom": facture.inscrit.prenom, "nom4p1": GetNom4P1(facture.inscrit, creche.inscrits)}))
+
         return result
     else:
         return [(label, '?') for label in ('mois', 'de-mois', 'de-mois-recap', 'date', 'numfact', 'montant-heure-garde', 'cotisation-mensuelle', 

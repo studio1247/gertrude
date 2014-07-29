@@ -46,6 +46,11 @@ class FactureFinMois(object):
         self.debut_recap = datetime.date(annee, mois, 1)
         self.fin_recap = getMonthEnd(self.debut_recap)
         self.date = self.fin_recap
+        try:
+            first_numero = int(creche.numeros_facture[self.debut_recap].valeur)
+        except:
+            first_numero = 0
+        self.numero = first_numero + creche.inscrits.index(inscrit)
         self.options = options
         self.cotisation_mensuelle = 0.0
         self.report_cotisation_mensuelle = 0.0

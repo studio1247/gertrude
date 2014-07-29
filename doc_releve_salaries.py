@@ -28,10 +28,10 @@ class ReleveSalariesModifications(object):
         self.multi = False
         self.template = 'Releve salaries.ods'
         if len(salaries) > 1:
-            self.default_output = u"Releve salaries %s %d.odt" % (months[periode.month-1], periode.year)
+            self.default_output = u"Releve salaries %s %d.ods" % (months[periode.month-1], periode.year)
         else:
             who = salaries[0]
-            self.default_output = u"Releve salaries %s - %s %d.odt" % (GetPrenomNom(who), months[periode.month - 1], periode.year)
+            self.default_output = u"Releve salaries %s - %s %d.ods" % (GetPrenomNom(who), months[periode.month - 1], periode.year)
     
     def GetFields(self, salarie):
         fields = [('nom-creche', creche.nom),

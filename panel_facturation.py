@@ -29,14 +29,15 @@ from doc_facture_mensuelle import FactureModifications
 from export_compta import ExportComptaModifications
 from doc_attestation_paiement import AttestationModifications
 from doc_appel_cotisations import AppelCotisationsModifications
-from sqlobjects import Correction
+from sqlobjects import Correction, NumeroFacture
 
 class CorrectionsTab(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         
-        # la selection du mois
+        # la selection du mois et le numéro de facture
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.monthchoice = wx.Choice(self)
         date = getFirstMonday()
         first_date = datetime.date(year=date.year, month=date.month, day=1) 
@@ -46,7 +47,10 @@ class CorrectionsTab(AutoTab):
             date = getNextMonthStart(date)
         self.monthchoice.SetStringSelection('%s %d' % (months[today.month - 1], today.year))        
         self.Bind(wx.EVT_CHOICE, self.EvtMonthChoice, self.monthchoice)
-        self.sizer.Add(self.monthchoice, 0, wx.EXPAND|wx.ALL, 5)
+        sizer.Add(self.monthchoice, 1, wx.EXPAND, 5)
+        self.numfacture = AutoNumericCtrl(self, None, 'valeur', precision=0)
+        sizer.AddMany([(wx.StaticText(self, -1, u'Premier numéro de facture :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (self.numfacture, 0, wx.ALIGN_CENTER_VERTICAL)])
+        self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 5)
         self.corrections_sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.corrections_sizer, 0, wx.ALL, 5)
         self.SetSizer(self.sizer)
@@ -60,6 +64,10 @@ class CorrectionsTab(AutoTab):
             self.corrections_sizer.Detach(0)
             
         date = self.monthchoice.GetClientData(self.monthchoice.GetSelection())
+        if not date in creche.numeros_facture:
+            creche.numeros_facture[date] = NumeroFacture(date)
+        self.numfacture.SetInstance(creche.numeros_facture[date])
+        
         for inscrit in creche.inscrits:
             if inscrit.hasFacture(date): # TODO and date not in inscrit.factures_cloturees:
                 if not date in inscrit.corrections:
@@ -69,6 +77,7 @@ class CorrectionsTab(AutoTab):
                 sizer.AddMany([(wx.StaticText(self, -1, u'Libellé :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, inscrit.corrections[date], 'libelle')])
                 sizer.AddMany([(wx.StaticText(self, -1, 'Valeur :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoNumericCtrl(self, inscrit.corrections[date], 'valeur', precision=2)])
                 self.corrections_sizer.Add(sizer)
+        
         AutoTab.UpdateContents(self)
         self.sizer.FitInside(self)              
 

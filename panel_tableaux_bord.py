@@ -28,6 +28,7 @@ from ooffice import *
 from doc_planning import PlanningModifications
 from doc_coordonnees_parents import CoordonneesModifications
 from doc_etats_trimestriels import EtatsTrimestrielsModifications
+from doc_releve_siej import ReleveSIEJModifications
 from doc_releve_detaille import ReleveDetailleModifications
 from doc_planning_detaille import PlanningDetailleModifications
 from doc_etat_presences import EtatsPresenceModifications
@@ -682,16 +683,29 @@ class RelevesTab(AutoTab):
         self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
         # Les releves trimestriels
-        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés trimestriels'), wx.HORIZONTAL)
-        self.releves_choice = wx.Choice(self)
-        button = wx.Button(self, -1, u'Génération')
-        for year in range(first_date.year, today.year + 1):
-            self.releves_choice.Append(u'Année %d' % year, year)
-        self.releves_choice.SetSelection(today.year - first_date.year)
-        self.Bind(wx.EVT_BUTTON, self.EvtGenerationEtatsTrimestriels, button)
-        box_sizer.AddMany([(self.releves_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
-        self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
-        
+        if IsTemplateFile("Releve SIEJ.odt"):
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés trimestriels (SIEJ)'), wx.HORIZONTAL)
+            self.releves_choice = wx.Choice(self)
+            button = wx.Button(self, -1, u'Génération')
+            for year in range(first_date.year, today.year + 1):
+                self.releves_choice.Append(u"Année %d" % year, year)
+            #    for index, trimestre in enumerate(trimestres):
+            #        self.releves_choice.Append(u"%s trimestre %d" % (trimestre, year), datetime.date(year, 1+3*index, 1))
+            self.releves_choice.SetSelection(today.year-first_date.year)
+            self.Bind(wx.EVT_BUTTON, self.EvtGenerationReleveSIEJ, button)
+            box_sizer.AddMany([(self.releves_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+        else:
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés trimestriels'), wx.HORIZONTAL)
+            self.releves_choice = wx.Choice(self)
+            button = wx.Button(self, -1, u'Génération')
+            for year in range(first_date.year, today.year + 1):
+                self.releves_choice.Append(u'Année %d' % year, year)
+            self.releves_choice.SetSelection(today.year - first_date.year)
+            self.Bind(wx.EVT_BUTTON, self.EvtGenerationEtatsTrimestriels, button)
+            box_sizer.AddMany([(self.releves_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+                
         # Les relevés détaillés
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés annuels détaillés'), wx.HORIZONTAL)
         self.releves_detailles_choice = wx.Choice(self)
@@ -810,6 +824,11 @@ class RelevesTab(AutoTab):
         date = str2date(self.inscriptions_date.GetValue())
         DocumentDialog(self, EtatsInscriptionsModifications(site, date)).ShowModal()
 
+    def EvtGenerationReleveSIEJ(self, evt):
+        site = self.GetSelectedSite()
+        annee = self.releves_choice.GetClientData(self.releves_choice.GetSelection())
+        DocumentDialog(self, ReleveSIEJModifications(site, annee)).ShowModal()
+        
     def EvtGenerationEtatsTrimestriels(self, evt):
         site = self.GetSelectedSite()
         annee = self.releves_choice.GetClientData(self.releves_choice.GetSelection())

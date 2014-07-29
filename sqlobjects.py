@@ -25,6 +25,7 @@ class SQLObject(object):
     def delete(self):
         print 'suppression %s' % self.__class__.__name__
         sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.table, (self.idx,))
+        self.idx = None
         
 class Day(object):
     table = None
@@ -451,10 +452,6 @@ class Bureau(SQLObject):
         result = sql_connection.execute('INSERT INTO BUREAUX (idx, debut, fin, president, vice_president, tresorier, secretaire, directeur) VALUES (NULL,?,?,?,?,?,?,?)', (self.debut, self.fin, self.president, self.vice_president, self.tresorier, self.secretaire, self.directeur))
         self.idx = result.lastrowid
 
-    def delete(self):
-        print 'suppression bureau'
-        sql_connection.execute('DELETE FROM BUREAUX WHERE idx=?', (self.idx,))
-
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['debut', 'fin', 'president', 'vice_president', 'tresorier', 'secretaire', 'directeur', 'gerant', 'directeur_adjoint', 'comptable'] and self.idx:
@@ -500,10 +497,6 @@ class Charges(object):
         print 'nouvelles charges'
         result = sql_connection.execute('INSERT INTO CHARGES (idx, date, charges) VALUES (NULL,?,?)', (self.date, self.charges))
         self.idx = result.lastrowid
-
-    def delete(self):
-        print 'suppression charges'
-        sql_connection.execute('DELETE FROM CHARGES WHERE idx=?', (self.idx,))
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
@@ -561,10 +554,6 @@ class Reservataire(SQLObject):
         print 'nouveau reservataire'
         result = sql_connection.execute('INSERT INTO RESERVATAIRES (idx, debut, fin, nom, places, heures_jour, heures_semaine, options) VALUES (NULL,?,?,?,?,?,?,?)', (self.debut, self.fin, self.nom, self.places, self.heures_jour, self.heures_semaine, self.options))
         self.idx = result.lastrowid
-
-    def delete(self):
-        print 'suppression reservataire'
-        sql_connection.execute('DELETE FROM RESERVATAIRES WHERE idx=?', (self.idx,))
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
@@ -886,6 +875,7 @@ class Creche(object):
         self.bureaux = []
         self.baremes_caf = []
         self.charges = {}
+        self.numeros_facture = {}
         self.inscrits = []
         self.ouverture = 7.75
         self.fermeture = 18.5
@@ -1309,9 +1299,6 @@ class TarifSpecial(SQLObject):
         result = sql_connection.execute('INSERT INTO TARIFSSPECIAUX (idx, label, type, unite, valeur) VALUES(NULL,?,?,?,?)', (self.label, self.type, self.unite, self.valeur))
         self.idx = result.lastrowid
         
-    def delete(self):
-        SQLObject.delete(self)
-
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['label', 'type', 'unite', 'valeur'] and self.idx:
@@ -1378,9 +1365,6 @@ class Categorie(SQLObject):
         result = sql_connection.execute('INSERT INTO CATEGORIES (idx, nom) VALUES(NULL,?)', (self.nom, ))
         self.idx = result.lastrowid
         
-    def delete(self):
-        SQLObject.delete(self)
-
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['nom'] and self.idx:
@@ -1494,6 +1478,33 @@ class Frere_Soeur(object):
         if name in ['prenom', 'naissance', 'entree', 'sortie'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE FRATRIES SET %s=? WHERE idx=?' % name, (value, self.idx))
+
+class NumeroFacture(SQLObject):
+    table = "NUMEROS_FACTURE"
+    
+    def __init__(self, date, valeur=0, idx=None):
+        self.ready = False
+        self.idx = idx
+        self.date = date
+        self.valeur = valeur
+        self.ready = True
+
+    def create(self):
+        print 'nouveau numero de facture'
+        result = sql_connection.execute('INSERT INTO NUMEROS_FACTURE (idx, date, valeur) VALUES (NULL,?,?)', (self.date, self.valeur))
+        self.idx = result.lastrowid
+
+    def __setattr__(self, name, value):
+        self.__dict__[name] = value
+        
+        if self.ready and name in ['valeur']:
+            if self.idx and self.valeur:
+                print 'update', name
+                sql_connection.execute('UPDATE NUMEROS_FACTURE SET %s=? WHERE idx=?' % name, (value, self.idx))
+            elif value and not self.idx:
+                self.create()
+            elif self.idx and not self.valeur:
+                self.delete()
 
 class Correction(SQLObject):
     table = "CORRECTIONS"
@@ -1797,6 +1808,16 @@ class Inscrit(object):
         else:
             return inscription.getJourneeReference(date).GetTotalActivitesPresenceNonFacturee()
         
+    def GetRegime(self, date):
+        result = 0
+        for parent in self.parents.values():
+            if parent:
+                revenu = Select(parent.revenus, date)
+                if revenu and revenu.regime:
+                    result = revenu.regime
+                    break
+        return result
+
     def __cmp__(self, other):
         if other is self:
             return 0

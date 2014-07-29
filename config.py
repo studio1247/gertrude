@@ -31,12 +31,25 @@ class Database(object):
         self.section = section
         self.filename = filename
         self.connection = FileConnection(filename)
+
+class Section(object):
+    def __init__(self, database):
+        self.database = database
+        self.numfact = None
+        self.codeclient = None
         
 class Config(object):
     def __init__(self):
-        self.databases = {}
-        self.connection = None
+        self.sections = {}
         self.options = 0
+        self.connection = None
+        
+    def setSection(self, section):
+        self.default_section = section
+        self.database = self.sections[section].database
+        self.connection = self.database.connection
+        self.numfact = self.sections[section].numfact
+        self.codeclient = self.sections[section].codeclient
 
 __builtin__.config = Config()
 
@@ -95,13 +108,22 @@ def getBackupsDirectory(parser):
         return directory
     except:
         return ""
-    
-def getDefaultDatabase(parser):
+
+def getDefaultSection(parser):
     try:
         return parser.get(DEFAULT_SECTION, "default-database")
     except:
         return None
 
+def getField(parser, section, field):
+    try:
+        return parser.get(section, field)
+    except:
+        try:
+            return parser.get(DEFAULT_SECTION, field)
+        except:
+            return None
+        
 def getDatabase(parser, section):
     try:
         filename = parser.get(section, "database")
@@ -175,19 +197,21 @@ def LoadConfig(progress_handler=default_progress_handler):
     config.original_backups_directory = getBackupsDirectory(parser)
     config.backups_directory = config.original_backups_directory
     
-    config.original_default_database = getDefaultDatabase(parser)
-    config.default_database = config.original_default_database
+    config.original_default_section = getDefaultSection(parser)
+    config.default_section = config.original_default_section
     
     if parser:
         for section in parser.sections():
             database = getDatabase(parser, section)
             if database:
-                config.databases[section] = database
-    if not config.databases:
-        config.databases[None] = Database()
-    if len(config.databases) == 1:
-        config.connection = config.databases[config.databases.keys()[0]].connection
-        
+                config.sections[section] = Section(database)
+                config.sections[section].numfact = getField(parser, section, "numfact")
+                config.sections[section].codeclient = getField(parser, section, "codeclient")
+    if not config.sections:
+        config.sections[None] = Section()
+    if len(config.sections) == 1:
+        config.setSection(config.sections.keys()[0])
+
 def SaveConfig(progress_handler):
     parameters = {}
     if config.window_size != config.original_window_size:
@@ -197,8 +221,8 @@ def SaveConfig(progress_handler):
         parameters["documents-directory"] = config.documents_directory
     if config.backups_directory != config.original_backups_directory:
         parameters["backups-directory"] = config.backups_directory
-    if config.default_database != config.original_default_database:
-        parameters["default-database"] = config.default_database
+    if config.default_section != config.original_default_section:
+        parameters["default-database"] = config.default_section
     if parameters:
         try:
             parser = ConfigParser.SafeConfigParser()
@@ -235,11 +259,11 @@ def Liste(progress_handler=default_progress_handler):
         c = creche
     except:
         c = None
-    for database in config.databases.values():
-        if database.section == config.default_database and c:
+    for value in config.sections.values():
+        if value.section == config.default_section and c:
             for inscrit in c.inscrits:
-                result[GetPrenomNom(inscrit)] = database
+                result[GetPrenomNom(inscrit)] = value
         else:
             for entry in database.connection.Liste(progress_handler):
-                result[entry] = database
+                result[entry] = value
     return result

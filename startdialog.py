@@ -113,10 +113,10 @@ class StartDialog(wx.Dialog):
             self.sizer.Hide(self.gauge)
             self.info.AppendText("Choix de la structure ...\n")
             self.sizer.Show(self.creche_sizer)
-            for section in config.databases.keys():
+            for section in config.sections.keys():
                 self.creche_ctrl.Append(section)
-            if config.default_database:
-                self.creche_ctrl.SetStringSelection(config.default_database)
+            if config.default_section:
+                self.creche_ctrl.SetStringSelection(config.default_section)
             else:
                 self.creche_ctrl.SetSelection(0)
             self.sizer.Show(self.btnsizer)
@@ -209,8 +209,7 @@ class StartDialog(wx.Dialog):
             self.sizer.Fit(self)
             section = self.creche_ctrl.GetStringSelection()
             self.info.AppendText(u"Structure %s sélectionnée.\n" % section)
-            config.default_database = section
-            config.connection = config.databases[section].connection
+            config.setSection(section)
             thread.start_new_thread(self.Load, (section, ))
             return
             

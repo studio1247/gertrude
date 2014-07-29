@@ -140,12 +140,12 @@ class GertrudeFrame(wx.Frame):
         # MenuBar
         menuBar = wx.MenuBar()
         menu = wx.Menu()
-        if len(config.databases) > 1:
+        if len(config.sections) > 1:
             self.db_menu = wx.Menu()
-            for i, key in enumerate(config.databases.keys()):
+            for i, key in enumerate(config.sections.keys()):
                 self.db_menu.Append(1001+i, key)
                 self.Bind(wx.EVT_MENU, self.OnChangementDatabase, id=1001+i)
-            self.db_menu.FindItemByPosition(config.databases.keys().index(config.default_database)).Enable(False)
+            self.db_menu.FindItemByPosition(config.sections.keys().index(config.default_section)).Enable(False)
             self.db_menu.AppendSeparator()
             self.db_menu.Append(1099, "Rechercher...")
             self.Bind(wx.EVT_MENU, self.OnRechercher, id=1099)
@@ -237,7 +237,7 @@ class GertrudeFrame(wx.Frame):
             return None
     
     def OnChangementDatabase(self, event):
-        self.ChangeDatabase(config.databases.keys()[event.GetId()-1001])
+        self.ChangeDatabase(config.sections.keys()[event.GetId()-1001])
         
     def ChangeDatabase(self, database):
         self.SetStatusText("Changement en cours ...")
