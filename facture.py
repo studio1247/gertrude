@@ -56,7 +56,7 @@ class FactureFinMois(object):
         self.report_cotisation_mensuelle = 0.0
         self.heures_contrat = 0.0 # heures réellement contractualisées, tient compte des prorata
         self.heures_maladie = 0.0
-        self.heures_facturees_par_mode = [0.0] * 33
+        self.heures_facturees_par_mode = [0.0] * (MODE_MAX+1)
         self.heures_contractualisees = 0.0
         self.heures_contractualisees_realisees = 0.0
         self.heures_realisees = 0.0

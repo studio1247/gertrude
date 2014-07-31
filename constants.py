@@ -64,6 +64,7 @@ MODE_3_5 = 8
 MODE_FORFAIT_HORAIRE = 16
 MODE_TEMPS_PARTIEL = 32
 MODE_ACCUEIL_URGENCE = 64
+MODE_MAX = MODE_ACCUEIL_URGENCE
 
 ModeAccueilItems = [("Temps plein", MODE_5_5),
                     ("Temps partiel", MODE_TEMPS_PARTIEL),
