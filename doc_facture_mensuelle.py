@@ -82,6 +82,18 @@ class FactureModifications(object):
         doc = dom.getElementsByTagName("office:text")[0]
         templates = doc.childNodes[:]
         
+        styleC3, styleD3 = False, False
+        for style in doc.getElementsByTagName('style:style'):
+            if style.name == 'Presences.C3':
+                styleC3 = True
+            elif style.name == 'Presences.D3':
+                styleD3 = True
+
+        #if not styleC3:
+        #    couleurs[CONGES] = 'B3'
+        if not styleD3:
+            couleurs[CONGES_DEPASSEMENT] = 'B3'
+        
         for index, inscrit in enumerate(self.inscrits):
             try:
                 facture = Facture(inscrit, self.periode.year, self.periode.month, options=TRACES)
@@ -157,6 +169,8 @@ class FactureModifications(object):
                                 else:
                                     state = ABSENT
                                 text_node.firstChild.replaceWholeText('%d%s' % (date.day, details))
+                                if date == datetime.date(2014, 7, 28):
+                                    print date, state, couleurs[state]
                                 cell.setAttribute('table:style-name', 'Presences.%s' % couleurs[state])
                             date += datetime.timedelta(1)
         
