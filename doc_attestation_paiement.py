@@ -34,7 +34,7 @@ class AttestationModifications(object):
                 self.email_subject = u"Attestations de paiement %s-%s %d" % (months[debut.month - 1], months[fin.month - 1], debut.year)
                 self.default_output = u"Attestation de paiement <prenom> <nom> %s-%s %d.odt" % (months[debut.month - 1], months[fin.month - 1], debut.year)
             self.email_to = None
-            self.multi = True
+            self.multi = None
         else:
             self.inscrits = [who]
             if debut.year == fin.year and debut.month == fin.month:

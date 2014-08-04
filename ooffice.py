@@ -529,7 +529,7 @@ class DocumentDialog(wx.Dialog):
         self.sizer.Add(line, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.TOP|wx.BOTTOM, 5)
         
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        if not modifications.multi: #sys.platform == 'win32':
+        if modifications.multi is not True:
             self.sauver_ouvrir = wx.Button(self, -1, u"Sauver et ouvrir")
             self.sauver_ouvrir.SetDefault()
             self.Bind(wx.EVT_BUTTON, self.onSauverOuvrir, self.sauver_ouvrir)
@@ -545,7 +545,7 @@ class DocumentDialog(wx.Dialog):
             self.sauver_envoyer = wx.Button(self, -1, u"Sauver et envoyer par email")
             self.Bind(wx.EVT_BUTTON, self.onSauverEnvoyer, self.sauver_envoyer)
             sizer.Add(self.sauver_envoyer, 0, wx.LEFT|wx.RIGHT, 5)
-            if not modifications.multi and not modifications.email_to:
+            if modifications.multi is False and not modifications.email_to:
                 self.sauver_envoyer.Disable()
                 
             if creche.caf_email:
@@ -586,7 +586,7 @@ class DocumentDialog(wx.Dialog):
         config.documents_directory = os.path.dirname(self.filename)
         dlg = None
         try:
-            if self.modifications.multi:
+            if self.modifications.multi is not False:
                 errors = { }
                 simple_modifications = self.modifications.GetSimpleModifications(self.oo_filename)
                 for i, (filename, modifs) in enumerate(simple_modifications):
@@ -626,6 +626,7 @@ class DocumentDialog(wx.Dialog):
         self.EndModal(wx.ID_OK)
         
     def onSauverOuvrir(self, event):
+        self.modifications.multi = False
         self.onSauver(event)
         if self.document_generated:
             if self.filename.endswith("pdf"):
@@ -640,7 +641,7 @@ class DocumentDialog(wx.Dialog):
     def onSauverEnvoyer(self, event):
         self.onSauver(event)
         if self.document_generated:
-            if self.modifications.multi:
+            if self.modifications.multi is not False:
                 simple_modifications = self.modifications.GetSimpleModifications(self.oo_filename)
                 emails = '\n'.join([" - %s (%s)" % (modifs.email_subject, ", ".join(modifs.email_to)) for filename, modifs in simple_modifications])
                 if len(emails) > 1000:
