@@ -591,7 +591,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                     if activities_state:
                         state &= ~activities_state
                         state |= PRESENT
-                elif state == VACANCES:
+                elif state == VACANCES and creche.repartition == REPARTITION_SANS_MENSUALISATION:
                     try:
                         if line.inscription.IsNombreSemainesCongesAtteint(line.key):
                             state = CONGES_DEPASSEMENT
