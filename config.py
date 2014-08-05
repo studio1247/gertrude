@@ -208,7 +208,7 @@ def LoadConfig(progress_handler=default_progress_handler):
                 config.sections[section].numfact = getField(parser, section, "numfact")
                 config.sections[section].codeclient = getField(parser, section, "codeclient")
     if not config.sections:
-        config.sections[None] = Section()
+        config.sections[None] = Section(Database())
     if len(config.sections) == 1:
         config.setSection(config.sections.keys()[0])
 
