@@ -245,6 +245,8 @@ class Cotisation(object):
                 if options & TRACES: print u' heures période :', self.heures_periode
 
                 self.nombre_factures = GetNombreFacturesContrat(self.inscription.debut, self.inscription.fin)
+                if self.nombre_factures == 0:
+                    self.nombre_factures = 1
                 if options & TRACES: print ' nombres de factures :', self.nombre_factures
                 self.heures_mois = math.ceil(self.heures_periode / self.nombre_factures)
                 if options & TRACES: print ' heures mensuelles : %f (%f)' % (self.heures_mois, self.heures_periode / self.nombre_factures)
