@@ -315,9 +315,13 @@ class FactureFinMois(object):
                     self.cotisation_mensuelle += prorata
                     self.total_contractualise += prorata
                     self.heures_contrat += prorata_heures
-                elif self.heures_contractualisees:
-                    prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees
-                    prorata_heures = cotisation.heures_mois * cotisation.heures_reference / self.heures_contractualisees
+                else:
+                    if self.heures_contractualisees:
+                        prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees
+                        prorata_heures = cotisation.heures_mois * cotisation.heures_reference / self.heures_contractualisees
+                    else:
+                        prorata = cotisation.cotisation_mensuelle
+                        prorata_heures = cotisation.heures_mois
                     # ajoute FACTURATION_PSU bloc plus haut pour eviter 2 * la regle de 3
                     # avant il y avait ce commentaire: ne marche pas pour saint julien, mais c'est redemande (2 octobre 2012), normal pour le premier mois pour un enfant qui arrive mi-septembre
                     # avec le test suivant on devrait etre bon, parce que sinon on effectue la regle de 3 dans la cotisation + ici
