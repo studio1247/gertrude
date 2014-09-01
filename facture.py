@@ -233,7 +233,7 @@ class FactureFinMois(object):
                         if heures_supplementaires_facturees > 0:
                             if creche.mode_facturation == FACTURATION_FORFAIT_10H:
                                 self.CalculeSupplement(cotisation, 10)
-                            else:
+                            elif cotisation.inscription.mode != MODE_FORFAIT_HORAIRE:
                                 cotisation.heures_supplementaires += heures_supplementaires_facturees
                                 self.heures_supplementaires += heures_supplementaires_facturees
                                 if creche.mode_facturation != FACTURATION_HORAIRES_REELS and (creche.facturation_periode_adaptation != FACTURATION_HORAIRES_REELS or not cotisation.inscription.IsInPeriodeAdaptation(date)):

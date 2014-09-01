@@ -285,7 +285,7 @@ class Cotisation(object):
             self.montant_heure_garde = 0.0
             self.cotisation_periode = 0.0
             self.cotisation_mensuelle = self.inscription.forfait_mensuel
-        elif creche.mode_facturation == FACTURATION_HORAIRES_REELS:
+        elif creche.mode_facturation == FACTURATION_HORAIRES_REELS or self.inscription.mode == MODE_FORFAIT_HORAIRE:
             if self.inscription.mode == MODE_FORFAIT_HORAIRE:
                 self.forfait_heures_presence = self.inscription.forfait_heures_presence
             try:
