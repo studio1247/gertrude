@@ -805,6 +805,12 @@ class SQLConnection(object):
         if progress_handler:
             progress_handler.display(u"Conversion de la base de données (version %d => version %d) ..." % (version, VERSION))
 
+
+        #pour decloturer une facture dans une base plus ancienne
+        #cur.execute('DELETE FROM FACTURES where inscrit=? AND date=?', (93, datetime.date(2014, 7, 1)))
+        #self.commit()
+        #exit(0)
+                               
         if version < 1:
             cur.execute("""
               CREATE TABLE DATA(

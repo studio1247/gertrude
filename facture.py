@@ -510,6 +510,7 @@ class FactureCloturee:
         if sql_connection:
             print u'Suppression clôture', self.inscrit.idx, self.date
             sql_connection.execute('DELETE FROM FACTURES where inscrit=? AND date=?', (self.inscrit.idx, self.date))
+            # print "sql_connection.execute('DELETE FROM FACTURES where inscrit=%d AND date=%r)'" % (self.inscrit.idx, self.date)
             history.append(None)
 
     

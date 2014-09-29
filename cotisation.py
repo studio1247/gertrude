@@ -411,7 +411,9 @@ class Cotisation(object):
                         self.montant_heure_garde = heure_garde_diff
                     
         self.cotisation_mensuelle += self.majoration_mensuelle
-        if options & TRACES: print " cotisation mensuelle :", self.cotisation_mensuelle
+        if options & TRACES: 
+            print " cotisation mensuelle :", self.cotisation_mensuelle
+            print
     
     def AjustePeriode(self, param):
         if isinstance(param, tuple):
