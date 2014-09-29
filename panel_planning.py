@@ -334,14 +334,17 @@ class PlanningPanel(GPanel):
                 date = datetime.date(tm.tm_year, tm.tm_mon, tm.tm_mday)
                 if idx not in array:
                     array[idx] = []
-                if label == "Arrivee":
+                if label == "arrivee":
                     arrivee = tm.tm_hour * 12 + tm.tm_min / creche.granularite * (creche.granularite/BASE_GRANULARITY)
                     array[idx].append(PeriodePresence(date, arrivee))
-                elif label == "Depart":
+                elif label == "depart":
                     depart = tm.tm_hour * 12 + (tm.tm_min+creche.granularite-1) / creche.granularite * (creche.granularite/BASE_GRANULARITY)
-                    last = array[idx][-1]
-                    if last.date == date and last.arrivee:
-                        last.depart = depart
+                    if len(array[idx]):
+                        last = array[idx][-1]
+                        if last.date == date and last.arrivee:
+                            last.depart = depart
+                        else:
+                            array[idx].append(PeriodePresence(date, None, depart))
                     else:
                         array[idx].append(PeriodePresence(date, None, depart))
                 creche.last_tablette_synchro = line
