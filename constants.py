@@ -74,7 +74,7 @@ ModeAccueilItems = [("Temps plein", MODE_5_5),
                     ("Halte-garderie", MODE_HALTE_GARDERIE),
                     ("Accueil urgence", MODE_ACCUEIL_URGENCE)]
 
-Regimes = [u'Pas de sélection', u'Régime général', u'Régime de la fonction publique', u'Régime MSA', u'Régime EDF-GDF', u'Régime RATP', u'Régime Pêche maritime', u'Régime Marins du Commerce', u'Régime RSI']
+Regimes = [u'Pas de sélection', u'Régime général', u'Régime de la fonction publique', u'Régime MSA', u'Régime EDF-GDF', u'Régime RATP', u'Régime Pêche maritime', u'Régime Marins du Commerce', u'Régime RSI', u'Régime SNCF']
 
 # Nombre de semaines de reference
 MAX_SEMAINES_REFERENCE = 10
