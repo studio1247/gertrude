@@ -357,13 +357,19 @@ class PlanningPanel(GPanel):
             if inscrit:
                 for periode in array[key]:
                     if not periode.arrivee:
-                        reference = inscrit.getJournee(periode.date)
-                        periode.arrivee = reference.GetPlageHoraire()[0]
                         errors.append(u"%s : Pas d'arrivée enregistrée le %s" % (GetPrenomNom(inscrit), periode.date))
+                        reference = inscrit.getJournee(periode.date)
+                        if reference:
+                            periode.arrivee = reference.GetPlageHoraire()[0]
+                        else:
+                            continue
                     elif not periode.depart:
-                        reference = inscrit.getJournee(date)
-                        periode.depart = reference.GetPlageHoraire()[-1]
                         errors.append(u"%s : Pas de départ enregistré le %s" % (GetPrenomNom(inscrit), periode.date))
+                        reference = inscrit.getJournee(date)
+                        if reference:
+                            periode.depart = reference.GetPlageHoraire()[-1]
+                        else:
+                            continue
                     
                     if periode.date in inscrit.journees:
                         inscrit.journees[periode.date].remove_activities(0)
