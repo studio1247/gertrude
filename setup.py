@@ -51,7 +51,7 @@ elif "linux" in sys.platform:
     p.author = "Bertrand Songis"
     p.mail = "bsongis@gmail.com"
     p.description = u"Logiciel pour les creches"
-    p.url = "http://gertrude.creches.free.fr"
+    p.url = "http://www.gertrude-logiciel.org"
     p.depends = "bash, python-gtk2, python"
     p.license = "gpl"
     p.section = "utils"
