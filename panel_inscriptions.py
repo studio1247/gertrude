@@ -319,6 +319,7 @@ class IdentitePanel(InscriptionsTab):
         if res == wx.ID_OK:
             self.inscrit.combinaison = dlg.getCombinaison()
             self.UpdateCombinaison()
+            history.Append(None)
         dlg.Destroy()        
 
     def UpdateCategorieItems(self):
