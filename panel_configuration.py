@@ -604,7 +604,7 @@ class ChargesTab(AutoTab, PeriodeMixin):
             self.annee_choice.Append(u"Année %d" % annee, annee)
         self.Bind(wx.EVT_CHOICE, self.EvtAnneeChoice, self.annee_choice)
         sizer.Add(self.annee_choice, 0, wx.TOP, 5)
-        sizer2 = wx.FlexGridSizer(4, 2, 5, 5)
+        sizer2 = wx.FlexGridSizer(12, 2, 5, 5)
         self.charges_ctrls = []
         for m in range(12):
             ctrl = AutoNumericCtrl(self, None, 'charges', precision=2)
