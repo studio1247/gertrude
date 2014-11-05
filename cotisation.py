@@ -115,6 +115,7 @@ class Cotisation(object):
             print u"\nCotisation de %s au %s ..." % (GetPrenomNom(inscrit), date)
 
         self.revenus_parents = []
+        self.conges_inscription = []
         self.chomage = 0
         self.conge_parental = 0
         self.date_revenus = GetDateRevenus(self.date)
@@ -219,7 +220,6 @@ class Cotisation(object):
                 self.heures_periode = 0.0
                 self.heures_fermeture_creche = 0.0
                 self.heures_accueil_non_facture = 0.0
-                self.conges_inscription = []
                 date = self.inscription.debut
                 if self.inscription.fin is None:
                     errors.append(u" - La période d'inscription n'a pas de fin.")
