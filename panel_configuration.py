@@ -659,7 +659,7 @@ class JoursFermeturePanel(AutoTab):
         for i, conge in enumerate(creche.conges):
             self.line_add(i)
         self.sizer.Add(self.conges_sizer, 0, wx.ALL, 5)
-        button_add = wx.Button(self, -1, u'Nouvelle période de congés')
+        button_add = wx.Button(self, -1, u"Ajouter une période de fermeture")
         if readonly:
             button_add.Disable()
         self.sizer.Add(button_add, 0, wx.EXPAND+wx.TOP, 5)
@@ -848,7 +848,7 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, u"Mode d'arrondi de la facturation des enfants :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'arrondi_facturation', [(u"Pas d'arrondi", SANS_ARRONDI), (u"Arrondi à l'heure", ARRONDI_HEURE), (u"Arrondi à la demi heure", ARRONDI_DEMI_HEURE), (u"Arrondi des heures d'arrivée et de départ", ARRONDI_HEURE_ARRIVEE_DEPART)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u"Mode d'arrondi des horaires des salariés :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'arrondi_heures_salaries', [(u"Pas d'arrondi", SANS_ARRONDI), (u"Arrondi à l'heure", ARRONDI_HEURE), (u"Arrondi des heures d'arrivée et de départ", ARRONDI_HEURE_ARRIVEE_DEPART)]), 0, wx.EXPAND)])
         # TODO n'afficher que si PSU/PAJE est choisi
-        sizer.AddMany([(wx.StaticText(self, -1, u"Gestion de périodes de congés à l'inscription :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'conges_inscription', [('Non', 0), (u'Oui', 1), (u"Oui, avec gestion d'heures supplémentaires", 2)]), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u"Gestion des absences prévues au contrat :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'conges_inscription', [('Non', 0), (u'Oui', 1), (u"Oui, avec gestion d'heures supplémentaires", 2)]), 0, wx.EXPAND)])
         # TODO n'afficher que si PSU/PAJE est choisi
         sizer.AddMany([(wx.StaticText(self, -1, u'Tarification des activités :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'tarification_activites', [(u'Non géré', ACTIVITES_NON_FACTUREES), (u'A la journée', ACTIVITES_FACTUREES_JOURNEE), (u"Période d'adaptation, à la journée", ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Traitement des absences pour maladie :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'traitement_maladie', [(u"Avec carence en jours ouvrés", DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_OUVRES), (u"Avec carence en jours calendaires", DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES), ("Sans carence", DEDUCTION_MALADIE_SANS_CARENCE)]), 0, wx.EXPAND)])
@@ -1345,7 +1345,7 @@ class ParametresNotebook(wx.Notebook):
         else:
             self.charges_tab_displayed = 0
         self.AddPage(CafTab(self), 'C.A.F.')
-        self.AddPage(JoursFermeturePanel(self), u'Congés')
+        self.AddPage(JoursFermeturePanel(self), u"Fermeture de l'établissement")
         self.AddPage(ActivitesTab(self), u'Couleurs / Activités')
         self.AddPage(ParametersPanel(self), u'Paramètres')
         self.tarif_horaire_panel = TarifHorairePanel(self)

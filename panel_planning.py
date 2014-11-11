@@ -281,6 +281,11 @@ class PlanningPanel(GPanel):
             return None        
             
     def onChangeWeek(self, evt=None):
+        self.UpdateWeek()
+        self.notebook.SetSelection(0)
+        self.sizer.Layout()
+        
+    def UpdateWeek(self):
         site = self.GetSelectedSite()
         groupe = self.GetSelectedGroupe()
         
@@ -296,8 +301,6 @@ class PlanningPanel(GPanel):
                 note = self.notebook.GetPage(page_index)
                 note.SetData(site, groupe, day)
                 page_index += 1
-        self.notebook.SetSelection(0)
-        self.sizer.Layout()
         
     def onPreviousWeek(self, evt):
         self.week_choice.SetSelection(self.week_choice.GetSelection() - 1)
@@ -357,17 +360,23 @@ class PlanningPanel(GPanel):
             if inscrit:
                 for periode in array[key]:
                     if not periode.arrivee:
-                        errors.append(u"%s : Pas d'arrivée enregistrée le %s" % (GetPrenomNom(inscrit), periode.date))
+                        if not date in inscrit.journees:
+                            errors.append(u"%s : Pas d'arrivée enregistrée le %s" % (GetPrenomNom(inscrit), periode.date))
                         reference = inscrit.getJournee(periode.date)
                         if reference:
                             periode.arrivee = reference.GetPlageHoraire()[0]
+                            if periode.arrivee is None:
+                                periode.arrivee = int(creche.ouverture*(60 / BASE_GRANULARITY))
                         else:
                             continue
                     elif not periode.depart:
-                        errors.append(u"%s : Pas de départ enregistré le %s" % (GetPrenomNom(inscrit), periode.date))
+                        if periode.date != today:
+                            errors.append(u"%s : Pas de départ enregistré le %s" % (GetPrenomNom(inscrit), periode.date))
                         reference = inscrit.getJournee(date)
                         if reference:
                             periode.depart = reference.GetPlageHoraire()[-1]
+                            if periode.depart is None:
+                                periode.depart = int(creche.fermeture*(60 / BASE_GRANULARITY))
                         else:
                             continue
                     
@@ -385,7 +394,7 @@ class PlanningPanel(GPanel):
             dlg.ShowModal()
             dlg.Destroy()
         
-        self.UpdateContents()
+        self.UpdateWeek()
         
     def UpdateContents(self):
         if len(creche.sites) > 1:

@@ -870,16 +870,21 @@ class PeriodeChoice(wx.BoxSizer):
         self.Enable()
 
     def EvtPeriodeDelButton(self, evt):
-        index = self.periodechoice.GetSelection()
-        periode = self.instance[index]
-        history.Append(Insert(self.instance, index, periode))
-        periode.delete()
-        del self.instance[index]
-        self.periodechoice.Delete(index)
-        self.periode = len(self.instance) - 1
-        self.periodechoice.SetSelection(self.periode)
-        self.parent.SetPeriode(self.periode)
-        self.Enable()
+        dlg = wx.MessageDialog(self.parent,
+            u'Cette période va être supprimée, confirmer ?',
+            'Confirmation',
+            wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
+        if dlg.ShowModal() == wx.ID_YES:
+            index = self.periodechoice.GetSelection()
+            periode = self.instance[index]
+            history.Append(Insert(self.instance, index, periode))
+            periode.delete()
+            del self.instance[index]
+            self.periodechoice.Delete(index)
+            self.periode = len(self.instance) - 1
+            self.periodechoice.SetSelection(self.periode)
+            self.parent.SetPeriode(self.periode)
+            self.Enable()
 
     def EvtPeriodeSettingsButton(self, evt):
         periode = self.instance[self.periode]

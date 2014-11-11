@@ -909,7 +909,7 @@ class CongesPanel(InscriptionsTab):
         self.conges_inscrit_sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.conges_inscrit_sizer, 0, wx.ALL, 5)
         
-        self.nouveau_conge_button = wx.Button(self, -1, u'Nouvelle période de congés')
+        self.nouveau_conge_button = wx.Button(self, -1, u"Ajouter une période d'absence")
         self.sizer.Add(self.nouveau_conge_button, 0, wx.EXPAND+wx.TOP, 5)
         self.Bind(wx.EVT_BUTTON, self.evt_conge_add, self.nouveau_conge_button)
 
@@ -1009,7 +1009,7 @@ class InscriptionsNotebook(wx.Notebook):
         self.AddPage(ModeAccueilPanel(self), "Mode d'accueil")
         if creche.conges_inscription:
             self.conges_panel = CongesPanel(self)
-            self.AddPage(self.conges_panel, u"Congés")
+            self.AddPage(self.conges_panel, u"Absences prévues au contrat")
         else:
             self.conges_panel = None
         self.AddPage(NotesPanel(self), "Notes")
