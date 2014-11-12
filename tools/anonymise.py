@@ -30,6 +30,7 @@ adresse = u"Rue du faubourg Saint Honoré"
 code_postal = 75000
 email = "contact@gertrude-logiciel.org"
 telephone = "06 12 34 56 78"
+bureau = (u"Auguste Jullien", u"François Vatel", u"Cesare Frangipani", u"Pierre-François de la Varenne", u"Gaston Lenôtre", u"Pierre Hermé", u"Christophe Felder", u"Philippe Conticini")
 
 con = sqlite3.connect(database)
 cur = con.cursor()
@@ -40,6 +41,7 @@ for i, entry in enumerate(cur.fetchall()):
     cur.execute('UPDATE parents SET nom=? WHERE inscrit=?', (nom, entry[0]))
     cur.execute('UPDATE parents SET telephone_domicile=?, telephone_travail=?, telephone_portable=?, email=? WHERE inscrit=?', (telephone, telephone, telephone, email, entry[0]))
 cur.execute('UPDATE creche SET nom=?, ville=?, code_postal=?, adresse=?, telephone=?, email=?', (creche, ville, code_postal, adresse, telephone, email))
+cur.execute('UPDATE bureaux SET president=?, vice_president=?, tresorier=?, secretaire=?, directeur=?, gerant=?, directeur_adjoint=?, comptable=?', bureau)
     
 con.commit()
 con.close()
