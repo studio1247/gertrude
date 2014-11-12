@@ -21,7 +21,7 @@ try:
 except:
     from pysqlite2 import dbapi2 as sqlite3
 
-database = "../tablette.db"
+database = "../gertrude.db"
 
 creche = u"Les choux à la crème"
 noms = [ "Thiers", "de Mac Mahon", u"Grévy", "Carnot", "Casimir-Perier", "Faure", "Loubet", u"Fallières", u"Poincaré", u"Deschanel", "Millerand", "Doumergue", "Doumer", "Lebrun", "Auriol", "Coty", "de Gaulle", "Pompidou", "Giscard d'Estaing", "Mitterand", "Chirac", "Sarkozy", "Hollande", "Alanine", u"Cystéine", u"Phénylalanine", u"Glycine", "Histidine", "Isoleucine", "Lysine", "Leucine", u"Méthionine", "Asparagine", "Pyrrolysine", "Proline" ] * 50
