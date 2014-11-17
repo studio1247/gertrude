@@ -165,12 +165,9 @@ class FactureModifications(object):
                                     state = VACANCES
                                 elif date in facture.jours_vacances:
                                     state = CONGES_DEPASSEMENT
-                                    print "depassement", date
                                 else:
                                     state = ABSENT
                                 text_node.firstChild.replaceWholeText('%d%s' % (date.day, details))
-                                if date == datetime.date(2014, 7, 28):
-                                    print date, state, couleurs[state]
                                 cell.setAttribute('table:style-name', 'Presences.%s' % couleurs[state])
                             date += datetime.timedelta(1)
         

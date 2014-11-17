@@ -115,6 +115,7 @@ class Cotisation(object):
             print u"\nCotisation de %s au %s ..." % (GetPrenomNom(inscrit), date)
 
         self.revenus_parents = []
+        self.conges_inscription = []
         self.chomage = 0
         self.conge_parental = 0
         self.date_revenus = GetDateRevenus(self.date)
@@ -219,7 +220,6 @@ class Cotisation(object):
                 self.heures_periode = 0.0
                 self.heures_fermeture_creche = 0.0
                 self.heures_accueil_non_facture = 0.0
-                self.conges_inscription = []
                 date = self.inscription.debut
                 if self.inscription.fin is None:
                     errors.append(u" - La période d'inscription n'a pas de fin.")
@@ -245,6 +245,8 @@ class Cotisation(object):
                 if options & TRACES: print u' heures période :', self.heures_periode
 
                 self.nombre_factures = GetNombreFacturesContrat(self.inscription.debut, self.inscription.fin)
+                if self.nombre_factures == 0:
+                    self.nombre_factures = 1
                 if options & TRACES: print ' nombres de factures :', self.nombre_factures
                 self.heures_mois = math.ceil(self.heures_periode / self.nombre_factures)
                 if options & TRACES: print ' heures mensuelles : %f (%f)' % (self.heures_mois, self.heures_periode / self.nombre_factures)
@@ -283,7 +285,7 @@ class Cotisation(object):
             self.montant_heure_garde = 0.0
             self.cotisation_periode = 0.0
             self.cotisation_mensuelle = self.inscription.forfait_mensuel
-        elif creche.mode_facturation == FACTURATION_HORAIRES_REELS:
+        elif creche.mode_facturation == FACTURATION_HORAIRES_REELS or self.inscription.mode == MODE_FORFAIT_HORAIRE:
             if self.inscription.mode == MODE_FORFAIT_HORAIRE:
                 self.forfait_heures_presence = self.inscription.forfait_heures_presence
             try:
@@ -302,11 +304,11 @@ class Cotisation(object):
                 errors.append(u" - La formule de calcul du tarif horaire n'est pas correcte.")
                 raise CotisationException(errors)
             if creche.repartition == REPARTITION_MENSUALISATION_DEBUT_FIN_INCLUS:
-                self.semaines_periode = ((self.inscription.fin - self.inscription.debut).days + 6) / 7
+                self.semaines_periode = ((self.inscription.fin - self.inscription.debut).days + 7) / 7
                 self.nombre_factures = GetNombreFacturesContrat(self.inscription.debut, self.inscription.fin)
                 self.prorata_effectue = True
             elif self.inscription.fin:
-                self.semaines_periode = min(52, ((self.inscription.fin - self.inscription.debut).days + 6) / 7)
+                self.semaines_periode = min(52, ((self.inscription.fin - self.inscription.debut).days + 7) / 7)
                 self.nombre_factures = 12 - GetNombreMoisSansFactureContrat(self.date.year)
                 self.nombre_factures = min(self.nombre_factures, GetNombreFacturesContrat(self.inscription.debut, self.inscription.fin))
                 self.prorata_effectue = True
@@ -409,7 +411,9 @@ class Cotisation(object):
                         self.montant_heure_garde = heure_garde_diff
                     
         self.cotisation_mensuelle += self.majoration_mensuelle
-        if options & TRACES: print " cotisation mensuelle :", self.cotisation_mensuelle
+        if options & TRACES: 
+            print " cotisation mensuelle :", self.cotisation_mensuelle
+            print
     
     def AjustePeriode(self, param):
         if isinstance(param, tuple):

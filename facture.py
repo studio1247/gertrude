@@ -233,7 +233,7 @@ class FactureFinMois(object):
                         if heures_supplementaires_facturees > 0:
                             if creche.mode_facturation == FACTURATION_FORFAIT_10H:
                                 self.CalculeSupplement(cotisation, 10)
-                            else:
+                            elif cotisation.inscription.mode != MODE_FORFAIT_HORAIRE:
                                 cotisation.heures_supplementaires += heures_supplementaires_facturees
                                 self.heures_supplementaires += heures_supplementaires_facturees
                                 if creche.mode_facturation != FACTURATION_HORAIRES_REELS and (creche.facturation_periode_adaptation != FACTURATION_HORAIRES_REELS or not cotisation.inscription.IsInPeriodeAdaptation(date)):
@@ -315,9 +315,13 @@ class FactureFinMois(object):
                     self.cotisation_mensuelle += prorata
                     self.total_contractualise += prorata
                     self.heures_contrat += prorata_heures
-                elif self.heures_contractualisees:
-                    prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees
-                    prorata_heures = cotisation.heures_mois * cotisation.heures_reference / self.heures_contractualisees
+                else:
+                    if self.heures_contractualisees:
+                        prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees
+                        prorata_heures = cotisation.heures_mois * cotisation.heures_reference / self.heures_contractualisees
+                    else:
+                        prorata = cotisation.cotisation_mensuelle
+                        prorata_heures = cotisation.heures_mois
                     # ajoute FACTURATION_PSU bloc plus haut pour eviter 2 * la regle de 3
                     # avant il y avait ce commentaire: ne marche pas pour saint julien, mais c'est redemande (2 octobre 2012), normal pour le premier mois pour un enfant qui arrive mi-septembre
                     # avec le test suivant on devrait etre bon, parce que sinon on effectue la regle de 3 dans la cotisation + ici
@@ -506,6 +510,7 @@ class FactureCloturee:
         if sql_connection:
             print u'Suppression clôture', self.inscrit.idx, self.date
             sql_connection.execute('DELETE FROM FACTURES where inscrit=? AND date=?', (self.inscrit.idx, self.date))
+            # print "sql_connection.execute('DELETE FROM FACTURES where inscrit=%d AND date=%r)'" % (self.inscrit.idx, self.date)
             history.append(None)
 
     

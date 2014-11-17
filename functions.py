@@ -645,6 +645,7 @@ def GetCotisationFields(cotisation):
             ('enfants-a-charge', cotisation.enfants_a_charge),            
             ('annee-debut', cotisation.debut.year),
             ('annee-fin', cotisation.debut.year+1),
+            ('semaines-conges', cotisation.conges_inscription)
            ]
 
 def GetFactureFields(facture):

@@ -56,7 +56,7 @@ Source: "dist\gertrude\*.pyd";                   DestDir: "{app}";              
 
 ; ---> Subdirectories
 Source: "dist\gertrude\bitmaps_dist\*";          DestDir: "{app}\bitmaps_dist";        Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "dist\gertrude\doc\*";                   DestDir: "{app}\doc";                 Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dist\gertrude\bitmaps_dist\pictos\*";   DestDir: "{app}\bitmaps_dist\pictos"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dist\gertrude\templates_dist\*";        DestDir: "{app}\templates_dist";      Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]

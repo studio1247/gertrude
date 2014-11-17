@@ -64,9 +64,9 @@ class EtatPlacesModifications(object):
                         if state > 0 and state & PRESENT:
                             count += 1
                 cell = GetCell(GetRow(table, date.month+3), date.day)
-                print cell.toprettyxml()
+                #print cell.toprettyxml()
                 SetValue(cell, count)
-                print cell.toprettyxml()
+                #print cell.toprettyxml()
                 
                 date += datetime.timedelta(1)
  
