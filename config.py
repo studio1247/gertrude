@@ -25,6 +25,7 @@ from data import FileConnection, SharedFileConnection, HttpConnection
 CONFIG_FILENAME = "gertrude.ini"
 DEFAULT_SECTION = "gertrude"
 DEFAULT_DATABASE = "gertrude.db"
+DEMO_DATABASE = "demo.db"
 
 class Database(object):
     def __init__(self, section=None, filename=DEFAULT_DATABASE):

@@ -5,9 +5,9 @@ AppName=Gertrude
 AppVerName=Gertrude {#GertrudeVersion}
 AppVersion={#GertrudeVersion}
 AppPublisher=Bertrand Songis
-AppPublisherURL=http://gertrude.creches.free.fr
-AppSupportURL=http://gertrude.creches.free.fr
-AppUpdatesURL=http://gertrude.creches.free.fr
+AppPublisherURL=http://www.gertrude-logiciel.org
+AppSupportURL=http://www.gertrude-logiciel.org
+AppUpdatesURL=http://www.gertrude-logiciel.org
 VersionInfoVersion={#GertrudeVersion}
 VersionInfoCompany=Bertrand Songis
 VersionInfoProductName=Gertrude
@@ -37,6 +37,7 @@ Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 
 [InstallDelete]
 Type: files; Name: "{app}\*.py"
+Type: files; Name: "{app}\demo.db"
 Type: files; Name: "{app}\*.php"
 Type: files; Name: "{app}\*.pyc"
 Type: files; Name: "{app}\*.log"
@@ -48,6 +49,7 @@ Name: "{app}"; Permissions:users-modify
 ; ---> Gertrude directory
 Source: "dist\gertrude\*.exe";                   DestDir: "{app}";                     Flags: ignoreversion
 Source: "dist\gertrude\*.ini.dist";              DestDir: "{app}";                     Flags: ignoreversion
+Source: "dist\gertrude\demo.db";                 DestDir: "{app}";                     Flags: ignoreversion
 Source: "dist\gertrude\*.php";                   DestDir: "{app}";                     Flags: ignoreversion
 Source: "dist\gertrude\*.dll";                   DestDir: "{app}";                     Flags: ignoreversion
 Source: "dist\gertrude\*.pyd";                   DestDir: "{app}";                     Flags: ignoreversion
