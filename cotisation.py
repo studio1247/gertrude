@@ -311,7 +311,6 @@ class Cotisation(object):
                 self.semaines_periode = min(52, ((self.inscription.fin - self.inscription.debut).days + 7) / 7)
                 self.nombre_factures = 12 - GetNombreMoisSansFactureContrat(self.date.year)
                 self.nombre_factures = min(self.nombre_factures, GetNombreFacturesContrat(self.inscription.debut, self.inscription.fin))
-                self.prorata_effectue = True
             else:
                 self.semaines_periode = 52
                 self.nombre_factures = 12 - GetNombreMoisSansFactureContrat(self.date.year)

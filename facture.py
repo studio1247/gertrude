@@ -327,7 +327,7 @@ class FactureFinMois(object):
                     # avec le test suivant on devrait etre bon, parce que sinon on effectue la regle de 3 dans la cotisation + ici
                     if not cotisation.prorata_effectue:
                         prorata = (prorata * cotisation.jours_ouvres) / jours_ouvres
-                        prorata = (prorata * cotisation.jours_ouvres) / jours_ouvres
+
                     self.cotisation_mensuelle += prorata
                     self.total_contractualise += prorata
                     self.heures_contrat += prorata_heures

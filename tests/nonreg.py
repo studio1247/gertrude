@@ -150,6 +150,7 @@ class PAJETests(GertrudeTestCase):
         
     def test_nospetitspouces(self):
         creche.mode_facturation = FACTURATION_PAJE
+        creche.repartition = REPARTITION_MENSUALISATION_DEBUT_FIN_INCLUS
         creche.formule_taux_horaire = [["", 6.70]]
         creche.update_formule_taux_horaire(changed=False)
         bureau = Bureau(creation=False)
@@ -168,6 +169,30 @@ class PAJETests(GertrudeTestCase):
         self.assertEquals(float("%.2f" % cotisation.cotisation_mensuelle), 1001.95)
         facture = Facture(inscrit, 2010, 9, NO_ADDRESS|NO_PARENTS)
         self.assertEquals(float("%.2f" % facture.total), 1001.95)
+        
+    def test_microcosmos(self):
+        creche.mode_facturation = FACTURATION_PAJE
+        creche.repartition = REPARTITION_MENSUALISATION
+        creche.formule_taux_horaire = [["", 10]]
+        creche.update_formule_taux_horaire(changed=False)
+        bureau = Bureau(creation=False)
+        bureau.debut = datetime.date(2010, 1, 1)
+        creche.bureaux.append(bureau)
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit, creation=False)
+        inscription.debut, inscription.fin = datetime.date(2014, 10, 15), datetime.date(2015, 12, 31)
+        inscription.reference[0].add_activity(96, 180, 0, -1)
+        inscription.reference[1].add_activity(96, 180, 0, -1)
+        inscription.reference[2].add_activity(96, 180, 0, -1)
+        inscription.reference[3].add_activity(96, 180, 0, -1)
+        inscription.reference[4].add_activity(96, 180, 0, -1)
+        inscrit.inscriptions.append(inscription)
+        cotisation = Cotisation(inscrit, datetime.date(2014, 10, 15), NO_ADDRESS|NO_PARENTS)
+        self.assertEquals(float("%.2f" % cotisation.cotisation_mensuelle), 1516.67)
+        facture = Facture(inscrit, 2014, 10, NO_ADDRESS|NO_PARENTS)
+        self.assertEquals(float("%.2f" % facture.total), 831.72)
+        facture = Facture(inscrit, 2014, 11, NO_ADDRESS|NO_PARENTS)
+        self.assertEquals(float("%.2f" % facture.total), 1516.67)
 
 class MarmousetsTests(GertrudeTestCase):
     def test_1(self):
