@@ -314,10 +314,12 @@ class PlanningPanel(GPanel):
         journal = config.connection.LoadJournal()
         
         class PeriodePresence(object):
-            def __init__(self, date, arrivee, depart=None):
+            def __init__(self, date, arrivee=None, depart=None, absent=False, malade=False):
                 self.date = date
                 self.arrivee = arrivee
                 self.depart = depart
+                self.absent = absent
+                self.malade = malade
         
         array = {}
         lines = journal.split("\n")
@@ -350,6 +352,11 @@ class PlanningPanel(GPanel):
                             array[idx].append(PeriodePresence(date, None, depart))
                     else:
                         array[idx].append(PeriodePresence(date, None, depart))
+                elif label == "absent":
+                    array[idx].append(PeriodePresence(date, absent=True))
+                elif label == "malade":
+                    array[idx].append(PeriodePresence(date, malade=True))
+                    
                 creche.last_tablette_synchro = line
             except Exception, e:
                 pass
@@ -359,7 +366,12 @@ class PlanningPanel(GPanel):
             inscrit = creche.GetInscrit(key)
             if inscrit:
                 for periode in array[key]:
-                    if not periode.arrivee:
+                    value = 0
+                    if periode.absent:
+                        value = VACANCES
+                    elif periode.malade:
+                        value = MALADE
+                    elif not periode.arrivee:
                         if not date in inscrit.journees:
                             errors.append(u"%s : Pas d'arrivée enregistrée le %s" % (GetPrenomNom(inscrit), periode.date))
                         reference = inscrit.getJournee(periode.date)
@@ -385,7 +397,10 @@ class PlanningPanel(GPanel):
                         inscrit.journees[periode.date].remove_activities(0|PREVISIONNEL)
                     else:
                         inscrit.journees[periode.date] = Journee(inscrit, periode.date)
-                    inscrit.journees[periode.date].SetActivity(periode.arrivee, periode.depart, 0)
+                    if value < 0:
+                        inscrit.journees[periode.date].set_state(value)
+                    else:
+                        inscrit.journees[periode.date].SetActivity(periode.arrivee, periode.depart, value)
                     history.Append(None)
             else:
                 errors.append(u"Inscrit %d: Inconnu!" % key)
