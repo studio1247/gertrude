@@ -1232,8 +1232,9 @@ class Parent(object):
 
         if creation:
             self.create()
-            debut = GetDateRevenus(today)
-            fin = datetime.date(debut.year, 12, 31)
+            date_revenus = GetDateRevenus(today)
+            debut = datetime.date(date_revenus.year, 1, 1)
+            fin = datetime.date(date_revenus.year, 12, 31)
             self.revenus.append(Revenu(self, debut, fin))
 
     def create(self):
