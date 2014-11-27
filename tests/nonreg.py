@@ -193,6 +193,42 @@ class PAJETests(GertrudeTestCase):
         self.assertEquals(float("%.2f" % facture.total), 831.72)
         facture = Facture(inscrit, 2014, 11, NO_ADDRESS|NO_PARENTS)
         self.assertEquals(float("%.2f" % facture.total), 1516.67)
+        
+    def test_123_apetitspas(self):
+        creche.mode_facturation = FACTURATION_PAJE
+        creche.repartition = REPARTITION_MENSUALISATION
+        creche.facturation_periode_adaptation = FACTURATION_HORAIRES_REELS
+        creche.formule_taux_horaire = [["", 6.25]]
+        creche.update_formule_taux_horaire(changed=False)
+        bureau = Bureau(creation=False)
+        bureau.debut = datetime.date(2010, 1, 1)
+        creche.bureaux.append(bureau)
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit, creation=False)
+        inscription.debut = datetime.date(2014, 9, 22)
+        inscription.reference[0].add_activity(96, 204, 0, -1)
+        inscription.reference[1].add_activity(96, 204, 0, -1)
+        inscription.reference[2].add_activity(96, 204, 0, -1)
+        inscription.reference[3].add_activity(96, 204, 0, -1)
+        inscription.reference[4].add_activity(96, 204, 0, -1)
+        inscription.semaines_conges = 7
+        inscription.fin_periode_adaptation = datetime.date(2014, 10, 6)
+        inscrit.inscriptions.append(inscription)
+        self.AddJourneePresence(inscrit, datetime.date(2014, 9, 22), 144, 204)
+        self.AddJourneePresence(inscrit, datetime.date(2014, 9, 23), 144, 204)
+        self.AddJourneePresence(inscrit, datetime.date(2014, 9, 24), 144, 204)
+        self.AddJourneePresence(inscrit, datetime.date(2014, 9, 25), 144, 204)
+        self.AddJourneePresence(inscrit, datetime.date(2014, 9, 26), 144, 204)
+        cotisation = Cotisation(inscrit, datetime.date(2014, 10, 1), NO_ADDRESS|NO_PARENTS)
+        self.assertEquals(float("%.2f" % cotisation.cotisation_mensuelle), 0)
+        cotisation = Cotisation(inscrit, datetime.date(2014, 10, 7), NO_ADDRESS|NO_PARENTS)
+        self.assertEquals(float("%.2f" % cotisation.cotisation_mensuelle), 1054.69)
+        facture = Facture(inscrit, 2014, 9, NO_ADDRESS|NO_PARENTS)
+        self.assertEquals(float("%.2f" % facture.total), 268.75)
+        facture = Facture(inscrit, 2014, 10, NO_ADDRESS|NO_PARENTS)
+        self.assertEquals(float("%.2f" % facture.total), 1096.26)
+        facture = Facture(inscrit, 2014, 11, NO_ADDRESS|NO_PARENTS)
+        self.assertEquals(float("%.2f" % facture.total), 1054.69)
 
 class MarmousetsTests(GertrudeTestCase):
     def test_1(self):

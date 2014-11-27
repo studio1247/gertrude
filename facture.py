@@ -279,8 +279,11 @@ class FactureFinMois(object):
                 elif creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and cotisation.inscription.IsInPeriodeAdaptation(cotisation.debut):
                     if cotisation.inscription.mode == MODE_FORFAIT_HORAIRE:
                         self.heures_facturees_par_mode[cotisation.mode_garde] += cotisation.heures_realisees - cotisation.heures_realisees_non_facturees
-                    self.cotisation_mensuelle += cotisation.CalculeFraisGarde(cotisation.heures_contractualisees)
-                    self.report_cotisation_mensuelle += cotisation.CalculeFraisGarde(cotisation.heures_realisees - cotisation.heures_realisees_non_facturees) - self.cotisation_mensuelle
+                    report = cotisation.CalculeFraisGarde(cotisation.heures_realisees)
+                    self.report_cotisation_mensuelle += report
+                    cotisation.prorata_effectue = True
+                    if options & TRACES:
+                        print " cotisation periode adaptation :", report
                 elif cotisation.inscription.mode == MODE_FORFAIT_HORAIRE:
                     self.cotisation_mensuelle += cotisation.cotisation_mensuelle * cotisation.jours_ouvres / jours_ouvres
                     cotisation.heures_contractualisees = cotisation.inscription.forfait_heures_presence * cotisation.jours_ouvres / jours_ouvres
@@ -317,16 +320,25 @@ class FactureFinMois(object):
                     self.heures_contrat += prorata_heures
                 else:
                     if self.heures_contractualisees:
-                        prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees
-                        prorata_heures = cotisation.heures_mois * cotisation.heures_reference / self.heures_contractualisees
+                        if cotisation.heures_reference != self.heures_contractualisees:
+                            prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees
+                            prorata_heures = cotisation.heures_mois * cotisation.heures_reference / self.heures_contractualisees
+                            cotisation.prorata_effectue = True
+                            if options & TRACES: 
+                                print " prorata : %f * %f / %f = %f" % (cotisation.cotisation_mensuelle, cotisation.heures_reference, self.heures_contractualisees, prorata)
+                        else:
+                            prorata = cotisation.cotisation_mensuelle
+                            prorata_heures = cotisation.heures_mois
                     else:
                         prorata = cotisation.cotisation_mensuelle
                         prorata_heures = cotisation.heures_mois
                     # ajoute FACTURATION_PSU bloc plus haut pour eviter 2 * la regle de 3
                     # avant il y avait ce commentaire: ne marche pas pour saint julien, mais c'est redemande (2 octobre 2012), normal pour le premier mois pour un enfant qui arrive mi-septembre
                     # avec le test suivant on devrait etre bon, parce que sinon on effectue la regle de 3 dans la cotisation + ici
-                    if not cotisation.prorata_effectue:
+                    if not cotisation.prorata_effectue:                            
                         prorata = (prorata * cotisation.jours_ouvres) / jours_ouvres
+                        if (options & TRACES):
+                            print " prorata : %f" % prorata                        
 
                     self.cotisation_mensuelle += prorata
                     self.total_contractualise += prorata
