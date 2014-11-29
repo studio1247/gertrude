@@ -234,6 +234,7 @@ class MarmousetsTests(GertrudeTestCase):
     def test_1(self):
         creche.mode_facturation = FACTURATION_PSU
         creche.temps_facturation = FACTURATION_DEBUT_MOIS_CONTRAT
+        creche.facturation_jours_feries = JOURS_FERIES_DEDUITS_ANNUELLEMENT
         creche.conges_inscription = 1
         for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", u"15 août", "1er novembre", "11 novembre", u"25 décembre", u"Lundi de Pâques", "Jeudi de l'Ascension"):
             self.AddJourFerie(label)
