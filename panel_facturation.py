@@ -26,7 +26,7 @@ from facture import *
 from ooffice import *
 from controls import *
 from doc_facture_mensuelle import FactureModifications
-from export_compta import ExportComptaModifications
+from doc_export_compta import ExportComptaModifications
 from doc_attestation_paiement import AttestationModifications
 from doc_appel_cotisations import AppelCotisationsModifications
 from sqlobjects import Correction, NumeroFacture

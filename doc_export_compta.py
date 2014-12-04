@@ -74,21 +74,21 @@ class ExportComptaModifications(object):
                       }
             
             for i in range(5):
-                if i==0:
+                if i==0 and facture.total:
                     fields['numero-compte'] = "411%s" % inscrit.nom.upper()[:5]
                     fields['debit'] = facture.total
                     fields['credit'] = 0
                     fields['activite'] = ""
                     fields['plan-analytique'] = ""
                     fields['poste-analytique'] = ""
-                elif i==1:
+                elif i==1 and facture.total - facture.supplement_activites:
                     fields['numero-compte'] = 70600000
                     fields['debit'] = 0
                     fields['credit'] = facture.total - facture.supplement_activites
                     fields['activite'] = 'garde'
                     fields['plan-analytique'] = "SITES" 
                     fields['poste-analytique'] = site
-                elif i==2:
+                elif i==2 and facture.supplement_activites:
                     fields['numero-compte'] = 70710000
                     fields['debit'] = 0
                     fields['credit'] = facture.supplement_activites
