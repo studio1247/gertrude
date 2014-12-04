@@ -40,7 +40,6 @@ couleurs = { SUPPLEMENT: 'A2',
 
 class FactureModifications(object):
     def __init__(self, inscrits, periode):
-        self.template = 'Facture mensuelle.odt'
         self.multi = False
         self.inscrits = inscrits
         self.periode = periode
@@ -60,12 +59,21 @@ class FactureModifications(object):
             self.email_subject = u"Facture %s %s %s %d" % (who.prenom, who.nom, months[periode.month - 1], periode.year)
             self.email_to = list(set([parent.email for parent in who.parents.values() if parent and parent.email]))
             self.default_output = self.email_subject + ".odt"
-
-        if IsTemplateFile("Facture mensuelle simple.odt"):
+        
+        if self.site and IsTemplateFile("Facture mensuelle simple %s.odt" % self.site.nom):
+            self.template = "Facture mensuelle simple %s.odt" % self.site.nom
+            if len(inscrits) > 1:
+                self.multi = True
+                self.default_output = u"Facture <prenom> <nom> %s %d.odt" % (months[periode.month - 1], periode.year)
+        elif self.site and IsTemplateFile("Facture mensuelle %s.odt" % self.site.nom):
+            self.template = "Facture mensuelle %s.odt" % self.site.nom
+        elif IsTemplateFile("Facture mensuelle simple.odt"):
             self.template = "Facture mensuelle simple.odt"
             if len(inscrits) > 1:
                 self.multi = True
                 self.default_output = u"Facture <prenom> <nom> %s %d.odt" % (months[periode.month - 1], periode.year)
+        else:
+            self.template = 'Facture mensuelle.odt'
         
         self.email_text = "Accompagnement facture.txt"
 
