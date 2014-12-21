@@ -202,6 +202,9 @@ class Cotisation(object):
             print u" heures hebdomadaires (réelles) :", self.heures_reelles_semaine
         
         self.prorata_effectue = False
+        self.heures_periode = 0.0
+        self.heures_fermeture_creche = 0.0
+        self.heures_accueil_non_facture = 0.0
               
         if creche.mode_facturation == FACTURATION_FORFAIT_10H:
             self.heures_semaine = 10.0 * self.jours_semaine
@@ -215,11 +218,7 @@ class Cotisation(object):
             self.nombre_factures = 12 - GetNombreMoisSansFactureContrat(self.date.year)
         else:                
             self.heures_semaine = self.heures_reelles_semaine
-                        
             if creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
-                self.heures_periode = 0.0
-                self.heures_fermeture_creche = 0.0
-                self.heures_accueil_non_facture = 0.0
                 date = self.inscription.debut
                 if self.inscription.fin is None:
                     errors.append(u" - La période d'inscription n'a pas de fin.")
