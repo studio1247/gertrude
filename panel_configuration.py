@@ -40,7 +40,8 @@ modes_facturation = [("Forfait 10h / jour", FACTURATION_FORFAIT_10H),
                      (u"Facturation personnalisée (forfait mensuel)", FACTURATION_FORFAIT_MENSUEL)]
 
 modes_facturation_adaptation = [(u'Facturation normale', PERIODE_ADAPTATION_FACTUREE_NORMALEMENT),
-                                (u"Horaires réels", FACTURATION_HORAIRES_REELS)]
+                                (u"Facturation aux horaires réels", PERIODE_ADAPTATION_HORAIRES_REELS),
+                                (u"Période d'adaptation gratuite", PERIODE_ADAPTATION_GRATUITE)]
 
 temps_facturation = [(u"Fin de mois", FACTURATION_FIN_MOIS),
                      (u"Début de mois : contrat mois + réalisé mois-1", FACTURATION_DEBUT_MOIS_CONTRAT),

@@ -197,7 +197,7 @@ class PAJETests(GertrudeTestCase):
     def test_123_apetitspas(self):
         creche.mode_facturation = FACTURATION_PAJE
         creche.repartition = REPARTITION_MENSUALISATION
-        creche.facturation_periode_adaptation = FACTURATION_HORAIRES_REELS
+        creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
         creche.formule_taux_horaire = [["", 6.25]]
         creche.update_formule_taux_horaire(changed=False)
         bureau = Bureau(creation=False)
@@ -395,7 +395,7 @@ class PetitsMoussesTests(GertrudeTestCase):
 class LoupandisesTests(GertrudeTestCase):
     def test_facture_periode_adaptation(self):
         creche.mode_facturation = FACTURATION_PSU
-        creche.facturation_periode_adaptation = FACTURATION_HORAIRES_REELS
+        creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
         creche.temps_facturation = FACTURATION_FIN_MOIS
         creche.facturation_jours_feries = JOURS_FERIES_DEDUITS_ANNUELLEMENT 
         for label in ("Week-end", "1er janvier", "14 juillet", "1er novembre", "11 novembre", u"Lundi de Pâques", "Jeudi de l'Ascension", u"Lundi de Pentecôte"):
@@ -424,7 +424,7 @@ class FacturationDebutMoisContratTests(GertrudeTestCase):
     def setUp(self):
         GertrudeTestCase.setUp(self)
         creche.mode_facturation = FACTURATION_HORAIRES_REELS
-        creche.facturation_periode_adaptation = FACTURATION_HORAIRES_REELS
+        creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
         creche.temps_facturation = FACTURATION_DEBUT_MOIS_CONTRAT
         creche.type = TYPE_MICRO_CRECHE
         creche.formule_taux_horaire = [["mode=hg", 9.50], ["", 7.0]]
@@ -499,7 +499,7 @@ class MonPetitBijouTests(GertrudeTestCase):
     def setUp(self):
         GertrudeTestCase.setUp(self)
         creche.mode_facturation = FACTURATION_HORAIRES_REELS
-        creche.facturation_periode_adaptation = FACTURATION_HORAIRES_REELS
+        creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
         creche.temps_facturation = FACTURATION_DEBUT_MOIS_PREVISIONNEL
         creche.type = TYPE_MICRO_CRECHE
         creche.formule_taux_horaire = [["mode=hg", 9.50], ["", 7.0]]
@@ -608,7 +608,7 @@ class VivreADomicileTests(GertrudeTestCase):
     def setUp(self):
         GertrudeTestCase.setUp(self)
         creche.mode_facturation = FACTURATION_PSU
-        creche.facturation_periode_adaptation = FACTURATION_HORAIRES_REELS
+        creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
         creche.temps_facturation = FACTURATION_FIN_MOIS
         creche.type = TYPE_PARENTAL
         self.AddConge("01/08/2011", "26/08/2011")

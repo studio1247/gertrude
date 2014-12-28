@@ -236,7 +236,7 @@ class FactureFinMois(object):
                             elif cotisation.inscription.mode != MODE_FORFAIT_HORAIRE:
                                 cotisation.heures_supplementaires += heures_supplementaires_facturees
                                 self.heures_supplementaires += heures_supplementaires_facturees
-                                if creche.mode_facturation != FACTURATION_HORAIRES_REELS and (creche.facturation_periode_adaptation != FACTURATION_HORAIRES_REELS or not cotisation.inscription.IsInPeriodeAdaptation(date)):
+                                if creche.mode_facturation != FACTURATION_HORAIRES_REELS and (creche.facturation_periode_adaptation == PERIODE_ADAPTATION_FACTUREE_NORMALEMENT or not cotisation.inscription.IsInPeriodeAdaptation(date)):
                                     self.CalculeSupplement(cotisation, heures_supplementaires_facturees)
 
                     if creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE or (creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION and inscription.IsInPeriodeAdaptation(date)):
@@ -261,7 +261,7 @@ class FactureFinMois(object):
                         cotisation.heures_contractualisees += heures_reference
                         self.heures_contractualisees += heures_reference
                         self.heures_contractualisees_realisees += min(heures_realisees, heures_reference)        
-                        if creche.mode_facturation == FACTURATION_HORAIRES_REELS or (creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date)) or (creche.mode_facturation == FACTURATION_PSU and cotisation.mode_garde == MODE_HALTE_GARDERIE):
+                        if creche.mode_facturation == FACTURATION_HORAIRES_REELS or (creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date)) or (creche.mode_facturation == FACTURATION_PSU and cotisation.mode_garde == MODE_HALTE_GARDERIE):
                             self.heures_facturees_par_mode[cotisation.mode_garde] += heures_realisees - heures_realisees_non_facturees + heures_facturees_non_realisees
                             self.total_contractualise += cotisation.CalculeFraisGarde(heures_reference)
                         else:
@@ -276,7 +276,7 @@ class FactureFinMois(object):
                 if creche.repartition == REPARTITION_SANS_MENSUALISATION:
                     self.cotisation_mensuelle += cotisation.heures_contractualisees * cotisation.montant_heure_garde
                     self.total_contractualise += cotisation.heures_contractualisees * cotisation.montant_heure_garde
-                elif creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and cotisation.inscription.IsInPeriodeAdaptation(cotisation.debut):
+                elif creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and cotisation.inscription.IsInPeriodeAdaptation(cotisation.debut):
                     if cotisation.inscription.mode == MODE_FORFAIT_HORAIRE:
                         self.heures_facturees_par_mode[cotisation.mode_garde] += cotisation.heures_realisees - cotisation.heures_realisees_non_facturees
                     report = cotisation.CalculeFraisGarde(cotisation.heures_realisees)

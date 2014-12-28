@@ -103,7 +103,7 @@ class Cotisation(object):
             errors.append(u" - Il n'y a pas d'inscription à cette date.")
             raise CotisationException(errors)
         
-        if creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and self.inscription.fin_periode_adaptation:
+        if creche.facturation_periode_adaptation != PERIODE_ADAPTATION_FACTUREE_NORMALEMENT and self.inscription.fin_periode_adaptation:
             if self.inscription.IsInPeriodeAdaptation(self.date):
                 self.debut, self.fin = self.inscription.debut, self.inscription.fin_periode_adaptation
             else:
@@ -381,7 +381,7 @@ class Cotisation(object):
             else:
                 self.cotisation_mensuelle = self.assiette_mensuelle * self.taux_effort * self.heures_mois / 100
         
-        if creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and self.inscription.IsInPeriodeAdaptation(self.date):
+        if creche.facturation_periode_adaptation != PERIODE_ADAPTATION_FACTUREE_NORMALEMENT and self.inscription.IsInPeriodeAdaptation(self.date):
             self.cotisation_periode = 0.0
             self.cotisation_mensuelle = 0.0
         
