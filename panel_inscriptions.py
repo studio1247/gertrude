@@ -276,6 +276,12 @@ class IdentitePanel(InscriptionsTab):
         sizer2.AddMany([(wx.StaticText(self, -1, 'Ville :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.ville_ctrl, 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, u'Numéro de sécurité sociale :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'numero_securite_sociale'), 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, u"Numéro d'allocataire CAF :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'numero_allocataire_caf'), 0, wx.EXPAND)])
+        sizer3 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer3.AddMany([(AutoTextCtrl(self, None, 'medecin_traitant'), 1, wx.EXPAND), (AutoPhoneCtrl(self, None, 'telephone_medecin_traitant'), 1, wx.EXPAND)])
+        sizer2.AddMany([(wx.StaticText(self, -1, u"Médecin traitant :"), 0, wx.ALIGN_CENTER_VERTICAL), (sizer3, 0, wx.EXPAND)])
+        sizer3 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer3.AddMany([(AutoTextCtrl(self, None, 'assureur'), 1, wx.EXPAND), (AutoTextCtrl(self, None, 'numero_police_assurance'), 1, wx.EXPAND)])
+        sizer2.AddMany([(wx.StaticText(self, -1, u"Assurance :"), 0, wx.ALIGN_CENTER_VERTICAL), (sizer3, 0, wx.EXPAND)])
 
         if config.options & CATEGORIES:
             self.categorie_items = wx.StaticText(self, -1, u"Catégorie :"), AutoChoiceCtrl(self, None, 'categorie')  

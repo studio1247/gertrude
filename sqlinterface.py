@@ -25,7 +25,7 @@ from sqlobjects import *
 from facture import FactureCloturee
 import wx
 
-VERSION = 82
+VERSION = 83
 
 def getdate(s):
     if s is None:
@@ -226,6 +226,10 @@ class SQLConnection(object):
             ville VARCHAR,
             numero_securite_sociale VARCHAR,
             numero_allocataire_caf VARCHAR,
+            medecin_traitant VARCHAR,
+            telephone_medecin_traitant VARCHAR,
+            assureur VARCHAR,
+            numero_police_assurance VARCHAR,
             handicap BOOLEAN,
             tarifs INTEGER,
             marche BOOLEAN,
@@ -661,8 +665,8 @@ class SQLConnection(object):
             professeur.idx = idx
             creche.professeurs.append(professeur)
 
-        cur.execute('SELECT idx, prenom, nom, sexe, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, marche, notes, photo, combinaison, categorie FROM INSCRITS')
-        for idx, prenom, nom, sexe, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, marche, notes, photo, combinaison, categorie in cur.fetchall():
+        cur.execute('SELECT idx, prenom, nom, sexe, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, marche, notes, photo, combinaison, categorie, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance FROM INSCRITS')
+        for idx, prenom, nom, sexe, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, marche, notes, photo, combinaison, categorie, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance in cur.fetchall():
             if photo:
                 photo = binascii.a2b_base64(photo)
             inscrit = Inscrit(creation=False)
@@ -670,7 +674,7 @@ class SQLConnection(object):
             for tmp in creche.categories:
                 if categorie == tmp.idx:
                     inscrit.categorie = tmp
-            inscrit.prenom, inscrit.nom, inscrit.sexe, inscrit.naissance, inscrit.adresse, inscrit.code_postal, inscrit.ville, inscrit.numero_securite_sociale, inscrit.numero_allocataire_caf, inscrit.handicap, inscrit.tarifs, inscrit.marche, inscrit.notes, inscrit.photo, inscrit.combinaison, inscrit.idx = prenom, nom, sexe, getdate(naissance), adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, getdate(marche), notes, photo, combinaison, idx
+            inscrit.prenom, inscrit.nom, inscrit.sexe, inscrit.naissance, inscrit.adresse, inscrit.code_postal, inscrit.ville, inscrit.numero_securite_sociale, inscrit.numero_allocataire_caf, inscrit.handicap, inscrit.tarifs, inscrit.marche, inscrit.notes, inscrit.photo, inscrit.combinaison, inscrit.medecin_traitant, inscrit.telephone_medecin_traitant, inscrit.assureur, inscrit.numero_police_assurance, inscrit.idx = prenom, nom, sexe, getdate(naissance), adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, getdate(marche), notes, photo, combinaison, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, idx
             cur.execute('SELECT prenom, naissance, entree, sortie, idx FROM FRATRIES WHERE inscrit=?', (inscrit.idx,))
             for frere_entry in cur.fetchall():
                 frere = Frere_Soeur(inscrit, creation=False)
@@ -1570,6 +1574,16 @@ class SQLConnection(object):
                 valeur INTEGER
               );""")
             
+        if version < 83:
+            cur.execute("ALTER TABLE INSCRITS ADD medecin_traitant VARCHAR;")
+            cur.execute("UPDATE INSCRITS SET medecin_traitant=?", ("",))
+            cur.execute("ALTER TABLE INSCRITS ADD telephone_medecin_traitant VARCHAR;")
+            cur.execute("UPDATE INSCRITS SET telephone_medecin_traitant=?", ("",))
+            cur.execute("ALTER TABLE INSCRITS ADD assureur VARCHAR;")
+            cur.execute("UPDATE INSCRITS SET assureur=?", ("",))
+            cur.execute("ALTER TABLE INSCRITS ADD numero_police_assurance VARCHAR;")
+            cur.execute("UPDATE INSCRITS SET numero_police_assurance=?", ("",))
+  
         if version < VERSION:
             try:
                 cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))
