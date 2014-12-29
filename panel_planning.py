@@ -89,6 +89,7 @@ class DayPlanningPanel(PlanningWidget):
                     date = getNextMonthStart(self.date)
                 if date in inscrit.factures_cloturees:
                     line.readonly = True
+                line.day = self.date.weekday()
                 lignes_enfants.append(line)
                 
         if creche.tri_planning == TRI_GROUPE:
@@ -146,9 +147,9 @@ class DayPlanningPanel(PlanningWidget):
             if self.site:
                 den = self.site.capacite * creche.GetAmplitudeHoraire()
             else:
-                den = creche.GetCapacite() * creche.GetAmplitudeHoraire()
+                den = creche.GetHeuresAccueil(line.day)
             if den > 0:
-                text += " / " + "%.1f" % (heures * 100 / den) + "%"
+                text += " / " + "%.1f%%" % (heures * 100 / den)
             return text 
         else:
             return None

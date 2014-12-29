@@ -194,7 +194,7 @@ class PlanningDetailleModifications(object):
                                 else:
                                     nv, nw = line[x]
                                     
-                                if activity == 0 and (nw == 0 or nv > creche.GetCapacite() or float(nv)/nw > 6.5):
+                                if activity == 0 and (nw == 0 or nv > creche.GetCapacite(day.week_day) or float(nv)/nw > 6.5):
                                     nw = activity|SUPPLEMENT
                                 else:
                                     nw = activity

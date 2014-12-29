@@ -302,7 +302,8 @@ class SQLConnection(object):
             idx INTEGER PRIMARY KEY,
             value INTEGER,
             debut INTEGER,
-            fin INTEGER
+            fin INTEGER,
+            jour INTEGER
           );""")
 
         cur.execute("""
@@ -547,9 +548,12 @@ class SQLConnection(object):
             categorie.nom, categorie.idx = categorie_entry
             creche.categories.append(categorie)
 
-        cur.execute('SELECT value, debut, fin, idx FROM CAPACITE')
-        for value, debut, fin, idx in cur.fetchall():
-            creche.tranches_capacite.add_activity(debut, fin, value, idx)
+        cur.execute('SELECT value, debut, fin, jour, idx FROM CAPACITE')
+        for value, debut, fin, jour, idx in cur.fetchall():
+            try:
+                creche.tranches_capacite[jour].add_activity(debut, fin, value, idx)
+            except:
+                print "TODO"
 
         cur.execute('SELECT nom, adresse, code_postal, ville, telephone, capacite, idx FROM SITES')
         for site_entry in cur.fetchall():
@@ -1575,6 +1579,13 @@ class SQLConnection(object):
               );""")
             
         if version < 83:
+            cur.execute('SELECT value, debut, fin, idx FROM CAPACITE')
+            capacite = cur.fetchall()
+            cur.execute("DELETE FROM CAPACITE")
+            cur.execute("ALTER TABLE CAPACITE ADD jour INTEGER;")
+            for value, debut, fin, idx in capacite:
+                for jour in range(7):
+                    cur.execute('INSERT INTO CAPACITE (idx, value, debut, fin, jour) VALUES (NULL,?,?,?,?)', (value, debut, fin, jour))                
             cur.execute("ALTER TABLE INSCRITS ADD medecin_traitant VARCHAR;")
             cur.execute("UPDATE INSCRITS SET medecin_traitant=?", ("",))
             cur.execute("ALTER TABLE INSCRITS ADD telephone_medecin_traitant VARCHAR;")

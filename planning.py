@@ -36,6 +36,7 @@ ACTIVITES = 128
 NO_LABELS = 256
 DRAW_VALUES = 512
 DEPASSEMENT_CAPACITE = 1024
+NO_SCROLL = 2048
 
 # Elements size
 LABEL_WIDTH = 130 # px
@@ -419,7 +420,7 @@ class PlanningGridWindow(BufferedWindow):
                 activites, activites_sans_horaires = GetActivitiesSummary(creche, lines)
                 for start, end in self.GetPlagesSelectionnees():                        
                     for i in range(start, end):
-                        if activites[0][i][0] > creche.GetCapacite(i):
+                        if activites[0][i][0] > creche.GetCapacite(line.day):
                             dlg = wx.MessageDialog(None, u"Dépassement de la capacité sur ce créneau horaire !", "Attention", wx.OK|wx.ICON_WARNING)
                             dlg.ShowModal()
                             dlg.Destroy()
@@ -458,7 +459,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         self.sizer.Add(self.right_sizer)
         self.activites_sizers = []      
         self.SetSizer(self.sizer)
-        self.SetupScrolling(scroll_x = False)
+        self.SetupScrolling(scroll_x=False, scroll_y=not(options & NO_SCROLL))
 
     def OnCommentButtonPressed(self, event):
         button = event.GetEventObject()
@@ -633,7 +634,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             self.labels_panel.Refresh()
         self.grid_panel.Disable(info)
         self.sizer.Layout()
-        self.SetupScrolling(scroll_x=False)
+        self.SetupScrolling(scroll_x=False, scroll_y=not(self.options & NO_SCROLL))
         self.GetParent().sizer.Layout()
         self.grid_panel.UpdateDrawing()
         
@@ -716,7 +717,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             if not self.options & NO_LABELS:
                 self.labels_panel.SetMinSize((LABEL_WIDTH, LINE_HEIGHT*count - 1))
             self.sizer.Layout()
-            self.SetupScrolling(scroll_x=False)
+            self.SetupScrolling(scroll_x=False, scroll_y=not(self.options & NO_SCROLL))
             self.GetParent().sizer.Layout()
 
         for i in range(count):
@@ -873,7 +874,7 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
         else:
             self.summary_panel = None
         self.SetSizer(self.sizer)
-        self.SetupScrolling(scroll_y = False)
+        self.SetupScrolling(scroll_x=False, scroll_y=not(options & NO_SCROLL))
         self.sizer.Layout()
         self.scale_window.Bind(wx.EVT_PAINT, self.OnPaint)
 
@@ -894,6 +895,8 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
         self.internal_panel.SetLines(lines)
         if self.summary_panel:
             self.summary_panel.UpdateContents()
+        if self.options & NO_SCROLL:
+            self.SetMinSize((-1, 25+5+LINE_HEIGHT*len(lines)))
         self.Refresh()
     
     def UpdateDrawing(self):

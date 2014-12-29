@@ -141,10 +141,14 @@ def GetJoursOuvres(annee, mois):
 
 def GetHeuresAccueil(annee, mois, site=None):
     if site is not None:
-        capacite = site.capacite
-    else:
-        capacite = creche.GetCapacite()
-    return GetJoursOuvres(annee, mois) * (creche.fermeture - creche.ouverture) * capacite
+        return GetJoursOuvres(annee, mois) * (creche.fermeture - creche.ouverture) * site.capacite
+    result = 0.0
+    date = datetime.date(annee, mois, 1)
+    while date.month == mois:
+        if not date in creche.jours_fermeture:
+            result += creche.GetHeuresAccueil(date.weekday()) 
+        date += datetime.timedelta(1)
+    return result        
     
 def GetInitialesPrenom(person):
     if person.prenom:

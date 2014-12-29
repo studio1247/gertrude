@@ -64,7 +64,7 @@ class SitesPlanningPanel(PlanningWidget):
                 site_line = Summary(days[week_day])
                 for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
                     site_line[i][0] = 0
-                for start, end, value in creche.tranches_capacite.activites:
+                for start, end, value in creche.tranches_capacite[week_day].activites:
                     for i in range(start, end):
                         site_line[i][0] = value
                 lines.append(site_line)
@@ -116,7 +116,7 @@ class ReservatairesPlanningPanel(PlanningWidget):
             line = Summary("[Structure]")
             for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
                 line[i][0] = 0
-            for start, end, value in creche.tranches_capacite.activites:
+            for start, end, value in creche.tranches_capacite[week_day].activites:
                 for i in range(start, end):
                     line[i][0] = max(0, value)
             day_lines[None] = line

@@ -321,15 +321,17 @@ class JourneeCapacite(Day):
     nom = u"capacité"
     exclusive = True
     
-    def __init__(self):
+    def __init__(self, jour):
         Day.__init__(self)
+        self.jour = jour
+        self.label = days[jour]
         self.insert = None
         self.mode_arrondi = 'arrondi_heures'
         self.summary = None
 
     def insert_activity(self, start, end, value):
-        print u'nouvelle tranche horaire de capacité (%r, %r %d)' % (start, end, value), 
-        result = sql_connection.execute('INSERT INTO CAPACITE (idx, value, debut, fin) VALUES (NULL,?,?,?)', (value, start, end))
+        print u'nouvelle tranche horaire %s de capacité (%r, %r %d)' % (self.label, start, end, value), 
+        result = sql_connection.execute('INSERT INTO CAPACITE (idx, value, debut, fin, jour) VALUES (NULL,?,?,?,?)', (value, start, end, self.jour))
         idx = result.lastrowid
         self.activites[(start, end, value)] = idx   
         print idx    
@@ -899,7 +901,7 @@ class Creche(object):
         self.caf_email = ''
         self.mode_accueil_defaut = 0;
         self.type = TYPE_PARENTAL
-        self.tranches_capacite = JourneeCapacite()
+        self.tranches_capacite = [JourneeCapacite(i) for i in range(7)]
         self.facturation_periode_adaptation = PERIODE_ADAPTATION_FACTUREE_NORMALEMENT
         self.facturation_jours_feries = JOURS_FERIES_NON_DEDUITS
         self.formule_taux_horaire = None
@@ -1157,18 +1159,28 @@ class Creche(object):
             result = [(int(debut*(60 / BASE_GRANULARITY)), int(fin*(60 / BASE_GRANULARITY))) for debut, fin in result]
         return result
     
-    def GetCapacite(self, tranche=None):
-        if tranche is None:
-            result = 0.0
-            for start, end, value in self.tranches_capacite.activites:
-                result += value * (end - start)
-            return result / 12 / self.GetAmplitudeHoraire()
+    def GetCapacite(self, jour=None, tranche=None):
+        if jour is None:
+            jours, result = 0, 0.0
+            for jour in range(7):
+                if JourSemaineAffichable(jour):
+                    jours += 1
+                    result += self.GetCapacite(jour)
+            return result / jours
+        elif tranche is None:
+            return self.GetHeuresAccueil(jour) / self.GetAmplitudeHoraire()
         else:
-            for start, end, value in self.tranches_capacite.activites:
+            for start, end, value in self.tranches_capacite[jour].activites:
                 if tranche >= start and tranche < end:
                     return value
             else:
                 return 0
+            
+    def GetHeuresAccueil(self, jour):
+        result = 0.0
+        for start, end, value in self.tranches_capacite[jour].activites:
+            result += value * (end - start)
+        return result / 12        
 
     def GetInscrit(self, idx):
         for inscrit in self.inscrits:
