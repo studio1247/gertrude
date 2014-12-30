@@ -141,13 +141,14 @@ class DayPlanningPanel(PlanningWidget):
                 break
             elif not isinstance(line, basestring):
                 heures += line.GetNombreHeures()
+                day = line.day
         
         if heures > 0:
             text = GetHeureString(heures)
             if self.site:
                 den = self.site.capacite * creche.GetAmplitudeHoraire()
             else:
-                den = creche.GetHeuresAccueil(line.day)
+                den = creche.GetHeuresAccueil(day)
             if den > 0:
                 text += " / " + "%.1f%%" % (heures * 100 / den)
             return text 
