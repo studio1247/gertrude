@@ -637,7 +637,7 @@ class SQLConnection(object):
             for contrat in salarie.contrats:
                 cur.execute('SELECT day, value, debut, fin, idx FROM REF_JOURNEES_SALARIES WHERE reference=?', (contrat.idx,))
                 for day, value, debut, fin, idx in cur.fetchall():
-                    if day in contrat.reference:
+                    if day < len(contrat.reference):
                         reference_day = contrat.reference[day]
                         reference_day.add_activity(debut, fin, value, idx)
                         # print inscrit.prenom, inscrit.prenom, day, debut, fin, value
