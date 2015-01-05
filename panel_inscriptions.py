@@ -69,7 +69,7 @@ def ParseHtml(filename, context):
 
     return data
     
-class FraisAccueilPanel(wx.Panel):
+class FraisGardePanel(wx.Panel):
     def __init__(self, parent):
         self.parent = parent
         wx.Panel.__init__(self, parent)
@@ -119,8 +119,6 @@ class FraisAccueilPanel(wx.Panel):
                 self.html = ParseHtml(GetTemplateFile(filename), context)
                 self.frais_accueil_button.Enable()
                 self.contrat_button.Enable()
-
-
         self.html_window.SetPage(self.html)
         
     def SetInscrit(self, inscrit):
@@ -1020,10 +1018,7 @@ class InscriptionsNotebook(wx.Notebook):
             self.conges_panel = None
         self.AddPage(NotesPanel(self), "Notes")
         if profil & PROFIL_TRESORIER:
-            self.forfait_panel = FraisAccueilPanel(self)
-            self.AddPage(self.forfait_panel, 'Frais de garde')
-        else:
-            self.forfait_panel = None
+            self.AddPage(FraisGardePanel(self), 'Frais de garde')
 
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.onPageChanged)  
             

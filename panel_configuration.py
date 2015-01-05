@@ -39,6 +39,13 @@ modes_facturation = [("Forfait 10h / jour", FACTURATION_FORFAIT_10H),
                      (u"Horaires réels", FACTURATION_HORAIRES_REELS),
                      (u"Facturation personnalisée (forfait mensuel)", FACTURATION_FORFAIT_MENSUEL)]
 
+modes_mensualisation = [(u'Avec mensualisation (sur 12 mois si jours fériés non déduits)', REPARTITION_MENSUALISATION),
+                        (u'Avec mensualisation (sur la période du contrat), mois incomplets au même tarif', REPARTITION_MENSUALISATION_DEBUT_FIN_INCLUS),
+                        (u'Sans mensualisation', REPARTITION_SANS_MENSUALISATION)]
+
+modes_facturation_jours_feries = [(u"En semaines (nombre de semaines entré à l'inscription)", JOURS_FERIES_NON_DEDUITS), 
+                                  (u"En jours (décompte précis des jours de présence sur l'ensemble du contrat)", JOURS_FERIES_DEDUITS_ANNUELLEMENT)]
+
 modes_facturation_adaptation = [(u'Facturation normale', PERIODE_ADAPTATION_FACTUREE_NORMALEMENT),
                                 (u"Facturation aux horaires réels", PERIODE_ADAPTATION_HORAIRES_REELS),
                                 (u"Période d'adaptation gratuite", PERIODE_ADAPTATION_GRATUITE)]
@@ -841,7 +848,7 @@ class ParametersPanel(AutoTab):
         mode_facturation_choice = AutoChoiceCtrl(self, creche, 'mode_facturation', modes_facturation)
         self.Bind(wx.EVT_CHOICE, self.onModeFacturationChoice, mode_facturation_choice)
         sizer.AddMany([(wx.StaticText(self, -1, u'Mode de facturation :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (mode_facturation_choice, 1, wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, ''), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'repartition', [(u'Avec mensualisation', REPARTITION_MENSUALISATION), (u'Avec mensualisation, mois incomplets aux même tarif', REPARTITION_MENSUALISATION_DEBUT_FIN_INCLUS), (u'Sans mensualisation', REPARTITION_SANS_MENSUALISATION)]), 1, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, ''), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'repartition', modes_mensualisation), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, ''), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'temps_facturation', temps_facturation), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Revenus pris en compte :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'periode_revenus', [(u'Année N-2', REVENUS_YM2), (u'CAFPRO', REVENUS_CAFPRO)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u"Clôture des factures :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'cloture_factures', [(u'Activée', True), (u'Désactivée', False)]), 0, wx.EXPAND)])
@@ -850,7 +857,7 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, u"Mode d'arrondi de la facturation des enfants :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'arrondi_facturation', [(u"Pas d'arrondi", SANS_ARRONDI), (u"Arrondi à l'heure", ARRONDI_HEURE), (u"Arrondi à la demi heure", ARRONDI_DEMI_HEURE), (u"Arrondi des heures d'arrivée et de départ", ARRONDI_HEURE_ARRIVEE_DEPART)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u"Mode d'arrondi des horaires des salariés :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'arrondi_heures_salaries', [(u"Pas d'arrondi", SANS_ARRONDI), (u"Arrondi à l'heure", ARRONDI_HEURE), (u"Arrondi des heures d'arrivée et de départ", ARRONDI_HEURE_ARRIVEE_DEPART)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u"Gestion des absences prévues au contrat :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'conges_inscription', [('Non', 0), (u'Oui', 1), (u"Oui, avec gestion d'heures supplémentaires", 2)]), 0, wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Déduction des jours fériés et absences prévues au contrat :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'facturation_jours_feries', [(u"En semaines (nombre de semaines entré à l'inscription)", JOURS_FERIES_NON_DEDUITS), (u"En jours (décompte précis des jours de présence sur l'ensemble du contrat)", JOURS_FERIES_DEDUITS_ANNUELLEMENT)]), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Déduction des jours fériés et absences prévues au contrat :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'facturation_jours_feries', modes_facturation_jours_feries), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Tarification des activités :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'tarification_activites', [(u'Non géré', ACTIVITES_NON_FACTUREES), (u'A la journée', ACTIVITES_FACTUREES_JOURNEE), (u"Période d'adaptation, à la journée", ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Traitement des absences pour maladie :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'traitement_maladie', [(u"Avec carence en jours ouvrés", DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_OUVRES), (u"Avec carence en jours calendaires", DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES), ("Sans carence", DEDUCTION_MALADIE_SANS_CARENCE)]), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u"Durée de la carence :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'minimum_maladie', min=0, precision=0), 0, 0)])

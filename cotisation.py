@@ -125,7 +125,8 @@ class Cotisation(object):
             if parent:
                 self.parents += 1
                 revenus_parent = Select(parent.revenus, self.date_revenus)
-                if creche.formule_taux_horaire_needs_revenus() and (revenus_parent is None or revenus_parent.revenu == ''): 
+                revenusNeeded = creche.formule_taux_horaire_needs_revenus() 
+                if revenusNeeded and (revenus_parent is None or revenus_parent.revenu == ''): 
                     errors.append(u" - Les déclarations de revenus de %s sont incomplètes." % parent.relation)
                 elif revenus_parent:
                     if revenus_parent.revenu:
@@ -142,7 +143,8 @@ class Cotisation(object):
                             revenu_fin = datetime.date(revenu_fin.year+2, revenu_fin.month, revenu_fin.day)
                     else:
                         revenu_debut, revenu_fin = (GetYearStart(self.date), GetYearEnd(self.date))
-                    self.AjustePeriode((revenu_debut, revenu_fin))
+                    if revenusNeeded:
+                        self.AjustePeriode((revenu_debut, revenu_fin))
                     self.assiette_annuelle += revenu
                     if revenus_parent.chomage:
                         abattement = 0.3 * revenu
