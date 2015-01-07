@@ -887,7 +887,7 @@ class Creche(object):
         self.minimum_maladie = 15
         self.periode_revenus = REVENUS_YM2
         self.mode_facturation = FACTURATION_FORFAIT_10H
-        self.repartition = REPARTITION_MENSUALISATION
+        self.repartition = REPARTITION_MENSUALISATION_12MOIS
         self.temps_facturation = FACTURATION_FIN_MOIS
         self.conges_inscription = 0
         self.tarification_activites = ACTIVITES_NON_FACTUREES

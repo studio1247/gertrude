@@ -39,8 +39,9 @@ modes_facturation = [("Forfait 10h / jour", FACTURATION_FORFAIT_10H),
                      (u"Horaires réels", FACTURATION_HORAIRES_REELS),
                      (u"Facturation personnalisée (forfait mensuel)", FACTURATION_FORFAIT_MENSUEL)]
 
-modes_mensualisation = [(u'Avec mensualisation (sur 12 mois si jours fériés non déduits)', REPARTITION_MENSUALISATION),
-                        (u'Avec mensualisation (sur la période du contrat), mois incomplets au même tarif', REPARTITION_MENSUALISATION_DEBUT_FIN_INCLUS),
+modes_mensualisation = [(u'Avec mensualisation (sur 12 mois si jours fériés non déduits)', REPARTITION_MENSUALISATION_12MOIS),
+                        (u'Avec mensualisation (sur la période du contrat)', REPARTITION_MENSUALISATION_CONTRAT),
+                        (u'Avec mensualisation (sur la période du contrat), mois incomplets au même tarif', REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS),
                         (u'Sans mensualisation', REPARTITION_SANS_MENSUALISATION)]
 
 modes_facturation_jours_feries = [(u"En semaines (nombre de semaines entré à l'inscription)", JOURS_FERIES_NON_DEDUITS), 

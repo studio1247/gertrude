@@ -150,7 +150,7 @@ class PAJETests(GertrudeTestCase):
         
     def test_nospetitspouces(self):
         creche.mode_facturation = FACTURATION_PAJE
-        creche.repartition = REPARTITION_MENSUALISATION_DEBUT_FIN_INCLUS
+        creche.repartition = REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS
         creche.formule_taux_horaire = [["", 6.70]]
         creche.update_formule_taux_horaire(changed=False)
         bureau = Bureau(creation=False)
@@ -172,7 +172,7 @@ class PAJETests(GertrudeTestCase):
         
     def test_microcosmos(self):
         creche.mode_facturation = FACTURATION_PAJE
-        creche.repartition = REPARTITION_MENSUALISATION
+        creche.repartition = REPARTITION_MENSUALISATION_12MOIS
         creche.formule_taux_horaire = [["", 10]]
         creche.update_formule_taux_horaire(changed=False)
         bureau = Bureau(creation=False)
@@ -196,7 +196,7 @@ class PAJETests(GertrudeTestCase):
         
     def test_123_apetitspas(self):
         creche.mode_facturation = FACTURATION_PAJE
-        creche.repartition = REPARTITION_MENSUALISATION
+        creche.repartition = REPARTITION_MENSUALISATION_12MOIS
         creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
         creche.formule_taux_horaire = [["", 6.25]]
         creche.update_formule_taux_horaire(changed=False)
