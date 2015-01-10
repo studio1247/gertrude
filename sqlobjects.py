@@ -241,21 +241,21 @@ class Day(object):
             self.last_heures /= 60
         return self.last_heures
     
-    def GetHeureArrivee(self):
+    def GetHeureArrivee(self, activite=0):
         for start, end, value in self.activites:
-            if value & ~(PREVISIONNEL+CLOTURE) == 0:
+            if value & ~(PREVISIONNEL+CLOTURE) == activite:
                 return GetHeureString(start)
         return ''
 
-    def GetHeureDepart(self):
+    def GetHeureDepart(self, activite=0):
         for start, end, value in self.activites:
-            if value & ~(PREVISIONNEL+CLOTURE) == 0:
+            if value & ~(PREVISIONNEL+CLOTURE) == activite:
                 return GetHeureString(end)
         return ''
     
-    def GetHeureArriveeDepart(self):
+    def GetHeureArriveeDepart(self, activite=0):
         for start, end, value in self.activites:
-            if value & ~(PREVISIONNEL+CLOTURE) == 0:
+            if value & ~(PREVISIONNEL+CLOTURE) == activite:
                 return u"de %s à %s" % (GetHeureString(start), GetHeureString(end))
         return ''
 
@@ -1460,7 +1460,19 @@ class Inscription(PeriodeReference):
         if self.debut is None or self.fin_periode_adaptation is None:
             return False
         return date >= self.debut and date <= self.fin_periode_adaptation
-        
+    
+    def GetListeActivites(self, activite=0):
+        result = []
+        for i, jourReference in enumerate(self.reference):
+            str = jourReference.GetHeureArriveeDepart(activite)
+            if str:
+                if len(self.reference) <= 7:
+                    str = days[i] + " " + str
+                else:
+                    str = days[i%7] + " semaine %d" % (1+(i/7)) + str
+                result.append(str)
+        return ', '.join(result)
+    
     def create(self):
         print 'nouvelle inscription'
         result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, depart, mode, forfait_mensuel, frais_inscription, fin_periode_adaptation, duree_reference, forfait_heures_presence, semaines_conges) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.depart, self.mode, self.forfait_mensuel, self.frais_inscription, self.fin_periode_adaptation, self.duree_reference, self.forfait_heures_presence, self.semaines_conges))

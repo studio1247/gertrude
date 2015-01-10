@@ -340,16 +340,21 @@ class PlanningDetailleModifications(object):
         lignes = table.getElementsByTagName("table:table-row")
         
         HEADER_LINE_COUNT = 5
-        TEMPLATE_LINE_COUNT = HEADER_LINE_COUNT+2
+        BODY_LINE_COUNT = 2
+        FOOTER_LINE_COUNT = 1
+        TEMPLATE_LINE_COUNT = HEADER_LINE_COUNT+BODY_LINE_COUNT+FOOTER_LINE_COUNT
+        
         templateHeader = lignes[:HEADER_LINE_COUNT]
-        templateLines = lignes[HEADER_LINE_COUNT:TEMPLATE_LINE_COUNT]
+        templateLines = lignes[HEADER_LINE_COUNT:HEADER_LINE_COUNT+BODY_LINE_COUNT]
+        templateFooter = lignes[HEADER_LINE_COUNT+BODY_LINE_COUNT:TEMPLATE_LINE_COUNT]
 
         date = self.start
         while date <= self.end:
             if date in creche.jours_fermeture:
                 date += datetime.timedelta(1)
                 continue
-            
+
+            # Header            
             for line in templateHeader:
                 node = line.cloneNode(1)
                 ReplaceFields(node, [('semaine', date.isocalendar()[1]),
@@ -357,7 +362,9 @@ class PlanningDetailleModifications(object):
                                      ('date', date2str(date))])
                 table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
             
+            # Body
             inscrits = GetLines(date, creche.inscrits, site=self.site, groupe=self.groupe)
+            linesCount = 0
             for i, inscrit in enumerate(inscrits):
                 if inscrit is not None and not isinstance(inscrit, basestring):
                     if i % 2:
@@ -372,9 +379,16 @@ class PlanningDetailleModifications(object):
                               ('depart', inscrit.GetHeureDepart())]
                     ReplaceFields(node, fields)
                     table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
+                    linesCount += 1
+
+            # Footer
+            for line in templateFooter:
+                node = line.cloneNode(1)
+                ReplaceFields(node, [('count', linesCount)])
+                table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
             
             date += datetime.timedelta(1)
         
-        for line in templateHeader+templateLines:
+        for line in templateHeader+templateLines+templateFooter:
             table.removeChild(line)
         

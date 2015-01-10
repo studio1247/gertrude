@@ -104,11 +104,11 @@ class DocumentAccueilModifications(object):
             fields.append(('heure-fin[%d]' % jour, GetHeureString(fin)))
             fields.append(('heures-jour[%d]' % jour, GetHeureString(jour_reference.GetNombreHeures())))
 
-#            if inscrit.sexe == 1:
-#                fields.append(('ne-e', u"né"))
-#            else:
-#                fields.append(('ne-e', u"née"))
+        for key in creche.activites:
+            print key, creche.activites[key]
+            fields.append(('liste-activites[%d]' % key, inscription.GetListeActivites(key)))
 
+        print fields
         return fields
 
     def IsPresentDuringTranche(self, weekday, debut, fin):
@@ -158,6 +158,7 @@ class ContratAccueilModifications(DocumentAccueilModifications):
         
         # print dom.toprettyxml()
         doc = dom.getElementsByTagName("office:text")[0]
+        # print doc.toprettyxml()
         
         for table in doc.getElementsByTagName("table:table"):
             if table.getAttribute("table:name") == "Tableau3":
