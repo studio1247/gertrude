@@ -61,7 +61,7 @@ class ExportComptaModifications(object):
                 continue
             
             indexOperation += 1
-            date = getMonthEnd(self.periode)
+            date = GetMonthEnd(self.periode)
             if len(creche.sites) > 1 and facture.site:
                 site = facture.site.nom
             else:

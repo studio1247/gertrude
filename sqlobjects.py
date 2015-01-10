@@ -1727,12 +1727,12 @@ class Inscrit(object):
     def HasFacture(self, date):
         if date.month in creche.mois_sans_facture:
             return False
-        month_start = getMonthStart(date)
-        if self.GetInscriptions(month_start, getMonthEnd(date)):
+        month_start = GetMonthStart(date)
+        if self.GetInscriptions(month_start, GetMonthEnd(date)):
             return True
         if creche.temps_facturation != FACTURATION_FIN_MOIS:
             previous_month_end = month_start - datetime.timedelta(1)
-            if self.GetInscriptions(getMonthStart(previous_month_end), previous_month_end):
+            if self.GetInscriptions(GetMonthStart(previous_month_end), previous_month_end):
                 return True
         return False
 

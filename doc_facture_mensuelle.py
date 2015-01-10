@@ -45,7 +45,7 @@ class FactureModifications(object):
         self.periode = periode
         self.periode_facturation = periode
         if creche.temps_facturation != FACTURATION_FIN_MOIS:
-            self.periode_facturation = getMonthStart(periode - datetime.timedelta(1))
+            self.periode_facturation = GetMonthStart(periode - datetime.timedelta(1))
             
         self.email = True
         if len(inscrits) > 1:

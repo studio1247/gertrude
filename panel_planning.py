@@ -84,9 +84,9 @@ class DayPlanningPanel(PlanningWidget):
                         return None
                 line.GetDynamicText = GetHeuresEnfant
                 if creche.temps_facturation == FACTURATION_FIN_MOIS:
-                    date = getMonthStart(self.date)
+                    date = GetMonthStart(self.date)
                 else:
-                    date = getNextMonthStart(self.date)
+                    date = GetNextMonthStart(self.date)
                 if date in inscrit.factures_cloturees:
                     line.readonly = True
                 line.day = self.date.weekday()
@@ -180,7 +180,7 @@ class PlanningPanel(GPanel):
         if len(creche.sites) < 2:
             self.site_choice.Show(False)
         self.site_choice.SetSelection(0)
-        self.Bind(wx.EVT_CHOICE, self.onChangeWeek, self.site_choice)
+        self.Bind(wx.EVT_CHOICE, self.OnChangeWeek, self.site_choice)
         
         # Les raccourcis pour semaine précédente / suivante
         self.previous_button = wx.Button(self, -1, '<', size=(20,0), style=wx.NO_BORDER)
@@ -193,7 +193,7 @@ class PlanningPanel(GPanel):
         # La combobox pour la selection de la semaine
         self.week_choice = wx.Choice(self, -1)
         sizer.Add(self.week_choice, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-        day = first_monday = getFirstMonday()
+        day = first_monday = GetFirstMonday()
         while day < last_date:
             string = 'Semaine %d (%d %s %d)' % (day.isocalendar()[1], day.day, months[day.month - 1], day.year)
             self.week_choice.Append(string, day)
@@ -201,12 +201,12 @@ class PlanningPanel(GPanel):
         delta = datetime.date.today() - first_monday
         semaine = int(delta.days / 7)
         self.week_choice.SetSelection(semaine)
-        self.Bind(wx.EVT_CHOICE, self.onChangeWeek, self.week_choice)
+        self.Bind(wx.EVT_CHOICE, self.OnChangeWeek, self.week_choice)
         
         # La combobox pour la selection du groupe (si groupes)
         self.groupe_choice = wx.Choice(self, -1)
         sizer.Add(self.groupe_choice, 0, wx.ALIGN_CENTER_VERTICAL)
-        self.Bind(wx.EVT_CHOICE, self.onChangeGroupeDisplayed, self.groupe_choice)
+        self.Bind(wx.EVT_CHOICE, self.OnChangeGroupeDisplayed, self.groupe_choice)
         self.UpdateGroupeCombobox()
         
         # La combobox pour la selection de l'outil (si activités)
@@ -240,7 +240,7 @@ class PlanningPanel(GPanel):
                 else:
                     planning_panel.SetData(None, None, date)
                 self.notebook.AddPage(planning_panel, GetDateString(date))
-        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.onChangeWeekday, self.notebook)
+        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnChangeWeekday, self.notebook)
         self.sizer.Layout()
     
     def UpdateGroupeCombobox(self):
@@ -262,10 +262,10 @@ class PlanningPanel(GPanel):
         end = start + datetime.timedelta(6)
         DocumentDialog(self, PlanningDetailleModifications((start, end), site, groupe)).ShowModal()
 
-    def onChangeGroupeDisplayed(self, evt):
-        self.onChangeWeek(None)
+    def OnChangeGroupeDisplayed(self, evt):
+        self.OnChangeWeek(None)
     
-    def onChangeWeekday(self, evt=None):
+    def OnChangeWeekday(self, evt=None):
         self.notebook.GetCurrentPage().UpdateDrawing()
     
     def GetSelectedSite(self):
@@ -282,7 +282,7 @@ class PlanningPanel(GPanel):
         else:
             return None        
             
-    def onChangeWeek(self, evt=None):
+    def OnChangeWeek(self, evt=None):
         self.UpdateWeek()
         self.notebook.SetSelection(0)
         self.sizer.Layout()
@@ -306,11 +306,11 @@ class PlanningPanel(GPanel):
         
     def onPreviousWeek(self, evt):
         self.week_choice.SetSelection(self.week_choice.GetSelection() - 1)
-        self.onChangeWeek()
+        self.OnChangeWeek()
     
     def onNextWeek(self, evt):
         self.week_choice.SetSelection(self.week_choice.GetSelection() + 1)
-        self.onChangeWeek()
+        self.OnChangeWeek()
 
     def onTabletteSynchro(self, evt):
         journal = config.connection.LoadJournal()
@@ -443,6 +443,6 @@ class PlanningPanel(GPanel):
         if 'groupes' in observers and observers['groupes'] > self.last_groupe_observer:
             self.UpdateGroupeCombobox()
             
-        self.onChangeWeek()
+        self.OnChangeWeek()
         self.sizer.Layout()
 

@@ -252,7 +252,7 @@ class PlanningDetailleModifications(object):
     def executeTemplateCalc(self, filename, dom):
         # Garderie Ribambelle, planning detaille
 
-        debut, fin = getMonthStart(self.start), getMonthEnd(self.start)
+        debut, fin = GetMonthStart(self.start), GetMonthEnd(self.start)
         spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
         table = spreadsheet.getElementsByTagName("table:table")[0]
         lignes = table.getElementsByTagName("table:table-row")

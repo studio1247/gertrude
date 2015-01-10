@@ -48,7 +48,7 @@ def GetNombreFacturesContrat(debut, fin):
     while date <= fin:
         if IsContratFacture(date):
             nombre_factures += 1
-        date = getNextMonthStart(date)
+        date = GetNextMonthStart(date)
     return nombre_factures
 
 def GetNombreMoisSansFactureContrat(annee):
@@ -266,7 +266,7 @@ class Cotisation(object):
                     if self.inscription.fin is None:
                         errors.append(u" - La période d'inscription n'a pas de fin.")
                         raise CotisationException(errors)
-                    self.semaines_periode = (6 + (getMonthEnd(self.inscription.fin) - getMonthStart(self.inscription.debut)).days) / 7
+                    self.semaines_periode = (6 + (GetMonthEnd(self.inscription.fin) - GetMonthStart(self.inscription.debut)).days) / 7
                     self.nombre_factures = GetNombreFacturesContrat(self.inscription.debut, self.inscription.fin)
                 else:
                     self.semaines_periode = 52

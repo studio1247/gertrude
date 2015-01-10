@@ -119,12 +119,12 @@ class CongesPanel(SalariesTab):
             self.affiche_conges_creche()
         if self.salarie:
             for i in range(len(self.conges_salarie_sizer.GetChildren()), len(self.salarie.conges)):
-                self.line_add(i)
+                self.AddLine(i)
             for i in range(len(self.salarie.conges), len(self.conges_salarie_sizer.GetChildren())):
-                self.line_del()
+                self.RemoveLine()
         else:
             for i in range(len(self.conges_salarie_sizer.GetChildren())):
-                self.line_del()
+                self.RemoveLine()
         self.sizer.Layout()
         AutoTab.UpdateContents(self)
         
@@ -153,7 +153,7 @@ class CongesPanel(SalariesTab):
             self.conges_creche_sizer.Add(sizer)
         self.last_creche_observer = time.time()
 
-    def line_add(self, index):
+    def AddLine(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, 'Debut :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, self.salarie, 'conges[%d].debut' % index, mois=True)])
         sizer.AddMany([(wx.StaticText(self, -1, 'Fin :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, self.salarie, 'conges[%d].fin' % index, mois=True)])
@@ -164,7 +164,7 @@ class CongesPanel(SalariesTab):
         self.Bind(wx.EVT_BUTTON, self.evt_conge_del, delbutton)
         self.conges_salarie_sizer.Add(sizer)
         
-    def line_del(self):
+    def RemoveLine(self):
         index = len(self.conges_salarie_sizer.GetChildren()) - 1
         sizer = self.conges_salarie_sizer.GetItem(index)
         sizer.DeleteWindows()
@@ -173,13 +173,13 @@ class CongesPanel(SalariesTab):
     def evt_conge_add(self, event):
         history.Append(Delete(self.salarie.conges, -1))
         self.salarie.AddConge(CongeSalarie(self.salarie))
-        self.line_add(len(self.salarie.conges) - 1)
+        self.AddLine(len(self.salarie.conges) - 1)
         self.sizer.Layout()
 
     def evt_conge_del(self, event):
         index = event.GetEventObject().index
         history.Append(Insert(self.salarie.conges, index, self.salarie.conges[index]))
-        self.line_del()
+        self.RemoveLine()
         conge = self.salarie.conges[index]
         del self.salarie.conges[index]
         conge.delete()

@@ -50,7 +50,7 @@ class EtatPresenceMensuelModifications(object):
             
         #return errors
 
-        inscrits = GetInscrits(self.date, getMonthEnd(self.date))
+        inscrits = GetInscrits(self.date, GetMonthEnd(self.date))
         inscrits.sort(cmp=lambda x,y: cmp(GetPrenomNom(x), GetPrenomNom(y)))
         
         template = lignes.item(5)

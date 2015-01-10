@@ -26,7 +26,7 @@ class AppelCotisationsModifications(object):
         self.multi = False
         self.template = 'Appel cotisations.ods'
         self.default_output = u"Appel cotisations %s %d.ods" % (months[date.month - 1], date.year)
-        self.debut, self.fin = date, getMonthEnd(date)
+        self.debut, self.fin = date, GetMonthEnd(date)
         self.options = options
         self.gauge = None
         self.email = None

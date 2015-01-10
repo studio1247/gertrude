@@ -44,7 +44,7 @@ class FactureFinMois(object):
         self.annee = annee
         self.mois = mois
         self.debut_recap = datetime.date(annee, mois, 1)
-        self.fin_recap = getMonthEnd(self.debut_recap)
+        self.fin_recap = GetMonthEnd(self.debut_recap)
         self.date = self.fin_recap
         try:
             first_numero = int(creche.numeros_facture[self.debut_recap].valeur)
@@ -105,7 +105,7 @@ class FactureFinMois(object):
                
         if inscrit.HasFacture(self.debut_recap) and creche.cloture_factures and today > self.fin_recap:
             fin = self.debut_recap - datetime.timedelta(1)
-            debut = getMonthStart(fin)
+            debut = GetMonthStart(fin)
             if inscrit.GetInscriptions(debut, fin) and debut not in inscrit.factures_cloturees and IsFacture(debut) and self.debut_recap >= first_date:
                 error = u"La facture du mois " + GetDeMoisStr(debut.month-1) + " " + str(debut.year) + u" n'est pas clôturée"
                 raise CotisationException([error])

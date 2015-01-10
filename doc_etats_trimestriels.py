@@ -120,7 +120,7 @@ class EtatsTrimestrielsModifications(object):
                                 for i in range(3):
                                     if heures[m][i] == 0:
                                         fields.append(('%s(%d)' % (mode, i+1), ''))
-                                    # elif getMonthEnd(datetime.date(self.annee, trimestre * 3 + i + 1, 1)) > today or (creche.presences_previsionnelles and previsionnel[m]):
+                                    # elif GetMonthEnd(datetime.date(self.annee, trimestre * 3 + i + 1, 1)) > today or (creche.presences_previsionnelles and previsionnel[m]):
                                     #     fields.append(('%s(%d)' % (mode, i+1), '(%d)' % heures[m][i]))
                                     else:
                                         fields.append(('%s(%d)' % (mode, i+1), heures[m][i]))

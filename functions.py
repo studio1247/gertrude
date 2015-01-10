@@ -20,7 +20,7 @@ from constants import *
 from parameters import *
 import wx
 
-def getFirstMonday():
+def GetFirstMonday():
     first_monday = first_date
     while first_monday.weekday() != 0:
         first_monday += datetime.timedelta(1)
@@ -40,32 +40,32 @@ def GetDateMinus(date, years, months):
     else:
         y = date.year-1-years
         m = date.month+12-months
-    end = getMonthEnd(datetime.date(y, m, 1))
+    end = GetMonthEnd(datetime.date(y, m, 1))
     if d > end.day:
         d = end.day
     return datetime.date(y, m, d)
                 
-def getMonthStart(date):
+def GetMonthStart(date):
     return datetime.date(date.year, date.month, 1)
 
-def getMonthEnd(date):
+def GetMonthEnd(date):
     if date.month == 12:
         return datetime.date(date.year, 12, 31)
     else:
         return datetime.date(date.year, date.month + 1, 1) - datetime.timedelta(1)
 
-def getNextMonthStart(date):
+def GetNextMonthStart(date):
     if date.month == 12:
         return datetime.date(date.year+1, 1, 1)
     else:
         return datetime.date(date.year, date.month+1, 1)
     
-def getTrimestreStart(date):
+def GetTrimestreStart(date):
     return datetime.date(date.year, 1 + 3 * ((date.month-1)/3), 1)    
 
-def getTrimestreEnd(date):
-    nextTrimestre = getTrimestreStart(date) + datetime.timedelta(80)
-    return getTrimestreStart(nextTrimestre) - datetime.timedelta(1)    
+def GetTrimestreEnd(date):
+    nextTrimestre = GetTrimestreStart(date) + datetime.timedelta(80)
+    return GetTrimestreStart(nextTrimestre) - datetime.timedelta(1)    
 
 def GetHeureString(value):
     if value is None:

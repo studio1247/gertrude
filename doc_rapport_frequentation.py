@@ -77,7 +77,7 @@ class RapportFrequentationModifications(object):
                 after = lines[13]
                 for mois in range(1, 13):
                     debut = datetime.date(self.annee, mois, 1)
-                    fin = getMonthEnd(debut)
+                    fin = GetMonthEnd(debut)
                     if fin > today:
                         break
 
@@ -146,7 +146,7 @@ class RapportFrequentationModifications(object):
                 template = tables.item(0)
                 for mois in range(1, 13):
                     debut = datetime.date(self.annee, mois, 1)
-                    fin = getMonthEnd(debut)
+                    fin = GetMonthEnd(debut)
                     if fin > today:
                         break
         
