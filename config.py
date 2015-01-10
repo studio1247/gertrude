@@ -80,6 +80,13 @@ def getWindowSize(parser):
     except:
         return (1000, 600)
     
+def getColumnWidth(parser):
+    try:
+        result = int(parser.get(DEFAULT_SECTION, "column-width"))
+    except:
+        result = 4 # px
+    return result
+    
 def getDefaultDocumentsDirectory():
     if sys.platform == 'win32':
         try:
@@ -189,6 +196,7 @@ def LoadConfig(progress_handler=default_progress_handler):
 
     config.original_window_size = getWindowSize(parser)
     config.window_size = config.original_window_size
+    config.column_width = getColumnWidth(parser)
     
     config.options = getOptions(parser)
 
