@@ -42,7 +42,7 @@ class EtatsTrimestrielsModifications(object):
             return []
 
         elif filename == 'content.xml':
-            global_indexes = getTriParCommuneEtNomIndexes(range(len(creche.inscrits)))
+            global_indexes = GetTriParCommuneEtNomIndexes(range(len(creche.inscrits)))
     
             spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
             tables = spreadsheet.getElementsByTagName("table:table")
@@ -61,7 +61,7 @@ class EtatsTrimestrielsModifications(object):
                     fin = datetime.date(self.annee, trimestre * 3 + 4, 1) - datetime.timedelta(1)
     
                 # On retire ceux qui ne sont pas inscrits pendant la periode qui nous interesse
-                indexes = getPresentsIndexes(global_indexes, (debut, fin), self.site)
+                indexes = GetPresentsIndexes(global_indexes, (debut, fin), self.site)
     
                 table = template.cloneNode(1)
                 spreadsheet.appendChild(table)
@@ -165,7 +165,7 @@ class EtatsTrimestrielsModifications(object):
         return self.factures[inscrit.idx, mois]
 
     def Synthese(self, table, lignes, indexes, mode, str_mode, premiere_ligne):
-        indexes = getTriParNomIndexes(indexes)
+        indexes = GetTriParNomIndexes(indexes)
 
         # Le titre
         ReplaceFields(lignes.item(premiere_ligne), [('annee', self.annee)])

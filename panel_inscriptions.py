@@ -471,7 +471,7 @@ class ParentsPanel(InscriptionsTab):
             if profil & PROFIL_TRESORIER:
                 panel = PeriodePanel(self, 'revenus')
                 self.parents_items[-1].append(panel)
-                if not creche.formule_taux_horaire_needs_revenus():
+                if not creche.AreRevenusNeeded():
                     titre = u"Régime d'appartenance"
                     defaultPeriode = today.year
                 elif creche.periode_revenus == REVENUS_CAFPRO:
@@ -488,7 +488,7 @@ class ParentsPanel(InscriptionsTab):
                 revenus_gridsizer.AddMany([(0, 0), (AutoCheckBox(panel, None, 'chomage', u'Chômage'), 0, wx.EXPAND)])
                 revenus_gridsizer.AddMany([(0, 0), (AutoCheckBox(panel, None, 'conge_parental', u'Congé parental'), 0, wx.EXPAND)])
                 self.revenus_items.extend([revenus_gridsizer.GetItem(0), revenus_gridsizer.GetItem(1), revenus_gridsizer.GetItem(2)])
-                if not creche.formule_taux_horaire_needs_revenus():
+                if not creche.AreRevenusNeeded():
                     for item in self.revenus_items:
                         item.Show(False)
                 choice = AutoChoiceCtrl(panel, None, 'regime')
@@ -563,7 +563,7 @@ class ParentsPanel(InscriptionsTab):
         for i in range(referents_count, len(self.referents_sizer.GetChildren())):
             self.referent_line_del()
         for item in self.revenus_items:
-            item.Show(creche.formule_taux_horaire_needs_revenus())
+            item.Show(creche.AreRevenusNeeded())
         AutoTab.UpdateContents(self)
         self.sizer.FitInside(self)
 
@@ -738,7 +738,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
     def onDureeReferenceChoice(self, event):
         history.Append(None)
         duration = self.duree_reference_choice.GetClientData(self.duree_reference_choice.GetSelection())
-        self.inscrit.inscriptions[self.periode].setReferenceDuration(duration)
+        self.inscrit.inscriptions[self.periode].SetReferenceDuration(duration)
         self.UpdateContents()
         
     def onMode_5_5(self, event):
@@ -747,7 +747,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         inscription.mode = MODE_5_5
         for i, day in enumerate(inscription.reference):
             if JourSemaineAffichable(i):
-                day.set_state(0)
+                day.SetState(0)
         self.UpdateContents()
     
     def onMondayCopy(self, event):
@@ -981,7 +981,7 @@ class CongesPanel(InscriptionsTab):
 
     def evt_conge_add(self, event):
         history.Append(Delete(self.inscrit.conges, -1))
-        self.inscrit.add_conge(CongeInscrit(self.inscrit))
+        self.inscrit.AddConge(CongeInscrit(self.inscrit))
         self.line_add(len(self.inscrit.conges) - 1)
         self.sizer.Layout()
 

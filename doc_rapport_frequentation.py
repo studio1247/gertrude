@@ -192,7 +192,7 @@ class RapportFrequentationModifications(object):
                         cells = line.getElementsByTagName("table:table-cell")
                         for j, jour in enumerate(jours):
                             date = datetime.date(debut.year, debut.month, jour)
-                            state = inscrit.getState(date)
+                            state = inscrit.GetState(date)
                             if inscrit in total_heures_facturees:
                                 total_heures_facturees[inscrit] += state.heures_facturees
                             else:

@@ -58,7 +58,7 @@ class EtatPresenceMensuelModifications(object):
             cantine, garderie = 0, 0
             date = self.date
             while date.month == self.date.month:
-                journee = inscrit.getJournee(date)
+                journee = inscrit.GetJournee(date)
                 if journee:
                     if journee.GetActivity(8.0):
                         garderie += 1

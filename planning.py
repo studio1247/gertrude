@@ -19,7 +19,7 @@ import wx, wx.lib.scrolledpanel
 from buffered_window import BufferedWindow
 import datetime, time
 from constants import *
-from controls import getActivityColor, TextDialog
+from controls import GetActivityColor, TextDialog
 from functions import GetActivitiesSummary, GetBitmapFile, GetHeureString
 from sqlobjects import Day, JourneeCapacite
 from history import *
@@ -227,7 +227,7 @@ class PlanningGridWindow(BufferedWindow):
                 activity = val
                 if self.options & DRAW_VALUES:
                     activity = 0
-                r, g, b, t, s = getActivityColor(activity)
+                r, g, b, t, s = GetActivityColor(activity)
                 try:
                     dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
                     dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
@@ -405,7 +405,7 @@ class PlanningGridWindow(BufferedWindow):
                     line.ClearActivity(start, end, self.value)
                 
             if not (self.GetParent().GetParent().options & PRESENCES_ONLY) and len(line.activites) == 0 and line.reference and len(line.reference.activites) > 0:
-                line.set_state(VACANCES)
+                line.SetState(VACANCES)
                 
             if line.insert is not None:
                 line.insert[line.key] = line
@@ -464,12 +464,12 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         button = event.GetEventObject()
         line = self.lines[button.line]
         if not (line.readonly or readonly):
-            state = line.get_state()
+            state = line.GetState()
             dlg = TextDialog(self, "Commentaire", line.commentaire)
             response = dlg.ShowModal()
             dlg.Destroy()
             if response == wx.ID_OK:
-                line.setCommentaire(dlg.GetText())
+                line.SetCommentaire(dlg.GetText())
                 line.Save()
                 history.Append(None)
                 if line.insert is not None:
@@ -484,7 +484,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         line = self.lines[button.line]
         if not (line.readonly or readonly):
             history.Append([Call(line.Restore, line.Backup())])        
-            state = line.get_state()
+            state = line.GetState()
             
             if state < 0:
                 order = [VACANCES, ABSENCE_CONGE_SANS_PREAVIS, ABSENCE_NON_PREVENUE, MALADE, HOPITAL, MALADE_SANS_JUSTIFICATIF, PRESENT]
@@ -508,14 +508,14 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                         line.Save()
                         line.reference = reference
                 else:
-                    line.set_state(newstate)
+                    line.SetState(newstate)
             elif line.date <= datetime.date.today() and state & PREVISIONNEL:
                 line.Confirm()
             else:
-                if line.reference.get_state() == ABSENT:
-                    line.set_state(MALADE)
+                if line.reference.GetState() == ABSENT:
+                    line.SetState(MALADE)
                 else:
-                    line.set_state(VACANCES)
+                    line.SetState(VACANCES)
     
             if line.insert is not None:
                 line.insert[line.key] = line
@@ -530,10 +530,10 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         if not (line.readonly or readonly):
             if event.Checked():
                 history.Append(None)
-                line.insert_activity(None, None, button.activite.value)
+                line.InsertActivity(None, None, button.activite.value)
             else:
                 history.Append(None)
-                line.remove_activity(None, None, button.activite.value)
+                line.RemoveActivity(None, None, button.activite.value)
             line.Save()
             if line.insert is not None:
                 line.insert[line.key] = line
@@ -585,7 +585,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             if isinstance(line, LigneConge):
                 state = VACANCES
             else:
-                state = line.get_state()
+                state = line.GetState()
                 if state > 0:
                     activities_state = state & ~(PRESENT|PREVISIONNEL)
                     if activities_state:
@@ -842,7 +842,7 @@ class PlanningSummaryPanel(BufferedWindow):
             if nv != v or nw != w:
                 if v != 0:
                     rect = wx.Rect(pos+3+(a-debut)*config.column_width, 2 + index * 20, (x-a)*config.column_width-1, 19)
-                    r, g, b, t, s = getActivityColor(w)
+                    r, g, b, t, s = GetActivityColor(w)
                     text = str(v)
                     try:
                         dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))

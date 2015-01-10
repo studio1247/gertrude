@@ -539,7 +539,7 @@ class ActivitesTab(AutoTab):
                 return
         for inscrit, date in entrees:
             journee = inscrit.journees[date]
-            journee.remove_activities(index)
+            journee.RemoveActivities(index)
         history.Append(Insert(creche.activites, index, creche.activites[index]))
         for i, child in enumerate(self.activites_sizer.GetChildren()):
             sizer = child.GetSizer()
@@ -713,7 +713,7 @@ class JoursFermeturePanel(AutoTab):
     def conges_add(self, event):
         observers['conges'] = time.time()
         history.Append(Delete(creche.conges, -1))
-        creche.add_conge(Conge(creche))
+        creche.AddConge(Conge(creche))
         self.line_add(len(creche.conges) - 1)
         self.sizer.Layout()
 
@@ -733,7 +733,7 @@ class JoursFermeturePanel(AutoTab):
             conge = Conge(creche, creation=False)
             conge.debut = label
             conge.create()
-            creche.add_conge(conge)
+            creche.AddConge(conge)
         else:
             conge = creche.feries[label]
             del creche.feries[label]
@@ -995,7 +995,7 @@ class ParametersPanel(AutoTab):
                 for j, jour in enumerate(inscription.reference):
                     for a, b, v in jour.activites.keys():
                         if not obj.check_function(value, a, b):
-                            errors.append((inscrit, jour, " (%s)" % periodestr(inscription), days[j%7].lower()))
+                            errors.append((inscrit, jour, " (%s)" % GetPeriodeString(inscription), days[j%7].lower()))
             for j in inscrit.journees.keys():
                 jour = inscrit.journees[j]
                 for a, b, v in jour.activites.keys():
@@ -1107,7 +1107,7 @@ class TarifHorairePanel(AutoTab):
             creche.formule_taux_horaire = [["", 0.0]]
         else:
             creche.formule_taux_horaire.insert(object.index, ["", 0.0])
-        creche.update_formule_taux_horaire()
+        creche.UpdateFormuleTauxHoraire()
         for i in range(object.index+1, len(self.controls)):
             self.controls[i][0].SetLabel("[Cas %d]" % (i+1))
             for control in self.controls[i][1:]:
@@ -1125,7 +1125,7 @@ class TarifHorairePanel(AutoTab):
             creche.formule_taux_horaire = None
         else:
             del creche.formule_taux_horaire[index]
-        creche.update_formule_taux_horaire()
+        creche.UpdateFormuleTauxHoraire()
         for i in range(index, len(self.controls)):
             self.controls[i][0].SetLabel("[Cas %d]" % (i+1))
             for control in self.controls[i][1:]:
@@ -1136,8 +1136,8 @@ class TarifHorairePanel(AutoTab):
     def onConditionChange(self, event):
         object = event.GetEventObject()
         creche.formule_taux_horaire[object.index][0] = object.GetValue()
-        creche.update_formule_taux_horaire()
-        if creche.test_formule_taux_horaire(object.index):
+        creche.UpdateFormuleTauxHoraire()
+        if creche.CheckFormuleTauxHoraire(object.index):
             object.SetBackgroundColour(wx.WHITE)
         else:
             object.SetBackgroundColour(wx.RED)
@@ -1147,7 +1147,7 @@ class TarifHorairePanel(AutoTab):
     def onTauxChange(self, event):
         object = event.GetEventObject()
         creche.formule_taux_horaire[object.index][1] = float(object.GetValue())
-        creche.update_formule_taux_horaire()
+        creche.UpdateFormuleTauxHoraire()
         history.Append(None)
         
 class TauxEffortPanel(AutoTab):
@@ -1200,7 +1200,7 @@ class TauxEffortPanel(AutoTab):
             creche.formule_taux_effort = [["", 0.0]]
         else:
             creche.formule_taux_effort.insert(object.index, ["", 0.0])
-        creche.update_formule_taux_effort()
+        creche.UpdateFormuleTauxEffort()
         for i in range(object.index+1, len(self.controls)):
             self.controls[i][0].SetLabel("[Cas %d]" % (i+1))
             for control in self.controls[i][1:]:
@@ -1218,7 +1218,7 @@ class TauxEffortPanel(AutoTab):
             creche.formule_taux_effort = None
         else:
             del creche.formule_taux_effort[index]
-        creche.update_formule_taux_effort()
+        creche.UpdateFormuleTauxEffort()
         for i in range(index, len(self.controls)):
             self.controls[i][0].SetLabel("[Cas %d]" % (i+1))
             for control in self.controls[i][1:]:
@@ -1229,8 +1229,8 @@ class TauxEffortPanel(AutoTab):
     def onConditionChange(self, event):
         object = event.GetEventObject()
         creche.formule_taux_effort[object.index][0] = object.GetValue()
-        creche.update_formule_taux_effort()
-        if creche.test_formule_taux_effort(object.index):
+        creche.UpdateFormuleTauxEffort()
+        if creche.CheckFormuleTauxEffort(object.index):
             object.SetBackgroundColour(wx.WHITE)
         else:
             object.SetBackgroundColour(wx.RED)
@@ -1240,7 +1240,7 @@ class TauxEffortPanel(AutoTab):
     def onTauxChange(self, event):
         object = event.GetEventObject()
         creche.formule_taux_effort[object.index][1] = float(object.GetValue())
-        creche.update_formule_taux_effort()
+        creche.UpdateFormuleTauxEffort()
         history.Append(None)    
 
 profiles = [("Administrateur", PROFIL_ALL),

@@ -22,13 +22,13 @@ class GertrudeTestCase(unittest.TestCase):
     def AddJourFerie(self, label):
         conge = Conge(creche, creation=False)
         conge.debut = label
-        creche.add_conge(conge)
+        creche.AddConge(conge)
             
     def AddConge(self, debut, fin="", options=0):
         conge = Conge(creche, creation=False)
         conge.debut, conge.fin = debut, fin
         conge.options = options
-        creche.add_conge(conge)
+        creche.AddConge(conge)
     
     def AddParents(self, inscrit, salaire=30000.0):
         inscrit.parents["papa"] = papa = Parent(inscrit, creation=False)
@@ -49,7 +49,7 @@ class GertrudeTestCase(unittest.TestCase):
     
     def AddActivite(self, inscrit, date, debut, fin, activite):
         inscrit.journees[date] = Journee(inscrit, date)
-        inscrit.journees[date].add_activity(debut, fin, activite, None)
+        inscrit.journees[date].AddActivity(debut, fin, activite, None)
         
     def AddJourneePresence(self, inscrit, date, debut, fin):
         self.AddActivite(inscrit, date, debut, fin, 0)
@@ -92,7 +92,7 @@ class PlanningTests(GertrudeTestCase):
         
     def test_previsionnel_cloture(self):
         day = Day()
-        day.insert_activity(0, 10, PREVISIONNEL|CLOTURE)
+        day.InsertActivity(0, 10, PREVISIONNEL|CLOTURE)
         day.SetActivity(2, 8, 0)
         self.assertEquals(len(day.activites), 2)
 
@@ -103,7 +103,7 @@ class DocumentsTests(GertrudeTestCase):
         os.chdir("..")
         creche.mode_facturation = FACTURATION_PAJE
         creche.formule_taux_horaire = [["", 6.70]]
-        creche.update_formule_taux_horaire(changed=False)
+        creche.UpdateFormuleTauxHoraire(changed=False)
         bureau = Bureau(creation=False)
         bureau.debut = datetime.date(2010, 1, 1)
         creche.bureaux.append(bureau)
@@ -111,11 +111,11 @@ class DocumentsTests(GertrudeTestCase):
             inscrit = self.AddInscrit()
             inscription = Inscription(inscrit, creation=False)
             inscription.debut, inscription.fin = datetime.date(2010, 9, 6), datetime.date(2011, 7, 27)
-            inscription.reference[0].add_activity(96, 180, 0, -1)
-            inscription.reference[1].add_activity(96, 180, 0, -1)
-            inscription.reference[2].add_activity(96, 180, 0, -1)
-            inscription.reference[3].add_activity(96, 180, 0, -1)
-            inscription.reference[4].add_activity(96, 180, 0, -1)
+            inscription.reference[0].AddActivity(96, 180, 0, -1)
+            inscription.reference[1].AddActivity(96, 180, 0, -1)
+            inscription.reference[2].AddActivity(96, 180, 0, -1)
+            inscription.reference[3].AddActivity(96, 180, 0, -1)
+            inscription.reference[4].AddActivity(96, 180, 0, -1)
             inscrit.inscriptions.append(inscription)
     
     def tearDown(self):
@@ -145,25 +145,25 @@ class PAJETests(GertrudeTestCase):
         inscrit.inscriptions.append(inscription)
         self.assertRaises(CotisationException, Cotisation, inscrit, datetime.date(2010, 1, 1), NO_ADDRESS|NO_PARENTS)
         creche.formule_taux_horaire = [["", 0.0]]
-        creche.update_formule_taux_horaire(changed=False)
+        creche.UpdateFormuleTauxHoraire(changed=False)
         cotisation = Cotisation(inscrit, datetime.date(2010, 1, 1), NO_ADDRESS|NO_PARENTS)
         
     def test_nospetitspouces(self):
         creche.mode_facturation = FACTURATION_PAJE
         creche.repartition = REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS
         creche.formule_taux_horaire = [["", 6.70]]
-        creche.update_formule_taux_horaire(changed=False)
+        creche.UpdateFormuleTauxHoraire(changed=False)
         bureau = Bureau(creation=False)
         bureau.debut = datetime.date(2010, 1, 1)
         creche.bureaux.append(bureau)
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
         inscription.debut, inscription.fin = datetime.date(2010, 9, 6), datetime.date(2011, 7, 27)
-        inscription.reference[0].add_activity(96, 180, 0, -1)
-        inscription.reference[1].add_activity(96, 180, 0, -1)
-        inscription.reference[2].add_activity(96, 180, 0, -1)
-        inscription.reference[3].add_activity(96, 180, 0, -1)
-        inscription.reference[4].add_activity(96, 180, 0, -1)
+        inscription.reference[0].AddActivity(96, 180, 0, -1)
+        inscription.reference[1].AddActivity(96, 180, 0, -1)
+        inscription.reference[2].AddActivity(96, 180, 0, -1)
+        inscription.reference[3].AddActivity(96, 180, 0, -1)
+        inscription.reference[4].AddActivity(96, 180, 0, -1)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2010, 9, 6), NO_ADDRESS|NO_PARENTS)
         self.assertEquals(float("%.2f" % cotisation.cotisation_mensuelle), 1001.95)
@@ -174,18 +174,18 @@ class PAJETests(GertrudeTestCase):
         creche.mode_facturation = FACTURATION_PAJE
         creche.repartition = REPARTITION_MENSUALISATION_12MOIS
         creche.formule_taux_horaire = [["", 10]]
-        creche.update_formule_taux_horaire(changed=False)
+        creche.UpdateFormuleTauxHoraire(changed=False)
         bureau = Bureau(creation=False)
         bureau.debut = datetime.date(2010, 1, 1)
         creche.bureaux.append(bureau)
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
         inscription.debut, inscription.fin = datetime.date(2014, 10, 15), datetime.date(2015, 12, 31)
-        inscription.reference[0].add_activity(96, 180, 0, -1)
-        inscription.reference[1].add_activity(96, 180, 0, -1)
-        inscription.reference[2].add_activity(96, 180, 0, -1)
-        inscription.reference[3].add_activity(96, 180, 0, -1)
-        inscription.reference[4].add_activity(96, 180, 0, -1)
+        inscription.reference[0].AddActivity(96, 180, 0, -1)
+        inscription.reference[1].AddActivity(96, 180, 0, -1)
+        inscription.reference[2].AddActivity(96, 180, 0, -1)
+        inscription.reference[3].AddActivity(96, 180, 0, -1)
+        inscription.reference[4].AddActivity(96, 180, 0, -1)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2014, 10, 15), NO_ADDRESS|NO_PARENTS)
         self.assertEquals(float("%.2f" % cotisation.cotisation_mensuelle), 1516.67)
@@ -199,18 +199,18 @@ class PAJETests(GertrudeTestCase):
         creche.repartition = REPARTITION_MENSUALISATION_12MOIS
         creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
         creche.formule_taux_horaire = [["", 6.25]]
-        creche.update_formule_taux_horaire(changed=False)
+        creche.UpdateFormuleTauxHoraire(changed=False)
         bureau = Bureau(creation=False)
         bureau.debut = datetime.date(2010, 1, 1)
         creche.bureaux.append(bureau)
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
         inscription.debut = datetime.date(2014, 9, 22)
-        inscription.reference[0].add_activity(96, 204, 0, -1)
-        inscription.reference[1].add_activity(96, 204, 0, -1)
-        inscription.reference[2].add_activity(96, 204, 0, -1)
-        inscription.reference[3].add_activity(96, 204, 0, -1)
-        inscription.reference[4].add_activity(96, 204, 0, -1)
+        inscription.reference[0].AddActivity(96, 204, 0, -1)
+        inscription.reference[1].AddActivity(96, 204, 0, -1)
+        inscription.reference[2].AddActivity(96, 204, 0, -1)
+        inscription.reference[3].AddActivity(96, 204, 0, -1)
+        inscription.reference[4].AddActivity(96, 204, 0, -1)
         inscription.semaines_conges = 7
         inscription.fin_periode_adaptation = datetime.date(2014, 10, 6)
         inscrit.inscriptions.append(inscription)
@@ -240,7 +240,7 @@ class MarmousetsTests(GertrudeTestCase):
             self.AddJourFerie(label)
         conge = Conge(creche, creation=False)
         conge.debut = conge.fin = "14/05/2010"
-        creche.add_conge(conge)
+        creche.AddConge(conge)
         bareme = BaremeCAF(creation=False)
         bareme.debut, bareme.plancher, bareme.plafond = datetime.date(2010, 1, 1), 6876.00, 53400.00
         creche.baremes_caf.append(bareme)
@@ -251,14 +251,14 @@ class MarmousetsTests(GertrudeTestCase):
         inscription = Inscription(inscrit, creation=False)
         inscription.debut = datetime.date(2010, 1, 4)
         inscription.fin = datetime.date(2010, 7, 30)
-        inscription.reference[1].add_activity(102, 210, 0, -1)
-        inscription.reference[2].add_activity(102, 210, 0, -1)
-        inscription.reference[3].add_activity(102, 210, 0, -1)
-        inscription.reference[4].add_activity(102, 222, 0, -1)
+        inscription.reference[1].AddActivity(102, 210, 0, -1)
+        inscription.reference[2].AddActivity(102, 210, 0, -1)
+        inscription.reference[3].AddActivity(102, 210, 0, -1)
+        inscription.reference[4].AddActivity(102, 222, 0, -1)
         inscrit.inscriptions.append(inscription)
         conge = CongeInscrit(inscrit, creation=False)
         conge.debut, conge.fin = "01/02/2010", "20/02/2010"
-        inscrit.add_conge(conge)
+        inscrit.AddConge(conge)
         cotisation = Cotisation(inscrit, datetime.date(2010, 1, 4), NO_ADDRESS|NO_PARENTS)
         self.assertEquals(float("%.2f" % cotisation.heures_semaine), 37.0)
         self.assertEquals(cotisation.heures_periode, 971.0)
@@ -286,11 +286,11 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         inscription = Inscription(inscrit, creation=False)
         inscription.debut = datetime.date(2010, 8, 24)
         inscription.fin = datetime.date(2010, 12, 31)
-        inscription.reference[0].add_activity(102, 210, 0, -1)
-        inscription.reference[1].add_activity(102, 210, 0, -1)
-        inscription.reference[2].add_activity(102, 210, 0, -1)
-        inscription.reference[3].add_activity(102, 210, 0, -1)
-        inscription.reference[4].add_activity(102, 210, 0, -1)
+        inscription.reference[0].AddActivity(102, 210, 0, -1)
+        inscription.reference[1].AddActivity(102, 210, 0, -1)
+        inscription.reference[2].AddActivity(102, 210, 0, -1)
+        inscription.reference[3].AddActivity(102, 210, 0, -1)
+        inscription.reference[4].AddActivity(102, 210, 0, -1)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2010, 9, 1))
         self.assertEquals(float("%.2f" % cotisation.heures_semaine), 45.0)
@@ -302,11 +302,11 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         inscription = Inscription(inscrit, creation=False)
         inscription.debut = datetime.date(2010, 9, 1)
         inscription.fin = datetime.date(2010, 12, 31)
-        inscription.reference[0].add_activity(102, 210, 0, -1)
-        inscription.reference[1].add_activity(102, 210, 0, -1)
-        inscription.reference[2].add_activity(102, 210, 0, -1)
-        inscription.reference[3].add_activity(102, 210, 0, -1)
-        inscription.reference[4].add_activity(102, 210, 0, -1)
+        inscription.reference[0].AddActivity(102, 210, 0, -1)
+        inscription.reference[1].AddActivity(102, 210, 0, -1)
+        inscription.reference[2].AddActivity(102, 210, 0, -1)
+        inscription.reference[3].AddActivity(102, 210, 0, -1)
+        inscription.reference[4].AddActivity(102, 210, 0, -1)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2010, 9, 1))
         self.assertEquals(float("%.2f" % cotisation.heures_semaine), 45.0)
@@ -318,11 +318,11 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         inscription = Inscription(inscrit, creation=False)
         inscription.debut = datetime.date(2010, 1, 1)
         inscription.fin = datetime.date(2010, 12, 31)
-        inscription.reference[0].add_activity(102, 210, 0, -1)
-        inscription.reference[1].add_activity(102, 222, 0, -1)
-        inscription.reference[2].add_activity(102, 210, 0, -1)
-        inscription.reference[3].add_activity(102, 222, 0, -1)
-        inscription.reference[4].add_activity(102, 222, 0, -1)
+        inscription.reference[0].AddActivity(102, 210, 0, -1)
+        inscription.reference[1].AddActivity(102, 222, 0, -1)
+        inscription.reference[2].AddActivity(102, 210, 0, -1)
+        inscription.reference[3].AddActivity(102, 222, 0, -1)
+        inscription.reference[4].AddActivity(102, 222, 0, -1)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2010, 9, 1))
         self.assertEquals(float("%.2f" % cotisation.heures_semaine), 48.0)
@@ -337,7 +337,7 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         inscription = Inscription(inscrit, creation=False)
         inscription.debut = datetime.date(2010, 1, 1)
         inscription.fin = datetime.date(2010, 12, 31)
-        inscription.reference[2].add_activity(96, 150, 0, -1)
+        inscription.reference[2].AddActivity(96, 150, 0, -1)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2010, 9, 1))
         self.assertEquals(float("%.2f" % cotisation.heures_semaine), 5.0)
@@ -350,7 +350,7 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         inscription = Inscription(inscrit, creation=False)
         inscription.debut = datetime.date(2010, 1, 1)
         inscription.fin = datetime.date(2010, 12, 31)
-        inscription.reference[2].add_activity(102, 222, 0, -1)
+        inscription.reference[2].AddActivity(102, 222, 0, -1)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2010, 9, 1))
         # self.assertEquals(float("%.2f" % cotisation.heures_semaine), 5.0)
@@ -377,9 +377,9 @@ class PetitsMoussesTests(GertrudeTestCase):
         inscription.debut = datetime.date(2013, 1, 1)
         inscription.fin = datetime.date(2013, 2, 15)
         inscription.semaines_conges = 5
-        inscription.reference[0].add_activity(102, 222, 0, -1)
-        inscription.reference[3].add_activity(102, 222, 0, -1)
-        inscription.reference[4].add_activity(102, 222, 0, -1)
+        inscription.reference[0].AddActivity(102, 222, 0, -1)
+        inscription.reference[3].AddActivity(102, 222, 0, -1)
+        inscription.reference[4].AddActivity(102, 222, 0, -1)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2013, 1, 1))
         self.assertEquals(float("%.2f" % cotisation.heures_semaine), 30.0)
@@ -406,8 +406,8 @@ class LoupandisesTests(GertrudeTestCase):
         inscription.debut = datetime.date(2010, 9, 6)
         inscription.fin = datetime.date(2010, 12, 31)
         inscription.fin_periode_adaptation = datetime.date(2010, 11, 30)
-        inscription.reference[1].add_activity(141, 201, 0, -1)
-        inscription.reference[3].add_activity(165, 201, 0, -1)
+        inscription.reference[1].AddActivity(141, 201, 0, -1)
+        inscription.reference[3].AddActivity(165, 201, 0, -1)
         inscrit.inscriptions.append(inscription)
         inscrit.journees[datetime.date(2010, 11, 4)] = Journee(inscrit, datetime.date(2010, 11, 4))       
         self.AddJourneePresence(inscrit, datetime.date(2010, 11, 8), 120, 156)
@@ -428,7 +428,7 @@ class FacturationDebutMoisContratTests(GertrudeTestCase):
         creche.temps_facturation = FACTURATION_DEBUT_MOIS_CONTRAT
         creche.type = TYPE_MICRO_CRECHE
         creche.formule_taux_horaire = [["mode=hg", 9.50], ["", 7.0]]
-        creche.update_formule_taux_horaire(changed=False)
+        creche.UpdateFormuleTauxHoraire(changed=False)
         
     def test_forfait_mensuel(self):
         inscrit = self.AddInscrit()
@@ -436,10 +436,10 @@ class FacturationDebutMoisContratTests(GertrudeTestCase):
         inscription.mode = MODE_FORFAIT_HORAIRE
         inscription.forfait_heures_presence = 90.0
         inscription.debut = datetime.date(2010, 3, 1)
-        inscription.reference[0].add_activity(93, 213, 0, -1) # 10h
-        inscription.reference[1].add_activity(93, 213, 0, -1) # 10h
-        inscription.reference[2].add_activity(93, 141, 0, -1) # 4h
-        inscription.reference[3].add_activity(93, 213, 0, -1) # 10h
+        inscription.reference[0].AddActivity(93, 213, 0, -1) # 10h
+        inscription.reference[1].AddActivity(93, 213, 0, -1) # 10h
+        inscription.reference[2].AddActivity(93, 141, 0, -1) # 4h
+        inscription.reference[3].AddActivity(93, 213, 0, -1) # 10h
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2010, 3)
         self.assertEquals(facture.total, 90.0*7.0)
@@ -457,10 +457,10 @@ class FacturationDebutMoisContratTests(GertrudeTestCase):
         inscription = Inscription(inscrit, creation=False)
         inscription.mode = MODE_TEMPS_PARTIEL
         inscription.debut = datetime.date(2010, 3, 1)
-        inscription.reference[0].add_activity(93, 213, 0, -1) # 10h
-        inscription.reference[1].add_activity(93, 213, 0, -1) # 10h
-        inscription.reference[2].add_activity(93, 141, 0, -1) # 4h
-        inscription.reference[3].add_activity(93, 213, 0, -1) # 10h
+        inscription.reference[0].AddActivity(93, 213, 0, -1) # 10h
+        inscription.reference[1].AddActivity(93, 213, 0, -1) # 10h
+        inscription.reference[2].AddActivity(93, 141, 0, -1) # 4h
+        inscription.reference[3].AddActivity(93, 213, 0, -1) # 10h
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2010, 3)
         self.assertEquals(facture.total, (5*4+14*10)*7.0)
@@ -478,10 +478,10 @@ class FacturationDebutMoisContratTests(GertrudeTestCase):
         inscription = Inscription(inscrit, creation=False)
         inscription.mode = MODE_HALTE_GARDERIE
         inscription.debut = datetime.date(2010, 3, 1)
-        inscription.reference[0].add_activity(93, 213, 0, -1) # 10h
-        inscription.reference[1].add_activity(93, 213, 0, -1) # 10h
-        inscription.reference[2].add_activity(93, 141, 0, -1) # 4h
-        inscription.reference[3].add_activity(93, 213, 0, -1) # 10h
+        inscription.reference[0].AddActivity(93, 213, 0, -1) # 10h
+        inscription.reference[1].AddActivity(93, 213, 0, -1) # 10h
+        inscription.reference[2].AddActivity(93, 141, 0, -1) # 4h
+        inscription.reference[3].AddActivity(93, 213, 0, -1) # 10h
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2010, 3)
         self.assertEquals(facture.total, (5*4+14*10)*9.5)
@@ -503,7 +503,7 @@ class MonPetitBijouTests(GertrudeTestCase):
         creche.temps_facturation = FACTURATION_DEBUT_MOIS_PREVISIONNEL
         creche.type = TYPE_MICRO_CRECHE
         creche.formule_taux_horaire = [["mode=hg", 9.50], ["", 7.0]]
-        creche.update_formule_taux_horaire(changed=False)
+        creche.UpdateFormuleTauxHoraire(changed=False)
         __builtin__.sql_connection = None
         
     def test_forfait_mensuel(self):
@@ -512,10 +512,10 @@ class MonPetitBijouTests(GertrudeTestCase):
         inscription.mode = MODE_FORFAIT_HORAIRE
         inscription.forfait_heures_presence = 90.0
         inscription.debut = datetime.date(2010, 3, 1)
-        inscription.reference[0].add_activity(93, 213, 0, -1) # 10h
-        inscription.reference[1].add_activity(93, 213, 0, -1) # 10h
-        inscription.reference[2].add_activity(93, 141, 0, -1) # 4h
-        inscription.reference[3].add_activity(93, 213, 0, -1) # 10h
+        inscription.reference[0].AddActivity(93, 213, 0, -1) # 10h
+        inscription.reference[1].AddActivity(93, 213, 0, -1) # 10h
+        inscription.reference[2].AddActivity(93, 141, 0, -1) # 4h
+        inscription.reference[3].AddActivity(93, 213, 0, -1) # 10h
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2010, 3)
         self.assertEquals(facture.total, (5*4+14*10)*7.0)
@@ -542,10 +542,10 @@ class MonPetitBijouTests(GertrudeTestCase):
         inscription = Inscription(inscrit, creation=False)
         inscription.mode = MODE_TEMPS_PARTIEL
         inscription.debut = datetime.date(2010, 3, 1)
-        inscription.reference[0].add_activity(93, 213, 0, -1) # 10h
-        inscription.reference[1].add_activity(93, 213, 0, -1) # 10h
-        inscription.reference[2].add_activity(93, 141, 0, -1) # 4h
-        inscription.reference[3].add_activity(93, 213, 0, -1) # 10h
+        inscription.reference[0].AddActivity(93, 213, 0, -1) # 10h
+        inscription.reference[1].AddActivity(93, 213, 0, -1) # 10h
+        inscription.reference[2].AddActivity(93, 141, 0, -1) # 4h
+        inscription.reference[3].AddActivity(93, 213, 0, -1) # 10h
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2010, 3)
         self.assertEquals(facture.total, (5*4+14*10)*7.0)
@@ -567,10 +567,10 @@ class MonPetitBijouTests(GertrudeTestCase):
         inscription = Inscription(inscrit, creation=False)
         inscription.mode = MODE_HALTE_GARDERIE
         inscription.debut = datetime.date(2010, 3, 1)
-        inscription.reference[0].add_activity(93, 213, 0, -1) # 10h
-        inscription.reference[1].add_activity(93, 213, 0, -1) # 10h
-        inscription.reference[2].add_activity(93, 141, 0, -1) # 4h
-        inscription.reference[3].add_activity(93, 213, 0, -1) # 10h
+        inscription.reference[0].AddActivity(93, 213, 0, -1) # 10h
+        inscription.reference[1].AddActivity(93, 213, 0, -1) # 10h
+        inscription.reference[2].AddActivity(93, 141, 0, -1) # 4h
+        inscription.reference[3].AddActivity(93, 213, 0, -1) # 10h
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2010, 3)
         self.assertEquals(facture.total, (5*4+14*10)*9.5)
@@ -658,8 +658,8 @@ class BebebulTests(GertrudeTestCase):
         inscription = Inscription(inscrit, creation=False)
         inscription.mode = MODE_HALTE_GARDERIE
         inscription.debut = datetime.date(2012, 10, 1)
-        inscription.reference[1].add_activity(102, 144, 0, -1) # 3h30
-        inscription.reference[3].add_activity(102, 144, 0, -1) # 3h30
+        inscription.reference[1].AddActivity(102, 144, 0, -1) # 3h30
+        inscription.reference[3].AddActivity(102, 144, 0, -1) # 3h30
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2012, 10, 1), NO_ADDRESS|NO_PARENTS)
         self.AddJourneePresence(inscrit, datetime.date(2012, 10, 2), 105, 138) # 2h45

@@ -76,7 +76,7 @@ class SitesPlanningPanel(PlanningWidget):
                         if date in inscrit.journees:
                             line = inscrit.journees[date]
                         else:
-                            line = inscrit.getJourneeReference(date)
+                            line = inscrit.GetJourneeReference(date)
                         if len(creche.sites) > 1:
                             if inscription.site and inscription.site in day_lines:
                                 site_line = day_lines[inscription.site]
@@ -126,7 +126,7 @@ class ReservatairesPlanningPanel(PlanningWidget):
                 if date not in inscrit.jours_conges:
                     inscription = inscrit.GetInscription(date)
                     if inscription is not None:
-                        line = inscrit.getJournee(date)
+                        line = inscrit.GetJournee(date)
                         if inscription.reservataire and inscription.reservataire in day_lines:
                             reservataire_line = day_lines[inscription.reservataire]
                         else:
@@ -446,14 +446,14 @@ class EtatsPresenceTab(AutoTab):
                     else:
                         date_fin = fin
                     while date <= date_fin:
-                        state = inscrit.getState(date)
+                        state = inscrit.GetState(date)
                         if state.state > 0 and state.state & PRESENT:
                             if date not in selection:
                                 selection[date] = []
                             if date in inscrit.journees:
                                 journee = inscrit.journees[date]
                             else:
-                                journee = inscrit.getJourneeReference(date)
+                                journee = inscrit.GetJourneeReference(date)
                             arrivee, depart = journee.GetPlageHoraire()
                             # print date, arrivee, depart, journee.activites
                             selection[date].append((inscription.site, inscription.professeur, inscrit, arrivee, depart, state.heures_realisees, journee.commentaire))

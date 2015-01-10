@@ -172,7 +172,7 @@ class CongesPanel(SalariesTab):
 
     def evt_conge_add(self, event):
         history.Append(Delete(self.salarie.conges, -1))
-        self.salarie.add_conge(CongeSalarie(self.salarie))
+        self.salarie.AddConge(CongeSalarie(self.salarie))
         self.line_add(len(self.salarie.conges) - 1)
         self.sizer.Layout()
 
@@ -258,7 +258,7 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
     def onDureeReferenceChoice(self, event):
         history.Append(None)
         duration = self.duree_reference_choice.GetClientData(self.duree_reference_choice.GetSelection())
-        self.salarie.contrats[self.periode].setReferenceDuration(duration)
+        self.salarie.contrats[self.periode].SetReferenceDuration(duration)
         self.UpdateContents()
         
     def onMode_5_5(self, event):
@@ -267,7 +267,7 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
         contrat.mode = MODE_5_5
         for i, day in enumerate(contrat.reference):
             if JourSemaineAffichable(i):
-                day.set_state(0)
+                day.SetState(0)
         self.UpdateContents()
     
     def onMondayCopy(self, event):

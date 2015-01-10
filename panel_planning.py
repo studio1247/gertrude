@@ -56,7 +56,7 @@ class DayPlanningPanel(PlanningWidget):
                         if not line.commentaire:
                             line.commentaire = inscrit.jours_conges[self.date].label
                     else:
-                        line.reference = inscription.getJourneeReference(self.date)
+                        line.reference = inscription.GetJourneeReference(self.date)
                     line.insert = None
                     line.key = self.date
                 elif creche.conges_inscription == GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT and self.date in inscrit.jours_conges:
@@ -67,8 +67,8 @@ class DayPlanningPanel(PlanningWidget):
                     line.insert = inscrit.journees
                     line.key = self.date
                 else:
-                    line = inscription.getJourneeReferenceCopy(self.date)
-                    line.reference = inscription.getJourneeReference(self.date)
+                    line = inscription.GetJourneeReferenceCopy(self.date)
+                    line.reference = inscription.GetJourneeReference(self.date)
                     line.insert = inscrit.journees
                     line.key = self.date
 
@@ -103,10 +103,10 @@ class DayPlanningPanel(PlanningWidget):
             if contrat is not None and (len(creche.sites) <= 1 or contrat.site is self.site):
                 if self.date in salarie.journees:
                     line = salarie.journees[self.date]
-                    line.reference = contrat.getJourneeReference(self.date)
+                    line.reference = contrat.GetJourneeReference(self.date)
                     line.insert = None
                 else:
-                    line = contrat.getJourneeReferenceCopy(self.date)
+                    line = contrat.GetJourneeReferenceCopy(self.date)
                     line.insert = salarie.journees
                     line.key = self.date
                 line.salarie = salarie
@@ -119,7 +119,7 @@ class DayPlanningPanel(PlanningWidget):
                         if date in line.salarie.journees:
                             heures = line.salarie.journees[date].GetNombreHeures()
                         else:
-                            heures = line.contrat.getJourneeReference(date).GetNombreHeures()
+                            heures = line.contrat.GetJourneeReference(date).GetNombreHeures()
                         heures_semaine += heures
                         if date == line.date:
                             heures_jour = heures
@@ -376,7 +376,7 @@ class PlanningPanel(GPanel):
                     elif not periode.arrivee:
                         if not date in inscrit.journees:
                             errors.append(u"%s : Pas d'arrivée enregistrée le %s" % (GetPrenomNom(inscrit), periode.date))
-                        reference = inscrit.getJournee(periode.date)
+                        reference = inscrit.GetJournee(periode.date)
                         if reference:
                             periode.arrivee = reference.GetPlageHoraire()[0]
                             if periode.arrivee is None:
@@ -386,7 +386,7 @@ class PlanningPanel(GPanel):
                     elif not periode.depart:
                         if periode.date != today:
                             errors.append(u"%s : Pas de départ enregistré le %s" % (GetPrenomNom(inscrit), periode.date))
-                        reference = inscrit.getJournee(date)
+                        reference = inscrit.GetJournee(date)
                         if reference:
                             periode.depart = reference.GetPlageHoraire()[-1]
                             if periode.depart is None:
@@ -395,12 +395,12 @@ class PlanningPanel(GPanel):
                             continue
                     
                     if periode.date in inscrit.journees:
-                        inscrit.journees[periode.date].remove_activities(0)
-                        inscrit.journees[periode.date].remove_activities(0|PREVISIONNEL)
+                        inscrit.journees[periode.date].RemoveActivities(0)
+                        inscrit.journees[periode.date].RemoveActivities(0|PREVISIONNEL)
                     else:
                         inscrit.journees[periode.date] = Journee(inscrit, periode.date)
                     if value < 0:
-                        inscrit.journees[periode.date].set_state(value)
+                        inscrit.journees[periode.date].SetState(value)
                     else:
                         inscrit.journees[periode.date].SetActivity(periode.arrivee, periode.depart, value)
                     history.Append(None)

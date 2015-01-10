@@ -533,8 +533,8 @@ class SQLConnection(object):
             creche.formule_taux_horaire, creche.formule_taux_effort, creche.idx = eval(formule_taux_horaire), eval(formule_taux_effort), idx
         else:
             creche = Creche()
-        creche.update_formule_taux_horaire(changed=False)
-        creche.update_formule_taux_effort(changed=False)
+        creche.UpdateFormuleTauxHoraire(changed=False)
+        creche.UpdateFormuleTauxEffort(changed=False)
         
         cur.execute('SELECT nom, ordre, idx from GROUPES')
         for groupe_entry in cur.fetchall():
@@ -551,7 +551,7 @@ class SQLConnection(object):
         cur.execute('SELECT value, debut, fin, jour, idx FROM CAPACITE')
         for value, debut, fin, jour, idx in cur.fetchall():
             try:
-                creche.tranches_capacite[jour].add_activity(debut, fin, value, idx)
+                creche.tranches_capacite[jour].AddActivity(debut, fin, value, idx)
             except:
                 print "TODO"
 
@@ -591,8 +591,8 @@ class SQLConnection(object):
         for conges_entry in cur.fetchall():
             conge = Conge(creche, creation=False)
             conge.debut, conge.fin, conge.label, conge.options, conge.idx = conges_entry
-            creche.add_conge(conge, calcule=False)
-        creche.calcule_jours_conges()
+            creche.AddConge(conge, calcule=False)
+        creche.CalculeJoursConges()
 
         cur.execute('SELECT debut, fin, plancher, plafond, idx FROM BAREMESCAF')
         for bareme_entry in cur.fetchall():
@@ -639,7 +639,7 @@ class SQLConnection(object):
                 for day, value, debut, fin, idx in cur.fetchall():
                     if day < len(contrat.reference):
                         reference_day = contrat.reference[day]
-                        reference_day.add_activity(debut, fin, value, idx)
+                        reference_day.AddActivity(debut, fin, value, idx)
                         # print inscrit.prenom, inscrit.prenom, day, debut, fin, value
                     
             cur.execute('SELECT date, value, debut, fin, idx FROM ACTIVITES_SALARIES WHERE salarie=?', (salarie.idx,))
@@ -651,14 +651,14 @@ class SQLConnection(object):
                     journee = JourneeSalarie(salarie, key)
                     salarie.journees[key] = journee
                 # print salarie.prenom, salarie.nom, key, debut, fin, value
-                journee.add_activity(debut, fin, value, idx)
+                journee.AddActivity(debut, fin, value, idx)
                     
             cur.execute('SELECT debut, fin, label, idx FROM CONGES_SALARIES WHERE salarie=?', (salarie.idx,))
             for conges_entry in cur.fetchall():
                 conge = CongeSalarie(salarie, creation=False)
                 conge.debut, conge.fin, conge.label, conge.idx = conges_entry
                 salarie.conges.append(conge)
-            salarie.calcule_jours_conges(creche)
+            salarie.CalculeJoursConges(creche)
 
         cur.execute('SELECT prenom, nom, entree, sortie, idx FROM PROFESSEURS')
         for professeur_entry in cur.fetchall():
@@ -718,7 +718,7 @@ class SQLConnection(object):
                 for day, value, debut, fin, idx in cur.fetchall():
                     try:
                         reference_day = inscription.reference[day]
-                        reference_day.add_activity(debut, fin, value, idx)
+                        reference_day.AddActivity(debut, fin, value, idx)
                     except Exception, e:
                         print inscrit.prenom, inscrit.nom, day, debut, fin, value, e
                     # print inscrit.prenom, day, debut, fin, value
@@ -727,7 +727,7 @@ class SQLConnection(object):
                 conge = CongeInscrit(inscrit, creation=False)
                 conge.debut, conge.fin, conge.label, conge.idx = conges_entry
                 inscrit.conges.append(conge)
-            inscrit.calcule_jours_conges(creche)
+            inscrit.CalculeJoursConges(creche)
             
             cur.execute('SELECT relation, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email, idx FROM PARENTS WHERE inscrit=?', (inscrit.idx,))
             for parent_entry in cur.fetchall():
@@ -755,7 +755,7 @@ class SQLConnection(object):
                     journee = Journee(inscrit, key)
                     inscrit.journees[key] = journee
                 # print inscrit.prenom, key, debut, fin, value
-                journee.add_activity(debut, fin, value, idx)
+                journee.AddActivity(debut, fin, value, idx)
             cur.execute('SELECT date, commentaire, idx FROM COMMENTAIRES WHERE inscrit=?', (inscrit.idx,))
             for date, commentaire, idx in cur.fetchall():
                 key = getdate(date)

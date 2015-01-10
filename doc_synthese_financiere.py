@@ -43,7 +43,7 @@ class SyntheseFinanciereModifications(object):
             return []
 
         elif filename == 'content.xml':
-            global_indexes = getTriParCommuneEtNomIndexes(range(len(creche.inscrits)))
+            global_indexes = GetTriParCommuneEtNomIndexes(range(len(creche.inscrits)))
     
             spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
             tables = spreadsheet.getElementsByTagName("table:table")

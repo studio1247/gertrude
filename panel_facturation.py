@@ -69,7 +69,7 @@ class CorrectionsTab(AutoTab):
         self.numfacture.SetInstance(creche.numeros_facture[date])
         
         for inscrit in creche.inscrits:
-            if inscrit.hasFacture(date): # TODO and date not in inscrit.factures_cloturees:
+            if inscrit.HasFacture(date): # TODO and date not in inscrit.factures_cloturees:
                 if not date in inscrit.corrections:
                     inscrit.corrections[date] = Correction(inscrit, date)
                 sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -152,7 +152,7 @@ class FacturationTab(AutoTab):
         inscrit = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
         date = getFirstMonday()
         while date <= datetime.date.today():
-            if IsFacture(date) and (isinstance(inscrit, list) or inscrit.hasFacture(date)):
+            if IsFacture(date) and (isinstance(inscrit, list) or inscrit.HasFacture(date)):
                 self.factures_monthchoice.Append('%s %d' % (months[date.month - 1], date.year), date)
             date = getNextMonthStart(date)
         self.factures_monthchoice.SetSelection(self.factures_monthchoice.GetCount()-1)
@@ -165,7 +165,7 @@ class FacturationTab(AutoTab):
             if not isinstance(inscrits, list):
                 inscrits = [inscrits]
             for inscrit in inscrits:
-                if inscrit.hasFacture(date) and date not in inscrit.factures_cloturees:
+                if inscrit.HasFacture(date) and date not in inscrit.factures_cloturees:
                     self.cloture_button.Enable()
                     break
             else:
@@ -286,7 +286,7 @@ class FacturationTab(AutoTab):
         inscrits = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
         periode = self.factures_monthchoice.GetClientData(self.factures_monthchoice.GetSelection())
         if isinstance(inscrits, list):
-            inscrits = [inscrit for inscrit in inscrits if inscrit.hasFacture(periode)]
+            inscrits = [inscrit for inscrit in inscrits if inscrit.HasFacture(periode)]
         else:
             inscrits = [inscrits]
         return inscrits, periode
