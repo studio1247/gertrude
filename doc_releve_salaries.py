@@ -62,7 +62,7 @@ class ReleveSalariesModifications(object):
                         if day in salarie.journees:
                             heures = salarie.journees[day].GetNombreHeures()
                         else:
-                            heures = contrat.getJourneeReference(day).GetNombreHeures()
+                            heures = contrat.GetJourneeReference(day).GetNombreHeures()
                     else:
                         heures = 0
                 else:

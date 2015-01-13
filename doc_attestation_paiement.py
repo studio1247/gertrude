@@ -84,11 +84,11 @@ class AttestationModifications(object):
                     if facture.total != 0:
                         if facture_debut is None:
                             facture_debut = date
-                        facture_fin = getMonthEnd(date)
+                        facture_fin = GetMonthEnd(date)
                         print ' ', date, facture.total
                         total += facture.total
                         heures_facturees += facture.heures_facturees
-                    date = getNextMonthStart(date)
+                    date = GetNextMonthStart(date)
             except CotisationException, e:
                 errors[GetPrenomNom(inscrit)] = e.errors
                 continue

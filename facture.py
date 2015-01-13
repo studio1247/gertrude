@@ -44,7 +44,7 @@ class FactureFinMois(object):
         self.annee = annee
         self.mois = mois
         self.debut_recap = datetime.date(annee, mois, 1)
-        self.fin_recap = getMonthEnd(self.debut_recap)
+        self.fin_recap = GetMonthEnd(self.debut_recap)
         self.date = self.fin_recap
         try:
             first_numero = int(creche.numeros_facture[self.debut_recap].valeur)
@@ -103,9 +103,9 @@ class FactureFinMois(object):
         if options & TRACES:
             print '\nFacture de', inscrit.prenom, inscrit.nom, 'pour', months[mois-1], annee
                
-        if inscrit.hasFacture(self.debut_recap) and creche.cloture_factures and today > self.fin_recap:
+        if inscrit.HasFacture(self.debut_recap) and creche.cloture_factures and today > self.fin_recap:
             fin = self.debut_recap - datetime.timedelta(1)
-            debut = getMonthStart(fin)
+            debut = GetMonthStart(fin)
             if inscrit.GetInscriptions(debut, fin) and debut not in inscrit.factures_cloturees and IsFacture(debut) and self.debut_recap >= first_date:
                 error = u"La facture du mois " + GetDeMoisStr(debut.month-1) + " " + str(debut.year) + u" n'est pas clôturée"
                 raise CotisationException([error])
@@ -117,7 +117,7 @@ class FactureFinMois(object):
                 inscription = inscrit.GetInscription(date)
                 if inscription:
                     self.site = inscription.site
-                    inscritState = inscrit.getState(date)
+                    inscritState = inscrit.GetState(date)
                     # print date, str(inscritState)
                     state, heures_reference, heures_realisees, heures_facturees = inscritState.state, inscritState.heures_contractualisees, inscritState.heures_realisees, inscritState.heures_facturees
                     heures_facturees_non_realisees = 0.0
@@ -178,7 +178,7 @@ class FactureFinMois(object):
                             nombre_jours_ouvres_maladie = 0
                             while tmp > inscrit.inscriptions[0].debut:
                                 tmp -= datetime.timedelta(1)
-                                state = inscrit.getState(tmp).state
+                                state = inscrit.GetState(tmp).state
                                 if state == MALADE:
                                     premier_jour_maladie = tmp
                                     if not tmp in creche.jours_fermeture:
@@ -193,7 +193,7 @@ class FactureFinMois(object):
                                 dernier_jour_maladie = tmp = date
                                 while not inscrit.inscriptions[-1].fin or tmp < inscrit.inscriptions[-1].fin:
                                     tmp += datetime.timedelta(1)
-                                    state = inscrit.getState(tmp).state
+                                    state = inscrit.GetState(tmp).state
                                     if state == MALADE:
                                         dernier_jour_maladie = tmp
                                     else:
@@ -270,7 +270,7 @@ class FactureFinMois(object):
                     
             date += datetime.timedelta(1)
 
-        if inscrit.hasFacture(self.debut_recap):
+        if inscrit.HasFacture(self.debut_recap):
             for cotisation in cotisations_mensuelles:
                 self.heures_maladie += cotisation.heures_maladie
                 if creche.repartition == REPARTITION_SANS_MENSUALISATION:
@@ -474,7 +474,7 @@ class FactureDebutMoisPrevisionnel(FactureDebutMois):
                     journee = self.inscrit.journees[date]
                     journee.CloturePrevisionnel()
                 elif not (date in creche.jours_fermeture or date in self.inscrit.jours_conges):
-                    journee = self.inscrit.getJourneeReferenceCopy(date)
+                    journee = self.inscrit.GetJourneeReferenceCopy(date)
                     if journee:
                         self.inscrit.journees[date] = journee
                         journee.CloturePrevisionnel()

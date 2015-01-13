@@ -44,7 +44,7 @@ from sqlobjects import Day
 
 class SitesPlanningPanel(PlanningWidget):
     def UpdateContents(self):          
-        first_monday = getFirstMonday()
+        first_monday = GetFirstMonday()
         lines = []
         for week_day in range(7):
             date = first_monday + datetime.timedelta(self.semaine * 7 + week_day)
@@ -76,7 +76,7 @@ class SitesPlanningPanel(PlanningWidget):
                         if date in inscrit.journees:
                             line = inscrit.journees[date]
                         else:
-                            line = inscrit.getJourneeReference(date)
+                            line = inscrit.GetJourneeReference(date)
                         if len(creche.sites) > 1:
                             if inscription.site and inscription.site in day_lines:
                                 site_line = day_lines[inscription.site]
@@ -95,7 +95,7 @@ class SitesPlanningPanel(PlanningWidget):
         
 class ReservatairesPlanningPanel(PlanningWidget):
     def UpdateContents(self):          
-        first_monday = getFirstMonday()
+        first_monday = GetFirstMonday()
         lines = []
         for week_day in range(7):
             date = first_monday + datetime.timedelta(self.semaine * 7 + week_day)
@@ -126,7 +126,7 @@ class ReservatairesPlanningPanel(PlanningWidget):
                 if date not in inscrit.jours_conges:
                     inscription = inscrit.GetInscription(date)
                     if inscription is not None:
-                        line = inscrit.getJournee(date)
+                        line = inscrit.GetJournee(date)
                         if inscription.reservataire and inscription.reservataire in day_lines:
                             reservataire_line = day_lines[inscription.reservataire]
                         else:
@@ -162,7 +162,7 @@ class PlacesDisponiblesTab(AutoTab):
         # La combobox pour la selection de la semaine
         self.week_choice = wx.Choice(self, -1)
         sizer.Add(self.week_choice, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-        day = first_monday = getFirstMonday()
+        day = first_monday = GetFirstMonday()
         while day < last_date:
             string = 'Semaine %d (%d %s %d)' % (day.isocalendar()[1], day.day, months[day.month - 1], day.year)
             self.week_choice.Append(string, day)
@@ -170,7 +170,7 @@ class PlacesDisponiblesTab(AutoTab):
         delta = datetime.date.today() - first_monday
         semaine = int(delta.days / 7)
         self.week_choice.SetSelection(semaine)
-        self.Bind(wx.EVT_CHOICE, self.onChangeWeek, self.week_choice)
+        self.Bind(wx.EVT_CHOICE, self.OnChangeWeek, self.week_choice)
         self.sizer.Add(sizer, 0, wx.EXPAND)
                 
         if (config.options & RESERVATAIRES) and len(creche.reservataires) > 0:
@@ -182,7 +182,7 @@ class PlacesDisponiblesTab(AutoTab):
         self.sizer.Layout()
         self.SetSizer(self.sizer)
 
-    def onChangeWeek(self, evt=None):   
+    def OnChangeWeek(self, evt=None):   
         week_selection = self.week_choice.GetSelection()
         self.previous_button.Enable(week_selection is not 0)
         self.next_button.Enable(week_selection is not self.week_choice.GetCount() - 1)
@@ -192,14 +192,14 @@ class PlacesDisponiblesTab(AutoTab):
         
     def onPreviousWeek(self, evt):
         self.week_choice.SetSelection(self.week_choice.GetSelection() - 1)
-        self.onChangeWeek()
+        self.OnChangeWeek()
     
     def onNextWeek(self, evt):
         self.week_choice.SetSelection(self.week_choice.GetSelection() + 1)
-        self.onChangeWeek()
+        self.OnChangeWeek()
         
     def UpdateContents(self):            
-        self.onChangeWeek()
+        self.OnChangeWeek()
 
 
 class EtatsPresenceTab(AutoTab):
@@ -446,14 +446,14 @@ class EtatsPresenceTab(AutoTab):
                     else:
                         date_fin = fin
                     while date <= date_fin:
-                        state = inscrit.getState(date)
+                        state = inscrit.GetState(date)
                         if state.state > 0 and state.state & PRESENT:
                             if date not in selection:
                                 selection[date] = []
                             if date in inscrit.journees:
                                 journee = inscrit.journees[date]
                             else:
-                                journee = inscrit.getJourneeReference(date)
+                                journee = inscrit.GetJourneeReference(date)
                             arrivee, depart = journee.GetPlageHoraire()
                             # print date, arrivee, depart, journee.activites
                             selection[date].append((inscription.site, inscription.professeur, inscrit, arrivee, depart, state.heures_realisees, journee.commentaire))
@@ -593,7 +593,7 @@ class StatistiquesFrequentationTab(AutoTab):
         erreurs = []
         for mois in periode:
             debut = datetime.date(annee, mois+1, 1)
-            fin = getMonthEnd(debut)
+            fin = GetMonthEnd(debut)
             heures_accueil += GetHeuresAccueil(annee, mois+1, site)
             print "Statistiques %s %d" % (months[mois], annee)
             for inscrit in creche.inscrits:
@@ -746,7 +746,7 @@ class RelevesTab(AutoTab):
             date = first_date
             while date < last_date:
                 self.etat_presence_mensuesl_choice.Append(u'%s %d' % (months[date.month-1], date.year), date)
-                date = getNextMonthStart(date)
+                date = GetNextMonthStart(date)
             self.etat_presence_mensuesl_choice.SetSelection((today.year - first_date.year)*12 + today.month - first_date.month)
             self.Bind(wx.EVT_BUTTON, self.EvtGenerationEtatPresenceMensuel, button)
             box_sizer.AddMany([(self.etat_presence_mensuesl_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
@@ -767,12 +767,12 @@ class RelevesTab(AutoTab):
         # Les plannings de presence enfants
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Planning des présences'), wx.HORIZONTAL)
         self.weekchoice = wx.Choice(self)
-        day = getFirstMonday()
+        day = GetFirstMonday()
         while day < last_date:
             str = '%d %s %d' % (day.day, months[day.month - 1], day.year)
             self.weekchoice.Append(str, day)
             day += datetime.timedelta(7)
-        self.weekchoice.SetSelection((today - getFirstMonday()).days / 7 + 1)
+        self.weekchoice.SetSelection((today - GetFirstMonday()).days / 7 + 1)
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationPlanningPresences, button)
         box_sizer.AddMany([(self.weekchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
@@ -926,11 +926,11 @@ class SalariesTab(AutoTab):
         selection = self.releves_monthchoice.GetStringSelection()
         self.releves_monthchoice.Clear()
         salarie = self.salaries_choice["releves"].GetClientData(self.salaries_choice["releves"].GetSelection())
-        date = getFirstMonday()
+        date = GetFirstMonday()
         while date <= datetime.date.today():
             if isinstance(salarie, list) or salarie.GetContrat(date):
                 self.releves_monthchoice.Append('%s %d' % (months[date.month - 1], date.year), date)
-            date = getNextMonthStart(date)
+            date = GetNextMonthStart(date)
         self.releves_monthchoice.SetSelection(self.releves_monthchoice.GetCount()-1)
         self.EvtRelevesMonthChoice()
         

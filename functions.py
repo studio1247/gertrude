@@ -20,7 +20,7 @@ from constants import *
 from parameters import *
 import wx
 
-def getFirstMonday():
+def GetFirstMonday():
     first_monday = first_date
     while first_monday.weekday() != 0:
         first_monday += datetime.timedelta(1)
@@ -40,32 +40,32 @@ def GetDateMinus(date, years, months):
     else:
         y = date.year-1-years
         m = date.month+12-months
-    end = getMonthEnd(datetime.date(y, m, 1))
+    end = GetMonthEnd(datetime.date(y, m, 1))
     if d > end.day:
         d = end.day
     return datetime.date(y, m, d)
                 
-def getMonthStart(date):
+def GetMonthStart(date):
     return datetime.date(date.year, date.month, 1)
 
-def getMonthEnd(date):
+def GetMonthEnd(date):
     if date.month == 12:
         return datetime.date(date.year, 12, 31)
     else:
         return datetime.date(date.year, date.month + 1, 1) - datetime.timedelta(1)
 
-def getNextMonthStart(date):
+def GetNextMonthStart(date):
     if date.month == 12:
         return datetime.date(date.year+1, 1, 1)
     else:
         return datetime.date(date.year, date.month+1, 1)
     
-def getTrimestreStart(date):
+def GetTrimestreStart(date):
     return datetime.date(date.year, 1 + 3 * ((date.month-1)/3), 1)    
 
-def getTrimestreEnd(date):
-    nextTrimestre = getTrimestreStart(date) + datetime.timedelta(80)
-    return getTrimestreStart(nextTrimestre) - datetime.timedelta(1)    
+def GetTrimestreEnd(date):
+    nextTrimestre = GetTrimestreStart(date) + datetime.timedelta(80)
+    return GetTrimestreStart(nextTrimestre) - datetime.timedelta(1)    
 
 def GetHeureString(value):
     if value is None:
@@ -265,7 +265,7 @@ def date2str(date):
     else:
         return '%.02d/%.02d/%.04d' % (date.day, date.month, date.year)
 
-def periodestr(o):
+def GetPeriodeString(o):
     if None in (o.debut, o.fin) or (o.debut.year, o.debut.month, o.debut.day) != (o.fin.year, 1, 1) or (o.fin.month, o.fin.day) != (12, 31):
         return date2str(o.debut) + ' - ' + date2str(o.fin)
     else:
@@ -324,7 +324,7 @@ def GetInscriptions(start, end):
             result.append(inscription)
     return result
 
-def getTriParCommuneEtNomIndexes(indexes):
+def GetTriParCommuneEtNomIndexes(indexes):
     # Tri par commune (Rennes en premier) + ordre alphabetique des noms
     def tri(one, two):
         i1 = creche.inscrits[one] ; i2 = creche.inscrits[two]
@@ -338,7 +338,7 @@ def getTriParCommuneEtNomIndexes(indexes):
     indexes.sort(tri)
     return indexes
 
-def getTriParPrenomIndexes(indexes):
+def GetTriParPrenomIndexes(indexes):
     # Tri par ordre alphabetique des prenoms
     def tri(one, two):
         i1 = creche.inscrits[one] ; i2 = creche.inscrits[two]
@@ -347,7 +347,7 @@ def getTriParPrenomIndexes(indexes):
     indexes.sort(tri)
     return indexes
 
-def getTriParNomIndexes(indexes):
+def GetTriParNomIndexes(indexes):
     # Tri par ordre alphabetique des prenoms
     def tri(one, two):
         i1 = creche.inscrits[one] ; i2 = creche.inscrits[two]
@@ -356,7 +356,7 @@ def getTriParNomIndexes(indexes):
     indexes.sort(tri)
     return indexes
 
-def getPresentsIndexes(indexes, (debut, fin), site=None):
+def GetPresentsIndexes(indexes, (debut, fin), site=None):
     if indexes is None:
         indexes = range(len(creche.inscrits))
     result = []
@@ -376,7 +376,7 @@ def getPresentsIndexes(indexes, (debut, fin), site=None):
     return result
 
 def GetInscrits(debut, fin, site=None):
-    indexes = getPresentsIndexes(None, (debut, fin), site=site)
+    indexes = GetPresentsIndexes(None, (debut, fin), site=site)
     return [creche.inscrits[i] for i in indexes]
 
 def GetLines(date, inscrits, presence=False, site=None, groupe=None):
@@ -387,18 +387,18 @@ def GetLines(date, inscrits, presence=False, site=None, groupe=None):
         inscription = inscrit.GetInscription(date)
         if inscription and (site is None or inscription.site == site) and (groupe is None or inscription.groupe == groupe):
             if presence:
-                state = inscrit.getState(date).state
+                state = inscrit.GetState(date).state
                 if state < 0 or not state & PRESENT:
                     continue 
             if date in inscrit.journees:
                 line = inscrit.journees[date]
             else:
-                line = inscription.getJourneeReferenceCopy(date)
+                line = inscription.GetJourneeReferenceCopy(date)
             line.nom = inscrit.nom
             line.prenom = inscrit.prenom
             line.label = GetPrenomNom(inscrit)
             line.inscription = inscription
-            line.reference = inscription.getJourneeReference(date)
+            line.reference = inscription.GetJourneeReference(date)
             line.summary = 1 # TODO SUMMARY_NUM
             lines.append(line)
     return lines
@@ -465,7 +465,7 @@ def TrieParGroupes(lines):
 
     return lines
 
-def getActivityColor(value):
+def GetActivityColor(value):
     if value < 0:
         if value == HOPITAL or value == MALADE_SANS_JUSTIFICATIF:
             value = MALADE

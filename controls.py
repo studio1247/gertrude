@@ -834,7 +834,7 @@ class PeriodeChoice(wx.BoxSizer):
         if instance is not None:
             self.periodechoice.Clear()
             for item in instance:
-                self.periodechoice.Append(periodestr(item))
+                self.periodechoice.Append(GetPeriodeString(item))
             self.Enable()
             if periode is not None:
                 self.periodechoice.SetSelection(periode)
@@ -863,7 +863,7 @@ class PeriodeChoice(wx.BoxSizer):
             new_periode.fin = datetime.date(self.defaultPeriode, 12, 31)
             
         self.instance.append(new_periode)
-        self.periodechoice.Append(periodestr(new_periode))
+        self.periodechoice.Append(GetPeriodeString(new_periode))
         self.periodechoice.SetSelection(self.periode)
         self.parent.SetPeriode(self.periode)
         history.Append(Delete(self.instance, -1))
@@ -894,7 +894,7 @@ class PeriodeChoice(wx.BoxSizer):
         if response == wx.ID_OK:
             history.Append([Change(periode, 'debut', periode.debut), Change(periode, 'fin', periode.fin)])
             periode.debut, periode.fin = dlg.debut_ctrl.GetValue(), dlg.fin_ctrl.GetValue()
-            self.periodechoice.SetString(self.periode, periodestr(periode))
+            self.periodechoice.SetString(self.periode, GetPeriodeString(periode))
             self.periodechoice.SetSelection(self.periode)
             self.Enable()
 

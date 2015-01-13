@@ -39,12 +39,12 @@ class CorrectionsTab(AutoTab):
         # la selection du mois et le numéro de facture
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.monthchoice = wx.Choice(self)
-        date = getFirstMonday()
+        date = GetFirstMonday()
         first_date = datetime.date(year=date.year, month=date.month, day=1) 
         while date < last_date:
             string = '%s %d' % (months[date.month - 1], date.year)
             self.monthchoice.Append(string, date)
-            date = getNextMonthStart(date)
+            date = GetNextMonthStart(date)
         self.monthchoice.SetStringSelection('%s %d' % (months[today.month - 1], today.year))        
         self.Bind(wx.EVT_CHOICE, self.EvtMonthChoice, self.monthchoice)
         sizer.Add(self.monthchoice, 1, wx.EXPAND, 5)
@@ -69,7 +69,7 @@ class CorrectionsTab(AutoTab):
         self.numfacture.SetInstance(creche.numeros_facture[date])
         
         for inscrit in creche.inscrits:
-            if inscrit.hasFacture(date): # TODO and date not in inscrit.factures_cloturees:
+            if inscrit.HasFacture(date): # TODO and date not in inscrit.factures_cloturees:
                 if not date in inscrit.corrections:
                     inscrit.corrections[date] = Correction(inscrit, date)
                 sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -93,12 +93,12 @@ class FacturationTab(AutoTab):
         # Les appels de cotisations
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Edition des appels de cotisation'), wx.HORIZONTAL)
         self.appels_monthchoice = wx.Choice(self)
-        date = getFirstMonday()
+        date = GetFirstMonday()
         first_date = datetime.date(year=date.year, month=date.month, day=1) 
         while date < last_date:
             string = '%s %d' % (months[date.month - 1], date.year)
             self.appels_monthchoice.Append(string, date)
-            date = getNextMonthStart(date)
+            date = GetNextMonthStart(date)
         self.appels_monthchoice.SetStringSelection('%s %d' % (months[today.month - 1], today.year))
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationAppelCotisations, button)
@@ -150,11 +150,11 @@ class FacturationTab(AutoTab):
         selection = self.factures_monthchoice.GetStringSelection()
         self.factures_monthchoice.Clear()
         inscrit = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
-        date = getFirstMonday()
+        date = GetFirstMonday()
         while date <= datetime.date.today():
-            if IsFacture(date) and (isinstance(inscrit, list) or inscrit.hasFacture(date)):
+            if IsFacture(date) and (isinstance(inscrit, list) or inscrit.HasFacture(date)):
                 self.factures_monthchoice.Append('%s %d' % (months[date.month - 1], date.year), date)
-            date = getNextMonthStart(date)
+            date = GetNextMonthStart(date)
         self.factures_monthchoice.SetSelection(self.factures_monthchoice.GetCount()-1)
         self.EvtFacturesMonthChoice()
         
@@ -165,7 +165,7 @@ class FacturationTab(AutoTab):
             if not isinstance(inscrits, list):
                 inscrits = [inscrits]
             for inscrit in inscrits:
-                if inscrit.hasFacture(date) and date not in inscrit.factures_cloturees:
+                if inscrit.HasFacture(date) and date not in inscrit.factures_cloturees:
                     self.cloture_button.Enable()
                     break
             else:
@@ -187,25 +187,25 @@ class FacturationTab(AutoTab):
                 if inscrit.GetInscriptions(datetime.date(year, 1, 1), datetime.date(year, 12, 31)):
                     need_separator = True
                     self.recus_periodechoice.Append(u"Année %d" % year, (datetime.date(year, 1, 1), datetime.date(year, 12, 31)))
-            if inscrit.GetInscriptions(datetime.date(today.year, 1, 1), getMonthEnd(today)):
+            if inscrit.GetInscriptions(datetime.date(today.year, 1, 1), GetMonthEnd(today)):
                 need_separator = True
                 debut = 1
-                while not inscrit.GetInscriptions(datetime.date(today.year, debut, 1), getMonthEnd(datetime.date(today.year, debut, 1))) and debut < today.month:
+                while not inscrit.GetInscriptions(datetime.date(today.year, debut, 1), GetMonthEnd(datetime.date(today.year, debut, 1))) and debut < today.month:
                     debut += 1
                 if debut == today.month:
-                    self.recus_periodechoice.Append("%s %d" % (months[debut-1], today.year), (datetime.date(today.year, debut, 1), getMonthEnd(datetime.date(today.year, debut, 1))))
+                    self.recus_periodechoice.Append("%s %d" % (months[debut-1], today.year), (datetime.date(today.year, debut, 1), GetMonthEnd(datetime.date(today.year, debut, 1))))
                 else:
                     self.recus_periodechoice.Append(u"%s - %s %d" % (months[debut-1], months[today.month-1], today.year), (datetime.date(today.year, debut, 1), datetime.date(today.year, today.month, 1)))
 
         
-        date = getFirstMonday()
+        date = GetFirstMonday()
         while date < today:
-            if isinstance(inscrit, list) or inscrit.GetInscriptions(datetime.date(date.year, date.month, 1), getMonthEnd(date)):
+            if isinstance(inscrit, list) or inscrit.GetInscriptions(datetime.date(date.year, date.month, 1), GetMonthEnd(date)):
                 if need_separator:
                     self.recus_periodechoice.Append(20 * "-", None)
                     need_separator = False
-                self.recus_periodechoice.Append('%s %d' % (months[date.month - 1], date.year), (datetime.date(date.year, date.month, 1), getMonthEnd(date)))
-            date = getNextMonthStart(date)
+                self.recus_periodechoice.Append('%s %d' % (months[date.month - 1], date.year), (datetime.date(date.year, date.month, 1), GetMonthEnd(date)))
+            date = GetNextMonthStart(date)
         self.recus_periodechoice.SetSelection(0)
         self.EvtRecusPeriodeChoice(evt)
 
@@ -218,9 +218,9 @@ class FacturationTab(AutoTab):
             if debut.month == fin.month and debut < today:
                 date = debut
                 while date < today:
-                    if isinstance(inscrit, list) or inscrit.GetInscriptions(datetime.date(date.year, date.month, 1), getMonthEnd(date)):
-                        self.recus_endchoice.Append('%s %d' % (months[date.month - 1], date.year), (datetime.date(date.year, date.month, 1), getMonthEnd(date)))
-                    date = getNextMonthStart(date)
+                    if isinstance(inscrit, list) or inscrit.GetInscriptions(datetime.date(date.year, date.month, 1), GetMonthEnd(date)):
+                        self.recus_endchoice.Append('%s %d' % (months[date.month - 1], date.year), (datetime.date(date.year, date.month, 1), GetMonthEnd(date)))
+                    date = GetNextMonthStart(date)
                 self.recus_endchoice.Enable()
                 self.recus_endchoice.SetSelection(0)
             else:
@@ -286,7 +286,7 @@ class FacturationTab(AutoTab):
         inscrits = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
         periode = self.factures_monthchoice.GetClientData(self.factures_monthchoice.GetSelection())
         if isinstance(inscrits, list):
-            inscrits = [inscrit for inscrit in inscrits if inscrit.hasFacture(periode)]
+            inscrits = [inscrit for inscrit in inscrits if inscrit.HasFacture(periode)]
         else:
             inscrits = [inscrits]
         return inscrits, periode

@@ -45,7 +45,7 @@ class FactureModifications(object):
         self.periode = periode
         self.periode_facturation = periode
         if creche.temps_facturation != FACTURATION_FIN_MOIS:
-            self.periode_facturation = getMonthStart(periode - datetime.timedelta(1))
+            self.periode_facturation = GetMonthStart(periode - datetime.timedelta(1))
             
         self.email = True
         if len(inscrits) > 1:
@@ -167,7 +167,7 @@ class FactureModifications(object):
                                     details = " (%s)" % GetHeureString(facture.jours_supplementaires[date])
                                 elif date in facture.jours_maladie:
                                     state = MALADE
-                                elif inscrit.isDateConge(date):
+                                elif inscrit.IsDateConge(date):
                                     state = CONGES
                                 elif date in facture.jours_conges_non_factures:
                                     state = VACANCES

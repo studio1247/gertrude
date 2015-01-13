@@ -56,7 +56,7 @@ class DayPlanningPanel(PlanningWidget):
                         if not line.commentaire:
                             line.commentaire = inscrit.jours_conges[self.date].label
                     else:
-                        line.reference = inscription.getJourneeReference(self.date)
+                        line.reference = inscription.GetJourneeReference(self.date)
                     line.insert = None
                     line.key = self.date
                 elif creche.conges_inscription == GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT and self.date in inscrit.jours_conges:
@@ -67,8 +67,8 @@ class DayPlanningPanel(PlanningWidget):
                     line.insert = inscrit.journees
                     line.key = self.date
                 else:
-                    line = inscription.getJourneeReferenceCopy(self.date)
-                    line.reference = inscription.getJourneeReference(self.date)
+                    line = inscription.GetJourneeReferenceCopy(self.date)
+                    line.reference = inscription.GetJourneeReference(self.date)
                     line.insert = inscrit.journees
                     line.key = self.date
 
@@ -84,9 +84,9 @@ class DayPlanningPanel(PlanningWidget):
                         return None
                 line.GetDynamicText = GetHeuresEnfant
                 if creche.temps_facturation == FACTURATION_FIN_MOIS:
-                    date = getMonthStart(self.date)
+                    date = GetMonthStart(self.date)
                 else:
-                    date = getNextMonthStart(self.date)
+                    date = GetNextMonthStart(self.date)
                 if date in inscrit.factures_cloturees:
                     line.readonly = True
                 line.day = self.date.weekday()
@@ -103,10 +103,10 @@ class DayPlanningPanel(PlanningWidget):
             if contrat is not None and (len(creche.sites) <= 1 or contrat.site is self.site):
                 if self.date in salarie.journees:
                     line = salarie.journees[self.date]
-                    line.reference = contrat.getJourneeReference(self.date)
+                    line.reference = contrat.GetJourneeReference(self.date)
                     line.insert = None
                 else:
-                    line = contrat.getJourneeReferenceCopy(self.date)
+                    line = contrat.GetJourneeReferenceCopy(self.date)
                     line.insert = salarie.journees
                     line.key = self.date
                 line.salarie = salarie
@@ -119,7 +119,7 @@ class DayPlanningPanel(PlanningWidget):
                         if date in line.salarie.journees:
                             heures = line.salarie.journees[date].GetNombreHeures()
                         else:
-                            heures = line.contrat.getJourneeReference(date).GetNombreHeures()
+                            heures = line.contrat.GetJourneeReference(date).GetNombreHeures()
                         heures_semaine += heures
                         if date == line.date:
                             heures_jour = heures
@@ -180,7 +180,7 @@ class PlanningPanel(GPanel):
         if len(creche.sites) < 2:
             self.site_choice.Show(False)
         self.site_choice.SetSelection(0)
-        self.Bind(wx.EVT_CHOICE, self.onChangeWeek, self.site_choice)
+        self.Bind(wx.EVT_CHOICE, self.OnChangeWeek, self.site_choice)
         
         # Les raccourcis pour semaine précédente / suivante
         self.previous_button = wx.Button(self, -1, '<', size=(20,0), style=wx.NO_BORDER)
@@ -193,7 +193,7 @@ class PlanningPanel(GPanel):
         # La combobox pour la selection de la semaine
         self.week_choice = wx.Choice(self, -1)
         sizer.Add(self.week_choice, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-        day = first_monday = getFirstMonday()
+        day = first_monday = GetFirstMonday()
         while day < last_date:
             string = 'Semaine %d (%d %s %d)' % (day.isocalendar()[1], day.day, months[day.month - 1], day.year)
             self.week_choice.Append(string, day)
@@ -201,12 +201,12 @@ class PlanningPanel(GPanel):
         delta = datetime.date.today() - first_monday
         semaine = int(delta.days / 7)
         self.week_choice.SetSelection(semaine)
-        self.Bind(wx.EVT_CHOICE, self.onChangeWeek, self.week_choice)
+        self.Bind(wx.EVT_CHOICE, self.OnChangeWeek, self.week_choice)
         
         # La combobox pour la selection du groupe (si groupes)
         self.groupe_choice = wx.Choice(self, -1)
         sizer.Add(self.groupe_choice, 0, wx.ALIGN_CENTER_VERTICAL)
-        self.Bind(wx.EVT_CHOICE, self.onChangeGroupeDisplayed, self.groupe_choice)
+        self.Bind(wx.EVT_CHOICE, self.OnChangeGroupeDisplayed, self.groupe_choice)
         self.UpdateGroupeCombobox()
         
         # La combobox pour la selection de l'outil (si activités)
@@ -240,7 +240,7 @@ class PlanningPanel(GPanel):
                 else:
                     planning_panel.SetData(None, None, date)
                 self.notebook.AddPage(planning_panel, GetDateString(date))
-        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.onChangeWeekday, self.notebook)
+        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnChangeWeekday, self.notebook)
         self.sizer.Layout()
     
     def UpdateGroupeCombobox(self):
@@ -262,10 +262,10 @@ class PlanningPanel(GPanel):
         end = start + datetime.timedelta(6)
         DocumentDialog(self, PlanningDetailleModifications((start, end), site, groupe)).ShowModal()
 
-    def onChangeGroupeDisplayed(self, evt):
-        self.onChangeWeek(None)
+    def OnChangeGroupeDisplayed(self, evt):
+        self.OnChangeWeek(None)
     
-    def onChangeWeekday(self, evt=None):
+    def OnChangeWeekday(self, evt=None):
         self.notebook.GetCurrentPage().UpdateDrawing()
     
     def GetSelectedSite(self):
@@ -282,7 +282,7 @@ class PlanningPanel(GPanel):
         else:
             return None        
             
-    def onChangeWeek(self, evt=None):
+    def OnChangeWeek(self, evt=None):
         self.UpdateWeek()
         self.notebook.SetSelection(0)
         self.sizer.Layout()
@@ -306,11 +306,11 @@ class PlanningPanel(GPanel):
         
     def onPreviousWeek(self, evt):
         self.week_choice.SetSelection(self.week_choice.GetSelection() - 1)
-        self.onChangeWeek()
+        self.OnChangeWeek()
     
     def onNextWeek(self, evt):
         self.week_choice.SetSelection(self.week_choice.GetSelection() + 1)
-        self.onChangeWeek()
+        self.OnChangeWeek()
 
     def onTabletteSynchro(self, evt):
         journal = config.connection.LoadJournal()
@@ -376,7 +376,7 @@ class PlanningPanel(GPanel):
                     elif not periode.arrivee:
                         if not date in inscrit.journees:
                             errors.append(u"%s : Pas d'arrivée enregistrée le %s" % (GetPrenomNom(inscrit), periode.date))
-                        reference = inscrit.getJournee(periode.date)
+                        reference = inscrit.GetJournee(periode.date)
                         if reference:
                             periode.arrivee = reference.GetPlageHoraire()[0]
                             if periode.arrivee is None:
@@ -386,7 +386,7 @@ class PlanningPanel(GPanel):
                     elif not periode.depart:
                         if periode.date != today:
                             errors.append(u"%s : Pas de départ enregistré le %s" % (GetPrenomNom(inscrit), periode.date))
-                        reference = inscrit.getJournee(date)
+                        reference = inscrit.GetJournee(date)
                         if reference:
                             periode.depart = reference.GetPlageHoraire()[-1]
                             if periode.depart is None:
@@ -395,12 +395,12 @@ class PlanningPanel(GPanel):
                             continue
                     
                     if periode.date in inscrit.journees:
-                        inscrit.journees[periode.date].remove_activities(0)
-                        inscrit.journees[periode.date].remove_activities(0|PREVISIONNEL)
+                        inscrit.journees[periode.date].RemoveActivities(0)
+                        inscrit.journees[periode.date].RemoveActivities(0|PREVISIONNEL)
                     else:
                         inscrit.journees[periode.date] = Journee(inscrit, periode.date)
                     if value < 0:
-                        inscrit.journees[periode.date].set_state(value)
+                        inscrit.journees[periode.date].SetState(value)
                     else:
                         inscrit.journees[periode.date].SetActivity(periode.arrivee, periode.depart, value)
                     history.Append(None)
@@ -443,6 +443,6 @@ class PlanningPanel(GPanel):
         if 'groupes' in observers and observers['groupes'] > self.last_groupe_observer:
             self.UpdateGroupeCombobox()
             
-        self.onChangeWeek()
+        self.OnChangeWeek()
         self.sizer.Layout()
 

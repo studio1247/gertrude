@@ -19,7 +19,7 @@ import wx, wx.lib.scrolledpanel
 from buffered_window import BufferedWindow
 import datetime, time
 from constants import *
-from controls import getActivityColor, TextDialog
+from controls import GetActivityColor, TextDialog
 from functions import GetActivitiesSummary, GetBitmapFile, GetHeureString
 from sqlobjects import Day, JourneeCapacite
 from history import *
@@ -41,7 +41,6 @@ NO_SCROLL = 2048
 # Elements size
 LABEL_WIDTH = 130 # px
 ICONS_WIDTH = 50 # px
-COLUMN_WIDTH = 48 / (60 / BASE_GRANULARITY) # px
 LINE_HEIGHT = 32 # px
 CHECKBOX_WIDTH = 20 # px
 
@@ -63,7 +62,7 @@ BUTTON_BITMAPS = { ABSENT: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BI
                    }
 
 def getPlanningWidth():
-    return (creche.affichage_max - creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH
+    return (creche.affichage_max - creche.affichage_min) * (60 / BASE_GRANULARITY) * config.column_width
 
 class LigneConge(object):
     def __init__(self, info):
@@ -82,7 +81,7 @@ class PlanningGridWindow(BufferedWindow):
         self.plages_insecables = creche.GetPlagesArray(PLAGE_INSECABLE, conversion=True)
         self.last_plages_observer = None 
         self.lines = []
-        BufferedWindow.__init__(self, parent, size=((creche.affichage_max-creche.affichage_min) * 4 * COLUMN_WIDTH + 1, -1))
+        BufferedWindow.__init__(self, parent, size=((creche.affichage_max-creche.affichage_min) * 4 * config.column_width + 1, -1))
         # self.SetBackgroundColour(wx.WHITE)
         self.activity_combobox = activity_combobox
         self.value, self.state = None, None
@@ -105,7 +104,7 @@ class PlanningGridWindow(BufferedWindow):
         
     def SetLines(self, lines):
         self.lines = lines
-        self.SetMinSize((int((creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * COLUMN_WIDTH + 1), LINE_HEIGHT * len(self.lines) - 1))
+        self.SetMinSize((int((creche.affichage_max-creche.affichage_min) * (60 / BASE_GRANULARITY) * config.column_width + 1), LINE_HEIGHT * len(self.lines) - 1))
         if self.last_plages_observer is None or ('plages' in observers and observers['plages'] > self.last_plages_observer):
             self.plages_fermeture = creche.GetPlagesArray(PLAGE_FERMETURE, conversion=True)
             self.plages_insecables = creche.GetPlagesArray(PLAGE_INSECABLE, conversion=True)
@@ -130,7 +129,7 @@ class PlanningGridWindow(BufferedWindow):
             heure = affichage_min
         
         while heure <= affichage_max:
-            x = (heure - affichage_min) * COLUMN_WIDTH
+            x = (heure - affichage_min) * config.column_width
             if heure % (60 / BASE_GRANULARITY) == 0:
                 dc.SetPen(wx.GREY_PEN)
             else:
@@ -146,11 +145,11 @@ class PlanningGridWindow(BufferedWindow):
         dc.SetPen(wx.LIGHT_GREY_PEN)
         dc.SetBrush(wx.LIGHT_GREY_BRUSH)
         for debut, fin in self.plages_fermeture:
-            dc.DrawRectangle(1 + (debut-affichage_min) * COLUMN_WIDTH, 0, (fin-debut) * COLUMN_WIDTH - 1, height)
+            dc.DrawRectangle(1 + (debut-affichage_min) * config.column_width, 0, (fin-debut) * config.column_width - 1, height)
         dc.SetPen(wx.TRANSPARENT_PEN)            
         dc.SetBrush(wx.Brush(wx.Colour(250, 250, 0, 100)))
         for debut, fin in self.plages_insecables:
-            dc.DrawRectangle(1 + (debut-affichage_min) * COLUMN_WIDTH, 0, (fin-debut) * COLUMN_WIDTH - 1, height)
+            dc.DrawRectangle(1 + (debut-affichage_min) * config.column_width, 0, (fin-debut) * config.column_width - 1, height)
             
             
     def Draw(self, dc):
@@ -167,7 +166,7 @@ class PlanningGridWindow(BufferedWindow):
         dc.SetBrush(wx.LIGHT_GREY_BRUSH)
         affichage_min = int(creche.affichage_min * 60 / BASE_GRANULARITY)
         for debut, fin in self.plages_fermeture:
-            dc.DrawRectangle(1 + (debut-affichage_min) * COLUMN_WIDTH, 0, (fin-debut) * COLUMN_WIDTH - 1, height)
+            dc.DrawRectangle(1 + (debut-affichage_min) * config.column_width, 0, (fin-debut) * config.column_width - 1, height)
 
         if self.info:
             dc.SetTextForeground("LIGHT GREY")
@@ -228,14 +227,14 @@ class PlanningGridWindow(BufferedWindow):
                 activity = val
                 if self.options & DRAW_VALUES:
                     activity = 0
-                r, g, b, t, s = getActivityColor(activity)
+                r, g, b, t, s = GetActivityColor(activity)
                 try:
                     dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
                     dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
                 except:
                     dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
                     dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
-                rect = wx.Rect(1+(start-int(creche.affichage_min*(60 / BASE_GRANULARITY)))*COLUMN_WIDTH, 1+index*LINE_HEIGHT, (end-start)*COLUMN_WIDTH-1, LINE_HEIGHT-1)
+                rect = wx.Rect(1+(start-int(creche.affichage_min*(60 / BASE_GRANULARITY)))*config.column_width, 1+index*LINE_HEIGHT, (end-start)*config.column_width-1, LINE_HEIGHT-1)
                 dc.DrawRoundedRectangleRect(rect, 4)
                 if self.options & DRAW_VALUES and val != 0:
                     dc.DrawText(str(val), rect.GetX() + rect.GetWidth()/2 - 4*len(str(val)), 7 + index * LINE_HEIGHT)
@@ -261,7 +260,7 @@ class PlanningGridWindow(BufferedWindow):
                     nv = line[x][0]
                 if nv != v:
                     if v != 0:
-                        rect = wx.Rect(pos+3+(a-debut)*COLUMN_WIDTH, 2 + index * LINE_HEIGHT, (x-a)*COLUMN_WIDTH-1, LINE_HEIGHT-1)
+                        rect = wx.Rect(pos+3+(a-debut)*config.column_width, 2 + index * LINE_HEIGHT, (x-a)*config.column_width-1, LINE_HEIGHT-1)
                         if v > 5:
                             r, g, b, t, s = 5, 203, 28, 150, wx.SOLID
                         elif v > 0:
@@ -276,7 +275,7 @@ class PlanningGridWindow(BufferedWindow):
                             dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
                         dc.DrawRoundedRectangleRect(rect, 4)
                         s = str(int(v))
-                        dc.DrawText(s, pos + 4 - 4*len(s) + (float(x+a)/2-debut)*COLUMN_WIDTH, 7 + index * LINE_HEIGHT)
+                        dc.DrawText(s, pos + 4 - 4*len(s) + (float(x+a)/2-debut)*config.column_width, 7 + index * LINE_HEIGHT)
                     a = x    
                     if nv:
                         v = nv
@@ -288,7 +287,7 @@ class PlanningGridWindow(BufferedWindow):
         p = -1
         if x > 0:
             x -= 1
-        l = int(creche.affichage_min * (60 / BASE_GRANULARITY) + (x / COLUMN_WIDTH))               
+        l = int(creche.affichage_min * (60 / BASE_GRANULARITY) + (x / config.column_width))               
         c = int(y / LINE_HEIGHT)
         return l, c, p
 
@@ -406,7 +405,7 @@ class PlanningGridWindow(BufferedWindow):
                     line.ClearActivity(start, end, self.value)
                 
             if not (self.GetParent().GetParent().options & PRESENCES_ONLY) and len(line.activites) == 0 and line.reference and len(line.reference.activites) > 0:
-                line.set_state(VACANCES)
+                line.SetState(VACANCES)
                 
             if line.insert is not None:
                 line.insert[line.key] = line
@@ -465,12 +464,12 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         button = event.GetEventObject()
         line = self.lines[button.line]
         if not (line.readonly or readonly):
-            state = line.get_state()
+            state = line.GetState()
             dlg = TextDialog(self, "Commentaire", line.commentaire)
             response = dlg.ShowModal()
             dlg.Destroy()
             if response == wx.ID_OK:
-                line.setCommentaire(dlg.GetText())
+                line.SetCommentaire(dlg.GetText())
                 line.Save()
                 history.Append(None)
                 if line.insert is not None:
@@ -485,7 +484,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         line = self.lines[button.line]
         if not (line.readonly or readonly):
             history.Append([Call(line.Restore, line.Backup())])        
-            state = line.get_state()
+            state = line.GetState()
             
             if state < 0:
                 order = [VACANCES, ABSENCE_CONGE_SANS_PREAVIS, ABSENCE_NON_PREVENUE, MALADE, HOPITAL, MALADE_SANS_JUSTIFICATIF, PRESENT]
@@ -509,14 +508,14 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                         line.Save()
                         line.reference = reference
                 else:
-                    line.set_state(newstate)
+                    line.SetState(newstate)
             elif line.date <= datetime.date.today() and state & PREVISIONNEL:
                 line.Confirm()
             else:
-                if line.reference.get_state() == ABSENT:
-                    line.set_state(MALADE)
+                if line.reference.GetState() == ABSENT:
+                    line.SetState(MALADE)
                 else:
-                    line.set_state(VACANCES)
+                    line.SetState(VACANCES)
     
             if line.insert is not None:
                 line.insert[line.key] = line
@@ -531,10 +530,10 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         if not (line.readonly or readonly):
             if event.Checked():
                 history.Append(None)
-                line.insert_activity(None, None, button.activite.value)
+                line.InsertActivity(None, None, button.activite.value)
             else:
                 history.Append(None)
-                line.remove_activity(None, None, button.activite.value)
+                line.RemoveActivity(None, None, button.activite.value)
             line.Save()
             if line.insert is not None:
                 line.insert[line.key] = line
@@ -586,7 +585,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             if isinstance(line, LigneConge):
                 state = VACANCES
             else:
-                state = line.get_state()
+                state = line.GetState()
                 if state > 0:
                     activities_state = state & ~(PRESENT|PREVISIONNEL)
                     if activities_state:
@@ -842,8 +841,8 @@ class PlanningSummaryPanel(BufferedWindow):
                 
             if nv != v or nw != w:
                 if v != 0:
-                    rect = wx.Rect(pos+3+(a-debut)*COLUMN_WIDTH, 2 + index * 20, (x-a)*COLUMN_WIDTH-1, 19)
-                    r, g, b, t, s = getActivityColor(w)
+                    rect = wx.Rect(pos+3+(a-debut)*config.column_width, 2 + index * 20, (x-a)*config.column_width-1, 19)
+                    r, g, b, t, s = GetActivityColor(w)
                     text = str(v)
                     try:
                         dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
@@ -853,7 +852,7 @@ class PlanningSummaryPanel(BufferedWindow):
                         dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
                     w, h = dc.GetTextExtent(text) 
                     dc.DrawRoundedRectangleRect(rect, 4)
-                    dc.DrawText(text, pos + 4 - 4*len(text) + (float(x+a)/2-debut)*COLUMN_WIDTH, 4 + (15-h)/2 + index * 20)
+                    dc.DrawText(text, pos + 4 - 4*len(text) + (float(x+a)/2-debut)*config.column_width, 4 + (15-h)/2 + index * 20)
                 a = x
                 v, w = nv, nw
             x += 1
@@ -939,7 +938,7 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
         if not self.options & NO_ICONS:
             offset += ICONS_WIDTH
         while heure <= affichage_max:
-            x = offset + (heure - affichage_min) * COLUMN_WIDTH
+            x = offset + (heure - affichage_min) * config.column_width
             if heure % (60 / BASE_GRANULARITY) == 0:
                 dc.DrawLine(x, 20, x, 12)
                 dc.DrawText(str(int(round(heure/(60 / BASE_GRANULARITY))))+"h", x - 3, 0)
@@ -953,7 +952,7 @@ class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
             font = wx.Font(8, wx.SWISS, wx.NORMAL, wx.NORMAL)
             dc.SetFont(font)
             for i, activite in enumerate(activites):
-                dc.DrawRotatedText(activite.label, i*25 + 10 + offset + (affichage_max - affichage_min) * COLUMN_WIDTH, 12, 18)
+                dc.DrawRotatedText(activite.label, i*25 + 10 + offset + (affichage_max - affichage_min) * config.column_width, 12, 18)
             
         dc.EndDrawing()
 

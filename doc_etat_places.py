@@ -60,7 +60,7 @@ class EtatPlacesModifications(object):
                 for inscrit in creche.inscrits:
                     inscription = inscrit.GetInscription(date)
                     if inscription and (not self.site or self.site == inscription.site):
-                        state = inscrit.getState(date).state
+                        state = inscrit.GetState(date).state
                         if state > 0 and state & PRESENT:
                             count += 1
                 cell = GetCell(GetRow(table, date.month+3), date.day)

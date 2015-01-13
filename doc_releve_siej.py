@@ -58,7 +58,7 @@ class ReleveSIEJModifications(object):
         for inscrit in GetInscrits(self.debut, self.fin):
             date = self.debut
             for mois in range(12):
-                trimestreEnd = getTrimestreEnd(date)
+                trimestreEnd = GetTrimestreEnd(date)
                 try:
                     facture = Facture(inscrit, self.annee, mois+1)
                     regime = self.GetRegime(inscrit, date)
@@ -79,7 +79,7 @@ class ReleveSIEJModifications(object):
                         self.previsionnel += facture_heures_facturees
                 except CotisationException, e:
                     self.errors[GetPrenomNom(inscrit)] = e.errors                            
-                date = getNextMonthStart(date)
+                date = GetNextMonthStart(date)
 
     def execute(self, filename, dom):
         if filename == 'meta.xml':
@@ -104,8 +104,8 @@ class ReleveSIEJModifications(object):
             
             fields = GetCrecheFields(creche) + [('annee', self.annee),
                                                 ('date-debut-reel', self.debut),
-                                                ('date-fin-reel', getTrimestreStart(today) - datetime.timedelta(1)),
-                                                ('date-debut-previsionnel', getTrimestreStart(today)),
+                                                ('date-fin-reel', GetTrimestreStart(today) - datetime.timedelta(1)),
+                                                ('date-debut-previsionnel', GetTrimestreStart(today)),
                                                 ('date-fin-previsionnel', self.fin),
                                                 ]
             

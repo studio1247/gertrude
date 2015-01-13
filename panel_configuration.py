@@ -426,7 +426,7 @@ class ActivitesTab(AutoTab):
         self.activites_sizer = wx.BoxSizer(wx.VERTICAL)
         for activity in creche.activites.values():
             if activity.value > 0:
-                self.line_add(activity)
+                self.AddLine(activity)
         box_sizer.Add(self.activites_sizer, 0, wx.EXPAND|wx.ALL, 5)
         button_add = wx.Button(self, -1, u'Nouvelle activité')
         box_sizer.Add(button_add, 0, wx.ALL, 5)
@@ -447,7 +447,7 @@ class ActivitesTab(AutoTab):
         self.activites_sizer.Clear(True)
         for activity in creche.activites.values():
             if activity.value > 0:
-                self.line_add(activity)
+                self.AddLine(activity)
         self.sizer.Layout()
         
     def OnCouleursDefaut(self, event):
@@ -464,7 +464,7 @@ class ActivitesTab(AutoTab):
             self.color_buttons[(0, field)].SetBackgroundColour(wx.Colour(r, g, b))
             self.UpdateHash(self.color_buttons[(0, field)].hash_cb, color)        
 
-    def line_add(self, activity):
+    def AddLine(self, activity):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, u'Libellé :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, 'activites[%d].label' % activity.value), 1, wx.EXPAND)])
         mode_choice = AutoChoiceCtrl(self, creche, 'activites[%d].mode' % activity.value, items=activity_modes, observers=['activites'])
@@ -513,7 +513,7 @@ class ActivitesTab(AutoTab):
             activity.couleur_previsionnel = 0, 0, 0, 50, wx.SOLID
         creche.activites[activity.value] = activity
         history.Append(Delete(creche.activites, activity.value))
-        self.line_add(activity)
+        self.AddLine(activity)
         self.sizer.Layout()
 
     def activite_del(self, event):
@@ -539,7 +539,7 @@ class ActivitesTab(AutoTab):
                 return
         for inscrit, date in entrees:
             journee = inscrit.journees[date]
-            journee.remove_activities(index)
+            journee.RemoveActivities(index)
         history.Append(Insert(creche.activites, index, creche.activites[index]))
         for i, child in enumerate(self.activites_sizer.GetChildren()):
             sizer = child.GetSizer()
@@ -668,7 +668,7 @@ class JoursFermeturePanel(AutoTab):
             self.Bind(wx.EVT_CHECKBOX, self.feries_check, checkbox)
         self.conges_sizer = wx.BoxSizer(wx.VERTICAL)
         for i, conge in enumerate(creche.conges):
-            self.line_add(i)
+            self.AddLine(i)
         self.sizer.Add(self.conges_sizer, 0, wx.ALL, 5)
         button_add = wx.Button(self, -1, u"Ajouter une période de fermeture")
         if readonly:
@@ -684,13 +684,13 @@ class JoursFermeturePanel(AutoTab):
 
     def UpdateContents(self):
         for i in range(len(self.conges_sizer.GetChildren()), len(creche.conges)):
-            self.line_add(i)
+            self.AddLine(i)
         for i in range(len(creche.conges), len(self.conges_sizer.GetChildren())):
-            self.line_del()
+            self.RemoveLine()
         self.sizer.Layout()
         AutoTab.UpdateContents(self)
 
-    def line_add(self, index):
+    def AddLine(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, 'Debut :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, creche, 'conges[%d].debut' % index, mois=True, observers=['conges'])])
         sizer.AddMany([(wx.StaticText(self, -1, 'Fin :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, creche, 'conges[%d].fin' % index, mois=True, observers=['conges'])])
@@ -704,7 +704,7 @@ class JoursFermeturePanel(AutoTab):
         self.Bind(wx.EVT_BUTTON, self.conges_del, delbutton)
         self.conges_sizer.Add(sizer)
 
-    def line_del(self):
+    def RemoveLine(self):
         index = len(self.conges_sizer.GetChildren()) - 1
         sizer = self.conges_sizer.GetItem(index)
         sizer.DeleteWindows()
@@ -713,15 +713,15 @@ class JoursFermeturePanel(AutoTab):
     def conges_add(self, event):
         observers['conges'] = time.time()
         history.Append(Delete(creche.conges, -1))
-        creche.add_conge(Conge(creche))
-        self.line_add(len(creche.conges) - 1)
+        creche.AddConge(Conge(creche))
+        self.AddLine(len(creche.conges) - 1)
         self.sizer.Layout()
 
     def conges_del(self, event):
         observers['conges'] = time.time()
         index = event.GetEventObject().index
         history.Append(Insert(creche.conges, index, creche.conges[index]))
-        self.line_del()
+        self.RemoveLine()
         creche.conges[index].delete()
         del creche.conges[index]
         self.sizer.Layout()
@@ -733,7 +733,7 @@ class JoursFermeturePanel(AutoTab):
             conge = Conge(creche, creation=False)
             conge.debut = label
             conge.create()
-            creche.add_conge(conge)
+            creche.AddConge(conge)
         else:
             conge = creche.feries[label]
             del creche.feries[label]
@@ -747,7 +747,7 @@ class ReservatairesTab(AutoTab):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.reservataires_sizer = wx.BoxSizer(wx.VERTICAL)
         for i, reservataire in enumerate(creche.reservataires):
-            self.line_add(i)
+            self.AddLine(i)
         self.sizer.Add(self.reservataires_sizer, 0, wx.ALL, 5)
         button_add = wx.Button(self, -1, u'Nouveau réservataire')
         if readonly:
@@ -763,13 +763,13 @@ class ReservatairesTab(AutoTab):
 
     def UpdateContents(self):
         for i in range(len(self.reservataires_sizer.GetChildren()), len(creche.reservataires)):
-            self.line_add(i)
+            self.AddLine(i)
         for i in range(len(creche.reservataires), len(self.reservataires_sizer.GetChildren())):
-            self.line_del()
+            self.RemoveLine()
         self.sizer.Layout()
         AutoTab.UpdateContents(self)
 
-    def line_add(self, index):
+    def AddLine(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, 'Debut :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, creche, 'reservataires[%d].debut' % index, mois=True, observers=['reservataires'])])
         sizer.AddMany([(wx.StaticText(self, -1, 'Fin :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, creche, 'reservataires[%d].fin' % index, mois=True, observers=['reservataires'])])
@@ -790,7 +790,7 @@ class ReservatairesTab(AutoTab):
         self.Bind(wx.EVT_BUTTON, self.reservataire_del, delbutton)
         self.reservataires_sizer.Add(sizer)
 
-    def line_del(self):
+    def RemoveLine(self):
         index = len(self.reservataires_sizer.GetChildren()) - 1
         sizer = self.reservataires_sizer.GetItem(index)
         sizer.DeleteWindows()
@@ -800,7 +800,7 @@ class ReservatairesTab(AutoTab):
         observers['reservataires'] = time.time()
         history.Append(Delete(creche.reservataires, -1))
         creche.reservataires.append(Reservataire())
-        self.line_add(len(creche.reservataires) - 1)
+        self.AddLine(len(creche.reservataires) - 1)
         self.sizer.FitInside(self)
         self.sizer.Layout()
 
@@ -808,7 +808,7 @@ class ReservatairesTab(AutoTab):
         observers['reservataires'] = time.time()
         index = event.GetEventObject().index
         history.Append(Insert(creche.reservataires, index, creche.reservataires[index]))
-        self.line_del()
+        self.RemoveLine()
         creche.reservataires[index].delete()
         del creche.reservataires[index]
         self.sizer.FitInside(self)
@@ -995,7 +995,7 @@ class ParametersPanel(AutoTab):
                 for j, jour in enumerate(inscription.reference):
                     for a, b, v in jour.activites.keys():
                         if not obj.check_function(value, a, b):
-                            errors.append((inscrit, jour, " (%s)" % periodestr(inscription), days[j%7].lower()))
+                            errors.append((inscrit, jour, " (%s)" % GetPeriodeString(inscription), days[j%7].lower()))
             for j in inscrit.journees.keys():
                 jour = inscrit.journees[j]
                 for a, b, v in jour.activites.keys():
@@ -1057,17 +1057,17 @@ class TarifHorairePanel(AutoTab):
         if readonly:
             addbutton.Disable()
         addbutton.index = 0
-        self.Bind(wx.EVT_BUTTON, self.onAdd, addbutton)
+        self.Bind(wx.EVT_BUTTON, self.OnAdd, addbutton)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(addbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.TOP, 5)
         self.controls = []
         if creche.formule_taux_horaire:
             for i, cas in enumerate(creche.formule_taux_horaire):
-                self.line_add(i, cas[0], cas[1])
+                self.AddLine(i, cas[0], cas[1])
         self.SetSizer(self.sizer)
         self.Layout()
         
-    def line_add(self, index, condition="", taux=0.0):
+    def AddLine(self, index, condition="", taux=0.0):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.AddSpacer(10)
         cas = wx.StaticText(self, -1, "[Cas %d]" % (index+1))
@@ -1087,10 +1087,10 @@ class TarifHorairePanel(AutoTab):
         sizer1.Add(delbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT|wx.RIGHT, 5)
         sizer.Add(sizer1, 0, wx.EXPAND)
         sizer.Add(addbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.TOP, 5)
-        self.Bind(wx.EVT_TEXT, self.onConditionChange, condition_ctrl)
-        self.Bind(wx.EVT_TEXT, self.onTauxChange, taux_ctrl)
-        self.Bind(wx.EVT_BUTTON, self.onDel, delbutton)
-        self.Bind(wx.EVT_BUTTON, self.onAdd, addbutton)
+        self.Bind(wx.EVT_TEXT, self.OnConditionChange, condition_ctrl)
+        self.Bind(wx.EVT_TEXT, self.OnTauxChange, taux_ctrl)
+        self.Bind(wx.EVT_BUTTON, self.OnRemove, delbutton)
+        self.Bind(wx.EVT_BUTTON, self.OnAdd, addbutton)
         self.controls.insert(index, (cas, condition_ctrl, taux_ctrl, delbutton, addbutton))
         self.sizer.Insert(index+1, sizer, 0, wx.EXPAND|wx.BOTTOM, 5)
         if readonly:
@@ -1100,14 +1100,14 @@ class TarifHorairePanel(AutoTab):
             addbutton.Disable()
      
 
-    def onAdd(self, event):
+    def OnAdd(self, event):
         object = event.GetEventObject()
-        self.line_add(object.index)
+        self.AddLine(object.index)
         if creche.formule_taux_horaire is None:
             creche.formule_taux_horaire = [["", 0.0]]
         else:
             creche.formule_taux_horaire.insert(object.index, ["", 0.0])
-        creche.update_formule_taux_horaire()
+        creche.UpdateFormuleTauxHoraire()
         for i in range(object.index+1, len(self.controls)):
             self.controls[i][0].SetLabel("[Cas %d]" % (i+1))
             for control in self.controls[i][1:]:
@@ -1115,7 +1115,7 @@ class TarifHorairePanel(AutoTab):
         self.sizer.FitInside(self)
         history.Append(None)
     
-    def onDel(self, event):
+    def OnRemove(self, event):
         index = event.GetEventObject().index
         sizer = self.sizer.GetItem(index+1)
         sizer.DeleteWindows()
@@ -1125,7 +1125,7 @@ class TarifHorairePanel(AutoTab):
             creche.formule_taux_horaire = None
         else:
             del creche.formule_taux_horaire[index]
-        creche.update_formule_taux_horaire()
+        creche.UpdateFormuleTauxHoraire()
         for i in range(index, len(self.controls)):
             self.controls[i][0].SetLabel("[Cas %d]" % (i+1))
             for control in self.controls[i][1:]:
@@ -1133,21 +1133,21 @@ class TarifHorairePanel(AutoTab):
         self.sizer.FitInside(self)
         history.Append(None)
     
-    def onConditionChange(self, event):
+    def OnConditionChange(self, event):
         object = event.GetEventObject()
         creche.formule_taux_horaire[object.index][0] = object.GetValue()
-        creche.update_formule_taux_horaire()
-        if creche.test_formule_taux_horaire(object.index):
+        creche.UpdateFormuleTauxHoraire()
+        if creche.CheckFormuleTauxHoraire(object.index):
             object.SetBackgroundColour(wx.WHITE)
         else:
             object.SetBackgroundColour(wx.RED)
         object.Refresh()
         history.Append(None)
         
-    def onTauxChange(self, event):
+    def OnTauxChange(self, event):
         object = event.GetEventObject()
         creche.formule_taux_horaire[object.index][1] = float(object.GetValue())
-        creche.update_formule_taux_horaire()
+        creche.UpdateFormuleTauxHoraire()
         history.Append(None)
         
 class TauxEffortPanel(AutoTab):
@@ -1156,17 +1156,17 @@ class TauxEffortPanel(AutoTab):
         self.delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
         addbutton = wx.Button(self, -1, "Ajouter un cas")
         addbutton.index = 0
-        self.Bind(wx.EVT_BUTTON, self.onAdd, addbutton)
+        self.Bind(wx.EVT_BUTTON, self.OnAdd, addbutton)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(addbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.TOP, 5)
         self.controls = []
         if creche.formule_taux_effort:
             for i, cas in enumerate(creche.formule_taux_effort):
-                self.line_add(i, cas[0], cas[1])
+                self.AddLine(i, cas[0], cas[1])
         self.SetSizer(self.sizer)
         self.Layout()
         
-    def line_add(self, index, condition="", taux=0.0):
+    def AddLine(self, index, condition="", taux=0.0):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.AddSpacer(10)
         cas = wx.StaticText(self, -1, "[Cas %d]" % (index+1))
@@ -1186,21 +1186,21 @@ class TauxEffortPanel(AutoTab):
         sizer1.Add(delbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT|wx.RIGHT, 5)
         sizer.Add(sizer1, 0, wx.EXPAND)
         sizer.Add(addbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.TOP, 5)
-        self.Bind(wx.EVT_TEXT, self.onConditionChange, condition_ctrl)
-        self.Bind(wx.EVT_TEXT, self.onTauxChange, taux_ctrl)
-        self.Bind(wx.EVT_BUTTON, self.onDel, delbutton)
-        self.Bind(wx.EVT_BUTTON, self.onAdd, addbutton)
+        self.Bind(wx.EVT_TEXT, self.OnConditionChange, condition_ctrl)
+        self.Bind(wx.EVT_TEXT, self.OnTauxChange, taux_ctrl)
+        self.Bind(wx.EVT_BUTTON, self.OnRemove, delbutton)
+        self.Bind(wx.EVT_BUTTON, self.OnAdd, addbutton)
         self.controls.insert(index, (cas, condition_ctrl, taux_ctrl, delbutton, addbutton))
         self.sizer.Insert(index+1, sizer, 0, wx.EXPAND|wx.BOTTOM, 5)         
 
-    def onAdd(self, event):
+    def OnAdd(self, event):
         object = event.GetEventObject()
-        self.line_add(object.index)
+        self.AddLine(object.index)
         if creche.formule_taux_effort is None:
             creche.formule_taux_effort = [["", 0.0]]
         else:
             creche.formule_taux_effort.insert(object.index, ["", 0.0])
-        creche.update_formule_taux_effort()
+        creche.UpdateFormuleTauxEffort()
         for i in range(object.index+1, len(self.controls)):
             self.controls[i][0].SetLabel("[Cas %d]" % (i+1))
             for control in self.controls[i][1:]:
@@ -1208,7 +1208,7 @@ class TauxEffortPanel(AutoTab):
         self.sizer.FitInside(self)
         history.Append(None)
     
-    def onDel(self, event):
+    def OnRemove(self, event):
         index = event.GetEventObject().index
         sizer = self.sizer.GetItem(index+1)
         sizer.DeleteWindows()
@@ -1218,7 +1218,7 @@ class TauxEffortPanel(AutoTab):
             creche.formule_taux_effort = None
         else:
             del creche.formule_taux_effort[index]
-        creche.update_formule_taux_effort()
+        creche.UpdateFormuleTauxEffort()
         for i in range(index, len(self.controls)):
             self.controls[i][0].SetLabel("[Cas %d]" % (i+1))
             for control in self.controls[i][1:]:
@@ -1226,21 +1226,21 @@ class TauxEffortPanel(AutoTab):
         self.sizer.FitInside(self)
         history.Append(None)
     
-    def onConditionChange(self, event):
+    def OnConditionChange(self, event):
         object = event.GetEventObject()
         creche.formule_taux_effort[object.index][0] = object.GetValue()
-        creche.update_formule_taux_effort()
-        if creche.test_formule_taux_effort(object.index):
+        creche.UpdateFormuleTauxEffort()
+        if creche.CheckFormuleTauxEffort(object.index):
             object.SetBackgroundColour(wx.WHITE)
         else:
             object.SetBackgroundColour(wx.RED)
         object.Refresh()
         history.Append(None)
         
-    def onTauxChange(self, event):
+    def OnTauxChange(self, event):
         object = event.GetEventObject()
         creche.formule_taux_effort[object.index][1] = float(object.GetValue())
-        creche.update_formule_taux_effort()
+        creche.UpdateFormuleTauxEffort()
         history.Append(None)    
 
 profiles = [("Administrateur", PROFIL_ALL),
@@ -1260,57 +1260,57 @@ class UsersTab(AutoTab):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.users_sizer = wx.BoxSizer(wx.VERTICAL)
         for i, user in enumerate(creche.users):
-            self.line_add(i)
+            self.AddLine(i)
         self.sizer.Add(self.users_sizer, 0, wx.EXPAND|wx.ALL, 5)
         button_add = wx.Button(self, -1, 'Nouvel utilisateur')
         if readonly:
             button_add.Disable()      
         self.sizer.Add(button_add, 0, wx.ALL, 5)
-        self.Bind(wx.EVT_BUTTON, self.user_add, button_add)
+        self.Bind(wx.EVT_BUTTON, self.AddUser, button_add)
         self.SetSizer(self.sizer)
 
     def UpdateContents(self):
         for i in range(len(self.users_sizer.GetChildren()), len(creche.users)):
-            self.line_add(i)
+            self.AddLine(i)
         for i in range(len(creche.users), len(self.users_sizer.GetChildren())):
-            self.line_del()
+            self.RemoveLine()
         self.sizer.Layout()
         AutoTab.UpdateContents(self)
 
-    def line_add(self, index):
+    def AddLine(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, 'Login :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, creche, 'users[%d].login' % index), 0, wx.ALIGN_CENTER_VERTICAL)])
         sizer.AddMany([(wx.StaticText(self, -1, 'Mot de passe :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, creche, 'users[%d].password' % index), 0, wx.ALIGN_CENTER_VERTICAL)])
         profile_choice = AutoChoiceCtrl(self, creche, 'users[%d].profile' % index, items=profiles)
         profile_choice.index = index
-        self.Bind(wx.EVT_CHOICE, self.user_modify_profile, profile_choice)
+        self.Bind(wx.EVT_CHOICE, self.OnUserProfileModified, profile_choice)
         sizer.AddMany([(wx.StaticText(self, -1, 'Profil :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), profile_choice])
         delbutton = wx.BitmapButton(self, -1, delbmp, style=wx.NO_BORDER)
         if readonly:
             delbutton.Disable()              
         delbutton.index = index
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
-        self.Bind(wx.EVT_BUTTON, self.user_del, delbutton)
+        self.Bind(wx.EVT_BUTTON, self.RemoveUser, delbutton)
         self.users_sizer.Add(sizer)
 
-    def line_del(self):
+    def RemoveLine(self):
         index = len(self.users_sizer.GetChildren()) - 1
         sizer = self.users_sizer.GetItem(index)
         sizer.DeleteWindows()
         self.users_sizer.Detach(index)
 
-    def user_add(self, event):
+    def AddUser(self, event):
         history.Append(Delete(creche.users, -1))
         creche.users.append(User())
-        self.line_add(len(creche.users) - 1)
+        self.AddLine(len(creche.users) - 1)
         self.sizer.Layout()
 
-    def user_del(self, event):
+    def RemoveUser(self, event):
         index = event.GetEventObject().index
         nb_admins = len([user for i, user in enumerate(creche.users) if (i != index and user.profile == PROFIL_ALL)])
         if len(creche.users) == 1 or nb_admins > 0:
             history.Append(Insert(creche.users, index, creche.users[index]))
-            self.line_del()
+            self.RemoveLine()
             creche.users[index].delete()
             del creche.users[index]
             self.sizer.Layout()
@@ -1320,7 +1320,7 @@ class UsersTab(AutoTab):
             dlg.ShowModal()
             dlg.Destroy()
 
-    def user_modify_profile(self, event):
+    def OnUserProfileModified(self, event):
         obj = event.GetEventObject()
         index = obj.index
         if creche.users[index].profile == PROFIL_ALL and event.GetClientData() != PROFIL_ALL:
