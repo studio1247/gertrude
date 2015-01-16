@@ -31,6 +31,7 @@ NO_NOM = 2
 NO_REVENUS = 4
 NO_PARENTS = 8
 TRACES = 16
+DEPART_ANTICIPE = 32
 
 def GetDateRevenus(date):
     if creche.periode_revenus == REVENUS_CAFPRO:
@@ -108,8 +109,13 @@ class Cotisation(object):
                 self.debut, self.fin = self.inscription.debut, self.inscription.fin_periode_adaptation
             else:
                 self.debut, self.fin = self.inscription.fin_periode_adaptation + datetime.timedelta(1), self.inscription.fin
+            self.fin_inscription = self.fin
         else:
-            self.debut, self.fin = self.inscription.debut, self.inscription.fin
+            if (options & DEPART_ANTICIPE) and creche.gestion_depart_anticipe and self.inscription.depart:
+                self.fin_inscription = self.inscription.depart
+            else:
+                self.fin_inscription = self.inscription.fin
+            self.debut, self.fin = self.inscription.debut, self.fin_inscription
         
         if options & TRACES:
             print u"\nCotisation de %s au %s ..." % (GetPrenomNom(inscrit), date)
@@ -222,10 +228,10 @@ class Cotisation(object):
             self.heures_semaine = self.heures_reelles_semaine
             if creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
                 date = self.inscription.debut
-                if self.inscription.fin is None:
+                if self.fin_inscription is None:
                     errors.append(u" - La période d'inscription n'a pas de fin.")
                     raise CotisationException(errors)
-                while date <= self.inscription.fin:
+                while date <= self.fin_inscription:
                     heures = self.inscription.GetJourneeReference(date).GetNombreHeures()
                     if heures:
                         if date in creche.jours_fermeture:
@@ -247,8 +253,8 @@ class Cotisation(object):
                     self.heures_periode -= self.inscription.semaines_conges * self.heures_semaine
                 self.heures_periode = math.ceil(self.heures_periode)
                 if options & TRACES: print u' heures période :', self.heures_periode
-                self.semaines_periode = ((self.inscription.fin - self.inscription.debut).days + 7) / 7
-                self.nombre_factures = GetNombreFacturesContrat(self.inscription.debut, self.inscription.fin)
+                self.semaines_periode = ((self.fin_inscription - self.inscription.debut).days + 7) / 7
+                self.nombre_factures = GetNombreFacturesContrat(self.inscription.debut, self.fin_inscription)
                 if self.nombre_factures == 0:
                     self.nombre_factures = 1
                 if options & TRACES: print ' nombres de factures :', self.nombre_factures
@@ -256,18 +262,18 @@ class Cotisation(object):
                 if options & TRACES: print ' heures mensuelles : %f (%f)' % (self.heures_mois, self.heures_periode / self.nombre_factures)
             else:
                 if creche.repartition == REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS:
-                    if self.inscription.fin is None:
+                    if self.fin_inscription is None:
                         errors.append(u" - La période d'inscription n'a pas de fin.")
                         raise CotisationException(errors)
-                    self.semaines_periode = (6 + (self.inscription.fin - self.inscription.debut).days) / 7
-                    self.nombre_factures = GetNombreFacturesContrat(self.inscription.debut, self.inscription.fin)
+                    self.semaines_periode = (6 + (self.fin_inscription - self.inscription.debut).days) / 7
+                    self.nombre_factures = GetNombreFacturesContrat(self.inscription.debut, self.fin_inscription)
                     self.prorata_effectue = True
                 elif creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
-                    if self.inscription.fin is None:
+                    if self.fin_inscription is None:
                         errors.append(u" - La période d'inscription n'a pas de fin.")
                         raise CotisationException(errors)
-                    self.semaines_periode = (6 + (GetMonthEnd(self.inscription.fin) - GetMonthStart(self.inscription.debut)).days) / 7
-                    self.nombre_factures = GetNombreFacturesContrat(self.inscription.debut, self.inscription.fin)
+                    self.semaines_periode = (6 + (GetMonthEnd(self.fin_inscription) - GetMonthStart(self.inscription.debut)).days) / 7
+                    self.nombre_factures = GetNombreFacturesContrat(self.inscription.debut, self.fin_inscription)
                 else:
                     self.semaines_periode = 52
                     self.nombre_factures = 12 - GetNombreMoisSansFactureContrat(self.date.year)

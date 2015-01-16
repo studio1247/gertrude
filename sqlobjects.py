@@ -1436,10 +1436,25 @@ class Inscription(PeriodeReference):
         result.reference = reference
         return result
     
+    def GetNombreJoursCongesPoses(self):
+        jours = 0
+        if self.debut and self.fin:
+            date = self.debut
+            if self.fin_periode_adaptation:
+                date = self.fin_periode_adaptation + datetime.timedelta(1)
+            while date < self.fin:
+                state = self.inscrit.GetState(date)
+                if state.state == VACANCES:
+                    # print date
+                    jours += 1
+                date += datetime.timedelta(1)
+        return jours
+    
     def IsNombreSemainesCongesAtteint(self, jalon):
         if self.debut:
             if self.semaines_conges:
                 restant = self.semaines_conges * self.GetJoursHeuresReference()[0]
+                print "restant", jalon, restant
             else:
                 # print GetPrenomNom(self.inscrit)
                 restant = 0
@@ -1705,9 +1720,9 @@ class Inscrit(object):
             except:
                 pass
         
-    def GetInscription(self, date, preinscription=False):
+    def GetInscription(self, date, preinscription=False, departanticipe=True):
         for inscription in self.inscriptions:
-            if (preinscription or not creche.preinscriptions or not inscription.preinscription) and inscription.debut and date >= inscription.debut and (not inscription.fin or date <= inscription.fin) and (not inscription.depart or date <= inscription.depart):
+            if (preinscription or not creche.preinscriptions or not inscription.preinscription) and inscription.debut and date >= inscription.debut and (not inscription.fin or date <= inscription.fin) and (not departanticipe or not inscription.depart or date <= inscription.depart):
                 return inscription
         return None
 

@@ -665,7 +665,11 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         sizer1.AddMany([(wx.StaticText(self, -1, u"Mode d'accueil :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.mode_accueil_choice, 0, wx.EXPAND)])
         sizer1.AddMany([(wx.StaticText(self, -1, u"Frais d'inscription :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'frais_inscription', min=0, precision=2), 0, wx.EXPAND)])
         self.semaines_conges_items = wx.StaticText(self, -1, u"Nombre de semaines d'absence prévu au contrat :"), AutoNumericCtrl(self, None, 'semaines_conges', min=0, precision=0)
-        sizer1.AddMany([(self.semaines_conges_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.semaines_conges_items[1], 0, wx.EXPAND)])
+        self.jours_poses = wx.TextCtrl(self, -1)
+        self.jours_poses.Disable()
+        sizer3 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer3.AddMany([(self.semaines_conges_items[1], 0, wx.EXPAND), (self.jours_poses, 1, wx.EXPAND|wx.LEFT, 5)])
+        sizer1.AddMany([(self.semaines_conges_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (sizer3, 0, wx.EXPAND)])
         self.facturation_items = wx.StaticText(self, -1, u"Forfait mensuel :"), AutoNumericCtrl(self, None, 'forfait_mensuel', min=0, precision=2)
         sizer1.AddMany([(self.facturation_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.facturation_items[1], 0, wx.EXPAND)])
         sizer1.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_adaptation'), 0, wx.EXPAND)])
@@ -892,6 +896,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
             self.forfait_heures_presences_static.Show(inscription.mode == MODE_FORFAIT_HORAIRE)
             self.duree_reference_choice.SetSelection(inscription.duree_reference / 7 - 1)
             self.planning_panel.SetInscription(inscription)
+            self.jours_poses.SetValue(u"%d jours posés / %d jours" % (inscription.GetNombreJoursCongesPoses(), inscription.semaines_conges*inscription.GetJoursHeuresReference()[0]))
         else:
             self.planning_panel.SetInscription(None)
             for obj in [self.duree_reference_choice, self.mode_accueil_choice, self.button_5_5, self.button_copy, self.validation_button]:

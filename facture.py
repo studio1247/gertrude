@@ -87,6 +87,7 @@ class FactureFinMois(object):
         self.montant_heure_garde = 0.0
         self.correction = 0.0
         self.libelle_correction = ""
+        self.regularisation = 0.0
         if self.debut_recap in inscrit.corrections:
             try:
                 if inscrit.corrections[self.debut_recap].valeur:
@@ -213,7 +214,7 @@ class FactureFinMois(object):
                     elif state == VACANCES:
                         if heures_reference > 0:
                             self.jours_vacances.append(date)
-                        if (creche.repartition==REPARTITION_SANS_MENSUALISATION and not inscription.IsNombreSemainesCongesAtteint(date)) or creche.gestion_preavis_conges:
+                        if creche.repartition==REPARTITION_SANS_MENSUALISATION and not inscription.IsNombreSemainesCongesAtteint(date):
                             self.jours_conges_non_factures.append(date)
                             self.heures_facturees_par_mode[cotisation.mode_garde] -= heures_reference
                             self.CalculeDeduction(cotisation, heures_reference)
@@ -343,7 +344,30 @@ class FactureFinMois(object):
                     self.cotisation_mensuelle += prorata
                     self.total_contractualise += prorata
                     self.heures_contrat += prorata_heures
+
+                if creche.gestion_depart_anticipe and inscription.depart and cotisation.Include(inscription.depart):
+                    date = cotisation.debut
+                    while date <= inscription.depart:
+                        cotisation_regularisee = Cotisation(inscrit, date, options=NO_ADDRESS|self.options|DEPART_ANTICIPE)
+                        regularisation_cotisation = cotisation_regularisee.cotisation_mensuelle - cotisation.cotisation_mensuelle
+                        if (options & TRACES):
+                            print u" régularisation cotisation : %f - %f = %f" % (cotisation_regularisee.cotisation_mensuelle, cotisation.cotisation_mensuelle, regularisation_cotisation)
+                        self.regularisation += regularisation_cotisation 
+                        date = GetNextMonthStart(date)
+
+                if inscription and inscription.GetJoursHeuresReference()[0]:
+                    if (inscription.fin and cotisation.Include(inscription.fin)) or (creche.gestion_depart_anticipe and inscription.depart and cotisation.Include(inscription.depart)):
+                        semaines_conges_non_pris = inscription.semaines_conges - float(inscription.GetNombreJoursCongesPoses()) / inscription.GetJoursHeuresReference()[0]
+                        heures = cotisation.heures_semaine * semaines_conges_non_pris
+                        regularisation_conges_non_pris = heures * cotisation.montant_heure_garde
+                        if (options & TRACES):
+                            print u" régularisation congés non pris : %dh * %f = %f" % (heures, cotisation.montant_heure_garde, regularisation_conges_non_pris)
+                        self.regularisation += regularisation_conges_non_pris
                     
+        if self.regularisation != 0:
+            self.deduction -= self.regularisation
+            self.raison_deduction.add(u"régularisation")
+            
         self.heures_facture = self.heures_contrat + self.heures_supplementaires - self.heures_maladie
         self.heures_facturees = sum(self.heures_facturees_par_mode)
         if creche.temps_facturation == FACTURATION_FIN_MOIS:
@@ -392,8 +416,8 @@ class FactureFinMois(object):
                 if inscription.reservataire:
                     self.frais_inscription_reservataire += inscription.frais_inscription
                 else:
-                    self.frais_inscription += inscription.frais_inscription 
-        
+                    self.frais_inscription += inscription.frais_inscription
+
         self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction + self.correction
         self.total_facture = self.total + self.report_cotisation_mensuelle
         
