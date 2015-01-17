@@ -96,7 +96,9 @@ class DocumentAccueilModifications(object):
                         fields.append(('semaines-brut-periode', "%.2f" % (heures_brut_periode / self.cotisation.heures_semaine)))
                     else:
                         fields.append(('semaines-brut-periode', "0"))
-    
+
+        fields.append(('dates-conges-creche', ", ".join([(GetDateString(debut) + ' - ' + GetDateString(fin)) for debut, fin in creche.liste_conges if inscription.debut < fin and (not inscription.fin or inscription.fin > debut)])))
+        
         for jour in range(len(inscription.reference)):
             jour_reference = inscription.reference[jour]
             debut, fin = jour_reference.GetPlageHoraire()
@@ -105,10 +107,8 @@ class DocumentAccueilModifications(object):
             fields.append(('heures-jour[%d]' % jour, GetHeureString(jour_reference.GetNombreHeures())))
 
         for key in creche.activites:
-            print key, creche.activites[key]
             fields.append(('liste-activites[%d]' % key, inscription.GetListeActivites(key)))
 
-        print fields
         return fields
 
     def IsPresentDuringTranche(self, weekday, debut, fin):

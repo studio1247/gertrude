@@ -27,8 +27,20 @@ from doc_planning_detaille import PlanningDetailleModifications
 
 class DayPlanningPanel(PlanningWidget):
     def __init__(self, parent, activity_combobox):
-        PlanningWidget.__init__(self, parent, activity_combobox, COMMENTS|ACTIVITES|TWO_PARTS|DEPASSEMENT_CAPACITE)
-        
+        PlanningWidget.__init__(self, parent, activity_combobox, COMMENTS|ACTIVITES|TWO_PARTS|DEPASSEMENT_CAPACITE, self.CheckLine)
+    
+    def CheckLine(self, line, plages_selectionnees):
+        lines = self.GetSummaryLines()
+        activites, activites_sans_horaires = GetActivitiesSummary(creche, lines)
+        for start, end in plages_selectionnees:                        
+            for i in range(start, end):
+                if activites[0][i][0] > creche.GetCapacite(line.day):
+                    dlg = wx.MessageDialog(None, u"Dépassement de la capacité sur ce créneau horaire !", "Attention", wx.OK|wx.ICON_WARNING)
+                    dlg.ShowModal()
+                    dlg.Destroy()
+                    self.state = None
+                    return
+                    
     def UpdateContents(self):
         if self.date in creche.jours_fermeture:
             conge = creche.jours_fermeture[self.date]
@@ -43,7 +55,7 @@ class DayPlanningPanel(PlanningWidget):
         else:
             self.SetInfo("")
         
-        lignes_enfants = []
+        self.lignes_enfants = []
         for inscrit in creche.inscrits:
             inscription = inscrit.GetInscription(self.date)
             if inscription is not None and (len(creche.sites) <= 1 or inscription.site is self.site) and (self.groupe is None or inscription.groupe == self.groupe):
@@ -90,14 +102,14 @@ class DayPlanningPanel(PlanningWidget):
                 if date in inscrit.factures_cloturees:
                     line.readonly = True
                 line.day = self.date.weekday()
-                lignes_enfants.append(line)
+                self.lignes_enfants.append(line)
                 
         if creche.tri_planning == TRI_GROUPE:
-            lignes_enfants = TrieParGroupes(lignes_enfants)
+            self.lignes_enfants = TrieParGroupes(self.lignes_enfants)
         else:
-            lignes_enfants.sort(key=lambda line: line.label)    
+            self.lignes_enfants.sort(key=lambda line: line.label)    
                  
-        lignes_salaries = []
+        self.lignes_salaries = []
         for salarie in creche.salaries:
             contrat = salarie.GetContrat(self.date)
             if contrat is not None and (len(creche.sites) <= 1 or contrat.site is self.site):
@@ -127,12 +139,12 @@ class DayPlanningPanel(PlanningWidget):
                     return GetHeureString(heures_jour) + '/' + GetHeureString(heures_semaine)
                 line.GetDynamicText = GetHeuresSalarie
                 line.summary = SUMMARY_DEN
-                lignes_salaries.append(line)
-        lignes_salaries.sort(key=lambda line: line.label)    
+                self.lignes_salaries.append(line)
+        self.lignes_salaries.sort(key=lambda line: line.label)    
 
-        if lignes_salaries:
-            lignes_enfants.append(None)
-        self.SetLines(lignes_enfants + lignes_salaries)
+        if self.lignes_salaries:
+            self.lignes_enfants.append(None)
+        self.SetLines(self.lignes_enfants + self.lignes_salaries)
     
     def GetSummaryDynamicText(self):
         heures = 0.0

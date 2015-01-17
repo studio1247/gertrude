@@ -607,8 +607,30 @@ class ParentsPanel(InscriptionsTab):
 
 class ReferencePlanningPanel(PlanningWidget):
     def __init__(self, parent, activity_choice):
-        PlanningWidget.__init__(self, parent, activity_choice, options=NO_ICONS|PRESENCES_ONLY|ACTIVITES)
-        
+        PlanningWidget.__init__(self, parent, activity_choice, options=NO_ICONS|PRESENCES_ONLY|ACTIVITES|DEPASSEMENT_CAPACITE, check_line=self.CheckLine)
+
+    def CheckLine(self, line, plages):
+        dates_depassement = []
+        for date in self.inscription.GetDatesFromReference(line.day):
+            if not self.CheckDate(date, plages):
+                dates_depassement.append(date)
+                if len(dates_depassement) == creche.seuil_alerte_inscription:
+                    dlg = wx.MessageDialog(None, u"Dépassement de la capacité sur ce créneau horaire les:\n" + "\n".join([(" - " + GetDateString(date)) for date in dates_depassement]), "Attention", wx.OK|wx.ICON_WARNING)
+                    dlg.ShowModal()
+                    dlg.Destroy()
+                    self.state = None
+                    return
+            
+    def CheckDate(self, date, plages):
+        capacite = creche.GetCapacite(date.weekday())
+        lines = GetLines(date, creche.inscrits)
+        activites, activites_sans_horaires = GetActivitiesSummary(creche, lines)
+        for start, end in plages:                        
+            for i in range(start, end):
+                if activites[0][i][0] > capacite:
+                    return False
+        return True
+   
     def UpdateContents(self):
         lines = []
         if self.inscription:
@@ -616,6 +638,7 @@ class ReferencePlanningPanel(PlanningWidget):
                 if JourSemaineAffichable(day):
                     line = self.inscription.reference[day]
                     line.insert = None
+                    line.day = day
                     line.label = days[day % 7]
                     line.reference = None
                     line.summary = SUMMARY_NUM

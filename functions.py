@@ -291,7 +291,6 @@ def GetDeMoisStr(mois):
         return "d'%s" % months[mois].lower()
     else:
         return "de %s" % months[mois].lower()
-       
 
 def GetParentsString(inscrit):
     if not inscrit.parents['papa'] and not inscrit.parents['maman']:
@@ -649,11 +648,13 @@ def GetCotisationFields(cotisation):
             ('heures-semaine', GetHeureString(cotisation.heures_semaine)),
             ('heures-mois', GetHeureString(cotisation.heures_mois)),
             ('heures-periode', GetHeureString(cotisation.heures_periode)),
+            ('semaines-periode', cotisation.semaines_periode),
             ('cotisation-mensuelle', "%.02f" % cotisation.cotisation_mensuelle),
-            ('enfants-a-charge', cotisation.enfants_a_charge),            
+            ('enfants-a-charge', cotisation.enfants_a_charge),           
             ('annee-debut', cotisation.debut.year),
             ('annee-fin', cotisation.debut.year+1),
-            ('semaines-conges', cotisation.conges_inscription)
+            ('semaines-conges', cotisation.conges_inscription),
+            ('liste-conges', ", ".join(cotisation.liste_conges))
            ]
 
 def GetFactureFields(facture):

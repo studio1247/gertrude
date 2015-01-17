@@ -121,6 +121,7 @@ class Cotisation(object):
             print u"\nCotisation de %s au %s ..." % (GetPrenomNom(inscrit), date)
 
         self.revenus_parents = []
+        self.liste_conges = []
         self.conges_inscription = []
         self.chomage = 0
         self.conge_parental = 0
@@ -213,6 +214,7 @@ class Cotisation(object):
         self.heures_periode = 0.0
         self.heures_fermeture_creche = 0.0
         self.heures_accueil_non_facture = 0.0
+        self.semaines_periode = 0
               
         if creche.mode_facturation == FACTURATION_FORFAIT_10H:
             self.heures_semaine = 10.0 * self.jours_semaine
@@ -231,10 +233,13 @@ class Cotisation(object):
                 if self.fin_inscription is None:
                     errors.append(u" - La période d'inscription n'a pas de fin.")
                     raise CotisationException(errors)
+                # debut_conge = None
                 while date <= self.fin_inscription:
                     heures = self.inscription.GetJourneeReference(date).GetNombreHeures()
                     if heures:
                         if date in creche.jours_fermeture:
+                            # if debut_conge is None:
+                            #     debut_conge = date
                             if creche.jours_fermeture[date].options == ACCUEIL_NON_FACTURE:
                                 if (options & TRACES): print u' accueil non facturé :', date, "(%fh)" % heures
                                 self.heures_accueil_non_facture += heures
@@ -243,14 +248,21 @@ class Cotisation(object):
                                 self.heures_fermeture_creche += heures
                         elif date in self.inscrit.jours_conges:
                             if (options & TRACES): print u' jour de congé inscription :', date, "(%fh)" % heures
-                            self.conges_inscription.append(date)                            
+                            self.conges_inscription.append(date)
+                            # if debut_conge is None:
+                            #     debut_conge = date                            
                         else:
                             self.heures_periode += heures
+                            # if debut_conge is not None:
+                            #     self.liste_conges.append(date2str(debut_conge) + " - " + date2str(date-datetime.timedelta(1)))
+                            #     debut_conge = None
                     date += datetime.timedelta(1)
-                
+                # if debut_conge is not None:
+                #     self.liste_conges.append(date2str(debut_conge) + " - " + date2str(self.fin_inscription))
                 if self.inscription.semaines_conges:
                     if (options & TRACES): print u' + %d semaines de congés' % self.inscription.semaines_conges
                     self.heures_periode -= self.inscription.semaines_conges * self.heures_semaine
+                    self.liste_conges.append(u"%d semaines de congés" % self.inscription.semaines_conges)
                 self.heures_periode = math.ceil(self.heures_periode)
                 if options & TRACES: print u' heures période :', self.heures_periode
                 self.semaines_periode = ((self.fin_inscription - self.inscription.debut).days + 7) / 7

@@ -927,6 +927,7 @@ class Creche(object):
         self.conversion_formule_taux_effort = None
         self.gestion_alertes = False
         self.age_maximum = 3
+        self.seuil_alerte_inscription = 3
         self.cloture_factures = False
         self.arrondi_heures = SANS_ARRONDI
         self.arrondi_facturation = SANS_ARRONDI
@@ -965,6 +966,7 @@ class Creche(object):
         self.jours_feries = self.jours_fermeture.keys()
         self.jours_fete = set(self.jours_feries) - set(self.jours_weekend)
         self.jours_conges = set()
+        self.liste_conges = []
         def AddPeriode(debut, fin, conge):
             date = debut
             while date <= fin:
@@ -972,6 +974,7 @@ class Creche(object):
                 if date not in self.jours_feries:
                     self.jours_conges.add(date)
                 date += datetime.timedelta(1)
+            self.liste_conges.append((debut, fin))
 
         for conge in self.conges:
             if conge.options == MOIS_SANS_FACTURE:
@@ -1208,7 +1211,7 @@ class Creche(object):
                 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'periode_revenus', 'mode_facturation', 'repartition', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'age_maximum', 'cloture_factures', 'arrondi_heures', 'arrondi_facturation', 'arrondi_heures_salaries', 'gestion_maladie_hospitalisation', 'gestion_absences_non_prevenues', 'gestion_maladie_sans_justificatif', 'gestion_preavis_conges', 'gestion_depart_anticipe', 'alerte_depassement_planning', 'tri_planning', 'smtp_server', 'caf_email', 'mode_accueil_defaut', 'last_tablette_synchro'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'periode_revenus', 'mode_facturation', 'repartition', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'age_maximum', 'seuil_alerte_inscription', 'cloture_factures', 'arrondi_heures', 'arrondi_facturation', 'arrondi_heures_salaries', 'gestion_maladie_hospitalisation', 'gestion_absences_non_prevenues', 'gestion_maladie_sans_justificatif', 'gestion_preavis_conges', 'gestion_depart_anticipe', 'alerte_depassement_planning', 'tri_planning', 'smtp_server', 'caf_email', 'mode_accueil_defaut', 'last_tablette_synchro'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
@@ -1471,6 +1474,19 @@ class Inscription(PeriodeReference):
                 date += datetime.timedelta(1)
         return False
     
+    def GetDatesFromReference(self, index):
+        dates = []
+        if self.debut is None:
+            return dates
+        fin = self.fin
+        if not fin:
+            fin = datetime(self.debut.year+1, self.debut.month, self.debut.day)
+        date = self.debut + datetime.timedelta(index + 7 - self.debut.weekday())
+        while date < fin:
+            dates.append(date)
+            date += datetime.timedelta(self.duree_reference)
+        return dates
+    
     def IsInPeriodeAdaptation(self, date):
         if self.debut is None or self.fin_periode_adaptation is None:
             return False
@@ -1724,7 +1740,7 @@ class Inscrit(object):
         for inscription in self.inscriptions:
             if (preinscription or not creche.preinscriptions or not inscription.preinscription) and inscription.debut and date >= inscription.debut and (not inscription.fin or date <= inscription.fin) and (not departanticipe or not inscription.depart or date <= inscription.depart):
                 return inscription
-        return None
+        return None        
 
     def GetInscriptions(self, date_debut, date_fin):
         result = []

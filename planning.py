@@ -74,8 +74,9 @@ class LigneConge(object):
         return 0.0
 
 class PlanningGridWindow(BufferedWindow):
-    def __init__(self, parent, activity_combobox, options):
+    def __init__(self, parent, activity_combobox, options, check_line=None):
         self.options = options
+        self.check_line = check_line
         self.info = ""
         self.plages_fermeture = creche.GetPlagesArray(PLAGE_FERMETURE, conversion=True)
         self.plages_insecables = creche.GetPlagesArray(PLAGE_INSECABLE, conversion=True)
@@ -404,7 +405,7 @@ class PlanningGridWindow(BufferedWindow):
                 for start, end in self.GetPlagesSelectionnees():                        
                     line.ClearActivity(start, end, self.value)
                 
-            if not (self.GetParent().GetParent().options & PRESENCES_ONLY) and len(line.activites) == 0 and line.reference and len(line.reference.activites) > 0:
+            if not (self.options & PRESENCES_ONLY) and len(line.activites) == 0 and line.reference and len(line.reference.activites) > 0:
                 line.SetState(VACANCES)
                 
             if line.insert is not None:
@@ -414,23 +415,14 @@ class PlanningGridWindow(BufferedWindow):
             self.GetParent().UpdateLine(self.curStartY)
             self.UpdateDrawing()
             
-            if self.GetParent().GetParent().options & DEPASSEMENT_CAPACITE and self.state > 0 and self.value == 0 and creche.alerte_depassement_planning:
-                lines = self.GetParent().GetParent().GetSummaryLines()
-                activites, activites_sans_horaires = GetActivitiesSummary(creche, lines)
-                for start, end in self.GetPlagesSelectionnees():                        
-                    for i in range(start, end):
-                        if activites[0][i][0] > creche.GetCapacite(line.day):
-                            dlg = wx.MessageDialog(None, u"Dépassement de la capacité sur ce créneau horaire !", "Attention", wx.OK|wx.ICON_WARNING)
-                            dlg.ShowModal()
-                            dlg.Destroy()
-                            self.state = None
-                            return
+            if self.options & DEPASSEMENT_CAPACITE and self.state > 0 and self.value == 0 and creche.alerte_depassement_planning and self.check_line:
+                self.check_line(line, self.GetPlagesSelectionnees())
                     
             self.state = None
  
 
 class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
-    def __init__(self, parent, activity_combobox, options):
+    def __init__(self, parent, activity_combobox, options, check_line=None):
         self.options = options
         self.activites_count = 0
         self.bulle_bitmap = wx.Bitmap(GetBitmapFile("bulle.png"))
@@ -451,7 +443,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             self.buttons_sizer = wx.BoxSizer(wx.VERTICAL)
             self.buttons_sizer.SetMinSize((ICONS_WIDTH-2, -1))
             self.sizer.Add(self.buttons_sizer, 0, wx.EXPAND|wx.RIGHT, 2)
-        self.grid_panel = PlanningGridWindow(self, activity_combobox, options)
+        self.grid_panel = PlanningGridWindow(self, activity_combobox, options, check_line)
         self.sizer.Add(self.grid_panel, 0, wx.EXPAND)
         self.last_activites_observer = None
         self.right_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -858,14 +850,14 @@ class PlanningSummaryPanel(BufferedWindow):
             x += 1
         
 class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
-    def __init__(self, parent, activity_combobox=None, options=0):
+    def __init__(self, parent, activity_combobox=None, options=0, check_line=None):
         wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, id=-1, style=wx.LB_DEFAULT)
         self.options = options
         self.lines = []
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.scale_window = wx.Window(self, -1, size=(-1, 25))
         self.sizer.Add(self.scale_window, 0, wx.EXPAND)
-        self.internal_panel = PlanningInternalPanel(self, activity_combobox, options)
+        self.internal_panel = PlanningInternalPanel(self, activity_combobox, options, check_line)
         self.sizer.Add(self.internal_panel, 1, wx.EXPAND)
         if not (options & NO_BOTTOM_LINE):
             self.summary_panel = PlanningSummaryPanel(self, options)
