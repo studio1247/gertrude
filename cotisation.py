@@ -229,12 +229,12 @@ class Cotisation(object):
         else:                
             self.heures_semaine = self.heures_reelles_semaine
             if creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
-                date = self.inscription.debut
-                if self.fin_inscription is None:
+                date = self.debut
+                if self.fin is None:
                     errors.append(u" - La période d'inscription n'a pas de fin.")
                     raise CotisationException(errors)
                 # debut_conge = None
-                while date <= self.fin_inscription:
+                while date <= self.fin:
                     heures = self.inscription.GetJourneeReference(date).GetNombreHeures()
                     if heures:
                         if date in creche.jours_fermeture:
@@ -428,6 +428,7 @@ class Cotisation(object):
         self.cotisation_mensuelle += self.majoration_mensuelle
         if options & TRACES: 
             print " cotisation mensuelle :", self.cotisation_mensuelle
+            print " montant heure garde :", self.montant_heure_garde
             print
     
     def AjustePeriode(self, param):
