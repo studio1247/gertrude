@@ -272,6 +272,7 @@ class Cotisation(object):
                 if options & TRACES: print ' nombres de factures :', self.nombre_factures
                 self.heures_mois = math.ceil(self.heures_periode / self.nombre_factures)
                 if options & TRACES: print ' heures mensuelles : %f (%f)' % (self.heures_mois, self.heures_periode / self.nombre_factures)
+                self.prorata_effectue = True
             else:
                 if creche.repartition == REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS:
                     if self.fin_inscription is None:
