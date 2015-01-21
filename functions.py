@@ -166,12 +166,14 @@ def GetNom(person):
     else:
         return ""
 
-def GetNom4P1(person, array):
-    if person:
-        result = person.nom[:4].upper()
-        noms = [p.nom[:4].upper() for p in array]
-        if noms.count(result) > 1 and len(person.prenom) > 0:
-            result += person.prenom[0].upper()
+def GetNom4P1(inscrit, inscrits):
+    if inscrit:
+        result = inscrit.nom[:4].upper()
+        noms = [p.nom[:4].upper() for p in inscrits]
+        if noms.count(result) > 1 and len(inscrit.prenom) > 0:
+            for parent in inscrit.parents.values():
+                if parent and len(parent.prenom) > 0:
+                    result += parent.prenom[0].upper()
         return result
     else:
         return ""
