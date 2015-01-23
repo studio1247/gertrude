@@ -355,9 +355,10 @@ class FactureFinMois(object):
                         self.regularisation += regularisation_cotisation 
                         date = GetNextMonthStart(date)
 
-                if inscription and inscription.GetJoursHeuresReference()[0]:
+                jours_presence = inscription.GetNombreJoursPresenceSemaine()
+                if inscription and jours_presence:
                     if (inscription.fin and inscription.fin >= self.debut_recap and inscription.fin <= self.fin_recap) or (creche.gestion_depart_anticipe and inscription.depart and inscription.depart >= self.debut_recap and inscription.depart <= self.fin_recap):
-                        semaines_conges_non_pris = inscription.semaines_conges - float(inscription.GetNombreJoursCongesPoses()) / inscription.GetJoursHeuresReference()[0]
+                        semaines_conges_non_pris = inscription.semaines_conges - float(inscription.GetNombreJoursCongesPoses()) / jours_presence
                         heures = cotisation.heures_semaine * semaines_conges_non_pris
                         regularisation_conges_non_pris = heures * cotisation.montant_heure_garde
                         if (options & TRACES):

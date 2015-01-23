@@ -694,6 +694,26 @@ class PeriodeReference(SQLObject):
         else:
             return self.reference[date.weekday()]
 
+    def GetNombreJoursPresenceSemaine(self):
+        jours = 0
+        for i in range(self.duree_reference):
+            if JourSemaineAffichable(i) and self.reference[i].GetState() & PRESENT:
+                jours += 1
+        if self.duree_reference > 7:
+            return float(jours) / (self.duree_reference / 7)
+        else:
+            return jours
+        
+    def GetNombreHeuresPresenceSemaine(self):
+        heures = 0.0
+        for i in range(self.duree_reference):
+            if JourSemaineAffichable(i) and self.reference[i].GetState() & PRESENT:
+                heures += self.reference[i].GetNombreHeures()
+        if self.duree_reference > 7:
+            return heures / (self.duree_reference / 7)
+        else:
+            return heures
+    
     def GetJoursHeuresReference(self):
         jours = 0
         heures = 0.0
@@ -1301,7 +1321,6 @@ class Referent(SQLObject):
         self.prenom = ""
         self.nom = ""
         self.telephone = ""
-        
         if creation:
             self.create()
 
@@ -1439,6 +1458,12 @@ class Inscription(PeriodeReference):
         result.reference = reference
         return result
     
+    def GetNombreJoursCongesPeriode(self):
+        if self.semaines_conges:
+            return self.semaines_conges * self.GetNombreJoursPresenceSemaine()
+        else:
+            return 0
+        
     def GetNombreJoursCongesPoses(self):
         jours = 0
         if self.debut and self.fin:
@@ -1456,10 +1481,8 @@ class Inscription(PeriodeReference):
     def IsNombreSemainesCongesAtteint(self, jalon):
         if self.debut:
             if self.semaines_conges:
-                restant = self.semaines_conges * self.GetJoursHeuresReference()[0]
-                print "restant", jalon, restant
+                restant = self.GetNombreJoursCongesPeriode()
             else:
-                # print GetPrenomNom(self.inscrit)
                 restant = 0
             date = self.debut
             if self.fin_periode_adaptation:

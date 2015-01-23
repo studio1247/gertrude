@@ -74,9 +74,10 @@ class LigneConge(object):
         return 0.0
 
 class PlanningGridWindow(BufferedWindow):
-    def __init__(self, parent, activity_combobox, options, check_line=None):
+    def __init__(self, parent, activity_combobox, options, check_line=None, on_modify=None):
         self.options = options
         self.check_line = check_line
+        self.on_modify = on_modify
         self.info = ""
         self.plages_fermeture = creche.GetPlagesArray(PLAGE_FERMETURE, conversion=True)
         self.plages_insecables = creche.GetPlagesArray(PLAGE_INSECABLE, conversion=True)
@@ -417,12 +418,15 @@ class PlanningGridWindow(BufferedWindow):
             
             if self.options & DEPASSEMENT_CAPACITE and self.state > 0 and self.value == 0 and creche.alerte_depassement_planning and self.check_line:
                 self.check_line(line, self.GetPlagesSelectionnees())
+                
+            if self.on_modify:
+                self.on_modify(line)
                     
             self.state = None
  
 
 class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
-    def __init__(self, parent, activity_combobox, options, check_line=None):
+    def __init__(self, parent, activity_combobox, options, check_line=None, on_modify=None):
         self.options = options
         self.activites_count = 0
         self.bulle_bitmap = wx.Bitmap(GetBitmapFile("bulle.png"))
@@ -443,7 +447,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
             self.buttons_sizer = wx.BoxSizer(wx.VERTICAL)
             self.buttons_sizer.SetMinSize((ICONS_WIDTH-2, -1))
             self.sizer.Add(self.buttons_sizer, 0, wx.EXPAND|wx.RIGHT, 2)
-        self.grid_panel = PlanningGridWindow(self, activity_combobox, options, check_line)
+        self.grid_panel = PlanningGridWindow(self, activity_combobox, options, check_line, on_modify)
         self.sizer.Add(self.grid_panel, 0, wx.EXPAND)
         self.last_activites_observer = None
         self.right_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -850,14 +854,14 @@ class PlanningSummaryPanel(BufferedWindow):
             x += 1
         
 class PlanningWidget(wx.lib.scrolledpanel.ScrolledPanel):
-    def __init__(self, parent, activity_combobox=None, options=0, check_line=None):
+    def __init__(self, parent, activity_combobox=None, options=0, check_line=None, on_modify=None):
         wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, id=-1, style=wx.LB_DEFAULT)
         self.options = options
         self.lines = []
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.scale_window = wx.Window(self, -1, size=(-1, 25))
         self.sizer.Add(self.scale_window, 0, wx.EXPAND)
-        self.internal_panel = PlanningInternalPanel(self, activity_combobox, options, check_line)
+        self.internal_panel = PlanningInternalPanel(self, activity_combobox, options, check_line, on_modify)
         self.sizer.Add(self.internal_panel, 1, wx.EXPAND)
         if not (options & NO_BOTTOM_LINE):
             self.summary_panel = PlanningSummaryPanel(self, options)
