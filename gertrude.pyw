@@ -23,7 +23,8 @@ import wx, wx.lib.wordwrap
 from wx.lib import masked
 from startdialog import StartDialog
 from config import Liste, Load, Update, Save, Restore, Exit, ProgressHandler
-from functions import GetBitmapFile, today
+from constants import *
+from functions import today, GetBitmapFile, GetPrenomNom
 from alertes import CheckAlertes
 try:
     import winsound
@@ -33,7 +34,7 @@ except:
 # Don't remove these 2 lines (mandatory for py2exe)
 import controls, zipfile, xml.dom.minidom, wx.html, ooffice
 
-VERSION = '0.98c'
+VERSION = '0.98d'
 
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):
@@ -182,9 +183,11 @@ class GertrudeFrame(wx.Frame):
         self.Bind(EVT_UPDATE_AVAILABLE_EVENT, self.OnUpdateAvailable)
         thread.start_new_thread(self.CheckForUpdates, ())
         
+        self.ChangementsGroupeEvent, EVT_CHANGEMENT_GROUPES_EVENT = wx.lib.newevent.NewEvent()
+        self.Bind(EVT_CHANGEMENT_GROUPES_EVENT, self.OnChangementsGroupeAvailable)        
         self.AlertEvent, EVT_ALERT_EVENT = wx.lib.newevent.NewEvent()
-        self.Bind(EVT_ALERT_EVENT, self.OnAlertAvailable)
-        thread.start_new_thread(self.CheckAlertes, ())
+        self.Bind(EVT_ALERT_EVENT, self.OnAlertesAvailable)
+        thread.start_new_thread(self.AutoActions, ())
 
         self.Bind(wx.EVT_SIZE, self.OnResize)
         self.Bind(wx.EVT_CLOSE, self.OnExit)
@@ -201,13 +204,35 @@ class GertrudeFrame(wx.Frame):
                 __builtin__.creche = _creche
                 self.listbook.UpdateContents()
         
-    def CheckAlertes(self):
+    def AutoActions(self):
+        if creche.changement_groupe_auto:
+            changements = []
+            for inscrit in creche.inscrits:
+                if inscrit.naissance:
+                    for inscription in inscrit.inscriptions:
+                        if inscription.debut and (not inscription.fin or inscription.fin >= today):
+                             groupe = inscrit.GetGroupe()
+                             if groupe and inscription.groupe != groupe:
+                                 changements.append((inscription, groupe))
+            if changements:
+                wx.PostEvent(self, self.ChangementsGroupeEvent(changements=changements))
+                         
         if creche.gestion_alertes:
             new_alertes, alertes_non_acquittees = CheckAlertes()
             if new_alertes or alertes_non_acquittees:
                 wx.PostEvent(self, self.AlertEvent(new_alertes=new_alertes, alertes_non_acquittees=alertes_non_acquittees))
+    
+    def OnChangementsGroupeAvailable(self, event):
+        messages = []
+        for inscription, groupe in event.changements:
+            inscription.groupe = groupe
+            messages.append("%s passe dans le groupe %s" % (GetPrenomNom(inscription.inscrit, tri=TRI_PRENOM), groupe.nom))
+        texte = "\n".join(messages)
+        dlg = wx.MessageDialog(self, texte, "Changements de groupe")
+        result = dlg.ShowModal()
+        dlg.Destroy()
             
-    def OnAlertAvailable(self, event):
+    def OnAlertesAvailable(self, event):
         if event.new_alertes:
             for alerte in event.new_alertes:
                 alerte.create()
@@ -217,7 +242,7 @@ class GertrudeFrame(wx.Frame):
             for alerte in event.alertes_non_acquittees:
                 texte += alerte.texte + "\n"
             texte += "\n"
-            dlg = wx.MessageDialog(self, texte + "Voulez-vous acquitter ces alertes ?", "Gertrude", wx.YES_NO|wx.YES_DEFAULT|wx.CANCEL|wx.ICON_QUESTION)
+            dlg = wx.MessageDialog(self, texte + "Voulez-vous acquitter ces alertes ?", "Alertes", wx.YES_NO|wx.YES_DEFAULT|wx.CANCEL|wx.ICON_QUESTION)
             result = dlg.ShowModal()
             dlg.Destroy()
             if result == wx.ID_YES:

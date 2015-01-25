@@ -37,14 +37,8 @@ class CoordonneesModifications(object):
         if filename != 'content.xml':
             return None
 
-        fields = [('nom-creche', creche.nom),
-                  ('adresse-creche', creche.adresse),
-                  ('code-postal-creche', str(creche.code_postal)),
-                  ('ville-creche', creche.ville),
-                  ('telephone-creche', creche.telephone),
-                  ('email-creche', creche.email),
-                  ('date', '%.2d/%.2d/%d' % (self.date.day, self.date.month, self.date.year))
-                 ]
+        fields = GetCrecheFields(creche)
+        fields.append(('date', '%.2d/%.2d/%d' % (self.date.day, self.date.month, self.date.year)))
         ReplaceTextFields(dom, fields)
         
         for table in dom.getElementsByTagName('table:table'):

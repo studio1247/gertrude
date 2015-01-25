@@ -960,9 +960,14 @@ class Creche(object):
         self.alerte_depassement_planning = False
         self.tri_planning = TRI_PRENOM
         self.last_tablette_synchro = ""
+        self.changement_groupe_auto = False
+        self.allergies = ""
         self.alertes = {}
         self.CalculeJoursConges()
 
+    def GetAllergies(self):
+        return [allergie.strip() for allergie in self.allergies.split(",")]
+    
     def CalculeJoursConges(self):
         self.jours_fermeture = {}
         self.jours_fete = set()
@@ -1231,7 +1236,7 @@ class Creche(object):
                 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'periode_revenus', 'mode_facturation', 'repartition', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'age_maximum', 'seuil_alerte_inscription', 'cloture_factures', 'arrondi_heures', 'arrondi_facturation', 'arrondi_heures_salaries', 'gestion_maladie_hospitalisation', 'gestion_absences_non_prevenues', 'gestion_maladie_sans_justificatif', 'gestion_preavis_conges', 'gestion_depart_anticipe', 'alerte_depassement_planning', 'tri_planning', 'smtp_server', 'caf_email', 'mode_accueil_defaut', 'last_tablette_synchro'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'ouverture', 'fermeture', 'affichage_min', 'affichage_max', 'granularite', 'preinscriptions', 'presences_previsionnelles', 'presences_supplementaires', 'modes_inscription', 'minimum_maladie', 'email', 'type', 'periode_revenus', 'mode_facturation', 'repartition', 'temps_facturation', 'conges_inscription', 'tarification_activites', 'traitement_maladie', 'facturation_jours_feries', 'facturation_periode_adaptation', 'gestion_alertes', 'age_maximum', 'seuil_alerte_inscription', 'cloture_factures', 'arrondi_heures', 'arrondi_facturation', 'arrondi_heures_salaries', 'gestion_maladie_hospitalisation', 'gestion_absences_non_prevenues', 'gestion_maladie_sans_justificatif', 'gestion_preavis_conges', 'gestion_depart_anticipe', 'alerte_depassement_planning', 'tri_planning', 'smtp_server', 'caf_email', 'mode_accueil_defaut', 'last_tablette_synchro', 'changement_groupe_auto', 'allergies'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
@@ -1387,12 +1392,13 @@ class Groupe(SQLObject):
         self.idx = None
         self.nom = ""
         self.ordre = ordre
+        self.age_maximum = 0
         if creation:
             self.create()
         
     def create(self):
         print 'nouveau groupe'
-        result = sql_connection.execute('INSERT INTO GROUPES (idx, nom, ordre) VALUES(NULL,?,?)', (self.nom, self.ordre))
+        result = sql_connection.execute('INSERT INTO GROUPES (idx, nom, ordre, age_maximum) VALUES(NULL,?,?,?)', (self.nom, self.ordre, self.age_maximum))
         self.idx = result.lastrowid
         
     def delete(self):
@@ -1400,7 +1406,7 @@ class Groupe(SQLObject):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'ordre'] and self.idx:
+        if name in ['nom', 'ordre', 'age_maximum'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE GROUPES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
@@ -1669,6 +1675,7 @@ class Inscrit(object):
         self.jours_conges = {}
         self.factures_cloturees = {}
         self.corrections = {}
+        self.allergies = ""
 
         if creation:
             self.create()
@@ -1691,10 +1698,12 @@ class Inscrit(object):
 #        self.autorisation_image = 0
 #        self.autorisation_recherche = 0
 
-
+    def GetAllergies(self):
+        return [allergie.strip() for allergie in self.allergies.split(",")]
+    
     def create(self):
         print 'nouvel inscrit'
-        result = sql_connection.execute('INSERT INTO INSCRITS (idx, prenom, nom, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, marche, photo, notes, notes_parents, combinaison, categorie, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', (self.prenom, self.nom, self.naissance, self.adresse, self.code_postal, self.ville, self.numero_securite_sociale, self.numero_allocataire_caf, self.handicap, self.tarifs, self.marche, self.photo, self.notes, self.notes_parents, self.combinaison, self.categorie, self.medecin_traitant, self.telephone_medecin_traitant, self.assureur, self.numero_police_assurance))
+        result = sql_connection.execute('INSERT INTO INSCRITS (idx, prenom, nom, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, marche, photo, notes, notes_parents, combinaison, categorie, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', (self.prenom, self.nom, self.naissance, self.adresse, self.code_postal, self.ville, self.numero_securite_sociale, self.numero_allocataire_caf, self.handicap, self.tarifs, self.marche, self.photo, self.notes, self.notes_parents, self.combinaison, self.categorie, self.medecin_traitant, self.telephone_medecin_traitant, self.assureur, self.numero_police_assurance, self.allergies))
         self.idx = result.lastrowid
         for obj in self.parents.values() + self.freres_soeurs + self.referents + self.inscriptions: # TODO + self.presences.values():
             if obj:
@@ -1717,7 +1726,7 @@ class Inscrit(object):
             value = binascii.b2a_base64(value)
         elif name in ('categorie', ) and value is not None and self.idx:
             value = value.idx
-        if name in ['prenom', 'nom', 'sexe', 'naissance', 'adresse', 'code_postal', 'ville', 'numero_securite_sociale', 'numero_allocataire_caf', 'handicap', 'tarifs', 'marche', 'photo', 'combinaison', 'notes', 'notes_parents', 'categorie', 'medecin_traitant', 'telephone_medecin_traitant', 'assureur', 'numero_police_assurance'] and self.idx:
+        if name in ['prenom', 'nom', 'sexe', 'naissance', 'adresse', 'code_postal', 'ville', 'numero_securite_sociale', 'numero_allocataire_caf', 'handicap', 'tarifs', 'marche', 'photo', 'combinaison', 'notes', 'notes_parents', 'categorie', 'medecin_traitant', 'telephone_medecin_traitant', 'assureur', 'numero_police_assurance', 'allergies'] and self.idx:
             print 'update', name, (old_value, value)
             sql_connection.execute('UPDATE INSCRITS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
@@ -1726,6 +1735,15 @@ class Inscrit(object):
         if calcule:
             self.CalculeJoursConges()
             
+    def GetGroupe(self):
+        result = None
+        age = GetAge(self.naissance)
+        for groupe in creche.groupes:
+            if not groupe.age_maximum or age <= groupe.age_maximum:
+                if result is None or not result.age_maximum or (groupe.age_maximum and groupe.age_maximum < result.age_maximum):
+                    result = groupe
+        return result
+        
     def CalculeJoursConges(self, parent=None):
         if parent is None:
             parent = creche

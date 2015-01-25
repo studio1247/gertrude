@@ -389,7 +389,7 @@ class PetitsMoussesTests(GertrudeTestCase):
         facture = Facture(inscrit, 2013, 1, NO_ADDRESS|NO_PARENTS)
         self.assertEquals(float("%.2f" % facture.total), 302.51)
         facture = Facture(inscrit, 2013, 2, NO_ADDRESS|NO_PARENTS)
-        self.assertEquals(float("%.2f" % facture.total), 166.38)
+        self.assertEquals(float("%.2f" % facture.total), 166.38+354)
         
 
 class LoupandisesTests(GertrudeTestCase):

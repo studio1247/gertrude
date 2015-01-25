@@ -19,6 +19,7 @@ from constants import *
 from functions import *
 from facture import *
 from cotisation import CotisationException
+from sqlobjects import Inscription
 from ooffice import *
 
 left = 1.5
@@ -171,7 +172,11 @@ class PlanningDetailleModifications(object):
                                 node.setAttribute('svg:x', '%fcm' % (left + labels_width + float(a-affichage_min) * step))
                                 node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
                                 node.setAttribute('svg:width', '%fcm' % ((b-a)*step))
-                                ReplaceTextFields(node, [('texte', '')])
+                                if isinstance(line.inscription, Inscription):
+                                    allergies = ', '.join(line.inscription.inscrit.GetAllergies())
+                                else:
+                                    allergies = ''                                    
+                                ReplaceTextFields(node, [('texte', ''), ('allergies', allergies)])
                                 page.appendChild(node)
                             
                 if page_index+1 == pages_count:

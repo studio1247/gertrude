@@ -77,11 +77,17 @@ def GetHeureString(value):
     minutes -= heures * 60
     return "%dh%02d" % (heures, minutes)
 
-def GetAgeString(naissance):
+def GetAge(naissance):
+    age = 0
     if naissance:
         age = today.year * 12 + today.month - naissance.year * 12 - naissance.month
         if today.day < naissance.day:
             age -= 1
+    return age
+ 
+def GetAgeString(naissance):
+    if naissance:
+        age = GetAge(naissance)
         annees, mois = age / 12, age % 12
         if annees < 0:
             return ""   
@@ -184,13 +190,15 @@ def GetPrenom(person):
     else:
         return ""
     
-def GetPrenomNom(person, maj_nom=False):
+def GetPrenomNom(person, maj_nom=False, tri=None):
     if not person:
         return ""
     nom = person.nom
+    if tri is None:
+        tri = creche.tri_planning
     if maj_nom:
         nom = nom.upper()
-    if creche.tri_planning == TRI_NOM:
+    if tri == TRI_NOM:
         return "%s %s" % (nom, person.prenom)
     else:
         return "%s %s" % (person.prenom, nom)
@@ -515,6 +523,16 @@ def GetUnionHeures(journee, reference):
 
     return result
 
+def PopulateWeekChoice(combo):
+    date = first_monday = GetFirstMonday()
+    while date < last_date:
+        str = 'Semaine %d (%d %s %d)' % (date.isocalendar()[1], date.day, months[date.month - 1], date.year)
+        combo.Append(str, date)
+        date += datetime.timedelta(7)
+    delta = datetime.date.today() - first_monday
+    semaine = int(delta.days / 7)
+    combo.SetSelection(semaine)
+    
 class State(object):
     def __init__(self, state, heures_contractualisees=.0, heures_realisees=.0, heures_facturees=.0):
         self.state = state

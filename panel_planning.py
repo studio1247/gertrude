@@ -192,7 +192,7 @@ class PlanningPanel(GPanel):
         if len(creche.sites) < 2:
             self.site_choice.Show(False)
         self.site_choice.SetSelection(0)
-        self.Bind(wx.EVT_CHOICE, self.OnChangeWeek, self.site_choice)
+        self.Bind(wx.EVT_CHOICE, self.OnChangementSemaine, self.site_choice)
         
         # Les raccourcis pour semaine précédente / suivante
         self.previous_button = wx.Button(self, -1, '<', size=(20,0), style=wx.NO_BORDER)
@@ -205,15 +205,8 @@ class PlanningPanel(GPanel):
         # La combobox pour la selection de la semaine
         self.week_choice = wx.Choice(self, -1)
         sizer.Add(self.week_choice, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-        day = first_monday = GetFirstMonday()
-        while day < last_date:
-            string = 'Semaine %d (%d %s %d)' % (day.isocalendar()[1], day.day, months[day.month - 1], day.year)
-            self.week_choice.Append(string, day)
-            day += datetime.timedelta(7)
-        delta = datetime.date.today() - first_monday
-        semaine = int(delta.days / 7)
-        self.week_choice.SetSelection(semaine)
-        self.Bind(wx.EVT_CHOICE, self.OnChangeWeek, self.week_choice)
+        PopulateWeekChoice(self.week_choice)
+        self.Bind(wx.EVT_CHOICE, self.OnChangementSemaine, self.week_choice)
         
         # La combobox pour la selection du groupe (si groupes)
         self.groupe_choice = wx.Choice(self, -1)
@@ -243,16 +236,15 @@ class PlanningPanel(GPanel):
         # le notebook pour les jours de la semaine
         self.notebook = wx.Notebook(self, style=wx.LB_DEFAULT)
         self.sizer.Add(self.notebook, 1, wx.EXPAND|wx.TOP, 5)
+        first_monday = GetFirstMonday()
+        delta = datetime.date.today() - first_monday
+        semaine = int(delta.days / 7)
         for week_day in range(7):
             if JourSemaineAffichable(week_day):
                 date = first_monday + datetime.timedelta(semaine * 7 + week_day)
                 planning_panel = DayPlanningPanel(self.notebook, self.activity_choice)
-                if len(creche.sites) > 1:
-                    planning_panel.SetData(creche.sites[0], None, date)
-                else:
-                    planning_panel.SetData(None, None, date)
                 self.notebook.AddPage(planning_panel, GetDateString(date))
-        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnChangeWeekday, self.notebook)
+        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnChangementSemaineday, self.notebook)
         self.sizer.Layout()
     
     def UpdateGroupeCombobox(self):
@@ -275,9 +267,9 @@ class PlanningPanel(GPanel):
         DocumentDialog(self, PlanningDetailleModifications((start, end), site, groupe)).ShowModal()
 
     def OnChangeGroupeDisplayed(self, evt):
-        self.OnChangeWeek(None)
+        self.OnChangementSemaine(None)
     
-    def OnChangeWeekday(self, evt=None):
+    def OnChangementSemaineday(self, evt=None):
         self.notebook.GetCurrentPage().UpdateDrawing()
     
     def GetSelectedSite(self):
@@ -294,7 +286,7 @@ class PlanningPanel(GPanel):
         else:
             return None        
             
-    def OnChangeWeek(self, evt=None):
+    def OnChangementSemaine(self, evt=None):
         self.UpdateWeek()
         self.notebook.SetSelection(0)
         self.sizer.Layout()
@@ -318,11 +310,11 @@ class PlanningPanel(GPanel):
         
     def onPreviousWeek(self, evt):
         self.week_choice.SetSelection(self.week_choice.GetSelection() - 1)
-        self.OnChangeWeek()
+        self.OnChangementSemaine()
     
     def onNextWeek(self, evt):
         self.week_choice.SetSelection(self.week_choice.GetSelection() + 1)
-        self.OnChangeWeek()
+        self.OnChangementSemaine()
 
     def onTabletteSynchro(self, evt):
         journal = config.connection.LoadJournal()
@@ -455,6 +447,6 @@ class PlanningPanel(GPanel):
         if 'groupes' in observers and observers['groupes'] > self.last_groupe_observer:
             self.UpdateGroupeCombobox()
             
-        self.OnChangeWeek()
+        self.OnChangementSemaine()
         self.sizer.Layout()
 
