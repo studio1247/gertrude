@@ -531,9 +531,9 @@ class ActivitesTab(AutoTab):
                         entrees.append((inscrit, date))
                         break
         if len(entrees) > 0:
-            message = 'Cette activité est utilisée par :\n'
+            message = u'Cette activité est utilisée par :\n'
             for inscrit, date in entrees:
-                message += '%s %s le %s, ' % (inscrit.prenom, inscrit.nom, GetDateString(date))
+                message += u'%s %s le %s, ' % (inscrit.prenom, inscrit.nom, GetDateString(date))
             message += '\nVoulez-vous vraiment la supprimer ?'
             dlg = wx.MessageDialog(self, message, 'Confirmation', wx.OK|wx.CANCEL|wx.ICON_WARNING)
             reponse = dlg.ShowModal()
