@@ -124,6 +124,7 @@ class DayPlanningPanel(PlanningWidget):
                 line.salarie = salarie
                 line.label = GetPrenomNom(salarie)
                 line.contrat = contrat
+                line.day = self.date.weekday()
                 def GetHeuresSalarie(line):
                     date = line.date - datetime.timedelta(line.date.weekday())
                     heures_semaine = 0
