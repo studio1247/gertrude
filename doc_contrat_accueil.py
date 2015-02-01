@@ -131,30 +131,18 @@ class DocumentAccueilModifications(object):
         else:
             return result        
 
-class ContratAccueilModifications(DocumentAccueilModifications):
-    def __init__(self, who, date, avenant=False):
+class OdtDocumentAccueilModifications(DocumentAccueilModifications):
+    def __init__(self, who, date):
         DocumentAccueilModifications.__init__(self, who, date)
         self.inscription = who.GetInscription(date)
         self.multi = False
-        if avenant and IsTemplateFile("Avenant contrat accueil.odt"):
-            self.template = "Avenant contrat accueil.odt"
-            self.default_output = u"Avenant contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
-        else:
-            if self.inscription.mode == MODE_TEMPS_PARTIEL and IsTemplateFile("Contrat accueil temps partiel.odt"):
-                self.template = "Contrat accueil temps partiel.odt"
-            elif self.inscription.mode == MODE_FORFAIT_HORAIRE and IsTemplateFile("Contrat accueil forfait mensuel.odt"):
-                self.template = "Contrat accueil forfait mensuel.odt"
-            elif self.inscription.mode == MODE_HALTE_GARDERIE and IsTemplateFile("Contrat accueil halte garderie.odt"):
-                self.template = "Contrat accueil halte garderie.odt"
-            else:
-                self.template = 'Contrat accueil.odt'
-            self.default_output = u"Contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
 
     def execute(self, filename, dom):
-        if filename != 'content.xml':
-            return None
-        
         fields = self.GetFields()
+        
+        if filename != 'content.xml':
+            ReplaceTextFields(dom, fields)
+            return None
         
         # print dom.toprettyxml()
         doc = dom.getElementsByTagName("office:text")[0]
@@ -179,7 +167,32 @@ class ContratAccueilModifications(DocumentAccueilModifications):
         # print doc.toprettyxml()
         ReplaceTextFields(doc, fields)
         return {}
-    
+
+class DevisAccueilModifications(OdtDocumentAccueilModifications):
+    def __init__(self, who, date):
+        OdtDocumentAccueilModifications.__init__(self, who, date)
+        self.template = "Devis accueil.odt"
+        self.default_output = u"Devis accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
+
+class ContratAccueilModifications(OdtDocumentAccueilModifications):
+    def __init__(self, who, date):
+        OdtDocumentAccueilModifications.__init__(self, who, date)
+        if self.inscription.mode == MODE_TEMPS_PARTIEL and IsTemplateFile("Contrat accueil temps partiel.odt"):
+            self.template = "Contrat accueil temps partiel.odt"
+        elif self.inscription.mode == MODE_FORFAIT_HORAIRE and IsTemplateFile("Contrat accueil forfait mensuel.odt"):
+            self.template = "Contrat accueil forfait mensuel.odt"
+        elif self.inscription.mode == MODE_HALTE_GARDERIE and IsTemplateFile("Contrat accueil halte garderie.odt"):
+            self.template = "Contrat accueil halte garderie.odt"
+        else:
+            self.template = 'Contrat accueil.odt'
+        self.default_output = u"Contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
+
+class AvenantContratAccueilModifications(OdtDocumentAccueilModifications):
+    def __init__(self, who, date):
+        OdtDocumentAccueilModifications.__init__(self, who, date)
+        self.template = "Avenant contrat accueil.odt"
+        self.default_output = u"Avenant contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
+
 class FraisGardeModifications(DocumentAccueilModifications):
     def __init__(self, who, date):
         DocumentAccueilModifications.__init__(self, who, date)

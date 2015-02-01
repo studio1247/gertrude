@@ -23,7 +23,7 @@ from controls import *
 from planning import *
 from cotisation import *
 from ooffice import *
-from doc_contrat_accueil import ContratAccueilModifications, FraisGardeModifications
+from doc_contrat_accueil import ContratAccueilModifications, DevisAccueilModifications, FraisGardeModifications
 
 def ParseHtml(filename, context):
     locals().update(context.__dict__)
@@ -81,13 +81,17 @@ class FraisGardePanel(wx.Panel):
         self.frais_accueil_button = wx.Button(self, -1, u"Exporter")
         sizer1.Add(self.frais_accueil_button, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationFraisAccueil, self.frais_accueil_button)
+        if IsTemplateFile("Devis accueil.odt"):
+            devis_button = wx.Button(self, -1, u"Générer un devis")
+            sizer1.Add(devis_button, 0, wx.LEFT, 5)
+            self.Bind(wx.EVT_BUTTON, self.EvtGenerationDevis, devis_button)
         self.contrat_button = wx.Button(self, -1, u"Générer le contrat")
         sizer1.Add(self.contrat_button, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationContrat, self.contrat_button)
         if IsTemplateFile("Avenant contrat accueil.odt"):
-            self.avenant_button = wx.Button(self, -1, u"Générer un avenant")
-            sizer1.Add(self.avenant_button, 0, wx.LEFT, 5)
-            self.Bind(wx.EVT_BUTTON, self.EvtGenerationAvenant, self.avenant_button)
+            avenant_button = wx.Button(self, -1, u"Générer un avenant")
+            sizer1.Add(avenant_button, 0, wx.LEFT, 5)
+            self.Bind(wx.EVT_BUTTON, self.EvtGenerationAvenant, avenant_button)
         self.sizer.Add(sizer1, 0, wx.ALL, 5)
         self.html_window = wx.html.HtmlWindow(self, style=wx.SUNKEN_BORDER)
         self.sizer.Add(self.html_window, 1, wx.EXPAND|wx.ALL-wx.TOP, 5)
@@ -173,11 +177,14 @@ class FraisGardePanel(wx.Panel):
     def EvtGenerationFraisAccueil(self, evt):
         DocumentDialog(self, FraisGardeModifications(self.inscrit, self.current_cotisation[0])).ShowModal()
 
+    def EvtGenerationDevis(self, evt):
+        DocumentDialog(self, DevisAccueilModifications(self.inscrit, self.current_cotisation[0])).ShowModal()
+
     def EvtGenerationContrat(self, evt):
         DocumentDialog(self, ContratAccueilModifications(self.inscrit, self.current_cotisation[0])).ShowModal()
 
     def EvtGenerationAvenant(self, evt):
-        DocumentDialog(self, ContratAccueilModifications(self.inscrit, self.current_cotisation[0], avenant=True)).ShowModal()
+        DocumentDialog(self, AvenantContratAccueilModifications(self.inscrit, self.current_cotisation[0])).ShowModal()
             
 wildcard = "PNG (*.png)|*.png|"     \
            "BMP (*.pmp)|*.bmp|"     \
@@ -718,6 +725,8 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.Bind(wx.EVT_CHOICE, self.OnModeAccueilChoice, self.mode_accueil_choice)
         sizer1.AddMany([(wx.StaticText(self, -1, u"Mode d'accueil :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.mode_accueil_choice, 0, wx.EXPAND)])
         sizer1.AddMany([(wx.StaticText(self, -1, u"Frais d'inscription :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'frais_inscription', min=0, precision=2), 0, wx.EXPAND)])
+        if creche.mode_facturation == FACTURATION_PAJE:
+            sizer1.AddMany([(wx.StaticText(self, -1, u"Alocation mensuelle CAF :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'allocation_mensuelle_caf', min=0, precision=2), 0, wx.EXPAND)])
         self.semaines_conges_items = wx.StaticText(self, -1, u"Nombre de semaines d'absence prévu au contrat :"), AutoNumericCtrl(self, None, 'semaines_conges', min=0, precision=0)
         self.jours_poses = wx.TextCtrl(self, -1)
         self.jours_poses.Disable()

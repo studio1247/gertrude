@@ -669,12 +669,18 @@ def GetCotisationFields(cotisation):
             ('heures-mois', GetHeureString(cotisation.heures_mois)),
             ('heures-periode', GetHeureString(cotisation.heures_periode)),
             ('semaines-periode', cotisation.semaines_periode),
+            ('frais-inscription', cotisation.frais_inscription, FIELD_EUROS|FIELD_SIGN),
             ('cotisation-mensuelle', "%.02f" % cotisation.cotisation_mensuelle),
+            ('montant-semaine', cotisation.heures_semaine*cotisation.montant_heure_garde, FIELD_EUROS|FIELD_SIGN),
+            ('montant-periode', cotisation.heures_periode*cotisation.montant_heure_garde, FIELD_EUROS|FIELD_SIGN),
             ('enfants-a-charge', cotisation.enfants_a_charge),           
             ('annee-debut', cotisation.debut.year),
             ('annee-fin', cotisation.debut.year+1),
             ('semaines-conges', cotisation.conges_inscription),
-            ('liste-conges', ", ".join(cotisation.liste_conges))
+            ('liste-conges', ", ".join(cotisation.liste_conges)),
+            ('montant-allocation-caf', cotisation.montant_allocation_caf, FIELD_EUROS|FIELD_SIGN),
+            ('cotisation-mensuelle-apres-allocation-caf', cotisation.cotisation_mensuelle-cotisation.montant_allocation_caf, FIELD_EUROS|FIELD_SIGN),
+            ('montant-heure-garde-apres-allocation-caf', (cotisation.cotisation_mensuelle-cotisation.montant_allocation_caf) / (cotisation.cotisation_mensuelle/cotisation.montant_heure_garde), FIELD_EUROS|FIELD_SIGN),
            ]
 
 def GetFactureFields(facture):

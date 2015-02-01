@@ -1448,6 +1448,7 @@ class Inscription(PeriodeReference):
         self.professeur = None
         self.forfait_mensuel = 0.0
         self.frais_inscription = 0.0
+        self.allocation_mensuelle_caf = 0.0
         self.heures_supplementaires = {}
 
         if creation:
@@ -1535,7 +1536,7 @@ class Inscription(PeriodeReference):
     
     def create(self):
         print 'nouvelle inscription'
-        result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, depart, mode, forfait_mensuel, frais_inscription, fin_periode_adaptation, duree_reference, forfait_heures_presence, semaines_conges) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.depart, self.mode, self.forfait_mensuel, self.frais_inscription, self.fin_periode_adaptation, self.duree_reference, self.forfait_heures_presence, self.semaines_conges))
+        result = sql_connection.execute('INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, depart, mode, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_heures_presence, semaines_conges) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?)', (self.inscrit.idx, self.debut, self.fin, self.depart, self.mode, self.forfait_mensuel, self.frais_inscription, self.allocation_mensuelle_caf, self.fin_periode_adaptation, self.duree_reference, self.forfait_heures_presence, self.semaines_conges))
         self.idx = result.lastrowid
         
     def delete(self):
@@ -1549,7 +1550,7 @@ class Inscription(PeriodeReference):
             value = value.idx
         elif name == "sites_preinscription":
             value = " ".join([str(value.idx) for value in value])
-        if name in ['debut', 'fin', 'depart', 'mode', 'forfait_mensuel', 'frais_inscription', 'fin_periode_adaptation', 'duree_reference', 'forfait_heures_presence', 'semaines_conges', 'preinscription', 'site', 'sites_preinscription', 'professeur', 'reservataire', 'groupe'] and self.idx:
+        if name in ['debut', 'fin', 'depart', 'mode', 'forfait_mensuel', 'frais_inscription', 'allocation_mensuelle_caf', 'fin_periode_adaptation', 'duree_reference', 'forfait_heures_presence', 'semaines_conges', 'preinscription', 'site', 'sites_preinscription', 'professeur', 'reservataire', 'groupe'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE INSCRIPTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))   
 

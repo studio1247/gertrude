@@ -128,6 +128,8 @@ class Cotisation(object):
         self.date_revenus = GetDateRevenus(self.date)
         self.assiette_annuelle = 0.0
         self.parents = 0
+        self.frais_inscription = self.inscription.frais_inscription
+        self.montant_allocation_caf = self.inscription.allocation_mensuelle_caf
         for parent in inscrit.parents.values():
             if parent:
                 self.parents += 1

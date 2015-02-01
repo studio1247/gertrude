@@ -25,7 +25,7 @@ from sqlobjects import *
 from facture import FactureCloturee
 import wx
 
-VERSION = 85
+VERSION = 86
 
 def getdate(s):
     if s is None:
@@ -288,6 +288,7 @@ class SQLConnection(object):
             groupe INTEGER REFERENCES GROUPES(idx),
             forfait_mensuel FLOAT,
             frais_inscription FLOAT,
+            allocation_mensuelle_caf FLOAT,
             site INTEGER REFERENCES SITES(idx),
             sites_preinscription VARCHAR,
             professeur INTEGER REFERENCES PROFESSEURS(idx),
@@ -695,8 +696,8 @@ class SQLConnection(object):
                 referent = Referent(inscrit, creation=False)
                 referent.prenom, referent.nom, referent.telephone, referent.idx = referent_entry
                 inscrit.referents.append(referent)
-            cur.execute('SELECT idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, fin_periode_adaptation, duree_reference, forfait_heures_presence, semaines_conges, preinscription, site, sites_preinscription, professeur FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
-            for idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, fin_periode_adaptation, duree_reference, forfait_heures_presence, semaines_conges, preinscription, site, sites_preinscription, professeur in cur.fetchall():
+            cur.execute('SELECT idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_heures_presence, semaines_conges, preinscription, site, sites_preinscription, professeur FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
+            for idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_heures_presence, semaines_conges, preinscription, site, sites_preinscription, professeur in cur.fetchall():
                 inscription = Inscription(inscrit, duree_reference, creation=False)
                 for tmp in creche.sites:
                     if site == tmp.idx:
@@ -716,7 +717,7 @@ class SQLConnection(object):
                 for tmp in creche.professeurs:
                     if professeur == tmp.idx:
                         inscription.professeur = tmp
-                inscription.debut, inscription.fin, inscription.depart, inscription.mode, inscription.preinscription, inscription.forfait_heures_presence, inscription.forfait_mensuel, inscription.frais_inscription, inscription.fin_periode_adaptation, inscription.semaines_conges, inscription.idx = getdate(debut), getdate(fin), getdate(depart), mode, preinscription, forfait_heures_presence, forfait_mensuel, frais_inscription, getdate(fin_periode_adaptation), semaines_conges, idx
+                inscription.debut, inscription.fin, inscription.depart, inscription.mode, inscription.preinscription, inscription.forfait_heures_presence, inscription.forfait_mensuel, inscription.frais_inscription, inscription.allocation_mensuelle_caf, inscription.fin_periode_adaptation, inscription.semaines_conges, inscription.idx = getdate(debut), getdate(fin), getdate(depart), mode, preinscription, forfait_heures_presence, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, getdate(fin_periode_adaptation), semaines_conges, idx
                 inscrit.inscriptions.append(inscription)
             for inscription in inscrit.inscriptions:
                 cur.execute('SELECT day, value, debut, fin, idx FROM REF_ACTIVITIES WHERE reference=?', (inscription.idx,))
@@ -1613,7 +1614,11 @@ class SQLConnection(object):
             cur.execute("UPDATE CRECHE SET allergies=?", ("",))
             cur.execute("ALTER TABLE INSCRITS ADD allergies VARCHAR;")
             cur.execute("UPDATE INSCRITS SET allergies=?", ("",))
-              
+
+        if version < 86:
+            cur.execute("ALTER TABLE INSCRIPTIONS ADD allocation_mensuelle_caf FLOAT")
+            cur.execute("UPDATE INSCRIPTIONS SET allocation_mensuelle_caf=?", (.0,))            
+
         if version < VERSION:
             try:
                 cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))
