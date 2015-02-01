@@ -637,16 +637,17 @@ class ReferencePlanningPanel(PlanningWidget):
         self.parent = parent
         
     def CheckLine(self, line, plages):
-        dates_depassement = []
-        for date in self.inscription.GetDatesFromReference(line.day):
-            if not self.CheckDate(date, plages):
-                dates_depassement.append(date)
-                if len(dates_depassement) == creche.seuil_alerte_inscription:
-                    dlg = wx.MessageDialog(None, u"Dépassement de la capacité sur ce créneau horaire les:\n" + "\n".join([(" - " + GetDateString(date)) for date in dates_depassement]), "Attention", wx.OK|wx.ICON_WARNING)
-                    dlg.ShowModal()
-                    dlg.Destroy()
-                    self.state = None
-                    return
+        if creche.seuil_alerte_inscription > 0:
+            dates_depassement = []
+            for date in self.inscription.GetDatesFromReference(line.day):
+                if not self.CheckDate(date, plages):
+                    dates_depassement.append(date)
+                    if len(dates_depassement) == creche.seuil_alerte_inscription:
+                        dlg = wx.MessageDialog(None, u"Dépassement de la capacité sur ce créneau horaire les:\n" + "\n".join([(" - " + GetDateString(date)) for date in dates_depassement]), "Attention", wx.OK|wx.ICON_WARNING)
+                        dlg.ShowModal()
+                        dlg.Destroy()
+                        self.state = None
+                        return
     
     def OnPlanningChanged(self, line):
         self.parent.UpdateDecompteConges()
