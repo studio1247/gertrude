@@ -287,10 +287,10 @@ class IdentitePanel(InscriptionsTab):
         sizer3 = wx.BoxSizer(wx.HORIZONTAL)
         sizer3.AddMany([(AutoTextCtrl(self, None, 'assureur'), 1, wx.EXPAND), (AutoTextCtrl(self, None, 'numero_police_assurance'), 1, wx.EXPAND|wx.LEFT, 5)])
         sizer2.AddMany([(wx.StaticText(self, -1, u"Assurance :"), 0, wx.ALIGN_CENTER_VERTICAL), (sizer3, 0, wx.EXPAND)])
-        sizer3 = wx.BoxSizer(wx.HORIZONTAL)
         self.allergies_checkboxes = []
         allergies = creche.GetAllergies()
         if allergies:
+            sizer3 = wx.BoxSizer(wx.HORIZONTAL)
             for allergie in allergies:
                 checkbox = wx.CheckBox(self, -1, allergie)
                 self.allergies_checkboxes.append(checkbox)

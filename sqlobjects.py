@@ -966,7 +966,7 @@ class Creche(object):
         self.CalculeJoursConges()
 
     def GetAllergies(self):
-        return [allergie.strip() for allergie in self.allergies.split(",")]
+        return [allergie.strip() for allergie in self.allergies.split(",") if allergie.strip()]
     
     def CalculeJoursConges(self):
         self.jours_fermeture = {}
