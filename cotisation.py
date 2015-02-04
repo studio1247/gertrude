@@ -232,7 +232,7 @@ class Cotisation(object):
             self.heures_semaine = self.heures_reelles_semaine
             if creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
                 date = self.debut
-                if self.fin is None:
+                if self.fin_inscription is None:
                     errors.append(u" - La période d'inscription n'a pas de fin.")
                     raise CotisationException(errors)
                 # debut_conge = None
