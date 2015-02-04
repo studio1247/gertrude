@@ -159,7 +159,7 @@ class FacturationTab(AutoTab):
         self.EvtFacturesMonthChoice()
         
     def EvtFacturesMonthChoice(self, evt=None):
-        inscrits, periode = self.__GetSelection()
+        inscrits, periode = self.__GetFactureSelection()
         for inscrit in inscrits:
             if inscrit.HasFacture(periode) and periode not in inscrit.factures_cloturees:
                 self.cloture_button.Enable()
@@ -270,7 +270,16 @@ class FacturationTab(AutoTab):
         periode = self.appels_monthchoice.GetClientData(self.appels_monthchoice.GetSelection())
         DocumentDialog(self, AppelCotisationsModifications(periode, options=NO_NOM)).ShowModal()
 
-    def __GetSelection(self):
+    def __GetSelection(self, periode, data):
+        if isinstance(data, Creche):
+            inscrits = [inscrit for inscrit in creche.inscrits if inscrit.HasFacture(periode)]
+        elif isinstance(data, Site):
+            inscrits = [inscrit for inscrit in GetInscrits(GetMonthStart(periode), GetMonthEnd(periode), site=data) if inscrit.HasFacture(periode)]
+        else:
+            inscrits = [data]
+        return inscrits, periode
+        
+    def __GetFactureSelection(self):
         periode = self.factures_monthchoice.GetClientData(self.factures_monthchoice.GetSelection())
         data = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
         if isinstance(data, Creche):
@@ -280,9 +289,9 @@ class FacturationTab(AutoTab):
         else:
             inscrits = [data]
         return inscrits, periode
-            
+    
     def EvtClotureFacture(self, evt):
-        inscrits, periode = self.__GetSelection()
+        inscrits, periode = self.__GetFactureSelection()
         errors = {}
         for inscrit in inscrits:
             try:
@@ -300,7 +309,7 @@ class FacturationTab(AutoTab):
         self.EvtFacturesMonthChoice()
 
     def EvtDeclotureFacture(self, evt):
-        inscrits, periode = self.__GetSelection()
+        inscrits, periode = self.__GetFactureSelection()
         errors = {}
         for inscrit in inscrits:
             try:
@@ -320,7 +329,7 @@ class FacturationTab(AutoTab):
         self.EvtFacturesMonthChoice()
 
     def EvtGenerationFacture(self, evt):
-        inscrits, periode = self.__GetSelection()
+        inscrits, periode = self.__GetFactureSelection()
         if len(inscrits) > 0:
             DocumentDialog(self, FactureModifications(inscrits, periode)).ShowModal()
         else:
@@ -334,7 +343,7 @@ class FacturationTab(AutoTab):
         DocumentDialog(self, AttestationModifications(inscrits, debut, fin)).ShowModal()
         
     def EvtExportCompta(self, evt):
-        inscrits, periode = self.__GetSelection()
+        inscrits, periode = self.__GetFactureSelection()
         if len(inscrits) > 0:
             DocumentDialog(self, ExportComptaModifications(inscrits, periode)).ShowModal()
 

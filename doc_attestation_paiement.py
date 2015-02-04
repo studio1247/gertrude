@@ -18,7 +18,7 @@
 from constants import *
 from functions import *
 from facture import *
-from sqlobjects import Parent
+from sqlobjects import Parent, Creche, Site
 from cotisation import CotisationException
 from ooffice import *
 
@@ -26,7 +26,18 @@ class AttestationModifications(object):
     def __init__(self, who, debut, fin):
         self.template = 'Attestation paiement.odt'
         if isinstance(who, list):
-            self.inscrits = [inscrit for inscrit in who if inscrit.GetInscriptions(debut, fin)]
+            who = [inscrit for inscrit in who if inscrit.GetInscriptions(debut, fin)]
+        elif isinstance(who, Creche):
+            who = [inscrit for inscrit in who.inscrits if inscrit.GetInscriptions(debut, fin)]
+        elif isinstance(who, Site):
+            who = []
+            for inscrit in creche.inscrits:
+                for inscription in inscrit.GetInscriptions(debut, fin):
+                    if inscription.site == who:
+                        who.append(inscrit)
+                        break
+        if isinstance(who, list):
+            self.inscrits = who
             if debut.year == fin.year and debut.month == fin.month:
                 self.email_subject = u"Attestations de paiement %s %d" % (months[debut.month - 1], debut.year)
                 self.default_output = u"Attestation de paiement <prenom> <nom> %s %d.odt" % (months[debut.month - 1], debut.year)
