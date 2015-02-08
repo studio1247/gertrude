@@ -25,27 +25,21 @@ from ooffice import *
 class AttestationModifications(object):
     def __init__(self, who, debut, fin):
         self.template = 'Attestation paiement.odt'
+        self.debut, self.fin = debut, fin
         if isinstance(who, list):
-            who = [inscrit for inscrit in who if inscrit.GetInscriptions(debut, fin)]
+            self.inscrits = [inscrit for inscrit in who if inscrit.GetInscriptions(debut, fin)]
+            self.SetDefaultMultiParam()
         elif isinstance(who, Creche):
-            who = [inscrit for inscrit in who.inscrits if inscrit.GetInscriptions(debut, fin)]
+            self.inscrits = [inscrit for inscrit in who.inscrits if inscrit.GetInscriptions(debut, fin)]
+            self.SetDefaultMultiParam()
         elif isinstance(who, Site):
-            who = []
+            self.inscrits = []
             for inscrit in creche.inscrits:
                 for inscription in inscrit.GetInscriptions(debut, fin):
                     if inscription.site == who:
-                        who.append(inscrit)
+                        self.inscrits.append(inscrit)
                         break
-        if isinstance(who, list):
-            self.inscrits = who
-            if debut.year == fin.year and debut.month == fin.month:
-                self.email_subject = u"Attestations de paiement %s %d" % (months[debut.month - 1], debut.year)
-                self.default_output = u"Attestation de paiement <prenom> <nom> %s %d.odt" % (months[debut.month - 1], debut.year)
-            else:
-                self.email_subject = u"Attestations de paiement %s-%s %d" % (months[debut.month - 1], months[fin.month - 1], debut.year)
-                self.default_output = u"Attestation de paiement <prenom> <nom> %s-%s %d.odt" % (months[debut.month - 1], months[fin.month - 1], debut.year)
-            self.email_to = None
-            self.multi = None
+            self.SetDefaultMultiParam()                    
         else:
             self.inscrits = [who]
             if debut.year == fin.year and debut.month == fin.month:
@@ -55,10 +49,19 @@ class AttestationModifications(object):
             self.default_output = self.email_subject + ".odt"
             self.email_to = list(set([parent.email for parent in who.parents.values() if parent and parent.email]))
             self.multi = False
-        self.debut, self.fin = debut, fin
         self.email = True
         self.site = None
         self.email_text = "Accompagnement attestation paiement.txt"
+
+    def SetDefaultMultiParam(self):
+        if self.debut.year == self.fin.year and self.debut.month == self.fin.month:
+            self.email_subject = u"Attestations de paiement %s %d" % (months[self.debut.month - 1], self.debut.year)
+            self.default_output = u"Attestation de paiement <prenom> <nom> %s %d.odt" % (months[self.debut.month - 1], self.debut.year)
+        else:
+            self.email_subject = u"Attestations de paiement %s-%s %d" % (months[self.debut.month - 1], months[self.fin.month - 1], self.debut.year)
+            self.default_output = u"Attestation de paiement <prenom> <nom> %s-%s %d.odt" % (months[self.debut.month - 1], months[self.fin.month - 1], self.debut.year)
+        self.email_to = None
+        self.multi = None
 
     def GetSimpleModifications(self, filename):
         return [(filename.replace("<prenom>", inscrit.prenom).replace("<nom>", inscrit.nom), AttestationModifications(inscrit, self.debut, self.fin)) for inscrit in self.inscrits]
