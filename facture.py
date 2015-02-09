@@ -44,7 +44,7 @@ class FactureFinMois(object):
         self.annee = annee
         self.mois = mois
         self.debut_recap = datetime.date(annee, mois, 1)
-        self.fin_recap = getMonthEnd(self.debut_recap)
+        self.fin_recap = GetMonthEnd(self.debut_recap)
         self.date = self.fin_recap
         try:
             first_numero = int(creche.numeros_facture[self.debut_recap].valeur)
@@ -87,6 +87,7 @@ class FactureFinMois(object):
         self.montant_heure_garde = 0.0
         self.correction = 0.0
         self.libelle_correction = ""
+        self.regularisation = 0.0
         if self.debut_recap in inscrit.corrections:
             try:
                 if inscrit.corrections[self.debut_recap].valeur:
@@ -103,9 +104,9 @@ class FactureFinMois(object):
         if options & TRACES:
             print '\nFacture de', inscrit.prenom, inscrit.nom, 'pour', months[mois-1], annee
                
-        if inscrit.hasFacture(self.debut_recap) and creche.cloture_factures and today > self.fin_recap:
+        if inscrit.HasFacture(self.debut_recap) and creche.cloture_factures and today > self.fin_recap:
             fin = self.debut_recap - datetime.timedelta(1)
-            debut = getMonthStart(fin)
+            debut = GetMonthStart(fin)
             if inscrit.GetInscriptions(debut, fin) and debut not in inscrit.factures_cloturees and IsFacture(debut) and self.debut_recap >= first_date:
                 error = u"La facture du mois " + GetDeMoisStr(debut.month-1) + " " + str(debut.year) + u" n'est pas clôturée"
                 raise CotisationException([error])
@@ -117,7 +118,7 @@ class FactureFinMois(object):
                 inscription = inscrit.GetInscription(date)
                 if inscription:
                     self.site = inscription.site
-                    inscritState = inscrit.getState(date)
+                    inscritState = inscrit.GetState(date)
                     # print date, str(inscritState)
                     state, heures_reference, heures_realisees, heures_facturees = inscritState.state, inscritState.heures_contractualisees, inscritState.heures_realisees, inscritState.heures_facturees
                     heures_facturees_non_realisees = 0.0
@@ -178,7 +179,7 @@ class FactureFinMois(object):
                             nombre_jours_ouvres_maladie = 0
                             while tmp > inscrit.inscriptions[0].debut:
                                 tmp -= datetime.timedelta(1)
-                                state = inscrit.getState(tmp).state
+                                state = inscrit.GetState(tmp).state
                                 if state == MALADE:
                                     premier_jour_maladie = tmp
                                     if not tmp in creche.jours_fermeture:
@@ -193,7 +194,7 @@ class FactureFinMois(object):
                                 dernier_jour_maladie = tmp = date
                                 while not inscrit.inscriptions[-1].fin or tmp < inscrit.inscriptions[-1].fin:
                                     tmp += datetime.timedelta(1)
-                                    state = inscrit.getState(tmp).state
+                                    state = inscrit.GetState(tmp).state
                                     if state == MALADE:
                                         dernier_jour_maladie = tmp
                                     else:
@@ -213,7 +214,7 @@ class FactureFinMois(object):
                     elif state == VACANCES:
                         if heures_reference > 0:
                             self.jours_vacances.append(date)
-                        if (creche.repartition==REPARTITION_SANS_MENSUALISATION and not inscription.IsNombreSemainesCongesAtteint(date)) or creche.gestion_preavis_conges:
+                        if creche.repartition==REPARTITION_SANS_MENSUALISATION and not inscription.IsNombreSemainesCongesAtteint(date):
                             self.jours_conges_non_factures.append(date)
                             self.heures_facturees_par_mode[cotisation.mode_garde] -= heures_reference
                             self.CalculeDeduction(cotisation, heures_reference)
@@ -236,14 +237,15 @@ class FactureFinMois(object):
                             elif cotisation.inscription.mode != MODE_FORFAIT_HORAIRE:
                                 cotisation.heures_supplementaires += heures_supplementaires_facturees
                                 self.heures_supplementaires += heures_supplementaires_facturees
-                                if creche.mode_facturation != FACTURATION_HORAIRES_REELS and (creche.facturation_periode_adaptation != FACTURATION_HORAIRES_REELS or not cotisation.inscription.IsInPeriodeAdaptation(date)):
+                                if creche.mode_facturation != FACTURATION_HORAIRES_REELS and (creche.facturation_periode_adaptation == PERIODE_ADAPTATION_FACTUREE_NORMALEMENT or not cotisation.inscription.IsInPeriodeAdaptation(date)):
                                     self.CalculeSupplement(cotisation, heures_supplementaires_facturees)
 
                     if creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE or (creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION and inscription.IsInPeriodeAdaptation(date)):
                         activites = inscrit.GetExtraActivites(date)
                         for value in activites:
-                            activite = creche.activites[value]
-                            self.supplement_activites += activite.tarif
+                            if value in creche.activites:
+                                activite = creche.activites[value]
+                                self.supplement_activites += activite.tarif
 
                     if heures_realisees_non_facturees > 0 and heures_realisees == heures_realisees_non_facturees:
                         self.jours_presence_non_facturee[date] = heures_realisees_non_facturees
@@ -261,7 +263,7 @@ class FactureFinMois(object):
                         cotisation.heures_contractualisees += heures_reference
                         self.heures_contractualisees += heures_reference
                         self.heures_contractualisees_realisees += min(heures_realisees, heures_reference)        
-                        if creche.mode_facturation == FACTURATION_HORAIRES_REELS or (creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date)) or (creche.mode_facturation == FACTURATION_PSU and cotisation.mode_garde == MODE_HALTE_GARDERIE):
+                        if creche.mode_facturation == FACTURATION_HORAIRES_REELS or (creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date)) or (creche.mode_facturation == FACTURATION_PSU and cotisation.mode_garde == MODE_HALTE_GARDERIE):
                             self.heures_facturees_par_mode[cotisation.mode_garde] += heures_realisees - heures_realisees_non_facturees + heures_facturees_non_realisees
                             self.total_contractualise += cotisation.CalculeFraisGarde(heures_reference)
                         else:
@@ -270,20 +272,24 @@ class FactureFinMois(object):
                     
             date += datetime.timedelta(1)
 
-        if inscrit.hasFacture(self.debut_recap):
+        if inscrit.HasFacture(self.debut_recap):
             for cotisation in cotisations_mensuelles:
+                inscription = cotisation.inscription
                 self.heures_maladie += cotisation.heures_maladie
                 if creche.repartition == REPARTITION_SANS_MENSUALISATION:
                     self.cotisation_mensuelle += cotisation.heures_contractualisees * cotisation.montant_heure_garde
                     self.total_contractualise += cotisation.heures_contractualisees * cotisation.montant_heure_garde
-                elif creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS and cotisation.inscription.IsInPeriodeAdaptation(cotisation.debut):
-                    if cotisation.inscription.mode == MODE_FORFAIT_HORAIRE:
+                elif creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(cotisation.debut):
+                    if inscription.mode == MODE_FORFAIT_HORAIRE:
                         self.heures_facturees_par_mode[cotisation.mode_garde] += cotisation.heures_realisees - cotisation.heures_realisees_non_facturees
-                    self.cotisation_mensuelle += cotisation.CalculeFraisGarde(cotisation.heures_contractualisees)
-                    self.report_cotisation_mensuelle += cotisation.CalculeFraisGarde(cotisation.heures_realisees - cotisation.heures_realisees_non_facturees) - self.cotisation_mensuelle
-                elif cotisation.inscription.mode == MODE_FORFAIT_HORAIRE:
+                    report = cotisation.CalculeFraisGarde(cotisation.heures_realisees)
+                    self.report_cotisation_mensuelle += report
+                    cotisation.prorata_effectue = True
+                    if options & TRACES:
+                        print " cotisation periode adaptation :", report
+                elif inscription.mode == MODE_FORFAIT_HORAIRE:
                     self.cotisation_mensuelle += cotisation.cotisation_mensuelle * cotisation.jours_ouvres / jours_ouvres
-                    cotisation.heures_contractualisees = cotisation.inscription.forfait_heures_presence * cotisation.jours_ouvres / jours_ouvres
+                    cotisation.heures_contractualisees = inscription.forfait_heures_presence * cotisation.jours_ouvres / jours_ouvres
                     self.heures_contractualisees += cotisation.heures_contractualisees
                     self.total_contractualise += cotisation.heures_contractualisees * cotisation.montant_heure_garde
                     if cotisation.nombre_jours_maladie_deduits > 0:
@@ -317,21 +323,55 @@ class FactureFinMois(object):
                     self.heures_contrat += prorata_heures
                 else:
                     if self.heures_contractualisees:
-                        prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees
-                        prorata_heures = cotisation.heures_mois * cotisation.heures_reference / self.heures_contractualisees
+                        if cotisation.heures_reference != self.heures_contractualisees:
+                            prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees
+                            prorata_heures = cotisation.heures_mois * cotisation.heures_reference / self.heures_contractualisees
+                            cotisation.prorata_effectue = True
+                            if options & TRACES: 
+                                print " prorata : %f * %f / %f = %f" % (cotisation.cotisation_mensuelle, cotisation.heures_reference, self.heures_contractualisees, prorata)
+                        else:
+                            prorata = cotisation.cotisation_mensuelle
+                            prorata_heures = cotisation.heures_mois
                     else:
                         prorata = cotisation.cotisation_mensuelle
                         prorata_heures = cotisation.heures_mois
                     # ajoute FACTURATION_PSU bloc plus haut pour eviter 2 * la regle de 3
                     # avant il y avait ce commentaire: ne marche pas pour saint julien, mais c'est redemande (2 octobre 2012), normal pour le premier mois pour un enfant qui arrive mi-septembre
                     # avec le test suivant on devrait etre bon, parce que sinon on effectue la regle de 3 dans la cotisation + ici
-                    if not cotisation.prorata_effectue:
+                    if not cotisation.prorata_effectue:                            
                         prorata = (prorata * cotisation.jours_ouvres) / jours_ouvres
-                        prorata = (prorata * cotisation.jours_ouvres) / jours_ouvres
+                        if (options & TRACES):
+                            print " prorata : %f" % prorata                        
+
                     self.cotisation_mensuelle += prorata
                     self.total_contractualise += prorata
                     self.heures_contrat += prorata_heures
+
+                if creche.regularisation_fin_contrat:
+                    if creche.gestion_depart_anticipe and inscription.depart and cotisation.Include(inscription.depart):
+                        date = cotisation.debut
+                        while date <= inscription.depart:
+                            cotisation_regularisee = Cotisation(inscrit, date, options=NO_ADDRESS|self.options|DEPART_ANTICIPE)
+                            regularisation_cotisation = cotisation_regularisee.cotisation_mensuelle - cotisation.cotisation_mensuelle
+                            if (options & TRACES):
+                                print u" régularisation cotisation : %f - %f = %f" % (cotisation_regularisee.cotisation_mensuelle, cotisation.cotisation_mensuelle, regularisation_cotisation)
+                            self.regularisation += regularisation_cotisation 
+                            date = GetNextMonthStart(date)
+    
+                    jours_presence = inscription.GetNombreJoursPresenceSemaine()
+                    if jours_presence and inscription.semaines_conges:
+                        if (inscription.fin and inscription.fin >= self.debut_recap and inscription.fin <= self.fin_recap) or (creche.gestion_depart_anticipe and inscription.depart and inscription.depart >= self.debut_recap and inscription.depart <= self.fin_recap):
+                            semaines_conges_non_pris = inscription.semaines_conges - float(inscription.GetNombreJoursCongesPoses()) / jours_presence
+                            heures = cotisation.heures_semaine * semaines_conges_non_pris
+                            regularisation_conges_non_pris = heures * cotisation.montant_heure_garde
+                            if (options & TRACES):
+                                print u" régularisation congés non pris : %dh * %f = %f" % (heures, cotisation.montant_heure_garde, regularisation_conges_non_pris)
+                            self.regularisation += regularisation_conges_non_pris
                     
+        if self.regularisation != 0:
+            self.deduction -= self.regularisation
+            self.raison_deduction.add(u"régularisation")
+            
         self.heures_facture = self.heures_contrat + self.heures_supplementaires - self.heures_maladie
         self.heures_facturees = sum(self.heures_facturees_par_mode)
         if creche.temps_facturation == FACTURATION_FIN_MOIS:
@@ -380,8 +420,8 @@ class FactureFinMois(object):
                 if inscription.reservataire:
                     self.frais_inscription_reservataire += inscription.frais_inscription
                 else:
-                    self.frais_inscription += inscription.frais_inscription 
-        
+                    self.frais_inscription += inscription.frais_inscription
+
         self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction + self.correction
         self.total_facture = self.total + self.report_cotisation_mensuelle
         
@@ -462,7 +502,7 @@ class FactureDebutMoisPrevisionnel(FactureDebutMois):
                     journee = self.inscrit.journees[date]
                     journee.CloturePrevisionnel()
                 elif not (date in creche.jours_fermeture or date in self.inscrit.jours_conges):
-                    journee = self.inscrit.getJourneeReferenceCopy(date)
+                    journee = self.inscrit.GetJourneeReferenceCopy(date)
                     if journee:
                         self.inscrit.journees[date] = journee
                         journee.CloturePrevisionnel()

@@ -27,8 +27,20 @@ from doc_planning_detaille import PlanningDetailleModifications
 
 class DayPlanningPanel(PlanningWidget):
     def __init__(self, parent, activity_combobox):
-        PlanningWidget.__init__(self, parent, activity_combobox, COMMENTS|ACTIVITES|TWO_PARTS|DEPASSEMENT_CAPACITE)
-        
+        PlanningWidget.__init__(self, parent, activity_combobox, COMMENTS|ACTIVITES|TWO_PARTS|DEPASSEMENT_CAPACITE, self.CheckLine)
+    
+    def CheckLine(self, line, plages_selectionnees):
+        lines = self.GetSummaryLines()
+        activites, activites_sans_horaires = GetActivitiesSummary(creche, lines)
+        for start, end in plages_selectionnees:                        
+            for i in range(start, end):
+                if activites[0][i][0] > creche.GetCapacite(line.day):
+                    dlg = wx.MessageDialog(None, u"Dépassement de la capacité sur ce créneau horaire !", "Attention", wx.OK|wx.ICON_WARNING)
+                    dlg.ShowModal()
+                    dlg.Destroy()
+                    self.state = None
+                    return
+                    
     def UpdateContents(self):
         if self.date in creche.jours_fermeture:
             conge = creche.jours_fermeture[self.date]
@@ -43,7 +55,7 @@ class DayPlanningPanel(PlanningWidget):
         else:
             self.SetInfo("")
         
-        lignes_enfants = []
+        self.lignes_enfants = []
         for inscrit in creche.inscrits:
             inscription = inscrit.GetInscription(self.date)
             if inscription is not None and (len(creche.sites) <= 1 or inscription.site is self.site) and (self.groupe is None or inscription.groupe == self.groupe):
@@ -56,7 +68,7 @@ class DayPlanningPanel(PlanningWidget):
                         if not line.commentaire:
                             line.commentaire = inscrit.jours_conges[self.date].label
                     else:
-                        line.reference = inscription.getJourneeReference(self.date)
+                        line.reference = inscription.GetJourneeReference(self.date)
                     line.insert = None
                     line.key = self.date
                 elif creche.conges_inscription == GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT and self.date in inscrit.jours_conges:
@@ -67,8 +79,8 @@ class DayPlanningPanel(PlanningWidget):
                     line.insert = inscrit.journees
                     line.key = self.date
                 else:
-                    line = inscription.getJourneeReferenceCopy(self.date)
-                    line.reference = inscription.getJourneeReference(self.date)
+                    line = inscription.GetJourneeReferenceCopy(self.date)
+                    line.reference = inscription.GetJourneeReference(self.date)
                     line.insert = inscrit.journees
                     line.key = self.date
 
@@ -84,33 +96,35 @@ class DayPlanningPanel(PlanningWidget):
                         return None
                 line.GetDynamicText = GetHeuresEnfant
                 if creche.temps_facturation == FACTURATION_FIN_MOIS:
-                    date = getMonthStart(self.date)
+                    date = GetMonthStart(self.date)
                 else:
-                    date = getNextMonthStart(self.date)
+                    date = GetNextMonthStart(self.date)
                 if date in inscrit.factures_cloturees:
                     line.readonly = True
-                lignes_enfants.append(line)
+                line.day = self.date.weekday()
+                self.lignes_enfants.append(line)
                 
         if creche.tri_planning == TRI_GROUPE:
-            lignes_enfants = TrieParGroupes(lignes_enfants)
+            self.lignes_enfants = TrieParGroupes(self.lignes_enfants)
         else:
-            lignes_enfants.sort(key=lambda line: line.label)    
+            self.lignes_enfants.sort(key=lambda line: line.label)    
                  
-        lignes_salaries = []
+        self.lignes_salaries = []
         for salarie in creche.salaries:
             contrat = salarie.GetContrat(self.date)
             if contrat is not None and (len(creche.sites) <= 1 or contrat.site is self.site):
                 if self.date in salarie.journees:
                     line = salarie.journees[self.date]
-                    line.reference = contrat.getJourneeReference(self.date)
+                    line.reference = contrat.GetJourneeReference(self.date)
                     line.insert = None
                 else:
-                    line = contrat.getJourneeReferenceCopy(self.date)
+                    line = contrat.GetJourneeReferenceCopy(self.date)
                     line.insert = salarie.journees
                     line.key = self.date
                 line.salarie = salarie
                 line.label = GetPrenomNom(salarie)
                 line.contrat = contrat
+                line.day = self.date.weekday()
                 def GetHeuresSalarie(line):
                     date = line.date - datetime.timedelta(line.date.weekday())
                     heures_semaine = 0
@@ -118,7 +132,7 @@ class DayPlanningPanel(PlanningWidget):
                         if date in line.salarie.journees:
                             heures = line.salarie.journees[date].GetNombreHeures()
                         else:
-                            heures = line.contrat.getJourneeReference(date).GetNombreHeures()
+                            heures = line.contrat.GetJourneeReference(date).GetNombreHeures()
                         heures_semaine += heures
                         if date == line.date:
                             heures_jour = heures
@@ -126,12 +140,12 @@ class DayPlanningPanel(PlanningWidget):
                     return GetHeureString(heures_jour) + '/' + GetHeureString(heures_semaine)
                 line.GetDynamicText = GetHeuresSalarie
                 line.summary = SUMMARY_DEN
-                lignes_salaries.append(line)
-        lignes_salaries.sort(key=lambda line: line.label)    
+                self.lignes_salaries.append(line)
+        self.lignes_salaries.sort(key=lambda line: line.label)    
 
-        if lignes_salaries:
-            lignes_enfants.append(None)
-        self.SetLines(lignes_enfants + lignes_salaries)
+        if self.lignes_salaries:
+            self.lignes_enfants.append(None)
+        self.SetLines(self.lignes_enfants + self.lignes_salaries)
     
     def GetSummaryDynamicText(self):
         heures = 0.0
@@ -140,15 +154,16 @@ class DayPlanningPanel(PlanningWidget):
                 break
             elif not isinstance(line, basestring):
                 heures += line.GetNombreHeures()
+                day = line.day
         
         if heures > 0:
             text = GetHeureString(heures)
             if self.site:
                 den = self.site.capacite * creche.GetAmplitudeHoraire()
             else:
-                den = creche.GetCapacite() * creche.GetAmplitudeHoraire()
+                den = creche.GetHeuresAccueil(day)
             if den > 0:
-                text += " / " + "%.1f" % (heures * 100 / den) + "%"
+                text += " / " + "%.1f%%" % (heures * 100 / den)
             return text 
         else:
             return None
@@ -178,7 +193,7 @@ class PlanningPanel(GPanel):
         if len(creche.sites) < 2:
             self.site_choice.Show(False)
         self.site_choice.SetSelection(0)
-        self.Bind(wx.EVT_CHOICE, self.onChangeWeek, self.site_choice)
+        self.Bind(wx.EVT_CHOICE, self.OnChangementSemaine, self.site_choice)
         
         # Les raccourcis pour semaine précédente / suivante
         self.previous_button = wx.Button(self, -1, '<', size=(20,0), style=wx.NO_BORDER)
@@ -191,20 +206,13 @@ class PlanningPanel(GPanel):
         # La combobox pour la selection de la semaine
         self.week_choice = wx.Choice(self, -1)
         sizer.Add(self.week_choice, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-        day = first_monday = getFirstMonday()
-        while day < last_date:
-            string = 'Semaine %d (%d %s %d)' % (day.isocalendar()[1], day.day, months[day.month - 1], day.year)
-            self.week_choice.Append(string, day)
-            day += datetime.timedelta(7)
-        delta = datetime.date.today() - first_monday
-        semaine = int(delta.days / 7)
-        self.week_choice.SetSelection(semaine)
-        self.Bind(wx.EVT_CHOICE, self.onChangeWeek, self.week_choice)
+        PopulateWeekChoice(self.week_choice)
+        self.Bind(wx.EVT_CHOICE, self.OnChangementSemaine, self.week_choice)
         
         # La combobox pour la selection du groupe (si groupes)
         self.groupe_choice = wx.Choice(self, -1)
         sizer.Add(self.groupe_choice, 0, wx.ALIGN_CENTER_VERTICAL)
-        self.Bind(wx.EVT_CHOICE, self.onChangeGroupeDisplayed, self.groupe_choice)
+        self.Bind(wx.EVT_CHOICE, self.OnChangeGroupeDisplayed, self.groupe_choice)
         self.UpdateGroupeCombobox()
         
         # La combobox pour la selection de l'outil (si activités)
@@ -229,16 +237,15 @@ class PlanningPanel(GPanel):
         # le notebook pour les jours de la semaine
         self.notebook = wx.Notebook(self, style=wx.LB_DEFAULT)
         self.sizer.Add(self.notebook, 1, wx.EXPAND|wx.TOP, 5)
+        first_monday = GetFirstMonday()
+        delta = datetime.date.today() - first_monday
+        semaine = int(delta.days / 7)
         for week_day in range(7):
             if JourSemaineAffichable(week_day):
                 date = first_monday + datetime.timedelta(semaine * 7 + week_day)
                 planning_panel = DayPlanningPanel(self.notebook, self.activity_choice)
-                if len(creche.sites) > 1:
-                    planning_panel.SetData(creche.sites[0], None, date)
-                else:
-                    planning_panel.SetData(None, None, date)
                 self.notebook.AddPage(planning_panel, GetDateString(date))
-        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.onChangeWeekday, self.notebook)
+        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnChangementSemaineday, self.notebook)
         self.sizer.Layout()
     
     def UpdateGroupeCombobox(self):
@@ -260,10 +267,10 @@ class PlanningPanel(GPanel):
         end = start + datetime.timedelta(6)
         DocumentDialog(self, PlanningDetailleModifications((start, end), site, groupe)).ShowModal()
 
-    def onChangeGroupeDisplayed(self, evt):
-        self.onChangeWeek(None)
+    def OnChangeGroupeDisplayed(self, evt):
+        self.OnChangementSemaine(None)
     
-    def onChangeWeekday(self, evt=None):
+    def OnChangementSemaineday(self, evt=None):
         self.notebook.GetCurrentPage().UpdateDrawing()
     
     def GetSelectedSite(self):
@@ -280,7 +287,7 @@ class PlanningPanel(GPanel):
         else:
             return None        
             
-    def onChangeWeek(self, evt=None):
+    def OnChangementSemaine(self, evt=None):
         self.UpdateWeek()
         self.notebook.SetSelection(0)
         self.sizer.Layout()
@@ -304,20 +311,22 @@ class PlanningPanel(GPanel):
         
     def onPreviousWeek(self, evt):
         self.week_choice.SetSelection(self.week_choice.GetSelection() - 1)
-        self.onChangeWeek()
+        self.OnChangementSemaine()
     
     def onNextWeek(self, evt):
         self.week_choice.SetSelection(self.week_choice.GetSelection() + 1)
-        self.onChangeWeek()
+        self.OnChangementSemaine()
 
     def onTabletteSynchro(self, evt):
         journal = config.connection.LoadJournal()
         
         class PeriodePresence(object):
-            def __init__(self, date, arrivee, depart=None):
+            def __init__(self, date, arrivee=None, depart=None, absent=False, malade=False):
                 self.date = date
                 self.arrivee = arrivee
                 self.depart = depart
+                self.absent = absent
+                self.malade = malade
         
         array = {}
         lines = journal.split("\n")
@@ -350,6 +359,11 @@ class PlanningPanel(GPanel):
                             array[idx].append(PeriodePresence(date, None, depart))
                     else:
                         array[idx].append(PeriodePresence(date, None, depart))
+                elif label == "absent":
+                    array[idx].append(PeriodePresence(date, absent=True))
+                elif label == "malade":
+                    array[idx].append(PeriodePresence(date, malade=True))
+                    
                 creche.last_tablette_synchro = line
             except Exception, e:
                 pass
@@ -359,10 +373,15 @@ class PlanningPanel(GPanel):
             inscrit = creche.GetInscrit(key)
             if inscrit:
                 for periode in array[key]:
-                    if not periode.arrivee:
+                    value = 0
+                    if periode.absent:
+                        value = VACANCES
+                    elif periode.malade:
+                        value = MALADE
+                    elif not periode.arrivee:
                         if not date in inscrit.journees:
                             errors.append(u"%s : Pas d'arrivée enregistrée le %s" % (GetPrenomNom(inscrit), periode.date))
-                        reference = inscrit.getJournee(periode.date)
+                        reference = inscrit.GetJournee(periode.date)
                         if reference:
                             periode.arrivee = reference.GetPlageHoraire()[0]
                             if periode.arrivee is None:
@@ -372,7 +391,7 @@ class PlanningPanel(GPanel):
                     elif not periode.depart:
                         if periode.date != today:
                             errors.append(u"%s : Pas de départ enregistré le %s" % (GetPrenomNom(inscrit), periode.date))
-                        reference = inscrit.getJournee(date)
+                        reference = inscrit.GetJournee(date)
                         if reference:
                             periode.depart = reference.GetPlageHoraire()[-1]
                             if periode.depart is None:
@@ -381,11 +400,14 @@ class PlanningPanel(GPanel):
                             continue
                     
                     if periode.date in inscrit.journees:
-                        inscrit.journees[periode.date].remove_activities(0)
-                        inscrit.journees[periode.date].remove_activities(0|PREVISIONNEL)
+                        inscrit.journees[periode.date].RemoveActivities(0)
+                        inscrit.journees[periode.date].RemoveActivities(0|PREVISIONNEL)
                     else:
                         inscrit.journees[periode.date] = Journee(inscrit, periode.date)
-                    inscrit.journees[periode.date].SetActivity(periode.arrivee, periode.depart, 0)
+                    if value < 0:
+                        inscrit.journees[periode.date].SetState(value)
+                    else:
+                        inscrit.journees[periode.date].SetActivity(periode.arrivee, periode.depart, value)
                     history.Append(None)
             else:
                 errors.append(u"Inscrit %d: Inconnu!" % key)
@@ -426,6 +448,6 @@ class PlanningPanel(GPanel):
         if 'groupes' in observers and observers['groupes'] > self.last_groupe_observer:
             self.UpdateGroupeCombobox()
             
-        self.onChangeWeek()
+        self.OnChangementSemaine()
         self.sizer.Layout()
 

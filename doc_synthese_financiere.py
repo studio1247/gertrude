@@ -43,7 +43,7 @@ class SyntheseFinanciereModifications(object):
             return []
 
         elif filename == 'content.xml':
-            global_indexes = getTriParCommuneEtNomIndexes(range(len(creche.inscrits)))
+            global_indexes = GetTriParCommuneEtNomIndexes(range(len(creche.inscrits)))
     
             spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
             tables = spreadsheet.getElementsByTagName("table:table")
@@ -60,7 +60,7 @@ class SyntheseFinanciereModifications(object):
                 cotisations_facturees = 0.0
                 
                 debut = datetime.date(self.annee, mois, 1)
-                fin = getMonthEnd(debut)
+                fin = GetMonthEnd(debut)
                 for inscrit in creche.inscrits:
                     if inscrit.GetInscriptions(debut, fin):
                         facture = FactureFinMois(inscrit, self.annee, mois)
@@ -80,7 +80,7 @@ class SyntheseFinanciereModifications(object):
             
             
 #                debut = datetime.date(annee, mois+1, 1)
-#                fin = getMonthEnd(debut)
+#                fin = GetMonthEnd(debut)
 #                for inscrit in creche.inscrits:
 #                    try:
 #                        if inscrit.GetInscriptions(debut, fin):

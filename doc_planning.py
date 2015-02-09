@@ -72,25 +72,25 @@ class PlanningModifications(object):
     
     #        # Les enfants en adaptation
     #        indexes = [] # TODO getAdaptationIndexes(self.debut, date_fin)
-    #        indexes = getTriParPrenomIndexes(indexes)
+    #        indexes = GetTriParPrenomIndexes(indexes)
     #        self.printPresences(template, indexes, 15)
     #        nb_ad = max(2, len(indexes))
     
             # Les halte-garderie
             indexes = GetInscritsByMode(self.debut, date_fin, MODE_HALTE_GARDERIE, self.site)
-            indexes = getTriParPrenomIndexes(indexes)
+            indexes = GetTriParPrenomIndexes(indexes)
             self.printPresences(table, indexes, 11)
             nb_hg = max(2, len(indexes))
     
             # Les mi-temps
             indexes = GetInscritsByMode(self.debut, date_fin, MODE_4_5|MODE_3_5, self.site)
-            indexes = getTriParPrenomIndexes(indexes)
+            indexes = GetTriParPrenomIndexes(indexes)
             self.printPresences(table, indexes, 7)
             nb_45 = max(2, len(indexes))
     
             # Les plein-temps
             indexes = GetInscritsByMode(self.debut, date_fin, MODE_5_5, self.site)
-            indexes = getTriParPrenomIndexes(indexes)
+            indexes = GetTriParPrenomIndexes(indexes)
             self.printPresences(table, indexes, 3)
             nb_55 = max(2, len(indexes))
     
@@ -110,7 +110,7 @@ class PlanningModifications(object):
                 else:
                     tableau[inscription.professeur] = [inscription]
             def GetState(inscription, delta):
-                state = inscription.inscrit.getState(self.debut + datetime.timedelta(delta)).state
+                state = inscription.inscrit.GetState(self.debut + datetime.timedelta(delta)).state
                 if state <= 0:
                     return 0
                 else:
@@ -200,7 +200,7 @@ class PlanningModifications(object):
                     if date in inscrit.journees:
                         journee = inscrit.journees[date]
                     else:
-                        journee = inscrit.getJourneeReferenceCopy(date)
+                        journee = inscrit.GetJourneeReferenceCopy(date)
                     for t in range(2):
                         cell += 1
                         if journee and IsPresentDuringTranche(journee, tranches[t][0]*12, tranches[t][1]*12):
@@ -264,7 +264,7 @@ class PlanningModifications(object):
                         if date in inscrit.journees:
                             journee = inscrit.journees[date]
                         else:
-                            journee = inscrit.getJourneeReferenceCopy(date)
+                            journee = inscrit.GetJourneeReferenceCopy(date)
                     for t in range(3):
                         cellule = cellules.item(1 + semaine * 17 + jour * 3 + t)
                         if inscrit and journee:

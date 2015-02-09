@@ -28,6 +28,7 @@ import wx, wx.lib.filebrowsebutton
 import traceback
 import unicodedata
 from functions import *
+import subprocess
 
 NumberTypes = (types.IntType, types.LongType, types.FloatType, types.ComplexType)
 
@@ -403,9 +404,9 @@ def oo_open(filename):
             dlg.ShowModal()
             dlg.Destroy()
     elif sys.platform == "darwin":
-        os.system("/Applications/OpenOffice.app/Contents/MacOS/soffice %s" % filename.replace(" ", "\ "))
+        subprocess.Popen(["/Applications/OpenOffice.app/Contents/MacOS/soffice", filename])
     else:
-        os.system("ooffice %s" % filename.replace(" ", "\ "))
+        subprocess.Popen(["ooffice", filename])
     return 1
 
 def save_current_document(filename):

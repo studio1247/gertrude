@@ -40,13 +40,12 @@ couleurs = { SUPPLEMENT: 'A2',
 
 class FactureModifications(object):
     def __init__(self, inscrits, periode):
-        self.template = 'Facture mensuelle.odt'
         self.multi = False
         self.inscrits = inscrits
         self.periode = periode
         self.periode_facturation = periode
         if creche.temps_facturation != FACTURATION_FIN_MOIS:
-            self.periode_facturation = getMonthStart(periode - datetime.timedelta(1))
+            self.periode_facturation = GetMonthStart(periode - datetime.timedelta(1))
             
         self.email = True
         if len(inscrits) > 1:
@@ -60,12 +59,28 @@ class FactureModifications(object):
             self.email_subject = u"Facture %s %s %s %d" % (who.prenom, who.nom, months[periode.month - 1], periode.year)
             self.email_to = list(set([parent.email for parent in who.parents.values() if parent and parent.email]))
             self.default_output = self.email_subject + ".odt"
-
-        if IsTemplateFile("Facture mensuelle simple.odt"):
+        
+        if self.site and IsTemplateFile("Facture mensuelle simple %s.odt" % self.site.nom):
+            self.template = "Facture mensuelle simple %s.odt" % self.site.nom
+            if len(inscrits) > 1:
+                self.multi = True
+                self.default_output = u"Facture <prenom> <nom> %s %d.odt" % (months[periode.month - 1], periode.year)
+        elif IsTemplateFile("Facture mensuelle simple %s.odt" % creche.nom):
+            self.template = "Facture mensuelle simple %s.odt" % creche.nom
+            if len(inscrits) > 1:
+                self.multi = True
+                self.default_output = u"Facture <prenom> <nom> %s %d.odt" % (months[periode.month - 1], periode.year)
+        elif self.site and IsTemplateFile("Facture mensuelle %s.odt" % self.site.nom):
+            self.template = "Facture mensuelle %s.odt" % self.site.nom
+        elif IsTemplateFile("Facture mensuelle %s.odt" % creche.nom):
+            self.template = "Facture mensuelle %s.odt" % creche.nom
+        elif IsTemplateFile("Facture mensuelle simple.odt"):
             self.template = "Facture mensuelle simple.odt"
             if len(inscrits) > 1:
                 self.multi = True
                 self.default_output = u"Facture <prenom> <nom> %s %d.odt" % (months[periode.month - 1], periode.year)
+        else:
+            self.template = 'Facture mensuelle.odt'
         
         self.email_text = "Accompagnement facture.txt"
 
@@ -159,7 +174,7 @@ class FactureModifications(object):
                                     details = " (%s)" % GetHeureString(facture.jours_supplementaires[date])
                                 elif date in facture.jours_maladie:
                                     state = MALADE
-                                elif inscrit.isDateConge(date):
+                                elif inscrit.IsDateConge(date):
                                     state = CONGES
                                 elif date in facture.jours_conges_non_factures:
                                     state = VACANCES

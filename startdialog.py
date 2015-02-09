@@ -16,11 +16,11 @@
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import __builtin__
-import time, thread, traceback
+import time, thread, traceback, shutil
 import wx, wx.lib, wx.lib.newevent
 from constants import *
 from functions import *
-from config import LoadConfig, Load, Exit
+from config import LoadConfig, Load, Exit, CONFIG_FILENAME, DEFAULT_DATABASE, DEMO_DATABASE
 from asyncore import dispatcher
 import sys, time, socket
 
@@ -97,6 +97,13 @@ class StartDialog(wx.Dialog):
 
         __builtin__.force_token = False
         
+        if not os.path.isfile(CONFIG_FILENAME) and not os.path.isfile(DEFAULT_DATABASE) and os.path.isfile(DEMO_DATABASE):
+            dlg = wx.MessageDialog(self, u"Vous utilisez Gertrude pour la première fois, voulez-vous installer une base de démonstration ?",
+                                       'Gertrude',
+                                       wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+            if dlg.ShowModal() == wx.ID_YES:
+                shutil.copy(DEMO_DATABASE, DEFAULT_DATABASE)
+                
         self.MessageEvent, EVT_MESSAGE_EVENT = wx.lib.newevent.NewEvent()
         self.Bind(EVT_MESSAGE_EVENT, self.OnMessage)
         self.LoadedEvent, EVT_PROGRESS_EVENT = wx.lib.newevent.NewEvent()

@@ -15,7 +15,7 @@ exe = EXE(pyz,
           console=False,
           icon='bitmaps_dist\\gertrude.ico' )
 coll = COLLECT(exe,
-               a.binaries + [(x, x, 'DATA') for x in glob.glob("*.ini.dist") + glob.glob("*.php") + glob.glob("bitmaps_dist\\*.png") + glob.glob("bitmaps_dist\\pictos\\*.png") + glob.glob("bitmaps_dist\\*.ico") + glob.glob("templates_dist\\*.html") + glob.glob("templates_dist\\*.txt") + glob.glob("templates_dist\\*.od?")],
+               a.binaries + [(x, x, 'DATA') for x in glob.glob("*.ini.dist") + glob.glob("demo.db") + glob.glob("*.php") + glob.glob("bitmaps_dist\\*.png") + glob.glob("bitmaps_dist\\pictos\\*.png") + glob.glob("bitmaps_dist\\*.ico") + glob.glob("templates_dist\\*.html") + glob.glob("templates_dist\\*.txt") + glob.glob("templates_dist\\*.od?")],
                a.zipfiles,
                a.datas,
                strip=None,

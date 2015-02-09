@@ -18,23 +18,28 @@
 from constants import *
 from functions import *
 from facture import *
-from sqlobjects import Parent
+from sqlobjects import Parent, Creche, Site
 from cotisation import CotisationException
 from ooffice import *
 
 class AttestationModifications(object):
     def __init__(self, who, debut, fin):
         self.template = 'Attestation paiement.odt'
+        self.debut, self.fin = debut, fin
         if isinstance(who, list):
             self.inscrits = [inscrit for inscrit in who if inscrit.GetInscriptions(debut, fin)]
-            if debut.year == fin.year and debut.month == fin.month:
-                self.email_subject = u"Attestations de paiement %s %d" % (months[debut.month - 1], debut.year)
-                self.default_output = u"Attestation de paiement <prenom> <nom> %s %d.odt" % (months[debut.month - 1], debut.year)
-            else:
-                self.email_subject = u"Attestations de paiement %s-%s %d" % (months[debut.month - 1], months[fin.month - 1], debut.year)
-                self.default_output = u"Attestation de paiement <prenom> <nom> %s-%s %d.odt" % (months[debut.month - 1], months[fin.month - 1], debut.year)
-            self.email_to = None
-            self.multi = None
+            self.SetDefaultMultiParam()
+        elif isinstance(who, Creche):
+            self.inscrits = [inscrit for inscrit in who.inscrits if inscrit.GetInscriptions(debut, fin)]
+            self.SetDefaultMultiParam()
+        elif isinstance(who, Site):
+            self.inscrits = []
+            for inscrit in creche.inscrits:
+                for inscription in inscrit.GetInscriptions(debut, fin):
+                    if inscription.site == who:
+                        self.inscrits.append(inscrit)
+                        break
+            self.SetDefaultMultiParam()                    
         else:
             self.inscrits = [who]
             if debut.year == fin.year and debut.month == fin.month:
@@ -44,10 +49,19 @@ class AttestationModifications(object):
             self.default_output = self.email_subject + ".odt"
             self.email_to = list(set([parent.email for parent in who.parents.values() if parent and parent.email]))
             self.multi = False
-        self.debut, self.fin = debut, fin
         self.email = True
         self.site = None
         self.email_text = "Accompagnement attestation paiement.txt"
+
+    def SetDefaultMultiParam(self):
+        if self.debut.year == self.fin.year and self.debut.month == self.fin.month:
+            self.email_subject = u"Attestations de paiement %s %d" % (months[self.debut.month - 1], self.debut.year)
+            self.default_output = u"Attestation de paiement <prenom> <nom> %s %d.odt" % (months[self.debut.month - 1], self.debut.year)
+        else:
+            self.email_subject = u"Attestations de paiement %s-%s %d" % (months[self.debut.month - 1], months[self.fin.month - 1], self.debut.year)
+            self.default_output = u"Attestation de paiement <prenom> <nom> %s-%s %d.odt" % (months[self.debut.month - 1], months[self.fin.month - 1], self.debut.year)
+        self.email_to = None
+        self.multi = None
 
     def GetSimpleModifications(self, filename):
         return [(filename.replace("<prenom>", inscrit.prenom).replace("<nom>", inscrit.nom), AttestationModifications(inscrit, self.debut, self.fin)) for inscrit in self.inscrits]
@@ -84,11 +98,11 @@ class AttestationModifications(object):
                     if facture.total != 0:
                         if facture_debut is None:
                             facture_debut = date
-                        facture_fin = getMonthEnd(date)
+                        facture_fin = GetMonthEnd(date)
                         print ' ', date, facture.total
                         total += facture.total
                         heures_facturees += facture.heures_facturees
-                    date = getNextMonthStart(date)
+                    date = GetNextMonthStart(date)
             except CotisationException, e:
                 errors[GetPrenomNom(inscrit)] = e.errors
                 continue

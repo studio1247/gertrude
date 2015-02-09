@@ -50,7 +50,7 @@ class EtatPresenceMensuelModifications(object):
             
         #return errors
 
-        inscrits = GetInscrits(self.date, getMonthEnd(self.date))
+        inscrits = GetInscrits(self.date, GetMonthEnd(self.date))
         inscrits.sort(cmp=lambda x,y: cmp(GetPrenomNom(x), GetPrenomNom(y)))
         
         template = lignes.item(5)
@@ -58,7 +58,7 @@ class EtatPresenceMensuelModifications(object):
             cantine, garderie = 0, 0
             date = self.date
             while date.month == self.date.month:
-                journee = inscrit.getJournee(date)
+                journee = inscrit.GetJournee(date)
                 if journee:
                     if journee.GetActivity(8.0):
                         garderie += 1
