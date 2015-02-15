@@ -663,7 +663,7 @@ def GetInscriptionFields(inscription):
             ]
 
 def GetCotisationFields(cotisation):
-    return [('nombre-factures', cotisation.nombre_factures),
+    result = [('nombre-factures', cotisation.nombre_factures),
             ('jours-semaine', cotisation.jours_semaine),
             ('heures-semaine', GetHeureString(cotisation.heures_semaine)),
             ('heures-mois', GetHeureString(cotisation.heures_mois)),
@@ -680,8 +680,12 @@ def GetCotisationFields(cotisation):
             ('liste-conges', ", ".join(cotisation.liste_conges)),
             ('montant-allocation-caf', cotisation.montant_allocation_caf, FIELD_EUROS|FIELD_SIGN),
             ('cotisation-mensuelle-apres-allocation-caf', cotisation.cotisation_mensuelle-cotisation.montant_allocation_caf, FIELD_EUROS|FIELD_SIGN),
-            ('montant-heure-garde-apres-allocation-caf', (cotisation.cotisation_mensuelle-cotisation.montant_allocation_caf) / (cotisation.cotisation_mensuelle/cotisation.montant_heure_garde), FIELD_EUROS|FIELD_SIGN),
            ]
+    if (cotisation.montant_heure_garde and cotisation.cotisation_mensuelle):
+        result.append(('montant-heure-garde-apres-allocation-caf', (cotisation.cotisation_mensuelle-cotisation.montant_allocation_caf) / (cotisation.cotisation_mensuelle/cotisation.montant_heure_garde), FIELD_EUROS|FIELD_SIGN))
+    else:
+        result.append(('montant-heure-garde-apres-allocation-caf', 0.0, FIELD_EUROS|FIELD_SIGN))
+    return result
 
 def GetFactureFields(facture):
     if facture:
