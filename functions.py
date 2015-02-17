@@ -671,8 +671,6 @@ def GetCotisationFields(cotisation):
             ('semaines-periode', cotisation.semaines_periode),
             ('frais-inscription', cotisation.frais_inscription, FIELD_EUROS|FIELD_SIGN),
             ('cotisation-mensuelle', "%.02f" % cotisation.cotisation_mensuelle),
-            ('montant-semaine', cotisation.heures_semaine*cotisation.montant_heure_garde, FIELD_EUROS|FIELD_SIGN),
-            ('montant-periode', cotisation.heures_periode*cotisation.montant_heure_garde, FIELD_EUROS|FIELD_SIGN),
             ('enfants-a-charge', cotisation.enfants_a_charge),           
             ('annee-debut', cotisation.debut.year),
             ('annee-fin', cotisation.debut.year+1),
@@ -681,6 +679,9 @@ def GetCotisationFields(cotisation):
             ('montant-allocation-caf', cotisation.montant_allocation_caf, FIELD_EUROS|FIELD_SIGN),
             ('cotisation-mensuelle-apres-allocation-caf', cotisation.cotisation_mensuelle-cotisation.montant_allocation_caf, FIELD_EUROS|FIELD_SIGN),
            ]
+    if cotisation.montant_heure_garde is not None:
+        result.append(('montant-semaine', cotisation.heures_semaine*cotisation.montant_heure_garde, FIELD_EUROS|FIELD_SIGN))
+        result.append(('montant-periode', cotisation.heures_periode*cotisation.montant_heure_garde, FIELD_EUROS|FIELD_SIGN))
     if (cotisation.montant_heure_garde and cotisation.cotisation_mensuelle):
         result.append(('montant-heure-garde-apres-allocation-caf', (cotisation.cotisation_mensuelle-cotisation.montant_allocation_caf) / (cotisation.cotisation_mensuelle/cotisation.montant_heure_garde), FIELD_EUROS|FIELD_SIGN))
     else:
