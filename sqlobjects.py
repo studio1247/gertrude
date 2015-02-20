@@ -229,7 +229,7 @@ class Day(object):
             if value < 0:
                 self.last_heures = 0.0
                 return self.last_heures
-            elif value == 0:
+            elif value == 0 or value == PREVISIONNEL:
                 if facturation:
                     mode_arrondi = creche.arrondi_facturation
                 else:
