@@ -166,18 +166,20 @@ class PlanningDetailleModifications(object):
                         page.appendChild(node)
                         for a, b, v in line.activites:
                             if v >= 0:
-                                v = v & (~PREVISIONNEL)
-                                # print a,b,v
-                                node = shapes["activite-%d" % v].cloneNode(1)
-                                node.setAttribute('svg:x', '%fcm' % (left + labels_width + float(a-affichage_min) * step))
-                                node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
-                                node.setAttribute('svg:width', '%fcm' % ((b-a)*step))
-                                if isinstance(line.inscription, Inscription):
-                                    allergies = ', '.join(line.inscription.inscrit.GetAllergies())
-                                else:
-                                    allergies = ''                                    
-                                ReplaceTextFields(node, [('texte', ''), ('allergies', allergies)])
-                                page.appendChild(node)
+                                key = "activite-%d" % v
+                                if key in shapes:
+                                    v = v & (~PREVISIONNEL)
+                                    # print a,b,v
+                                    node = shapes[key].cloneNode(1)
+                                    node.setAttribute('svg:x', '%fcm' % (left + labels_width + float(a-affichage_min) * step))
+                                    node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
+                                    node.setAttribute('svg:width', '%fcm' % ((b-a)*step))
+                                    if isinstance(line.inscription, Inscription):
+                                        allergies = ', '.join(line.inscription.inscrit.GetAllergies())
+                                    else:
+                                        allergies = ''                                    
+                                    ReplaceTextFields(node, [('texte', ''), ('allergies', allergies)])
+                                    page.appendChild(node)
                             
                 if page_index+1 == pages_count:
                     # ligne séparatrice
