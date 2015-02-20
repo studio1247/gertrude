@@ -166,9 +166,9 @@ class PlanningDetailleModifications(object):
                         page.appendChild(node)
                         for a, b, v in line.activites:
                             if v >= 0:
+                                v = v & (~PREVISIONNEL)
                                 key = "activite-%d" % v
                                 if key in shapes:
-                                    v = v & (~PREVISIONNEL)
                                     # print a,b,v
                                     node = shapes[key].cloneNode(1)
                                     node.setAttribute('svg:x', '%fcm' % (left + labels_width + float(a-affichage_min) * step))
