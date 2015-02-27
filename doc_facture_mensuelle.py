@@ -149,8 +149,8 @@ class FactureModifications(object):
                             for cell in cells[i]:
                                 cell.setAttribute('table:style-name', 'Tableau1.E2')
                                 text_node = cell.getElementsByTagName('text:p')[0]
-                                text_node.firstChild.replaceWholeText(' ')
-        
+                                if text_node and text_node.firstChild:
+                                    text_node.firstChild.replaceWholeText(' ')
                         date = facture.debut_recap
                         while date.month == facture.debut_recap.month:
                             col = date.weekday()
@@ -182,7 +182,8 @@ class FactureModifications(object):
                                     state = CONGES_DEPASSEMENT
                                 else:
                                     state = ABSENT
-                                text_node.firstChild.replaceWholeText('%d%s' % (date.day, details))
+                                if text_node and text_node.firstChild:
+                                    text_node.firstChild.replaceWholeText('%d%s' % (date.day, details))
                                 cell.setAttribute('table:style-name', 'Presences.%s' % couleurs[state])
                             date += datetime.timedelta(1)
         
