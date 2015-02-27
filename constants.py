@@ -185,3 +185,12 @@ NUMEROS_FACTURES_CONSECUTIFS = 1 << 5
 # Atributs de plages horaires spéciales
 PLAGE_FERMETURE = 0
 PLAGE_INSECABLE = 1
+
+# Paramètres pour les factures
+NO_ADDRESS = 1 << 0
+NO_NOM     = 1 << 1
+NO_REVENUS = 1 << 2
+NO_PARENTS = 1 << 3
+NO_NUMERO  = 1 << 4
+TRACES     = 1 << 5
+DEPART_ANTICIPE = 1 << 6

@@ -26,14 +26,6 @@ class CotisationException(Exception):
     def __str__(self):
         return '\n'.join(self.errors)
 
-NO_ADDRESS = 1 << 0
-NO_NOM     = 1 << 1
-NO_REVENUS = 1 << 2
-NO_PARENTS = 1 << 3
-NO_NUMERO  = 1 << 4
-TRACES     = 1 << 5
-DEPART_ANTICIPE = 1 << 6
-
 def GetDateRevenus(date):
     if creche.periode_revenus == REVENUS_CAFPRO:
         return datetime.date(date.year, date.month, date.day)
