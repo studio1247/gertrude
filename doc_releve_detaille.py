@@ -66,7 +66,7 @@ class ReleveDetailleModifications(object):
                 date = datetime.date(self.annee, mois+1, 1)
                 if date <= today and (not agemin or date >= anniversaireMin) and (not agemax or date < anniversaireMax):
                     try:
-                        facture = Facture(inscrit, self.annee, mois+1)
+                        facture = Facture(inscrit, self.annee, mois+1, NO_NUMERO)
                         fields = [('heures-facturees', facture.heures_facture), ('heures-realisees', facture.heures_realisees), ('total', facture.total)]
                     except CotisationException, e:
                         self.errors[GetPrenomNom(inscrit)] = e.errors
@@ -121,7 +121,7 @@ class ReleveDetailleModifications(object):
                 for inscrit in GetInscrits(datetime.date(self.annee, 1, 1), datetime.date(self.annee, 12, 31)):
                     for i, line in enumerate(template):
                         try:
-                            facture = Facture(inscrit, self.annee, i+1)
+                            facture = Facture(inscrit, self.annee, i+1, NO_NUMERO)
                         except CotisationException, e:
                             facture = None
                             self.errors[GetPrenomNom(inscrit)] = e.errors                            

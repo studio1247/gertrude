@@ -601,7 +601,7 @@ class StatistiquesFrequentationTab(AutoTab):
                 try:
                     inscriptions = inscrit.GetInscriptions(debut, fin)
                     if inscriptions and (site is None or inscriptions[0].site == site):
-                        facture = Facture(inscrit, annee, mois+1)
+                        facture = Facture(inscrit, annee, mois+1, NO_NUMERO)
                         heures_contrat += facture.heures_contrat
                         heures_facture += facture.heures_facture
                         heures_contractualisees += facture.heures_contractualisees

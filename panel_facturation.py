@@ -295,7 +295,7 @@ class FacturationTab(AutoTab):
         errors = {}
         for inscrit in inscrits:
             try:
-                facture = Facture(inscrit, periode.year, periode.month)
+                facture = Facture(inscrit, periode.year, periode.month, NO_NUMERO)
                 facture.Cloture()
             except CotisationException, e:
                 errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors

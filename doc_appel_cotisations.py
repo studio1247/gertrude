@@ -76,7 +76,7 @@ class AppelCotisationsModifications(object):
                 self.gauge.SetValue(10+int(80.0*i/len(inscrits)))
             line = lines_template[i % 2].cloneNode(1)
             try:
-                facture = Facture(inscrit, self.debut.year, self.debut.month, self.options)
+                facture = Facture(inscrit, self.debut.year, self.debut.month, self.options|NO_NUMERO)
                 commentaire = None
             except CotisationException, e:
                 facture = None

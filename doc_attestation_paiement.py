@@ -93,7 +93,7 @@ class AttestationModifications(object):
             site = None
             try:
                 while date <= self.fin:
-                    facture = Facture(inscrit, date.year, date.month)
+                    facture = Facture(inscrit, date.year, date.month, NO_NUMERO)
                     site = facture.site
                     if facture.total != 0:
                         if facture_debut is None:

@@ -154,7 +154,7 @@ class EtatsTrimestrielsModifications(object):
     def get_facture(self, inscrit, mois):
         if (inscrit.idx, mois) not in self.factures:
             try:
-                self.factures[inscrit.idx, mois] = Facture(inscrit, self.annee, mois, options=NO_REVENUS)
+                self.factures[inscrit.idx, mois] = Facture(inscrit, self.annee, mois, options=NO_REVENUS|NO_NUMERO)
             except CotisationException, e:
                 label = "%s %s" % (inscrit.prenom, inscrit.nom)
                 if not label in self.errors:

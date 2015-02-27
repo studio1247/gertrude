@@ -60,7 +60,7 @@ class ReleveSIEJModifications(object):
             for mois in range(12):
                 trimestreEnd = GetTrimestreEnd(date)
                 try:
-                    facture = Facture(inscrit, self.annee, mois+1)
+                    facture = Facture(inscrit, self.annee, mois+1, NO_NUMERO)
                     regime = self.GetRegime(inscrit, date)
                     if config.options & HEURES_CONTRAT:
                         facture_heures_facturees = facture.heures_facture

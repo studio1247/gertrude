@@ -128,6 +128,7 @@ class DayPlanningPanel(PlanningWidget):
                 def GetHeuresSalarie(line):
                     date = line.date - datetime.timedelta(line.date.weekday())
                     heures_semaine = 0
+                    print date
                     for i in range(7):
                         if date in line.salarie.journees:
                             heures = line.salarie.journees[date].GetNombreHeures()

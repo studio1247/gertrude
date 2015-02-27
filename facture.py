@@ -38,6 +38,31 @@ class FactureFinMois(object):
         else:
             self.formule_supplement.append(u"%s = %.2f" % (GetHeureString(heures), supplement))
 
+    def GetNumeroFacture(self):
+        try:
+            numero = int(creche.numeros_facture[self.debut_recap].valeur)
+        except:
+            numero = 0
+            
+        if config.options & NUMEROS_FACTURES_CONSECUTIFS:
+            # print u"Calcul du numéro de facture de", GetPrenomNom(self.inscrit)
+            for inscrit in creche.inscrits:
+                if inscrit is self.inscrit:
+                    return numero
+                else:
+                    if inscrit.HasFacture(self.debut_recap):
+                        try:
+                            facture = FactureFinMois(inscrit, self.annee, self.mois, options=NO_ADDRESS|NO_PARENTS|NO_NUMERO)
+                            if facture.total > 0:
+                                # print u"  Facture de %s: %d" % (GetPrenomNom(inscrit), numero)
+                                numero += 1
+                            # else:
+                            #    print u"  Facture de %s sautée" % GetPrenomNom(inscrit)
+                        except:
+                            raise CotisationException([u"Impossible de calculer le numéro de facture (erreur sur la facture de %s qui la précède)" % GetPrenomNom(inscrit)])
+        else:
+            return numero + creche.inscrits.index(self.inscrit) 
+            
     def __init__(self, inscrit, annee, mois, options=0):
         self.inscrit = inscrit
         self.site = None
@@ -46,11 +71,10 @@ class FactureFinMois(object):
         self.debut_recap = datetime.date(annee, mois, 1)
         self.fin_recap = GetMonthEnd(self.debut_recap)
         self.date = self.fin_recap
-        try:
-            first_numero = int(creche.numeros_facture[self.debut_recap].valeur)
-        except:
-            first_numero = 0
-        self.numero = first_numero + creche.inscrits.index(inscrit)
+        if options & NO_NUMERO:
+            self.numero = 0
+        else:
+            self.numero = self.GetNumeroFacture()
         self.options = options
         self.cotisation_mensuelle = 0.0
         self.report_cotisation_mensuelle = 0.0

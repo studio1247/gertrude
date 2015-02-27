@@ -55,7 +55,7 @@ class ExportComptaModifications(object):
         indexOperation = 0
         for inscrit in self.inscrits:
             try:
-                facture = Facture(inscrit, self.periode.year, self.periode.month)
+                facture = Facture(inscrit, self.periode.year, self.periode.month, NO_NUMERO)
             except CotisationException, e:
                 errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
                 continue

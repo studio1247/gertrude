@@ -180,6 +180,7 @@ HEURES_CONTRAT = 1 << 1
 TABLETTE = 1 << 2
 CATEGORIES = 1 << 3
 DECLOTURE = 1 << 4
+NUMEROS_FACTURES_CONSECUTIFS = 1 << 5
 
 # Atributs de plages horaires spéciales
 PLAGE_FERMETURE = 0
