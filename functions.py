@@ -367,9 +367,9 @@ def GetTriParCommuneEtNomIndexes(indexes):
     # Tri par commune (Rennes en premier) + ordre alphabetique des noms
     def tri(one, two):
         i1 = creche.inscrits[one] ; i2 = creche.inscrits[two]
-        if (i1.ville.lower() != 'rennes' and i2.ville.lower() == 'rennes'):
+        if (i1.famille.ville.lower() != 'rennes' and i2.famille.ville.lower() == 'rennes'):
             return 1
-        elif (i1.ville.lower() == 'rennes' and i2.ville.lower() != 'rennes'):
+        elif (i1.famille.ville.lower() == 'rennes' and i2.famille.ville.lower() != 'rennes'):
             return -1
         else:
             return cmp("%s %s" % (i1.nom, i1.prenom), "%s %s" % (i2.nom, i2.prenom))

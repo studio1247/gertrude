@@ -719,15 +719,16 @@ class RelevesTab(AutoTab):
         self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
         
         # Les etats des places
-        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Etats des places'), wx.HORIZONTAL)
-        self.places_choice = wx.Choice(self)
-        button = wx.Button(self, -1, u'Génération')
-        for year in range(first_date.year, today.year + 1):
-            self.places_choice.Append(u'Année %d' % year, year)
-        self.places_choice.SetSelection(today.year - first_date.year)
-        self.Bind(wx.EVT_BUTTON, self.OnGenerationEtatsPlaces, button)
-        box_sizer.AddMany([(self.places_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
-        self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+        if IsTemplateFile("Etats places.ods"):
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Etats des places'), wx.HORIZONTAL)
+            self.places_choice = wx.Choice(self)
+            button = wx.Button(self, -1, u'Génération')
+            for year in range(first_date.year, today.year + 1):
+                self.places_choice.Append(u'Année %d' % year, year)
+            self.places_choice.SetSelection(today.year - first_date.year)
+            self.Bind(wx.EVT_BUTTON, self.OnGenerationEtatsPlaces, button)
+            box_sizer.AddMany([(self.places_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
         
         # Les rapports de fréquentation
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Rapports de fréquentation'), wx.HORIZONTAL)
@@ -776,13 +777,14 @@ class RelevesTab(AutoTab):
             self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
         
         # Les plannings de presence enfants
-        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Planning des présences'), wx.HORIZONTAL)
-        self.planning_hebdo_choice = wx.Choice(self)
-        PopulateWeekChoice(self.planning_hebdo_choice)
-        button = wx.Button(self, -1, u'Génération')
-        self.Bind(wx.EVT_BUTTON, self.OnGenerationPlanningPresences, button)
-        box_sizer.AddMany([(self.planning_hebdo_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
-        self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+        if IsTemplateFile('Planning.ods'):
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Planning des présences'), wx.HORIZONTAL)
+            self.planning_hebdo_choice = wx.Choice(self)
+            PopulateWeekChoice(self.planning_hebdo_choice)
+            button = wx.Button(self, -1, u'Génération')
+            self.Bind(wx.EVT_BUTTON, self.OnGenerationPlanningPresences, button)
+            box_sizer.AddMany([(self.planning_hebdo_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
         # Les plannings détaillés
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Planning détaillé'), wx.HORIZONTAL)

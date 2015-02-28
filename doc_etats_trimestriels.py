@@ -107,12 +107,7 @@ class EtatsTrimestrielsModifications(object):
                                 heures[0][i] = facture.heures_facturees - facture.heures_facturees_par_mode[MODE_HALTE_GARDERIE]
                                 heures[1][i] = facture.heures_facturees_par_mode[MODE_HALTE_GARDERIE]
     
-                            fields = [('nom', inscrit.nom),
-                                      ('prenom', inscrit.prenom),
-                                      ('adresse', inscrit.famille.adresse),
-                                      ('ville', inscrit.famille.ville),
-                                      ('code_postal', str(inscrit.code_postal)),
-                                      ('naissance', inscrit.naissance),
+                            fields = GetInscritFields(inscrit) + [
                                       ('entree', inscrit.inscriptions[0].debut),
                                       ('sortie', inscrit.inscriptions[-1].fin)]
     
@@ -125,7 +120,7 @@ class EtatsTrimestrielsModifications(object):
                                     else:
                                         fields.append(('%s(%d)' % (mode, i+1), heures[m][i]))
                         else:
-                            fields = [(tmp, '') for tmp in ('nom', 'prenom', 'adresse', 'ville', 'code_postal', 'naissance', 'entree', 'sortie')]
+                            fields = [(tmp, '') for tmp in ('nom', 'prenom', 'adresse', 'ville', 'code-postal', 'naissance', 'entree', 'sortie')]
                             for mode in ["creche", "halte"]:
                                 for i in range(3):
                                     fields.append(('%s(%d)' % (mode, i+1), ''))
