@@ -1236,6 +1236,13 @@ class Creche(object):
                 return inscrit
         else:
             return None
+        
+    def GetSalarie(self, idx):
+        for salarie in self.salaries:
+            if salarie.idx == idx:
+                return salarie
+        else:
+            return None
                 
     def __setattr__(self, name, value):
         self.__dict__[name] = value

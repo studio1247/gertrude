@@ -128,7 +128,6 @@ class DayPlanningPanel(PlanningWidget):
                 def GetHeuresSalarie(line):
                     date = line.date - datetime.timedelta(line.date.weekday())
                     heures_semaine = 0
-                    print date
                     for i in range(7):
                         if date in line.salarie.journees:
                             heures = line.salarie.journees[date].GetNombreHeures()
@@ -328,8 +327,46 @@ class PlanningPanel(GPanel):
                 self.depart = depart
                 self.absent = absent
                 self.malade = malade
+
+        def AddPeriode(who, periode):
+            value = 0
+            if periode.absent:
+                value = VACANCES
+            elif periode.malade:
+                value = MALADE
+            elif not periode.arrivee:
+                if not date in who.journees:
+                    errors.append(u"%s : Pas d'arrivée enregistrée le %s" % (GetPrenomNom(who), periode.date))
+                reference = who.GetJournee(periode.date)
+                if reference:
+                    periode.arrivee = reference.GetPlageHoraire()[0]
+                    if periode.arrivee is None:
+                        periode.arrivee = int(creche.ouverture*(60 / BASE_GRANULARITY))
+                else:
+                    return
+            elif not periode.depart:
+                if periode.date != today:
+                    errors.append(u"%s : Pas de départ enregistré le %s" % (GetPrenomNom(who), periode.date))
+                reference = who.GetJournee(date)
+                if reference:
+                    periode.depart = reference.GetPlageHoraire()[-1]
+                    if periode.depart is None:
+                        periode.depart = int(creche.fermeture*(60 / BASE_GRANULARITY))
+                else:
+                    return
+            if periode.date in who.journees:
+                who.journees[periode.date].RemoveActivities(0)
+                who.journees[periode.date].RemoveActivities(0|PREVISIONNEL)
+            else:
+                who.journees[periode.date] = Journee(who, periode.date)
+            if value < 0:
+                who.journees[periode.date].SetState(value)
+            else:
+                who.journees[periode.date].SetActivity(periode.arrivee, periode.depart, value)
+            history.Append(None)
         
-        array = {}
+        array_enfants = {}
+        array_salaries = {}
         lines = journal.split("\n")
         
         index = -1
@@ -341,10 +378,16 @@ class PlanningPanel(GPanel):
 
         for line in lines[index+1:]:
             try:
-                label, idx, date = line.split()
+                full_label, idx, date = line.split()
                 idx = int(idx)
                 tm = time.strptime(date, "%Y-%m-%d@%H:%M")
                 date = datetime.date(tm.tm_year, tm.tm_mon, tm.tm_mday)
+                if full_label.endswith("_salarie"):
+                    array = array_salaries
+                    label = full_label[:-8]
+                else:
+                    array = array_enfants
+                    label = full_label
                 if idx not in array:
                     array[idx] = []
                 if label == "arrivee":
@@ -364,54 +407,30 @@ class PlanningPanel(GPanel):
                     array[idx].append(PeriodePresence(date, absent=True))
                 elif label == "malade":
                     array[idx].append(PeriodePresence(date, malade=True))
-                    
+                else:
+                    print "Ligne %s inconnue" % full_label
                 creche.last_tablette_synchro = line
             except Exception, e:
+                print e
                 pass
         
+        print array_salaries
+        
         errors = []            
-        for key in array:
+        for key in array_enfants:
             inscrit = creche.GetInscrit(key)
             if inscrit:
-                for periode in array[key]:
-                    value = 0
-                    if periode.absent:
-                        value = VACANCES
-                    elif periode.malade:
-                        value = MALADE
-                    elif not periode.arrivee:
-                        if not date in inscrit.journees:
-                            errors.append(u"%s : Pas d'arrivée enregistrée le %s" % (GetPrenomNom(inscrit), periode.date))
-                        reference = inscrit.GetJournee(periode.date)
-                        if reference:
-                            periode.arrivee = reference.GetPlageHoraire()[0]
-                            if periode.arrivee is None:
-                                periode.arrivee = int(creche.ouverture*(60 / BASE_GRANULARITY))
-                        else:
-                            continue
-                    elif not periode.depart:
-                        if periode.date != today:
-                            errors.append(u"%s : Pas de départ enregistré le %s" % (GetPrenomNom(inscrit), periode.date))
-                        reference = inscrit.GetJournee(date)
-                        if reference:
-                            periode.depart = reference.GetPlageHoraire()[-1]
-                            if periode.depart is None:
-                                periode.depart = int(creche.fermeture*(60 / BASE_GRANULARITY))
-                        else:
-                            continue
-                    
-                    if periode.date in inscrit.journees:
-                        inscrit.journees[periode.date].RemoveActivities(0)
-                        inscrit.journees[periode.date].RemoveActivities(0|PREVISIONNEL)
-                    else:
-                        inscrit.journees[periode.date] = Journee(inscrit, periode.date)
-                    if value < 0:
-                        inscrit.journees[periode.date].SetState(value)
-                    else:
-                        inscrit.journees[periode.date].SetActivity(periode.arrivee, periode.depart, value)
-                    history.Append(None)
+                for periode in array_enfants[key]:
+                    AddPeriode(inscrit, periode)
             else:
                 errors.append(u"Inscrit %d: Inconnu!" % key)
+        for key in array_salaries:
+            salarie = creche.GetSalarie(key)
+            if salarie:
+                for periode in array_salaries[key]:
+                    AddPeriode(salarie, periode)
+            else:
+                errors.append(u"Salarié %d: Inconnu!" % key)
         if errors:
             dlg = wx.MessageDialog(None, u"\n".join(errors), u'Erreurs de saisie tablette', wx.OK|wx.ICON_WARNING)
             dlg.ShowModal()
