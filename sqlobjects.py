@@ -771,6 +771,7 @@ class Salarie(object):
         self.conges = []
         self.journees = {}
         self.jours_conges = {}
+        self.combinaison = ""
         if creation:
             self.create()
 
@@ -824,7 +825,7 @@ class Salarie(object):
 
     def create(self):
         print 'nouveau salarie'
-        result = sql_connection.execute('INSERT INTO EMPLOYES (idx, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, email, diplomes) VALUES(NULL,?,?,?,?,?,?,?,?)', (self.prenom, self.nom, self.telephone_domicile, self.telephone_domicile_notes, self.telephone_portable, self.telephone_portable_notes, self.email, self.diplomes))
+        result = sql_connection.execute('INSERT INTO EMPLOYES (idx, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, email, diplomes, combinaison) VALUES(NULL,?,?,?,?,?,?,?,?,?)', (self.prenom, self.nom, self.telephone_domicile, self.telephone_domicile_notes, self.telephone_portable, self.telephone_portable_notes, self.email, self.diplomes, self.combinaison))
         self.idx = result.lastrowid
 
     def delete(self):
@@ -835,7 +836,7 @@ class Salarie(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['prenom', 'nom', 'telephone_domicile', 'telephone_domicile_notes', 'telephone_portable', 'telephone_portable_notes', 'email', 'diplomes'] and self.idx:
+        if name in ['prenom', 'nom', 'telephone_domicile', 'telephone_domicile_notes', 'telephone_portable', 'telephone_portable_notes', 'email', 'diplomes', 'combinaison'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE EMPLOYES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
@@ -1692,7 +1693,6 @@ class Famille(object):
         if name in ['adresse', 'code_postal', 'ville', 'numero_securite_sociale', 'numero_allocataire_caf', 'tarifs', 'notes', 'medecin_traitant', 'telephone_medecin_traitant', 'assureur', 'numero_police_assurance'] and self.idx:
             print 'update', name, (old_value, value)
             sql_connection.execute('UPDATE FAMILLES SET %s=? WHERE idx=?' % name, (value, self.idx))
-
 
 class Inscrit(object):
     def __init__(self, creation=True):

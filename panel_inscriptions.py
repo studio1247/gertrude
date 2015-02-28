@@ -206,56 +206,7 @@ class InscriptionsTab(AutoTab):
         self.inscrit = inscrit
         for ctrl in self.ctrls:
             ctrl.SetInstance(inscrit)
-
-def getPictoBitmap(index, size=64):
-    if isinstance(index, int):
-        index = chr(ord('a')+index)
-    bitmap = wx.Bitmap(GetBitmapFile("pictos/%c.png" % index), wx.BITMAP_TYPE_PNG)
-    image = wx.ImageFromBitmap(bitmap)
-    image = image.Scale(size, size, wx.IMAGE_QUALITY_HIGH)
-    return wx.BitmapFromImage(image)
     
-class CombinaisonDialog(wx.Dialog):
-    def __init__(self, parent):
-        wx.Dialog.__init__(self, parent, -1, "Nouvelle combinaison", wx.DefaultPosition, wx.DefaultSize)
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        gridSizer = wx.FlexGridSizer(5, 4, 5, 5)
-        self.combinaison= []
-        for i in range(20):
-            picto = wx.BitmapButton(self, -1, getPictoBitmap(i), style=wx.BU_EXACTFIT)
-            picto.picto = chr(ord('a')+i)
-            self.Bind(wx.EVT_BUTTON, self.OnPressPicto, picto)
-            gridSizer.Add(picto)            
-        self.sizer.Add(gridSizer, 0, wx.EXPAND|wx.ALL, 5)
-
-        self.combinaisonPanel = wx.Panel(self, style=wx.SUNKEN_BORDER)
-        self.combinaisonPanel.SetMinSize((-1, 36))
-        self.combinaisonSizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.combinaisonPanel.SetSizer(self.combinaisonSizer)
-        self.sizer.Add(self.combinaisonPanel, 0, wx.EXPAND)
-        
-        btnsizer = wx.StdDialogButtonSizer()
-        btn = wx.Button(self, wx.ID_OK)
-        btnsizer.AddButton(btn)
-        btn = wx.Button(self, wx.ID_CANCEL)
-        btnsizer.AddButton(btn)
-        btnsizer.Realize()       
-        self.sizer.Add(btnsizer, 0, wx.ALL, 5)
-        self.SetSizer(self.sizer)
-        self.sizer.Fit(self)
-    
-    def OnPressPicto(self, event):
-        sender = event.GetEventObject()
-        picto = sender.picto
-        self.combinaison.append(picto)       
-        bmp = getPictoBitmap(picto, size=32)
-        button = wx.StaticBitmap(self.combinaisonPanel, -1, bmp)
-        self.combinaisonSizer.Add(button, 0, wx.LEFT, 5)
-        self.combinaisonSizer.Layout()
-    
-    def GetCombinaison(self):
-        return "".join(self.combinaison)
-
 class IdentitePanel(InscriptionsTab):
     def __init__(self, parent):
         InscriptionsTab.__init__(self, parent)
@@ -331,19 +282,9 @@ class IdentitePanel(InscriptionsTab):
         sizer3.Add(self.nouveau_frere, 0, wx.RIGHT+wx.LEFT+wx.BOTTOM, 10)
         self.Bind(wx.EVT_BUTTON, self.OnAjoutFrere, self.nouveau_frere)
         self.sizer.Add(sizer3, 0, wx.EXPAND|wx.ALL, 5)
-
-        if config.options & TABLETTE: 
-            tabletteSizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Tablette'), wx.VERTICAL)
-            internalSizer = wx.BoxSizer(wx.HORIZONTAL)
-            self.combinaisonSizer = wx.BoxSizer(wx.HORIZONTAL)
-            internalSizer.Add(self.combinaisonSizer)
-            settingsbmp = wx.Bitmap(GetBitmapFile("settings.png"), wx.BITMAP_TYPE_PNG)
-            button = wx.BitmapButton(self, -1, settingsbmp)
-            self.Bind(wx.EVT_BUTTON, self.OnModifyCombinaison, button)           
-            internalSizer.Add(button, 0, wx.LEFT, 10)
-            tabletteSizer.Add(internalSizer, 0, wx.TOP|wx.BOTTOM, 10)
-            self.sizer.Add(tabletteSizer, 0, wx.EXPAND|wx.ALL, 5)
-
+        if config.options & TABLETTE:
+            self.tabletteSizer = TabletteSizer(self, self.inscrit)
+            self.sizer.Add(self.tabletteSizer, 0, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(self.sizer)
         self.sizer.FitInside(self)
 
@@ -355,15 +296,6 @@ class IdentitePanel(InscriptionsTab):
                     allergies.append(checkbox.GetLabel())
             self.inscrit.allergies = ','.join(allergies)
             history.Append(None)                    
-        
-    def OnModifyCombinaison(self, event):
-        dlg = CombinaisonDialog(self)
-        res = dlg.ShowModal()
-        if res == wx.ID_OK:
-            self.inscrit.combinaison = dlg.GetCombinaison()
-            self.UpdateCombinaison()
-            history.Append(None)
-        dlg.Destroy()        
 
     def UpdateCategorieItems(self):
         if len(creche.categories) > 0:
@@ -375,17 +307,6 @@ class IdentitePanel(InscriptionsTab):
             for item in self.categorie_items:
                 item.Show(False)
         self.last_categorie_observer = time.time()
-        
-    def UpdateCombinaison(self):
-        if self.inscrit and config.options & TABLETTE: 
-            self.combinaisonSizer.DeleteWindows()
-            if self.inscrit.combinaison:
-                for letter in self.inscrit.combinaison:
-                    bitmap = getPictoBitmap(letter, size=32)
-                    picto = wx.StaticBitmap(self, -1, bitmap)
-                    self.combinaisonSizer.Add(picto, 0, wx.LEFT, 10)
-            self.combinaisonSizer.Layout()
-            self.sizer.Layout()
             
     def UpdateAllergies(self):
         if self.inscrit and self.allergies_checkboxes:
@@ -515,7 +436,8 @@ class IdentitePanel(InscriptionsTab):
         for i in range(freres_count, len(self.fratrie_sizer.GetChildren())):
             self.SupprimeLigneFrere()
         self.UpdateAllergies()
-        self.UpdateCombinaison()
+        if config.options & TABLETTE:
+            self.tabletteSizer.UpdateCombinaison()
         if 'categories' in observers and observers['categories'] > self.last_categorie_observer:
             self.UpdateCategorieItems()
 
@@ -524,6 +446,8 @@ class IdentitePanel(InscriptionsTab):
         
     def SetInscrit(self, inscrit):
         self.inscrit = inscrit
+        if config.options & TABLETTE:
+            self.tabletteSizer.SetObject(inscrit)
         self.UpdateContents()
         InscriptionsTab.SetInscrit(self, inscrit)
         self.nouveau_frere.Enable(self.inscrit is not None and not readonly)

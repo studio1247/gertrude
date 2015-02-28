@@ -25,7 +25,7 @@ from sqlobjects import *
 from facture import FactureCloturee
 import wx
 
-VERSION = 88
+VERSION = 89
 
 def getdate(s):
     if s is None:
@@ -206,7 +206,8 @@ class SQLConnection(object):
             telephone_portable VARCHAR,
             telephone_portable_notes VARCHAR,
             email VARCHAR,
-            diplomes VARCHAR
+            diplomes VARCHAR,
+            combinaison VARCHAR
           );""")
         
         cur.execute("""  
@@ -631,10 +632,10 @@ class SQLConnection(object):
             else:
                 creche.activites[activity.value] = activity
                 
-        cur.execute('SELECT prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, email, diplomes, idx FROM EMPLOYES')
+        cur.execute('SELECT prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, email, diplomes, combinaison, idx FROM EMPLOYES')
         for salarie_entry in cur.fetchall():
             salarie = Salarie(creation=False)
-            salarie.prenom, salarie.nom, salarie.telephone_domicile, salarie.telephone_domicile_notes, salarie.telephone_portable, salarie.telephone_portable_notes, salarie.email, salarie.diplomes, salarie.idx = salarie_entry
+            salarie.prenom, salarie.nom, salarie.telephone_domicile, salarie.telephone_domicile_notes, salarie.telephone_portable, salarie.telephone_portable_notes, salarie.email, salarie.diplomes, salarie.combinaison, salarie.idx = salarie_entry
             creche.salaries.append(salarie)
             cur.execute('SELECT debut, fin, site, fonction, duree_reference, idx FROM CONTRATS WHERE employe=?', (salarie.idx,))
             for debut, fin, site_idx, fonction, duree_reference, idx in cur.fetchall():
@@ -1669,6 +1670,10 @@ class SQLConnection(object):
                 cur.execute('UPDATE PARENTS SET famille=? WHERE inscrit=?', (result.lastrowid, idx))
                 cur.execute('UPDATE FRATRIES SET famille=? WHERE inscrit=?', (result.lastrowid, idx))
                 cur.execute('UPDATE REFERENTS SET famille=? WHERE inscrit=?', (result.lastrowid, idx))
+
+        if version < 89:
+            cur.execute("ALTER TABLE EMPLOYES ADD combinaison VARCHAR;")
+            cur.execute('UPDATE EMPLOYES SET combinaison=?', ("",))
 
         if version < VERSION:
             try:

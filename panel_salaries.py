@@ -60,6 +60,9 @@ class IdentiteSalariePanel(SalariesTab):
         sizer2.AddMany([(wx.StaticText(self, -1, 'E-mail :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'email'), 0, wx.EXPAND)])
         sizer2.AddMany([(wx.StaticText(self, -1, u"Diplômes :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoComboBox(self, None, 'diplomes', choices=["CAP petite enfance", u"Auxiliaire puéricultrice", "EJE", u"Puéricultrice", "Sans objet"]), 0, wx.EXPAND)])
         self.sizer.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
+        if config.options & TABLETTE:
+            self.tabletteSizer = TabletteSizer(self, self.salarie)
+            self.sizer.Add(self.tabletteSizer, 0, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(self.sizer)
         self.sizer.FitInside(self)
         
@@ -81,10 +84,14 @@ class IdentiteSalariePanel(SalariesTab):
         
     def UpdateContents(self):
         AutoTab.UpdateContents(self)
+        if config.options & TABLETTE:
+            self.tabletteSizer.UpdateCombinaison()
         self.sizer.FitInside(self)
         
     def SetSalarie(self, salarie):
         self.salarie = salarie
+        if config.options & TABLETTE:
+            self.tabletteSizer.SetObject(salarie)
         self.UpdateContents()
         SalariesTab.SetSalarie(self, salarie)
 
