@@ -109,8 +109,8 @@ class EtatsTrimestrielsModifications(object):
     
                             fields = [('nom', inscrit.nom),
                                       ('prenom', inscrit.prenom),
-                                      ('adresse', inscrit.adresse),
-                                      ('ville', inscrit.ville),
+                                      ('adresse', inscrit.famille.adresse),
+                                      ('ville', inscrit.famille.ville),
                                       ('code_postal', str(inscrit.code_postal)),
                                       ('naissance', inscrit.naissance),
                                       ('entree', inscrit.inscriptions[0].debut),
@@ -204,8 +204,8 @@ class EtatsTrimestrielsModifications(object):
 
             fields = [('nom', inscrit.nom),
                       ('prenom', inscrit.prenom),
-                      ('adresse', inscrit.adresse),
-                      ('ville', inscrit.ville),
+                      ('adresse', inscrit.famille.adresse),
+                      ('ville', inscrit.famille.ville),
                       ('code_postal', str(inscrit.code_postal)),
                       ('naissance', inscrit.naissance),
                       ('entree', inscrit.inscriptions[0].debut),

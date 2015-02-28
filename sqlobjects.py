@@ -915,6 +915,7 @@ class Creche(object):
         self.baremes_caf = []
         self.charges = {}
         self.numeros_facture = {}
+        self.familles = []
         self.inscrits = []
         self.ouverture = 7.75
         self.fermeture = 18.5
@@ -1271,8 +1272,8 @@ class Revenu(object):
             sql_connection.execute('UPDATE REVENUS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 class Parent(object):
-    def __init__(self, inscrit, relation=None, creation=True):
-        self.inscrit = inscrit
+    def __init__(self, famille, relation=None, creation=True):
+        self.famille = famille
         self.idx = None
         self.relation = relation
         self.prenom = ""
@@ -1297,7 +1298,7 @@ class Parent(object):
 
     def create(self):
         print 'nouveau parent'
-        result = sql_connection.execute('INSERT INTO PARENTS (idx, inscrit, relation, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?)', (self.inscrit.idx, self.relation, self.prenom, self.nom, self.telephone_domicile, self.telephone_domicile_notes, self.telephone_portable, self.telephone_portable_notes, self.telephone_travail, self.telephone_travail_notes, self.email))
+        result = sql_connection.execute('INSERT INTO PARENTS (idx, famille, relation, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?)', (self.famille.idx, self.relation, self.prenom, self.nom, self.telephone_domicile, self.telephone_domicile_notes, self.telephone_portable, self.telephone_portable_notes, self.telephone_travail, self.telephone_travail_notes, self.email))
         self.idx = result.lastrowid
         for revenu in self.revenus:
             revenu.create()
@@ -1321,8 +1322,8 @@ class Parent(object):
 class Referent(SQLObject):
     table = "REFERENTS"
     
-    def __init__(self, inscrit, creation=True):
-        self.inscrit = inscrit
+    def __init__(self, famille, creation=True):
+        self.famille = famille
         self.idx = None
         self.prenom = ""
         self.nom = ""
@@ -1332,7 +1333,7 @@ class Referent(SQLObject):
 
     def create(self):
         print 'nouveau referent'
-        result = sql_connection.execute('INSERT INTO REFERENTS (idx, inscrit, prenom, nom, telephone) VALUES(NULL,?,?,?,?)', (self.inscrit.idx, self.prenom, self.nom, self.telephone))
+        result = sql_connection.execute('INSERT INTO REFERENTS (idx, famille, prenom, nom, telephone) VALUES(NULL,?,?,?,?)', (self.famille.idx, self.prenom, self.nom, self.telephone))
         self.idx = result.lastrowid
 
     def __setattr__(self, name, value):
@@ -1556,9 +1557,9 @@ class Inscription(PeriodeReference):
             sql_connection.execute('UPDATE INSCRIPTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))   
 
 class Frere_Soeur(object):
-    def __init__(self, inscrit, creation=True):
+    def __init__(self, famille, creation=True):
         self.idx = None
-        self.inscrit = inscrit
+        self.famille = famille
         self.prenom = ''
         self.naissance = None
         # self.handicape = 0
@@ -1570,7 +1571,7 @@ class Frere_Soeur(object):
 
     def create(self):
         print 'nouveau frere / soeur'
-        result = sql_connection.execute('INSERT INTO FRATRIES (idx, inscrit, prenom, naissance, entree, sortie) VALUES(NULL,?,?,?,?,?)', (self.inscrit.idx, self.prenom, self.naissance, self.entree, self.sortie))
+        result = sql_connection.execute('INSERT INTO FRATRIES (idx, famille, prenom, naissance, entree, sortie) VALUES(NULL,?,?,?,?,?)', (self.famille.idx, self.prenom, self.naissance, self.entree, self.sortie))
         self.idx = result.lastrowid
         
     def delete(self):
@@ -1644,13 +1645,9 @@ class Correction(SQLObject):
             elif self.idx and not self.valeur and not self.libelle:
                 self.delete()
 
-class Inscrit(object):
+class Famille(object):
     def __init__(self, creation=True):
         self.idx = None
-        self.prenom = ""
-        self.nom = ""
-        self.sexe = None
-        self.naissance = None
         self.adresse = ""
         self.code_postal = ""
         self.ville = ""
@@ -1660,17 +1657,56 @@ class Inscrit(object):
         self.telephone_medecin_traitant = ""
         self.assureur = ""
         self.numero_police_assurance = ""
+        self.tarifs = 0
+        self.notes = ""
+        self.freres_soeurs = []
+        self.parents = { "papa": None, "maman": None }
+        self.referents = []
+
+        if creation:
+            self.create()
+            self.parents["papa"] = Parent(self, "papa")
+            self.parents["maman"] = Parent(self, "maman")
+    
+    def create(self):
+        print 'nouvelle famille'
+        result = sql_connection.execute('INSERT INTO FAMILLES (idx, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, tarifs, notes, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?)', (self.adresse, self.code_postal, self.ville, self.numero_securite_sociale, self.numero_allocataire_caf, self.tarifs, self.notes, self.medecin_traitant, self.telephone_medecin_traitant, self.assureur, self.numero_police_assurance))
+        self.idx = result.lastrowid
+        for obj in self.parents.values() + self.freres_soeurs + self.referents:
+            if obj:
+                obj.create()
+        
+    def delete(self):
+        print 'suppression famille'
+        sql_connection.execute('DELETE FROM FAMILLES WHERE idx=?', (self.idx,))
+        for obj in self.parents.values() + self.freres_soeurs + self.referents:
+            if obj is not None:
+                obj.delete()
+                
+    def __setattr__(self, name, value):
+        if name in self.__dict__:
+            old_value = self.__dict__[name]
+        else:
+            old_value = '-'
+        self.__dict__[name] = value
+        if name in ['adresse', 'code_postal', 'ville', 'numero_securite_sociale', 'numero_allocataire_caf', 'tarifs', 'notes', 'medecin_traitant', 'telephone_medecin_traitant', 'assureur', 'numero_police_assurance'] and self.idx:
+            print 'update', name, (old_value, value)
+            sql_connection.execute('UPDATE FAMILLES SET %s=? WHERE idx=?' % name, (value, self.idx))
+
+
+class Inscrit(object):
+    def __init__(self, creation=True):
+        self.idx = None
+        self.prenom = ""
+        self.nom = ""
+        self.sexe = None
+        self.naissance = None
         self.handicap = False
         self.categorie = None
-        self.tarifs = 0
         self.marche = None
         self.photo = None
         self.combinaison = ""
         self.notes = ""
-        self.notes_parents = ""
-        self.freres_soeurs = []
-        self.parents = { "papa": None, "maman": None }
-        self.referents = []
         self.inscriptions = []
         self.conges = []
         self.journees = {}
@@ -1678,43 +1714,27 @@ class Inscrit(object):
         self.factures_cloturees = {}
         self.corrections = {}
         self.allergies = ""
+        self.famille = None
 
         if creation:
+            self.famille = Famille()
             self.create()
-            self.parents["papa"] = Parent(self, "papa")
-            self.parents["maman"] = Parent(self, "maman")
             self.inscriptions.append(Inscription(self))
-
-#        self.reglement_cotisation = 0
-#        self.reglement_caution = 0
-#        self.reglement_premier_mois = 0
-#        self.cheque_depot_garantie = 0
-#        self.fiche_medicale = 0
-#        self.signature_ri = 0
-#        self.signature_permanences = 0
-#        self.signature_projet_pedagogique = 0
-#        self.signature_projet_etablissement = 0
-#        self.signature_contrat_accueil = 0
-#        self.autorisation_hospitalisation = 0
-#        self.autorisation_transport = 0
-#        self.autorisation_image = 0
-#        self.autorisation_recherche = 0
 
     def GetAllergies(self):
         return [allergie.strip() for allergie in self.allergies.split(",")]
     
     def create(self):
         print 'nouvel inscrit'
-        result = sql_connection.execute('INSERT INTO INSCRITS (idx, prenom, nom, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, marche, photo, notes, notes_parents, combinaison, categorie, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, allergies) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', (self.prenom, self.nom, self.naissance, self.adresse, self.code_postal, self.ville, self.numero_securite_sociale, self.numero_allocataire_caf, self.handicap, self.tarifs, self.marche, self.photo, self.notes, self.notes_parents, self.combinaison, self.categorie, self.medecin_traitant, self.telephone_medecin_traitant, self.assureur, self.numero_police_assurance, self.allergies))
+        result = sql_connection.execute('INSERT INTO INSCRITS (idx, prenom, nom, naissance, handicap, marche, photo, notes, combinaison, categorie, allergies, famille) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?)', (self.prenom, self.nom, self.naissance, self.handicap, self.marche, self.photo, self.notes, self.combinaison, self.categorie, self.allergies, self.famille.idx))
         self.idx = result.lastrowid
-        for obj in self.parents.values() + self.freres_soeurs + self.referents + self.inscriptions: # TODO + self.presences.values():
-            if obj:
-                obj.create()
+        for inscription in self.inscriptions:
+            inscription.create()
         
     def delete(self):
         print 'suppression inscrit'
         sql_connection.execute('DELETE FROM INSCRITS WHERE idx=?', (self.idx,))
-        for obj in self.parents.values() + self.freres_soeurs + self.referents + self.inscriptions + self.journees.values():
+        for obj in self.inscriptions + self.journees.values():
             if obj is not None:
                 obj.delete()
 
@@ -1726,9 +1746,9 @@ class Inscrit(object):
         self.__dict__[name] = value
         if name == 'photo' and value:
             value = binascii.b2a_base64(value)
-        elif name in ('categorie', ) and value is not None and self.idx:
+        elif name in ('categorie', 'famille') and value is not None and self.idx:
             value = value.idx
-        if name in ['prenom', 'nom', 'sexe', 'naissance', 'adresse', 'code_postal', 'ville', 'numero_securite_sociale', 'numero_allocataire_caf', 'handicap', 'tarifs', 'marche', 'photo', 'combinaison', 'notes', 'notes_parents', 'categorie', 'medecin_traitant', 'telephone_medecin_traitant', 'assureur', 'numero_police_assurance', 'allergies'] and self.idx:
+        if name in ['prenom', 'nom', 'sexe', 'naissance', 'handicap', 'marche', 'photo', 'combinaison', 'notes', 'categorie', 'allergies', 'famille'] and self.idx:
             print 'update', name, (old_value, value)
             sql_connection.execute('UPDATE INSCRITS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
@@ -1778,7 +1798,19 @@ class Inscrit(object):
                         AddPeriode(debut, fin, conge)
             except:
                 pass
-        
+    
+    def GetPeriodeInscriptions(self):
+        if len(self.inscriptions) == 0:
+            return None, None
+        else:
+            debut, fin = self.inscriptions[0].debut, self.inscriptions[0].fin
+            for inscription in self.inscriptions:
+                if debut is None or (inscription.debut is not None and inscription.debut < debut):
+                    debut = inscription.debut
+                if fin is not None and (inscription.fin is None or inscription.fin > fin):
+                    fin = inscription.fin
+            return debut, fin
+            
     def GetInscription(self, date, preinscription=False, departanticipe=True):
         for inscription in self.inscriptions:
             if (preinscription or not creche.preinscriptions or not inscription.preinscription) and inscription.debut and date >= inscription.debut and (not inscription.fin or date <= inscription.fin) and (not departanticipe or not inscription.depart or date <= inscription.depart):
@@ -1814,8 +1846,16 @@ class Inscrit(object):
         if date.month in creche.mois_sans_facture:
             return False
         month_start = GetMonthStart(date)
-        if self.GetInscriptions(month_start, GetMonthEnd(date)):
-            return True
+        if config.options & FACTURES_FAMILLES:
+            day = month_start
+            while day.month == date.month:
+                journee = self.GetJournee(day)
+                if journee and journee.GetState() > 0:
+                    return True
+                day += datetime.timedelta(1)
+        else:
+            if self.GetInscriptions(month_start, GetMonthEnd(date)):
+                return True
         if creche.temps_facturation != FACTURATION_FIN_MOIS:
             previous_month_end = month_start - datetime.timedelta(1)
             if self.GetInscriptions(GetMonthStart(previous_month_end), previous_month_end):
@@ -1930,7 +1970,7 @@ class Inscrit(object):
         
     def GetRegime(self, date):
         result = 0
-        for parent in self.parents.values():
+        for parent in self.famille.parents.values():
             if parent:
                 revenu = Select(parent.revenus, date)
                 if revenu and revenu.regime:

@@ -10,6 +10,7 @@ from facture import Facture
 from doc_planning_detaille import PlanningDetailleModifications
 from doc_coordonnees_parents import CoordonneesModifications
 from ooffice import GenerateOODocument
+from config import Config
 
 __builtin__.first_date = datetime.date(2010, 1, 1) 
 
@@ -31,17 +32,18 @@ class GertrudeTestCase(unittest.TestCase):
         creche.AddConge(conge)
     
     def AddParents(self, inscrit, salaire=30000.0):
-        inscrit.parents["papa"] = papa = Parent(inscrit, creation=False)
+        inscrit.famille.parents["papa"] = papa = Parent(inscrit.famille, creation=False)
         revenu = Revenu(papa, creation=False)
         revenu.debut, revenu.revenu = datetime.date(2008, 1, 1), salaire
         papa.revenus.append(revenu)
-        inscrit.parents["maman"] = maman = Parent(inscrit, creation=False)
+        inscrit.famille.parents["maman"] = maman = Parent(inscrit.famille, creation=False)
         revenu = Revenu(maman, creation=False)
         revenu.debut, revenu.revenu = datetime.date(2008, 1, 1), 0.0
         maman.revenus.append(revenu)
         
     def AddInscrit(self):
         inscrit = Inscrit(creation=False)
+        inscrit.famille = Famille(creation=False)
         inscrit.prenom, inscrit.nom = 'Gertrude', 'GPL'
         self.AddParents(inscrit)
         creche.inscrits.append(inscrit)
@@ -59,7 +61,7 @@ class GertrudeTestCase(unittest.TestCase):
         result.prenom = "Frere ou Soeur"
         result.nom = "GPL"
         result.naissance = naissance
-        inscrit.freres_soeurs.append(result)
+        inscrit.famille.freres_soeurs.append(result)
         return result
         
 class DatabaseTests(unittest.TestCase):
@@ -619,7 +621,7 @@ class VivreADomicileTests(GertrudeTestCase):
         inscrit = self.AddInscrit()
         self.AddFrere(inscrit, datetime.date(2002, 9, 13))
         self.AddFrere(inscrit, datetime.date(2003, 9, 19))
-        inscrit.parents["papa"].revenus[0].revenu = 6960.0
+        inscrit.famille.parents["papa"].revenus[0].revenu = 6960.0
         inscription = Inscription(inscrit, creation=False)
         inscription.mode = MODE_HALTE_GARDERIE
         inscription.debut = datetime.date(2011, 1, 3)
@@ -654,7 +656,7 @@ class BebebulTests(GertrudeTestCase):
         inscrit = self.AddInscrit()
         self.AddFrere(inscrit, datetime.date(2009, 8, 11))
         self.AddFrere(inscrit, datetime.date(2012, 8, 18))
-        inscrit.parents["papa"].revenus[0].revenu = 42966.0
+        inscrit.famille.parents["papa"].revenus[0].revenu = 42966.0
         inscription = Inscription(inscrit, creation=False)
         inscription.mode = MODE_HALTE_GARDERIE
         inscription.debut = datetime.date(2012, 10, 1)
@@ -677,7 +679,7 @@ class BebebulTests(GertrudeTestCase):
         inscrit = self.AddInscrit()
         self.AddFrere(inscrit, datetime.date(2009, 8, 11))
         self.AddFrere(inscrit, datetime.date(2012, 8, 18))
-        inscrit.parents["papa"].revenus[0].revenu = 42966.0
+        inscrit.famille.parents["papa"].revenus[0].revenu = 42966.0
         inscription = Inscription(inscrit, creation=False)
         inscription.mode = MODE_HALTE_GARDERIE
         inscription.debut = datetime.date(2012, 10, 1)

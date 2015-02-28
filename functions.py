@@ -177,7 +177,7 @@ def GetNom4P1(inscrit, inscrits):
         result = inscrit.nom[:4].upper()
         noms = [p.nom[:4].upper() for p in inscrits]
         if noms.count(result) > 1 and len(inscrit.prenom) > 0:
-            for parent in inscrit.parents.values():
+            for parent in inscrit.famille.parents.values():
                 if parent and len(parent.prenom) > 0:
                     result += parent.prenom[0].upper()
         return result
@@ -202,12 +202,26 @@ def GetPrenomNom(person, maj_nom=False, tri=None):
         return "%s %s" % (nom, person.prenom)
     else:
         return "%s %s" % (person.prenom, nom)
-    
+
+def GetInscritsFamille(famille):
+    result = []
+    for inscrit in creche.inscrits:
+        if inscrit.famille is famille:
+            result.append(inscrit)
+    return result
+
+def GetInscritsFrereSoeurs(inscrit):
+    result = []
+    for candidat in creche.inscrits:
+        if candidat is not inscrit and candidat.famille == inscrit.famille:
+            result.append(candidat)
+    return result
+
 def GetEnfantsCount(inscrit, date):
     enfants_a_charge = 1
     enfants_en_creche = 1
     debut, fin = None, None
-    for frere_soeur in inscrit.freres_soeurs:
+    for frere_soeur in inscrit.famille.freres_soeurs:
         if frere_soeur.naissance:
             if frere_soeur.naissance <= date:
                 if not debut or frere_soeur.naissance > debut:
@@ -218,6 +232,19 @@ def GetEnfantsCount(inscrit, date):
             else:
                 if not fin or frere_soeur.naissance < fin:
                     fin = frere_soeur.naissance
+    for candidat in creche.inscrits:
+        if candidat is not inscrit and candidat.famille == inscrit.famille:
+            if candidat.naissance:
+                if candidat.naissance <= date:
+                    if not debut or candidat.naissance > debut:
+                        debut = candidat.naissance
+                    enfants_a_charge += 1
+                    inscription = candidat.GetInscription(date)
+                    if inscription and inscription.debut and inscription.debut <= date and (inscription.fin is None or inscription.fin > date):
+                        enfants_en_creche += 1
+                else:
+                    if not fin or frere_soeur.naissance < fin:
+                        fin = frere_soeur.naissance 
     return enfants_a_charge, enfants_en_creche, debut, fin
 
 def GetDepartement(cp):
@@ -296,22 +323,25 @@ def Select(object, date):
             return o
     return None
 
-def GetDeMoisStr(mois):
-    if months[mois].startswith('A') or months[mois].startswith('O'):
-        return "d'%s" % months[mois].lower()
+def GetDeStr(str):
+    if len(str) > 0 and str[0].lower() in ('a', 'e', 'i', 'o', 'u'):
+        return "d'" + str
     else:
-        return "de %s" % months[mois].lower()
+        return "de " + str
 
-def GetParentsString(inscrit):
-    if not inscrit.parents['papa'] and not inscrit.parents['maman']:
+def GetDeMoisStr(mois):
+    return GetDeStr(months[mois].lower())
+
+def GetParentsString(famille):
+    if not famille.parents['papa'] and not famille.parents['maman']:
         return "orphelin"
-    elif not inscrit.parents['maman']:
-        return GetPrenomNom(inscrit.parents['papa'])
-    elif not inscrit.parents['papa']:
-        return GetPrenomNom(inscrit.parents['maman'])
+    elif not famille.parents['maman']:
+        return GetPrenomNom(famille.parents['papa'])
+    elif not famille.parents['papa']:
+        return GetPrenomNom(famille.parents['maman'])
     else:
-        papa = inscrit.parents['papa']
-        maman = inscrit.parents['maman']
+        papa = famille.parents['papa']
+        maman = famille.parents['maman']
         if maman.nom == papa.nom:
             return '%s et %s %s' % (maman.prenom, papa.prenom, papa.nom)
         else:
@@ -606,42 +636,46 @@ def GetInscritSexe(inscrit):
     else:
         return "Fille"
 
-def GetTelephone(inscrit):
+def GetTelephone(famille):
     result = []
-    for key in inscrit.parents:
-        if inscrit.parents[key]:
-            if inscrit.parents[key].telephone_domicile:
-                result.append(inscrit.parents[key].telephone_domicile)
-            if inscrit.parents[key].telephone_portable:
-                result.append(inscrit.parents[key].telephone_portable)
+    for key in famille.parents:
+        if famille.parents[key]:
+            if famille.parents[key].telephone_domicile:
+                result.append(famille.parents[key].telephone_domicile)
+            if famille.parents[key].telephone_portable:
+                result.append(famille.parents[key].telephone_portable)
     return ", ".join(set(result))
 
-def GetEmail(inscrit):
+def GetEmail(famille):
     result = []
-    for key in inscrit.parents:
-        if inscrit.parents[key] and inscrit.parents[key].email:
-            result.append(inscrit.parents[key].email)
+    for key in famille.parents:
+        if famille.parents[key] and famille.parents[key].email:
+            result.append(famille.parents[key].email)
     return ", ".join(result)
-            
+
+def GetFamilleFields(famille):
+    return [('adresse', famille.adresse),
+            ('code-postal', GetCodePostal(famille)),
+            ('ville', famille.ville),
+            ('numero-securite-sociale', famille.numero_securite_sociale),
+            ('numero-allocataire-caf', famille.numero_allocataire_caf),
+            ('medecin-traitant', famille.medecin_traitant),
+            ('telephone-medecin-traitant', famille.telephone_medecin_traitant),
+            ('assureur', famille.assureur),
+            ('police-assurance', famille.numero_police_assurance),
+            ('parents', GetParentsString(famille)),
+            ('telephone', GetTelephone(famille)),
+            ('email', GetEmail(famille)),
+            ]
+    
 def GetInscritFields(inscrit):
-    return [('adresse', inscrit.adresse),
+    return GetFamilleFields(inscrit.famille) + [
             ('prenom', inscrit.prenom),
+            ('de-prenom', GetDeStr(inscrit.prenom)),
             ('nom', inscrit.nom),
             ('sexe', GetInscritSexe(inscrit)),
-            ('adresse', inscrit.adresse),
-            ('code-postal', GetCodePostal(inscrit)),
-            ('ville', inscrit.ville),
             ('naissance', inscrit.naissance),
             ('age', GetAgeString(inscrit.naissance)),
-            ('numero-securite-sociale', inscrit.numero_securite_sociale),
-            ('numero-allocataire-caf', inscrit.numero_allocataire_caf),
-            ('medecin-traitant', inscrit.medecin_traitant),
-            ('telephone-medecin-traitant', inscrit.telephone_medecin_traitant),
-            ('assureur', inscrit.assureur),
-            ('police-assurance', inscrit.numero_police_assurance),
-            ('parents', GetParentsString(inscrit)),
-            ('telephone', GetTelephone(inscrit)),
-            ('email', GetEmail(inscrit)),
             ]
 
 def GetInscriptionFields(inscription):
@@ -696,7 +730,7 @@ def GetFactureFields(facture):
         result = [('mois', '%s %d' % (months[facture.mois - 1], facture.annee)),
                   ('de-mois', '%s %d' % (GetDeMoisStr(facture.mois - 1), facture.annee)),
                   ('de-mois-recap', '%s %d' % (GetDeMoisStr(facture.debut_recap.month - 1), facture.debut_recap.year)),
-                  ('date', '%.2d/%.2d/%d' % (facture.date.day, facture.mois, facture.annee)),
+                  ('date', '%02d/%02d/%d' % (facture.date.day, facture.mois, facture.annee)),
                   ('montant-heure-garde', facture.montant_heure_garde, FIELD_EUROS),
                   ('cotisation-mensuelle', facture.cotisation_mensuelle, FIELD_EUROS),
                   ('heures-cotisation-mensuelle', GetHeureString(facture.heures_cotisation_mensuelle)),

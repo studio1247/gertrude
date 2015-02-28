@@ -39,6 +39,12 @@ couleurs = { SUPPLEMENT: 'A2',
            }
 
 class FactureModifications(object):
+    def GetPrenomNom(self, who):
+        if config.options & FACTURES_FAMILLES:
+            return who.nom
+        else:
+            return GetPrenomNom(who)
+        
     def __init__(self, inscrits, periode):
         self.multi = False
         self.inscrits = inscrits
@@ -56,20 +62,20 @@ class FactureModifications(object):
         else:
             who = inscrits[0]
             self.site = who.GetInscriptions(self.periode_facturation, None)[0].site
-            self.email_subject = u"Facture %s %s %s %d" % (who.prenom, who.nom, months[periode.month - 1], periode.year)
-            self.email_to = list(set([parent.email for parent in who.parents.values() if parent and parent.email]))
+            self.email_subject = u"Facture %s %s %d" % (self.GetPrenomNom(who), months[periode.month - 1], periode.year)
+            self.email_to = list(set([parent.email for parent in who.famille.parents.values() if parent and parent.email]))
             self.default_output = self.email_subject + ".odt"
         
         if self.site and IsTemplateFile("Facture mensuelle simple %s.odt" % self.site.nom):
             self.template = "Facture mensuelle simple %s.odt" % self.site.nom
             if len(inscrits) > 1:
                 self.multi = True
-                self.default_output = u"Facture <prenom> <nom> %s %d.odt" % (months[periode.month - 1], periode.year)
+                self.default_output = u"Facture <enfant> %s %d.odt" % (months[periode.month - 1], periode.year)
         elif IsTemplateFile("Facture mensuelle simple %s.odt" % creche.nom):
             self.template = "Facture mensuelle simple %s.odt" % creche.nom
             if len(inscrits) > 1:
                 self.multi = True
-                self.default_output = u"Facture <prenom> <nom> %s %d.odt" % (months[periode.month - 1], periode.year)
+                self.default_output = u"Facture <enfant> %s %d.odt" % (months[periode.month - 1], periode.year)
         elif self.site and IsTemplateFile("Facture mensuelle %s.odt" % self.site.nom):
             self.template = "Facture mensuelle %s.odt" % self.site.nom
         elif IsTemplateFile("Facture mensuelle %s.odt" % creche.nom):
@@ -78,15 +84,72 @@ class FactureModifications(object):
             self.template = "Facture mensuelle simple.odt"
             if len(inscrits) > 1:
                 self.multi = True
-                self.default_output = u"Facture <prenom> <nom> %s %d.odt" % (months[periode.month - 1], periode.year)
+                self.default_output = u"Facture <enfant> %s %d.odt" % (months[periode.month - 1], periode.year)
         else:
             self.template = 'Facture mensuelle.odt'
         
         self.email_text = "Accompagnement facture.txt"
 
     def GetSimpleModifications(self, filename):
-        return [(filename.replace("<prenom>", inscrit.prenom).replace("<nom>", inscrit.nom), FactureModifications([inscrit], self.periode)) for inscrit in self.inscrits]
+        return [(filename.replace("<enfant>", self.GetPrenomNom(inscrit)).replace("<prenom>", inscrit.prenom).replace("<nom>", inscrit.nom), FactureModifications([inscrit], self.periode)) for inscrit in self.inscrits]
     
+    def FillRecapSection(self, section, facture):
+        empty_cells = facture.debut_recap.weekday()
+        if "Week-end" in creche.feries and empty_cells > 4:
+            empty_cells -= 7
+                    
+        tables = section.getElementsByTagName('table:table')
+        for table in tables:
+            if table.getAttribute('table:name').startswith('Presences'):
+                rows = table.getElementsByTagName('table:table-row')[1:]
+                cells_count = GetCellsCount(rows[0])
+                cells = []
+                for i in range(len(rows)):
+                    cells.append(rows[i].getElementsByTagName('table:table-cell'))
+                    for cell in cells[i]:
+                        cell.setAttribute('table:style-name', 'Tableau1.E2')
+                        text_node = cell.getElementsByTagName('text:p')[0]
+                        if text_node and text_node.firstChild:
+                            text_node.firstChild.replaceWholeText(' ')
+                date = facture.debut_recap
+                while date.month == facture.debut_recap.month:
+                    col = date.weekday()
+                    if col < cells_count:
+                        details = ""
+                        row = (date.day + empty_cells - 1) / 7
+                        cell = cells[row][col]
+                        # ecriture de la date dans la cellule
+                        text_node = cell.getElementsByTagName('text:p')[0]
+                        if date in facture.jours_presence_non_facturee:
+                            state = PRESENCE_NON_FACTUREE
+                            details = " (%s)" % GetHeureString(facture.jours_presence_non_facturee[date])
+                        elif date in facture.jours_absence_non_prevenue:
+                            state = ABSENCE_NON_PREVENUE
+                            details = " (%s)" % GetHeureString(facture.jours_absence_non_prevenue[date])                                    
+                        elif date in facture.jours_presence_selon_contrat:
+                            state = PRESENT
+                            details = " (%s)" % GetHeureString(facture.jours_presence_selon_contrat[date])
+                        elif date in facture.jours_supplementaires:
+                            state = SUPPLEMENT
+                            details = " (%s)" % GetHeureString(facture.jours_supplementaires[date])
+                        elif date in facture.jours_maladie:
+                            state = MALADE
+                        elif facture.inscrit.IsDateConge(date):
+                            state = CONGES
+                        elif date in facture.jours_conges_non_factures:
+                            state = VACANCES
+                        elif date in facture.jours_vacances:
+                            state = CONGES_DEPASSEMENT
+                        else:
+                            state = ABSENT
+                        if text_node and text_node.firstChild:
+                            text_node.firstChild.replaceWholeText('%d%s' % (date.day, details))
+                        cell.setAttribute('table:style-name', 'Presences.%s' % couleurs[state])
+                    date += datetime.timedelta(1)
+                for i in range(row + 1, len(rows)):
+                    table.removeChild(rows[i])
+        ReplaceTextFields(section, facture.fields)
+        
     def execute(self, filename, dom):
         if filename != 'content.xml':
             return None
@@ -94,6 +157,7 @@ class FactureModifications(object):
         errors = {}
         
         # print dom.toprettyxml()
+        
         doc = dom.getElementsByTagName("office:text")[0]
         templates = doc.childNodes[:]
         
@@ -109,95 +173,89 @@ class FactureModifications(object):
         if not styleD3:
             couleurs[CONGES_DEPASSEMENT] = 'B3'
         
+        fields = GetCrecheFields(creche)
+        done = []
+        
         for index, inscrit in enumerate(self.inscrits):
-            try:
-                facture = Facture(inscrit, self.periode.year, self.periode.month, options=TRACES)
-            except CotisationException, e:
-                errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
-                continue
-           
-            for template in templates:
-                section = template.cloneNode(1)
-                if section.nodeName in ("draw:frame", "draw:custom-shape"):
-                    doc.insertBefore(section, template)
-                else:
-                    doc.appendChild(section)
-                if section.hasAttribute("text:anchor-page-number"):
-                    section.setAttribute("text:anchor-page-number", str(index+1))
+            if config.options & FACTURES_FAMILLES:
+                skip = False
+                enfants = GetInscritsFamille(inscrit.famille)
+                for enfant in enfants:
+                    if enfant in done:
+                        skip = True
+                        break
+                    else:
+                        done.append(enfant)
+                if skip:
+                    continue
+            else:
+                enfants = [inscrit]
             
-                # D'abord le tableau des presences du mois
-                empty_cells = facture.debut_recap.weekday()
-                if "Week-end" in creche.feries and empty_cells > 4:
-                    empty_cells -= 7
-        
-                # Création d'un tableau de cells
-                for table in section.getElementsByTagName('table:table'):
-                    table_name = table.getAttribute('table:name')
-                    if table_name == 'Montants':
-                        rows = table.getElementsByTagName('table:table-row')
-                        if not facture.frais_inscription:
-                            for row in rows:
-                                if "Frais d'inscription" in row.toprettyxml():
-                                    table.removeChild(row)
-                                    break
-                    elif table_name.startswith('Presences'):
-                        rows = table.getElementsByTagName('table:table-row')[1:]
-                        cells_count = GetCellsCount(rows[0])
-                        cells = []
-                        for i in range(len(rows)):
-                            cells.append(rows[i].getElementsByTagName('table:table-cell'))
-                            for cell in cells[i]:
-                                cell.setAttribute('table:style-name', 'Tableau1.E2')
-                                text_node = cell.getElementsByTagName('text:p')[0]
-                                if text_node and text_node.firstChild:
-                                    text_node.firstChild.replaceWholeText(' ')
-                        date = facture.debut_recap
-                        while date.month == facture.debut_recap.month:
-                            col = date.weekday()
-                            if col < cells_count:
-                                details = ""
-                                row = (date.day + empty_cells - 1) / 7
-                                cell = cells[row][col]
-                                # ecriture de la date dans la cellule
-                                text_node = cell.getElementsByTagName('text:p')[0]
-                                if date in facture.jours_presence_non_facturee:
-                                    state = PRESENCE_NON_FACTUREE
-                                    details = " (%s)" % GetHeureString(facture.jours_presence_non_facturee[date])
-                                elif date in facture.jours_absence_non_prevenue:
-                                    state = ABSENCE_NON_PREVENUE
-                                    details = " (%s)" % GetHeureString(facture.jours_absence_non_prevenue[date])                                    
-                                elif date in facture.jours_presence_selon_contrat:
-                                    state = PRESENT
-                                    details = " (%s)" % GetHeureString(facture.jours_presence_selon_contrat[date])
-                                elif date in facture.jours_supplementaires:
-                                    state = SUPPLEMENT
-                                    details = " (%s)" % GetHeureString(facture.jours_supplementaires[date])
-                                elif date in facture.jours_maladie:
-                                    state = MALADE
-                                elif inscrit.IsDateConge(date):
-                                    state = CONGES
-                                elif date in facture.jours_conges_non_factures:
-                                    state = VACANCES
-                                elif date in facture.jours_vacances:
-                                    state = CONGES_DEPASSEMENT
-                                else:
-                                    state = ABSENT
-                                if text_node and text_node.firstChild:
-                                    text_node.firstChild.replaceWholeText('%d%s' % (date.day, details))
-                                cell.setAttribute('table:style-name', 'Presences.%s' % couleurs[state])
-                            date += datetime.timedelta(1)
-        
-                        for i in range(row + 1, len(rows)):
-                            table.removeChild(rows[i])
-
-                # Les champs de la facture
+            factures = []
+            total_facture = 0.0
+            for enfant in enfants:
+                try:
+                    facture = Facture(enfant, self.periode.year, self.periode.month, options=TRACES)
+                    total_facture += facture.total
+                except CotisationException, e:
+                    errors["%s %s" % (enfant.prenom, enfant.nom)] = e.errors
+                    continue
                 last_inscription = None
-                for tmp in inscrit.inscriptions:
+                for tmp in enfant.inscriptions:
                     if not last_inscription or not last_inscription.fin or (tmp.fin and tmp.fin > last_inscription.fin):
                         last_inscription = tmp 
-                
-                fields = GetCrecheFields(creche) + GetInscritFields(inscrit) + GetInscriptionFields(last_inscription) + GetFactureFields(facture)
-                ReplaceTextFields(section, fields)
+                facture.fields = fields + GetInscritFields(enfant) + GetInscriptionFields(last_inscription) + GetFactureFields(facture)
+                factures.append(facture)
+            if errors:
+                continue
+            
+            for template in templates:
+                clone = template.cloneNode(1)
+                if clone.nodeName in ("draw:frame", "draw:custom-shape"):
+                    doc.insertBefore(clone, template)
+                else:
+                    doc.appendChild(clone)
+                if clone.hasAttribute("text:anchor-page-number"):
+                    clone.setAttribute("text:anchor-page-number", str(index+1))
+
+                sections = clone.getElementsByTagName('text:section')
+                recap_section_found = False
+                for section in sections:
+                    section_name = section.getAttribute('text:name')
+                    # Le(s) sections(x) des presences du mois
+                    if section_name == "SectionRecap":
+                        recap_section_found = True
+                        for i, facture in enumerate(factures):
+                            if i < len(factures) - 1:
+                                section_clone = section.cloneNode(1)
+                                clone.insertBefore(section_clone, section)
+                            else:
+                                section_clone = section
+                            self.FillRecapSection(section_clone, facture)
+                if not recap_section_found:
+                    self.FillRecapSection(clone, facture)
+
+                tables = clone.getElementsByTagName('table:table')
+                for table in tables:
+                    table_name = table.getAttribute('table:name')
+                    # Le(s) tableau(x) des montants détaillés
+                    if table_name == 'Montants':
+                        for i, facture in enumerate(factures):
+                            if i < len(factures) - 1:
+                                montants_table = table.cloneNode(1)
+                                clone.insertBefore(montants_table, table)
+                            else:
+                                montants_table = table
+                            rows = montants_table.getElementsByTagName('table:table-row')
+                            if not facture.frais_inscription:
+                                for row in rows:
+                                    if "Frais d'inscription" in row.toprettyxml():
+                                        montants_table.removeChild(row)
+                            ReplaceTextFields(montants_table, facture.fields)
+                                
+                # Les autres champs de la facture
+                facture_fields = fields + GetFamilleFields(inscrit.famille) + [('total', total_facture, FIELD_EUROS)] + GetFactureFields(factures[0])
+                ReplaceTextFields(clone, facture_fields)
 
         for template in templates:
             doc.removeChild(template)

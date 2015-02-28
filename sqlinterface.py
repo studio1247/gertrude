@@ -25,7 +25,7 @@ from sqlobjects import *
 from facture import FactureCloturee
 import wx
 
-VERSION = 87
+VERSION = 88
 
 def getdate(s):
     if s is None:
@@ -219,12 +219,8 @@ class SQLConnection(object):
           );""")
 
         cur.execute("""
-          CREATE TABLE INSCRITS(
+          CREATE TABLE FAMILLES(
             idx INTEGER PRIMARY KEY,
-            prenom VARCHAR,
-            nom VARCHAR,
-            sexe INTEGER,
-            naissance DATE,
             adresse VARCHAR,
             code_postal INTEGER,
             ville VARCHAR,
@@ -234,21 +230,31 @@ class SQLConnection(object):
             telephone_medecin_traitant VARCHAR,
             assureur VARCHAR,
             numero_police_assurance VARCHAR,
-            handicap BOOLEAN,
             tarifs INTEGER,
+            notes VARCHAR
+          );""")
+        
+        cur.execute("""
+          CREATE TABLE INSCRITS(
+            idx INTEGER PRIMARY KEY,
+            prenom VARCHAR,
+            nom VARCHAR,
+            sexe INTEGER,
+            naissance DATE,
+            handicap BOOLEAN,
             marche BOOLEAN,
             photo VARCHAR,
             notes VARCHAR,
-            notes_parents VARCHAR,
             combinaison VARCHAR,
             categorie INTEGER REFERENCES CATEGORIES(idx),
-            allergies VARCHAR
+            allergies VARCHAR,
+            famille INTEGER REFERENCES FAMILLES(idx)
           );""")
 
         cur.execute("""
           CREATE TABLE PARENTS(
             idx INTEGER PRIMARY KEY,
-            inscrit INTEGER REFERENCES INSCRITS(idx),
+            famille INTEGER REFERENCES FAMILLES(idx),
             relation VARCHAR,
             prenom VARCHAR,
             nom VARCHAR,
@@ -264,7 +270,7 @@ class SQLConnection(object):
         cur.execute("""  
           CREATE TABLE FRATRIES (
             idx INTEGER PRIMARY KEY,
-            inscrit INTEGER REFERENCES INSCRITS(idx),
+            famille INTEGER REFERENCES FAMILLES(idx),
             prenom VARCHAR,
             naissance DATE,
             entree DATE,
@@ -274,7 +280,7 @@ class SQLConnection(object):
         cur.execute("""  
           CREATE TABLE REFERENTS (
             idx INTEGER PRIMARY KEY,
-            inscrit INTEGER REFERENCES INSCRITS(idx),
+            famille INTEGER REFERENCES FAMILLES(idx),
             prenom VARCHAR,
             nom VARCHAR,
             telephone VARCHAR
@@ -676,8 +682,42 @@ class SQLConnection(object):
             professeur.idx = idx
             creche.professeurs.append(professeur)
 
-        cur.execute('SELECT idx, prenom, nom, sexe, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, marche, notes, photo, combinaison, categorie, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, allergies FROM INSCRITS')
-        for idx, prenom, nom, sexe, naissance, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, marche, notes, photo, combinaison, categorie, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, allergies in cur.fetchall():
+        cur.execute('SELECT idx, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, tarifs, notes FROM FAMILLES')
+        for idx, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, tarifs, notes in cur.fetchall():
+            famille = Famille(creation=False)
+            famille.adresse, famille.code_postal, famille.ville, famille.numero_securite_sociale, famille.numero_allocataire_caf, famille.medecin_traitant, famille.telephone_medecin_traitant, famille.assureur, famille.numero_police_assurance, famille.tarifs, famille.notes, famille.idx = adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, tarifs, notes, idx
+            creche.familles.append(famille)
+            cur.execute('SELECT relation, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email, idx FROM PARENTS WHERE famille=?', (famille.idx,))
+            for parent_entry in cur.fetchall():
+                parent = Parent(famille, creation=False)
+                parent.relation, parent.prenom, parent.nom, parent.telephone_domicile, parent.telephone_domicile_notes, parent.telephone_portable, parent.telephone_portable_notes, parent.telephone_travail, parent.telephone_travail_notes, parent.email, parent.idx = parent_entry
+                famille.parents[parent.relation] = parent
+                cur.execute('SELECT debut, fin, revenu, chomage, conge_parental, regime, idx FROM REVENUS WHERE parent=?', (parent.idx,))
+                for revenu_entry in cur.fetchall():
+                    revenu = Revenu(parent, creation=False)
+                    revenu.debut, revenu.fin, revenu.revenu, revenu.chomage, revenu.conge_parental, revenu.regime, idx = revenu_entry
+                    revenu.debut, revenu.fin, revenu.idx = getdate(revenu.debut), getdate(revenu.fin), idx
+                    if 0:
+                        # convertit N-2 en CAFPRO
+                        if revenu.debut:
+                            revenu.debut = datetime.date(revenu.debut.year+2, revenu.debut.month, revenu.debut.day)
+                        if revenu.fin:
+                            revenu.fin = datetime.date(revenu.fin.year+2, revenu.fin.month, revenu.fin.day)
+                    parent.revenus.append(revenu)
+            cur.execute('SELECT prenom, naissance, entree, sortie, idx FROM FRATRIES WHERE famille=?', (famille.idx,))
+            for frere_entry in cur.fetchall():
+                frere = Frere_Soeur(famille, creation=False)
+                frere.prenom, frere.naissance, frere.entree, frere.sortie, idx = frere_entry
+                frere.naissance, frere.entree, frere.sortie, frere.idx = getdate(frere.naissance), getdate(frere.entree), getdate(frere.sortie), idx
+                famille.freres_soeurs.append(frere)
+            cur.execute('SELECT prenom, nom, telephone, idx FROM REFERENTS WHERE famille=?', (famille.idx,))
+            for referent_entry in cur.fetchall():
+                referent = Referent(famille, creation=False)
+                referent.prenom, referent.nom, referent.telephone, referent.idx = referent_entry
+                famille.referents.append(referent)
+           
+        cur.execute('SELECT idx, prenom, nom, sexe, naissance, handicap, marche, notes, photo, combinaison, categorie, allergies, famille FROM INSCRITS')
+        for idx, prenom, nom, sexe, naissance, handicap, marche, notes, photo, combinaison, categorie, allergies, famille in cur.fetchall():
             if photo:
                 photo = binascii.a2b_base64(photo)
             inscrit = Inscrit(creation=False)
@@ -685,18 +725,12 @@ class SQLConnection(object):
             for tmp in creche.categories:
                 if categorie == tmp.idx:
                     inscrit.categorie = tmp
-            inscrit.prenom, inscrit.nom, inscrit.sexe, inscrit.naissance, inscrit.adresse, inscrit.code_postal, inscrit.ville, inscrit.numero_securite_sociale, inscrit.numero_allocataire_caf, inscrit.handicap, inscrit.tarifs, inscrit.marche, inscrit.notes, inscrit.photo, inscrit.combinaison, inscrit.medecin_traitant, inscrit.telephone_medecin_traitant, inscrit.assureur, inscrit.numero_police_assurance, inscrit.allergies, inscrit.idx = prenom, nom, sexe, getdate(naissance), adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, handicap, tarifs, getdate(marche), notes, photo, combinaison, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, allergies, idx
-            cur.execute('SELECT prenom, naissance, entree, sortie, idx FROM FRATRIES WHERE inscrit=?', (inscrit.idx,))
-            for frere_entry in cur.fetchall():
-                frere = Frere_Soeur(inscrit, creation=False)
-                frere.prenom, frere.naissance, frere.entree, frere.sortie, idx = frere_entry
-                frere.naissance, frere.entree, frere.sortie, frere.idx = getdate(frere.naissance), getdate(frere.entree), getdate(frere.sortie), idx
-                inscrit.freres_soeurs.append(frere)
-            cur.execute('SELECT prenom, nom, telephone, idx FROM REFERENTS WHERE inscrit=?', (inscrit.idx,))
-            for referent_entry in cur.fetchall():
-                referent = Referent(inscrit, creation=False)
-                referent.prenom, referent.nom, referent.telephone, referent.idx = referent_entry
-                inscrit.referents.append(referent)
+                    break
+            for tmp in creche.familles:
+                if famille == tmp.idx:
+                    inscrit.famille = tmp
+                    break
+            inscrit.prenom, inscrit.nom, inscrit.sexe, inscrit.naissance, inscrit.handicap, inscrit.marche, inscrit.notes, inscrit.photo, inscrit.combinaison, inscrit.allergies, inscrit.idx = prenom, nom, sexe, getdate(naissance), handicap, getdate(marche), notes, photo, combinaison, allergies, idx
             cur.execute('SELECT idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_heures_presence, semaines_conges, preinscription, site, sites_preinscription, professeur FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
             for idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_heures_presence, semaines_conges, preinscription, site, sites_preinscription, professeur in cur.fetchall():
                 inscription = Inscription(inscrit, duree_reference, creation=False)
@@ -736,23 +770,6 @@ class SQLConnection(object):
                 inscrit.conges.append(conge)
             inscrit.CalculeJoursConges(creche)
             
-            cur.execute('SELECT relation, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email, idx FROM PARENTS WHERE inscrit=?', (inscrit.idx,))
-            for parent_entry in cur.fetchall():
-                parent = Parent(inscrit, creation=False)
-                parent.relation, parent.prenom, parent.nom, parent.telephone_domicile, parent.telephone_domicile_notes, parent.telephone_portable, parent.telephone_portable_notes, parent.telephone_travail, parent.telephone_travail_notes, parent.email, parent.idx = parent_entry
-                inscrit.parents[parent.relation] = parent
-                cur.execute('SELECT debut, fin, revenu, chomage, conge_parental, regime, idx FROM REVENUS WHERE parent=?', (parent.idx,))
-                for revenu_entry in cur.fetchall():
-                    revenu = Revenu(parent, creation=False)
-                    revenu.debut, revenu.fin, revenu.revenu, revenu.chomage, revenu.conge_parental, revenu.regime, idx = revenu_entry
-                    revenu.debut, revenu.fin, revenu.idx = getdate(revenu.debut), getdate(revenu.fin), idx
-                    if 0:
-                        # convertit N-2 en CAFPRO
-                        if revenu.debut:
-                            revenu.debut = datetime.date(revenu.debut.year+2, revenu.debut.month, revenu.debut.day)
-                        if revenu.fin:
-                            revenu.fin = datetime.date(revenu.fin.year+2, revenu.fin.month, revenu.fin.day)
-                    parent.revenus.append(revenu)
             cur.execute('SELECT date, value, debut, fin, idx FROM ACTIVITES WHERE inscrit=?', (inscrit.idx,))
             for date, value, debut, fin, idx in cur.fetchall():
                 key = getdate(date)
@@ -800,7 +817,7 @@ class SQLConnection(object):
             alerte.idx = idx
             creche.alertes[texte] = alerte
 
-        creche.inscrits.sort()
+        # creche.inscrits.sort()
         return creche
 
     def translate(self, progress_handler=default_progress_handler):
@@ -1623,6 +1640,35 @@ class SQLConnection(object):
         if version < 87:
             cur.execute("ALTER TABLE CRECHE ADD regularisation_fin_contrat BOOLEAN;")
             cur.execute("UPDATE CRECHE SET regularisation_fin_contrat=?", (True,))      
+
+        if version < 88:
+            # TODO notes_parents marche ?
+            cur.execute("""
+              CREATE TABLE FAMILLES(
+                idx INTEGER PRIMARY KEY,
+                adresse VARCHAR,
+                code_postal INTEGER,
+                ville VARCHAR,
+                numero_securite_sociale VARCHAR,
+                numero_allocataire_caf VARCHAR,
+                medecin_traitant VARCHAR,
+                telephone_medecin_traitant VARCHAR,
+                assureur VARCHAR,
+                numero_police_assurance VARCHAR,
+                tarifs INTEGER,
+                notes VARCHAR
+              );""")
+            cur.execute("ALTER TABLE INSCRITS ADD famille INTEGER REFERENCES FAMILLES(idx);")
+            cur.execute("ALTER TABLE PARENTS ADD famille INTEGER REFERENCES FAMILLES(idx);")
+            cur.execute("ALTER TABLE FRATRIES ADD famille INTEGER REFERENCES FAMILLES(idx);")
+            cur.execute("ALTER TABLE REFERENTS ADD famille INTEGER REFERENCES FAMILLES(idx);")
+            cur.execute('SELECT idx, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, tarifs, notes_parents FROM INSCRITS')
+            for idx, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, tarifs, notes in cur.fetchall():
+                result = self.con.execute('INSERT INTO FAMILLES (idx, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, tarifs, notes) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?)', (adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, tarifs, notes))
+                cur.execute('UPDATE INSCRITS SET famille=? WHERE idx=?', (result.lastrowid, idx))
+                cur.execute('UPDATE PARENTS SET famille=? WHERE inscrit=?', (result.lastrowid, idx))
+                cur.execute('UPDATE FRATRIES SET famille=? WHERE inscrit=?', (result.lastrowid, idx))
+                cur.execute('UPDATE REFERENTS SET famille=? WHERE inscrit=?', (result.lastrowid, idx))
 
         if version < VERSION:
             try:

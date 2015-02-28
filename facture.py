@@ -44,22 +44,18 @@ class FactureFinMois(object):
         except:
             numero = 0
             
-        if config.options & NUMEROS_FACTURES_CONSECUTIFS:
+        if config.options & FACTURES_FAMILLES:
             # print u"Calcul du numéro de facture de", GetPrenomNom(self.inscrit)
+            done = []
             for inscrit in creche.inscrits:
                 if inscrit is self.inscrit:
                     return numero
-                else:
-                    if inscrit.HasFacture(self.debut_recap):
-                        try:
-                            facture = FactureFinMois(inscrit, self.annee, self.mois, options=NO_ADDRESS|NO_PARENTS|NO_NUMERO)
-                            if facture.total > 0:
-                                # print u"  Facture de %s: %d" % (GetPrenomNom(inscrit), numero)
-                                numero += 1
-                            # else:
-                            #    print u"  Facture de %s sautée" % GetPrenomNom(inscrit)
-                        except:
-                            raise CotisationException([u"Impossible de calculer le numéro de facture (erreur sur la facture de %s qui la précède)" % GetPrenomNom(inscrit)])
+                elif inscrit.HasFacture(self.debut_recap) and inscrit.famille not in done:
+                    # print u"  Facture de %s: %d" % (GetPrenomNom(inscrit), numero)
+                    numero += 1
+                    done.append(inscrit.famille)
+                # else:
+                    # print u"  Facture de %s sautée" % GetPrenomNom(inscrit)
         else:
             return numero + creche.inscrits.index(self.inscrit) 
             

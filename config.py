@@ -68,8 +68,8 @@ def getOptions(parser):
             options |= TABLETTE
         if "decloture" in str:
             options |= DECLOTURE
-        if "numeros-factures-consecutifs" in str:
-            options |= NUMEROS_FACTURES_CONSECUTIFS
+        if "factures-familles" in str:
+            options |= FACTURES_FAMILLES
     except:
         pass
     return options

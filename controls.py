@@ -169,7 +169,7 @@ class PhoneCtrl(wx.TextCtrl):
 #        if kw.has_key('style'): this_sty = this_sty | kw['style']
 #        kw['style'] = this_sty
 
-        wx.TextCtrl.__init__(self, parent, id, size=(-1, -1), *args, **kw)
+        wx.TextCtrl.__init__(self, parent.GetWindow(), id, size=(-1, -1), *args, **kw)
         self.SetMaxLength(14)
 
         wx.EVT_CHAR(self, self.onChar)
@@ -279,6 +279,8 @@ else:
         self.mois = mois
         wx.TextCtrl.__init__(self, parent, id=-1, *args, **kwargs)
         wx.EVT_TEXT(self, -1, self.checkSyntax)
+        if value is not None:
+            self.SetValue(value)
 
     def checkSyntax(self, event=None):
         str = wx.TextCtrl.GetValue(self)
@@ -541,7 +543,7 @@ class AutoMixin:
         
 class AutoTextCtrl(wx.TextCtrl, AutoMixin):
     def __init__(self, parent, instance, member, fixed_instance=False, observers=[], *args, **kwargs):
-        wx.TextCtrl.__init__(self, parent, -1, *args, **kwargs)
+        wx.TextCtrl.__init__(self, parent.GetWindow(), -1, *args, **kwargs)
         AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
         
     def __del__(self):
@@ -549,7 +551,7 @@ class AutoTextCtrl(wx.TextCtrl, AutoMixin):
 
 class AutoComboBox(wx.ComboBox, AutoMixin):
     def __init__(self, parent, instance, member, fixed_instance=False, observers=[], *args, **kwargs):
-        wx.ComboBox.__init__(self, parent, -1, *args, **kwargs)
+        wx.ComboBox.__init__(self, parent.GetWindow(), -1, *args, **kwargs)
         AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
 
     def __del__(self):
@@ -557,7 +559,7 @@ class AutoComboBox(wx.ComboBox, AutoMixin):
         
 class AutoDateCtrl(DateCtrl, AutoMixin):
     def __init__(self, parent, instance, member, fixed_instance=False, observers=[], *args, **kwargs):
-        DateCtrl.__init__(self, parent, id=-1, style=wx.DP_DEFAULT|wx.DP_DROPDOWN|wx.DP_SHOWCENTURY|wx.DP_ALLOWNONE, *args, **kwargs)
+        DateCtrl.__init__(self, parent.GetWindow(), id=-1, style=wx.DP_DEFAULT|wx.DP_DROPDOWN|wx.DP_SHOWCENTURY|wx.DP_ALLOWNONE, *args, **kwargs)
         AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
         # self.Bind(wx.EVT_DATE_CHANGED, self.onText, self)
         # DateCtrl.__init__(self, parent, -1, *args, **kwargs)
@@ -591,7 +593,7 @@ class AutoTimeCtrl(TimeCtrl, AutoMixin):
 
 class AutoNumericCtrl(NumericCtrl, AutoMixin):
     def __init__(self, parent, instance, member, fixed_instance=False, observers=[], *args, **kwargs):
-        NumericCtrl.__init__(self, parent, *args, **kwargs)
+        NumericCtrl.__init__(self, parent.GetWindow(), *args, **kwargs)
         AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
 
     def __del__(self):
@@ -907,19 +909,31 @@ class PeriodeChoice(wx.BoxSizer):
     def Disable(self):
         self.Enable(False)
 
-class AutoTab(wx.lib.scrolledpanel.ScrolledPanel):
+class ControlsGroup(object):
     def __init__(self, parent):
-        wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent)
-        self.parent = parent
         self.ctrls = []
-        self.SetAutoLayout(1)
-        self.SetupScrolling()
+        self.parent = parent
+        self.window = None
 
     def UpdateContents(self):
         for ctrl in self.ctrls:
             ctrl.UpdateContents()
+            
+    def GetWindow(self):
+        return self.parent
+        
+class AutoTab(wx.lib.scrolledpanel.ScrolledPanel, ControlsGroup):
+    def __init__(self, parent):
+        ControlsGroup.__init__(self, parent)
+        wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent)
+        self.window = self
+        self.SetAutoLayout(1)
+        self.SetupScrolling()
+        
+    def GetWindow(self):
+        return self
 
-class PeriodeMixin:
+class PeriodeMixin(object):
     def __init__(self, member):
         self.instance = None
         self.member = member
@@ -965,6 +979,9 @@ class PeriodePanel(wx.Panel, PeriodeMixin):
         wx.Panel.__init__(self, parent, -1, *args, **kwargs)
         PeriodeMixin.__init__(self, member)
         parent.ctrls.append(self)
+        
+    def GetWindow(self):
+        return self
 
 class HashComboBox(wx.combo.OwnerDrawnComboBox):
     def __init__(self, parent, id=-1):
