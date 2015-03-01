@@ -68,8 +68,8 @@ MODE_MAX = MODE_ACCUEIL_URGENCE
 
 ModeAccueilItems = [("Temps plein", MODE_5_5),
                     ("Temps partiel", MODE_TEMPS_PARTIEL),
-                    (u"4/5èmes", MODE_4_5), 
-                    (u"3/5èmes", MODE_3_5), 
+#                    (u"4/5èmes", MODE_4_5), 
+#                    (u"3/5èmes", MODE_3_5), 
                     ("Forfait horaire mensuel", MODE_FORFAIT_HORAIRE), 
                     ("Halte-garderie", MODE_HALTE_GARDERIE),
                     ("Accueil urgence", MODE_ACCUEIL_URGENCE)]
