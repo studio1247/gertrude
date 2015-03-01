@@ -425,7 +425,7 @@ class FactureFinMois(object):
         
         self.majoration_mensuelle = 0.0
         for tarif in creche.tarifs_speciaux:
-            if tarif.unite == TARIF_SPECIAL_UNITE_EUROS and self.inscrit.tarifs & (1<<tarif.idx):
+            if tarif.unite == TARIF_SPECIAL_UNITE_EUROS and self.inscrit.famille.tarifs & (1<<tarif.idx):
                 if tarif.type == TARIF_SPECIAL_REDUCTION:
                     self.majoration_mensuelle -= tarif.valeur
                 elif tarif.type == TARIF_SPECIAL_MAJORATION:

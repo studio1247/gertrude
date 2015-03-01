@@ -423,7 +423,7 @@ class IdentitePanel(InscriptionsTab):
             w = self.sizer2.GetColWidths()[0] + 10
             for tarif in creche.tarifs_speciaux:
                 sizer = wx.BoxSizer(wx.HORIZONTAL)
-                sizer.AddMany([(wx.StaticText(self, -1, u'%s :' % tarif.label, size=(w, -1)), 0, wx.ALIGN_CENTER_VERTICAL), (AutoCheckBox(self, self.inscrit, 'tarifs', value=1<<tarif.idx), 0, wx.EXPAND)])
+                sizer.AddMany([(wx.StaticText(self, -1, u'%s :' % tarif.label, size=(w, -1)), 0, wx.ALIGN_CENTER_VERTICAL), (AutoCheckBox(self, self.inscrit, 'famille.tarifs', value=1<<tarif.idx), 0, wx.EXPAND)])
                 self.tarifs_sizer.Add(sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
             self.last_tarifs_observer = time.time()
         self.UpdateLignesInscritsFratrie()

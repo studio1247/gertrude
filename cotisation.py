@@ -400,7 +400,7 @@ class Cotisation(object):
         self.majoration_mensuelle = 0.0
         if self.montant_heure_garde is not None:
             for tarif in creche.tarifs_speciaux:
-                if self.inscrit.tarifs & (1<<tarif.idx):
+                if self.inscrit.famille.tarifs & (1<<tarif.idx):
                     if tarif.unite == TARIF_SPECIAL_UNITE_EUROS:
                         cotisation_diff = tarif.valeur
                         heure_garde_diff = 0.0
