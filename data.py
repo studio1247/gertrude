@@ -400,6 +400,7 @@ class FileConnection(object):
 
     def Save(self, progress_handler=default_progress_handler):
         sql_connection.commit()
+        self.Backup(progress_handler)
         return True
     
     def Restore(self, progress_handler=default_progress_handler):

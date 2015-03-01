@@ -360,6 +360,7 @@ class GertrudeFrame(wx.Frame):
             dlg.Destroy()
         else:
             Save(ProgressHandler(self.SetStatusText))
+        history.Clear()
         self.SetStatusText("")
 
     def OnBackup(self, evt):
