@@ -315,6 +315,45 @@ def GetTables(filename):
     spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
     return spreadsheet.getElementsByTagName("table:table")
 
+def GetDimension(node, what):
+    attribute = node.getAttribute(what)
+    if attribute.endswith("cm"):
+        return float(attribute[:-2])
+    elif attribute.endswith("in"):
+        return float(attribute[:-2])*2.54
+    else:
+        return 0
+    
+def SetDimension(node, what, value):
+    node.setAttribute(what, "%.3scm" % value)
+    
+def ModifyLogo(dom, logo):
+    bitmap = wx.Bitmap("templates/logo.png", wx.BITMAP_TYPE_PNG)
+    for frame in dom.getElementsByTagName('draw:frame'):
+        name = frame.getAttribute('draw:name')
+        if name == "Logo":
+            width = GetDimension(frame, "svg:width")
+            height = GetDimension(frame, "svg:height")
+            if width > 0 and height > 0:
+                height = width * bitmap.Height / bitmap.Width
+                SetDimension(frame, "svg:height", height)
+                images = frame.getElementsByTagName('draw:image')
+                if len(images) == 1:
+                    images[0].setAttribute("xlink:href", logo)
+                    return True
+    return False
+
+def AddLogo(dom, logo):
+    manifests = dom.getElementsByTagName('manifest:manifest')
+    for manifest in manifests:
+        files = manifest.getElementsByTagName('manifest:file-entry')
+        for file in files:
+            if file.getAttribute("manifest:media-type") == "image/png":
+                clone = file.cloneNode(1)
+                clone.setAttribute("manifest:full-path", logo)
+                manifest.insertBefore(clone, file)
+                return
+            
 def GenerateOODocument(modifications, filename=None, gauge=None):
     if gauge:
         gauge.SetValue(0)
@@ -327,21 +366,28 @@ def GenerateOODocument(modifications, filename=None, gauge=None):
     if gauge:
         modifications.gauge = gauge
         gauge.SetValue(5)
-        
-    XML_FILES = ('meta.xml', 'styles.xml', 'content.xml')
-    for f in XML_FILES:
-        data = zip.read(f)
-        dom = xml.dom.minidom.parseString(data)
-        new_errors = modifications.execute(f, dom)
-        if new_errors:
-            errors.update(new_errors)
-        data = dom.toxml('UTF-8')
-        files.append((f, data))  
     
-    for f in zip.namelist():
-        if not f in XML_FILES:
-            data = zip.read(f)
-            files.append((f, data))
+    LOGO = "Pictures/logo.png"
+    logo_inserted = False
+    namelist = zip.namelist()
+    if "content.xml" in namelist:
+        namelist.remove("content.xml")
+        namelist.insert(0, "content.xml")
+    for f in namelist:
+        data = zip.read(f)
+        if f.endswith(".xml") and len(data) > 0:
+            dom = xml.dom.minidom.parseString(data)
+            if IsTemplateFile("logo.png"):
+                if f == 'content.xml':
+                    logo_inserted = ModifyLogo(dom, LOGO)
+                elif logo_inserted and f == 'META-INF/manifest.xml':
+                    AddLogo(dom, LOGO)
+                    files.append((LOGO, file("templates/logo.png", "rb").read()))
+            new_errors = modifications.execute(f, dom)
+            if new_errors:
+                errors.update(new_errors)
+            data = dom.toxml('UTF-8')
+        files.append((f, data))  
             
     zip.close()
     zip = zipfile.ZipFile(filename, 'w')

@@ -151,6 +151,7 @@ class FactureModifications(object):
         ReplaceTextFields(section, facture.fields)
         
     def execute(self, filename, dom):
+        print filename
         if filename != 'content.xml':
             return None
 
