@@ -43,12 +43,18 @@ class FactureFinMois(object):
             numero = int(creche.numeros_facture[self.debut_recap].valeur)
         except:
             numero = 0
+        
+        if creche.tri_factures == TRI_NOM:
+            inscrits = GetEnfantsTriesParNom()
+        else:
+            inscrits = creche.inscrits
             
         if config.options & FACTURES_FAMILLES:
             # print u"Calcul du numéro de facture de", GetPrenomNom(self.inscrit)
             done = []
-            for inscrit in creche.inscrits:
-                if inscrit is self.inscrit:
+            for inscrit in inscrits:
+                if inscrit.famille is self.inscrit.famille:
+                    # print " => %d" % numero
                     return numero
                 elif inscrit.HasFacture(self.debut_recap) and inscrit.famille not in done:
                     # print u"  Facture de %s: %d" % (GetPrenomNom(inscrit), numero)
@@ -57,7 +63,7 @@ class FactureFinMois(object):
                 # else:
                     # print u"  Facture de %s sautée" % GetPrenomNom(inscrit)
         else:
-            return numero + creche.inscrits.index(self.inscrit) 
+            return numero + inscrits.index(self.inscrit) 
             
     def __init__(self, inscrit, annee, mois, options=0):
         self.inscrit = inscrit

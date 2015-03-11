@@ -347,6 +347,21 @@ def GetParentsString(famille):
         else:
             return '%s %s et %s %s' % (maman.prenom, maman.nom, papa.prenom, papa.nom)
 
+def GetParentsNomsString(famille):
+    if not famille.parents['papa'] and not famille.parents['maman']:
+        return "ZZZZ"
+    elif not famille.parents['maman']:
+        return famille.parents['papa'].nom
+    elif not famille.parents['papa']:
+        return famille.parents['maman'].nom
+    else:
+        papa = famille.parents['papa']
+        maman = famille.parents['maman']
+        if maman.nom == papa.nom:
+            return maman.nom
+        else:
+            return '%s-%s' % (papa.nom, maman.nom)
+
 def GetInscritsByMode(start, end, mode, site=None): # TODO pourquoi retourner les index
     result = []
     for i, inscrit in enumerate(creche.inscrits):
@@ -396,9 +411,21 @@ def GetTriParNomIndexes(indexes):
 
 def GetEnfantsTriesParNom(enfants=None):
     def tri(one, two):
-        return cmp(one.nom + one.prenom, one.nom + one.prenom)
+        return cmp(GetPrenomNom(one, tri=TRI_NOM), GetPrenomNom(two, tri=TRI_NOM))
     if enfants is None:
-        enfants = creches.inscrits[:]
+        enfants = creche.inscrits[:]
+    else:
+        enfants = enfants[:]
+    enfants.sort(tri)
+    return enfants
+
+def GetEnfantsTriesParNomParents(enfants=None):
+    def tri(one, two):
+        return cmp(GetParentsNomsString(one), GetParentsNomsString(two))
+    if enfants is None:
+        enfants = creche.inscrits[:]
+    else:
+        enfants = enfants[:]
     enfants.sort(tri)
     return enfants
 

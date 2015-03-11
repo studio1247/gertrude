@@ -47,20 +47,23 @@ class FactureModifications(object):
         
     def __init__(self, inscrits, periode):
         self.multi = False
-        self.inscrits = inscrits
+        if creche.tri_factures == TRI_NOM:
+            self.inscrits = GetEnfantsTriesParNom(inscrits)
+        else:
+            self.inscrits = inscrits
         self.periode = periode
         self.periode_facturation = periode
         if creche.temps_facturation != FACTURATION_FIN_MOIS:
             self.periode_facturation = GetMonthStart(periode - datetime.timedelta(1))
             
         self.email = True
-        if len(inscrits) > 1:
-            self.site = inscrits[0].GetInscriptions(self.periode_facturation, None)[0].site
+        if len(self.inscrits) > 1:
+            self.site = self.inscrits[0].GetInscriptions(self.periode_facturation, None)[0].site
             self.email_subject = u"Factures %s %d" % (months[periode.month - 1], periode.year)
             self.default_output = u"Factures %s %d.odt" % (months[periode.month - 1], periode.year)
             self.email_to = None
         else:
-            who = inscrits[0]
+            who = self.inscrits[0]
             self.site = who.GetInscriptions(self.periode_facturation, None)[0].site
             self.email_subject = u"Facture %s %s %d" % (self.GetPrenomNom(who), months[periode.month - 1], periode.year)
             self.email_to = list(set([parent.email for parent in who.famille.parents.values() if parent and parent.email]))
@@ -68,12 +71,12 @@ class FactureModifications(object):
         
         if self.site and IsTemplateFile("Facture mensuelle simple %s.odt" % self.site.nom):
             self.template = "Facture mensuelle simple %s.odt" % self.site.nom
-            if len(inscrits) > 1:
+            if len(self.inscrits) > 1:
                 self.multi = True
                 self.default_output = u"Facture <enfant> %s %d.odt" % (months[periode.month - 1], periode.year)
         elif IsTemplateFile("Facture mensuelle simple %s.odt" % creche.nom):
             self.template = "Facture mensuelle simple %s.odt" % creche.nom
-            if len(inscrits) > 1:
+            if len(self.inscrits) > 1:
                 self.multi = True
                 self.default_output = u"Facture <enfant> %s %d.odt" % (months[periode.month - 1], periode.year)
         elif self.site and IsTemplateFile("Facture mensuelle %s.odt" % self.site.nom):
@@ -82,7 +85,7 @@ class FactureModifications(object):
             self.template = "Facture mensuelle %s.odt" % creche.nom
         elif IsTemplateFile("Facture mensuelle simple.odt"):
             self.template = "Facture mensuelle simple.odt"
-            if len(inscrits) > 1:
+            if len(self.inscrits) > 1:
                 self.multi = True
                 self.default_output = u"Facture <enfant> %s %d.odt" % (months[periode.month - 1], periode.year)
         else:
@@ -151,7 +154,6 @@ class FactureModifications(object):
         ReplaceTextFields(section, facture.fields)
         
     def execute(self, filename, dom):
-        print filename
         if filename != 'content.xml':
             return None
 
