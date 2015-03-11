@@ -1665,6 +1665,7 @@ class Famille(object):
         self.telephone_medecin_traitant = ""
         self.assureur = ""
         self.numero_police_assurance = ""
+        self.code_client = ""
         self.tarifs = 0
         self.notes = ""
         self.freres_soeurs = []
@@ -1678,7 +1679,7 @@ class Famille(object):
     
     def create(self):
         print 'nouvelle famille'
-        result = sql_connection.execute('INSERT INTO FAMILLES (idx, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, tarifs, notes, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?)', (self.adresse, self.code_postal, self.ville, self.numero_securite_sociale, self.numero_allocataire_caf, self.tarifs, self.notes, self.medecin_traitant, self.telephone_medecin_traitant, self.assureur, self.numero_police_assurance))
+        result = sql_connection.execute('INSERT INTO FAMILLES (idx, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, tarifs, notes, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, code_client) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?)', (self.adresse, self.code_postal, self.ville, self.numero_securite_sociale, self.numero_allocataire_caf, self.tarifs, self.notes, self.medecin_traitant, self.telephone_medecin_traitant, self.assureur, self.numero_police_assurance, self.code_client))
         self.idx = result.lastrowid
         for obj in self.parents.values() + self.freres_soeurs + self.referents:
             if obj:
@@ -1697,7 +1698,7 @@ class Famille(object):
         else:
             old_value = '-'
         self.__dict__[name] = value
-        if name in ['adresse', 'code_postal', 'ville', 'numero_securite_sociale', 'numero_allocataire_caf', 'tarifs', 'notes', 'medecin_traitant', 'telephone_medecin_traitant', 'assureur', 'numero_police_assurance'] and self.idx:
+        if name in ['adresse', 'code_postal', 'ville', 'numero_securite_sociale', 'numero_allocataire_caf', 'tarifs', 'notes', 'medecin_traitant', 'telephone_medecin_traitant', 'assureur', 'numero_police_assurance', 'code_client'] and self.idx:
             print 'update', name, (old_value, value)
             sql_connection.execute('UPDATE FAMILLES SET %s=? WHERE idx=?' % name, (value, self.idx))
 

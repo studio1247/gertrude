@@ -387,13 +387,20 @@ def GetTriParPrenomIndexes(indexes):
     return indexes
 
 def GetTriParNomIndexes(indexes):
-    # Tri par ordre alphabetique des prenoms
     def tri(one, two):
         i1 = creche.inscrits[one] ; i2 = creche.inscrits[two]
         return cmp(i1.nom, i2.nom)
 
     indexes.sort(tri)
     return indexes
+
+def GetEnfantsTriesParNom(enfants=None):
+    def tri(one, two):
+        return cmp(one.nom + one.prenom, one.nom + one.prenom)
+    if enfants is None:
+        enfants = creches.inscrits[:]
+    enfants.sort(tri)
+    return enfants
 
 def GetPresentsIndexes(indexes, (debut, fin), site=None):
     if indexes is None:
@@ -761,7 +768,9 @@ def GetFactureFields(facture):
             result.append(('numfact', config.numfact % {"inscritid": facture.inscrit.idx, "numero": facture.numero, "annee": facture.annee, "mois": facture.mois}))
         else:
             result.append(('numfact', '%03d%04d%02d' % (facture.inscrit.idx, facture.annee, facture.mois)))
-        if config.codeclient:
+        if config.codeclient == "custom":
+            result.append(('codeclient', facture.inscrit.famille.code_client))
+        elif isinstance(config.codeclient, basestring):
             result.append(('codeclient', config.codeclient % {"inscritid": facture.inscrit.idx, "nom": facture.inscrit.nom, "prenom": facture.inscrit.prenom, "nom4p1": GetNom4P1(facture.inscrit, creche.inscrits)}))
 
         return result

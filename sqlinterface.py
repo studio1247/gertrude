@@ -25,7 +25,7 @@ from sqlobjects import *
 from facture import FactureCloturee
 import wx
 
-VERSION = 89
+VERSION = 90
 
 def getdate(s):
     if s is None:
@@ -231,6 +231,7 @@ class SQLConnection(object):
             telephone_medecin_traitant VARCHAR,
             assureur VARCHAR,
             numero_police_assurance VARCHAR,
+            code_client VARCHAR,
             tarifs INTEGER,
             notes VARCHAR
           );""")
@@ -683,10 +684,10 @@ class SQLConnection(object):
             professeur.idx = idx
             creche.professeurs.append(professeur)
 
-        cur.execute('SELECT idx, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, tarifs, notes FROM FAMILLES')
-        for idx, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, tarifs, notes in cur.fetchall():
+        cur.execute('SELECT idx, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, code_client, tarifs, notes FROM FAMILLES')
+        for idx, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, code_client, tarifs, notes in cur.fetchall():
             famille = Famille(creation=False)
-            famille.adresse, famille.code_postal, famille.ville, famille.numero_securite_sociale, famille.numero_allocataire_caf, famille.medecin_traitant, famille.telephone_medecin_traitant, famille.assureur, famille.numero_police_assurance, famille.tarifs, famille.notes, famille.idx = adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, tarifs, notes, idx
+            famille.adresse, famille.code_postal, famille.ville, famille.numero_securite_sociale, famille.numero_allocataire_caf, famille.medecin_traitant, famille.telephone_medecin_traitant, famille.assureur, famille.numero_police_assurance, famille.code_client, famille.tarifs, famille.notes, famille.idx = adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, code_client, tarifs, notes, idx
             creche.familles.append(famille)
             cur.execute('SELECT relation, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email, idx FROM PARENTS WHERE famille=?', (famille.idx,))
             for parent_entry in cur.fetchall():
@@ -1674,6 +1675,10 @@ class SQLConnection(object):
         if version < 89:
             cur.execute("ALTER TABLE EMPLOYES ADD combinaison VARCHAR;")
             cur.execute('UPDATE EMPLOYES SET combinaison=?', ("",))
+
+        if version < 90:
+            cur.execute("ALTER TABLE FAMILLES ADD code_client VARCHAR;")
+            cur.execute('UPDATE FAMILLES SET code_client=?', ("",))
 
         if version < VERSION:
             try:
