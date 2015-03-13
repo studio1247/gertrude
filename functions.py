@@ -334,7 +334,7 @@ def GetDeMoisStr(mois):
 
 def GetParentsString(famille):
     if not famille.parents['papa'] and not famille.parents['maman']:
-        return "orphelin"
+        return "ZZZZ"
     elif not famille.parents['maman']:
         return GetPrenomNom(famille.parents['papa'])
     elif not famille.parents['papa']:
@@ -409,25 +409,23 @@ def GetTriParNomIndexes(indexes):
     indexes.sort(tri)
     return indexes
 
+def GetEnfantsTries(enfants, tri):
+    if enfants is None:
+        enfants = creche.inscrits[:]
+    else:
+        enfants = enfants[:]
+    enfants.sort(tri)
+    return enfants
+    
 def GetEnfantsTriesParNom(enfants=None):
     def tri(one, two):
         return cmp(GetPrenomNom(one, tri=TRI_NOM), GetPrenomNom(two, tri=TRI_NOM))
-    if enfants is None:
-        enfants = creche.inscrits[:]
-    else:
-        enfants = enfants[:]
-    enfants.sort(tri)
-    return enfants
+    return GetEnfantsTries(enfants, tri)
 
 def GetEnfantsTriesParNomParents(enfants=None):
     def tri(one, two):
-        return cmp(GetParentsNomsString(one), GetParentsNomsString(two))
-    if enfants is None:
-        enfants = creche.inscrits[:]
-    else:
-        enfants = enfants[:]
-    enfants.sort(tri)
-    return enfants
+        return cmp(GetParentsNomsString(one.famille), GetParentsNomsString(two.famille))
+    return GetEnfantsTries(enfants, tri)
 
 def GetPresentsIndexes(indexes, (debut, fin), site=None):
     if indexes is None:

@@ -46,6 +46,8 @@ class FactureFinMois(object):
         
         if creche.tri_factures == TRI_NOM:
             inscrits = GetEnfantsTriesParNom()
+        elif creche.tri_factures == TRI_NOM_PARENTS:
+            inscrits = GetEnfantsTriesParNomParents()
         else:
             inscrits = creche.inscrits
             

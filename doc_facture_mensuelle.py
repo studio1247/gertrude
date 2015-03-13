@@ -49,6 +49,8 @@ class FactureModifications(object):
         self.multi = False
         if creche.tri_factures == TRI_NOM:
             self.inscrits = GetEnfantsTriesParNom(inscrits)
+        elif creche.tri_factures == TRI_NOM_PARENTS:
+            self.inscrits = GetEnfantsTriesParNomParents(inscrits)
         else:
             self.inscrits = inscrits
         self.periode = periode
@@ -253,6 +255,10 @@ class FactureModifications(object):
                             if not facture.frais_inscription:
                                 for row in rows:
                                     if "Frais d'inscription" in row.toprettyxml():
+                                        montants_table.removeChild(row)
+                            if not facture.correction:
+                                for row in rows:
+                                    if "Correction" in row.toprettyxml():
                                         montants_table.removeChild(row)
                             ReplaceTextFields(montants_table, facture.fields)
                                 
