@@ -328,7 +328,16 @@ class PlanningPanel(GPanel):
                 self.absent = absent
                 self.malade = malade
 
-        def AddPeriode(who, periode):
+        def AddPeriodes(who, date, periodes, classeJournee):
+            if date in who.journees:
+                who.journees[date].RemoveActivities(0)
+                who.journees[date].RemoveActivities(0|PREVISIONNEL)
+            else:
+                who.journees[date] = classeJournee(who, date)
+            for periode in periodes:
+                AddPeriode(who, who.journees[date], periode)
+                
+        def AddPeriode(who, journee, periode):
             value = 0
             if periode.absent:
                 value = VACANCES
@@ -354,15 +363,11 @@ class PlanningPanel(GPanel):
                         periode.depart = int(creche.fermeture*(60 / BASE_GRANULARITY))
                 else:
                     return
-            if periode.date in who.journees:
-                who.journees[periode.date].RemoveActivities(0)
-                who.journees[periode.date].RemoveActivities(0|PREVISIONNEL)
-            else:
-                who.journees[periode.date] = Journee(who, periode.date)
+            
             if value < 0:
-                who.journees[periode.date].SetState(value)
+                journee.SetState(value)
             else:
-                who.journees[periode.date].SetActivity(periode.arrivee, periode.depart, value)
+                journee.SetActivity(periode.arrivee, periode.depart, value)
             history.Append(None)
         
         array_enfants = {}
@@ -389,24 +394,26 @@ class PlanningPanel(GPanel):
                     array = array_enfants
                     label = full_label
                 if idx not in array:
-                    array[idx] = []
+                    array[idx] = { }
+                if date not in array[idx]:
+                    array[idx][date] = []
                 if label == "arrivee":
                     arrivee = tm.tm_hour * 12 + tm.tm_min / creche.granularite * (creche.granularite/BASE_GRANULARITY)
-                    array[idx].append(PeriodePresence(date, arrivee))
+                    array[idx][date].append(PeriodePresence(date, arrivee))
                 elif label == "depart":
                     depart = tm.tm_hour * 12 + (tm.tm_min+creche.granularite-1) / creche.granularite * (creche.granularite/BASE_GRANULARITY)
-                    if len(array[idx]):
-                        last = array[idx][-1]
+                    if len(array[idx][date]):
+                        last = array[idx][date][-1]
                         if last.date == date and last.arrivee:
                             last.depart = depart
                         else:
-                            array[idx].append(PeriodePresence(date, None, depart))
+                            array[idx][date].append(PeriodePresence(date, None, depart))
                     else:
-                        array[idx].append(PeriodePresence(date, None, depart))
+                        array[idx][date].append(PeriodePresence(date, None, depart))
                 elif label == "absent":
-                    array[idx].append(PeriodePresence(date, absent=True))
+                    array[idx][date].append(PeriodePresence(date, absent=True))
                 elif label == "malade":
-                    array[idx].append(PeriodePresence(date, malade=True))
+                    array[idx][date].append(PeriodePresence(date, malade=True))
                 else:
                     print "Ligne %s inconnue" % full_label
                 creche.last_tablette_synchro = line
@@ -414,21 +421,22 @@ class PlanningPanel(GPanel):
                 print e
                 pass
         
-        print array_salaries
+        # print array_salaries
         
         errors = []            
         for key in array_enfants:
             inscrit = creche.GetInscrit(key)
             if inscrit:
-                for periode in array_enfants[key]:
-                    AddPeriode(inscrit, periode)
+                for date in array_enfants[key]:
+                    AddPeriodes(inscrit, date, array_enfants[key][date], Journee)
             else:
                 errors.append(u"Inscrit %d: Inconnu!" % key)
         for key in array_salaries:
             salarie = creche.GetSalarie(key)
             if salarie:
-                for periode in array_salaries[key]:
-                    AddPeriode(salarie, periode)
+                for date in array_salaries[key]:
+                    # print key, GetPrenomNom(salarie), periode
+                    AddPeriodes(salarie, date, array_salaries[key][date], JourneeSalarie)
             else:
                 errors.append(u"Salarié %d: Inconnu!" % key)
         if errors:

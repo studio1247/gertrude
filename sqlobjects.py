@@ -408,7 +408,7 @@ class Journee(Day):
 
     def InsertActivity(self, start, end, value): 
         if sql_connection:
-            print 'nouvelle activite (%r, %r, %d)' % (start, end, value),
+            print 'nouvelle activite %d (%r, %r, %d)' % (self.inscrit_idx, start, end, value),
             result = sql_connection.execute('INSERT INTO ACTIVITES (idx, inscrit, date, value, debut, fin) VALUES (NULL,?,?,?,?,?)', (self.inscrit_idx, self.date, value, start, end))
             idx = result.lastrowid
             print idx
@@ -775,6 +775,32 @@ class Salarie(object):
         if creation:
             self.create()
 
+    def IsDateConge(self, date):
+        return date in creche.jours_fermeture or date in self.jours_conges
+    
+    def GetJourneeReference(self, date):
+        if date in self.jours_conges:
+            return JourneeReferenceSalarie(None, 0)
+        else:
+            contrat = self.GetContrat(date)
+            if contrat:
+                return contrat.GetJourneeReference(date)
+            else:
+                return None
+            
+    def GetJournee(self, date):
+        if self.IsDateConge(date):
+            return None
+        
+        contrat = self.GetContrat(date)
+        if contrat is None:
+            return None
+        
+        if date in self.journees:
+            return self.journees[date]
+        else:
+            return self.GetJourneeReference(date)
+        
     def GetContrat(self, date):
         for contrat in self.contrats:
             if contrat.debut and date >= contrat.debut and (not contrat.fin or date <= contrat.fin):
