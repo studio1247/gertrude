@@ -18,6 +18,7 @@
 import os, datetime, time, xml.dom.minidom, cStringIO
 import wx, wx.lib.scrolledpanel, wx.html
 from constants import *
+from functions import AddInscritsToChoice
 from sqlobjects import *
 from controls import *
 from planning import *
@@ -1144,53 +1145,9 @@ class InscriptionsPanel(GPanel):
 
     def UpdateContents(self):
         self.notebook.UpdateContents()
-
-    def __add_in_array(self, array, cell):
-        if isinstance(cell, basestring):
-            return '[%s]' % cell
-
-        key = GetPrenomNom(cell)
-        if key.isspace():
-            key = 'Nouvelle inscription'
-        count = array.count(key)
-        array.append(key)
-        if count > 0:
-            key = key + " (%d)" % count
-        return '  ' + key 
-
-    def __add_in_inscrits_choice(self, inscrits):
-        array = []
-        for inscrit in inscrits:
-            key = self.__add_in_array(array, inscrit)
-            self.choice.Append(key, inscrit)
             
     def InitInscrits(self, selected=None):
-        self.choice.Clear()
-
-        inscrits = []
-        autres = []
-        for inscrit in creche.inscrits:
-            if inscrit.GetInscription(datetime.date.today(), preinscription=True) != None:
-                inscrits.append(inscrit)
-            else:
-                autres.append(inscrit)
-        
-        if (config.options & RESERVATAIRES) and len(creche.reservataires):
-            inscrits = TrieParReservataires(inscrits)
-        else:
-            if len(inscrits) > 0 and len(autres) > 0:
-                self.choice.Append("[Inscrits]", None)
-            inscrits.sort(key=lambda inscrit: GetPrenomNom(inscrit))
-
-        self.__add_in_inscrits_choice(inscrits)        
-        
-        if len(inscrits) > 0 and len(autres) > 0:
-            self.choice.Append("[Anciens]", None)
-
-        autres.sort(key=lambda inscrit: GetPrenomNom(inscrit))
-
-        self.__add_in_inscrits_choice(autres)        
-
+        AddInscritsToChoice(self.choice)
         if len(creche.inscrits) > 0 and selected != None and selected in creche.inscrits:
             self.SelectInscrit(selected)
         else:
@@ -1216,11 +1173,7 @@ class InscriptionsPanel(GPanel):
 
     def SelectInscrit(self, inscrit):
         if inscrit:
-            for i in range(self.choice.GetCount()):
-                if self.choice.GetClientData(i) == inscrit:
-                    self.inscrit_selected = i
-                    self.choice.SetSelection(i)
-                    break
+            self.inscrit_selected = SelectValueInChoice(self.choice, inscrit)
         else:
             self.choice.SetSelection(-1)
         self.notebook.SetInscrit(inscrit)

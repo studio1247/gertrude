@@ -1698,6 +1698,7 @@ class Famille(object):
         self.freres_soeurs = []
         self.parents = { "papa": None, "maman": None }
         self.referents = []
+        self.encaissements = []
 
         if creation:
             self.create()
@@ -2043,3 +2044,35 @@ class Alerte(object):
         if name in ['acquittement'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE ALERTES SET %s=? WHERE idx=?' % name, (value, self.idx))
+            
+class Encaissement(SQLObject):
+    table = "ENCAISSEMENTS"
+    
+    def __init__(self, famille, date=today, valeur=0, moyen_paiement=0, idx=None):
+        self.ready = False
+        self.idx = idx
+        self.famille = famille
+        self.date = date
+        self.valeur = valeur
+        self.moyen_paiement = moyen_paiement
+        self.ready = True
+        if idx is None:
+            self.create()
+
+    def create(self):
+        print 'nouvel encaissement'
+        result = sql_connection.execute('INSERT INTO ENCAISSEMENTS (idx, famille, date, valeur, moyen_paiement) VALUES (NULL,?,?,?,?)', (self.famille.idx, self.date, self.valeur, self.moyen_paiement))
+        self.idx = result.lastrowid
+
+    def delete(self):
+        print 'suppression encaissement'
+        sql_connection.execute('DELETE FROM ENCAISSEMENTS WHERE idx=?', (self.idx,))
+        self.idx = None
+
+    def __setattr__(self, name, value):
+        self.__dict__[name] = value
+        
+        if self.ready and name in ['date', 'valeur', 'moyen_paiement']:
+            print 'update', name
+            sql_connection.execute('UPDATE ENCAISSEMENTS SET %s=? WHERE idx=?' % name, (value, self.idx))
+    

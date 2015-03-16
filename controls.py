@@ -274,10 +274,16 @@ if 0: #sys.platform == 'win32':
         else:
             return None
 else:
+  DATECTRL_WIDTH = 0
   class DateCtrl(wx.TextCtrl):
     def __init__(self, parent, id=-1, value=None, mois=False, *args, **kwargs):
+        global DATECTRL_WIDTH
         self.mois = mois
         wx.TextCtrl.__init__(self, parent, id=-1, *args, **kwargs)
+        if DATECTRL_WIDTH == 0:
+            dc = wx.WindowDC(self)
+            DATECTRL_WIDTH = dc.GetMultiLineTextExtent("00/00/0000 ", self.GetFont())[0]
+        self.SetMinSize((DATECTRL_WIDTH+10, -1))
         wx.EVT_TEXT(self, -1, self.checkSyntax)
         if value is not None:
             self.SetValue(value)
@@ -607,6 +613,24 @@ class AutoPhoneCtrl(PhoneCtrl, AutoMixin):
     def __del__(self):
         AutoMixin.__del__(self)
 
+class ChoiceCtrl(wx.Choice):
+    def __init__(self, parent, items=None):
+        wx.Choice.__init__(self, parent, -1)
+        if items:
+            self.SetItems(items)
+
+    def SetItems(self, items):
+        wx.Choice.Clear(self)
+        for item in items:
+            if isinstance(item, tuple):
+                self.Append(item[0], item[1])
+            else:
+                self.Append(item, item)
+    
+    def GetValue(self):
+        selected = self.GetSelection()
+        return self.GetClientData(selected)
+            
 class AutoChoiceCtrl(wx.Choice, AutoMixin):
     def __init__(self, parent, instance, member, items=None, fixed_instance=False, observers=[], *args, **kwargs):
         wx.Choice.__init__(self, parent, -1, *args, **kwargs) 

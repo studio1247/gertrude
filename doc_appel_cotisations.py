@@ -37,26 +37,30 @@ class AppelCotisationsModifications(object):
             return None
         
         errors = {}
-        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
-        template = spreadsheet.getElementsByTagName("table:table").item(0)
-        
+        spreadsheet = dom.getElementsByTagName('office:spreadsheet')[0]
+        templates = spreadsheet.getElementsByTagName("table:table")
+        template = templates[0]
+                
         if len(creche.sites) > 1:
             spreadsheet.removeChild(template)
             for i, site in enumerate(creche.sites):
                 table = template.cloneNode(1)
                 spreadsheet.appendChild(table)
                 table.setAttribute("table:name", site.nom)
-                self.fill_table(table, site, errors)
+                self.RemplitFeuilleMois(table, site, errors)
                 if self.gauge:
                     self.gauge.SetValue((90/len(creche.sites)) * (i+1))
         else:
-            self.fill_table(template)
+            self.RemplitFeuilleMois(template, None, errors)
             if self.gauge:
                 self.gauge.SetValue(90)
-        
+                
+        if len(templates) > 0:
+            self.RemplitFeuilleEnfants(templates[1], errors)
+            
         return errors
 
-    def fill_table(self, table, site=None, errors={}):
+    def RemplitFeuilleMois(self, table, site=None, errors={}):
         lignes = table.getElementsByTagName("table:table-row")
             
         # La date
@@ -67,23 +71,24 @@ class AppelCotisationsModifications(object):
             fields.append(('site', None))
         ReplaceFields(lignes, fields)
         
-        # Les cotisations
-        lines_template = [lignes.item(7), lignes.item(8)]
         inscrits = GetInscrits(self.debut, self.fin, site=site)
         inscrits.sort(cmp=lambda x,y: cmp(GetPrenomNom(x), GetPrenomNom(y)))
+        
+        # Les cotisations
+        lines_template = [lignes.item(7), lignes.item(8)]
         for i, inscrit in enumerate(inscrits):
             if self.gauge:
                 self.gauge.SetValue(10+int(80.0*i/len(inscrits)))
             line = lines_template[i % 2].cloneNode(1)
             try:
-                facture = Facture(inscrit, self.debut.year, self.debut.month, self.options|NO_NUMERO)
+                facture = Facture(inscrit, self.debut.year, self.debut.month, self.options)
                 commentaire = None
             except CotisationException, e:
                 facture = None
                 commentaire = '\n'.join(e.errors)
                 errors[GetPrenomNom(inscrit)] = e.errors
                 
-            fields = GetCrecheFields(creche) + GetInscritFields(inscrit) + GetFactureFields(facture) + [('commentaire', commentaire)]            
+            fields = GetCrecheFields(creche) + GetInscritFields(inscrit) + GetFactureFields(facture) + GetReglementFields(inscrit.famille, self.debut.year, self.debut.month) + [('commentaire', commentaire)]            
             ReplaceFields(line, fields)
             
             table.insertBefore(line, lines_template[0])
@@ -91,3 +96,32 @@ class AppelCotisationsModifications(object):
 
         table.removeChild(lines_template[0])
         table.removeChild(lines_template[1])
+        
+    def RemplitFeuilleEnfants(self, template, errors):
+        inscrits = GetInscrits(self.debut, self.fin)
+        inscrits.sort(cmp=lambda x,y: cmp(GetPrenomNom(x), GetPrenomNom(y)))
+        lines_template = template.getElementsByTagName("table:table-row")[1:21]
+        for i, inscrit in enumerate(inscrits):
+            inscrit_fields = GetCrecheFields(creche) + GetInscritFields(inscrit)
+            mois = 1
+            for line in lines_template:
+                clone = line.cloneNode(1)
+                if "cotisation-mensuelle" in clone.toprettyxml():
+                    if datetime.date(self.debut.year, mois, 1) > today:
+                        continue
+                    try:
+                        facture = Facture(inscrit, self.debut.year, mois, self.options)
+                        commentaire = None
+                    except CotisationException, e:
+                        facture = None
+                        commentaire = '\n'.join(e.errors)
+                        errors[GetPrenomNom(inscrit)] = e.errors
+                        continue
+                    fields = inscrit_fields + GetFactureFields(facture) + GetReglementFields(inscrit.famille, self.debut.year, mois) + [('commentaire', commentaire)]            
+                    mois = mois + 1
+                else:
+                    fields = inscrit_fields
+                ReplaceFields(clone, fields)
+                template.insertBefore(clone, lines_template[0])
+        for line in lines_template:
+            template.removeChild(line)

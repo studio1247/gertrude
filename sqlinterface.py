@@ -25,13 +25,14 @@ from sqlobjects import *
 from facture import FactureCloturee
 import wx
 
-VERSION = 90
+VERSION = 91
 
 def getdate(s):
-    if s is None:
+    try:
+        annee, mois, jour = map(lambda x: int(x), s.split('-'))
+        return datetime.date(annee, mois, jour)
+    except:
         return None
-    annee, mois, jour = map(lambda x: int(x), s.split('-'))
-    return datetime.date(annee, mois, jour)
 
 class SQLConnection(object):
     def __init__(self, filename):
@@ -453,6 +454,15 @@ class SQLConnection(object):
           );""")
         
         cur.execute("""
+          CREATE TABLE ENCAISSEMENTS (
+            idx INTEGER PRIMARY KEY,
+            famille INTEGER REFERENCES FAMILLES(idx),
+            date DATE,
+            valeur FLOAT,
+            moyen_paiement INTEGER
+          );""")
+        
+        cur.execute("""
           CREATE TABLE NUMEROS_FACTURE (
             idx INTEGER PRIMARY KEY,
             date DATE,
@@ -718,6 +728,11 @@ class SQLConnection(object):
                 referent = Referent(famille, creation=False)
                 referent.prenom, referent.nom, referent.telephone, referent.idx = referent_entry
                 famille.referents.append(referent)
+            cur.execute('SELECT idx, date, valeur, moyen_paiement FROM ENCAISSEMENTS where famille=?', (famille.idx,))
+            for idx, date, valeur, moyen_paiement in cur.fetchall():
+                print idx, date, valeur, moyen_paiement
+                date = getdate(date)
+                famille.encaissements.append(Encaissement(famille, date, valeur, moyen_paiement, idx))
            
         cur.execute('SELECT idx, prenom, nom, sexe, naissance, handicap, marche, notes, photo, combinaison, categorie, allergies, famille FROM INSCRITS')
         for idx, prenom, nom, sexe, naissance, handicap, marche, notes, photo, combinaison, categorie, allergies, famille in cur.fetchall():
@@ -1682,6 +1697,16 @@ class SQLConnection(object):
             cur.execute('UPDATE FAMILLES SET code_client=?', ("",))
             cur.execute("ALTER TABLE CRECHE ADD tri_factures INTEGER")
             cur.execute('UPDATE CRECHE SET tri_factures=?', (TRI_NOM,))    
+
+        if version < 91:
+            cur.execute("""
+              CREATE TABLE ENCAISSEMENTS (
+                idx INTEGER PRIMARY KEY,
+                famille INTEGER REFERENCES FAMILLES(idx),
+                date DATE,
+                valeur FLOAT,
+                moyen_paiement INTEGER
+              );""")
 
         if version < VERSION:
             try:

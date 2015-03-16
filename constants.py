@@ -66,15 +66,35 @@ MODE_TEMPS_PARTIEL = 32
 MODE_ACCUEIL_URGENCE = 64
 MODE_MAX = MODE_ACCUEIL_URGENCE
 
-ModeAccueilItems = [("Temps plein", MODE_5_5),
-                    ("Temps partiel", MODE_TEMPS_PARTIEL),
-#                    (u"4/5èmes", MODE_4_5), 
-#                    (u"3/5èmes", MODE_3_5), 
-                    ("Forfait horaire mensuel", MODE_FORFAIT_HORAIRE), 
-                    ("Halte-garderie", MODE_HALTE_GARDERIE),
-                    ("Accueil urgence", MODE_ACCUEIL_URGENCE)]
+ModeAccueilItems = [
+  ("Temps plein", MODE_5_5),
+  ("Temps partiel", MODE_TEMPS_PARTIEL),
+# (u"4/5èmes", MODE_4_5), 
+# (u"3/5èmes", MODE_3_5), 
+  ("Forfait horaire mensuel", MODE_FORFAIT_HORAIRE), 
+  ("Halte-garderie", MODE_HALTE_GARDERIE),
+  ("Accueil urgence", MODE_ACCUEIL_URGENCE)
+]
 
-Regimes = [u'Pas de sélection', u'Régime général', u'Régime de la fonction publique', u'Régime MSA', u'Régime EDF-GDF', u'Régime RATP', u'Régime Pêche maritime', u'Régime Marins du Commerce', u'Régime RSI', u'Régime SNCF']
+Regimes = [
+  u'Pas de sélection',
+  u'Régime général',
+  u'Régime de la fonction publique', 
+  u'Régime MSA', 
+  u'Régime EDF-GDF', 
+  u'Régime RATP', 
+  u'Régime Pêche maritime',
+  u'Régime Marins du Commerce',
+  u'Régime RSI',
+  u'Régime SNCF'
+]
+
+ModeEncaissementItems = [
+  (u"Espèces", 0),
+  (u"Virement", 1),
+  (u"Chèque", 2),
+  (u"Chèque CESU", 3)
+]
 
 # Nombre de semaines de reference
 MAX_SEMAINES_REFERENCE = 10

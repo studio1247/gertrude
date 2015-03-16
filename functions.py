@@ -882,7 +882,7 @@ def AddInscritsToChoice(choice):
         inscrits = TrieParReservataires(inscrits)
     else:
         if len(inscrits) > 0 and len(autres) > 0:
-            self.choice.Append("[Inscrits]", None)
+            choice.Append("[Inscrits]", None)
         inscrits.sort(key=lambda inscrit: GetPrenomNom(inscrit))
 
     __add_in_inscrits_choice(choice, inscrits)        
