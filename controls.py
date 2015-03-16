@@ -158,8 +158,12 @@ class NumericCtrl(wx.TextCtrl):
 ##        self.Refresh()
 
 
+PHONECTRL_WIDTH = 0
+
 class PhoneCtrl(wx.TextCtrl):
+  
     def __init__(self, parent, id, value=None, action_kw={}, *args, **kwargs):
+        global PHONECTRL_WIDTH
 
         self.__digits = '0123456789'
 
@@ -171,6 +175,10 @@ class PhoneCtrl(wx.TextCtrl):
 
         wx.TextCtrl.__init__(self, parent.GetWindow(), id, size=(-1, -1), *args, **kw)
         self.SetMaxLength(14)
+        if PHONECTRL_WIDTH == 0:
+            dc = wx.WindowDC(self)
+            PHONECTRL_WIDTH = dc.GetMultiLineTextExtent("00 00 00 00 00", self.GetFont())[0]
+        self.SetMinSize((PHONECTRL_WIDTH+15, -1))
 
         wx.EVT_CHAR(self, self.onChar)
         wx.EVT_TEXT(self, -1, self.checkSyntax)
