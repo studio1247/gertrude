@@ -25,6 +25,8 @@ from planning import PlanningWidget, LigneConge, COMMENTS, ACTIVITES, TWO_PARTS,
 from ooffice import *
 from doc_planning_detaille import PlanningDetailleModifications
 
+TABLETTE_MARGE_ARRIVEE = 10
+
 class DayPlanningPanel(PlanningWidget):
     def __init__(self, parent, activity_combobox):
         PlanningWidget.__init__(self, parent, activity_combobox, COMMENTS|ACTIVITES|TWO_PARTS|DEPASSEMENT_CAPACITE, self.CheckLine)
@@ -398,10 +400,10 @@ class PlanningPanel(GPanel):
                 if date not in array[idx]:
                     array[idx][date] = []
                 if label == "arrivee":
-                    arrivee = tm.tm_hour * 12 + tm.tm_min / creche.granularite * (creche.granularite/BASE_GRANULARITY)
+                    arrivee = tm.tm_hour * 12 + (tm.tm_min+TABLETTE_MARGE_ARRIVEE) / creche.granularite * (creche.granularite/BASE_GRANULARITY)
                     array[idx][date].append(PeriodePresence(date, arrivee))
                 elif label == "depart":
-                    depart = tm.tm_hour * 12 + (tm.tm_min+creche.granularite-1) / creche.granularite * (creche.granularite/BASE_GRANULARITY)
+                    depart = tm.tm_hour * 12 + (tm.tm_min+creche.granularite-TABLETTE_MARGE_ARRIVEE) / creche.granularite * (creche.granularite/BASE_GRANULARITY)
                     if len(array[idx][date]):
                         last = array[idx][date][-1]
                         if last.date == date and last.arrivee:
