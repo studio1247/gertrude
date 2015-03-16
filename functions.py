@@ -277,8 +277,9 @@ def GetTemplateFile(filename, site=None):
     return GetFile(filename, site, "templates")
 
 def IsTemplateFile(filename):
-    path = "./templates/%s" % filename
-    return os.path.isfile(path)
+    path1 = "./templates/%s" % filename
+    path2 = "./templates_dist/%s" % filename
+    return os.path.isfile(path1) or os.path.isfile(path2)
 
 def str2date(s, year=None, day=None):
     s = s.strip()
@@ -297,10 +298,10 @@ def str2date(s, year=None, day=None):
         return None
 
 def date2str(date):
-    if date is None:
-        return ''
-    else:
+    try:
         return '%.02d/%.02d/%.04d' % (date.day, date.month, date.year)
+    except:
+        return ''
 
 def GetPeriodeString(o):
     if None in (o.debut, o.fin) or (o.debut.year, o.debut.month, o.debut.day) != (o.fin.year, 1, 1) or (o.fin.month, o.fin.day) != (12, 31):
@@ -754,6 +755,21 @@ def GetCotisationFields(cotisation):
         result.append(('montant-heure-garde-apres-allocation-caf', 0.0, FIELD_EUROS|FIELD_SIGN))
     return result
 
+def GetReglementFields(famille, annee, mois):
+    total = 0.0
+    date = None
+    moyen = ''
+    for encaissement in famille.encaissements:
+        if encaissement.date and encaissement.date.month == mois:
+            total += encaissement.valeur
+            date = encaissement.date
+            moyen = ModeEncaissementItems[encaissement.moyen_paiement][0]
+    result = [('date-reglement', date2str(date)),
+              ('reglement', total, FIELD_EUROS),
+              ('moyen-paiement', moyen)
+              ]
+    return result
+    
 def GetFactureFields(facture):
     if facture:
         taux_effort = 0.0
@@ -762,7 +778,7 @@ def GetFactureFields(facture):
         result = [('mois', '%s %d' % (months[facture.mois - 1], facture.annee)),
                   ('de-mois', '%s %d' % (GetDeMoisStr(facture.mois - 1), facture.annee)),
                   ('de-mois-recap', '%s %d' % (GetDeMoisStr(facture.debut_recap.month - 1), facture.debut_recap.year)),
-                  ('date', '%02d/%02d/%d' % (facture.date.day, facture.mois, facture.annee)),
+                  ('date', date2str(facture.date)),
                   ('montant-heure-garde', facture.montant_heure_garde, FIELD_EUROS),
                   ('cotisation-mensuelle', facture.cotisation_mensuelle, FIELD_EUROS),
                   ('heures-cotisation-mensuelle', GetHeureString(facture.heures_cotisation_mensuelle)),
@@ -824,3 +840,56 @@ class ProgressHandler:
         return ProgressHandler(self.display_fn, self.gauge_fn, self.value, self.value + (self.max-self.min)*ratio/100)
 
 default_progress_handler = ProgressHandler()
+
+def SelectValueInChoice(choice, value):
+    for i in range(choice.GetCount()):
+        if choice.GetClientData(i) == value:
+            choice.SetSelection(i)
+            return i
+    return None
+
+def AddInscritsToChoice(choice):
+    def __add_in_array(array, cell):
+        if isinstance(cell, basestring):
+            return '[%s]' % cell
+
+        key = GetPrenomNom(cell)
+        if key.isspace():
+            key = 'Nouvelle inscription'
+        count = array.count(key)
+        array.append(key)
+        if count > 0:
+            key = key + " (%d)" % count
+        return '  ' + key 
+
+    def __add_in_inscrits_choice(choice, inscrits):
+        array = []
+        for inscrit in inscrits:
+            key = __add_in_array(array, inscrit)
+            choice.Append(key, inscrit)
+            
+    choice.Clear()
+
+    inscrits = []
+    autres = []
+    for inscrit in creche.inscrits:
+        if inscrit.GetInscription(datetime.date.today(), preinscription=True) != None:
+            inscrits.append(inscrit)
+        else:
+            autres.append(inscrit)
+    
+    if (config.options & RESERVATAIRES) and len(creche.reservataires):
+        inscrits = TrieParReservataires(inscrits)
+    else:
+        if len(inscrits) > 0 and len(autres) > 0:
+            self.choice.Append("[Inscrits]", None)
+        inscrits.sort(key=lambda inscrit: GetPrenomNom(inscrit))
+
+    __add_in_inscrits_choice(choice, inscrits)        
+    
+    if len(inscrits) > 0 and len(autres) > 0:
+        choice.Append("[Anciens]", None)
+
+    autres.sort(key=lambda inscrit: GetPrenomNom(inscrit))
+
+    __add_in_inscrits_choice(choice, autres)
