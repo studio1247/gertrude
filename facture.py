@@ -376,7 +376,7 @@ class FactureFinMois(object):
                     self.heures_contrat += prorata_heures
 
                 if creche.regularisation_fin_contrat:
-                    if creche.gestion_depart_anticipe and inscription.depart and cotisation.Include(inscription.depart):
+                    if creche.gestion_depart_anticipe and inscription.depart and cotisation.Include(inscription.depart) and inscription.depart >= self.debut_recap and inscription.depart <= self.fin_recap:
                         date = cotisation.debut
                         while date <= inscription.depart:
                             cotisation_regularisee = Cotisation(inscrit, date, options=NO_ADDRESS|self.options|DEPART_ANTICIPE)
