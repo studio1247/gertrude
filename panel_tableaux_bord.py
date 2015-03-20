@@ -38,6 +38,7 @@ from doc_rapport_frequentation import RapportFrequentationModifications
 from doc_synthese_financiere import SyntheseFinanciereModifications
 from doc_releve_salaries import ReleveSalariesModifications
 from doc_etat_presence_mensuel import EtatPresenceMensuelModifications
+# from doc_compte_exploitation import CompteExploitationModifications
 from doc_commande_repas import CommandeRepasModifications
 from facture import Facture
 from planning import *
@@ -531,25 +532,28 @@ class StatistiquesFrequentationTab(AutoTab):
         self.message.Show(False)
         self.sizer.Add(self.message, 0, wx.EXPAND|wx.ALL, 10)
         
-        self.result_sizer = wx.FlexGridSizer(0, 3, 5, 10)
+        self.result_sizer = wx.FlexGridSizer(0, 4, 5, 10)
         self.presences_contrat_heures = wx.TextCtrl(self)
         self.presences_contrat_heures.Disable()
         self.presences_contrat_euros = wx.TextCtrl(self)
         self.presences_contrat_euros.Disable()
-        self.result_sizer.AddMany([(wx.StaticText(self, -1, u'Présences contractualisées :'), 0, 0), (self.presences_contrat_heures, 0, wx.EXPAND), (self.presences_contrat_euros, 0, wx.EXPAND)])
+        self.presences_contrat_percent = wx.TextCtrl(self)
+        self.presences_contrat_percent.Disable()
+        self.result_sizer.AddMany([(wx.StaticText(self, -1, u'Présences contractualisées :'), 0, 0), (self.presences_contrat_heures, 0, wx.EXPAND), (self.presences_contrat_euros, 0, wx.EXPAND), (self.presences_contrat_percent, 0, wx.EXPAND)])
         self.presences_realisees_heures = wx.TextCtrl(self)
         self.presences_realisees_heures.Disable()
         self.presences_realisees_euros = wx.TextCtrl(self)
         self.presences_realisees_euros.Disable()
-        self.result_sizer.AddMany([(wx.StaticText(self, -1, u'Présences réalisées :'), 0, 0), (self.presences_realisees_heures, 0, wx.EXPAND), (self.presences_realisees_euros, 0, wx.EXPAND)])
+        self.presences_realisees_percent = wx.TextCtrl(self)
+        self.presences_realisees_percent.Disable()
+        self.result_sizer.AddMany([(wx.StaticText(self, -1, u'Présences réalisées :'), 0, 0), (self.presences_realisees_heures, 0, wx.EXPAND), (self.presences_realisees_euros, 0, wx.EXPAND), (self.presences_realisees_percent, 0, wx.EXPAND)])
         self.presences_facturees_heures = wx.TextCtrl(self)
         self.presences_facturees_heures.Disable()
         self.presences_facturees_euros = wx.TextCtrl(self)
         self.presences_facturees_euros.Disable()
-        self.result_sizer.AddMany([(wx.StaticText(self, -1, u'Présences facturées :'), 0, 0), (self.presences_facturees_heures, 0, wx.EXPAND), (self.presences_facturees_euros, 0, wx.EXPAND)])       
-        self.coefficient_remplissage = wx.TextCtrl(self)
-        self.coefficient_remplissage.Disable()
-        self.result_sizer.AddMany([(wx.StaticText(self, -1, u'Coefficient de remplissage :'), 0, 0), (self.coefficient_remplissage, 0, wx.EXPAND)])       
+        self.presences_facturees_percent = wx.TextCtrl(self)
+        self.presences_facturees_percent.Disable()
+        self.result_sizer.AddMany([(wx.StaticText(self, -1, u'Présences facturées :'), 0, 0), (self.presences_facturees_heures, 0, wx.EXPAND), (self.presences_facturees_euros, 0, wx.EXPAND), (self.presences_facturees_percent, 0, wx.EXPAND)])              
         self.sizer.Add(self.result_sizer, 0, wx.EXPAND|wx.ALL, 10)
         self.SetSizer(self.sizer)
         self.UpdateContents()
@@ -626,13 +630,10 @@ class StatistiquesFrequentationTab(AutoTab):
             msg = u"\n\n".join([u"%s %s:\n%s" % (inscrit.prenom, inscrit.nom, unicode(erreur)) for inscrit, erreur in erreurs])
             self.message.SetValue(msg)
             self.message.Show(True)
-            self.presences_contrat_heures.SetValue("-")
-            self.presences_realisees_heures.SetValue("-")
-            self.presences_facturees_heures.SetValue("-")
-            self.presences_contrat_euros.SetValue("-")
-            self.presences_realisees_euros.SetValue("-")
-            self.presences_facturees_euros.SetValue("-")
-            self.coefficient_remplissage.SetValue("-")
+            for ctrl in (self.presences_contrat_heures, self.presences_realisees_heures, self.presences_facturees_heures,
+                         self.presences_contrat_euros, self.presences_realisees_euros, self.presences_facturees_euros,
+                         self.presences_contrat_percent, self.presences_realisees_percent, self.presences_facturees_percent):
+                ctrl.SetValue("-")
         else:
             self.message.Show(False)
             if creche.nom == "Dessine moi un mouton" or (config.options & HEURES_CONTRAT):
@@ -648,10 +649,14 @@ class StatistiquesFrequentationTab(AutoTab):
             self.presences_contrat_euros.SetValue(u"%.2f €" % cotisations_contractualisees)
             self.presences_realisees_euros.SetValue(u"%.2f €" % cotisations_realisees)
             self.presences_facturees_euros.SetValue(u"%.2f €" % cotisations_facturees)
-            coeff_remplissage = 0.0
+            coeff_contrat = coeff_realise = coeff_facture = 0.0
             if heures_accueil:
-                coeff_remplissage = (100.0 * heures_facturees) / heures_accueil
-            self.coefficient_remplissage.SetValue(u"%.1f %%" % coeff_remplissage)
+                coeff_contrat = (100.0 * presences_contrat_heures) / heures_accueil
+                coeff_realise = (100.0 * heures_realisees) / heures_accueil
+                coeff_facture = (100.0 * presences_facturees_heures) / heures_accueil
+            self.presences_contrat_percent.SetValue(u"%.1f %%" % coeff_contrat)
+            self.presences_realisees_percent.SetValue(u"%.1f %%" % coeff_realise)
+            self.presences_facturees_percent.SetValue(u"%.1f %%" % coeff_facture)
 
         self.sizer.FitInside(self)
         self.Layout()
@@ -766,6 +771,18 @@ class RelevesTab(AutoTab):
             box_sizer.AddMany([(self.syntheses_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
+        # Les comptes d'exploitation
+        if IsTemplateFile("Compte exploitation.ods"):
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u"Compte d'exploitation"), wx.HORIZONTAL)
+            self.comptes_exploitation_choice = wx.Choice(self)
+            button = wx.Button(self, -1, u'Génération')
+            for year in range(first_date.year, today.year + 1):
+                self.syntheses_choice.Append(u'Année %d' % year, year)
+            self.comptes_exploitation_choice.SetSelection(today.year - first_date.year)
+            self.Bind(wx.EVT_BUTTON, self.OnGenerationCompteExploitation, button)
+            box_sizer.AddMany([(self.comptes_exploitation_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+
         # Les commandes de repas
         if IsTemplateFile("Commande repas.odt"):
             box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Commande de repas'), wx.HORIZONTAL)
@@ -865,6 +882,10 @@ class RelevesTab(AutoTab):
     def OnGenerationSyntheseFinanciere(self, evt):
         annee = self.syntheses_choice.GetClientData(self.syntheses_choice.GetSelection())
         DocumentDialog(self, SyntheseFinanciereModifications(annee)).ShowModal()
+
+    def OnGenerationCompteExploitation(self, evt):
+        annee = self.comptes_exploitation_choice.GetClientData(self.comptes_exploitation_choice.GetSelection())
+        DocumentDialog(self, CompteExploitationModifications(annee)).ShowModal()
 
     def OnGenerationCommandeRepas(self, evt):
         semaine = self.commande_repas_choice.GetClientData(self.commande_repas_choice.GetSelection())

@@ -107,7 +107,7 @@ class DayPlanningPanel(PlanningWidget):
                 self.lignes_enfants.append(line)
                 
         if creche.tri_planning == TRI_GROUPE:
-            self.lignes_enfants = TrieParGroupes(self.lignes_enfants)
+            self.lignes_enfants = GetEnfantsTriesParGroupe(self.lignes_enfants)
         else:
             self.lignes_enfants.sort(key=lambda line: line.label)    
                  

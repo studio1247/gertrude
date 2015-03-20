@@ -423,6 +423,11 @@ def GetEnfantsTriesParNom(enfants=None):
         return cmp(GetPrenomNom(one, tri=TRI_NOM), GetPrenomNom(two, tri=TRI_NOM))
     return GetEnfantsTries(enfants, tri)
 
+def GetEnfantsTriesParPrenom(enfants=None):
+    def tri(one, two):
+        return cmp(GetPrenomNom(one), GetPrenomNom(two))
+    return GetEnfantsTries(enfants, tri)
+
 def GetEnfantsTriesParNomParents(enfants=None):
     def tri(one, two):
         return cmp(GetParentsNomsString(one.famille), GetParentsNomsString(two.famille))
@@ -475,7 +480,7 @@ def GetLines(date, inscrits, presence=False, site=None, groupe=None):
             lines.append(line)
     return lines
 
-def TrieParReservataires(inscrits):
+def GetEnfantsTriesParReservataire(inscrits):
     reservataires = {}
     for inscrit in inscrits:
         if len(inscrit.inscriptions):
@@ -509,7 +514,7 @@ def TrieParReservataires(inscrits):
     return lines
 
         
-def TrieParGroupes(lines):
+def GetEnfantsTriesParGroupe(lines):
     groupes = {}
     for line in lines:
         groupe = line.inscription.groupe
@@ -757,16 +762,16 @@ def GetCotisationFields(cotisation):
 
 def GetReglementFields(famille, annee, mois):
     total = 0.0
-    date = None
-    moyen = ''
+    dates = []
+    moyens = set()
     for encaissement in famille.encaissements:
         if encaissement.date and encaissement.date.month == mois:
             total += encaissement.valeur
-            date = encaissement.date
-            moyen = ModeEncaissementItems[encaissement.moyen_paiement][0]
-    result = [('date-reglement', date2str(date)),
+            dates.append(encaissement.date)
+            moyens.add(ModeEncaissementItems[encaissement.moyen_paiement][0])
+    result = [('date-reglement', ', '.join([date2str(date) for date in dates])),
               ('reglement', total, FIELD_EUROS),
-              ('moyen-paiement', moyen)
+              ('moyen-paiement', ', '.join(moyens))
               ]
     return result
     
@@ -879,7 +884,7 @@ def AddInscritsToChoice(choice):
             autres.append(inscrit)
     
     if (config.options & RESERVATAIRES) and len(creche.reservataires):
-        inscrits = TrieParReservataires(inscrits)
+        inscrits = GetEnfantsTriesParReservataire(inscrits)
     else:
         if len(inscrits) > 0 and len(autres) > 0:
             choice.Append("[Inscrits]", None)

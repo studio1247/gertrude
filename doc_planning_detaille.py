@@ -95,10 +95,14 @@ class PlanningDetailleModifications(object):
             if day in creche.jours_fermeture:
                 day += datetime.timedelta(1)
                 continue
-            
+
             lines_enfants = GetLines(day, creche.inscrits, site=self.site, groupe=self.groupe)
             if creche.tri_planning == TRI_GROUPE:
-                lines_enfants = TrieParGroupes(lines_enfants)
+                lines_enfants = GetEnfantsTriesParGroupe(lines_enfants)
+            elif creche.tri_planning == TRI_NOM:
+                lines_enfants = GetEnfantsTriesParNom(lines_enfants)
+            else:
+                lines_enfants = GetEnfantsTriesParPrenom(lines_enfants)
                 
             lines_salaries = GetLines(day, creche.salaries, site=self.site)
             
