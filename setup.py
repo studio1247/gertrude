@@ -53,7 +53,7 @@ elif "linux" in sys.platform:
     p.description = u"Logiciel de gestion de creches"
     p.url = "http://www.gertrude-logiciel.org"
     p.icon = "./bitmaps_dist/gertrude.png"
-    p.depends = "bash, python-gtk2, python"
+    p.depends = "bash, python, python-gtk2, python-wxgtk2.8"
     p.license = "gpl"
     p.section = "utils"
     p.arch = "all"
