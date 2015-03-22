@@ -24,7 +24,12 @@ from data import FileConnection, SharedFileConnection, HttpConnection
 
 CONFIG_FILENAME = "gertrude.ini"
 DEFAULT_SECTION = "gertrude"
-DEFAULT_DATABASE = "gertrude.db"
+if sys.platform == "win32":
+  DEFAULT_DATABASE = "gertrude.db"
+  CONFIG_PATHS = [""]
+else:
+  DEFAULT_DATABASE = GERTRUDE_DIRECTORY + "/gertrude.db"
+  CONFIG_PATHS = ["./", GERTRUDE_DIRECTORY + "/", "/etc/gertrude/"]
 DEMO_DATABASE = "demo.db"
 
 class Database(object):
@@ -187,7 +192,8 @@ def LoadConfig(progress_handler=default_progress_handler):
     progress_handler.display(u"Chargement de la configuration ...")
     
     parser = None
-    if os.path.isfile(CONFIG_FILENAME):
+    for path in CONFIG_PATHS:
+      if os.path.isfile(path + CONFIG_FILENAME):
         try:
             parser = ConfigParser.SafeConfigParser()
             parser.read(CONFIG_FILENAME)

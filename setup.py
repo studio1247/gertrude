@@ -50,8 +50,9 @@ elif "linux" in sys.platform:
     p = Py2deb("gertrude")
     p.author = "Bertrand Songis"
     p.mail = "bsongis@gmail.com"
-    p.description = u"Logiciel pour les creches"
+    p.description = u"Logiciel de gestion de creches"
     p.url = "http://www.gertrude-logiciel.org"
+    p.icon = "./bitmaps_dist/gertrude.png"
     p.depends = "bash, python-gtk2, python"
     p.license = "gpl"
     p.section = "utils"
@@ -61,6 +62,6 @@ elif "linux" in sys.platform:
     p["/usr/share/gertrude"] = glob.glob("./*.py") + glob.glob("./demo.db") + glob.glob("./bitmaps_dist/*.*") + glob.glob("./bitmaps_dist/pictos/*") + glob.glob("./templates_dist/*.html") + glob.glob("./templates_dist/*.txt") + glob.glob("./templates_dist/*.od?")
     p["/usr/bin"]=["./linux/gertrude|gertrude"]
     p["/usr/share/doc/gertrude"]=["COPYING"]
-    p.generate(VERSION, "", rpm=True, src=True)
+    p.generate(VERSION, u"", rpm=True, src=True)
 else:
     print u"Plateforme %s non supportée" % sys.platform

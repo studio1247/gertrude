@@ -4,9 +4,9 @@ X-AppInstall-Popcon=140
 X-AppInstall-Section=universe
 
 Name=Gertrude
-Comment=Logiciel de gestion pour les crèches
+Comment=Logiciel de gestion de crèches
 Exec=/usr/bin/gertrude
-Icon=gertrude
+Icon=/usr/share/gertrude/bitmaps_dist/gertrude.png
 Terminal=false
 Type=Application
 StartupNotify=true

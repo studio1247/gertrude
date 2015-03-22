@@ -16,13 +16,16 @@
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import __builtin__
-import os.path, shutil, time
+import sys, os.path, shutil, time
 import urllib2, mimetypes, uuid
 import ConfigParser
 from sqlinterface import SQLConnection
 from functions import *
 
-BACKUPS_DIRECTORY = './backups'
+if sys.platform == "win32":
+  BACKUPS_DIRECTORY = "./backups"
+else:
+  BACKUPS_DIRECTORY = GERTRUDE_DIRECTORY + '/backups'
 TOKEN_FILENAME = '.token'
 
 class HttpConnection(object):
@@ -357,11 +360,11 @@ class FileConnection(object):
         try:
             if os.path.isfile(self.filename):
                 if not os.path.isdir(BACKUPS_DIRECTORY):
-                    os.mkdir(BACKUPS_DIRECTORY)
-                self.backup = 'backup_%s_%d.db' % (self.filename, time.time())
+                    os.makedirs(BACKUPS_DIRECTORY)
+                self.backup = 'backup_%s_%d.db' % (os.path.split(self.filename)[1], time.time())
                 shutil.copyfile(self.filename, BACKUPS_DIRECTORY + '/' + self.backup)
         except Exception, e:
-            progress_handler.display('Impossible de faire la sauvegarde' + e)
+            progress_handler.display('Impossible de faire la sauvegarde' + str(e))
     
     def Liste(self, progress_handler=default_progress_handler):
         if not os.path.isfile(self.filename):

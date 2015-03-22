@@ -452,7 +452,10 @@ def oo_open(filename):
     elif sys.platform == "darwin":
         subprocess.Popen(["/Applications/OpenOffice.app/Contents/MacOS/soffice", filename])
     else:
-        subprocess.Popen(["ooffice", filename])
+        if os.path.exists("/usr/bin/libreoffice"):
+            subprocess.Popen(["/usr/bin/libreoffice", filename])
+        else:
+            subprocess.Popen(["ooffice", filename])
     return 1
 
 def save_current_document(filename):

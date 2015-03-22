@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 ##    This file is part of Gertrude.
@@ -18,18 +18,26 @@
 ##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import __builtin__
-import os, sys, imp, time, locale, shutil, glob, thread, urllib2
+import os, sys, codecs, imp, time, locale, shutil, glob, thread, urllib2
 import wx, wx.lib.wordwrap
 from wx.lib import masked
 from startdialog import StartDialog
 from config import Liste, Load, Update, Save, Restore, Exit, ProgressHandler
 from constants import *
-from functions import today, GetBitmapFile, GetPrenomNom
+from functions import *
 from alertes import CheckAlertes
 try:
     import winsound
 except:
     pass
+
+if sys.platform != "win32":
+  if not os.path.exists(GERTRUDE_DIRECTORY):
+    os.mkdir(GERTRUDE_DIRECTORY)
+  try:
+    print u"Démarrage de Gertrude ..."
+  except:
+    sys.stdout = codecs.open(GERTRUDE_DIRECTORY + "/gertrude.log", "w", "utf-8")
 
 # Don't remove these 2 lines (mandatory for py2exe)
 import controls, zipfile, xml.dom.minidom, wx.html, ooffice

@@ -15,10 +15,13 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import datetime, os.path
+import sys, datetime, os.path, wx
 from constants import *
 from parameters import *
-import wx
+
+if sys.platform != "win32":
+    HOME = os.path.expanduser("~")
+    GERTRUDE_DIRECTORY = HOME + "/.gertrude"
 
 def GetFirstMonday():
     first_monday = first_date
@@ -254,21 +257,21 @@ def GetDepartement(cp):
         return ""
 
 def GetFile(filename, site, base):
+    paths = []
     if site and site.nom:
-        path = "./%s/%s_%s" % (base, site.nom, filename)
-        if os.path.isfile(path):
-            return path
+        paths.append("%s/%s_%s" % (base, site.nom, filename))
     try:
-        path = "./%s/%s_%s" % (base, creche.nom.lower(), filename)
-        if os.path.isfile(path):
-            return path
+        paths.append("%s/%s_%s" % (base, creche.nom.lower(), filename))
+        paths.append("%s/[%s] %s" % (base, creche.nom.lower(), filename))
     except:
         pass
-    path = "./%s/%s" % (base, filename)
-    if os.path.isfile(path):
-        return path
-    else:
-        return "./%s_dist/%s" % (base, filename)
+    paths.append("%s/%s" % (base, filename))
+    paths.append("%s_dist/%s" % (base, filename))
+    for directory in ["./", "~/.gertrude/", "/usr/share/gertrude/"]:
+        for path in paths:
+            if os.path.isfile(directory + path):
+                return directory + path
+    return None
     
 def GetBitmapFile(filename, site=None):
     return GetFile(filename, site, "bitmaps")
