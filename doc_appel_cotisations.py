@@ -55,7 +55,7 @@ class AppelCotisationsModifications(object):
             if self.gauge:
                 self.gauge.SetValue(90)
                 
-        if len(templates) > 0:
+        if len(templates) > 1:
             self.RemplitFeuilleEnfants(templates[1], errors)
             
         return errors
