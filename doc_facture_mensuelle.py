@@ -198,12 +198,14 @@ class FactureModifications(object):
             
             factures = []
             total_facture = 0.0
+            has_errors = False
             for enfant in enfants:
                 try:
                     facture = Facture(enfant, self.periode.year, self.periode.month, options=TRACES)
                     total_facture += facture.total
                 except CotisationException, e:
                     errors["%s %s" % (enfant.prenom, enfant.nom)] = e.errors
+                    has_errors = True
                     continue
                 last_inscription = None
                 for tmp in enfant.inscriptions:
@@ -211,7 +213,8 @@ class FactureModifications(object):
                         last_inscription = tmp 
                 facture.fields = fields + GetInscritFields(enfant) + GetInscriptionFields(last_inscription) + GetFactureFields(facture)
                 factures.append(facture)
-            if errors:
+                
+            if has_errors:
                 continue
             
             for template in templates:
