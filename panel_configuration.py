@@ -141,10 +141,11 @@ class CrecheTab(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, 'Ville :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, 'sites[%d].ville' % index), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Téléphone'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoPhoneCtrl(self, creche, 'sites[%d].telephone' % index), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Capacité'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoNumericCtrl(self, creche, 'sites[%d].capacite' % index, precision=0), 1, wx.EXPAND)])                
-        delbutton = wx.BitmapButton(self, -1, delbmp)
-        delbutton.index = index
-        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
-        self.Bind(wx.EVT_BUTTON, self.OnSuppressionSite, delbutton)
+        if not readonly:
+            delbutton = wx.BitmapButton(self, -1, delbmp)
+            delbutton.index = index
+            sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
+            self.Bind(wx.EVT_BUTTON, self.OnSuppressionSite, delbutton)
         self.sites_sizer.Add(sizer, 0, wx.EXPAND|wx.BOTTOM, 5)
 
     def SupprimeLigneSite(self):
@@ -176,10 +177,11 @@ class CrecheTab(AutoTab):
         if creche.changement_groupe_auto:
             sizer.AddMany([(wx.StaticText(self, -1, 'Age maximum :'), 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoNumericCtrl(self, creche, 'groupes[%d].age_maximum' % index, observers=['groupes'], precision=0), 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, 'Ordre :'), 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoNumericCtrl(self, creche, 'groupes[%d].ordre' % index, observers=['groupes'], precision=0), 0, wx.EXPAND)])
-        delbutton = wx.BitmapButton(self, -1, delbmp)
-        delbutton.index = index
-        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
-        self.Bind(wx.EVT_BUTTON, self.OnSuppressionGroupe, delbutton)
+        if not readonly:
+            delbutton = wx.BitmapButton(self, -1, delbmp)
+            delbutton.index = index
+            sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
+            self.Bind(wx.EVT_BUTTON, self.OnSuppressionGroupe, delbutton)
         self.groupes_sizer.Add(sizer, 0, wx.EXPAND|wx.BOTTOM, 5)
 
     def SupprimeLigneGroupe(self):
@@ -213,10 +215,11 @@ class CrecheTab(AutoTab):
     def AjouteLigneCategorie(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, 'categories[%d].nom' % index, observers=['categories']), 1, wx.EXPAND)])
-        delbutton = wx.BitmapButton(self, -1, delbmp)
-        delbutton.index = index
-        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
-        self.Bind(wx.EVT_BUTTON, self.OnSuppressionCategorie, delbutton)
+        if not readonly:
+            delbutton = wx.BitmapButton(self, -1, delbmp)
+            delbutton.index = index
+            sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
+            self.Bind(wx.EVT_BUTTON, self.OnSuppressionCategorie, delbutton)
         self.categories_sizer.Add(sizer, 0, wx.EXPAND|wx.BOTTOM, 5)
 
     def SupprimeLigneCategorie(self):
@@ -274,10 +277,11 @@ class ProfesseursTab(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, professeur, 'nom', observers=['professeurs']), 0, wx.ALIGN_CENTER_VERTICAL)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Entrée :', size=(50,-1)), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), AutoDateCtrl(self, professeur, 'entree', observers=['professeurs'])])
         sizer.AddMany([(wx.StaticText(self, -1, 'Sortie :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), AutoDateCtrl(self, professeur, 'sortie', observers=['professeurs'])])
-        delbutton = wx.BitmapButton(self, -1, delbmp, style=wx.NO_BORDER)
-        delbutton.professeur, delbutton.sizer = professeur, sizer
-        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
-        self.Bind(wx.EVT_BUTTON, self.OnSuppressionProfesseur, delbutton)
+        if not readonly:
+            delbutton = wx.BitmapButton(self, -1, delbmp, style=wx.NO_BORDER)
+            delbutton.professeur, delbutton.sizer = professeur, sizer
+            sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
+            self.Bind(wx.EVT_BUTTON, self.OnSuppressionProfesseur, delbutton)
         self.professeurs_sizer.Add(sizer)
 
     def OnAjoutProfesseur(self, event):
@@ -486,14 +490,15 @@ class ActivitesTab(AutoTab):
         sizer.AddMany([(color_button.static, 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (color_button, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (color_button.hash_cb, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5)])
         if creche.tarification_activites:
             sizer.AddMany([(wx.StaticText(self, -1, 'Tarif :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoNumericCtrl(self, creche, 'activites[%d].tarif' % activity.value, precision=2), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5)])
-        delbutton = wx.BitmapButton(self, -1, delbmp)
-        delbutton.index = activity.value        
+        if not readonly:
+            delbutton = wx.BitmapButton(self, -1, delbmp)
+            delbutton.index = activity.value
+            sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
+            self.Bind(wx.EVT_BUTTON, self.OnSuppressionActivite, delbutton)      
         if readonly or activity.mode == MODE_SANS_HORAIRES:
             color_button.Disable()
             color_button.static.Disable()
             color_button.hash_cb.Disable()
-        sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
-        self.Bind(wx.EVT_BUTTON, self.OnSuppressionActivite, delbutton)
         self.activites_sizer.Add(sizer, 0, wx.EXPAND|wx.BOTTOM, 5)
 
     def OnAjoutActivite(self, event):
@@ -1090,25 +1095,24 @@ class TarifHorairePanel(AutoTab):
         taux_ctrl = wx.TextCtrl(self, -1, str(taux))
         taux_ctrl.index = index
         sizer1.AddMany([(wx.StaticText(self, -1, 'Tarif horaire :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (taux_ctrl, 0, wx.ALIGN_CENTER_VERTICAL, 5)])
-        delbutton = wx.BitmapButton(self, -1, self.delbmp)
-        delbutton.index = index
-        addbutton = wx.Button(self, -1, "Ajouter un cas")
-        addbutton.index = index+1
-        sizer1.Add(delbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT|wx.RIGHT, 5)
+        if not readonly:
+            delbutton = wx.BitmapButton(self, -1, self.delbmp)
+            delbutton.index = index
+            sizer1.Add(delbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT|wx.RIGHT, 5)
+            self.Bind(wx.EVT_BUTTON, self.OnRemove, delbutton)
         sizer.Add(sizer1, 0, wx.EXPAND)
-        sizer.Add(addbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.TOP, 5)
-        self.Bind(wx.EVT_TEXT, self.OnConditionChange, condition_ctrl)
-        self.Bind(wx.EVT_TEXT, self.OnTauxChange, taux_ctrl)
-        self.Bind(wx.EVT_BUTTON, self.OnRemove, delbutton)
-        self.Bind(wx.EVT_BUTTON, self.OnAdd, addbutton)
-        self.controls.insert(index, (cas, condition_ctrl, taux_ctrl, delbutton, addbutton))
-        self.sizer.Insert(index+1, sizer, 0, wx.EXPAND|wx.BOTTOM, 5)
-        if readonly:
+        if not readonly:
+            addbutton = wx.Button(self, -1, "Ajouter un cas")
+            addbutton.index = index+1
+            sizer.Add(addbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.TOP, 5)
+            self.Bind(wx.EVT_BUTTON, self.OnAdd, addbutton)
+            self.controls.insert(index, (cas, condition_ctrl, taux_ctrl, delbutton, addbutton))
+            self.Bind(wx.EVT_TEXT, self.OnConditionChange, condition_ctrl)
+            self.Bind(wx.EVT_TEXT, self.OnTauxChange, taux_ctrl)
+        else:
             condition_ctrl.Disable()
             taux_ctrl.Disable()
-            delbutton.Disable()
-            addbutton.Disable()
-     
+        self.sizer.Insert(index+1, sizer, 0, wx.EXPAND|wx.BOTTOM, 5)            
 
     def OnAdd(self, event):
         object = event.GetEventObject()
@@ -1189,18 +1193,20 @@ class TauxEffortPanel(AutoTab):
         taux_ctrl = wx.TextCtrl(self, -1, str(taux))
         taux_ctrl.index = index
         sizer1.AddMany([(wx.StaticText(self, -1, "Taux d'effort :"), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (taux_ctrl, 0, wx.ALIGN_CENTER_VERTICAL, 5)])
-        delbutton = wx.BitmapButton(self, -1, self.delbmp)
-        delbutton.index = index
-        addbutton = wx.Button(self, -1, "Ajouter un cas")
-        addbutton.index = index+1
-        sizer1.Add(delbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT|wx.RIGHT, 5)
+        if not readonly:
+            delbutton = wx.BitmapButton(self, -1, self.delbmp)
+            delbutton.index = index
+            sizer1.Add(delbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT|wx.RIGHT, 5)
+            self.Bind(wx.EVT_BUTTON, self.OnRemove, delbutton)
         sizer.Add(sizer1, 0, wx.EXPAND)
-        sizer.Add(addbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.TOP, 5)
-        self.Bind(wx.EVT_TEXT, self.OnConditionChange, condition_ctrl)
-        self.Bind(wx.EVT_TEXT, self.OnTauxChange, taux_ctrl)
-        self.Bind(wx.EVT_BUTTON, self.OnRemove, delbutton)
-        self.Bind(wx.EVT_BUTTON, self.OnAdd, addbutton)
-        self.controls.insert(index, (cas, condition_ctrl, taux_ctrl, delbutton, addbutton))
+        if not readonly:
+            addbutton = wx.Button(self, -1, "Ajouter un cas")
+            addbutton.index = index+1
+            sizer.Add(addbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.TOP, 5)
+            self.Bind(wx.EVT_BUTTON, self.OnAdd, addbutton)
+            self.controls.insert(index, (cas, condition_ctrl, taux_ctrl, delbutton, addbutton))
+            self.Bind(wx.EVT_TEXT, self.OnConditionChange, condition_ctrl)
+            self.Bind(wx.EVT_TEXT, self.OnTauxChange, taux_ctrl)
         self.sizer.Insert(index+1, sizer, 0, wx.EXPAND|wx.BOTTOM, 5)         
 
     def OnAdd(self, event):

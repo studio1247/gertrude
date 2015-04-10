@@ -1124,6 +1124,7 @@ class TabletteSizer(wx.StaticBoxSizer):
         internalSizer.Add(self.combinaisonSizer)
         settingsbmp = wx.Bitmap(GetBitmapFile("settings.png"), wx.BITMAP_TYPE_PNG)
         self.button = wx.BitmapButton(parent, -1, settingsbmp)
+        self.button.Enable(not readonly)
         parent.Bind(wx.EVT_BUTTON, self.OnModifyCombinaison, self.button)           
         internalSizer.Add(self.button, 0, wx.LEFT, 10)
         self.Add(internalSizer, 0, wx.TOP|wx.BOTTOM, 10)
@@ -1140,7 +1141,7 @@ class TabletteSizer(wx.StaticBoxSizer):
     def UpdateCombinaison(self):
         self.combinaisonSizer.DeleteWindows()
         if self.object:
-            self.button.Enable()
+            self.button.Enable(not readonly)
             if self.object.combinaison:
                 for letter in self.object.combinaison:
                     bitmap = GetPictoBitmap(letter, size=32)

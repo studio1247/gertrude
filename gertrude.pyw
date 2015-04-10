@@ -19,19 +19,19 @@
 
 import os, sys, codecs, locale
 from startdialog import StartDialog
-from functions import GERTRUDE_DIRECTORY
 try:
     import winsound
 except:
     pass
 
 if sys.platform != "win32":
-  if not os.path.exists(GERTRUDE_DIRECTORY):
-    os.mkdir(GERTRUDE_DIRECTORY)
-  try:
-    print u"Démarrage de Gertrude ..."
-  except:
-    sys.stdout = codecs.open(GERTRUDE_DIRECTORY + "/gertrude.log", "w", "utf-8")
+    from functions import GERTRUDE_DIRECTORY
+    if not os.path.exists(GERTRUDE_DIRECTORY):
+        os.mkdir(GERTRUDE_DIRECTORY)
+    try:
+        print u"Démarrage de Gertrude ..."
+    except:
+        sys.stdout = codecs.open(GERTRUDE_DIRECTORY + "/gertrude.log", "w", "utf-8")
 
 # Don't remove these 2 lines (mandatory for py2exe)
 import controls, zipfile, xml.dom.minidom, wx.html, ooffice

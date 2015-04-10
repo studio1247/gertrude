@@ -63,6 +63,8 @@ def getOptions(parser):
     options = 0
     try:
         str = parser.get(DEFAULT_SECTION, "options")
+        if "lecture-seule" in str:
+            options |= READONLY
         if "reservataires" in str:
             options |= RESERVATAIRES
         if "categories" in str:

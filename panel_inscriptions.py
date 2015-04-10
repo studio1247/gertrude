@@ -178,7 +178,6 @@ class FraisGardePanel(wx.Panel):
         
     def EvtPeriodeChoice(self, evt):
         ctrl = evt.GetEventObject()
-        print "periode choice"
         self.current_cotisation = self.cotisations[ctrl.GetSelection()]
         self.UpdatePage()
         
@@ -258,6 +257,8 @@ class IdentitePanel(InscriptionsTab):
             sizer3 = wx.BoxSizer(wx.HORIZONTAL)
             for allergie in allergies:
                 checkbox = wx.CheckBox(self, -1, allergie)
+                if readonly:
+                    checkbox.Disable()
                 self.allergies_checkboxes.append(checkbox)
                 self.Bind(wx.EVT_CHECKBOX, self.OnToggleAllergie, checkbox)
                 sizer3.Add(checkbox)

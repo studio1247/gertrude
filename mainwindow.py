@@ -286,7 +286,9 @@ class GertrudeFrame(wx.Frame):
         Load(ProgressHandler(self.SetStatusText))
 
         frame = GertrudeFrame()
-        if readonly:
+        if config.options & READONLY:
+            __builtin__.readonly = True
+        elif readonly:
             dlg = wx.MessageDialog(frame,
                                    u"Le jeton n'a pas pu être pris. Gertrude sera accessible en lecture seule. Voulez-vous forcer la prise du jeton ?",
                                    'Gertrude',
@@ -297,6 +299,7 @@ class GertrudeFrame(wx.Frame):
                 __builtin__.force_token = True
                 Load(ProgressHandler(frame.SetStatusText))
                 frame.listbook.UpdateContents()
+        
                 
         frame.Show()        
         self.Destroy()

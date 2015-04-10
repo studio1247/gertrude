@@ -131,8 +131,10 @@ class StartDialog(wx.Dialog):
             self.sizer.Layout()
             self.sizer.Fit(self)
             return
-
-        if readonly:
+        
+        if config.options & READONLY:
+            __builtin__.readonly = True
+        elif readonly:
             dlg = wx.MessageDialog(self,
                                    u"Le jeton n'a pas pu être pris. Gertrude sera accessible en lecture seule. Voulez-vous forcer la prise du jeton ?",
                                    'Gertrude',

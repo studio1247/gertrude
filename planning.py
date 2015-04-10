@@ -611,7 +611,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                 checkbox.Disable()
             else:
                 checkbox.Show()
-                checkbox.Enable()
+                checkbox.Enable(not readonly)
                 checkbox.SetValue(checkbox.activite.value in line.activites_sans_horaires)
 
     def SetInfo(self, info):
@@ -650,6 +650,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                     sizer.Detach(i-1)
                 for i in range(self.activites_count, activites_count):
                     checkbox = wx.CheckBox(self, -1, "", size=(CHECKBOX_WIDTH, LINE_HEIGHT))
+                    checkbox.Enable(not readonly)
                     sizer.Add(checkbox, 0, wx.EXPAND|wx.LEFT, 5)
                     checkbox.line = i
                     self.Bind(wx.EVT_CHECKBOX, self.OnActiviteCheckbox, checkbox)
@@ -690,6 +691,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                     activites_sizer = wx.BoxSizer(wx.HORIZONTAL)
                     for activite in activites: 
                         checkbox = wx.CheckBox(self, -1, "", size=(CHECKBOX_WIDTH, LINE_HEIGHT))
+                        checkbox.Enable(not readonly)
                         activites_sizer.Add(checkbox, 0, wx.EXPAND|wx.LEFT, 5)
                         checkbox.activite = activite
                         checkbox.line = i
