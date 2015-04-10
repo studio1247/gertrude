@@ -76,7 +76,7 @@ class Cotisation(object):
             else:
                 multiplier = heures/heures_mois
             while heure < heures_mois:
-                montant_heure_garde = creche.EvalTauxHoraire(self.mode_garde, self.inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, self.inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, heure)
+                montant_heure_garde = creche.EvalTauxHoraire(self.mode_garde, self.inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, self.inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, heure, self.tranche_paje)
                 result += multiplier * montant_heure_garde * min(1.0, heures_mois-heure)
                 tarifs.add(montant_heure_garde)
                 heure += 1.0
@@ -301,6 +301,7 @@ class Cotisation(object):
         else:
             self.str_mode_garde = u'%d/5èmes' % self.jours_semaine
         
+        self.tranche_paje = 0
         self.taux_effort = None
         self.forfait_heures_presence = 0.0
         self.montants_heure_garde = []
@@ -313,7 +314,7 @@ class Cotisation(object):
             if self.inscription.mode == MODE_FORFAIT_HORAIRE:
                 self.forfait_heures_presence = self.inscription.forfait_heures_presence
             try:
-                self.montant_heure_garde = creche.EvalTauxHoraire(self.mode_garde, self.inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, self.inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, 0)
+                self.montant_heure_garde = creche.EvalTauxHoraire(self.mode_garde, self.inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, self.inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, 0, self.tranche_paje)
                 if options & TRACES: print " montant heure de garde (Forfait horaire) :", self.montant_heure_garde
             except:
                 errors.append(u" - La formule de calcul du tarif horaire n'est pas correcte.")
@@ -321,8 +322,10 @@ class Cotisation(object):
             self.cotisation_periode = None
             self.cotisation_mensuelle, self.montants_heure_garde = self.CalculeFraisGardeComplete(self.forfait_heures_presence, self.heures_mois)                    
         elif creche.mode_facturation == FACTURATION_PAJE:
+            if self.enfants_a_charge > 3:
+                self.tranche_paje = 1 + GetTranche(self.assiette_annuelle, [0, 10, 20])
             try:
-                self.montant_heure_garde = creche.EvalTauxHoraire(self.mode_garde, self.inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, self.inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, None)
+                self.montant_heure_garde = creche.EvalTauxHoraire(self.mode_garde, self.inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, self.inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, None, self.tranche_paje)
                 if options & TRACES: print " montant heure de garde (PAJE) :", self.montant_heure_garde
             except:
                 errors.append(u" - La formule de calcul du tarif horaire n'est pas correcte.")
@@ -344,7 +347,7 @@ class Cotisation(object):
                 
             if creche.mode_facturation == FACTURATION_PSU_TAUX_PERSONNALISES:
                 try:
-                    self.taux_effort = creche.EvalTauxEffort(self.mode_garde, self.inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, self.inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, 0)
+                    self.taux_effort = creche.EvalTauxEffort(self.mode_garde, self.inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, self.inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, 0, self.tranche_paje)
                 except:
                     errors.append(u" - La formule de calcul du taux d'effort n'est pas correcte.")
                     raise CotisationException(errors)

@@ -136,7 +136,7 @@ class FactureFinMois(object):
             fin = self.debut_recap - datetime.timedelta(1)
             debut = GetMonthStart(fin)
             if inscrit.GetInscriptions(debut, fin) and debut not in inscrit.factures_cloturees and IsFacture(debut) and self.debut_recap >= first_date:
-                error = u"La facture du mois " + GetDeMoisStr(debut.month-1) + " " + str(debut.year) + u" n'est pas clôturée"
+                error = u" - La facture du mois " + GetDeMoisStr(debut.month-1) + " " + str(debut.year) + u" n'est pas clôturée"
                 raise CotisationException([error])
 
         date = self.debut_recap
@@ -508,7 +508,7 @@ class FactureDebutMoisPrevisionnel(FactureDebutMois):
         if today > self.fin_recap:
             if inscrit.GetInscriptions(self.facture_precedente.debut_recap, self.facture_precedente.fin_recap):
                 if self.facture_precedente.fin_recap not in inscrit.factures_cloturees:
-                    error = u"La facture du mois " + GetDeMoisStr(self.facture_precedente.fin_recap.month-1) + " " + str(self.facture_precedente.fin_recap.year) + u" n'est pas clôturée"
+                    error = u" - La facture du mois " + GetDeMoisStr(self.facture_precedente.fin_recap.month-1) + " " + str(self.facture_precedente.fin_recap.year) + u" n'est pas clôturée"
                     raise CotisationException([error])
                 
                 facture_cloturee = inscrit.factures_cloturees[self.facture_precedente.fin_recap].Restore()

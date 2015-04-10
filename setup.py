@@ -19,9 +19,9 @@
 # a executer avec le parametre "py2exe"
 
 import glob, shutil, os, sys
+from version import VERSION
 
 if sys.platform == 'win32':
-    from gertrude import VERSION
     import win32api
     
     for directory in ("./dist", "./build"):

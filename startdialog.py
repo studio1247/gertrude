@@ -22,6 +22,7 @@ from constants import *
 from functions import *
 from config import LoadConfig, Load, Exit, CONFIG_FILENAME, DEFAULT_DATABASE, DEMO_DATABASE
 from asyncore import dispatcher
+from mainwindow import GertrudeFrame
 import sys, time, socket
 
 __builtin__.server = None
@@ -37,10 +38,9 @@ class Server(dispatcher):
         dispatcher.close(self)
 
 class StartDialog(wx.Dialog):
-    def __init__(self, frame):
+    def __init__(self):
         self.test_unicity = False
         self.loaded = False
-        self.frame = frame
         wx.Dialog.__init__(self, None, -1, "Gertrude")
         
         icon = wx.Icon(GetBitmapFile("gertrude.ico"), wx.BITMAP_TYPE_ICO )
@@ -203,7 +203,8 @@ class StartDialog(wx.Dialog):
         wx.PostEvent(self, self.LoadedEvent(result=result))
 
     def StartFrame(self):
-        self.frame(ProgressHandler(self.info.AppendText, self.gauge.SetValue, 50, 100)).Show()
+        frame = GertrudeFrame(ProgressHandler(self.info.AppendText, self.gauge.SetValue, 50, 100))
+        frame.Show()
         self.gauge.SetValue(100)
         self.Destroy()
 
