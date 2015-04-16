@@ -1102,7 +1102,7 @@ class Creche(object):
             sql_connection.execute('UPDATE CRECHE SET formule_taux_horaire=?', (str(self.formule_taux_horaire),))
         self.conversion_formule_taux_horaire = self.GetFormuleConversion(self.formule_taux_horaire)
     
-    def EvalTauxHoraire(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois):
+    def EvalTauxHoraire(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, tranche_paje):
         return self.EvalFormule(self.conversion_formule_taux_horaire, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois)
     
     def AreRevenusNeeded(self):
@@ -1183,7 +1183,7 @@ class Creche(object):
             sql_connection.execute('UPDATE CRECHE SET formule_taux_effort=?', (str(self.formule_taux_effort),))
         self.conversion_formule_taux_effort = self.GetFormuleConversion(self.formule_taux_effort)
     
-    def EvalTauxEffort(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois):
+    def EvalTauxEffort(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, tranche_paje):
         return self.EvalFormule(self.conversion_formule_taux_effort, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois)
         
     def CheckFormuleTauxEffort(self, index):
