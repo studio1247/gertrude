@@ -38,14 +38,12 @@ import controls, zipfile, xml.dom.minidom, wx.html, ooffice
 
 class GertrudeApp(wx.App):
     def OnInit(self):
+        self.locale = wx.Locale(wx.LANGUAGE_DEFAULT)
         dialog = StartDialog()
+        
         dialog.Show(True)
         return True
 
 if __name__ == '__main__':
-    if sys.platform == 'win32':
-        locale.setlocale(locale.LC_ALL, 'fra_fra')
-    else:
-        locale.setlocale(locale.LC_ALL, 'fr_FR')
     app = GertrudeApp(False)
     app.MainLoop()
