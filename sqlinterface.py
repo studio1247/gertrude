@@ -730,7 +730,6 @@ class SQLConnection(object):
                 famille.referents.append(referent)
             cur.execute('SELECT idx, date, valeur, moyen_paiement FROM ENCAISSEMENTS where famille=?', (famille.idx,))
             for idx, date, valeur, moyen_paiement in cur.fetchall():
-                print idx, date, valeur, moyen_paiement
                 date = getdate(date)
                 famille.encaissements.append(Encaissement(famille, date, valeur, moyen_paiement, idx))
            
