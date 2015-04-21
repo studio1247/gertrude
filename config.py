@@ -77,6 +77,8 @@ def getOptions(parser):
             options |= DECLOTURE
         if "factures-familles" in str:
             options |= FACTURES_FAMILLES
+        if "groupes-sites" in str:
+            options |= GROUPES_SITES
     except:
         pass
     return options

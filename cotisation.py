@@ -322,8 +322,13 @@ class Cotisation(object):
             self.cotisation_periode = None
             self.cotisation_mensuelle, self.montants_heure_garde = self.CalculeFraisGardeComplete(self.forfait_heures_presence, self.heures_mois)                    
         elif creche.mode_facturation == FACTURATION_PAJE:
-            if self.enfants_a_charge > 3:
-                self.tranche_paje = 1 + GetTranche(self.assiette_annuelle, [0, 10, 20])
+            if self.enfants_a_charge == 1:
+                self.tranche_paje = 1 + GetTranche(self.assiette_annuelle, [20285.0, 45077.01])
+            elif self.enfants_a_charge == 2:
+                self.tranche_paje = 1 + GetTranche(self.assiette_annuelle, [23164.0, 51475.01])
+            else:
+                supplement_tranche = (self.enfants_a_charge - 3) * 6398.0
+                self.tranche_paje = 1 + GetTranche(self.assiette_annuelle, [26043.0 + supplement_tranche, 57873.01 + supplement_tranche])
             try:
                 self.montant_heure_garde = creche.EvalTauxHoraire(self.mode_garde, self.inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, self.inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, None, self.tranche_paje)
                 if options & TRACES: print " montant heure de garde (PAJE) :", self.montant_heure_garde

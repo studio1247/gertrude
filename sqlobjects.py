@@ -899,12 +899,13 @@ class Site(object):
         self.ville = ''
         self.telephone = ''
         self.capacite = 0
+        self.groupe = 0
         if creation:
             self.create()
 
     def create(self):
         print 'nouveau site'
-        result = sql_connection.execute('INSERT INTO SITES (idx, nom, adresse, code_postal, ville, telephone, capacite) VALUES(NULL,?,?,?,?,?,?)', (self.nom, self.adresse, self.code_postal, self.ville, self.telephone, self.capacite))
+        result = sql_connection.execute('INSERT INTO SITES (idx, nom, adresse, code_postal, ville, telephone, capacite, groupe) VALUES(NULL,?,?,?,?,?,?,?)', (self.nom, self.adresse, self.code_postal, self.ville, self.telephone, self.capacite, self.groupe))
         self.idx = result.lastrowid
 
     def delete(self):
@@ -913,7 +914,7 @@ class Site(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'capacite'] and self.idx:
+        if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'capacite', 'groupe'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE SITES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
@@ -1102,8 +1103,8 @@ class Creche(object):
             sql_connection.execute('UPDATE CRECHE SET formule_taux_horaire=?', (str(self.formule_taux_horaire),))
         self.conversion_formule_taux_horaire = self.GetFormuleConversion(self.formule_taux_horaire)
     
-    def EvalTauxHoraire(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, tranche_paje):
-        return self.EvalFormule(self.conversion_formule_taux_horaire, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois)
+    def EvalTauxHoraire(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje):
+        return self.EvalFormule(self.conversion_formule_taux_horaire, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje)
     
     def AreRevenusNeeded(self):
         if self.mode_facturation in (FACTURATION_FORFAIT_10H, FACTURATION_PSU, FACTURATION_PSU_TAUX_PERSONNALISES):
@@ -1113,7 +1114,7 @@ class Creche(object):
         if self.formule_taux_horaire is None:
             return False
         for cas in self.formule_taux_horaire:
-            if "revenus" in cas[0]:
+            if "revenus" in cas[0] or "paje" in cas[0]:
                 return True
         else:
             return False
@@ -1135,7 +1136,7 @@ class Creche(object):
         else:
             return None
         
-    def EvalFormule(self, formule, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois):
+    def EvalFormule(self, formule, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje):
         # print 'EvalFormule', 'mode=%d' % mode, handicap, 'revenus=%f' % revenus, 'enfants=%d' % enfants, 'jours=%d' % jours, 'heures=%f' % heures, reservataire, nom, 'parents=%d' % parents, chomage, conge_parental, 'heures_mois=%f' % heures_mois, heure_mois
         hg = MODE_HALTE_GARDERIE
         creche = MODE_CRECHE
@@ -1171,10 +1172,12 @@ class Creche(object):
         enfants = 1
         reservataire = False
         nom = "gertrude"
+        paje = paje1
         try:
             test = eval(formule[index][0])
             return True
-        except:
+        except Exception as e:
+            print e
             return False
             
     def UpdateFormuleTauxEffort(self, changed=True):
@@ -1183,8 +1186,8 @@ class Creche(object):
             sql_connection.execute('UPDATE CRECHE SET formule_taux_effort=?', (str(self.formule_taux_effort),))
         self.conversion_formule_taux_effort = self.GetFormuleConversion(self.formule_taux_effort)
     
-    def EvalTauxEffort(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, tranche_paje):
-        return self.EvalFormule(self.conversion_formule_taux_effort, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois)
+    def EvalTauxEffort(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje):
+        return self.EvalFormule(self.conversion_formule_taux_effort, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje)
         
     def CheckFormuleTauxEffort(self, index):
         return self.CheckFormule(self.conversion_formule_taux_effort, index)
@@ -1785,7 +1788,7 @@ class Inscrit(object):
         elif name in ('categorie', 'famille') and value is not None and self.idx:
             value = value.idx
         if name in ['prenom', 'nom', 'sexe', 'naissance', 'handicap', 'marche', 'photo', 'combinaison', 'notes', 'categorie', 'allergies', 'famille'] and self.idx:
-            print 'update', name, (old_value, value)
+            print 'update', self.idx, name, (old_value, value)
             sql_connection.execute('UPDATE INSCRITS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
     def AddConge(self, conge, calcule=True):

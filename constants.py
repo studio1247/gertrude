@@ -204,6 +204,7 @@ CATEGORIES = 1 << 3
 DECLOTURE = 1 << 4
 FACTURES_FAMILLES = 1 << 5
 READONLY = 1 << 6
+GROUPES_SITES = 1 << 7
 
 # Atributs de plages horaires spéciales
 PLAGE_FERMETURE = 0
@@ -217,3 +218,8 @@ NO_PARENTS = 1 << 3
 NO_NUMERO  = 1 << 4
 TRACES     = 1 << 5
 DEPART_ANTICIPE = 1 << 6
+
+# Tranches PAJE
+paje1 = 1
+paje2 = 2
+paje3 = 3

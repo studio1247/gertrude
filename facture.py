@@ -44,12 +44,17 @@ class FactureFinMois(object):
         except:
             numero = 0
         
-        if creche.tri_factures == TRI_NOM:
-            inscrits = GetEnfantsTriesParNom()
-        elif creche.tri_factures == TRI_NOM_PARENTS:
-            inscrits = GetEnfantsTriesParNomParents()
+        if (config.options & GROUPES_SITES) and self.site:
+            inscrits = []
+            for site in creche.sites:
+                if site.groupe == self.site.groupe:
+                    inscrits.extend(GetInscrits(self.debut_recap, self.fin_recap, site))
         else:
-            inscrits = creche.inscrits
+            inscrits = creche.inscrits[:]
+        if creche.tri_factures == TRI_NOM:
+            inscrits = GetEnfantsTriesParNom(inscrits)
+        elif creche.tri_factures == TRI_NOM_PARENTS:
+            inscrits = GetEnfantsTriesParNomParents(inscrits)
             
         if config.options & FACTURES_FAMILLES:
             # print u"Calcul du numéro de facture de", GetPrenomNom(self.inscrit)
@@ -75,10 +80,6 @@ class FactureFinMois(object):
         self.debut_recap = datetime.date(annee, mois, 1)
         self.fin_recap = GetMonthEnd(self.debut_recap)
         self.date = self.fin_recap
-        if options & NO_NUMERO:
-            self.numero = 0
-        else:
-            self.numero = self.GetNumeroFacture()
         self.options = options
         self.cotisation_mensuelle = 0.0
         self.report_cotisation_mensuelle = 0.0
@@ -301,6 +302,11 @@ class FactureFinMois(object):
                     self.total_realise += cotisation.CalculeFraisGarde(heures_realisees - heures_realisees_non_facturees)
                     
             date += datetime.timedelta(1)
+            
+        if options & NO_NUMERO:
+            self.numero = 0
+        else:
+            self.numero = self.GetNumeroFacture()
 
         if inscrit.HasFacture(self.debut_recap):
             for cotisation in cotisations_mensuelles:

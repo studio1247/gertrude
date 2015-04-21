@@ -250,6 +250,14 @@ def GetEnfantsCount(inscrit, date):
                         fin = frere_soeur.naissance 
     return enfants_a_charge, enfants_en_creche, debut, fin
 
+def GetTranche(valeur, tranches):
+    result = 0
+    for tranche in tranches:
+        if valeur < tranche:
+            return result
+        result += 1
+    return result
+
 def GetDepartement(cp):
     if cp:
         return int(cp/1000)

@@ -25,7 +25,7 @@ from sqlobjects import *
 from facture import FactureCloturee
 import wx
 
-VERSION = 91
+VERSION = 92
 
 def getdate(s):
     try:
@@ -130,7 +130,8 @@ class SQLConnection(object):
             code_postal INTEGER,
             ville VARCHAR,
             telephone VARCHAR,
-            capacite INTEGER
+            capacite INTEGER,
+            groupe INTEGER
           );""")
 
         cur.execute("""
@@ -581,10 +582,10 @@ class SQLConnection(object):
             except:
                 print "TODO"
 
-        cur.execute('SELECT nom, adresse, code_postal, ville, telephone, capacite, idx FROM SITES')
+        cur.execute('SELECT nom, adresse, code_postal, ville, telephone, capacite, groupe, idx FROM SITES')
         for site_entry in cur.fetchall():
             site = Site(creation=False)
-            site.nom, site.adresse, site.code_postal, site.ville, site.telephone, site.capacite, site.idx = site_entry
+            site.nom, site.adresse, site.code_postal, site.ville, site.telephone, site.capacite, site.groupe, site.idx = site_entry
             creche.sites.append(site)
                 
         cur.execute('SELECT login, password, profile, idx FROM USERS')
@@ -1707,6 +1708,10 @@ class SQLConnection(object):
                 moyen_paiement INTEGER
               );""")
 
+        if version < 92:
+            cur.execute("ALTER TABLE SITES ADD groupe INTEGER;")
+            cur.execute("UPDATE SITES SET groupe=?;", (0,))
+      
         if version < VERSION:
             try:
                 cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))

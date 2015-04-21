@@ -141,6 +141,8 @@ class CrecheTab(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, 'Ville :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, 'sites[%d].ville' % index), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Téléphone'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoPhoneCtrl(self, creche, 'sites[%d].telephone' % index), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, u'Capacité'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoNumericCtrl(self, creche, 'sites[%d].capacite' % index, precision=0), 1, wx.EXPAND)])                
+        if config.options & GROUPES_SITES:
+            sizer.AddMany([(wx.StaticText(self, -1, u'Groupe'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoNumericCtrl(self, creche, 'sites[%d].groupe' % index, precision=0), 1, wx.EXPAND)])                
         if not readonly:
             delbutton = wx.BitmapButton(self, -1, delbmp)
             delbutton.index = index
