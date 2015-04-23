@@ -495,8 +495,8 @@ def pdf_open(filename):
     global dde_server
     import win32ui
     import win32api
-    import dde, time
-    from os import spawnl,P_NOWAIT,startfile
+    import dde
+    from os import spawnl, P_NOWAIT, startfile
     
     filename = unicode(os.path.abspath(filename))
     path, name = os.path.split(filename)
