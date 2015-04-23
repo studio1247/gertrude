@@ -697,7 +697,7 @@ class JoursFermeturePanel(AutoTab):
             self.AjouteLigneConge(i)
         for i in range(len(creche.conges), len(self.conges_sizer.GetChildren())):
             self.RemoveLine()
-        self.sizer.Layout()
+        self.GetSizer().Layout()
         AutoTab.UpdateContents(self)
 
     def AjouteLigneConge(self, index):
@@ -725,7 +725,7 @@ class JoursFermeturePanel(AutoTab):
         history.Append(Delete(creche.conges, -1))
         creche.AddConge(Conge(creche))
         self.AjouteLigneConge(len(creche.conges) - 1)
-        self.sizer.Layout()
+        self.GetSizer().Layout()
 
     def OnSuppressionConge(self, event):
         observers['conges'] = time.time()
@@ -734,7 +734,6 @@ class JoursFermeturePanel(AutoTab):
         self.RemoveLine()
         creche.conges[index].delete()
         del creche.conges[index]
-        self.sizer.Layout()
         self.UpdateContents()
 
     def feries_check(self, event):
