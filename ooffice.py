@@ -353,7 +353,9 @@ def AddLogo(dom, logo):
                 clone.setAttribute("manifest:full-path", logo)
                 manifest.insertBefore(clone, file)
                 return
-            
+
+files_order = ["meta.xml", "content.xml"]
+   
 def GenerateOODocument(modifications, filename=None, gauge=None):
     if gauge:
         gauge.SetValue(0)
@@ -370,9 +372,14 @@ def GenerateOODocument(modifications, filename=None, gauge=None):
     LOGO = "Pictures/logo.png"
     logo_inserted = False
     namelist = zip.namelist()
-    if "content.xml" in namelist:
-        namelist.remove("content.xml")
-        namelist.insert(0, "content.xml")
+    
+    index = 0
+    for f in files_order:
+        if f in namelist:
+            namelist.remove(f)
+            namelist.insert(index, f)
+            index += 1
+        
     for f in namelist:
         data = zip.read(f)
         if f.endswith(".xml") and len(data) > 0:
