@@ -68,7 +68,12 @@ class CorrectionsTab(AutoTab):
             creche.numeros_facture[date] = NumeroFacture(date)
         self.numfacture.SetInstance(creche.numeros_facture[date])
         
-        for inscrit in creche.inscrits:
+        if creche.tri_planning == TRI_PRENOM:
+            inscrits = GetEnfantsTriesParPrenom()
+        else:
+            inscrits = GetEnfantsTriesParNom()
+                
+        for inscrit in inscrits:
             if inscrit.HasFacture(date): # TODO and date not in inscrit.factures_cloturees:
                 if not date in inscrit.corrections:
                     inscrit.corrections[date] = Correction(inscrit, date)
