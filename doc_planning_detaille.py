@@ -47,7 +47,6 @@ class PlanningDetailleModifications(object):
         self.errors = {}
         self.metas = { "Format": 0 }
         self.email = None
-        self.site = None
 
     def execute(self, filename, dom):
         if filename == 'meta.xml':
