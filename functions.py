@@ -246,8 +246,8 @@ def GetEnfantsCount(inscrit, date):
                     if inscription and inscription.debut and inscription.debut <= date and (inscription.fin is None or inscription.fin > date):
                         enfants_en_creche += 1
                 else:
-                    if not fin or frere_soeur.naissance < fin:
-                        fin = frere_soeur.naissance 
+                    if not fin or candidat.naissance < fin:
+                        fin = candidat.naissance 
     return enfants_a_charge, enfants_en_creche, debut, fin
 
 def GetTranche(valeur, tranches):
