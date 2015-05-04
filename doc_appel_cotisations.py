@@ -123,5 +123,8 @@ class AppelCotisationsModifications(object):
                     fields = inscrit_fields
                 ReplaceFields(clone, fields)
                 template.insertBefore(clone, lines_template[0])
+            for line in lines_template:
+                IncrementFormulas(line, row=+7+mois)
+            
         for line in lines_template:
             template.removeChild(line)
