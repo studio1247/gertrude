@@ -864,6 +864,18 @@ def SelectValueInChoice(choice, value):
             return i
     return None
 
+def AddYearsToChoice(choice):
+    for year in range(first_date.year, last_date.year+1):
+        choice.Append(u'Année %d' % year, year)
+    choice.SetSelection(today.year-first_date.year)
+            
+def AddMonthsToChoice(choice):
+    date = first_date
+    while date < last_date:
+        choice.Append(u'%s %d' % (months[date.month-1], date.year), date)
+        date = GetNextMonthStart(date)
+    choice.SetStringSelection('%s %d' % (months[today.month - 1], today.year))        
+
 def AddInscritsToChoice(choice):
     def __add_in_array(array, cell):
         if isinstance(cell, basestring):

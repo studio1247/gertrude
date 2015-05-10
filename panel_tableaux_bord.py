@@ -509,9 +509,7 @@ class StatistiquesFrequentationTab(AutoTab):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.sitechoice = wx.Choice(self)
         self.anneechoice = wx.Choice(self)
-        for annee in range(first_date.year, last_date.year+1):
-            self.anneechoice.Append(str(annee), annee)
-        self.anneechoice.SetStringSelection(str(today.year))
+        AddYearsToChoice(self.anneechoice)
         self.periodechoice = wx.Choice(self)
         for index, month in enumerate(months):
             self.periodechoice.Append(month, [index])
@@ -692,22 +690,16 @@ class RelevesTab(AutoTab):
         if IsTemplateFile("Releve SIEJ.odt"):
             box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés trimestriels (SIEJ)'), wx.HORIZONTAL)
             self.releves_choice = wx.Choice(self)
+            AddYearsToChoice(self.releves_choice)
             button = wx.Button(self, -1, u'Génération')
-            for year in range(first_date.year, today.year + 1):
-                self.releves_choice.Append(u"Année %d" % year, year)
-            #    for index, trimestre in enumerate(trimestres):
-            #        self.releves_choice.Append(u"%s trimestre %d" % (trimestre, year), datetime.date(year, 1+3*index, 1))
-            self.releves_choice.SetSelection(today.year-first_date.year)
             self.Bind(wx.EVT_BUTTON, self.OnGenerationReleveSIEJ, button)
             box_sizer.AddMany([(self.releves_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
         else:
             box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés trimestriels'), wx.HORIZONTAL)
             self.releves_choice = wx.Choice(self)
+            AddYearsToChoice(self.releves_choice)
             button = wx.Button(self, -1, u'Génération')
-            for year in range(first_date.year, today.year + 1):
-                self.releves_choice.Append(u'Année %d' % year, year)
-            self.releves_choice.SetSelection(today.year - first_date.year)
             self.Bind(wx.EVT_BUTTON, self.OnGenerationEtatsTrimestriels, button)
             box_sizer.AddMany([(self.releves_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
@@ -715,10 +707,8 @@ class RelevesTab(AutoTab):
         # Les relevés détaillés
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés annuels détaillés'), wx.HORIZONTAL)
         self.releves_detailles_choice = wx.Choice(self)
+        AddYearsToChoice(self.releves_detailles_choice)
         button = wx.Button(self, -1, u'Génération')
-        for year in range(first_date.year, today.year + 1):
-            self.releves_detailles_choice.Append(u'Année %d' % year, year)
-        self.releves_detailles_choice.SetSelection(today.year - first_date.year)
         self.Bind(wx.EVT_BUTTON, self.OnGenerationRelevesDetailles, button)
         box_sizer.AddMany([(self.releves_detailles_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
@@ -727,10 +717,8 @@ class RelevesTab(AutoTab):
         if IsTemplateFile("Etats places.ods"):
             box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Etats des places'), wx.HORIZONTAL)
             self.places_choice = wx.Choice(self)
+            AddYearsToChoice(self.places_choice)
             button = wx.Button(self, -1, u'Génération')
-            for year in range(first_date.year, today.year + 1):
-                self.places_choice.Append(u'Année %d' % year, year)
-            self.places_choice.SetSelection(today.year - first_date.year)
             self.Bind(wx.EVT_BUTTON, self.OnGenerationEtatsPlaces, button)
             box_sizer.AddMany([(self.places_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
@@ -738,10 +726,8 @@ class RelevesTab(AutoTab):
         # Les rapports de fréquentation
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Rapports de fréquentation'), wx.HORIZONTAL)
         self.rapports_choice = wx.Choice(self)
+        AddYearsToChoice(self.rapports_choice)
         button = wx.Button(self, -1, u'Génération')
-        for year in range(first_date.year, today.year + 1):
-            self.rapports_choice.Append(u'Année %d' % year, year)
-        self.rapports_choice.SetSelection(today.year - first_date.year)
         self.Bind(wx.EVT_BUTTON, self.OnGenerationRapportFrequentation, button)
         box_sizer.AddMany([(self.rapports_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
@@ -749,12 +735,8 @@ class RelevesTab(AutoTab):
         if IsTemplateFile("Etat presence mensuel.ods"):
             box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Etat de présence mensuel'), wx.HORIZONTAL)
             self.etat_presence_mensuesl_choice = wx.Choice(self)
+            AddMonthsToChoice(self.etat_presence_mensuesl_choice)
             button = wx.Button(self, -1, u'Génération')
-            date = first_date
-            while date < last_date:
-                self.etat_presence_mensuesl_choice.Append(u'%s %d' % (months[date.month-1], date.year), date)
-                date = GetNextMonthStart(date)
-            self.etat_presence_mensuesl_choice.SetSelection((today.year - first_date.year)*12 + today.month - first_date.month)
             self.Bind(wx.EVT_BUTTON, self.OnGenerationEtatPresenceMensuel, button)
             box_sizer.AddMany([(self.etat_presence_mensuesl_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
@@ -763,10 +745,8 @@ class RelevesTab(AutoTab):
         if IsTemplateFile("Synthese financiere.ods"):
             box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Synthèse financière'), wx.HORIZONTAL)
             self.syntheses_choice = wx.Choice(self)
+            AddYearsToChoice(self.syntheses_choice)
             button = wx.Button(self, -1, u'Génération')
-            for year in range(first_date.year, today.year + 1):
-                self.syntheses_choice.Append(u'Année %d' % year, year)
-            self.syntheses_choice.SetSelection(today.year - first_date.year)
             self.Bind(wx.EVT_BUTTON, self.OnGenerationSyntheseFinanciere, button)
             box_sizer.AddMany([(self.syntheses_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
@@ -775,10 +755,8 @@ class RelevesTab(AutoTab):
         if IsTemplateFile("Compte exploitation.ods"):
             box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u"Compte d'exploitation"), wx.HORIZONTAL)
             self.comptes_exploitation_choice = wx.Choice(self)
+            AddYearsToChoice(self.comptes_exploitation_choice)
             button = wx.Button(self, -1, u'Génération')
-            for year in range(first_date.year, today.year + 1):
-                self.syntheses_choice.Append(u'Année %d' % year, year)
-            self.comptes_exploitation_choice.SetSelection(today.year - first_date.year)
             self.Bind(wx.EVT_BUTTON, self.OnGenerationCompteExploitation, button)
             box_sizer.AddMany([(self.comptes_exploitation_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)

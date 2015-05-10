@@ -39,13 +39,7 @@ class CorrectionsTab(AutoTab):
         # la selection du mois et le numéro de facture
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.monthchoice = wx.Choice(self)
-        date = GetFirstMonday()
-        first_date = datetime.date(year=date.year, month=date.month, day=1) 
-        while date < last_date:
-            string = '%s %d' % (months[date.month - 1], date.year)
-            self.monthchoice.Append(string, date)
-            date = GetNextMonthStart(date)
-        self.monthchoice.SetStringSelection('%s %d' % (months[today.month - 1], today.year))        
+        AddMonthsToChoice(self.monthchoice)
         self.Bind(wx.EVT_CHOICE, self.EvtMonthChoice, self.monthchoice)
         sizer.Add(self.monthchoice, 1, wx.EXPAND, 5)
         self.numfacture = AutoNumericCtrl(self, None, 'valeur', precision=0)
@@ -98,13 +92,7 @@ class FacturationTab(AutoTab):
         # Les appels de cotisations
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Edition des appels de cotisation'), wx.HORIZONTAL)
         self.appels_monthchoice = wx.Choice(self)
-        date = GetFirstMonday()
-        first_date = datetime.date(year=date.year, month=date.month, day=1) 
-        while date < last_date:
-            string = '%s %d' % (months[date.month - 1], date.year)
-            self.appels_monthchoice.Append(string, date)
-            date = GetNextMonthStart(date)
-        self.appels_monthchoice.SetStringSelection('%s %d' % (months[today.month - 1], today.year))
+        AddMonthsToChoice(self.appels_monthchoice)
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationAppelCotisations, button)
         box_sizer.AddMany([(self.appels_monthchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
