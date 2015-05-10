@@ -765,7 +765,7 @@ class RelevesTab(AutoTab):
         if IsTemplateFile("Commande repas.odt"):
             box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Commande de repas'), wx.HORIZONTAL)
             self.commande_repas_choice = wx.Choice(self)
-            PopulateWeekChoice(self.commande_repas_choice)
+            AddWeeksToChoice(self.commande_repas_choice)
             button = wx.Button(self, -1, u'Génération')
             self.Bind(wx.EVT_BUTTON, self.OnGenerationCommandeRepas, button)
             box_sizer.AddMany([(self.commande_repas_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
@@ -775,7 +775,7 @@ class RelevesTab(AutoTab):
         if IsTemplateFile('Planning.ods'):
             box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Planning des présences'), wx.HORIZONTAL)
             self.planning_hebdo_choice = wx.Choice(self)
-            PopulateWeekChoice(self.planning_hebdo_choice)
+            AddWeeksToChoice(self.planning_hebdo_choice)
             button = wx.Button(self, -1, u'Génération')
             self.Bind(wx.EVT_BUTTON, self.OnGenerationPlanningPresences, button)
             box_sizer.AddMany([(self.planning_hebdo_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])

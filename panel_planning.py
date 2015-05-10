@@ -208,7 +208,7 @@ class PlanningPanel(GPanel):
         # La combobox pour la selection de la semaine
         self.week_choice = wx.Choice(self, -1)
         sizer.Add(self.week_choice, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-        PopulateWeekChoice(self.week_choice)
+        AddWeeksToChoice(self.week_choice)
         self.Bind(wx.EVT_CHOICE, self.OnChangementSemaine, self.week_choice)
         
         # La combobox pour la selection du groupe (si groupes)

@@ -601,16 +601,6 @@ def GetUnionHeures(journee, reference):
                 again = True
 
     return result
-
-def PopulateWeekChoice(combo):
-    date = first_monday = GetFirstMonday()
-    while date < last_date:
-        str = 'Semaine %d (%d %s %d)' % (date.isocalendar()[1], date.day, months[date.month - 1], date.year)
-        combo.Append(str, date)
-        date += datetime.timedelta(7)
-    delta = datetime.date.today() - first_monday
-    semaine = int(delta.days / 7)
-    combo.SetSelection(semaine)
     
 class State(object):
     def __init__(self, state, heures_contractualisees=.0, heures_realisees=.0, heures_facturees=.0):
@@ -876,6 +866,16 @@ def AddMonthsToChoice(choice):
         date = GetNextMonthStart(date)
     choice.SetStringSelection('%s %d' % (months[today.month - 1], today.year))        
 
+def AddWeeksToChoice(choice):
+    date = first_monday = GetFirstMonday()
+    while date < last_date:
+        str = 'Semaine %d (%d %s %d)' % (date.isocalendar()[1], date.day, months[date.month - 1], date.year)
+        choice.Append(str, date)
+        date += datetime.timedelta(7)
+    delta = datetime.date.today() - first_monday
+    semaine = int(delta.days / 7)
+    choice.SetSelection(semaine)
+    
 def AddInscritsToChoice(choice):
     def __add_in_array(array, cell):
         if isinstance(cell, basestring):
