@@ -15,7 +15,7 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import sys, datetime, os.path, wx
+import sys, time, datetime, os.path, wx
 from constants import *
 from parameters import *
 
@@ -716,6 +716,12 @@ def GetInscritFields(inscrit):
             ('naissance', inscrit.naissance),
             ('age', GetAgeString(inscrit.naissance)),
             ]
+    
+def GetSalarieFields(salarie):
+    return [('nom', salarie.nom),
+            ('prenom', salarie.prenom),
+            ('de-prenom', GetDeStr(salarie.prenom)),
+            ]            
 
 def GetInscriptionFields(inscription):
     if inscription.site:
@@ -875,7 +881,26 @@ def AddWeeksToChoice(choice):
     delta = datetime.date.today() - first_monday
     semaine = int(delta.days / 7)
     choice.SetSelection(semaine)
-    
+
+class PeriodePresence(object):
+    def __init__(self, date, arrivee=None, depart=None, absent=False, malade=False):
+        self.date = date
+        self.arrivee = arrivee
+        self.depart = depart
+        self.absent = absent
+        self.malade = malade
+                
+def SplitLineTablette(line):
+    label, idx, date = line.split()
+    idx = int(idx)
+    tm = time.strptime(date, "%Y-%m-%d@%H:%M")
+    date = datetime.date(tm.tm_year, tm.tm_mon, tm.tm_mday)
+    heure = tm.tm_hour * 60 + tm.tm_min
+    if label.endswith("_salarie"):
+        return (True, label[:-8], idx, date, heure)
+    else:
+        return (False, label, idx, date, heure)
+
 def AddInscritsToChoice(choice):
     def __add_in_array(array, cell):
         if isinstance(cell, basestring):

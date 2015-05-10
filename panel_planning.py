@@ -321,14 +321,6 @@ class PlanningPanel(GPanel):
 
     def onTabletteSynchro(self, evt):
         journal = config.connection.LoadJournal()
-        
-        class PeriodePresence(object):
-            def __init__(self, date, arrivee=None, depart=None, absent=False, malade=False):
-                self.date = date
-                self.arrivee = arrivee
-                self.depart = depart
-                self.absent = absent
-                self.malade = malade
 
         def AddPeriodes(who, date, periodes, classeJournee):
             if date in who.journees:
@@ -385,25 +377,20 @@ class PlanningPanel(GPanel):
 
         for line in lines[index+1:]:
             try:
-                full_label, idx, date = line.split()
-                idx = int(idx)
-                tm = time.strptime(date, "%Y-%m-%d@%H:%M")
-                date = datetime.date(tm.tm_year, tm.tm_mon, tm.tm_mday)
-                if full_label.endswith("_salarie"):
+                salarie, label, idx, date, heure = SplitLineTablette(line)
+                if salarie:
                     array = array_salaries
-                    label = full_label[:-8]
                 else:
                     array = array_enfants
-                    label = full_label
                 if idx not in array:
                     array[idx] = { }
                 if date not in array[idx]:
                     array[idx][date] = []
                 if label == "arrivee":
-                    arrivee = tm.tm_hour * 12 + (tm.tm_min+TABLETTE_MARGE_ARRIVEE) / creche.granularite * (creche.granularite/BASE_GRANULARITY)
+                    arrivee = (heure+TABLETTE_MARGE_ARRIVEE) / creche.granularite * (creche.granularite/BASE_GRANULARITY)
                     array[idx][date].append(PeriodePresence(date, arrivee))
                 elif label == "depart":
-                    depart = tm.tm_hour * 12 + (tm.tm_min+creche.granularite-TABLETTE_MARGE_ARRIVEE) / creche.granularite * (creche.granularite/BASE_GRANULARITY)
+                    depart = (heure+creche.granularite-TABLETTE_MARGE_ARRIVEE) / creche.granularite * (creche.granularite/BASE_GRANULARITY)
                     if len(array[idx][date]):
                         last = array[idx][date][-1]
                         if last.date == date and last.arrivee:
@@ -417,7 +404,7 @@ class PlanningPanel(GPanel):
                 elif label == "malade":
                     array[idx][date].append(PeriodePresence(date, malade=True))
                 else:
-                    print "Ligne %s inconnue" % full_label
+                    print "Ligne %s inconnue" % label
                 creche.last_tablette_synchro = line
             except Exception, e:
                 print e

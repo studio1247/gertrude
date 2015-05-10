@@ -38,6 +38,7 @@ from doc_rapport_frequentation import RapportFrequentationModifications
 from doc_synthese_financiere import SyntheseFinanciereModifications
 from doc_releve_salaries import ReleveSalariesModifications
 from doc_etat_presence_mensuel import EtatPresenceMensuelModifications
+from doc_export_tablette import ExportTabletteModifications
 # from doc_compte_exploitation import CompteExploitationModifications
 from doc_commande_repas import CommandeRepasModifications
 from facture import Facture
@@ -794,6 +795,16 @@ class RelevesTab(AutoTab):
         box_sizer.AddMany([(self.detail_start_date, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5), (wx.StaticText(self, -1, "-"), 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5), (self.detail_end_date, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5), (button, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5)])
         self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
+        # Les exports tablette
+        if (config.options & TABLETTE) and IsTemplateFile('Export tablette.ods'):
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Export tablette'), wx.HORIZONTAL)
+            self.export_tablette_choice = wx.Choice(self)
+            AddMonthsToChoice(self.export_tablette_choice)
+            button = wx.Button(self, -1, u'Génération')
+            self.Bind(wx.EVT_BUTTON, self.OnGenerationExportTablette, button)
+            box_sizer.AddMany([(self.export_tablette_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+
         self.UpdateContents()        
         self.SetSizer(self.sizer)
 
@@ -881,6 +892,11 @@ class RelevesTab(AutoTab):
         if end is None:
             end = start
         DocumentDialog(self, PlanningDetailleModifications((start, end), site)).ShowModal()
+        
+    def OnGenerationExportTablette(self, evt):
+        site = self.GetSelectedSite()
+        date = self.export_tablette_choice.GetClientData(self.export_tablette_choice.GetSelection())
+        DocumentDialog(self, ExportTabletteModifications(site, date)).ShowModal()
         
 class AlertesTab(AutoTab):
     def __init__(self, parent):
