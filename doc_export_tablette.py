@@ -95,6 +95,12 @@ class ExportTabletteModifications(object):
                 table.insertBefore(ligne, lineTemplate)
         table.removeChild(lineTemplate)
 
+    
+    def SortedKeys(self, array, function):
+        keys = array.keys()
+        keys.sort(key=lambda key: GetPrenomNom(function(key)))
+        return keys
+            
     def execute(self, filename, dom):
         if filename != 'content.xml':
             return None
@@ -104,14 +110,14 @@ class ExportTabletteModifications(object):
         self.spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
         self.template = self.spreadsheet.getElementsByTagName("table:table").item(0)
 
-        for key in self.array_enfants:
+        for key in self.SortedKeys(self.array_enfants, creche.GetInscrit):
             inscrit = creche.GetInscrit(key)
             if inscrit:
                 self.AddSheet(inscrit, self.array_enfants[key], GetInscritFields(inscrit))
             else:
                 print "Inscrit %d inconnu"
                 
-        for key in self.array_salaries:
+        for key in self.SortedKeys(self.array_salaries, creche.GetSalarie):
             salarie = creche.GetSalarie(key)
             if salarie:
                 self.AddSheet(salarie, self.array_salaries[key], GetSalarieFields(salarie))
