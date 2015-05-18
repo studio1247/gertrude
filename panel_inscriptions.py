@@ -405,7 +405,7 @@ class IdentitePanel(InscriptionsTab):
 
     def OnAjoutFrere(self, event):
         history.Append(Delete(self.inscrit.famille.freres_soeurs, -1))
-        self.inscrit.famille.freres_soeurs.append(Frere_Soeur(self.inscrit))
+        self.inscrit.famille.freres_soeurs.append(Frere_Soeur(self.inscrit.famille))
         self.AjouteLigneFrere(len(self.inscrit.famille.freres_soeurs) - 1)
         self.sizer.FitInside(self)
 
