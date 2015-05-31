@@ -112,7 +112,7 @@ class FactureModifications(object):
                 for i in range(len(rows)):
                     cells.append(rows[i].getElementsByTagName('table:table-cell'))
                     for cell in cells[i]:
-                        cell.setAttribute('table:style-name', 'Tableau1.E2')
+                        cell.setAttribute('table:style-name', 'Presences.E7')
                         text_node = cell.getElementsByTagName('text:p')[0]
                         if text_node and text_node.firstChild:
                             text_node.firstChild.replaceWholeText(' ')
@@ -156,7 +156,9 @@ class FactureModifications(object):
         ReplaceTextFields(section, facture.fields)
         
     def execute(self, filename, dom):
+        fields = GetCrecheFields(creche)
         if filename != 'content.xml':
+            ReplaceTextFields(dom, fields)
             return None
 
         errors = {}
@@ -178,7 +180,6 @@ class FactureModifications(object):
         if not styleD3:
             couleurs[CONGES_DEPASSEMENT] = 'B3'
         
-        fields = GetCrecheFields(creche)
         done = []
         
         for index, inscrit in enumerate(self.inscrits):

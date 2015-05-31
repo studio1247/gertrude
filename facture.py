@@ -394,7 +394,7 @@ class FactureFinMois(object):
                             cotisation_regularisee = Cotisation(inscrit, date, options=NO_ADDRESS|self.options|DEPART_ANTICIPE)
                             regularisation_cotisation = cotisation_regularisee.cotisation_mensuelle - cotisation.cotisation_mensuelle
                             if (options & TRACES):
-                                print u" régularisation cotisation : %f - %f = %f" % (cotisation_regularisee.cotisation_mensuelle, cotisation.cotisation_mensuelle, regularisation_cotisation)
+                                print u" régularisation cotisation : %f - %f = %f par mois" % (cotisation_regularisee.cotisation_mensuelle, cotisation.cotisation_mensuelle, regularisation_cotisation)
                             self.regularisation += regularisation_cotisation 
                             date = GetNextMonthStart(date)
     
