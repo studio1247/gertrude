@@ -238,7 +238,7 @@ class GertrudeFrame(wx.Frame):
             for alerte in event.alertes_non_acquittees:
                 texte += alerte.texte + "\n"
             texte += "\n"
-            dlg = wx.MessageDialog(self, texte + "Voulez-vous acquitter ces alertes ?", "Alertes", wx.YES_NO|wx.YES_DEFAULT|wx.CANCEL|wx.ICON_QUESTION)
+            dlg = wx.MessageDialog(self, texte + "Ne plus revoir les alertes ci-dessus ?", "Alertes", wx.YES_NO|wx.YES_DEFAULT|wx.CANCEL|wx.ICON_QUESTION)
             result = dlg.ShowModal()
             dlg.Destroy()
             if result == wx.ID_YES:
