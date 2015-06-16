@@ -378,6 +378,8 @@ class PlanningPanel(GPanel):
         for line in lines[index+1:]:
             try:
                 salarie, label, idx, date, heure = SplitLineTablette(line)
+                if date >= today:
+                    break
                 if salarie:
                     array = array_salaries
                 else:
