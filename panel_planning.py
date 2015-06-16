@@ -338,9 +338,9 @@ class PlanningPanel(GPanel):
             elif periode.malade:
                 value = MALADE
             elif not periode.arrivee:
-                if not date in who.journees:
+                if not periode.date in who.journees:
                     errors.append(u"%s : Pas d'arrivée enregistrée le %s" % (GetPrenomNom(who), periode.date))
-                reference = who.GetJournee(periode.date)
+                reference = who.GetJourneeReference(periode.date)
                 if reference:
                     periode.arrivee = reference.GetPlageHoraire()[0]
                     if periode.arrivee is None:
@@ -350,7 +350,7 @@ class PlanningPanel(GPanel):
             elif not periode.depart:
                 if periode.date != today:
                     errors.append(u"%s : Pas de départ enregistré le %s" % (GetPrenomNom(who), periode.date))
-                reference = who.GetJournee(date)
+                reference = who.GetJourneeReference(periode.date)
                 if reference:
                     periode.depart = reference.GetPlageHoraire()[-1]
                     if periode.depart is None:
