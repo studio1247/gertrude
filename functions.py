@@ -787,6 +787,13 @@ def GetFactureFields(facture):
         taux_effort = 0.0
         if facture.taux_effort:
             taux_effort = facture.taux_effort
+        if (config.options & HEURES_CONTRAT):
+            heures_contractualisees = facture.heures_contrat
+            heures_facturees = facture.heures_facture
+        else:
+            heures_contractualisees = facture.heures_contractualisees
+            heures_facturees = facture.heures_facturees
+                
         result = [('mois', '%s %d' % (months[facture.mois - 1], facture.annee)),
                   ('de-mois', '%s %d' % (GetDeMoisStr(facture.mois - 1), facture.annee)),
                   ('de-mois-recap', '%s %d' % (GetDeMoisStr(facture.debut_recap.month - 1), facture.debut_recap.year)),
@@ -794,13 +801,13 @@ def GetFactureFields(facture):
                   ('montant-heure-garde', facture.montant_heure_garde, FIELD_EUROS),
                   ('cotisation-mensuelle', facture.cotisation_mensuelle, FIELD_EUROS),
                   ('heures-cotisation-mensuelle', GetHeureString(facture.heures_cotisation_mensuelle)),
-                  ('heures-contractualisees', GetHeureString(facture.heures_contractualisees)),
+                  ('heures-contractualisees', GetHeureString(heures_contractualisees)),
                   ('heures-contrat', GetHeureString(facture.heures_contrat)),
                   ('heures-realisees', GetHeureString(facture.heures_realisees)),
                   ('heures-realisees-non-facturees', GetHeureString(facture.heures_realisees_non_facturees)),
                   ('heures-facturees-non-realisees', GetHeureString(facture.heures_facturees_non_realisees)),
                   ('heures-contractualisees-realisees', GetHeureString(facture.heures_contractualisees_realisees)),
-                  ('heures-facturees', GetHeureString(facture.heures_facturees)),
+                  ('heures-facturees', GetHeureString(heures_facturees)),
                   ('heures-supplementaires', GetHeureString(facture.heures_supplementaires)),
                   ('heures-maladie', GetHeureString(facture.heures_maladie)),
                   ('heures-previsionnelles', GetHeureString(facture.heures_previsionnelles)),
