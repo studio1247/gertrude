@@ -261,7 +261,7 @@ class Cotisation(object):
                 self.heures_periode = math.ceil(self.heures_periode)
                 if options & TRACES: print u' heures période :', self.heures_periode
                 self.semaines_periode = ((self.fin_inscription - self.inscription.debut).days + 7) / 7
-                self.nombre_factures = GetNombreFacturesContrat(self.inscription.debut, self.fin_inscription)
+                self.nombre_factures = GetNombreFacturesContrat(self.debut, self.fin)
                 if self.nombre_factures == 0:
                     self.nombre_factures = 1
                 if options & TRACES: print ' nombres de factures :', self.nombre_factures

@@ -135,6 +135,21 @@ class DocumentsTests(GertrudeTestCase):
         self.assertEquals(len(errors), 0)
         os.unlink("./test.odt")
         
+class PSUTests(GertrudeTestCase):
+    def test_nombre_mois_facturation(self):
+        creche.mode_facturation = FACTURATION_PSU
+        creche.facturation_jours_feries = JOURS_FERIES_DEDUITS_ANNUELLEMENT
+        bureau = Bureau(creation=False)
+        bureau.debut = datetime.date(2010, 1, 1)
+        creche.bureaux.append(bureau)
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit, creation=False)
+        inscription.debut = datetime.date(2009, 9, 1)
+        inscription.fin = datetime.date(2010, 8, 31)
+        inscrit.inscriptions.append(inscription)
+        cotisation = Cotisation(inscrit, datetime.date(2010, 1, 1), NO_ADDRESS|NO_PARENTS)
+        self.assertEquals(cotisation.nombre_factures, 8)
+        
 class PAJETests(GertrudeTestCase):
     def test_pas_de_taux_horaire(self):
         creche.mode_facturation = FACTURATION_PAJE
