@@ -314,8 +314,8 @@ class FactureFinMois(object):
                 self.heures_maladie += cotisation.heures_maladie
                 self.heures_facture_par_mode[cotisation.mode_garde] -= cotisation.heures_maladie
                 if creche.repartition == REPARTITION_SANS_MENSUALISATION:
-                    self.cotisation_mensuelle += cotisation.heures_contractualisees * cotisation.montant_heure_garde
-                    self.total_contractualise += cotisation.heures_contractualisees * cotisation.montant_heure_garde
+                    self.cotisation_mensuelle += (cotisation.heures_contractualisees - cotisation.heures_realisees_non_facturees) * cotisation.montant_heure_garde
+                    self.total_contractualise += (cotisation.heures_contractualisees - cotisation.heures_realisees_non_facturees) * cotisation.montant_heure_garde
                 elif creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(cotisation.debut):
                     if inscription.mode == MODE_FORFAIT_HORAIRE:
                         self.heures_facturees_par_mode[cotisation.mode_garde] += cotisation.heures_realisees - cotisation.heures_realisees_non_facturees
