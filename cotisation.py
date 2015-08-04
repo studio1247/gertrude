@@ -293,7 +293,10 @@ class Cotisation(object):
                 else:
                     self.semaines_conges = 0
                 self.heures_periode = (self.semaines_periode - self.semaines_conges) * self.heures_semaine
-                self.heures_mois = self.heures_periode / self.nombre_factures
+                if self.nombre_factures == 0:
+                    self.heures_mois = 0
+                else:
+                    self.heures_mois = self.heures_periode / self.nombre_factures
                 if options & TRACES:
                     print ' heures / periode : (%d-%f) * %f = %f' % (self.semaines_periode, self.semaines_conges, self.heures_semaine, self.heures_periode)
                     print ' nombre de factures : %d' % self.nombre_factures
@@ -346,7 +349,10 @@ class Cotisation(object):
             if options & TRACES:
                 print " cotisation periode :", self.cotisation_periode
                 print " montant heure garde supplementaire :", self.montant_heure_garde
-            self.cotisation_mensuelle = self.cotisation_periode / self.nombre_factures
+            if self.nombre_factures == 0:
+                self.cotisation_mensuelle = 0.0
+            else:
+                self.cotisation_mensuelle = self.cotisation_periode / self.nombre_factures
         else:
             if self.enfants_a_charge > 1:
                 self.mode_taux_effort = u'%d enfants à charge' % self.enfants_a_charge
