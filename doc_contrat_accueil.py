@@ -134,7 +134,7 @@ class DocumentAccueilModifications(object):
 class OdtDocumentAccueilModifications(DocumentAccueilModifications):
     def __init__(self, who, date):
         DocumentAccueilModifications.__init__(self, who, date)
-        self.inscription = who.GetInscription(date)
+        self.inscription = who.GetInscription(date, preinscription=True)
         self.multi = False
 
     def execute(self, filename, dom):
