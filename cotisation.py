@@ -276,14 +276,22 @@ class Cotisation(object):
                     debut_inscription = self.inscription.debut
                     if creche.facturation_periode_adaptation == PERIODE_ADAPTATION_GRATUITE and self.inscription.fin_periode_adaptation:
                         debut_inscription = self.inscription.fin_periode_adaptation + datetime.timedelta(1)
-                    self.semaines_periode = (6 + (self.fin_inscription - debut_inscription).days) / 7
+                    anniversaire = GetDateMinus(debut_inscription, years=-1)
+                    if self.fin_inscription == anniversaire - datetime.timedelta(1):
+                        self.semaines_periode = 52
+                    else:
+                        self.semaines_periode = (6 + (self.fin_inscription - debut_inscription).days) / 7
                     self.nombre_factures = GetNombreFacturesContrat(self.inscription.debut, self.fin_inscription)
                     self.prorata_effectue = True
                 elif creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
                     if self.fin_inscription is None:
                         errors.append(u" - La période d'inscription n'a pas de fin.")
                         raise CotisationException(errors)
-                    self.semaines_periode = (6 + (GetMonthEnd(self.fin_inscription) - GetMonthStart(self.inscription.debut)).days) / 7
+                    anniversaire = GetDateMinus(GetMonthEnd(self.inscription.debut), years=-1)
+                    if GetMonthEnd(self.fin_inscription) == anniversaire - datetime.timedelta(1):
+                        self.semaines_periode = 52
+                    else:
+                        self.semaines_periode = (6 + (GetMonthEnd(self.fin_inscription) - GetMonthStart(self.inscription.debut)).days) / 7
                     self.nombre_factures = GetNombreFacturesContrat(self.inscription.debut, self.fin_inscription)
                 else:
                     self.semaines_periode = 52

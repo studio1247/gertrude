@@ -35,7 +35,7 @@ def GetYearStart(date):
 def GetYearEnd(date):
     return datetime.date(date.year, 12, 31)
 
-def GetDateMinus(date, years, months):
+def GetDateMinus(date, years, months=0):
     d = date.day
     if date.month > months:
         y = date.year-years
