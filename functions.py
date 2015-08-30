@@ -523,8 +523,7 @@ def GetEnfantsTriesParReservataire(inscrits):
         lines.extend(reservataires[key])
 
     return lines
-
-        
+     
 def GetEnfantsTriesParGroupe(lines):
     groupes = {}
     for line in lines:
@@ -601,7 +600,16 @@ def GetUnionHeures(journee, reference):
                 again = True
 
     return result
-    
+
+def GetNombreSemainesPeriode(debut, fin):
+    jours = (fin - debut).days
+    if creche.arrondi_semaines == ARRONDI_SEMAINE_SUPERIEURE:
+        return (jours + 6) / 7
+    elif creche.arrondi_semaines == ARRONDI_SEMAINE_PLUS_PROCHE:
+        return round(float(jours) / 7)
+    else:
+        return float(jours) / 7
+                
 class State(object):
     def __init__(self, state, heures_contractualisees=.0, heures_realisees=.0, heures_facturees=.0):
         self.state = state

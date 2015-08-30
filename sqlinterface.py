@@ -25,7 +25,7 @@ from sqlobjects import *
 from facture import FactureCloturee
 import wx
 
-VERSION = 92
+VERSION = 93
 
 def getdate(s):
     try:
@@ -105,6 +105,8 @@ class SQLConnection(object):
             arrondi_heures INTEGER,
             arrondi_facturation INTEGER,
             arrondi_heures_salaries INTEGER,
+            arrondi_mensualisation_euros INTEGER,
+            arrondi_semaines INTEGER,
             gestion_maladie_hospitalisation BOOLEAN,
             tri_planning INTEGER,
             tri_factures INTEGER,
@@ -513,8 +515,8 @@ class SQLConnection(object):
         for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", u"15 août", "1er novembre", "11 novembre", u"25 décembre", u"Lundi de Pâques", "Jeudi de l'Ascension"):
             cur.execute("INSERT INTO CONGES (idx, debut) VALUES (NULL, ?)", (label, ))
         cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
-        cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, preinscriptions, presences_previsionnelles, presences_supplementaires, modes_inscription, minimum_maladie, email, type, periode_revenus, mode_facturation, temps_facturation, repartition, conges_inscription, tarification_activites, traitement_maladie, facturation_jours_feries, facturation_periode_adaptation, formule_taux_horaire, formule_taux_effort, gestion_alertes, age_maximum, seuil_alerte_inscription, cloture_factures, arrondi_heures, arrondi_facturation, arrondi_heures_salaries, gestion_maladie_hospitalisation, tri_planning, tri_factures, smtp_server, caf_email, mode_accueil_defaut, gestion_absences_non_prevenues, gestion_maladie_sans_justificatif, gestion_preavis_conges, gestion_depart_anticipe, alerte_depassement_planning, last_tablette_synchro, changement_groupe_auto, allergies, regularisation_fin_contrat) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-                     ("","","","","",7.75,18.5,7.75,19.0,15,False,False,True,MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5,3,"",TYPE_PARENTAL,REVENUS_YM2,FACTURATION_PSU,FACTURATION_FIN_MOIS,REPARTITION_MENSUALISATION_12MOIS,0,0,DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_OUVRES,JOURS_FERIES_NON_DEDUITS,PERIODE_ADAPTATION_FACTUREE_NORMALEMENT,"None","None",False,3,3,False,SANS_ARRONDI,SANS_ARRONDI,SANS_ARRONDI,False,TRI_NOM,TRI_NOM,"","",0,False,False,False,False,False,"",False,"",True))
+        cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, preinscriptions, presences_previsionnelles, presences_supplementaires, modes_inscription,                         minimum_maladie, email, type,          periode_revenus, mode_facturation, temps_facturation,    repartition,                       conges_inscription, tarification_activites, traitement_maladie,                          facturation_jours_feries, facturation_periode_adaptation,          formule_taux_horaire, formule_taux_effort, gestion_alertes, age_maximum, seuil_alerte_inscription, cloture_factures, arrondi_heures, arrondi_facturation, arrondi_heures_salaries, arrondi_mensualisation_euros, arrondi_semaines,           gestion_maladie_hospitalisation, tri_planning, tri_factures, smtp_server, caf_email, mode_accueil_defaut, gestion_absences_non_prevenues, gestion_maladie_sans_justificatif, gestion_preavis_conges, gestion_depart_anticipe, alerte_depassement_planning, last_tablette_synchro, changement_groupe_auto, allergies, regularisation_fin_contrat) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                   (                         "",  "",      "",          "",    "",        7.75,      18.5,      7.75,          19.0,          15,          False,           False,                     True,                      MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5, 3,               "",    TYPE_PARENTAL, REVENUS_YM2,     FACTURATION_PSU,  FACTURATION_FIN_MOIS, REPARTITION_MENSUALISATION_12MOIS, 0,                  0,                      DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_OUVRES, JOURS_FERIES_NON_DEDUITS, PERIODE_ADAPTATION_FACTUREE_NORMALEMENT, "None",               "None",              False,           3,           3,                        False,            SANS_ARRONDI,   SANS_ARRONDI,        SANS_ARRONDI,            SANS_ARRONDI,                 ARRONDI_SEMAINE_SUPERIEURE, False,                           TRI_NOM,      TRI_NOM,      "",          "",        0,                   False,                          False,                             False,                  False,                   False,                       "",                    False,                  "",        True))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2006, 9, 1), datetime.date(2007, 8, 31),  6547.92, 51723.60))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2007, 9, 1), datetime.date(2008, 12, 31), 6660.00, 52608.00))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2009, 1, 1), datetime.date(2009, 12, 31), 6876.00, 53400.00))
@@ -1712,6 +1714,12 @@ class SQLConnection(object):
             cur.execute("ALTER TABLE SITES ADD groupe INTEGER;")
             cur.execute("UPDATE SITES SET groupe=?;", (0,))
       
+        if version < 93:
+            cur.execute("ALTER TABLE CRECHE ADD arrondi_mensualisation_euros INTEGER")            
+            cur.execute('UPDATE CRECHE SET arrondi_mensualisation_euros=?', (SANS_ARRONDI,))
+            cur.execute("ALTER TABLE CRECHE ADD arrondi_semaines INTEGER")            
+            cur.execute('UPDATE CRECHE SET arrondi_semaines=?', (ARRONDI_SEMAINE_SUPERIEURE,))  
+
         if version < VERSION:
             try:
                 cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))

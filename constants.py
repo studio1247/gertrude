@@ -167,12 +167,18 @@ ARRONDI_HEURE_ARRIVEE_DEPART = 2
 ARRONDI_DEMI_HEURE = 3
 ARRONDI_HEURE_MARGE_DEMI_HEURE = 4
 
+# Modes d'arrondis des semaines
+ARRONDI_SEMAINE_SUPERIEURE = 1
+ARRONDI_SEMAINE_PLUS_PROCHE = 2
+
+# Modes d'arrondis des factures
+ARRONDI_EURO_PLUS_PROCHE = 2
+
 # Modes de tri des enfants sur le planning
 TRI_PRENOM = 0
 TRI_NOM = 1
 TRI_GROUPE = 2
 TRI_NOM_PARENTS = 3
-
 
 # Valeurs de présence
 CONGES_DEPASSEMENT = -7

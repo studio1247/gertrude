@@ -276,22 +276,14 @@ class Cotisation(object):
                     debut_inscription = self.inscription.debut
                     if creche.facturation_periode_adaptation == PERIODE_ADAPTATION_GRATUITE and self.inscription.fin_periode_adaptation:
                         debut_inscription = self.inscription.fin_periode_adaptation + datetime.timedelta(1)
-                    anniversaire = GetDateMinus(debut_inscription, years=-1)
-                    if self.fin_inscription == anniversaire - datetime.timedelta(1):
-                        self.semaines_periode = 52
-                    else:
-                        self.semaines_periode = (6 + (self.fin_inscription - debut_inscription).days) / 7
+                    self.semaines_periode = GetNombreSemainesPeriode(debut_inscription, self.fin_inscription)
                     self.nombre_factures = GetNombreFacturesContrat(self.inscription.debut, self.fin_inscription)
                     self.prorata_effectue = True
                 elif creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
                     if self.fin_inscription is None:
                         errors.append(u" - La période d'inscription n'a pas de fin.")
                         raise CotisationException(errors)
-                    anniversaire = GetDateMinus(GetMonthEnd(self.inscription.debut), years=-1)
-                    if GetMonthEnd(self.fin_inscription) == anniversaire - datetime.timedelta(1):
-                        self.semaines_periode = 52
-                    else:
-                        self.semaines_periode = (6 + (GetMonthEnd(self.fin_inscription) - GetMonthStart(self.inscription.debut)).days) / 7
+                    self.semaines_periode = GetNombreSemainesPeriode(self.inscription.debut, self.fin_inscription)
                     self.nombre_factures = GetNombreFacturesContrat(self.inscription.debut, self.fin_inscription)
                 else:
                     self.semaines_periode = 52
@@ -447,6 +439,10 @@ class Cotisation(object):
                         self.montant_heure_garde = heure_garde_diff
                     
         self.cotisation_mensuelle += self.majoration_mensuelle
+        
+        if creche.arrondi_mensualisation_euros == ARRONDI_EURO_PLUS_PROCHE:
+            self.cotisation_mensuelle = round(self.cotisation_mensuelle)
+            
         if options & TRACES: 
             print " cotisation mensuelle :", self.cotisation_mensuelle
             print " montant heure garde :", self.montant_heure_garde
