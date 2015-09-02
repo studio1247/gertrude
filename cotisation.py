@@ -65,7 +65,10 @@ class Cotisation(object):
     
     def CalculeFraisGardeComplete(self, heures, heures_mois):
         if self.montant_heure_garde is not None:
-            result = self.montant_heure_garde * heures
+            try:
+                result = self.montant_heure_garde * heures
+            except:
+                result = 0.0
             tarifs = [self.montant_heure_garde]
         else:
             result = 0.0
