@@ -280,7 +280,7 @@ class Cotisation(object):
                     if creche.facturation_periode_adaptation == PERIODE_ADAPTATION_GRATUITE and self.inscription.fin_periode_adaptation:
                         debut_inscription = self.inscription.fin_periode_adaptation + datetime.timedelta(1)
                     self.semaines_periode = GetNombreSemainesPeriode(debut_inscription, self.fin_inscription)
-                    self.nombre_factures = GetNombreFacturesContrat(self.inscription.debut, self.fin_inscription)
+                    self.nombre_factures = GetNombreFacturesContrat(debut_inscription, self.fin_inscription)
                     self.prorata_effectue = True
                 elif creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
                     if self.fin_inscription is None:
