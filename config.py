@@ -201,6 +201,7 @@ def LoadConfig(progress_handler=default_progress_handler):
         try:
             parser = ConfigParser.SafeConfigParser()
             parser.read(CONFIG_FILENAME)
+            break
         except:
             progress_handler.display(u"Fichier %s erroné. Utilisation de la configuration par défaut." % CONFIG_FILENAME)
     else:
