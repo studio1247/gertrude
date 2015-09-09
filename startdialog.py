@@ -96,8 +96,8 @@ class StartDialog(wx.Dialog):
         self.SetPosition(((W-w)/2, (H-h)/2 - 50))
 
         __builtin__.force_token = False
-        
-        if not os.path.isfile(CONFIG_FILENAME) and not os.path.isfile(DEFAULT_DATABASE) and os.path.isfile(DEMO_DATABASE):
+
+        if sys.platform != "darwin" and not os.path.isfile(CONFIG_FILENAME) and not os.path.isfile(DEFAULT_DATABASE) and os.path.isfile(DEMO_DATABASE):
             dlg = wx.MessageDialog(self, u"Vous utilisez Gertrude pour la première fois, voulez-vous installer une base de démonstration ?",
                                        'Gertrude',
                                        wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
@@ -184,7 +184,8 @@ class StartDialog(wx.Dialog):
             self.gauge.SetValue(event.gauge)
                 
     def Load(self, section=None):
-        time.sleep(1)
+        if sys.platform != "darwin":
+            time.sleep(1)
         try:
             if section is None:
                 LoadConfig(ProgressHandler(self.AppendMessage, self.SetGauge, 0, 5))
