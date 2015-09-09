@@ -38,6 +38,7 @@ import controls, zipfile, xml.dom.minidom, wx.html, ooffice
 
 class GertrudeApp(wx.App):
     def OnInit(self):
+        self.SetAssertMode(wx.PYAPP_ASSERT_SUPPRESS)
         self.locale = wx.Locale(wx.LANGUAGE_DEFAULT)
         dialog = StartDialog()
         
