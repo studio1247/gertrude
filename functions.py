@@ -275,6 +275,8 @@ def GetFile(filename, site, base):
         pass
     paths.append("%s/%s" % (base, filename))
     paths.append("%s_dist/%s" % (base, filename))
+    if sys.platform == "darwin":
+        paths.append("../Resources/%s" % filename)
     for directory in ["./", "~/.gertrude/", "/usr/share/gertrude/"]:
         for path in paths:
             if os.path.isfile(directory + path):

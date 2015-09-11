@@ -39,6 +39,24 @@ if sys.platform == 'win32':
             os.remove(exe)
         os.rename("./Output/setup.exe", exe)
         print u"File %s generated!" % exe
+
+elif sys.platform == 'darwin':
+    from setuptools import setup
+
+    APP = ["gertrude.pyw"]
+    DATA_FILES = glob.glob("bitmaps_dist/*.png") + glob.glob("bitmaps_dist/*.ico") + glob.glob("templates_dist/*.html") + glob.glob("templates_dist/*.txt") + glob.glob("templates_dist/*.od?")
+    OPTIONS = {'site_packages': True,
+               'arch': 'i386',
+               'iconfile': 'bitmaps_dist/gertrude.icns',
+               'argv_emulation': True}
+
+    setup(
+        name="Gertrude",
+        app=APP,
+        data_files=DATA_FILES,
+        options={'py2app': OPTIONS},
+        setup_requires=['py2app'],
+    )
         
 elif "linux" in sys.platform:
     if not os.path.exists("./gertrude.py"):

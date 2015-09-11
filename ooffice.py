@@ -456,14 +456,25 @@ def oo_open(filename):
             dlg = wx.MessageDialog(None, u"Impossible d'ouvrir le document\n%r" % e, 'Erreur', wx.OK|wx.ICON_WARNING)
             dlg.ShowModal()
             dlg.Destroy()
-    elif sys.platform == "darwin":
-        subprocess.Popen(["/Applications/OpenOffice.app/Contents/MacOS/soffice", filename])
     else:
-        if os.path.exists("/usr/bin/libreoffice"):
-            subprocess.Popen(["/usr/bin/libreoffice", filename])
+        paths = []
+        if sys.platform == "darwin":
+            paths.append("/Applications/LibreOffice.app/Contents/MacOS/soffice")
+            paths.append("/Applications/OpenOffice.app/Contents/MacOS/soffice")
         else:
-            subprocess.Popen(["ooffice", filename])
-    return 1
+            paths.append("/usr/bin/libreoffice")
+            paths.append("ooffice")
+        for path in paths:
+            try:
+                print path, filename
+                subprocess.Popen([path, filename])
+                return
+            except Exception, e:
+                print e
+                pass
+        dlg = wx.MessageDialog(None, "Impossible de lancer OpenOffice / LibreOffice", 'Erreur', wx.OK|wx.ICON_WARNING)
+        dlg.ShowModal()
+        dlg.Destroy()
 
 def save_current_document(filename):
     if sys.platform == 'win32':
@@ -519,10 +530,13 @@ def pdf_open(filename):
             c = dde.CreateConversation(dde_server)
             c.ConnectTo(DDE_ACROBAT_STRINGS[t%3], 'control')
             c.Exec('[DocOpen("%s")]' % (filename,))
-            return 1
+            return
         except Exception, e:
             print "Impossible de lancer acrobat reader ; prochain essai dans 2s ...", e
-    return 0
+
+    dlg = wx.MessageDialog(self, "Impossible d'ouvrir le document", 'Erreur', wx.OK|wx.ICON_WARNING)
+    dlg.ShowModal()
+    dlg.Destroy()
 
 def IsOODocument(filename):
     return not (filename.endswith(".html") or filename.endswith(".txt"))
@@ -687,13 +701,9 @@ class DocumentDialog(wx.Dialog):
         self.onSauver(event)
         if self.document_generated:
             if self.filename.endswith("pdf"):
-                result = pdf_open(self.filename)
+                pdf_open(self.filename)
             else:
-                result = oo_open(self.filename)
-            if not result:
-                dlg = wx.MessageDialog(self, "Impossible d'ouvrir le document", 'Erreur', wx.OK|wx.ICON_WARNING)
-                dlg.ShowModal()
-                dlg.Destroy()
+                oo_open(self.filename)
                 
     def onSauverEnvoyer(self, event):
         self.onSauver(event)
