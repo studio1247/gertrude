@@ -378,9 +378,10 @@ class FactureFinMois(object):
                     # avant il y avait ce commentaire: ne marche pas pour saint julien, mais c'est redemande (2 octobre 2012), normal pour le premier mois pour un enfant qui arrive mi-septembre
                     # avec le test suivant on devrait etre bon, parce que sinon on effectue la regle de 3 dans la cotisation + ici
                     if not cotisation.prorata_effectue:                            
-                        prorata = (prorata * cotisation.jours_ouvres) / jours_ouvres
-                        if (options & TRACES):
-                            print " prorata : %f" % prorata                        
+                        new_prorata = (prorata * cotisation.jours_ouvres) / jours_ouvres
+                        if options & TRACES:
+                            print " prorata : %f * %f / %f = %f" % (prorata, cotisation.jours_ouvres, jours_ouvres, new_prorata)
+                        prorata = new_prorata                     
 
                     self.cotisation_mensuelle += prorata
                     self.total_contractualise += prorata
