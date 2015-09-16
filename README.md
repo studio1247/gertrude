@@ -1,6 +1,8 @@
 gertrude
 ========
 
+[![Build Status](https://travis-ci.org/studio1247/gertrude.svg?branch=master)](https://travis-ci.org/studio1247/gertrude)
+
 Gestion de crèches / haltes-garderies
 
 Gertrude est un logiciel libre adapté aux besoins de gestion des crèches / haltes-garderies / garderies périscolaires en France.
