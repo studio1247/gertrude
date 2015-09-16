@@ -4,7 +4,9 @@ dist
 backups
 bitmaps
 templates
-.*
+.project
+.pydevproject
+.settings
 *.ini
 *.db
 gertrude.ini.*
