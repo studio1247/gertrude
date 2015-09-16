@@ -173,6 +173,7 @@ class FactureFinMois(object):
                         cotisation.heures_maladie = 0.0
                         cotisation.heures_contractualisees = 0.0
                         cotisation.heures_supplementaires = 0.0
+                        cotisation.total_realise_non_facture = 0.0
                         cotisations_mensuelles.append(cotisation)
                         last_cotisation = cotisation
                         self.taux_effort = cotisation.taux_effort
@@ -281,7 +282,9 @@ class FactureFinMois(object):
                     if heures_realisees_non_facturees > 0 and heures_realisees == heures_realisees_non_facturees:
                         self.jours_presence_non_facturee[date] = heures_realisees_non_facturees
 
-                    self.total_realise_non_facture += cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees+heures_realisees_non_facturees) - cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees)
+                    realise_non_facture = cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees+heures_realisees_non_facturees) - cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees)
+                    cotisation.total_realise_non_facture += realise_non_facture
+                    self.total_realise_non_facture += realise_non_facture
 
                     self.heures_realisees += heures_realisees
                     self.heures_realisees_non_facturees += heures_realisees_non_facturees
@@ -356,6 +359,9 @@ class FactureFinMois(object):
                         prorata = cotisation.cotisation_mensuelle * cotisation.jours_ouvres / jours_ouvres
                     else:
                         prorata = cotisation.cotisation_mensuelle
+                    if cotisation.total_realise_non_facture:
+                        self.deduction += cotisation.total_realise_non_facture
+                        self.raison_deduction.add(u"heures non facturées")
                     self.cotisation_mensuelle += prorata
                     self.total_contractualise += prorata
                     self.heures_contrat += prorata_heures
@@ -418,9 +424,6 @@ class FactureFinMois(object):
         if creche.temps_facturation == FACTURATION_FIN_MOIS:
             self.cotisation_mensuelle += self.report_cotisation_mensuelle
             self.report_cotisation_mensuelle = 0.0
-
-        # print self.total_realise_non_facture            
-        # self.cotisation_mensuelle -= self.total_realise_non_facture
 
         # arrondi de tous les champs en euros
         if IsContratFacture(self.debut_recap):
