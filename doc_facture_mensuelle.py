@@ -47,12 +47,7 @@ class FactureModifications(object):
         
     def __init__(self, inscrits, periode):
         self.multi = False
-        if creche.tri_factures == TRI_NOM:
-            self.inscrits = GetEnfantsTriesParNom(inscrits)
-        elif creche.tri_factures == TRI_NOM_PARENTS:
-            self.inscrits = GetEnfantsTriesParNomParents(inscrits)
-        else:
-            self.inscrits = inscrits
+        self.inscrits = GetEnfantsTriesSelonParametreTriFacture(inscrits)
         self.periode = periode
         self.periode_facturation = periode
         if creche.temps_facturation != FACTURATION_FIN_MOIS:

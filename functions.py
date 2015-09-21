@@ -422,7 +422,7 @@ def GetTriParNomIndexes(indexes):
 
     indexes.sort(tri)
     return indexes
-
+            
 def GetEnfantsTries(enfants, tri):
     if enfants is None:
         enfants = creche.inscrits[:]
@@ -445,6 +445,14 @@ def GetEnfantsTriesParNomParents(enfants=None):
     def tri(one, two):
         return cmp(GetParentsNomsString(one.famille), GetParentsNomsString(two.famille))
     return GetEnfantsTries(enfants, tri)
+
+def GetEnfantsTriesSelonParametreTriFacture(enfants):
+    if creche.tri_factures == TRI_NOM:
+        return GetEnfantsTriesParNom(enfants)
+    elif creche.tri_factures == TRI_NOM_PARENTS:
+        return GetEnfantsTriesParNomParents(enfants)
+    else:
+        return enfants
 
 def GetPresentsIndexes(indexes, (debut, fin), site=None):
     if indexes is None:

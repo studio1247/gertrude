@@ -49,6 +49,7 @@ class AttestationModifications(object):
             self.default_output = self.email_subject + ".odt"
             self.email_to = list(set([parent.email for parent in who.famille.parents.values() if parent and parent.email]))
             self.multi = False
+        self.inscrits = GetEnfantsTriesSelonParametreTriFacture(self.inscrits)
         self.email = True
         self.site = None
         self.email_text = "Accompagnement attestation paiement.txt"
