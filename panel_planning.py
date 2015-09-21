@@ -338,25 +338,11 @@ class PlanningPanel(GPanel):
             elif periode.malade:
                 value = MALADE
             elif not periode.arrivee:
-                if not periode.date in who.journees:
-                    errors.append(u"%s : Pas d'arrivée enregistrée le %s" % (GetPrenomNom(who), periode.date))
-                reference = who.GetJourneeReference(periode.date)
-                if reference:
-                    periode.arrivee = reference.GetPlageHoraire()[0]
-                    if periode.arrivee is None:
-                        periode.arrivee = int(creche.ouverture*(60 / BASE_GRANULARITY))
-                else:
-                    return
+                errors.append(u"%s : Pas d'arrivée enregistrée le %s" % (GetPrenomNom(who), periode.date))
+                periode.arrivee = int(creche.ouverture*(60 / BASE_GRANULARITY))
             elif not periode.depart:
-                if periode.date != today:
-                    errors.append(u"%s : Pas de départ enregistré le %s" % (GetPrenomNom(who), periode.date))
-                reference = who.GetJourneeReference(periode.date)
-                if reference:
-                    periode.depart = reference.GetPlageHoraire()[-1]
-                    if periode.depart is None:
-                        periode.depart = int(creche.fermeture*(60 / BASE_GRANULARITY))
-                else:
-                    return
+                errors.append(u"%s : Pas de départ enregistré le %s" % (GetPrenomNom(who), periode.date))
+                periode.depart = int(creche.fermeture*(60 / BASE_GRANULARITY))
             
             if value < 0:
                 journee.SetState(value)
