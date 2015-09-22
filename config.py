@@ -196,21 +196,22 @@ def LoadConfig(progress_handler=default_progress_handler):
     progress_handler.display(u"Chargement de la configuration ...")
     
     parser = None
-    for path in CONFIG_PATHS:
-      if os.path.isfile(path + CONFIG_FILENAME):
+    for folder in CONFIG_PATHS:
+      path = folder + CONFIG_FILENAME
+      if os.path.isfile(path):
         try:
             parser = ConfigParser.SafeConfigParser()
-            parser.read(CONFIG_FILENAME)
+            parser.read(path)
             break
         except:
-            progress_handler.display(u"Fichier %s erroné. Utilisation de la configuration par défaut." % CONFIG_FILENAME)
+            progress_handler.display(u"Fichier %s erroné. Utilisation de la configuration par défaut." % path)
     else:
         progress_handler.display(u"Pas de fichier %s. Utilisation de la configuration par défaut." % CONFIG_FILENAME)
 
     config.original_window_size = getWindowSize(parser)
     config.window_size = config.original_window_size
     config.column_width = getColumnWidth(parser)
-    
+     
     config.options = getOptions(parser)
 
     config.original_documents_directory = getDocumentsDirectory(parser)
@@ -221,7 +222,7 @@ def LoadConfig(progress_handler=default_progress_handler):
     
     config.original_default_section = getDefaultSection(parser)
     config.default_section = config.original_default_section
-    
+   
     if parser:
         for section in parser.sections():
             database = getDatabase(parser, section)
