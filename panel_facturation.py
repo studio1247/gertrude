@@ -123,17 +123,21 @@ class FacturationTab(AutoTab):
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Edition des attestations de paiement'), wx.HORIZONTAL)
         self.inscrits_choice["recus"] = wx.Choice(self)
         self.recus_periodechoice = wx.Choice(self)
-        self.recus_endchoice = wx.Choice(self)
-        self.recus_endchoice.Disable()
+        if IsTemplateFile("Attestation mensuelle.odt"):
+            self.recus_endchoice = None
+        else:
+            self.recus_endchoice = wx.Choice(self)
+            self.recus_endchoice.Disable()
         self.Bind(wx.EVT_CHOICE, self.EvtRecusInscritChoice, self.inscrits_choice["recus"])
         self.Bind(wx.EVT_CHOICE, self.EvtRecusPeriodeChoice, self.recus_periodechoice)
         button = wx.Button(self, -1, u'Génération')
-        self.Bind(wx.EVT_BUTTON, self.EvtGenerationRecu, button)
+        self.Bind(wx.EVT_BUTTON, self.OnGenerationAttestationPaiement, button)
         box_sizer.AddMany([(self.inscrits_choice["recus"], 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5),
-                           (self.recus_periodechoice, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5),
-                           (wx.StaticText(self, -1, '-'), 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5),
-                           (self.recus_endchoice, 0, wx.EXPAND|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5),
-                           (button, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)])
+                           (self.recus_periodechoice, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)])
+        if self.recus_endchoice:
+            box_sizer.AddMany([(wx.StaticText(self, -1, '-'), 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5),
+                               (self.recus_endchoice, 0, wx.EXPAND|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)])
+        box_sizer.AddMany([(button, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)])
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
         self.SetSizer(sizer)
         self.UpdateContents()
@@ -164,27 +168,28 @@ class FacturationTab(AutoTab):
         self.recus_periodechoice.Clear()
         need_separator = False
         inscrit = self.inscrits_choice["recus"].GetClientData(self.inscrits_choice["recus"].GetSelection())
-        if isinstance(inscrit, Inscrit):
-            for year in range(today.year-10, today.year):
-                if inscrit.GetInscriptions(datetime.date(year, 1, 1), datetime.date(year, 12, 31)):
+        if self.recus_endchoice:
+            if isinstance(inscrit, Inscrit):
+                for year in range(today.year-10, today.year):
+                    if inscrit.GetInscriptions(datetime.date(year, 1, 1), datetime.date(year, 12, 31)):
+                        need_separator = True
+                        self.recus_periodechoice.Append(u"Année %d" % year, (datetime.date(year, 1, 1), datetime.date(year, 12, 31)))
+                if inscrit.GetInscriptions(datetime.date(today.year, 1, 1), GetMonthEnd(today)):
                     need_separator = True
-                    self.recus_periodechoice.Append(u"Année %d" % year, (datetime.date(year, 1, 1), datetime.date(year, 12, 31)))
-            if inscrit.GetInscriptions(datetime.date(today.year, 1, 1), GetMonthEnd(today)):
+                    debut = 1
+                    while not inscrit.GetInscriptions(datetime.date(today.year, debut, 1), GetMonthEnd(datetime.date(today.year, debut, 1))) and debut < today.month:
+                        debut += 1
+                    if debut == today.month:
+                        self.recus_periodechoice.Append("%s %d" % (months[debut-1], today.year), (datetime.date(today.year, debut, 1), GetMonthEnd(datetime.date(today.year, debut, 1))))
+                    else:
+                        self.recus_periodechoice.Append(u"%s - %s %d" % (months[debut-1], months[today.month-1], today.year), (datetime.date(today.year, debut, 1), datetime.date(today.year, today.month, 1)))
                 need_separator = True
-                debut = 1
-                while not inscrit.GetInscriptions(datetime.date(today.year, debut, 1), GetMonthEnd(datetime.date(today.year, debut, 1))) and debut < today.month:
-                    debut += 1
-                if debut == today.month:
-                    self.recus_periodechoice.Append("%s %d" % (months[debut-1], today.year), (datetime.date(today.year, debut, 1), GetMonthEnd(datetime.date(today.year, debut, 1))))
-                else:
-                    self.recus_periodechoice.Append(u"%s - %s %d" % (months[debut-1], months[today.month-1], today.year), (datetime.date(today.year, debut, 1), datetime.date(today.year, today.month, 1)))
-            need_separator = True
-        else:
-            self.recus_periodechoice.Append(u"Année %d" % (today.year-1), (datetime.date(today.year-1, 1, 1), datetime.date(today.year-1, 12, 31)))
-            if today.month == 1:
-                self.recus_periodechoice.Append("Janvier %d" % today.year, (datetime.date(today.year, 1, 1), datetime.date(today.year, 1, 31)))
             else:
-                self.recus_periodechoice.Append(u"Janvier - %s %d" % (months[today.month-1], today.year), (datetime.date(today.year, 1, 1), datetime.date(today.year, today.month, 1)))
+                self.recus_periodechoice.Append(u"Année %d" % (today.year-1), (datetime.date(today.year-1, 1, 1), datetime.date(today.year-1, 12, 31)))
+                if today.month == 1:
+                    self.recus_periodechoice.Append("Janvier %d" % today.year, (datetime.date(today.year, 1, 1), datetime.date(today.year, 1, 31)))
+                else:
+                    self.recus_periodechoice.Append(u"Janvier - %s %d" % (months[today.month-1], today.year), (datetime.date(today.year, 1, 1), datetime.date(today.year, today.month, 1)))
         
         date = GetFirstMonday()
         while date < today:
@@ -200,8 +205,9 @@ class FacturationTab(AutoTab):
     def EvtRecusPeriodeChoice(self, evt):
         inscrit = self.inscrits_choice["recus"].GetClientData(self.inscrits_choice["recus"].GetSelection())
         periode = self.recus_periodechoice.GetClientData(self.recus_periodechoice.GetSelection())
-        self.recus_endchoice.Clear()
-        if periode:
+        if self.recus_endchoice:
+            self.recus_endchoice.Clear()
+        if self.recus_endchoice and periode:
             debut, fin = periode
             if debut.month == fin.month and debut < today:
                 date = debut
@@ -215,7 +221,7 @@ class FacturationTab(AutoTab):
                 self.recus_endchoice.Disable()
         else:
             self.recus_periodechoice.SetSelection(0)
-            self.EvtRecusPeriodeChoice(evt)
+            # self.EvtRecusPeriodeChoice(evt)
 
     def UpdateContents(self):
         for choice in self.inscrits_choice.values():
@@ -328,10 +334,10 @@ class FacturationTab(AutoTab):
         else:
             wx.MessageDialog(self, u'Aucune facture pour cette période', 'Message', wx.OK|wx.ICON_WARNING).ShowModal()
 
-    def EvtGenerationRecu(self, evt):
+    def OnGenerationAttestationPaiement(self, evt):
         inscrits = self.inscrits_choice["recus"].GetClientData(self.inscrits_choice["recus"].GetSelection())
         debut, fin = self.recus_periodechoice.GetClientData(self.recus_periodechoice.GetSelection())
-        if self.recus_endchoice.IsEnabled():
+        if self.recus_endchoice and self.recus_endchoice.IsEnabled():
             fin = self.recus_endchoice.GetClientData(self.recus_endchoice.GetSelection())[1]
         DocumentDialog(self, AttestationModifications(inscrits, debut, fin)).ShowModal()
         

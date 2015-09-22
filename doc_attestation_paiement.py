@@ -24,7 +24,10 @@ from ooffice import *
 
 class AttestationModifications(object):
     def __init__(self, who, debut, fin):
-        self.template = 'Attestation paiement.odt'
+        if IsTemplateFile("Attestation mensuelle.odt"):
+            self.template = 'Attestation mensuelle.odt'
+        else:
+            self.template = 'Attestation paiement.odt'
         self.debut, self.fin = debut, fin
         if isinstance(who, list):
             self.inscrits = [inscrit for inscrit in who if inscrit.GetInscriptions(debut, fin)]
@@ -127,6 +130,12 @@ class AttestationModifications(object):
                     ('total', '%.2f' % total),
                     ('site', GetNom(site))
                     ]
+            
+            if IsTemplateFile("Attestation mensuelle.odt"):
+                fields.extend([
+                    ('mois', months[facture_debut.month - 1]),
+                    ('annee', facture_debut.year)
+                    ])
     
             if inscrit.sexe == 1:
                 fields.append(('ne-e', u"né"))
