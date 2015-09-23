@@ -409,11 +409,12 @@ class FactureFinMois(object):
                     if jours_presence and inscription.semaines_conges:
                         if (inscription.fin and inscription.fin >= self.debut_recap and inscription.fin <= self.fin_recap) or (creche.gestion_depart_anticipe and inscription.depart and inscription.depart >= self.debut_recap and inscription.depart <= self.fin_recap):
                             semaines_conges_non_pris = inscription.semaines_conges - float(inscription.GetNombreJoursCongesPoses()) / jours_presence
-                            heures = cotisation.heures_semaine * semaines_conges_non_pris
-                            regularisation_conges_non_pris = heures * cotisation.montant_heure_garde
-                            if (options & TRACES):
-                                print u" régularisation congés non pris : %dh * %f = %f" % (heures, cotisation.montant_heure_garde, regularisation_conges_non_pris)
-                            self.regularisation += regularisation_conges_non_pris
+                            if semaines_conges_non_pris > 0:
+                                heures = cotisation.heures_semaine * semaines_conges_non_pris
+                                regularisation_conges_non_pris = heures * cotisation.montant_heure_garde
+                                if options & TRACES:
+                                    print u" régularisation congés non pris (%d semaines, %d jours pris) : %dh * %f = %f" % (inscription.semaines_conges, inscription.GetNombreJoursCongesPoses(), heures, cotisation.montant_heure_garde, regularisation_conges_non_pris)
+                                self.regularisation += regularisation_conges_non_pris
                     
         if self.regularisation != 0:
             self.deduction -= self.regularisation
