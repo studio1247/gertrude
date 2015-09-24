@@ -775,8 +775,11 @@ class Salarie(object):
         if creation:
             self.create()
 
-    def IsDateConge(self, date):
-        return date in creche.jours_fermeture or date in self.jours_conges
+    def IsDateConge(self, date, conges_seulement=False):
+        if conges_seulement:
+            return date in creche.jours_conges or date in self.jours_conges
+        else:
+            return date in creche.jours_fermeture or date in self.jours_conges
     
     def GetJourneeReference(self, date):
         if date in self.jours_conges:
@@ -1920,9 +1923,12 @@ class Inscrit(object):
         else:
             return None
     
-    def IsDateConge(self, date):
-        return date in creche.jours_fermeture or (creche.conges_inscription != GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT and date in self.jours_conges)
-
+    def IsDateConge(self, date, conges_seulement=False):
+        if conges_seulement:
+            return date in creche.jours_conges or (creche.conges_inscription != GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT and date in self.jours_conges)
+        else:
+            return date in creche.jours_fermeture or (creche.conges_inscription != GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT and date in self.jours_conges)
+        
     def GetJournee(self, date):
         if self.IsDateConge(date):
             return None
@@ -1940,6 +1946,10 @@ class Inscrit(object):
         """Retourne les infos sur une journée
         \param date la journée
         """
+        
+        if self.IsDateConge(date, conges_seulement=True):
+            return State(VACANCES)
+        
         if self.IsDateConge(date):
             return State(ABSENT)
         
