@@ -15,7 +15,7 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import datetime, time, locale
+import datetime, time, locale, numbers
 import sys, os, shutil, types, zipfile
 import xml.dom.minidom
 import re, urllib
@@ -148,10 +148,13 @@ def ReplaceTextFields(dom, _fields):
     fields = _fields[:]
     for i, field in enumerate(fields):
         if len(field) == 3 and (field[2] & FIELD_EUROS) and field[1] is not None:
+            v = field[1]
+            if not isinstance(v, numbers.Real):
+                v = 0
             if field[2] & FIELD_SIGN:
-                fields[i] = (field[0], locale.format("%+.2f", field[1]))
+                fields[i] = (field[0], locale.format("%+.2f", v))
             else:
-                fields[i] = (field[0], locale.format("%.2f", field[1]))
+                fields[i] = (field[0], locale.format("%.2f", v))
 
     evalFields(fields)
     # print dom.toprettyxml()
