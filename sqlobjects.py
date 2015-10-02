@@ -775,11 +775,8 @@ class Salarie(object):
         if creation:
             self.create()
 
-    def IsDateConge(self, date, conges_seulement=False):
-        if conges_seulement:
-            return date in creche.jours_conges or date in self.jours_conges
-        else:
-            return date in creche.jours_fermeture or date in self.jours_conges
+    def IsDateConge(self, date):
+        return date in creche.jours_fermeture or date in self.jours_conges
     
     def GetJourneeReference(self, date):
         if date in self.jours_conges:
@@ -1515,39 +1512,48 @@ class Inscription(PeriodeReference):
             return self.semaines_conges * self.GetNombreJoursPresenceSemaine()
         else:
             return 0
-        
-    def GetNombreJoursCongesPoses(self):
+    
+    def GetNombreJoursCongesPris(self, debut, fin):
         jours = 0
-        if self.debut and self.fin:
-            date = self.debut
-            if self.fin_periode_adaptation:
-                date = self.fin_periode_adaptation + datetime.timedelta(1)
-            while date < self.fin:
-                state = self.inscrit.GetState(date)
+        date = debut
+        # print "GetNombreJoursCongesPris(%s-%s)" % (debut, fin)
+        while date < fin:
+            state = self.inscrit.GetState(date)
+            if creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
                 if state.state == VACANCES:
                     # print date
                     jours += 1
-                date += datetime.timedelta(1)
+            else:
+                if state.state in (ABSENT, VACANCES):
+                    reference = self.GetJourneeReference(date)
+                    if reference.GetNombreHeures() > 0:
+                        # print date
+                        jours += 1
+            date += datetime.timedelta(1)
         return jours
+
+    def GetDebutDecompteJoursConges(self):
+        if self.fin_periode_adaptation:
+            return self.fin_periode_adaptation + datetime.timedelta(1)
+        else:
+            return self.debut
+
+    def GetNombreJoursCongesPoses(self):
+        if self.debut and self.fin:
+            return self.GetNombreJoursCongesPris(self.GetDebutDecompteJoursConges(), self.fin)
+        else:
+            return 0
     
     def IsNombreSemainesCongesAtteint(self, jalon):
         if self.debut:
-            if self.semaines_conges:
-                restant = self.GetNombreJoursCongesPeriode()
-            else:
-                restant = 0
-            date = self.debut
-            if self.fin_periode_adaptation:
-                date = self.fin_periode_adaptation + datetime.timedelta(1)
-            while date < jalon:
-                state = self.inscrit.GetState(date)
-                if state.state == VACANCES:
-                    # print date
-                    restant -= 1
-                    if restant <= 0:
-                        return True
-                date += datetime.timedelta(1)
-        return False
+            if not self.semaines_conges:
+                return True
+            debut = self.GetDebutDecompteJoursConges()
+            pris = self.GetNombreJoursCongesPris(debut, jalon)
+            total = self.GetNombreJoursCongesPeriode()
+            return pris >= total
+        else:
+            return False
     
     def GetDatesFromReference(self, index):
         dates = []
@@ -1923,11 +1929,8 @@ class Inscrit(object):
         else:
             return None
     
-    def IsDateConge(self, date, conges_seulement=False):
-        if conges_seulement:
-            return date in creche.jours_conges or (creche.conges_inscription != GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT and date in self.jours_conges)
-        else:
-            return date in creche.jours_fermeture or (creche.conges_inscription != GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT and date in self.jours_conges)
+    def IsDateConge(self, date):
+        return date in creche.jours_fermeture or (creche.conges_inscription != GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT and date in self.jours_conges)
         
     def GetJournee(self, date):
         if self.IsDateConge(date):
@@ -1946,9 +1949,6 @@ class Inscrit(object):
         """Retourne les infos sur une journée
         \param date la journée
         """
-        
-        if self.IsDateConge(date, conges_seulement=True):
-            return State(VACANCES)
         
         if self.IsDateConge(date):
             return State(ABSENT)
