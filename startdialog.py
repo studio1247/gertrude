@@ -50,7 +50,7 @@ class StartDialog(wx.Dialog):
         bmp = wx.StaticBitmap(self, -1, wx.Bitmap(GetBitmapFile("splash_gertrude.png"), wx.BITMAP_TYPE_PNG), style=wx.SUNKEN_BORDER)
         self.sizer.Add(bmp, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
 
-        self.info = wx.TextCtrl(self, -1, u"Démarrage ...\n", size=(-1, 50), style=wx.TE_READONLY|wx.TE_MULTILINE)
+        self.info = wx.TextCtrl(self, -1, u"Démarrage ...\n", size=(-1, 70), style=wx.TE_READONLY|wx.TE_MULTILINE)
         self.sizer.Add(self.info, 0, wx.EXPAND|wx.ALL, 5)
         self.gauge = wx.Gauge(self, -1, 100, style=wx.GA_SMOOTH)
         self.sizer.Add(self.gauge, 0, wx.EXPAND|wx.ALL, 5)
