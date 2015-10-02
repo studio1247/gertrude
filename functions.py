@@ -451,6 +451,8 @@ def GetEnfantsTriesSelonParametreTriFacture(enfants):
         return GetEnfantsTriesParNom(enfants)
     elif creche.tri_factures == TRI_NOM_PARENTS:
         return GetEnfantsTriesParNomParents(enfants)
+    elif creche.tri_factures == TRI_PRENOM:
+        return GetEnfantsTriesParPrenom(enfants)
     else:
         return enfants
 

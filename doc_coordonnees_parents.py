@@ -45,7 +45,7 @@ class CoordonneesModifications(object):
             if table.getAttribute('table:name') == 'Enfants':                
                 template = table.getElementsByTagName('table:table-row')[1]
                 #print template.toprettyxml()
-                for inscrit in creche.inscrits:
+                for inscrit in GetEnfantsTriesParPrenom():
                     inscription = inscrit.GetInscription(self.date) 
                     if inscription and (self.site == None or inscription.site == self.site):
                         line = template.cloneNode(1)

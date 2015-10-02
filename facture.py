@@ -51,10 +51,8 @@ class FactureFinMois(object):
                     inscrits.extend(GetInscrits(self.debut_recap, self.fin_recap, site))
         else:
             inscrits = creche.inscrits[:]
-        if creche.tri_factures == TRI_NOM:
-            inscrits = GetEnfantsTriesParNom(inscrits)
-        elif creche.tri_factures == TRI_NOM_PARENTS:
-            inscrits = GetEnfantsTriesParNomParents(inscrits)
+        
+        inscrits = GetEnfantsTriesSelonParametreTriFacture(inscrits)
             
         if config.options & FACTURES_FAMILLES:
             # print u"Calcul du numéro de facture de", GetPrenomNom(self.inscrit)
