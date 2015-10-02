@@ -49,6 +49,8 @@ class Config(object):
         self.sections = {}
         self.options = 0
         self.connection = None
+        self.numfact = None
+        self.codeclient = None
         
     def setSection(self, section):
         self.default_section = section

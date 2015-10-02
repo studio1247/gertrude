@@ -9,6 +9,8 @@ from cotisation import *
 from facture import Facture
 from doc_planning_detaille import PlanningDetailleModifications
 from doc_coordonnees_parents import CoordonneesModifications
+from doc_releve_detaille import ReleveDetailleModifications
+from doc_etats_trimestriels import EtatsTrimestrielsModifications
 from ooffice import GenerateOODocument
 from config import Config
 
@@ -45,6 +47,7 @@ class GertrudeTestCase(unittest.TestCase):
         inscrit = Inscrit(creation=False)
         inscrit.famille = Famille(creation=False)
         inscrit.prenom, inscrit.nom = 'Gertrude', 'GPL'
+        inscrit.idx = 0
         self.AddParents(inscrit)
         creche.inscrits.append(inscrit)
         return inscrit
@@ -113,6 +116,7 @@ class DocumentsTests(GertrudeTestCase):
             inscrit = self.AddInscrit()
             inscription = Inscription(inscrit, creation=False)
             inscription.debut, inscription.fin = datetime.date(2010, 9, 6), datetime.date(2011, 7, 27)
+            inscription.mode = MODE_5_5
             inscription.reference[0].AddActivity(96, 180, 0, -1)
             inscription.reference[1].AddActivity(96, 180, 0, -1)
             inscription.reference[2].AddActivity(96, 180, 0, -1)
@@ -134,6 +138,18 @@ class DocumentsTests(GertrudeTestCase):
         errors = GenerateOODocument(modifications, filename="./test.odt", gauge=None)
         self.assertEquals(len(errors), 0)
         os.unlink("./test.odt")
+
+    def test_releves_trimestriels(self):
+        modifications = EtatsTrimestrielsModifications(None, 2011)
+        errors = GenerateOODocument(modifications, filename="./test.ods", gauge=None)
+        self.assertEquals(len(errors), 0)
+        os.unlink("./test.ods")    
+
+    def test_releves_detailles(self):
+        modifications = ReleveDetailleModifications(None, 2011)
+        errors = GenerateOODocument(modifications, filename="./test.ods", gauge=None)
+        self.assertEquals(len(errors), 0)
+        os.unlink("./test.ods")    
         
 class PSUTests(GertrudeTestCase):
     def test_nombre_mois_facturation(self):

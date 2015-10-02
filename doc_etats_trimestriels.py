@@ -207,14 +207,9 @@ class EtatsTrimestrielsModifications(object):
                 total[mois] += heures[mois]
                 total_previsionnel[mois] += previsionnel[mois]
 
-            fields = [('nom', inscrit.nom),
-                      ('prenom', inscrit.prenom),
-                      ('adresse', inscrit.famille.adresse),
-                      ('ville', inscrit.famille.ville),
-                      ('code_postal', str(inscrit.code_postal)),
-                      ('naissance', inscrit.naissance),
-                      ('entree', inscrit.inscriptions[0].debut),
-                      ('sortie', inscrit.inscriptions[-1].fin)]
+            fields = GetInscritFields(inscrit) + GetFamilleFields(inscrit.famille)
+            fields.extend([('entree', inscrit.inscriptions[0].debut),
+                           ('sortie', inscrit.inscriptions[-1].fin)])
 
             for mois in range(12):
                 if heures[mois] == 0:
