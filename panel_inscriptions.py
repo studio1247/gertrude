@@ -554,7 +554,7 @@ class ParentsPanel(InscriptionsTab):
                 item.Show(False)
             self.sizer.FitInside(self)
         elif not self.inscrit.famille.parents[value]:
-            self.inscrit.famille.parents[value] = parent = Parent(self.inscrit, value)
+            self.inscrit.famille.parents[value] = parent = Parent(self.inscrit.famille, value)
             for item in self.parents_items[object.index]:
                 try:
                     item.SetInstance(parent)

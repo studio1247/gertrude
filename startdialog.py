@@ -159,7 +159,7 @@ class StartDialog(wx.Dialog):
 
         self.loaded = True        
         sql_connection.open()
-        if len(creche.users) == 0:
+        if 1: # len(creche.users) == 0:
             __builtin__.profil = PROFIL_ALL
             self.StartFrame()
         else:
