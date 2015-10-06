@@ -212,6 +212,8 @@ class StartDialog(wx.Dialog):
         frame.Show()
         self.gauge.SetValue(100)
         self.Destroy()
+        if sys.platform == "darwin":
+            frame.Show()
 
     def OnOk(self, evt):
         if config.connection is None:
