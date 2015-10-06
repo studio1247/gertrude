@@ -46,6 +46,7 @@ class Section(object):
         
 class Config(object):
     def __init__(self):
+        self.filename = CONFIG_FILENAME
         self.sections = {}
         self.options = 0
         self.connection = None
@@ -198,15 +199,17 @@ def LoadConfig(progress_handler=default_progress_handler):
     progress_handler.display(u"Chargement de la configuration ...")
     
     parser = None
+    
     for folder in CONFIG_PATHS:
-      path = folder + CONFIG_FILENAME
-      if os.path.isfile(path):
-        try:
-            parser = ConfigParser.SafeConfigParser()
-            parser.read(path)
-            break
-        except:
-            progress_handler.display(u"Fichier %s erroné. Utilisation de la configuration par défaut." % path)
+        path = folder + CONFIG_FILENAME
+        if os.path.isfile(path):
+            try:
+                parser = ConfigParser.SafeConfigParser()
+                parser.read(path)
+                config.filename = path
+                break
+            except:
+                progress_handler.display(u"Fichier %s erroné. Utilisation de la configuration par défaut." % path)
     else:
         progress_handler.display(u"Pas de fichier %s. Utilisation de la configuration par défaut." % CONFIG_FILENAME)
 
@@ -251,15 +254,15 @@ def SaveConfig(progress_handler):
     if parameters:
         try:
             parser = ConfigParser.SafeConfigParser()
-            parser.read(CONFIG_FILENAME)
+            parser.read(config.filename)
             if not parser.has_section(DEFAULT_SECTION):
                 parser.add_section(DEFAULT_SECTION)
             for key in parameters.keys():
                 parser.set(DEFAULT_SECTION, key, parameters[key])
-            parser.write(file(CONFIG_FILENAME, "w"))
+            parser.write(file(config.filename, "w"))
         except Exception, e:
             print e
-            progress_handler.display(u"Impossible d'enregistrer le répertoire de destination des documents !")    
+            progress_handler.display(u"Impossible d'enregistrer les paramètres de configuration !")    
 
 def Load(progress_handler=default_progress_handler):
     __builtin__.creche, __builtin__.readonly = config.connection.Load(progress_handler)
