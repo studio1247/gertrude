@@ -40,7 +40,7 @@ class CorrectionsTab(AutoTab):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.monthchoice = wx.Choice(self)
         AddMonthsToChoice(self.monthchoice)
-        self.Bind(wx.EVT_CHOICE, self.EvtMonthChoice, self.monthchoice)
+        self.Bind(wx.EVT_CHOICE, self.OnMonthChoice, self.monthchoice)
         sizer.Add(self.monthchoice, 1, wx.EXPAND, 5)
         self.numfacture = AutoNumericCtrl(self, None, 'valeur', precision=0)
         sizer.AddMany([(wx.StaticText(self, -1, u'Premier numéro de facture :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (self.numfacture, 0, wx.ALIGN_CENTER_VERTICAL)])
@@ -51,7 +51,7 @@ class CorrectionsTab(AutoTab):
         self.UpdateContents()
         self.Layout()
         
-    def EvtMonthChoice(self, evt=None):
+    def OnMonthChoice(self, evt=None):
         while len(self.corrections_sizer.GetChildren()):
             sizer = self.corrections_sizer.GetItem(0)
             sizer.DeleteWindows()
@@ -81,7 +81,7 @@ class CorrectionsTab(AutoTab):
         self.sizer.FitInside(self)              
 
     def UpdateContents(self):
-        self.EvtMonthChoice()
+        self.OnMonthChoice()
         
 class FacturationTab(AutoTab):
     def __init__(self, parent):
@@ -94,7 +94,7 @@ class FacturationTab(AutoTab):
         self.appels_monthchoice = wx.Choice(self)
         AddMonthsToChoice(self.appels_monthchoice)
         button = wx.Button(self, -1, u'Génération')
-        self.Bind(wx.EVT_BUTTON, self.EvtGenerationAppelCotisations, button)
+        self.Bind(wx.EVT_BUTTON, self.OnGenerationAppelCotisations, button)
         box_sizer.AddMany([(self.appels_monthchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
@@ -102,20 +102,20 @@ class FacturationTab(AutoTab):
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Clôture et édition des factures'), wx.HORIZONTAL)
         self.inscrits_choice["factures"] = wx.Choice(self)
         self.factures_monthchoice = wx.Choice(self)
-        self.Bind(wx.EVT_CHOICE, self.EvtFacturesInscritChoice, self.inscrits_choice["factures"])
-        self.Bind(wx.EVT_CHOICE, self.EvtFacturesMonthChoice, self.factures_monthchoice)
+        self.Bind(wx.EVT_CHOICE, self.OnFacturesInscritChoice, self.inscrits_choice["factures"])
+        self.Bind(wx.EVT_CHOICE, self.OnFacturesMonthChoice, self.factures_monthchoice)
         self.cloture_button = wx.Button(self, -1, u'Clôture')
-        self.Bind(wx.EVT_BUTTON, self.EvtClotureFacture, self.cloture_button)
+        self.Bind(wx.EVT_BUTTON, self.OnClotureFacture, self.cloture_button)
         button2 = wx.Button(self, -1, u'Génération')
-        self.Bind(wx.EVT_BUTTON, self.EvtGenerationFacture, button2)
+        self.Bind(wx.EVT_BUTTON, self.OnGenerationFacture, button2)
         box_sizer.AddMany([(self.inscrits_choice["factures"], 1, wx.ALL|wx.EXPAND, 5), (self.factures_monthchoice, 1, wx.ALL|wx.EXPAND, 5), (self.cloture_button, 0, wx.ALL, 5), (button2, 0, wx.ALL, 5)])
         if IsTemplateFile("Export compta.txt"):
             exportButton = wx.Button(self, -1, u'Export compta')
-            self.Bind(wx.EVT_BUTTON, self.EvtExportCompta, exportButton)
+            self.Bind(wx.EVT_BUTTON, self.OnExportCompta, exportButton)
             box_sizer.Add(exportButton, 0, wx.ALL, 5)
         if config.options & DECLOTURE:
             self.decloture_button = wx.Button(self, -1, u'Dé-clôture')
-            self.Bind(wx.EVT_BUTTON, self.EvtDeclotureFacture, self.decloture_button)
+            self.Bind(wx.EVT_BUTTON, self.OnDeclotureFacture, self.decloture_button)
             box_sizer.Add(self.decloture_button, 0, wx.ALL, 5)
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
@@ -128,8 +128,8 @@ class FacturationTab(AutoTab):
         else:
             self.recus_endchoice = wx.Choice(self)
             self.recus_endchoice.Disable()
-        self.Bind(wx.EVT_CHOICE, self.EvtRecusInscritChoice, self.inscrits_choice["recus"])
-        self.Bind(wx.EVT_CHOICE, self.EvtRecusPeriodeChoice, self.recus_periodechoice)
+        self.Bind(wx.EVT_CHOICE, self.OnRecusInscritChoice, self.inscrits_choice["recus"])
+        self.Bind(wx.EVT_CHOICE, self.OnRecusPeriodeChoice, self.recus_periodechoice)
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.OnGenerationAttestationPaiement, button)
         box_sizer.AddMany([(self.inscrits_choice["recus"], 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5),
@@ -143,7 +143,7 @@ class FacturationTab(AutoTab):
         self.UpdateContents()
         self.Layout()
 
-    def EvtFacturesInscritChoice(self, evt):
+    def OnFacturesInscritChoice(self, evt):
         selection = self.factures_monthchoice.GetStringSelection()
         self.factures_monthchoice.Clear()
         inscrit = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
@@ -153,9 +153,9 @@ class FacturationTab(AutoTab):
                 self.factures_monthchoice.Append('%s %d' % (months[date.month - 1], date.year), date)
             date = GetNextMonthStart(date)
         self.factures_monthchoice.SetSelection(self.factures_monthchoice.GetCount()-1)
-        self.EvtFacturesMonthChoice()
+        self.OnFacturesMonthChoice()
         
-    def EvtFacturesMonthChoice(self, evt=None):
+    def OnFacturesMonthChoice(self, evt=None):
         inscrits, periode = self.__GetFactureSelection()
         for inscrit in inscrits:
             if inscrit.HasFacture(periode) and periode not in inscrit.factures_cloturees:
@@ -164,7 +164,7 @@ class FacturationTab(AutoTab):
         else:
             self.cloture_button.Disable()
 
-    def EvtRecusInscritChoice(self, evt):
+    def OnRecusInscritChoice(self, evt):
         self.recus_periodechoice.Clear()
         need_separator = False
         inscrit = self.inscrits_choice["recus"].GetClientData(self.inscrits_choice["recus"].GetSelection())
@@ -200,9 +200,9 @@ class FacturationTab(AutoTab):
                 self.recus_periodechoice.Append('%s %d' % (months[date.month - 1], date.year), (datetime.date(date.year, date.month, 1), GetMonthEnd(date)))
             date = GetNextMonthStart(date)
         self.recus_periodechoice.SetSelection(0)
-        self.EvtRecusPeriodeChoice(evt)
+        self.OnRecusPeriodeChoice(evt)
 
-    def EvtRecusPeriodeChoice(self, evt):
+    def OnRecusPeriodeChoice(self, evt):
         inscrit = self.inscrits_choice["recus"].GetClientData(self.inscrits_choice["recus"].GetSelection())
         periode = self.recus_periodechoice.GetClientData(self.recus_periodechoice.GetSelection())
         if self.recus_endchoice:
@@ -219,9 +219,6 @@ class FacturationTab(AutoTab):
                 self.recus_endchoice.SetSelection(0)
             else:
                 self.recus_endchoice.Disable()
-        else:
-            self.recus_periodechoice.SetSelection(0)
-            # self.EvtRecusPeriodeChoice(evt)
 
     def UpdateContents(self):
         for choice in self.inscrits_choice.values():
@@ -260,12 +257,12 @@ class FacturationTab(AutoTab):
         
         self.cloture_button.Show(creche.cloture_factures)
 
-        self.EvtFacturesInscritChoice(None)
-        self.EvtRecusInscritChoice(None)
+        self.OnFacturesInscritChoice(None)
+        self.OnRecusInscritChoice(None)
         
         self.Layout()
         
-    def EvtGenerationAppelCotisations(self, evt):
+    def OnGenerationAppelCotisations(self, evt):
         periode = self.appels_monthchoice.GetClientData(self.appels_monthchoice.GetSelection())
         DocumentDialog(self, AppelCotisationsModifications(periode, options=NO_NOM)).ShowModal()
 
@@ -289,7 +286,7 @@ class FacturationTab(AutoTab):
             inscrits = [data]
         return inscrits, periode
     
-    def EvtClotureFacture(self, evt):
+    def OnClotureFacture(self, evt):
         inscrits, periode = self.__GetFactureSelection()
         errors = {}
         for inscrit in inscrits:
@@ -305,9 +302,9 @@ class FacturationTab(AutoTab):
                 message += '\n' + label + ' :\n  '
                 message += '\n  '.join(errors[label])
             wx.MessageDialog(self, message, 'Message', wx.OK|wx.ICON_WARNING).ShowModal()
-        self.EvtFacturesMonthChoice()
+        self.OnFacturesMonthChoice()
 
-    def EvtDeclotureFacture(self, evt):
+    def OnDeclotureFacture(self, evt):
         inscrits, periode = self.__GetFactureSelection()
         errors = {}
         for inscrit in inscrits:
@@ -325,9 +322,9 @@ class FacturationTab(AutoTab):
                 message += '\n' + label + ' :\n  '
                 message += '\n  '.join(errors[label])
             wx.MessageDialog(self, message, 'Message', wx.OK|wx.ICON_WARNING).ShowModal()
-        self.EvtFacturesMonthChoice()
+        self.OnFacturesMonthChoice()
 
-    def EvtGenerationFacture(self, evt):
+    def OnGenerationFacture(self, evt):
         inscrits, periode = self.__GetFactureSelection()
         if len(inscrits) > 0:
             DocumentDialog(self, FactureModifications(inscrits, periode)).ShowModal()
@@ -341,7 +338,7 @@ class FacturationTab(AutoTab):
             fin = self.recus_endchoice.GetClientData(self.recus_endchoice.GetSelection())[1]
         DocumentDialog(self, AttestationModifications(inscrits, debut, fin)).ShowModal()
         
-    def EvtExportCompta(self, evt):
+    def OnExportCompta(self, evt):
         inscrits, periode = self.__GetFactureSelection()
         if len(inscrits) > 0:
             DocumentDialog(self, ExportComptaModifications(inscrits, periode)).ShowModal()
