@@ -36,6 +36,12 @@ class EtatsTrimestrielsModifications(object):
         self.errors = {}
         self.email = None
 
+    def GetPrintableValue(self, value):
+        if value == 0:
+            return ''
+        else:
+            return value
+
     def execute(self, filename, dom):
         if filename == 'styles.xml':
             ReplaceTextFields(dom, GetCrecheFields(creche))
@@ -73,6 +79,8 @@ class EtatsTrimestrielsModifications(object):
                     table.removeChild(line)
     
                 nb_pages = (len(indexes) / template_lines_count) + (len(indexes) % template_lines_count > 0)
+                total = [[0, 0, 0], [0, 0, 0]]
+
                 for page in range(nb_pages):
                     lines = []
                     for l, line in enumerate(page_template):
@@ -87,6 +95,8 @@ class EtatsTrimestrielsModifications(object):
                     ReplaceFields(lines[2], [('mois(1)', months[trimestre * 3].upper()),
                                              ('mois(2)', months[(trimestre * 3) + 1].upper()),
                                              ('mois(3)', months[(trimestre * 3) + 2].upper())])
+
+                    sous_total = [[0, 0, 0], [0, 0, 0]]
                     
                     for l, line in enumerate(lines[template_first_line:template_first_line+template_lines_count]):
                         index = page * template_lines_count + l
@@ -111,18 +121,13 @@ class EtatsTrimestrielsModifications(object):
                                     heures[0][i] = facture.heures_facturees - facture.heures_facturees_par_mode[MODE_HALTE_GARDERIE]
                                     heures[1][i] = facture.heures_facturees_par_mode[MODE_HALTE_GARDERIE]
     
-                            fields = GetInscritFields(inscrit) + [
-                                      ('entree', inscrit.inscriptions[0].debut),
-                                      ('sortie', inscrit.inscriptions[-1].fin)]
+                            fields = GetInscritFields(inscrit)
     
                             for m, mode in enumerate(["creche", "halte"]):
                                 for i in range(3):
-                                    if heures[m][i] == 0:
-                                        fields.append(('%s(%d)' % (mode, i+1), ''))
-                                    # elif GetMonthEnd(datetime.date(self.annee, trimestre * 3 + i + 1, 1)) > today or (creche.presences_previsionnelles and previsionnel[m]):
-                                    #     fields.append(('%s(%d)' % (mode, i+1), '(%d)' % heures[m][i]))
-                                    else:
-                                        fields.append(('%s(%d)' % (mode, i+1), heures[m][i]))
+                                    fields.append(('%s(%d)' % (mode, i+1), self.GetPrintableValue(heures[m][i])))
+                                    sous_total[m][i] += heures[m][i]
+                                    total[m][i] += heures[m][i]
                         else:
                             fields = [(tmp, '') for tmp in ('nom', 'prenom', 'adresse', 'ville', 'code-postal', 'naissance', 'entree', 'sortie')]
                             for mode in ["creche", "halte"]:
@@ -130,7 +135,28 @@ class EtatsTrimestrielsModifications(object):
                                     fields.append(('%s(%d)' % (mode, i+1), ''))
     
                         ReplaceFields(line, fields)
-    
+                    
+                    # La ligne de sous-total
+                    line = lines[template_first_line+template_lines_count]
+                    if "sous-total" in line.toprettyxml():
+                        fields = []
+                        for m, mode in enumerate(["creche", "halte"]):
+                            for i in range(3):
+                                fields.append(('sous-total-%s(%d)' % (mode, i+1), self.GetPrintableValue(sous_total[m][i])))
+                        ReplaceFields(line, fields)
+                    
+                    # La ligne de total
+                    line = lines[template_first_line+template_lines_count+1]
+                    if "total" in line.toprettyxml():
+                        if page == nb_pages-1:
+                            fields = []
+                            for m, mode in enumerate(["creche", "halte"]):
+                                for i in range(3):
+                                    fields.append(('total-%s(%d)' % (mode, i+1), self.GetPrintableValue(total[m][i])))
+                            ReplaceFields(line, fields)
+                        else:
+                            table.removeChild(line)
+                        
             # LA SYNTHESE ANNUELLE
             table = tables.item(0)
             if datetime.date(self.annee, 9, 1) < today:       
@@ -208,8 +234,6 @@ class EtatsTrimestrielsModifications(object):
                 total_previsionnel[mois] += previsionnel[mois]
 
             fields = GetInscritFields(inscrit) + GetFamilleFields(inscrit.famille)
-            fields.extend([('entree', inscrit.inscriptions[0].debut),
-                           ('sortie', inscrit.inscriptions[-1].fin)])
 
             for mois in range(12):
                 if heures[mois] == 0:
@@ -239,3 +263,14 @@ class EtatsTrimestrielsModifications(object):
             else:
                 fields.append(('total', sum(total)))
         ReplaceFields(ligne, fields)
+        
+# if __name__ == '__main__':
+#     import __builtin__, random
+#     from config import *
+#     from data import *
+#     from functions import *
+#     __builtin__.creche, result = FileConnection(DEFAULT_DATABASE).Load()
+#     modifications = EtatsTrimestrielsModifications(None, 2015)
+#     filename = "./test-%f.odt" % random.random()
+#     errors = GenerateOODocument(modifications, filename=filename, gauge=None)
+#     StartLibreOffice(filename)

@@ -745,6 +745,8 @@ def GetInscritFields(inscrit):
             ('sexe', GetInscritSexe(inscrit)),
             ('naissance', inscrit.naissance),
             ('age', GetAgeString(inscrit.naissance)),
+            ('entree', inscrit.inscriptions[0].debut),
+            ('sortie', inscrit.inscriptions[-1].fin)
             ]
     
 def GetSalarieFields(salarie):
