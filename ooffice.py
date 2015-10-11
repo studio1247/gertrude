@@ -32,6 +32,9 @@ import subprocess
 
 NumberTypes = (types.IntType, types.LongType, types.FloatType, types.ComplexType)
 
+def GetNodeFromAttribute(nodes, attribute, value):
+    pass
+
 def GetText(value):
     if isinstance(value, basestring):
         return value
@@ -295,7 +298,16 @@ def IncrementFormulas(cellules, row=0, column=0, flags=0):
                     formula = formula.replace(mo.group(0), "%s.___%s%d" % (prefix, GetColumnName(GetColumnIndex(mo.group(1))+column), int(mo.group(2))+row))
             formula = formula.replace('.___', '.')
             cellule.setAttribute("table:formula", formula)
-            
+
+def SetCellFormula(cell, formula):
+    cell.setAttribute("table:formula", formula)
+
+def SetCellFormulaReference(cell, table, other):    
+    SetCellFormula(cell, "of:=['%s'.%s]" % (table.getAttribute("table:name"), other))
+
+def HideLine(line):
+    line.setAttribute("table:visibility", "collapse")
+
 def getNamedShapes(dom):
     shapes = {}
     for tag in ("draw:line", "draw:frame", "draw:custom-shape"):
@@ -445,7 +457,7 @@ def MakePropertyValue(oServiceManager, Name, Value):
 def MakePropertyValues(oServiceManager, values):
     return [MakePropertyValue(oServiceManager, value[0], value[1]) for value in values]
 
-def oo_open(filename):
+def StartLibreOffice(filename):
     if sys.platform == 'win32':
         filename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(filename)).encode("latin-1"))])
         # print filename
@@ -512,7 +524,7 @@ def convert_to_pdf(filename, pdffilename):
 
 DDE_ACROBAT_STRINGS = ["AcroviewR11", "AcroviewR10", "acroview"]
 dde_server = None
-def pdf_open(filename):
+def StartAcrobatReader(filename):
     global dde_server
     import win32ui
     import win32api
@@ -606,25 +618,25 @@ class DocumentDialog(wx.Dialog):
         if modifications.multi is not True:
             self.sauver_ouvrir = wx.Button(self, -1, u"Sauver et ouvrir")
             self.sauver_ouvrir.SetDefault()
-            self.Bind(wx.EVT_BUTTON, self.onSauverOuvrir, self.sauver_ouvrir)
+            self.Bind(wx.EVT_BUTTON, self.OnSauverOuvrir, self.sauver_ouvrir)
             sizer.Add(self.sauver_ouvrir, 0, wx.LEFT|wx.RIGHT, 5)
         else:
             self.sauver_ouvrir = None
 
         self.sauver = wx.Button(self, -1, u"Sauver")
-        self.Bind(wx.EVT_BUTTON, self.onSauver, self.sauver)
+        self.Bind(wx.EVT_BUTTON, self.OnSauver, self.sauver)
         sizer.Add(self.sauver, 0, wx.RIGHT, 5)
         
         if modifications.email:
             self.sauver_envoyer = wx.Button(self, -1, u"Sauver et envoyer par email")
-            self.Bind(wx.EVT_BUTTON, self.onSauverEnvoyer, self.sauver_envoyer)
+            self.Bind(wx.EVT_BUTTON, self.OnSauverEnvoyer, self.sauver_envoyer)
             sizer.Add(self.sauver_envoyer, 0, wx.LEFT|wx.RIGHT, 5)
             if modifications.multi is False and not modifications.email_to:
                 self.sauver_envoyer.Disable()
                 
             if creche.caf_email:
                 self.sauver_envoyer = wx.Button(self, -1, u"Sauver et envoyer par email à la CAF")
-                self.Bind(wx.EVT_BUTTON, self.onSauverEnvoyerCAF, self.sauver_envoyer)
+                self.Bind(wx.EVT_BUTTON, self.OnSauverEnvoyerCAF, self.sauver_envoyer)
                 sizer.Add(self.sauver_envoyer, 0, wx.LEFT|wx.RIGHT, 5)
 
         #btnsizer.Add(self.ok)
@@ -643,7 +655,7 @@ class DocumentDialog(wx.Dialog):
         else:
             self.fbb.SetValue(filename+".pdf", None)
             
-    def onSauver(self, event):
+    def OnSauver(self, event):
         self.fbb.Disable()
         self.sauver.Disable()
         if self.sauver_ouvrir:
@@ -699,17 +711,17 @@ class DocumentDialog(wx.Dialog):
             dlg.Destroy()
         self.EndModal(wx.ID_OK)
         
-    def onSauverOuvrir(self, event):
+    def OnSauverOuvrir(self, event):
         self.modifications.multi = False
-        self.onSauver(event)
+        self.OnSauver(event)
         if self.document_generated:
             if self.filename.endswith("pdf"):
-                pdf_open(self.filename)
+                StartAcrobatReader(self.filename)
             else:
-                oo_open(self.filename)
+                StartLibreOffice(self.filename)
                 
-    def onSauverEnvoyer(self, event):
-        self.onSauver(event)
+    def OnSauverEnvoyer(self, event):
+        self.OnSauver(event)
         if self.document_generated:
             if self.modifications.multi is not False:
                 simple_modifications = self.modifications.GetSimpleModifications(self.oo_filename)
@@ -742,9 +754,9 @@ class DocumentDialog(wx.Dialog):
                     dlg.Destroy()
                     
         
-    def onSauverEnvoyerCAF(self, event):
+    def OnSauverEnvoyerCAF(self, event):
         self.modifications.multi = False
-        self.onSauver(event)
+        self.OnSauver(event)
         if self.document_generated:
             try:
                 self.send_document(self.filename, GetTemplateFile(self.modifications.email_text[:-4]+" CAF"+self.modifications.email_text[-4:]), self.modifications.email_subject, [creche.caf_email])

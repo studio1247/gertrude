@@ -475,9 +475,19 @@ def GetPresentsIndexes(indexes, (debut, fin), site=None):
                 break
     return result
 
-def GetInscrits(debut, fin, site=None):
-    indexes = GetPresentsIndexes(None, (debut, fin), site=site)
-    return [creche.inscrits[i] for i in indexes]
+def GetInscrits(debut, fin, site=None, handicap=None):
+    result = []
+    for inscrit in creche.inscrits:
+        for inscription in inscrit.inscriptions:
+            if ((inscription.fin is None or inscription.fin >= debut) and
+                (not creche.preinscriptions or not inscription.preinscription) and
+                (site is None or inscription.site == site) and
+                (inscription.debut != None) and 
+                (not fin or inscription.debut <= fin) and
+                (handicap is None or inscrit.handicap==handicap)):
+                result.append(inscrit)
+                break
+    return result
 
 def GetLines(date, inscrits, presence=False, site=None, groupe=None):
     lines = []

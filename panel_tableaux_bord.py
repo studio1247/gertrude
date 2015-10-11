@@ -39,7 +39,7 @@ from doc_synthese_financiere import SyntheseFinanciereModifications
 from doc_releve_salaries import ReleveSalariesModifications
 from doc_etat_presence_mensuel import EtatPresenceMensuelModifications
 from doc_export_tablette import ExportTabletteModifications
-# from doc_compte_exploitation import CompteExploitationModifications
+from doc_compte_exploitation import CompteExploitationModifications
 from doc_commande_repas import CommandeRepasModifications
 from facture import Facture
 from planning import *
@@ -873,8 +873,9 @@ class RelevesTab(AutoTab):
         DocumentDialog(self, SyntheseFinanciereModifications(annee)).ShowModal()
 
     def OnGenerationCompteExploitation(self, evt):
+        site = self.GetSelectedSite()
         annee = self.comptes_exploitation_choice.GetClientData(self.comptes_exploitation_choice.GetSelection())
-        DocumentDialog(self, CompteExploitationModifications(annee)).ShowModal()
+        DocumentDialog(self, CompteExploitationModifications(site, annee)).ShowModal()
 
     def OnGenerationCommandeRepas(self, evt):
         semaine = self.commande_repas_choice.GetClientData(self.commande_repas_choice.GetSelection())
