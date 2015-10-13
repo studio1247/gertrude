@@ -527,7 +527,6 @@ class FacturationDebutMoisContratTests(GertrudeTestCase):
         facture = Facture(inscrit, 2011, 3)
         self.assertEquals(facture.total, 1520.0 - (1.75 * 2) * 9.5)
 
-  
 class MonPetitBijouTests(GertrudeTestCase):
     def setUp(self):
         GertrudeTestCase.setUp(self)
@@ -720,5 +719,48 @@ class BebebulTests(GertrudeTestCase):
         facture = Facture(inscrit, 2012, 10)
         self.assertEquals("%.2f" % facture.total, "0.00")
 
+class RibambelleTests(GertrudeTestCase):
+    def setUp(self):
+        GertrudeTestCase.setUp(self)
+        creche.mode_facturation = FACTURATION_PSU
+        creche.temps_facturation = FACTURATION_FIN_MOIS
+        creche.type = TYPE_PARENTAL
+        creche.repartition = REPARTITION_SANS_MENSUALISATION
+        creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
+    
+    def test_normal(self):
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit, creation=False)
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.debut = datetime.date(2015, 10, 1)
+        inscription.reference[0].AddActivity(93, 213, 0, -1) # 10h
+        inscription.reference[1].AddActivity(93, 213, 0, -1) # 10h
+        inscription.reference[2].AddActivity(93, 213, 0, -1) # 10h
+        inscription.reference[3].AddActivity(93, 213, 0, -1) # 10h
+        inscription.reference[4].AddActivity(93, 213, 0, -1) # 10h
+        inscrit.inscriptions.append(inscription)
+        cotisation = Cotisation(inscrit, datetime.date(2015, 10, 1), NO_ADDRESS|NO_PARENTS)
+        self.assertEquals(cotisation.montant_heure_garde, 1.25)
+        facture = Facture(inscrit, 2015, 10)
+        self.assertEquals(facture.total, 275)
+        
+    def test_adaptation(self):
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit, creation=False)
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.debut = datetime.date(2015, 10, 1)
+        inscription.fin_periode_adaptation = datetime.date(2015, 10, 3)
+        self.AddJourneePresence(inscrit, datetime.date(2015, 10, 1), 105, 117) # 1h00
+        self.AddJourneePresence(inscrit, datetime.date(2015, 10, 2), 93, 201) # 9h00
+        inscription.reference[0].AddActivity(93, 213, 0, -1) # 10h
+        inscription.reference[1].AddActivity(93, 213, 0, -1) # 10h
+        inscription.reference[2].AddActivity(93, 213, 0, -1) # 10h
+        inscription.reference[3].AddActivity(93, 213, 0, -1) # 10h
+        inscription.reference[4].AddActivity(93, 213, 0, -1) # 10h
+        inscrit.inscriptions.append(inscription)
+        facture = Facture(inscrit, 2015, 10)
+        self.assertEquals(facture.total, 275 - 10*1.25)
+        
+        
 if __name__ == '__main__':
     unittest.main()
