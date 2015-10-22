@@ -1849,6 +1849,17 @@ class Inscrit(object):
             except:
                 pass
     
+    def IsPresent(self, debut, fin, site, handicap):
+        for inscription in self.inscriptions:
+            if ((inscription.fin is None or inscription.fin >= debut) and
+                (not creche.preinscriptions or not inscription.preinscription) and
+                (site is None or inscription.site == site) and
+                (inscription.debut != None) and 
+                (not fin or inscription.debut <= fin) and
+                (handicap is None or self.handicap==handicap)):
+                return True
+        return False
+    
     def GetPeriodeInscriptions(self):
         if len(self.inscriptions) == 0:
             return None, None

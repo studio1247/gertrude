@@ -478,15 +478,8 @@ def GetPresentsIndexes(indexes, (debut, fin), site=None):
 def GetInscrits(debut, fin, site=None, handicap=None):
     result = []
     for inscrit in creche.inscrits:
-        for inscription in inscrit.inscriptions:
-            if ((inscription.fin is None or inscription.fin >= debut) and
-                (not creche.preinscriptions or not inscription.preinscription) and
-                (site is None or inscription.site == site) and
-                (inscription.debut != None) and 
-                (not fin or inscription.debut <= fin) and
-                (handicap is None or inscrit.handicap==handicap)):
-                result.append(inscrit)
-                break
+        if inscrit.IsPresent(debut, fin, site, handicap):
+            result.append(inscrit)
     return result
 
 def GetLines(date, inscrits, presence=False, site=None, groupe=None):
