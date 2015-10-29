@@ -98,16 +98,16 @@ class HttpConnection(object):
             else:
                 req = urllib2.Request(url)
             result = urllib2.urlopen(req).read()
-            print '=>', result[:64]
+            # pas sur mac print '=>', result[:64]
             if len(result) == 1:
                 return eval(result)
             else:
                 return result
         except urllib2.HTTPError, e:
             if e.code == 404:
-                raise Exception(u"Echec - code 404 (page non trouvée)")
+                raise Exception(u"Echec - code 404 (page non trouvee)")
             else:
-                raise Exception(u"Echec - code %d (%s)" % (e.code, e.msg))
+                raise Exception(u"Echec - code %d" % e.code)
         except urllib2.URLError, e:
             raise Exception("Echec - cause:", e.reason)
         except Exception, e:
