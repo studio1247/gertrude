@@ -166,16 +166,16 @@ class FacturationTab(AutoTab):
 
     def OnRecusInscritChoice(self, evt):
         self.recus_periodechoice.Clear()
-        need_separator = False
         inscrit = self.inscrits_choice["recus"].GetClientData(self.inscrits_choice["recus"].GetSelection())
         if self.recus_endchoice:
             if isinstance(inscrit, Inscrit):
                 for year in range(today.year-10, today.year):
                     if inscrit.GetInscriptions(datetime.date(year, 1, 1), datetime.date(year, 12, 31)):
-                        need_separator = True
                         self.recus_periodechoice.Append(u"Année %d" % year, (datetime.date(year, 1, 1), datetime.date(year, 12, 31)))
+                for year in range(today.year-10, today.year):
+                    if inscrit.GetInscriptions(datetime.date(year-1, 12, 1), datetime.date(year, 11, 30)):
+                        self.recus_periodechoice.Append(u"Décembre %d - Novembre %d" % (year-1, year), (datetime.date(year-1, 12, 1), datetime.date(year, 11, 30)))
                 if inscrit.GetInscriptions(datetime.date(today.year, 1, 1), GetMonthEnd(today)):
-                    need_separator = True
                     debut = 1
                     while not inscrit.GetInscriptions(datetime.date(today.year, debut, 1), GetMonthEnd(datetime.date(today.year, debut, 1))) and debut < today.month:
                         debut += 1
@@ -183,9 +183,11 @@ class FacturationTab(AutoTab):
                         self.recus_periodechoice.Append("%s %d" % (months[debut-1], today.year), (datetime.date(today.year, debut, 1), GetMonthEnd(datetime.date(today.year, debut, 1))))
                     else:
                         self.recus_periodechoice.Append(u"%s - %s %d" % (months[debut-1], months[today.month-1], today.year), (datetime.date(today.year, debut, 1), datetime.date(today.year, today.month, 1)))
-                need_separator = True
             else:
-                self.recus_periodechoice.Append(u"Année %d" % (today.year-1), (datetime.date(today.year-1, 1, 1), datetime.date(today.year-1, 12, 31)))
+                for year in range(today.year-3, today.year):
+                    self.recus_periodechoice.Append(u"Année %d" % year, (datetime.date(year, 1, 1), datetime.date(year, 12, 31)))
+                for year in range(today.year-3, today.year):
+                    self.recus_periodechoice.Append(u"Décembre %d - Novembre %d" % (year-1, year), (datetime.date(year-1, 12, 1), datetime.date(year, 11, 30)))
                 if today.month == 1:
                     self.recus_periodechoice.Append("Janvier %d" % today.year, (datetime.date(today.year, 1, 1), datetime.date(today.year, 1, 31)))
                 else:
@@ -194,9 +196,6 @@ class FacturationTab(AutoTab):
         date = GetFirstMonday()
         while date < today:
             if not isinstance(inscrit, Inscrit) or inscrit.GetInscriptions(datetime.date(date.year, date.month, 1), GetMonthEnd(date)):
-                if need_separator:
-                    self.recus_periodechoice.Append(20 * "-", None)
-                    need_separator = False
                 self.recus_periodechoice.Append('%s %d' % (months[date.month - 1], date.year), (datetime.date(date.year, date.month, 1), GetMonthEnd(date)))
             date = GetNextMonthStart(date)
         self.recus_periodechoice.SetSelection(0)
