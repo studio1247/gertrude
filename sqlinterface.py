@@ -25,7 +25,7 @@ from sqlobjects import *
 from facture import FactureCloturee
 import wx
 
-VERSION = 93
+VERSION = 94
 
 def getdate(s):
     try:
@@ -312,7 +312,7 @@ class SQLConnection(object):
             mode, INTEGER,
             fin_periode_adaptation DATE,
             duree_reference INTEGER,
-            forfait_heures_presence INTEGER,
+            forfait_mensuel_heures FLOAT,
             semaines_conges INTEGER
           );""")
 
@@ -751,8 +751,8 @@ class SQLConnection(object):
                     inscrit.famille = tmp
                     break
             inscrit.prenom, inscrit.nom, inscrit.sexe, inscrit.naissance, inscrit.handicap, inscrit.marche, inscrit.notes, inscrit.photo, inscrit.combinaison, inscrit.allergies, inscrit.idx = prenom, nom, sexe, getdate(naissance), handicap, getdate(marche), notes, photo, combinaison, allergies, idx
-            cur.execute('SELECT idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_heures_presence, semaines_conges, preinscription, site, sites_preinscription, professeur FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
-            for idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_heures_presence, semaines_conges, preinscription, site, sites_preinscription, professeur in cur.fetchall():
+            cur.execute('SELECT idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_mensuel_heures, semaines_conges, preinscription, site, sites_preinscription, professeur FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
+            for idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_mensuel_heures, semaines_conges, preinscription, site, sites_preinscription, professeur in cur.fetchall():
                 inscription = Inscription(inscrit, duree_reference, creation=False)
                 for tmp in creche.sites:
                     if site == tmp.idx:
@@ -772,7 +772,7 @@ class SQLConnection(object):
                 for tmp in creche.professeurs:
                     if professeur == tmp.idx:
                         inscription.professeur = tmp
-                inscription.debut, inscription.fin, inscription.depart, inscription.mode, inscription.preinscription, inscription.forfait_heures_presence, inscription.forfait_mensuel, inscription.frais_inscription, inscription.allocation_mensuelle_caf, inscription.fin_periode_adaptation, inscription.semaines_conges, inscription.idx = getdate(debut), getdate(fin), getdate(depart), mode, preinscription, forfait_heures_presence, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, getdate(fin_periode_adaptation), semaines_conges, idx
+                inscription.debut, inscription.fin, inscription.depart, inscription.mode, inscription.preinscription, inscription.forfait_mensuel_heures, inscription.forfait_mensuel, inscription.frais_inscription, inscription.allocation_mensuelle_caf, inscription.fin_periode_adaptation, inscription.semaines_conges, inscription.idx = getdate(debut), getdate(fin), getdate(depart), mode, preinscription, forfait_mensuel_heures, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, getdate(fin_periode_adaptation), semaines_conges, idx
                 inscrit.inscriptions.append(inscription)
             for inscription in inscrit.inscriptions:
                 cur.execute('SELECT day, value, debut, fin, idx FROM REF_ACTIVITIES WHERE reference=?', (inscription.idx,))
@@ -1720,6 +1720,12 @@ class SQLConnection(object):
             cur.execute("ALTER TABLE CRECHE ADD arrondi_semaines INTEGER")            
             cur.execute('UPDATE CRECHE SET arrondi_semaines=?', (ARRONDI_SEMAINE_SUPERIEURE,))  
 
+        if version < 94:
+            cur.execute("ALTER TABLE INSCRIPTIONS ADD forfait_mensuel_heures FLOAT")
+            cur.execute('SELECT idx, forfait_heures_presence FROM INSCRIPTIONS')
+            for idx, forfait_heures_presence in cur.fetchall():
+                cur.execute("UPDATE INSCRIPTIONS SET forfait_mensuel_heures=? WHERE idx=?", (forfait_heures_presence, idx))
+            
         if version < VERSION:
             try:
                 cur.execute("DELETE FROM DATA WHERE key=?", ("VERSION", ))

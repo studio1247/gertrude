@@ -467,7 +467,7 @@ class FacturationDebutMoisContratTests(GertrudeTestCase):
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
         inscription.mode = MODE_FORFAIT_HORAIRE
-        inscription.forfait_heures_presence = 90.0
+        inscription.forfait_mensuel_heures = 90.0
         inscription.debut = datetime.date(2010, 3, 1)
         inscription.reference[0].AddActivity(93, 213, 0, -1) # 10h
         inscription.reference[1].AddActivity(93, 213, 0, -1) # 10h
@@ -542,7 +542,7 @@ class MonPetitBijouTests(GertrudeTestCase):
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
         inscription.mode = MODE_FORFAIT_HORAIRE
-        inscription.forfait_heures_presence = 90.0
+        inscription.forfait_mensuel_heures = 90.0
         inscription.debut = datetime.date(2010, 3, 1)
         inscription.reference[0].AddActivity(93, 213, 0, -1) # 10h
         inscription.reference[1].AddActivity(93, 213, 0, -1) # 10h
@@ -624,7 +624,7 @@ class MonPetitBijouTests(GertrudeTestCase):
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
         inscription.mode = MODE_FORFAIT_HORAIRE
-        inscription.forfait_heures_presence = 60.0
+        inscription.forfait_mensuel_heures = 60.0
         inscription.debut = datetime.date(2011, 4, 7)
         inscription.fin_periode_adaptation = datetime.date(2011, 9, 1)
         inscrit.inscriptions.append(inscription)

@@ -312,7 +312,7 @@ class Cotisation(object):
         
         self.tranche_paje = 0
         self.taux_effort = None
-        self.forfait_heures_presence = 0.0
+        self.forfait_mensuel_heures = 0.0
         self.montants_heure_garde = []
         
         if creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
@@ -321,7 +321,7 @@ class Cotisation(object):
             self.cotisation_mensuelle = self.inscription.forfait_mensuel
         elif creche.mode_facturation == FACTURATION_HORAIRES_REELS or self.inscription.mode == MODE_FORFAIT_HORAIRE:
             if self.inscription.mode == MODE_FORFAIT_HORAIRE:
-                self.forfait_heures_presence = self.inscription.forfait_heures_presence
+                self.forfait_mensuel_heures = self.inscription.forfait_mensuel_heures
             try:
                 self.montant_heure_garde = creche.EvalTauxHoraire(self.mode_garde, self.inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, self.inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, 0, self.tranche_paje)
                 if options & TRACES: print " montant heure de garde (Forfait horaire) :", self.montant_heure_garde
@@ -329,7 +329,7 @@ class Cotisation(object):
                 errors.append(u" - La formule de calcul du tarif horaire n'est pas correcte.")
                 raise CotisationException(errors)
             self.cotisation_periode = None
-            self.cotisation_mensuelle, self.montants_heure_garde = self.CalculeFraisGardeComplete(self.forfait_heures_presence, self.heures_mois)                    
+            self.cotisation_mensuelle, self.montants_heure_garde = self.CalculeFraisGardeComplete(self.forfait_mensuel_heures, self.heures_mois)                    
         elif creche.mode_facturation == FACTURATION_PAJE:
             if self.enfants_a_charge == 1:
                 self.tranche_paje = 1 + GetTranche(self.assiette_annuelle, [20285.0, 45077.01])

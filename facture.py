@@ -333,7 +333,7 @@ class FactureFinMois(object):
                         print " cotisation periode adaptation :", report
                 elif inscription.mode == MODE_FORFAIT_HORAIRE:
                     self.cotisation_mensuelle += cotisation.cotisation_mensuelle * cotisation.jours_ouvres / jours_ouvres
-                    cotisation.heures_contractualisees = inscription.forfait_heures_presence * cotisation.jours_ouvres / jours_ouvres
+                    cotisation.heures_contractualisees = inscription.forfait_mensuel_heures * cotisation.jours_ouvres / jours_ouvres
                     self.heures_contractualisees += cotisation.heures_contractualisees
                     self.total_contractualise += cotisation.heures_contractualisees * cotisation.montant_heure_garde
                     if cotisation.nombre_jours_maladie_deduits > 0:
