@@ -190,6 +190,9 @@ class Cotisation(object):
             self.jours_semaine /= self.semaines_reference
             self.heures_reelles_semaine /= self.semaines_reference
         
+        if self.mode_garde is None:
+            errors.append(u" - Le mode de garde n'est pas renseigné.")
+            
         if self.mode_garde == MODE_HALTE_GARDERIE:
             self.mode_inscription = MODE_HALTE_GARDERIE
         else:
