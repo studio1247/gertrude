@@ -880,7 +880,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
             inscription = self.inscrit.inscriptions[self.periode]
         if inscription:
             self.jours_poses.SetValue(u"%d jours posés / %d jours" % (inscription.GetNombreJoursCongesPoses(), inscription.GetNombreJoursCongesPeriode()))
-            self.heures_and_jours_reference.SetValue(u"%d heures / %d jours" % (inscription.GetNombreHeuresPresenceSemaine(), inscription.GetNombreJoursPresenceSemaine()))
+            self.heures_and_jours_reference.SetValue(u"10.2f heures / %10.2f jours" % (inscription.GetNombreHeuresPresenceSemaine(), inscription.GetNombreJoursPresenceSemaine()))
         else:
             self.jours_poses.SetValue("")
             self.heures_and_jours_reference.SetValue("")
