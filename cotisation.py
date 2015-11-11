@@ -230,10 +230,16 @@ class Cotisation(object):
         else:                
             self.heures_semaine = self.heures_reelles_semaine
             if creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
-                date = self.debut
                 if self.fin_inscription is None:
                     errors.append(u" - La période d'inscription n'a pas de fin.")
                     raise CotisationException(errors)
+
+                if creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
+                    date = GetMonthStart(self.debut)
+                else:
+                    self.prorata_effectue = True
+                    date = self.debut
+                
                 # debut_conge = None
                 while date <= self.fin:
                     heures = self.inscription.GetJourneeReference(date).GetNombreHeures()
@@ -266,14 +272,13 @@ class Cotisation(object):
                     self.liste_conges.append(u"%d semaines de congés" % self.inscription.semaines_conges)
                 self.heures_periode = math.ceil(self.heures_periode)
                 if options & TRACES: print u' heures période :', self.heures_periode
-                self.semaines_periode = ((self.fin_inscription - self.inscription.debut).days + 7) / 7
+                self.semaines_periode = 1 + (self.fin_inscription - self.inscription.debut).days / 7
                 self.nombre_factures = GetNombreFacturesContrat(self.debut, self.fin)
                 if self.nombre_factures == 0:
                     self.nombre_factures = 1
-                if options & TRACES: print ' nombres de factures :', self.nombre_factures
+                if options & TRACES: print u' nombres de factures :', self.nombre_factures
                 self.heures_mois = math.ceil(self.heures_periode / self.nombre_factures)
-                if options & TRACES: print ' heures mensuelles : %f (%f)' % (self.heures_mois, self.heures_periode / self.nombre_factures)
-                self.prorata_effectue = True
+                if options & TRACES: print u' heures mensuelles : %f (%f)' % (self.heures_mois, self.heures_periode / self.nombre_factures)
             else:
                 if creche.repartition == REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS:
                     if self.fin_inscription is None:
@@ -407,7 +412,7 @@ class Cotisation(object):
                         self.taux_effort = 0.05
                     else:
                         self.taux_effort = 0.06
-            if options & TRACES: print " taux d'effort :", self.taux_effort
+            if options & TRACES: print u" taux d'effort :", self.taux_effort
                 
             self.montant_heure_garde = self.assiette_mensuelle * self.taux_effort / 100
             if creche.mode_facturation in (FACTURATION_PSU, FACTURATION_PSU_TAUX_PERSONNALISES):
