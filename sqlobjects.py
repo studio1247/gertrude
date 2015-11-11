@@ -1904,7 +1904,7 @@ class Inscrit(object):
         return result
     
     def HasFacture(self, date):
-        if date.month in creche.mois_sans_facture:
+        if not date or date.month in creche.mois_sans_facture:
             return False
         month_start = GetMonthStart(date)
         if config.options & FACTURES_FAMILLES:

@@ -32,11 +32,13 @@ class FactureFinMois(object):
     def CalculeSupplement(self, cotisation, heures):
         supplement = cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees+heures) - cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees)
         cotisation.heures_mois_ajustees += heures
-        self.supplement += supplement
-        if cotisation.montant_heure_garde is not None:
-            self.formule_supplement.append(u"%s * %.2f" % (GetHeureString(heures), cotisation.montant_heure_garde))
-        else:
-            self.formule_supplement.append(u"%s = %.2f" % (GetHeureString(heures), supplement))
+        if supplement != 0:
+            self.supplement += supplement
+            self.raison_supplement.add(u"heures supplémentaires")
+            if cotisation.montant_heure_garde is not None:
+                self.formule_supplement.append(u"%s * %.2f" % (GetHeureString(heures), cotisation.montant_heure_garde))
+            else:
+                self.formule_supplement.append(u"%s = %.2f" % (GetHeureString(heures), supplement))
         return supplement
 
     def GetNumeroFacture(self):
@@ -110,6 +112,7 @@ class FactureFinMois(object):
         self.jours_vacances = []
         self.jours_conges_non_factures = []
         self.raison_deduction = set()
+        self.raison_supplement = set()
         self.supplement_activites = 0.0
         self.previsionnel = False
         self.cloture = False
@@ -256,7 +259,7 @@ class FactureFinMois(object):
                         if state & PREVISIONNEL:
                             self.previsionnel = True
                             
-                        supplement = 0
+                        supplement = 0.0
                         if heures_supplementaires_facturees > 0:
                             if creche.mode_facturation == FACTURATION_FORFAIT_10H:
                                 supplement = self.CalculeSupplement(cotisation, 10)
@@ -278,7 +281,11 @@ class FactureFinMois(object):
                             if value in creche.activites:
                                 activite = creche.activites[value]
                                 self.supplement_activites += activite.tarif
-
+                                
+                    if cotisation.majoration_journaliere:
+                        self.supplement += cotisation.majoration_journaliere
+                        self.raison_supplement = self.raison_supplement.union(cotisation.raison_majoration_journaliere)
+                    
                     if heures_realisees_non_facturees > 0 and heures_realisees == heures_realisees_non_facturees:
                         self.jours_presence_non_facturee[date] = heures_realisees_non_facturees
 
@@ -419,8 +426,11 @@ class FactureFinMois(object):
                                 if options & TRACES:
                                     print u" régularisation congés non pris (%d semaines, %d jours pris) : %dh * %f = %f" % (inscription.semaines_conges, inscription.GetNombreJoursCongesPoses(), heures, cotisation.montant_heure_garde, regularisation_conges_non_pris)
                                 self.regularisation += regularisation_conges_non_pris
-                    
-        if self.regularisation != 0:
+        
+        if self.regularisation > 0:
+            self.supplement += self.regularisation
+            self.raison_supplement.add(u"régularisation")
+        elif self.regularisation < 0:
             self.deduction -= self.regularisation
             self.raison_deduction.add(u"régularisation")
             
@@ -449,6 +459,10 @@ class FactureFinMois(object):
             self.raison_deduction = "(" + ", ".join(self.raison_deduction) + ")"
         else:
             self.raison_deduction = "" 
+        if self.raison_supplement:
+            self.raison_supplement = "(" + ", ".join(self.raison_supplement) + ")"
+        else:
+            self.raison_supplement = "" 
         self.total_contractualise = round(self.total_contractualise, 2)
         self.total_realise = round(self.total_realise, 2)
         
@@ -511,6 +525,7 @@ class FactureDebutMois(FactureFinMois):
         self.jours_conges_non_factures = self.facture_precedente.jours_conges_non_factures
         self.jours_vacances = self.facture_precedente.jours_vacances
         self.raison_deduction = self.facture_precedente.raison_deduction
+        self.raison_supplement = self.facture_precedente.raison_supplement
         self.previsionnel |= self.facture_precedente.previsionnel
         
 class FactureDebutMoisContrat(FactureDebutMois):

@@ -426,25 +426,37 @@ class Cotisation(object):
             self.cotisation_mensuelle = 0.0
         
         self.majoration_mensuelle = 0.0
+        self.majoration_journaliere = 0.0
+        self.raison_majoration_journaliere = set()
         if self.montant_heure_garde is not None:
             for tarif in creche.tarifs_speciaux:
                 if self.inscrit.famille.tarifs & (1<<tarif.idx):
+                    heure_garde_diff = 0.0
+                    jour_garde_diff = 0.0
                     if tarif.unite == TARIF_SPECIAL_UNITE_EUROS:
                         cotisation_diff = tarif.valeur
-                        heure_garde_diff = 0.0
                     elif tarif.unite == TARIF_SPECIAL_UNITE_POURCENTAGE:
                         cotisation_diff = (self.cotisation_mensuelle * tarif.valeur) / 100
                         heure_garde_diff = (self.montant_heure_garde * tarif.valeur) / 100
-                    else:
+                    elif tarif.unite == TARIF_SPECIAL_UNITE_EUROS_PAR_HEURE:
                         cotisation_diff = tarif.valeur * self.heures_mois 
                         heure_garde_diff = tarif.valeur
+                    elif tarif.unite == TARIF_SPECIAL_UNITE_EUROS_PAR_JOUR:
+                        cotisation_diff = 0
+                        jour_garde_diff = tarif.valeur
+                        self.raison_majoration_journaliere.add(tarif.label)
+                    else:
+                        errors.append(u" - Le tarif spécial à appliquer n'est pas implémenté.")
+                        raise CotisationException(errors)
                     
                     if tarif.type == TARIF_SPECIAL_REDUCTION:
                         self.majoration_mensuelle -= cotisation_diff
                         self.montant_heure_garde -= heure_garde_diff
+                        self.majoration_journaliere -= jour_garde_diff
                     elif tarif.type == TARIF_SPECIAL_MAJORATION:
                         self.majoration_mensuelle += cotisation_diff
                         self.montant_heure_garde += heure_garde_diff
+                        self.majoration_journaliere += jour_garde_diff
                     else:
                         self.cotisation_mensuelle = cotisation_diff
                         self.montant_heure_garde = heure_garde_diff

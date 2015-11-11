@@ -251,14 +251,14 @@ class FactureModifications(object):
                             else:
                                 montants_table = table
                             rows = montants_table.getElementsByTagName('table:table-row')
-                            if not facture.frais_inscription:
-                                for row in rows:
-                                    if "Frais d'inscription" in row.toprettyxml():
-                                        montants_table.removeChild(row)
-                            if not facture.correction:
-                                for row in rows:
-                                    if "Correction" in row.toprettyxml():
-                                        montants_table.removeChild(row)
+                            for row in rows:
+                                prettyxml = row.toprettyxml()
+                                if (("&lt;frais-inscription&gt;" in prettyxml and not facture.frais_inscription) or
+                                   ("&lt;correction&gt;" in prettyxml and not facture.correction) or
+                                   ("&lt;supplement-activites&gt;" in prettyxml and not facture.supplement_activites) or
+                                   ("&lt;supplement&gt;" in prettyxml and not facture.supplement) or
+                                   ("&lt;deduction&gt;" in prettyxml and not facture.deduction)):
+                                    montants_table.removeChild(row)
                             ReplaceTextFields(montants_table, facture.fields)
                                 
                 # Les autres champs de la facture
