@@ -114,13 +114,13 @@ class FraisGardePanel(wx.Panel):
                 self.contrat_button.Disable()
             else:
                 if creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
-                    filename = "Frais accueil forfait.html"
+                    filename = "Frais garde forfait.html"
                 elif creche.mode_facturation == FACTURATION_HORAIRES_REELS:
-                    filename = "Frais accueil reel.html"
+                    filename = "Frais garde reel.html"
                 elif creche.mode_facturation == FACTURATION_PAJE:
-                    filename = "Frais accueil paje.html"
+                    filename = "Frais garde paje.html"
                 else:
-                    filename = "Frais accueil defaut.html"   
+                    filename = "Frais garde defaut.html"   
                 self.html = ParseHtml(GetTemplateFile(filename), context)
                 self.frais_accueil_button.Enable()
                 self.contrat_button.Enable()

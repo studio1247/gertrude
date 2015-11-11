@@ -23,6 +23,22 @@
    <td>Heures de garde hebdomadaires (B)</td>
    <td>= <var value="'%.02f' % heures_semaine"/>h</td>
   </tr>
+
+  <if value="creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT">
+  <tr>
+   <td>Nombre d'heures de la p&eacute;riode (C)</td>
+   <td>= <var value="'%.2f' % heures_periode"/> heures</td>
+  </tr>
+  <tr>
+   <td>&nbsp</td>
+  </tr>
+  <tr>
+   <td><b>Montant total pour la p&eacute;riode = A * C</b></td>
+   <td><b>= <var value="'%.02f' % cotisation_periode"/> &euro;</b></td>
+  </tr>
+  </if>
+
+  <if value="creche.facturation_jours_feries != JOURS_FERIES_DEDUITS_ANNUELLEMENT">
   <tr>
    <td>Nombre de semaines de la p&eacute;riode (C)</td>
    <td>= <var value="'%d' % semaines_periode"/> semaines</td>
@@ -38,6 +54,8 @@
    <td><b>Montant total pour la p&eacute;riode = A * B * (C - D)</b></td>
    <td><b>= <var value="'%.02f' % cotisation_periode"/> &euro;</b></td>
   </tr>
+  </if>
+
   <if value="majoration_mensuelle">
   <tr>
    <td>Majoration / R&eacute;duction</td>
