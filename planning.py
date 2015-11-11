@@ -44,10 +44,6 @@ ICONS_WIDTH = 50 # px
 LINE_HEIGHT = 32 # px
 CHECKBOX_WIDTH = 20 # px
 
-# How lines are handled in the summary line
-SUMMARY_NUM = 1
-SUMMARY_DEN = 2
-
 BUTTON_BITMAPS = { ABSENT: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), u'Absent'),
                    ABSENT+PREVISIONNEL: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), u'Congés'),
                    PRESENT: (wx.Bitmap(GetBitmapFile("icone_presence.png"), wx.BITMAP_TYPE_PNG), u'Présent'),
@@ -423,7 +419,6 @@ class PlanningGridWindow(BufferedWindow):
                 self.on_modify(line)
                     
             self.state = None
- 
 
 class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, activity_combobox, options, check_line=None, on_modify=None):
@@ -729,8 +724,9 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         dc = wx.PaintDC(self.labels_panel)
         dc.BeginDrawing()
         dc.SetTextForeground("BLACK")
-        font = wx.Font(8, wx.SWISS, wx.NORMAL, wx.NORMAL)
-        dc.SetFont(font)
+        labelfont = wx.Font(8, wx.SWISS, wx.NORMAL, wx.NORMAL)
+        sublabelfont = wx.Font(5, wx.SWISS, wx.NORMAL, wx.NORMAL)
+        dc.SetFont(labelfont)
         for i, line in enumerate(self.lines):
             if line is None:
                 pass
@@ -745,7 +741,13 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                 dc.DrawRoundedRectangleRect(rect, 4)
                 dc.DrawText(line, 5, 8 + i * LINE_HEIGHT)
             else:
-                dc.DrawText(line.label, 5, 6 + LINE_HEIGHT*i)
+                if line.sublabel:
+                    dc.DrawText(line.label, 5, 4 + LINE_HEIGHT*i)
+                    dc.SetFont(sublabelfont)
+                    dc.DrawText(line.sublabel, 5, 16 + LINE_HEIGHT*i)
+                    dc.SetFont(labelfont)
+                else:
+                    dc.DrawText(line.label, 5, 6 + LINE_HEIGHT*i)
         dc.EndDrawing()
 
 
@@ -753,7 +755,7 @@ class PlanningSummaryPanel(BufferedWindow):
     def __init__(self, parent, options):
         self.parent = parent
         self.options = options
-        self.activities_count = len(creche.activites) - len(creche.GetActivitesSansHoraires())
+        self.activities_count = len(creche.GetActivitesAvecHoraires())
         self.activites = {}
         self.activites_sans_horaires = {}
         BufferedWindow.__init__(self, parent, size=(-1, 2+20*self.activities_count))
@@ -840,7 +842,10 @@ class PlanningSummaryPanel(BufferedWindow):
             if nv != v or nw != w:
                 if v != 0:
                     rect = wx.Rect(pos+3+(a-debut)*config.column_width, 2 + index * 20, (x-a)*config.column_width-1, 19)
+                    if w == PRESENCE_SALARIE:
+                        w = 0
                     r, g, b, t, s = GetActivityColor(w)
+                    
                     text = str(v)
                     try:
                         dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))

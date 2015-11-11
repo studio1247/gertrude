@@ -21,7 +21,7 @@ from parameters import *
 from functions import *
 from sqlobjects import *
 from controls import *
-from planning import PlanningWidget, LigneConge, COMMENTS, ACTIVITES, TWO_PARTS, DEPASSEMENT_CAPACITE, SUMMARY_NUM, SUMMARY_DEN
+from planning import PlanningWidget, LigneConge, COMMENTS, ACTIVITES, TWO_PARTS, DEPASSEMENT_CAPACITE, SUMMARY_ENFANT, SUMMARY_SALARIE
 from ooffice import *
 from doc_planning_detaille import PlanningDetailleModifications
 
@@ -37,7 +37,7 @@ class DayPlanningPanel(PlanningWidget):
         for start, end in plages_selectionnees:                        
             for i in range(start, end):
                 if activites[0][i][0] > creche.GetCapacite(line.day):
-                    dlg = wx.MessageDialog(None, u"Dépassement de la capacité sur ce créneau horaire !", "Attention", wx.OK|wx.ICON_WARNING)
+                    dlg = wx.MessageDialog(None, u"Dépassement de la capacité sur ce créneau horaire !", u"Attention", wx.OK|wx.ICON_WARNING)
                     dlg.ShowModal()
                     dlg.Destroy()
                     self.state = None
@@ -87,9 +87,10 @@ class DayPlanningPanel(PlanningWidget):
                     line.key = self.date
 
                 line.label = GetPrenomNom(inscrit)
+                line.sublabel = ""
                 line.inscription = inscription
                 line.options |= COMMENTS|ACTIVITES
-                line.summary = SUMMARY_NUM
+                line.summary = SUMMARY_ENFANT
                 def GetHeuresEnfant(line):
                     heures = line.GetNombreHeures()
                     if heures > 0:
@@ -125,6 +126,7 @@ class DayPlanningPanel(PlanningWidget):
                     line.key = self.date
                 line.salarie = salarie
                 line.label = GetPrenomNom(salarie)
+                line.sublabel = contrat.fonction
                 line.contrat = contrat
                 line.day = self.date.weekday()
                 def GetHeuresSalarie(line):
@@ -141,7 +143,7 @@ class DayPlanningPanel(PlanningWidget):
                         date += datetime.timedelta(1)
                     return GetHeureString(heures_jour) + '/' + GetHeureString(heures_semaine)
                 line.GetDynamicText = GetHeuresSalarie
-                line.summary = SUMMARY_DEN
+                line.summary = SUMMARY_SALARIE
                 self.lignes_salaries.append(line)
         self.lignes_salaries.sort(key=lambda line: line.label)    
 

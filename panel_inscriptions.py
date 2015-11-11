@@ -671,8 +671,9 @@ class ReferencePlanningPanel(PlanningWidget):
                     line.insert = None
                     line.day = day
                     line.label = days[day % 7]
+                    line.sublabel = ""
                     line.reference = None
-                    line.summary = SUMMARY_NUM
+                    line.summary = SUMMARY_ENFANT
                     line.options |= ACTIVITES
                     lines.append(line)
         self.SetLines(lines)

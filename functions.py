@@ -506,9 +506,10 @@ def GetLines(date, inscrits, presence=False, site=None, groupe=None):
             line.nom = inscrit.nom
             line.prenom = inscrit.prenom
             line.label = GetPrenomNom(inscrit)
+            line.sublabel = ""
             line.inscription = inscription
             line.reference = inscription.GetJourneeReference(date)
-            line.summary = 1 # TODO SUMMARY_NUM
+            line.summary = SUMMARY_ENFANT
             lines.append(line)
     return lines
 
@@ -645,6 +646,7 @@ class Summary(list):
     def __init__(self, label):
         self.options = 0
         self.label = label
+        self.sublabel = ""
         self.GetDynamicText = None
         for i in range(DAY_SIZE):
             self.append([0, 0])
@@ -658,6 +660,10 @@ def GetActivitiesSummary(creche, lines):
             activites_sans_horaires[key] = 0
         elif activite.mode != MODE_SYSTEMATIQUE_SANS_HORAIRES:
             activites[key] = Summary(activite.label)
+    if len(creche.salaries) > 0:
+        activite_salaries = activites[PRESENCE_SALARIE] = Summary(u"Présences salariés")
+    else:
+        activite_salaries = None
         
     for line in lines:
         if line is not None and not isinstance(line, basestring):
@@ -668,9 +674,13 @@ def GetActivitiesSummary(creche, lines):
                         for i in range(start, end):
                             if value in activites:
                                 activites[value][i][line.summary-1] += 1
+                                if line.summary == SUMMARY_SALARIE and activite_salaries:
+                                    activite_salaries[i][0] += 1
+                                    
             for key in line.activites_sans_horaires:
                 if key in activites_sans_horaires:
-                    activites_sans_horaires[key] += 1
+                    activites_sans_horaires[key] += 1  
+    
     return activites, activites_sans_horaires
 
 def GetCrecheFields(creche):

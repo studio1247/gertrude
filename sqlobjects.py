@@ -342,6 +342,7 @@ class JourneeCapacite(Day):
         Day.__init__(self)
         self.jour = jour
         self.label = days[jour]
+        self.sublabel = ""
         self.insert = None
         self.mode_arrondi = 'arrondi_heures'
         self.summary = None

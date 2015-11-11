@@ -181,7 +181,13 @@ TRI_NOM = 1
 TRI_GROUPE = 2
 TRI_NOM_PARENTS = 3
 
+# Types de lignes sur le planning (sert pour le Summary à séparer numérateur et dénominateur)
+SUMMARY_NONE = 0
+SUMMARY_ENFANT = 1
+SUMMARY_SALARIE = 2
+
 # Valeurs de présence
+PRESENCE_SALARIE = -256
 CONGES_DEPASSEMENT = -7
 ABSENCE_CONGE_SANS_PREAVIS = -6
 MALADE_SANS_JUSTIFICATIF = -5 
