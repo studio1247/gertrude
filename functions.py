@@ -310,6 +310,12 @@ def str2date(s, year=None, day=None):
     except:
         return None
 
+def Number2String(value):
+    if isinstance(value, float):
+        return "%.2f" % value
+    else:
+        return "%d" % value
+    
 def date2str(date):
     try:
         return '%.02d/%.02d/%.04d' % (date.day, date.month, date.year)

@@ -18,7 +18,7 @@
 import os, datetime, time, xml.dom.minidom, cStringIO
 import wx, wx.lib.scrolledpanel, wx.html
 from constants import *
-from functions import AddInscritsToChoice
+from functions import *
 from sqlobjects import *
 from controls import *
 from planning import *
@@ -880,7 +880,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
             inscription = self.inscrit.inscriptions[self.periode]
         if inscription:
             self.jours_poses.SetValue(u"%d jours posés / %d jours" % (inscription.GetNombreJoursCongesPoses(), inscription.GetNombreJoursCongesPeriode()))
-            self.heures_and_jours_reference.SetValue(u"%d heures / %d jours" % (inscription.GetNombreHeuresPresenceSemaine(), inscription.GetNombreJoursPresenceSemaine()))
+            self.heures_and_jours_reference.SetValue(u"%s heures / %s jours" % (Number2String(inscription.GetNombreHeuresPresenceSemaine()), Number2String(inscription.GetNombreJoursPresenceSemaine())))
         else:
             self.jours_poses.SetValue("")
             self.heures_and_jours_reference.SetValue("")
