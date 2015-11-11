@@ -1037,9 +1037,9 @@ class HashComboBox(wx.combo.OwnerDrawnComboBox):
         dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
 
         if flags & wx.combo.ODCB_PAINTING_CONTROL:
-            dc.DrawRoundedRectangleRect(wx.Rect(rr.x, rr.y-3, rr.width, rr.height+6), 4)
+            dc.DrawRoundedRectangleRect(wx.Rect(rr.x, rr.y-3, rr.width, rr.height+6), 3)
         else:
-            dc.DrawRoundedRectangleRect(wx.Rect(rr.x, rr.y-3, rr.width, rr.height+6), 4)
+            dc.DrawRoundedRectangleRect(wx.Rect(rr.x, rr.y-3, rr.width, rr.height+6), 3)
             dc.DrawText(self.GetString(item), rr.x + 10, rr.y)
 
     def OnMeasureItem(self, item):

@@ -451,8 +451,8 @@ class ActivitesTab(AutoTab):
     def UpdateContents(self):
         self.color_buttons[(0, "couleur_supplement")].Enable(not readonly and creche.presences_supplementaires)
         self.color_buttons[(0, "couleur_supplement")].hash_cb.Enable(not readonly and creche.presences_supplementaires)
-        self.color_buttons[(0, "couleur_previsionnel")].Enable(not readonly and creche.presences_previsionnelles)
-        self.color_buttons[(0, "couleur_previsionnel")].hash_cb.Enable(not readonly and creche.presences_previsionnelles)
+        self.color_buttons[(0, "couleur_previsionnel")].Enable(not readonly)
+        self.color_buttons[(0, "couleur_previsionnel")].hash_cb.Enable(not readonly)
         self.activites_sizer.Clear(True)
         for activity in creche.activites.values():
             if activity.value > 0:

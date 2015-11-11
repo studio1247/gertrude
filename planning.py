@@ -197,6 +197,20 @@ class PlanningGridWindow(BufferedWindow):
             dc.DrawText(line.info, 100, 7 + index * LINE_HEIGHT)
         elif not isinstance(line, basestring):
             keys = line.activites.keys()
+            # Affichage du contrat de référence en arrière plan
+            if line.reference:
+                for start, end, value in line.reference.activites:
+                    if value == 0:
+                        r, g, b, t, s = GetActivityColor(value|PREVISIONNEL)
+                        try:
+                            dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
+                            dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
+                        except:
+                            dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
+                            dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
+                        rect = wx.Rect(1+(start-int(creche.affichage_min*(60 / BASE_GRANULARITY)))*config.column_width, 1+index*LINE_HEIGHT, (end-start)*config.column_width-1, LINE_HEIGHT/3)
+                        dc.DrawRectangleRect(rect)
+                
             for start, end, activity in keys[:]:
                 if activity == 0 and line.reference:
                     keys.remove((start, end, activity))
@@ -233,7 +247,7 @@ class PlanningGridWindow(BufferedWindow):
                     dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
                     dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
                 rect = wx.Rect(1+(start-int(creche.affichage_min*(60 / BASE_GRANULARITY)))*config.column_width, 1+index*LINE_HEIGHT, (end-start)*config.column_width-1, LINE_HEIGHT-1)
-                dc.DrawRoundedRectangleRect(rect, 4)
+                dc.DrawRoundedRectangleRect(rect, 3)
                 if self.options & DRAW_VALUES and val != 0:
                     dc.DrawText(str(val), rect.GetX() + rect.GetWidth()/2 - 4*len(str(val)), 7 + index * LINE_HEIGHT)
             # Commentaire sur la ligne
@@ -271,7 +285,7 @@ class PlanningGridWindow(BufferedWindow):
                         except:
                             dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
                             dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
-                        dc.DrawRoundedRectangleRect(rect, 4)
+                        dc.DrawRoundedRectangleRect(rect, 3)
                         s = str(int(v))
                         dc.DrawText(s, pos + 4 - 4*len(s) + (float(x+a)/2-debut)*config.column_width, 7 + index * LINE_HEIGHT)
                     a = x    
@@ -738,7 +752,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
                 except:
                     dc.SetPen(wx.Pen(wx.Colour(0, 0, 0)))
                     dc.SetBrush(wx.Brush(wx.Colour(128, 128, 128), wx.SOLID))
-                dc.DrawRoundedRectangleRect(rect, 4)
+                dc.DrawRoundedRectangleRect(rect, 3)
                 dc.DrawText(line, 5, 8 + i * LINE_HEIGHT)
             else:
                 if line.sublabel:
@@ -795,7 +809,7 @@ class PlanningSummaryPanel(BufferedWindow):
                 if not (self.options & NO_ICONS):
                     x += ICONS_WIDTH
                 rect = wx.Rect(x, 2, 20, 19)
-                dc.DrawRoundedRectangleRect(rect, 4)
+                dc.DrawRoundedRectangleRect(rect, 3)
                 dc.DrawText(str(count), x + 4, 5)
         
         # total horaire + pourcentage remplissage
@@ -854,7 +868,7 @@ class PlanningSummaryPanel(BufferedWindow):
                         dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
                         dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
                     w, h = dc.GetTextExtent(text) 
-                    dc.DrawRoundedRectangleRect(rect, 4)
+                    dc.DrawRoundedRectangleRect(rect, 3)
                     dc.DrawText(text, pos + 4 - 4*len(text) + (float(x+a)/2-debut)*config.column_width, 4 + (15-h)/2 + index * 20)
                 a = x
                 v, w = nv, nw
