@@ -211,6 +211,7 @@ DECLOTURE = 1 << 4
 FACTURES_FAMILLES = 1 << 5
 READONLY = 1 << 6
 GROUPES_SITES = 1 << 7
+NO_BACKUPS = 1 << 8
 
 # Atributs de plages horaires spéciales
 PLAGE_FERMETURE = 0

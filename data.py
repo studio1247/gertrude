@@ -356,15 +356,16 @@ class FileConnection(object):
         self.backup = None
 
     def Backup(self, progress_handler=default_progress_handler):
-        progress_handler.display('Sauvegarde ...')
-        try:
-            if os.path.isfile(self.filename):
-                if not os.path.isdir(BACKUPS_DIRECTORY):
-                    os.makedirs(BACKUPS_DIRECTORY)
-                self.backup = 'backup_%s_%d.db' % (os.path.split(self.filename)[1], time.time())
-                shutil.copyfile(self.filename, BACKUPS_DIRECTORY + '/' + self.backup)
-        except Exception, e:
-            progress_handler.display('Impossible de faire la sauvegarde' + str(e))
+        if not config.options & NO_BACKUPS:
+            progress_handler.display('Sauvegarde ...')
+            try:
+                if os.path.isfile(self.filename):
+                    if not os.path.isdir(BACKUPS_DIRECTORY):
+                        os.makedirs(BACKUPS_DIRECTORY)
+                    self.backup = 'backup_%s_%d.db' % (os.path.split(self.filename)[1], time.time())
+                    shutil.copyfile(self.filename, BACKUPS_DIRECTORY + '/' + self.backup)
+            except Exception, e:
+                progress_handler.display('Impossible de faire la sauvegarde' + str(e))
     
     def Liste(self, progress_handler=default_progress_handler):
         if not os.path.isfile(self.filename):

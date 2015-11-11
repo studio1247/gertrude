@@ -82,6 +82,8 @@ def getOptions(parser):
             options |= FACTURES_FAMILLES
         if "groupes-sites" in str:
             options |= GROUPES_SITES
+        if "no-backups" in str:
+            options |= NO_BACKUPS
     except:
         pass
     return options
