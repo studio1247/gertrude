@@ -488,7 +488,7 @@ def GetInscrits(debut, fin, site=None, handicap=None):
             result.append(inscrit)
     return result
 
-def GetLines(date, inscrits, presence=False, site=None, groupe=None):
+def GetLines(date, inscrits, presence=False, site=None, groupe=None, summary=SUMMARY_ENFANT):
     lines = []
     for inscrit in inscrits:
         if date in inscrit.jours_conges:
@@ -509,7 +509,7 @@ def GetLines(date, inscrits, presence=False, site=None, groupe=None):
             line.sublabel = ""
             line.inscription = inscription
             line.reference = inscription.GetJourneeReference(date)
-            line.summary = SUMMARY_ENFANT
+            line.summary = summary
             lines.append(line)
     return lines
 

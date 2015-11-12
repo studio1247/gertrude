@@ -88,6 +88,8 @@ class PlanningDetailleModifications(object):
             if shape in ["legende-heure", "ligne-heure", "ligne-quart-heure", "libelle", "separateur", "category"] or shape.startswith("activite-"):
                 template.removeChild(shapes[shape])
         drawing.removeChild(template)
+        if not "activite-%d" % PRESENCE_SALARIE in shapes:
+            shapes["activite-%d" % PRESENCE_SALARIE] = shapes["activite-%d" % 0]
     
         day = self.start
         while day <= self.end:
@@ -95,7 +97,7 @@ class PlanningDetailleModifications(object):
                 day += datetime.timedelta(1)
                 continue
 
-            lines_enfants = GetLines(day, creche.inscrits, site=self.site, groupe=self.groupe)
+            lines_enfants = GetLines(day, creche.inscrits, site=self.site, groupe=self.groupe, summary=SUMMARY_ENFANT)
             if creche.tri_planning == TRI_GROUPE:
                 lines_enfants = GetEnfantsTriesParGroupe(lines_enfants)
             elif creche.tri_planning == TRI_NOM:
@@ -103,7 +105,7 @@ class PlanningDetailleModifications(object):
             else:
                 lines_enfants = GetEnfantsTriesParPrenom(lines_enfants)
                 
-            lines_salaries = GetLines(day, creche.salaries, site=self.site)
+            lines_salaries = GetLines(day, creche.salaries, site=self.site, summary=SUMMARY_SALARIE)
             
             if lines_salaries:
                 lines = lines_enfants + [None] + lines_salaries
@@ -183,6 +185,8 @@ class PlanningDetailleModifications(object):
                                         allergies = ''                                    
                                     ReplaceTextFields(node, [('texte', ''), ('allergies', allergies)])
                                     page.appendChild(node)
+                                else:
+                                    print u"Pas de forme pour %s" % key
                             
                 if page_index+1 == pages_count:
                     # ligne séparatrice
@@ -196,7 +200,7 @@ class PlanningDetailleModifications(object):
                     
                     # le récapitulatif par activité
                     i = lines_count
-                    summary = GetActivitiesSummary(creche, lines_enfants)[0]
+                    summary = GetActivitiesSummary(creche, lines)[0]
                     for activity in summary.keys():
                         i += 1
                         if activity == PRESENCE_SALARIE:
@@ -224,7 +228,7 @@ class PlanningDetailleModifications(object):
                             else:
                                 nv, nw = line[x]
                                 
-                            if activity == 0 and (nw == 0 or nv > creche.GetCapacite(day.week_day) or float(nv)/nw > 6.5):
+                            if activity == 0 and (nw == 0 or nv > creche.GetCapacite(day.weekday()) or float(nv)/nw > 6.5):
                                 nw = activity|SUPPLEMENT
                             else:
                                 nw = activity
@@ -240,6 +244,7 @@ class PlanningDetailleModifications(object):
                                         if key in shapes:
                                             node = shapes[key].cloneNode(1)
                                         else:
+                                            print u"Pas de forme pour %s" % key
                                             node = None
                                     if node:
                                         node.setAttribute('svg:x', '%fcm' % (left + labels_width + (float(a-affichage_min) * step)))

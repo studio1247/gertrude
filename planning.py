@@ -769,20 +769,21 @@ class PlanningSummaryPanel(BufferedWindow):
     def __init__(self, parent, options):
         self.parent = parent
         self.options = options
-        self.activities_count = len(creche.GetActivitesAvecHoraires())
+        self.activities_count = 0
         self.activites = {}
         self.activites_sans_horaires = {}
         BufferedWindow.__init__(self, parent, size=(-1, 2+20*self.activities_count))
 
     def UpdateContents(self):
-        new_activitites_count = len(creche.GetActivitesAvecHoraires())
+        lines = self.GetParent().GetSummaryLines()
+        self.activites, self.activites_sans_horaires = GetActivitiesSummary(creche, lines)
+        
+        new_activitites_count = len(self.activites)
         if self.activities_count != new_activitites_count:
             self.activities_count = new_activitites_count
             self.SetMinSize((-1, 2+20*new_activitites_count))
             self.GetParent().sizer.Layout()
-            
-        lines = self.GetParent().GetSummaryLines()
-        self.activites, self.activites_sans_horaires = GetActivitiesSummary(creche, lines)
+
         self.UpdateDrawing()
 
     def Draw(self, dc):
