@@ -52,6 +52,13 @@ class GertrudeTestCase(unittest.TestCase):
         creche.inscrits.append(inscrit)
         return inscrit
     
+    def AddSalarie(self):
+        salarie = Salarie(creation=False)
+        salarie.prenom, salarie.nom = 'Gertrude', 'GPL'
+        salarie.idx = 0
+        creche.salaries.append(salarie)
+        return salarie    
+    
     def AddActivite(self, inscrit, date, debut, fin, activite):
         inscrit.journees[date] = Journee(inscrit, date)
         inscrit.journees[date].AddActivity(debut, fin, activite, None)
@@ -123,6 +130,16 @@ class DocumentsTests(GertrudeTestCase):
             inscription.reference[3].AddActivity(96, 180, 0, -1)
             inscription.reference[4].AddActivity(96, 180, 0, -1)
             inscrit.inscriptions.append(inscription)
+            
+            salarie = self.AddSalarie()
+            contrat = Contrat(salarie, creation=False)
+            contrat.debut, contrat.fin = datetime.date(2010, 9, 6), datetime.date(2011, 7, 27)
+            contrat.reference[0].AddActivity(96, 180, 0, -1)
+            contrat.reference[1].AddActivity(96, 180, 0, -1)
+            contrat.reference[2].AddActivity(96, 180, 0, -1)
+            contrat.reference[3].AddActivity(96, 180, 0, -1)
+            contrat.reference[4].AddActivity(96, 180, 0, -1)
+            salarie.contrats.append(contrat)
     
     def tearDown(self):
         os.chdir(self.pwd)

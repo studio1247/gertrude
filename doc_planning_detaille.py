@@ -199,7 +199,9 @@ class PlanningDetailleModifications(object):
                     summary = GetActivitiesSummary(creche, lines_enfants)[0]
                     for activity in summary.keys():
                         i += 1
-                        if activity == 0:
+                        if activity == PRESENCE_SALARIE:
+                            label = u"Présences salariés"
+                        elif activity == 0:
                             label = u"Présences"
                         else:
                             label = creche.activites[activity].label
