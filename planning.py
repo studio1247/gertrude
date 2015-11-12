@@ -739,7 +739,7 @@ class PlanningInternalPanel(wx.lib.scrolledpanel.ScrolledPanel):
         dc.BeginDrawing()
         dc.SetTextForeground("BLACK")
         labelfont = wx.Font(8, wx.SWISS, wx.NORMAL, wx.NORMAL)
-        sublabelfont = wx.Font(5, wx.SWISS, wx.NORMAL, wx.NORMAL)
+        sublabelfont = wx.Font(6, wx.SWISS, wx.NORMAL, wx.NORMAL)
         dc.SetFont(labelfont)
         for i, line in enumerate(self.lines):
             if line is None:
