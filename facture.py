@@ -274,6 +274,11 @@ class FactureFinMois(object):
                             self.jours_supplementaires[date] = heures_realisees
                         else:
                             self.jours_presence_selon_contrat[date] = heures_realisees
+                            
+                        if cotisation.majoration_journaliere:
+                            self.supplement += cotisation.majoration_journaliere
+                            self.raison_supplement = self.raison_supplement.union(cotisation.raison_majoration_journaliere)
+
 
                     if creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE or (creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION and inscription.IsInPeriodeAdaptation(date)):
                         activites = inscrit.GetExtraActivites(date)
@@ -281,10 +286,6 @@ class FactureFinMois(object):
                             if value in creche.activites:
                                 activite = creche.activites[value]
                                 self.supplement_activites += activite.tarif
-                                
-                    if cotisation.majoration_journaliere:
-                        self.supplement += cotisation.majoration_journaliere
-                        self.raison_supplement = self.raison_supplement.union(cotisation.raison_majoration_journaliere)
                     
                     if heures_realisees_non_facturees > 0 and heures_realisees == heures_realisees_non_facturees:
                         self.jours_presence_non_facturee[date] = heures_realisees_non_facturees
