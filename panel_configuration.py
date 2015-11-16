@@ -957,7 +957,7 @@ class ParametersPanel(AutoTab):
     def AjouteLigneTarif(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, u'Libellé :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, 'tarifs_speciaux[%d].label' % index, observers=['tarifs']), 1, wx.RIGHT|wx.EXPAND, 5)])
-        sizer.AddMany([(AutoChoiceCtrl(self, creche, 'tarifs_speciaux[%d].type' % index, items=[("Majoration", TARIF_SPECIAL_MAJORATION), (u"Réduction", TARIF_SPECIAL_REDUCTION)]), 1, wx.EXPAND)])
+        sizer.AddMany([(AutoChoiceCtrl(self, creche, 'tarifs_speciaux[%d].type' % index, items=[(u"Majoration", TARIF_SPECIAL_MAJORATION), (u"Réduction", TARIF_SPECIAL_REDUCTION), (u"Tarif de remplacement", TARIF_SPECIAL_REMPLACEMENT)]), 1, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, 'Valeur :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoNumericCtrl(self, creche, 'tarifs_speciaux[%d].valeur' % index, precision=2), 1, wx.RIGHT|wx.EXPAND, 5)])
         sizer.AddMany([(AutoChoiceCtrl(self, creche, 'tarifs_speciaux[%d].unite' % index, items=[(u"€", TARIF_SPECIAL_UNITE_EUROS), (u"%", TARIF_SPECIAL_UNITE_POURCENTAGE), (u"€/heure", TARIF_SPECIAL_UNITE_EUROS_PAR_HEURE), (u"€/jour de présence", TARIF_SPECIAL_UNITE_EUROS_PAR_JOUR)]), 1, wx.EXPAND)])
         delbutton = wx.BitmapButton(self, -1, delbmp)
