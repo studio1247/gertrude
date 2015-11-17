@@ -264,34 +264,34 @@ def GetDepartement(cp):
     else:
         return ""
 
-def GetFile(filename, site, base):
+def GetFile(filename, site, path, path_dist):
     paths = []
     if site and site.nom:
-        paths.append("%s/%s_%s" % (base, site.nom, filename))
+        paths.append("%s/%s_%s" % (path, site.nom, filename))
     try:
-        paths.append("%s/%s_%s" % (base, creche.nom.lower(), filename))
-        paths.append("%s/[%s] %s" % (base, creche.nom.lower(), filename))
+        paths.append("%s/%s_%s" % (path, creche.nom.lower(), filename))
+        paths.append("%s/[%s] %s" % (path, creche.nom.lower(), filename))
     except:
         pass
-    paths.append("%s/%s" % (base, filename))
-    paths.append("%s_dist/%s" % (base, filename))
+    paths.append("%s/%s" % (path, filename))
+    paths.append("%s/%s" % (path_dist, filename))
     if sys.platform == "darwin":
         paths.append("../Resources/%s" % filename)
-    for directory in ["./", "~/.gertrude/", "/usr/share/gertrude/"]:
+    for directory in ["", "~/.gertrude/", "/usr/share/gertrude/"]:
         for path in paths:
             if os.path.isfile(directory + path):
                 return directory + path
     return None
     
 def GetBitmapFile(filename, site=None):
-    return GetFile(filename, site, "bitmaps")
+    return GetFile(filename, site, "bitmaps", "bitmaps_dist")
 
 def GetTemplateFile(filename, site=None):
-    return GetFile(filename, site, "templates")
+    return GetFile(filename, site, config.templates, "templates_dist")
 
 def IsTemplateFile(filename):
-    path1 = "./templates/%s" % filename
-    path2 = "./templates_dist/%s" % filename
+    path1 = "%s/%s" % (config.templates, filename)
+    path2 = "templates_dist/%s" % filename
     return os.path.isfile(path1) or os.path.isfile(path2)
 
 def str2date(s, year=None, day=None):

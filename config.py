@@ -52,6 +52,7 @@ class Config(object):
         self.connection = None
         self.numfact = None
         self.codeclient = None
+        self.templates = "templates"
         
     def setSection(self, section):
         self.default_section = section
@@ -124,6 +125,14 @@ def getDocumentsDirectory(parser):
         return directory
     except:
         return getDefaultDocumentsDirectory()
+
+def getTemplatesDirectory(parser):
+    try:
+        directory = parser.get(DEFAULT_SECTION, "templates")
+        assert os.path.isdir(directory)
+        return directory
+    except:
+        return "templates"
     
 def getBackupsDirectory(parser):
     try:
@@ -220,7 +229,8 @@ def LoadConfig(progress_handler=default_progress_handler):
     config.column_width = getColumnWidth(parser)
      
     config.options = getOptions(parser)
-
+    config.templates = getTemplatesDirectory(parser)
+    
     config.original_documents_directory = getDocumentsDirectory(parser)
     config.documents_directory = config.original_documents_directory
     
@@ -237,6 +247,7 @@ def LoadConfig(progress_handler=default_progress_handler):
                 config.sections[section] = Section(database)
                 config.sections[section].numfact = getField(parser, section, "numfact")
                 config.sections[section].codeclient = getField(parser, section, "codeclient")
+                
     if not config.sections:
         config.sections[None] = Section(Database())
     if len(config.sections) == 1:
