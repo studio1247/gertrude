@@ -64,6 +64,7 @@ class LigneConge(object):
     def __init__(self, info):
         self.info = info
         self.readonly = True
+        self.reference = None
         self.options = 0
     
     def GetNombreHeures(self):

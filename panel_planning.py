@@ -93,7 +93,10 @@ class DayPlanningPanel(PlanningWidget):
                 line.summary = SUMMARY_ENFANT
                 def GetHeuresEnfant(line):
                     heures = line.GetNombreHeures()
-                    heures_reference = line.reference.GetNombreHeures()
+                    if line.reference:
+                        heures_reference = line.reference.GetNombreHeures()
+                    else:
+                        heures_reference = 0
                     if heures > 0 or heures_reference > 0:
                         return GetHeureString(heures) + '/' + GetHeureString(heures_reference)
                     else:
