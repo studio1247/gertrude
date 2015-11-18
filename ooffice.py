@@ -522,7 +522,7 @@ def convert_to_pdf(filename, pdffilename):
     else:
         shutil.copy(filename, pdffilename)
 
-DDE_ACROBAT_STRINGS = ["AcroviewR11", "AcroviewR10", "acroview"]
+DDE_ACROBAT_STRINGS = ["AcroviewR15", "AcroviewA15", "AcroviewR12", "AcroviewA12", "AcroviewR11", "AcroviewA11", "AcroviewR10", "AcroviewA10", "acroview"]
 dde_server = None
 def StartAcrobatReader(filename):
     global dde_server
@@ -536,20 +536,22 @@ def StartAcrobatReader(filename):
     readerexe = win32api.FindExecutable(name, path)
     os.spawnl(os.P_NOWAIT, readerexe[1], " ")
     
-    for t in range(12):
-        try:
-            time.sleep(2)
-            if not dde_server:
-                dde_server = dde.CreateServer()
-                dde_server.Create('Gertrude')
-            c = dde.CreateConversation(dde_server)
-            c.ConnectTo(DDE_ACROBAT_STRINGS[t%3], 'control')
-            c.Exec('[DocOpen("%s")]' % (filename,))
-            return
-        except Exception, e:
-            print "Impossible de lancer acrobat reader ; prochain essai dans 2s ...", e
+    for t in range(10):
+        time.sleep(1)
+        for acrobat in DDE_ACROBAT_STRINGS:
+            try:
+                if not dde_server:
+                    dde_server = dde.CreateServer()
+                    dde_server.Create('Gertrude')
+                c = dde.CreateConversation(dde_server)
+                c.ConnectTo(acrobat, 'control')
+                c.Exec('[DocOpen("%s")]' % (filename,))
+                return
+            except Exception, e:
+                pass
+        print "Impossible de lancer acrobat reader ; prochain essai dans 1s ...", e
 
-    dlg = wx.MessageDialog(self, "Impossible d'ouvrir le document", 'Erreur', wx.OK|wx.ICON_WARNING)
+    dlg = wx.MessageDialog(None, "Impossible d'ouvrir le document", 'Erreur', wx.OK|wx.ICON_WARNING)
     dlg.ShowModal()
     dlg.Destroy()
 
