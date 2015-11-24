@@ -409,9 +409,12 @@ class FactureFinMois(object):
                     self.total_contractualise += prorata
                     self.heures_contrat += prorata_heures
                     self.heures_facture_par_mode[cotisation.mode_garde] += prorata_heures
-
+                
                 if creche.regularisation_fin_contrat:
-                    if creche.gestion_depart_anticipe and inscription.depart and cotisation.Include(inscription.depart) and inscription.depart >= self.debut_recap and inscription.depart <= self.fin_recap:
+                    depart_anticipe = (creche.gestion_depart_anticipe and inscription.depart and inscription.depart >= self.debut_recap and inscription.depart <= self.fin_recap)
+                    dernier_mois = (depart_anticipe | bool(inscription.fin and inscription.fin >= self.debut_recap and inscription.fin <= self.fin_recap))
+
+                    if depart_anticipe and cotisation.Include(inscription.depart):
                         date = cotisation.debut
                         while date <= inscription.depart:
                             cotisation_regularisee = Cotisation(inscrit, date, options=NO_ADDRESS|self.options|DEPART_ANTICIPE)
@@ -423,7 +426,7 @@ class FactureFinMois(object):
     
                     jours_presence = inscription.GetNombreJoursPresenceSemaine()
                     if jours_presence and inscription.semaines_conges:
-                        if (inscription.fin and inscription.fin >= self.debut_recap and inscription.fin <= self.fin_recap) or (creche.gestion_depart_anticipe and inscription.depart and inscription.depart >= self.debut_recap and inscription.depart <= self.fin_recap):
+                        if dernier_mois:
                             semaines_conges_non_pris = inscription.semaines_conges - float(inscription.GetNombreJoursCongesPoses()) / jours_presence
                             if semaines_conges_non_pris > 0:
                                 heures = cotisation.heures_semaine * semaines_conges_non_pris

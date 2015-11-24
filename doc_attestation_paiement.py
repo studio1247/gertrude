@@ -89,7 +89,6 @@ class AttestationModifications(object):
             doc.removeChild(template)
         
         for inscrit in self.inscrits:
-            print GetPrenomNom(inscrit)
             facture_debut = facture_fin = None
             date = self.debut
             heures_facturees = 0.0
@@ -128,7 +127,8 @@ class AttestationModifications(object):
                     ('date', '%.2d/%.2d/%d' % (today.day, today.month, today.year)),
                     ('heures-facturees', '%.2f' % heures_facturees),
                     ('total', '%.2f' % total),
-                    ('site', GetNom(site))
+                    ('site', GetNom(site)),
+                    ('dernier-mois', GetBoolStr(last_inscription.fin and last_inscription.fin <= facture_fin))
                     ]
             
             if IsTemplateFile("Attestation mensuelle.odt"):

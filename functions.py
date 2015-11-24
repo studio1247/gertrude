@@ -352,6 +352,12 @@ def GetDeStr(str):
 def GetDeMoisStr(mois):
     return GetDeStr(months[mois].lower())
 
+def GetBoolStr(val):
+    if val:
+        return "OUI"
+    else:
+        return "NON"
+    
 def GetParentsString(famille):
     if not famille.parents['papa'] and not famille.parents['maman']:
         return "ZZZZ"
