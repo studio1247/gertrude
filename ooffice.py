@@ -185,8 +185,8 @@ def ReplaceTextFields(dom, _fields):
                                     try:
                                         replace = True
                                         nodeText = nodeText.replace(tag, eval("value(%s)" % parameters))
-                                    except:
-                                        print 'erreur :', tag, parameters
+                                    except Exception, e:
+                                        print 'erreur :', tag, parameters, e
                         else:
                             tag = '<%s>' % field
                             if tag in nodeText:

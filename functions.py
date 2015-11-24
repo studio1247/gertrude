@@ -862,6 +862,7 @@ def GetFactureFields(facture):
                   ('raison-deduction', facture.raison_deduction),
                   ('raison-supplement', facture.raison_supplement),
                   ('supplement-activites', facture.supplement_activites, FIELD_EUROS),
+                  ('supplement_activites', facture.formule_supplement_activites),
                   ('majoration', facture.majoration_mensuelle, FIELD_EUROS|FIELD_SIGN),
                   ('frais-inscription', facture.frais_inscription, FIELD_EUROS|FIELD_SIGN),
                   ('site', GetNom(facture.site)),

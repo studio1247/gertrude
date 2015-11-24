@@ -15,7 +15,7 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import datetime
+import datetime, locale
 from constants import *
 from cotisation import *
 
@@ -114,6 +114,9 @@ class FactureFinMois(object):
         self.raison_deduction = set()
         self.raison_supplement = set()
         self.supplement_activites = 0.0
+        self.detail_supplement_activites = { }
+        for value in creche.activites:
+            self.detail_supplement_activites[creche.activites[value].label] = 0.0
         self.previsionnel = False
         self.cloture = False
         self.montant_heure_garde = 0.0
@@ -286,6 +289,7 @@ class FactureFinMois(object):
                             if value in creche.activites:
                                 activite = creche.activites[value]
                                 self.supplement_activites += activite.tarif
+                                self.detail_supplement_activites[activite.label] += activite.tarif
                     
                     if heures_realisees_non_facturees > 0 and heures_realisees == heures_realisees_non_facturees:
                         self.jours_presence_non_facturee[date] = heures_realisees_non_facturees
@@ -492,7 +496,13 @@ class FactureFinMois(object):
         if options & TRACES:
             for var in ["heures_contractualisees", "heures_facturees", "heures_supplementaires", "heures_contractualisees_realisees", "heures_realisees_non_facturees", "cotisation_mensuelle", "supplement", "deduction", "total"]:
                 print "", var, ':', eval("self.%s" % var)  
-                
+        
+    def formule_supplement_activites(self, activites):
+        result = 0.0
+        for activite in activites:
+            result += self.detail_supplement_activites[activite]
+        return locale.format("%+.2f", result)
+
     def Cloture(self, date=None):
         if not self.cloture:
             if date is None:
@@ -536,6 +546,7 @@ class FactureDebutMoisContrat(FactureDebutMois):
         self.supplement = self.facture_precedente.supplement
         self.deduction = self.facture_precedente.deduction
         self.supplement_activites = self.facture_precedente.supplement_activites
+        self.detail_supplement_activites = self.facture_precedente.detail_supplement_activites
         self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction + self.correction
 
 class FactureDebutMoisPrevisionnel(FactureDebutMois):
@@ -604,6 +615,7 @@ class FactureCloturee:
             self.facture.total_realise = self.total_realise
             self.facture.total_facture = self.total_facture
             self.facture.supplement_activites = self.supplement_activites
+            self.facture_precedente.supplement_activites
             self.facture.supplement = self.supplement
             self.facture.deduction = self.deduction
             self.facture.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction + self.facture.correction
