@@ -895,7 +895,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
             self.UpdateSiteItems()
         if counters['groupes'] > self.groupes_observer:
             self.UpdateGroupeItems()
-        if counters['reservataires'] > self.reservataires_observer:
+        if config.options & RESERVATAIRES and counters['reservataires'] > self.reservataires_observer:
             self.UpdateReservataireItems()
         if counters['professeurs'] > self.professeurs_observer:
             self.UpdateProfesseurItems()
