@@ -833,6 +833,11 @@ class PeriodeDialog(wx.Dialog):
         self.SetSizer(self.sizer)
         self.sizer.Fit(self)
 
+if sys.platform == "darwin":
+    SIMPLE_BUTTONS_SIZE = (30, 30)
+else:  
+    SIMPLE_BUTTONS_SIZE = (-1, -1)
+
 class PeriodeChoice(wx.BoxSizer):
     def __init__(self, parent, constructor, default=None):
         wx.BoxSizer.__init__(self, wx.HORIZONTAL)
@@ -846,14 +851,14 @@ class PeriodeChoice(wx.BoxSizer):
         delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
         plusbmp = wx.Bitmap(GetBitmapFile("plus.png"), wx.BITMAP_TYPE_PNG)
         settingsbmp = wx.Bitmap(GetBitmapFile("settings.png"), wx.BITMAP_TYPE_PNG)
-        self.periodeaddbutton = wx.BitmapButton(parent, -1, plusbmp, style=wx.BU_EXACTFIT)
+        self.periodeaddbutton = wx.BitmapButton(parent, -1, plusbmp, size=SIMPLE_BUTTONS_SIZE)
         self.periodeaddbutton.SetToolTipString(u"Ajouter une période")
-        self.periodedelbutton = wx.BitmapButton(parent, -1, delbmp, style=wx.BU_EXACTFIT)
+        self.periodedelbutton = wx.BitmapButton(parent, -1, delbmp, size=SIMPLE_BUTTONS_SIZE)
         self.periodedelbutton.SetToolTipString(u"Supprimer la période")
-        self.periodesettingsbutton = wx.BitmapButton(parent, -1, settingsbmp, style=wx.BU_EXACTFIT)
+        self.periodesettingsbutton = wx.BitmapButton(parent, -1, settingsbmp, size=SIMPLE_BUTTONS_SIZE)
         self.periodesettingsbutton.SetToolTipString(u"Modifier la période")
 
-        self.Add(self.periodechoice, 1, wx.EXPAND)
+        self.Add(self.periodechoice, 1, wx.EXPAND|wx.LEFT, 5)
         self.Add(self.periodeaddbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT|wx.RIGHT, 5)
         self.Add(self.periodedelbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 5)
         self.Add(self.periodesettingsbutton, 0, wx.ALIGN_CENTER_VERTICAL)
