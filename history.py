@@ -15,8 +15,6 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import __builtin__
-
 class Change:
     def __init__(self, instance, member, value):
         self.instance, self.member, self.value = instance, member, value
@@ -84,5 +82,3 @@ class History(list):
         
     def Clear(self):
         del self[:]
-
-__builtin__.history = History()

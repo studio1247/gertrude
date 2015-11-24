@@ -23,6 +23,7 @@ import wx, wx.lib.wordwrap
 from wx.lib import masked
 from config import Liste, Load, Update, Save, Restore, Exit, ProgressHandler
 from version import VERSION
+from globals import *
 from constants import *
 from functions import *
 from alertes import CheckAlertes

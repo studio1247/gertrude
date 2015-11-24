@@ -99,13 +99,12 @@ class CongesPanel(SalariesTab):
     def __init__(self, parent):
         global delbmp
         delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
-        self.last_creche_observer = -1
         
         SalariesTab.__init__(self, parent)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         
         self.conges_creche_sizer = wx.BoxSizer(wx.VERTICAL)
-        self.affiche_conges_creche()
+        self.AfficheCongesCreche()
         self.sizer.Add(self.conges_creche_sizer, 0, wx.ALL, 5)
         
         self.conges_salarie_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -113,7 +112,7 @@ class CongesPanel(SalariesTab):
         
         self.nouveau_conge_button = wx.Button(self, -1, u'Nouvelle période de congés')
         self.sizer.Add(self.nouveau_conge_button, 0, wx.EXPAND+wx.TOP, 5)
-        self.Bind(wx.EVT_BUTTON, self.evt_conge_add, self.nouveau_conge_button)
+        self.Bind(wx.EVT_BUTTON, self.OnCongeAdd, self.nouveau_conge_button)
 
 #        sizer2 = wx.BoxSizer(wx.HORIZONTAL)
 #        sizer2.AddMany([(wx.StaticText(self, -1, u'Nombre de semaines de congés déduites :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'semaines_conges', min=0, precision=0), 0, wx.EXPAND)])
@@ -122,8 +121,8 @@ class CongesPanel(SalariesTab):
         self.SetSizer(self.sizer)
 
     def UpdateContents(self):
-        if 'conges' in observers and observers['conges'] > self.last_creche_observer:
-            self.affiche_conges_creche()
+        if counters['conges'] > self.conges_observer:
+            self.AfficheCongesCreche()
         if self.salarie:
             for i in range(len(self.conges_salarie_sizer.GetChildren()), len(self.salarie.conges)):
                 self.AddLine(i)
@@ -141,7 +140,7 @@ class CongesPanel(SalariesTab):
         SalariesTab.SetSalarie(self, salarie)
         self.nouveau_conge_button.Enable(self.salarie is not None and not readonly)
 
-    def affiche_conges_creche(self):
+    def AfficheCongesCreche(self):
         self.conges_creche_sizer.DeleteWindows()
         labels_conges = [j[0] for j in jours_fermeture]
         for text in labels_conges:
@@ -158,7 +157,7 @@ class CongesPanel(SalariesTab):
             for child in sizer.GetChildren():
                 child.GetWindow().Disable()
             self.conges_creche_sizer.Add(sizer)
-        self.last_creche_observer = time.time()
+        self.conges_observer = counters['conges']
 
     def AddLine(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -168,7 +167,7 @@ class CongesPanel(SalariesTab):
         delbutton = wx.BitmapButton(self, -1, delbmp)
         delbutton.index = index
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
-        self.Bind(wx.EVT_BUTTON, self.evt_conge_del, delbutton)
+        self.Bind(wx.EVT_BUTTON, self.OnCongeRemove, delbutton)
         self.conges_salarie_sizer.Add(sizer)
         
     def RemoveLine(self):
@@ -177,13 +176,13 @@ class CongesPanel(SalariesTab):
         sizer.DeleteWindows()
         self.conges_salarie_sizer.Detach(index)
 
-    def evt_conge_add(self, event):
+    def OnCongeAdd(self, event):
         history.Append(Delete(self.salarie.conges, -1))
         self.salarie.AddConge(CongeSalarie(self.salarie))
         self.AddLine(len(self.salarie.conges) - 1)
         self.sizer.Layout()
 
-    def evt_conge_del(self, event):
+    def OnCongeRemove(self, event):
         index = event.GetEventObject().index
         history.Append(Insert(self.salarie.conges, index, self.salarie.conges[index]))
         self.RemoveLine()
@@ -242,11 +241,11 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
        
         sizer2 = wx.BoxSizer(wx.HORIZONTAL)
         self.button_copy = wx.Button(self, -1, u"Recopier lundi sur toute la période")
-        sizer2.Add(self.button_copy)
+        sizer2.Add(self.button_copy, 0, wx.EXPAND)
         self.Bind(wx.EVT_BUTTON, self.onMondayCopy, self.button_copy)
         
         self.activity_choice = ActivityComboBox(self)        
-        sizer2.Add(self.activity_choice, 0, wx.ALIGN_RIGHT)
+        sizer2.Add(self.activity_choice, 0, wx.ALIGN_RIGHT|wx.EXPAND)
         sizer.Add(sizer2, 0, wx.EXPAND)
         
         self.planning_panel = PlanningReferenceSalariePanel(self, self.activity_choice)
@@ -296,10 +295,10 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
         else:
             for item in self.sites_items:
                 item.Show(False)
-        self.last_site_observer = time.time()
+        self.sites_observer = counters['sites']
 
     def UpdateContents(self):
-        if 'sites' in observers and observers['sites'] > self.last_site_observer:
+        if counters['sites'] > self.sites_observer:
             self.UpdateSiteItems()
 
         SalariesTab.UpdateContents(self)

@@ -201,7 +201,7 @@ def GetPrenomNom(person, maj_nom=False, tri=None):
         tri = creche.tri_planning
     if maj_nom:
         nom = nom.upper()
-    if tri == TRI_NOM:
+    if (tri & 255) == TRI_NOM:
         return "%s %s" % (nom, person.prenom)
     else:
         return "%s %s" % (person.prenom, nom)
@@ -955,7 +955,7 @@ def AddInscritsToChoice(choice):
         if isinstance(cell, basestring):
             return '[%s]' % cell
 
-        key = GetPrenomNom(cell)
+        key = GetPrenomNom(cell, tri=creche.tri_inscriptions)
         if key.isspace():
             key = 'Nouvelle inscription'
         count = array.count(key)
@@ -975,7 +975,7 @@ def AddInscritsToChoice(choice):
     inscrits = []
     autres = []
     for inscrit in creche.inscrits:
-        if inscrit.GetInscription(datetime.date.today(), preinscription=True) != None:
+        if (creche.tri_inscriptions & TRI_SANS_SEPARATION) or inscrit.GetInscription(datetime.date.today(), preinscription=True):
             inscrits.append(inscrit)
         else:
             autres.append(inscrit)
@@ -985,13 +985,13 @@ def AddInscritsToChoice(choice):
     else:
         if len(inscrits) > 0 and len(autres) > 0:
             choice.Append("[Inscrits]", None)
-        inscrits.sort(key=lambda inscrit: GetPrenomNom(inscrit))
+        inscrits.sort(key=lambda inscrit: GetPrenomNom(inscrit, tri=creche.tri_inscriptions))
 
     __add_in_inscrits_choice(choice, inscrits)        
     
     if len(inscrits) > 0 and len(autres) > 0:
         choice.Append("[Anciens]", None)
 
-    autres.sort(key=lambda inscrit: GetPrenomNom(inscrit))
+    autres.sort(key=lambda inscrit: GetPrenomNom(inscrit, tri=creche.tri_inscriptions))
 
     __add_in_inscrits_choice(choice, autres)

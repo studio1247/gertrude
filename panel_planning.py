@@ -16,6 +16,7 @@
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import datetime
+from globals import *
 from constants import *
 from parameters import *
 from functions import *
@@ -52,7 +53,7 @@ class DayPlanningPanel(PlanningWidget):
                 if conge.label:
                     self.Disable(conge.label)
                 else:
-                    self.Disable(u"Crèche fermée")
+                    self.Disable(u"Etablissement fermé")
                 return
         else:
             self.SetInfo("")
@@ -197,7 +198,7 @@ class PlanningPanel(GPanel):
         self.site_choice = wx.Choice(self, -1)
         for site in creche.sites:
             self.site_choice.Append(site.nom, site)
-        sizer.Add(self.site_choice, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+        sizer.Add(self.site_choice, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.RIGHT, 5)
         if len(creche.sites) < 2:
             self.site_choice.Show(False)
         self.site_choice.SetSelection(0)
@@ -213,19 +214,19 @@ class PlanningPanel(GPanel):
         
         # La combobox pour la selection de la semaine
         self.week_choice = wx.Choice(self, -1)
-        sizer.Add(self.week_choice, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+        sizer.Add(self.week_choice, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.LEFT, 5)
         AddWeeksToChoice(self.week_choice)
         self.Bind(wx.EVT_CHOICE, self.OnChangementSemaine, self.week_choice)
         
         # La combobox pour la selection du groupe (si groupes)
         self.groupe_choice = wx.Choice(self, -1)
-        sizer.Add(self.groupe_choice, 0, wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(self.groupe_choice, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
         self.Bind(wx.EVT_CHOICE, self.OnChangeGroupeDisplayed, self.groupe_choice)
         self.UpdateGroupeCombobox()
         
         # La combobox pour la selection de l'outil (si activités)
         self.activity_choice = ActivityComboBox(self)
-        sizer.Add(self.activity_choice, 0, wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(self.activity_choice, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
         
         # Le bouton d'impression
         bmp = wx.Bitmap(GetBitmapFile("printer.png"), wx.BITMAP_TYPE_PNG)
@@ -265,7 +266,7 @@ class PlanningPanel(GPanel):
             self.groupe_choice.Show(True)
         else:
             self.groupe_choice.Show(False)
-        self.last_groupe_observer = time.time()
+        self.groupes_observer = counters['groupes']
 
     def onPrintPlanning(self, evt):
         site = self.GetSelectedSite()
@@ -276,10 +277,10 @@ class PlanningPanel(GPanel):
         DocumentDialog(self, PlanningDetailleModifications((start, end), site, groupe)).ShowModal()
 
     def OnChangeGroupeDisplayed(self, evt):
-        self.OnChangementSemaine(None)
+        self.OnChangementSemaine()
     
     def OnChangementSemaineday(self, evt=None):
-        self.notebook.GetCurrentPage().UpdateDrawing()
+        self.notebook.GetCurrentPage().UpdateContents()
     
     def GetSelectedSite(self):
         if len(creche.sites) > 1:
@@ -456,7 +457,7 @@ class PlanningPanel(GPanel):
             self.activity_choice.Append(creche.activites[0].label, creche.activites[0])
         self.activity_choice.SetSelection(selected)
         
-        if 'groupes' in observers and observers['groupes'] > self.last_groupe_observer:
+        if counters['groupes'] > self.groupes_observer:
             self.UpdateGroupeCombobox()
             
         self.OnChangementSemaine()

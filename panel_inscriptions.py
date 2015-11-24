@@ -17,6 +17,7 @@
 
 import os, datetime, time, xml.dom.minidom, cStringIO
 import wx, wx.lib.scrolledpanel, wx.html
+from globals import *
 from constants import *
 from functions import *
 from sqlobjects import *
@@ -210,7 +211,8 @@ class InscriptionsTab(AutoTab):
 class IdentitePanel(InscriptionsTab):
     def __init__(self, parent):
         InscriptionsTab.__init__(self, parent)
-        self.last_tarifs_observer = -1
+        self.tarifs_observer = -1
+        self.categories_observer = -1
         self.inscrit = None
         self.delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -310,7 +312,7 @@ class IdentitePanel(InscriptionsTab):
         else:
             for item in self.categorie_items:
                 item.Show(False)
-        self.last_categorie_observer = time.time()
+        self.categories_observer = counters['categories']
             
     def UpdateAllergies(self):
         if self.inscrit and self.allergies_checkboxes:
@@ -419,7 +421,7 @@ class IdentitePanel(InscriptionsTab):
         self.sizer.FitInside(self)
         
     def UpdateContents(self):
-        if self.last_tarifs_observer < 0 or ('tarifs' in observers and observers['tarifs'] > self.last_tarifs_observer):
+        if counters['tarifs'] > self.tarifs_observer:
             while len(self.tarifs_sizer.GetChildren()):
                 sizer = self.tarifs_sizer.GetItem(0)
                 sizer.DeleteWindows()
@@ -429,7 +431,7 @@ class IdentitePanel(InscriptionsTab):
                 sizer = wx.BoxSizer(wx.HORIZONTAL)
                 sizer.AddMany([(wx.StaticText(self, -1, u'%s :' % tarif.label, size=(w, -1)), 0, wx.ALIGN_CENTER_VERTICAL), (AutoCheckBox(self, self.inscrit, 'famille.tarifs', value=1<<tarif.idx), 0, wx.EXPAND)])
                 self.tarifs_sizer.Add(sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
-            self.last_tarifs_observer = time.time()
+            self.tarifs_observer = counters['tarifs']
         self.UpdateLignesInscritsFratrie()
         if self.inscrit:
             freres_count = len(self.inscrit.famille.freres_soeurs)
@@ -442,7 +444,7 @@ class IdentitePanel(InscriptionsTab):
         self.UpdateAllergies()
         if config.options & TABLETTE:
             self.tabletteSizer.UpdateCombinaison()
-        if 'categories' in observers and observers['categories'] > self.last_categorie_observer:
+        if config.options & CATEGORIES and counters['categories'] > self.categories_observer:
             self.UpdateCategorieItems()
 
         AutoTab.UpdateContents(self)
@@ -761,7 +763,9 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         
     def nouvelleInscription(self): # TODO les autres pareil ...
         inscription = Inscription(self.inscrit)
-        inscription.preinscription = creche.preinscriptions 
+        inscription.preinscription = creche.preinscriptions
+        if len(creche.groupes) > 0 and self.inscrit.inscriptions:
+            inscription.groupe = self.inscrit.inscriptions[-1].groupe
         return inscription
 
     def SetInscrit(self, inscrit):
@@ -841,7 +845,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         else:
             for item in self.sites_items:
                 item.Show(False)
-        self.last_site_observer = time.time()
+        self.sites_observer = counters['sites']
     
     def UpdateReservataireItems(self):
         if len(creche.reservataires) > 0:
@@ -852,7 +856,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         else:
             for item in self.reservataire_items:
                 item.Show(False)
-        self.last_reservataire_observer = time.time()
+        self.reservataires_observer = counters['reservataires']
 
     def UpdateGroupeItems(self):
         if len(creche.groupes) > 0:
@@ -863,7 +867,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         else:
             for item in self.groupe_items:
                 item.Show(False)
-        self.last_groupe_observer = time.time()
+        self.groupes_observer = counters["groupes"]
 
     def UpdateProfesseurItems(self):
         if creche.type == TYPE_GARDERIE_PERISCOLAIRE and len(creche.professeurs) > 0:
@@ -874,7 +878,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         else:
             for item in self.professeur_items:
                 item.Show(False)
-        self.last_professeur_observer = time.time()
+        self.professeurs_observer = counters["professeurs"]
     
     def UpdateDecompteConges(self, event=None, inscription=None):
         if inscription is None and self.inscrit and self.periode is not None and self.periode != -1 and self.periode < len(self.inscrit.inscriptions):
@@ -887,13 +891,13 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
             self.heures_and_jours_reference.SetValue("")
         
     def UpdateContents(self):
-        if 'sites' in observers and observers['sites'] > self.last_site_observer:
+        if counters['sites'] > self.sites_observer:
             self.UpdateSiteItems()
-        if 'groupes' in observers and observers['groupes'] > self.last_groupe_observer:
+        if counters['groupes'] > self.groupes_observer:
             self.UpdateGroupeItems()
-        if 'reservataires' in observers and observers['reservataires'] > self.last_reservataire_observer:
+        if counters['reservataires'] > self.reservataires_observer:
             self.UpdateReservataireItems()
-        if 'professeurs' in observers and observers['professeurs'] > self.last_professeur_observer:
+        if counters['professeurs'] > self.professeurs_observer:
             self.UpdateProfesseurItems()
 
         InscriptionsTab.UpdateContents(self)
@@ -973,7 +977,6 @@ class CongesPanel(InscriptionsTab):
     def __init__(self, parent):
         global delbmp
         delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
-        self.last_creche_observer = -1
         
         InscriptionsTab.__init__(self, parent)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -996,7 +999,7 @@ class CongesPanel(InscriptionsTab):
         self.SetSizer(self.sizer)
 
     def UpdateContents(self):
-        if 'conges' in observers and observers['conges'] > self.last_creche_observer:
+        if counters['conges'] > self.conges_observer:
             self.AfficheCongesCreche()
         if self.inscrit:
             for i in range(len(self.conges_inscrit_sizer.GetChildren()), len(self.inscrit.conges)):
@@ -1032,7 +1035,7 @@ class CongesPanel(InscriptionsTab):
             for child in sizer.GetChildren():
                 child.GetWindow().Disable()
             self.conges_creche_sizer.Add(sizer)
-        self.last_creche_observer = time.time()
+        self.conges_observer = counters['conges']
 
     def AjouteLigneConge(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -1126,7 +1129,7 @@ class InscriptionsPanel(GPanel):
     def __init__(self, parent):
         GPanel.__init__(self, parent, "Inscriptions")
 
-        # Le control pour la selection du bebe
+        # Le control pour la selection de l'enfant
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.choice = wx.Choice(self)
         self.Bind(wx.EVT_CHOICE, self.OnInscritChoice, self.choice)

@@ -180,6 +180,8 @@ TRI_PRENOM = 0
 TRI_NOM = 1
 TRI_GROUPE = 2
 TRI_NOM_PARENTS = 3
+TRI_SANS_SEPARATION = 256
+TRI_LIGNES_CAHIER = 512
 
 # Types de lignes sur le planning (sert pour le Summary à séparer numérateur et dénominateur)
 SUMMARY_NONE = 0

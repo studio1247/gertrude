@@ -19,8 +19,8 @@ import sys, __builtin__
 import wx, wx.lib, wx.lib.scrolledpanel, wx.lib.masked, wx.lib.stattext, wx.combo
 from wx.lib.masked import Field
 import fpformat, datetime, time
+from globals import *
 from functions import *
-from history import Change, Delete, Insert
 
 class GPanel(wx.Panel):
     def __init__(self, parent, title):
@@ -553,7 +553,7 @@ class AutoMixin:
                 history.Append(Change(self.instance, self.member, old_value))
             exec('self.instance.%s = new_value' % self.member)
             for o in self.observers:
-                observers[o] = time.time()
+                counters[o] += 1
         
 class AutoTextCtrl(wx.TextCtrl, AutoMixin):
     def __init__(self, parent, instance, member, fixed_instance=False, observers=[], *args, **kwargs):
@@ -1155,8 +1155,6 @@ class TabletteSizer(wx.StaticBoxSizer):
             
     def SetObject(self, object):
         self.object = object
-    
-__builtin__.observers = {}
 
 if sys.platform == "darwin":
     MACOS_MARGIN = 1
