@@ -123,11 +123,6 @@ class PlanningLineGrid(BufferedWindow):
                 dc.SetPen(wx.LIGHT_GREY_PEN)
             dc.DrawLine(x, 0,  x, LINE_HEIGHT)
             heure += creche.granularite / BASE_GRANULARITY
-
-        try:
-            dc = wx.GCDC(dc)
-        except:
-            pass
         
         if self.parent.parent.plages_fermeture or self.parent.parent.plages_insecables:
             dc.SetPen(wx.LIGHT_GREY_PEN)
@@ -144,16 +139,16 @@ class PlanningLineGrid(BufferedWindow):
         dc.SetBackground(wx.Brush(wx.WHITE))
         dc.Clear()
 
-        # le quadrillage
-        if self.line is not None:
-            self.DrawLineGrid(dc)
-        
-        # les présences
         try:
             dc = wx.GCDC(dc)
         except:
             pass
 
+        # le quadrillage
+        if self.line is not None:
+            self.DrawLineGrid(dc)
+        
+        # les présences
         if self.temp_line:
             line = self.temp_line
         else:
@@ -811,7 +806,7 @@ class PlanningSummaryPanel(BufferedWindow):
             self.SetMinSize((-1, 2+20*new_activitites_count))
             self.GetParent().sizer.Layout()
 
-        self.UpdateDrawing()
+        self.ForceRefresh()
 
     def Draw(self, dc):
         dc.BeginDrawing()
