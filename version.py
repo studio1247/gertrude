@@ -15,4 +15,4 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-VERSION = '1.02g'
+VERSION = '1.01a'
