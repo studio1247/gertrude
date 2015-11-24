@@ -94,6 +94,9 @@ class FactureFinMois(object):
         self.heures_realisees_non_facturees = 0.0
         self.heures_facturees_non_realisees = 0.0
         self.heures_previsionnelles = 0.0
+        self.jours_contractualises = 0
+        self.jours_realises = 0
+        self.jours_factures = 0        
         self.total_contractualise = 0.0
         self.total_realise = 0.0
         self.total_realise_non_facture = 0.0
@@ -156,6 +159,12 @@ class FactureFinMois(object):
                     inscritState = inscrit.GetState(date)
                     # print date, str(inscritState)
                     state, heures_reference, heures_realisees, heures_facturees = inscritState.state, inscritState.heures_contractualisees, inscritState.heures_realisees, inscritState.heures_facturees
+                    if heures_reference > 0:
+                        self.jours_contractualises += 1
+                    if heures_realisees > 0:
+                        self.jours_realises += 1
+                    if heures_facturees > 0:
+                        self.jours_factures += 1
                     heures_facturees_non_realisees = 0.0
                     heures_realisees_non_facturees = inscrit.GetTotalActivitesPresenceNonFacturee(date)
                     heures_supplementaires_facturees = (heures_facturees - heures_reference)
