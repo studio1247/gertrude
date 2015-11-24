@@ -834,7 +834,9 @@ class PlanningSummaryPanel(BufferedWindow):
                         x += ICONS_WIDTH
                     rect = wx.Rect(x, 2, 20, 19)
                     dc.DrawRoundedRectangleRect(rect, 3)
-                    dc.DrawText(str(count), x + 4, 5)
+                    text = str(count)
+                    w, h = dc.GetTextExtent(text)
+                    dc.DrawText(text, x + (20-w)/2, 4 + (15-h)/2)
             
             # total horaire + pourcentage remplissage
             text = self.parent.GetSummaryDynamicText()
@@ -894,7 +896,7 @@ class PlanningSummaryPanel(BufferedWindow):
                     except:
                         dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
                         dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
-                    w, h = dc.GetTextExtent(text) 
+                    w, h = dc.GetTextExtent(text)
                     dc.DrawRoundedRectangleRect(rect, 3)
                     dc.DrawText(text, pos + 4 - 4*len(text) + (float(x+a)/2-debut)*config.column_width, 4 + (15-h)/2 + index * 20)
                 a = x
