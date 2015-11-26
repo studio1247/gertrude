@@ -421,7 +421,7 @@ class FactureFinMois(object):
                 
                 if creche.regularisation_fin_contrat:
                     depart_anticipe = (creche.gestion_depart_anticipe and inscription.depart and inscription.depart >= self.debut_recap and inscription.depart <= self.fin_recap)
-                    dernier_mois = (depart_anticipe | bool(inscription.fin and inscription.fin >= self.debut_recap and inscription.fin <= self.fin_recap))
+                    dernier_mois = (depart_anticipe or (inscription.fin and inscription.fin >= self.debut_recap and inscription.fin <= self.fin_recap))
 
                     if depart_anticipe and cotisation.Include(inscription.depart):
                         date = cotisation.debut
