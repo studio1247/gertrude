@@ -1,20 +1,21 @@
 # -*- coding: utf-8 -*-
 
-##    This file is part of Gertrude.
-##
-##    Gertrude is free software; you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation; either version 3 of the License, or
-##    (at your option) any later version.
-##
-##    Gertrude is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
-##
-##    You should have received a copy of the GNU General Public License
-##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+import math
 from constants import *
 from functions import *
 from facture import *
@@ -117,7 +118,7 @@ class AttestationModifications(object):
             for tmp in inscrit.inscriptions:
                 if not last_inscription or not last_inscription.fin or (tmp.fin and tmp.fin > last_inscription.fin):
                     last_inscription = tmp 
-                
+            
             # Les champs du recu
             fields = GetCrecheFields(creche) +  GetInscritFields(inscrit) + GetInscriptionFields(last_inscription) + [
                     ('de-debut', '%s %d' % (GetDeMoisStr(facture_debut.month - 1), facture_debut.year)),
@@ -125,10 +126,11 @@ class AttestationModifications(object):
                     ('tresorier', tresorier),
                     ('directeur', directeur),
                     ('date', '%.2d/%.2d/%d' % (today.day, today.month, today.year)),
-                    ('heures-facturees', '%.2f' % heures_facturees),
+                    ('heures-facturees', GetHeureString(heures_facturees)),
+                    ('ceil-heures-facturees', GetHeureString(math.ceil(heures_facturees))),
                     ('total', '%.2f' % total),
                     ('site', GetNom(site)),
-                    ('dernier-mois', GetBoolStr(last_inscription.fin and last_inscription.fin <= facture_fin))
+                    ('dernier-mois', GetBoolStr(last_inscription.fin and last_inscription.fin <= facture_fin)),
                     ]
             
             if IsTemplateFile("Attestation mensuelle.odt"):
