@@ -130,8 +130,8 @@ class Cotisation(object):
             if parent:
                 self.parents += 1
                 revenus_parent = Select(parent.revenus, self.date_revenus)
-                revenusNeeded = creche.AreRevenusNeeded() 
-                if revenusNeeded and (revenus_parent is None or revenus_parent.revenu == ''): 
+                are_revenus_needed = creche.AreRevenusNeeded()
+                if are_revenus_needed and (revenus_parent is None or revenus_parent.revenu == ''):
                     errors.append(u" - Les déclarations de revenus de %s sont incomplètes." % parent.relation)
                 elif revenus_parent:
                     if revenus_parent.revenu:
@@ -148,7 +148,7 @@ class Cotisation(object):
                             revenu_fin = datetime.date(revenu_fin.year+2, revenu_fin.month, revenu_fin.day)
                     else:
                         revenu_debut, revenu_fin = (GetYearStart(self.date), GetYearEnd(self.date))
-                    if revenusNeeded:
+                    if are_revenus_needed:
                         self.AjustePeriode((revenu_debut, revenu_fin))
                     self.assiette_annuelle += revenu
                     if revenus_parent.chomage:
@@ -389,7 +389,7 @@ class Cotisation(object):
                         self.taux_effort = 0.04
                     else:
                         self.taux_effort = 0.05
-                elif creche.type == TYPE_FAMILIAL or creche.type == TYPE_PARENTAL or creche.type == TYPE_MICRO_CRECHE:
+                elif creche.type in (TYPE_FAMILIAL, TYPE_PARENTAL, TYPE_MICRO_CRECHE):
                     tranche = self.enfants_a_charge
                     if inscrit.handicap:
                         tranche += 1
@@ -402,13 +402,16 @@ class Cotisation(object):
                     else:
                         self.taux_effort = 0.05
                 else:
-                    if self.enfants_a_charge > 7:
+                    tranche = self.enfants_a_charge
+                    if inscrit.handicap:
+                        tranche += 1
+                    if tranche > 7:
                         self.taux_effort = 0.02
-                    elif self.enfants_a_charge > 3:
+                    elif tranche > 3:
                         self.taux_effort = 0.03
-                    elif self.enfants_a_charge == 3:
+                    elif tranche == 3:
                         self.taux_effort = 0.04
-                    elif self.enfants_a_charge == 2:
+                    elif tranche == 2:
                         self.taux_effort = 0.05
                     else:
                         self.taux_effort = 0.06
