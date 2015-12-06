@@ -1,6 +1,8 @@
 anguage: python
 
 install:
+  - sudo apt-get update
+  - sudo apt-get install -y python-wxversion
   - sudo apt-get install -y python-wxgtk2.8
 
 script:
