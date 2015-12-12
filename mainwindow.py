@@ -1,21 +1,21 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-##    This file is part of Gertrude.
-##
-##    Gertrude is free software; you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation; either version 2 of the License, or
-##    (at your option) any later version.
-##
-##    Gertrude is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
-##
-##    You should have received a copy of the GNU General Public License
-##    along with Gertrude; if not, write to the Free Software
-##    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, write to the Free Software
+#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import __builtin__
 import os, sys, codecs, imp, time, locale, shutil, glob, thread, urllib2
@@ -23,14 +23,15 @@ import wx, wx.lib.wordwrap
 from wx.lib import masked
 from config import Liste, Load, Update, Save, Restore, Exit, ProgressHandler
 from version import VERSION
+from sqlobjects import *
 from globals import *
-from constants import *
 from functions import *
 from alertes import CheckAlertes
 try:
     import winsound
 except:
     pass
+
 
 class HtmlListBox(wx.HtmlListBox):
     def __init__(self, parent, id, size, style):
@@ -47,6 +48,7 @@ class HtmlListBox(wx.HtmlListBox):
         self.SetItemCount(len(self.items))
         self.SetSelection(0)
         self.SetFocus()
+
 
 class Listbook(wx.Panel):
     def __init__(self, parent, id, style, pos):
@@ -70,11 +72,14 @@ class Listbook(wx.Panel):
             
     def ChangePage(self, position):
         self.list_box.SetSelection(position)
+
         class MyEvent(object):
             def __init__(self, selection):
                 self.selection = selection
+
             def GetSelection(self):
                 return self.selection
+
             def Skip(self):
                 pass
         self.OnPageChanged(MyEvent(position))
@@ -92,6 +97,7 @@ class Listbook(wx.Panel):
     def GetPage(self, n):
         return self.panels[n]
 
+
 class GertrudeListbook(Listbook):
     def __init__(self, parent, progress_handler):
         Listbook.__init__(self, parent, id=-1, style=wx.LB_DEFAULT, pos=(10, 10))
@@ -102,8 +108,9 @@ class GertrudeListbook(Listbook):
         panels.append(panel_planning.PlanningPanel)
         import panel_facturation
         panels.append(panel_facturation.FacturationPanel)
-        import panel_salaries
-        panels.append(panel_salaries.SalariesPanel)
+        if creche.mode_saisie_planning == SAISIE_HORAIRE:
+            import panel_salaries
+            panels.append(panel_salaries.SalariesPanel)
         import panel_tableaux_bord
         panels.append(panel_tableaux_bord.TableauxDeBordPanel)
         import panel_configuration
@@ -123,6 +130,7 @@ class GertrudeListbook(Listbook):
 
     def UpdateContents(self):
         self.GetPage(self.list_box.GetSelection()).UpdateContents()
+
 
 class GertrudeFrame(wx.Frame):
     def __init__(self, progress_handler=None):

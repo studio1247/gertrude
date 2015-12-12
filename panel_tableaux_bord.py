@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 
-##    This file is part of Gertrude.
-##
-##    Gertrude is free software; you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation; either version 3 of the License, or
-##    (at your option) any later version.
-##
-##    Gertrude is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
-##
-##    You should have received a copy of the GNU General Public License
-##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import __builtin__
 import os.path
@@ -43,7 +43,7 @@ from doc_compte_exploitation import CompteExploitationModifications
 from doc_commande_repas import CommandeRepasModifications
 from facture import Facture
 from planning import *
-from sqlobjects import Day
+
 
 class SitesPlanningPanel(PlanningWidget):
     def UpdateContents(self):          
@@ -95,7 +95,8 @@ class SitesPlanningPanel(PlanningWidget):
     def SetData(self, semaine):
         self.semaine = semaine
         self.UpdateContents()
-        
+
+
 class ReservatairesPlanningPanel(PlanningWidget):
     def UpdateContents(self):          
         first_monday = GetFirstMonday()
@@ -147,8 +148,9 @@ class ReservatairesPlanningPanel(PlanningWidget):
         self.semaine = semaine
         self.UpdateContents()
 
-class PlacesDisponiblesTab(AutoTab):
-    def __init__(self, parent):
+
+class PlacesInformationTab(AutoTab):
+    def __init__(self, parent, planning_class):
         AutoTab.__init__(self, parent)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -175,11 +177,8 @@ class PlacesDisponiblesTab(AutoTab):
         self.week_choice.SetSelection(semaine)
         self.Bind(wx.EVT_CHOICE, self.OnChangeWeek, self.week_choice)
         self.sizer.Add(sizer, 0, wx.EXPAND)
-                
-        if (config.options & RESERVATAIRES) and len(creche.reservataires) > 0:
-            self.planning_panel = ReservatairesPlanningPanel(self, options=DRAW_NUMBERS|NO_ICONS|NO_BOTTOM_LINE|READ_ONLY)
-        else:
-            self.planning_panel = SitesPlanningPanel(self, options=DRAW_NUMBERS|NO_ICONS|NO_BOTTOM_LINE|READ_ONLY)
+
+        self.planning_panel = planning_class(self, options=DRAW_NUMBERS|NO_ICONS|NO_BOTTOM_LINE|READ_ONLY)
         self.planning_panel.SetData(semaine)          
         self.sizer.Add(self.planning_panel, 1, wx.EXPAND)
         self.sizer.Layout()
@@ -203,6 +202,50 @@ class PlacesDisponiblesTab(AutoTab):
         
     def UpdateContents(self):            
         self.OnChangeWeek()
+
+
+class PlacesUtiliseesPlanningPanel(PlanningWidget):
+    def UpdateContents(self):
+        first_monday = GetFirstMonday()
+        lines = []
+        for week_day in range(7):
+            date = first_monday + datetime.timedelta(self.semaine * 7 + week_day)
+            if date in creche.jours_fermeture:
+                continue
+
+            day_lines = {}
+            lines.append(days[week_day])
+            for groupe in creche.groupes:
+                line = Summary(groupe.nom)
+                day_lines[groupe] = line
+                lines.append(line)
+            line = Summary("[Structure]")
+            for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
+                line[i][0] = 0
+            day_lines[None] = line
+            lines.append(line)
+
+            for inscrit in creche.inscrits:
+                if date not in inscrit.jours_conges:
+                    inscription = inscrit.GetInscription(date)
+                    if inscription is not None:
+                        line = inscrit.GetJournee(date)
+                        if inscription.groupe and inscription.groupe in day_lines:
+                            groupe_line = day_lines[inscription.groupe]
+                        else:
+                            groupe_line = None
+                        for start, end, value in line.activites:
+                            if value in (0, PREVISIONNEL):
+                                for i in range(start, end):
+                                    day_lines[None][i][0] += 1
+                                    if groupe_line is not None:
+                                        groupe_line[i][0] += 1
+
+        self.SetLines(lines)
+
+    def SetData(self, semaine):
+        self.semaine = semaine
+        self.UpdateContents()
 
 
 class EtatsPresenceTab(AutoTab):
@@ -1042,11 +1085,19 @@ class SalariesTab(AutoTab):
 class TableauxDeBordNotebook(wx.Notebook):
     def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
-        self.AddPage(PlacesDisponiblesTab(self), "Places disponibles")
+        if len(creche.groupes) > 0:
+            self.AddPage(PlacesInformationTab(self, PlacesUtiliseesPlanningPanel), u"Places utilisées")
+        if creche.mode_saisie_planning == SAISIE_HORAIRE:
+            if (config.options & RESERVATAIRES) and len(creche.reservataires) > 0:
+                planning_class = ReservatairesPlanningPanel
+            else:
+                planning_class = SitesPlanningPanel
+            self.AddPage(PlacesInformationTab(self, planning_class), u"Places disponibles")
         self.AddPage(EtatsPresenceTab(self), u"Etats de présence")
         self.AddPage(StatistiquesFrequentationTab(self), u'Statistiques de fréquentation')
         self.AddPage(RelevesTab(self), u'Edition de relevés')
-        self.AddPage(SalariesTab(self), u'Salariés')
+        if creche.mode_saisie_planning == SAISIE_HORAIRE:
+            self.AddPage(SalariesTab(self), u'Salariés')
         if creche.gestion_alertes:
             self.AddPage(AlertesTab(self), u'Alertes')
 

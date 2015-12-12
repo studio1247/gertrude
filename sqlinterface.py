@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 
-##    This file is part of Gertrude.
-##
-##    Gertrude is free software; you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation; either version 3 of the License, or
-##    (at your option) any later version.
-##
-##    Gertrude is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
-##
-##    You should have received a copy of the GNU General Public License
-##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import os, datetime, __builtin__
+import datetime, __builtin__
 try:
     import sqlite3
 except:
@@ -25,7 +25,8 @@ from sqlobjects import *
 from facture import FactureCloturee
 import wx
 
-VERSION = 95
+VERSION = 96
+
 
 def getdate(s):
     try:
@@ -33,6 +34,7 @@ def getdate(s):
         return datetime.date(annee, mois, jour)
     except:
         return None
+
 
 class SQLConnection(object):
     def __init__(self, filename):
@@ -87,6 +89,7 @@ class SQLConnection(object):
             minimum_maladie INTEGER,
             email VARCHAR,
             type INTEGER,
+            mode_saisie_planning INTEGER,
             periode_revenus INTEGER,
             mode_facturation INTEGER,
             temps_facturation INTEGER,
@@ -122,9 +125,10 @@ class SQLConnection(object):
             last_tablette_synchro VARCHAR,
             changement_groupe_auto BOOLEAN,
             allergies VARCHAR,
-            regularisation_fin_contrat BOOLEAN
+            regularisation_fin_contrat BOOLEAN,
+            date_raz_permanences DATE
           );""")
-        
+
         cur.execute("""
           CREATE TABLE SITES(
             idx INTEGER PRIMARY KEY,
@@ -187,10 +191,10 @@ class SQLConnection(object):
             couleur VARCHAR,
             couleur_supplement VARCHAR,
             couleur_previsionnel VARCHAR,
-            tarif INTEGER,
+            formule_tarif VARCHAR,
             owner INTEGER
           );""")
-        
+
         cur.execute("""  
           CREATE TABLE CONTRATS(
             idx INTEGER PRIMARY KEY,
@@ -215,7 +219,7 @@ class SQLConnection(object):
             diplomes VARCHAR,
             combinaison VARCHAR
           );""")
-        
+
         cur.execute("""  
           CREATE TABLE PROFESSEURS (
             idx INTEGER PRIMARY KEY,
@@ -241,7 +245,7 @@ class SQLConnection(object):
             tarifs INTEGER,
             notes VARCHAR
           );""")
-        
+
         cur.execute("""
           CREATE TABLE INSCRITS(
             idx INTEGER PRIMARY KEY,
@@ -314,7 +318,8 @@ class SQLConnection(object):
             fin_periode_adaptation DATE,
             duree_reference INTEGER,
             forfait_mensuel_heures FLOAT,
-            semaines_conges INTEGER
+            semaines_conges INTEGER,
+            heures_permanences FLOAT
           );""")
 
         cur.execute("""
@@ -357,7 +362,7 @@ class SQLConnection(object):
             conge_parental BOOLEAN,
             regime INTEGER
           );""")
-        
+
         cur.execute("""
           CREATE TABLE COMMENTAIRES(
             idx INTEGER PRIMARY KEY,
@@ -375,7 +380,16 @@ class SQLConnection(object):
             debut INTEGER,
             fin INTEGER
           );""")
-        
+
+        cur.execute("""
+          CREATE TABLE PLANNING_HEBDOMADAIRE(
+            idx INTEGER PRIMARY KEY,
+            inscrit INTEGER REFERENCES INSCRITS(idx),
+            date DATE,
+            activity INTEGER,
+            value FLOAT
+          );""")
+
         cur.execute("""
           CREATE TABLE ACTIVITES_SALARIES(
             idx INTEGER PRIMARY KEY,
@@ -386,13 +400,12 @@ class SQLConnection(object):
             fin INTEGER
           );""")
 
-
         cur.execute("""
           CREATE TABLE DATA(
             key VARCHAR,
             value VARCHAR
           );""")
-        
+
         cur.execute("""
           CREATE TABLE USERS(
             idx INTEGER PRIMARY KEY,
@@ -400,7 +413,7 @@ class SQLConnection(object):
             password VARCHAR,
             profile INTEGER
           );""")
-        
+
         cur.execute("""
           CREATE TABLE CONGES(
             idx INTEGER PRIMARY KEY,
@@ -409,7 +422,7 @@ class SQLConnection(object):
             label VARCHAR,
             options INTEGER
           );""")
-        
+
         cur.execute("""
           CREATE TABLE CONGES_INSCRITS(
             idx INTEGER PRIMARY KEY,
@@ -418,7 +431,7 @@ class SQLConnection(object):
             fin VARCHAR,
             label VARCHAR
           );""")
-        
+
         cur.execute("""
           CREATE TABLE CONGES_SALARIES(
             idx INTEGER PRIMARY KEY,
@@ -435,14 +448,14 @@ class SQLConnection(object):
             date DATE,
             acquittement BOOLEAN
           );""")
-        
+
         cur.execute("""
           CREATE TABLE CHARGES (
             idx INTEGER PRIMARY KEY,
             date DATE,
             charges FLOAT
           );""")
-        
+
         cur.execute("""
           CREATE TABLE FACTURES (
             idx INTEGER PRIMARY KEY,
@@ -456,7 +469,7 @@ class SQLConnection(object):
             supplement FLOAT,
             deduction FLOAT
           );""")
-        
+
         cur.execute("""
           CREATE TABLE ENCAISSEMENTS (
             idx INTEGER PRIMARY KEY,
@@ -465,14 +478,14 @@ class SQLConnection(object):
             valeur FLOAT,
             moyen_paiement INTEGER
           );""")
-        
+
         cur.execute("""
           CREATE TABLE NUMEROS_FACTURE (
             idx INTEGER PRIMARY KEY,
             date DATE,
             valeur INTEGER
           );""")
-        
+
         cur.execute("""
           CREATE TABLE CORRECTIONS (
             idx INTEGER PRIMARY KEY,
@@ -481,20 +494,20 @@ class SQLConnection(object):
             valeur FLOAT,
             libelle VARCHAR
           );""")
-        
+
         cur.execute("""
           CREATE TABLE GROUPES (
             idx INTEGER PRIMARY KEY,
             nom VARCHAR,
             ordre INTEGER,
             age_maximum INTEGER
-          );""")        
+          );""")
 
         cur.execute("""
           CREATE TABLE CATEGORIES (
             idx INTEGER PRIMARY KEY,
             nom VARCHAR
-          );""")        
+          );""")
 
         cur.execute("""
           CREATE TABLE TARIFSSPECIAUX (
@@ -512,12 +525,12 @@ class SQLConnection(object):
             fin FLOAT,
             flags INTEGER
           );""")
-            
+
         for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", u"15 août", "1er novembre", "11 novembre", u"25 décembre", u"Lundi de Pâques", "Jeudi de l'Ascension"):
             cur.execute("INSERT INTO CONGES (idx, debut) VALUES (NULL, ?)", (label, ))
         cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
-        cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, preinscriptions, presences_previsionnelles, presences_supplementaires, modes_inscription,                         minimum_maladie, email, type,          periode_revenus, mode_facturation, temps_facturation,    repartition,                       conges_inscription, tarification_activites, traitement_maladie,                          facturation_jours_feries, facturation_periode_adaptation,          formule_taux_horaire, formule_taux_effort, gestion_alertes, age_maximum, seuil_alerte_inscription, cloture_factures, arrondi_heures, arrondi_facturation, arrondi_heures_salaries, arrondi_mensualisation_euros, arrondi_semaines,           gestion_maladie_hospitalisation, tri_inscriptions, tri_planning, tri_factures, smtp_server, caf_email, mode_accueil_defaut, gestion_absences_non_prevenues, gestion_maladie_sans_justificatif, gestion_preavis_conges, gestion_depart_anticipe, alerte_depassement_planning, last_tablette_synchro, changement_groupe_auto, allergies, regularisation_fin_contrat) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-                   (                         "",  "",      "",          "",    "",        7.75,      18.5,      7.75,          19.0,          15,          False,           False,                     True,                      MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5, 3,               "",    TYPE_PARENTAL, REVENUS_YM2,     FACTURATION_PSU,  FACTURATION_FIN_MOIS, REPARTITION_MENSUALISATION_12MOIS, 0,                  0,                      DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_OUVRES, JOURS_FERIES_NON_DEDUITS, PERIODE_ADAPTATION_FACTUREE_NORMALEMENT, "None",               "None",              False,           3,           3,                        False,            SANS_ARRONDI,   SANS_ARRONDI,        SANS_ARRONDI,            SANS_ARRONDI,                 ARRONDI_SEMAINE_SUPERIEURE, False,                           TRI_NOM,          TRI_NOM,      TRI_NOM,      "",          "",        0,                   False,                          False,                             False,                  False,                   False,                       "",                    False,                  "",        True))
+        cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, preinscriptions, presences_previsionnelles, presences_supplementaires, modes_inscription,                         minimum_maladie, email, type,          mode_saisie_planning, periode_revenus, mode_facturation, temps_facturation,    repartition,                       conges_inscription, tarification_activites, traitement_maladie,                          facturation_jours_feries, facturation_periode_adaptation,          formule_taux_horaire, formule_taux_effort, gestion_alertes, age_maximum, seuil_alerte_inscription, cloture_factures, arrondi_heures, arrondi_facturation, arrondi_heures_salaries, arrondi_mensualisation_euros, arrondi_semaines,           gestion_maladie_hospitalisation, tri_inscriptions, tri_planning, tri_factures, smtp_server, caf_email, mode_accueil_defaut, gestion_absences_non_prevenues, gestion_maladie_sans_justificatif, gestion_preavis_conges, gestion_depart_anticipe, alerte_depassement_planning, last_tablette_synchro, changement_groupe_auto, allergies, regularisation_fin_contrat, date_raz_permanences) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                   (                         "",  "",      "",          "",    "",        7.75,      18.5,      7.75,          19.0,          15,          False,           False,                     True,                      MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5, 3,               "",    TYPE_PARENTAL, SAISIE_HORAIRE,       REVENUS_YM2,     FACTURATION_PSU,  FACTURATION_FIN_MOIS, REPARTITION_MENSUALISATION_12MOIS, 0,                  0,                      DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_OUVRES, JOURS_FERIES_NON_DEDUITS, PERIODE_ADAPTATION_FACTUREE_NORMALEMENT, "None",               "None",              False,           3,           3,                        False,            SANS_ARRONDI,   SANS_ARRONDI,        SANS_ARRONDI,            SANS_ARRONDI,                 ARRONDI_SEMAINE_SUPERIEURE, False,                           TRI_NOM,          TRI_NOM,      TRI_NOM,      "",          "",        0,                   False,                          False,                             False,                  False,                   False,                       "",                    False,                  "",        True,                       None))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2006, 9, 1), datetime.date(2007, 8, 31),  6547.92, 51723.60))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2007, 9, 1), datetime.date(2008, 12, 31), 6660.00, 52608.00))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2009, 1, 1), datetime.date(2009, 12, 31), 6876.00, 53400.00))
@@ -529,11 +542,11 @@ class SQLConnection(object):
         couleur = [5, 203, 28, 150, wx.SOLID]
         couleur_supplement = [5, 203, 28, 250, wx.SOLID]
         couleur_previsionnel = [5, 203, 28, 50, wx.SOLID]
-        cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel, tarif) VALUES(NULL,?,?,?,?,?,?,?)', (u"Présences", 0, 0, str(couleur), str(couleur_supplement), str(couleur_previsionnel), .0))
+        cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)', (u"Présences", 0, 0, str(couleur), str(couleur_supplement), str(couleur_previsionnel), ""))
         vacances = (0, 0, 255, 150, wx.SOLID)
         malade = (190, 35, 29, 150, wx.SOLID)
-        cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel, tarif) VALUES(NULL,?,?,?,?,?,?,?)', (u"Vacances", -1, 0, str(vacances), str(vacances), str(vacances), .0))
-        cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel, tarif) VALUES(NULL,?,?,?,?,?,?,?)', (u"Malade", -2, 0, str(malade), str(malade), str(malade), .0))
+        cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)', (u"Vacances", -1, 0, str(vacances), str(vacances), str(vacances), ""))
+        cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)', (u"Malade", -2, 0, str(malade), str(malade), str(malade), ""))
 
         self.con.commit()
 
@@ -542,7 +555,7 @@ class SQLConnection(object):
         cur = con.cursor()
         cur.execute('SELECT prenom, nom FROM INSCRITS')
         return ["%s %s" % entry for entry in cur.fetchall()]
-        
+
     def Load(self, progress_handler=default_progress_handler):
         if not self.con:
             self.open()
@@ -554,24 +567,24 @@ class SQLConnection(object):
             progress_handler.display(u"Chargement en mémoire de la base ...")
 
         cur = self.cursor()
-            
-        cur.execute('SELECT nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, preinscriptions, presences_previsionnelles, presences_supplementaires, modes_inscription, minimum_maladie, email, type, periode_revenus, mode_facturation, repartition, temps_facturation, conges_inscription, tarification_activites, traitement_maladie, facturation_jours_feries, facturation_periode_adaptation, formule_taux_horaire, formule_taux_effort, gestion_alertes, age_maximum, seuil_alerte_inscription, cloture_factures, arrondi_heures, arrondi_facturation, arrondi_heures_salaries, arrondi_mensualisation_euros, arrondi_semaines, gestion_maladie_hospitalisation, tri_inscriptions, tri_planning, tri_factures, smtp_server, caf_email, mode_accueil_defaut, gestion_absences_non_prevenues, gestion_maladie_sans_justificatif, gestion_preavis_conges, gestion_depart_anticipe, alerte_depassement_planning, last_tablette_synchro, changement_groupe_auto, allergies, regularisation_fin_contrat, idx FROM CRECHE')
+
+        cur.execute('SELECT nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, preinscriptions, presences_previsionnelles, presences_supplementaires, modes_inscription, minimum_maladie, email, type, mode_saisie_planning, periode_revenus, mode_facturation, repartition, temps_facturation, conges_inscription, tarification_activites, traitement_maladie, facturation_jours_feries, facturation_periode_adaptation, formule_taux_horaire, formule_taux_effort, gestion_alertes, age_maximum, seuil_alerte_inscription, cloture_factures, arrondi_heures, arrondi_facturation, arrondi_heures_salaries, arrondi_mensualisation_euros, arrondi_semaines, gestion_maladie_hospitalisation, tri_inscriptions, tri_planning, tri_factures, smtp_server, caf_email, mode_accueil_defaut, gestion_absences_non_prevenues, gestion_maladie_sans_justificatif, gestion_preavis_conges, gestion_depart_anticipe, alerte_depassement_planning, last_tablette_synchro, changement_groupe_auto, allergies, regularisation_fin_contrat, date_raz_permanences, idx FROM CRECHE')
         creche_entry = cur.fetchall()
         if len(creche_entry) > 0:
             creche = Creche()
-            creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.telephone, creche.ouverture, creche.fermeture, creche.affichage_min, creche.affichage_max, creche.granularite, creche.preinscriptions, creche.presences_previsionnelles, creche.presences_supplementaires, creche.modes_inscription, creche.minimum_maladie, creche.email, creche.type, creche.periode_revenus, creche.mode_facturation, creche.repartition, creche.temps_facturation, creche.conges_inscription, creche.tarification_activites, creche.traitement_maladie, creche.facturation_jours_feries, creche.facturation_periode_adaptation, formule_taux_horaire, formule_taux_effort, creche.gestion_alertes, creche.age_maximum, creche.seuil_alerte_inscription, creche.cloture_factures, creche.arrondi_heures, creche.arrondi_facturation, creche.arrondi_heures_salaries, creche.arrondi_mensualisation_euros, creche.arrondi_semaines, creche.gestion_maladie_hospitalisation, creche.tri_inscriptions, creche.tri_planning, creche.tri_factures, creche.smtp_server, creche.caf_email, creche.mode_accueil_defaut, creche.gestion_absences_non_prevenues, creche.gestion_maladie_sans_justificatif, creche.gestion_preavis_conges, creche.gestion_depart_anticipe, creche.alerte_depassement_planning, creche.last_tablette_synchro, creche.changement_groupe_auto, creche.allergies, creche.regularisation_fin_contrat, idx = creche_entry[0]
-            creche.formule_taux_horaire, creche.formule_taux_effort, creche.idx = eval(formule_taux_horaire), eval(formule_taux_effort), idx
+            creche.nom, creche.adresse, creche.code_postal, creche.ville, creche.telephone, creche.ouverture, creche.fermeture, creche.affichage_min, creche.affichage_max, creche.granularite, creche.preinscriptions, creche.presences_previsionnelles, creche.presences_supplementaires, creche.modes_inscription, creche.minimum_maladie, creche.email, creche.type, creche.mode_saisie_planning, creche.periode_revenus, creche.mode_facturation, creche.repartition, creche.temps_facturation, creche.conges_inscription, creche.tarification_activites, creche.traitement_maladie, creche.facturation_jours_feries, creche.facturation_periode_adaptation, formule_taux_horaire, formule_taux_effort, creche.gestion_alertes, creche.age_maximum, creche.seuil_alerte_inscription, creche.cloture_factures, creche.arrondi_heures, creche.arrondi_facturation, creche.arrondi_heures_salaries, creche.arrondi_mensualisation_euros, creche.arrondi_semaines, creche.gestion_maladie_hospitalisation, creche.tri_inscriptions, creche.tri_planning, creche.tri_factures, creche.smtp_server, creche.caf_email, creche.mode_accueil_defaut, creche.gestion_absences_non_prevenues, creche.gestion_maladie_sans_justificatif, creche.gestion_preavis_conges, creche.gestion_depart_anticipe, creche.alerte_depassement_planning, creche.last_tablette_synchro, creche.changement_groupe_auto, creche.allergies, creche.regularisation_fin_contrat, creche.date_raz_permanences, idx = creche_entry[0]
+            creche.formule_taux_horaire, creche.formule_taux_effort, creche.date_raz_permanences, creche.idx = eval(formule_taux_horaire), eval(formule_taux_effort), getdate(creche.date_raz_permanences), idx
         else:
             creche = Creche()
         creche.UpdateFormuleTauxHoraire(changed=False)
         creche.UpdateFormuleTauxEffort(changed=False)
-        
+
         cur.execute('SELECT nom, ordre, age_maximum, idx from GROUPES')
         for groupe_entry in cur.fetchall():
             groupe = Groupe(creation=False)
             groupe.nom, groupe.ordre, groupe.age_maximum, groupe.idx = groupe_entry
             creche.groupes.append(groupe)
-        
+
         cur.execute('SELECT nom, idx from CATEGORIES')
         for categorie_entry in cur.fetchall():
             categorie = Categorie(creation=False)
@@ -590,7 +603,7 @@ class SQLConnection(object):
             site = Site(creation=False)
             site.nom, site.adresse, site.code_postal, site.ville, site.telephone, site.capacite, site.groupe, site.idx = site_entry
             creche.sites.append(site)
-                
+
         cur.execute('SELECT login, password, profile, idx FROM USERS')
         for users_entry in cur.fetchall():
             user = User(creation=False)
@@ -610,13 +623,13 @@ class SQLConnection(object):
             tarif = TarifSpecial(creation=False)
             tarif.label, tarif.type, tarif.unite, tarif.valeur, tarif.idx = tarifs_entry
             creche.tarifs_speciaux.append(tarif)
-            
+
         cur.execute('SELECT debut, fin, flags, idx FROM PLAGESHORAIRES')
         for plages_entry in cur.fetchall():
             plage = PlageHoraire(creation=False)
             plage.debut, plage.fin, plage.flags, plage.idx = plages_entry
-            creche.plages_horaires.append(plage)            
-            
+            creche.plages_horaires.append(plage)
+
         cur.execute('SELECT debut, fin, label, options, idx FROM CONGES')
         for conges_entry in cur.fetchall():
             conge = Conge(creche, creation=False)
@@ -630,7 +643,7 @@ class SQLConnection(object):
             bareme.debut, bareme.fin, bareme.plancher, bareme.plafond, idx = bareme_entry
             bareme.debut, bareme.fin, bareme.idx = getdate(bareme.debut), getdate(bareme.fin), idx
             creche.baremes_caf.append(bareme)
-            
+
         cur.execute('SELECT date, charges, idx FROM CHARGES')
         for charges_entry in cur.fetchall():
             charges = Charges(creation=False)
@@ -638,16 +651,15 @@ class SQLConnection(object):
             charges.date, charges.idx = getdate(date), idx
             creche.charges[charges.date] = charges
 
-        cur.execute('SELECT label, value, mode, couleur, couleur_supplement, couleur_previsionnel, tarif, owner, idx FROM ACTIVITIES')
-        activites_by_idx = {}
+        cur.execute('SELECT label, value, mode, couleur, couleur_supplement, couleur_previsionnel, formule_tarif, owner, idx FROM ACTIVITIES')
         for entry in cur.fetchall():
             activity = Activite(creation=False)
-            activity.label, activity.value, activity.mode, activity.couleur, activity.couleur_supplement, activity.couleur_previsionnel, activity.tarif, activity.owner, activity.idx = entry
+            activity.label, activity.value, activity.mode, activity.couleur, activity.couleur_supplement, activity.couleur_previsionnel, activity.formule_tarif, activity.owner, activity.idx = entry
             if activity.value < 0:
                 creche.couleurs[activity.value] = activity
             else:
                 creche.activites[activity.value] = activity
-                
+
         cur.execute('SELECT prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, email, diplomes, combinaison, idx FROM EMPLOYES')
         for salarie_entry in cur.fetchall():
             salarie = Salarie(creation=False)
@@ -663,7 +675,7 @@ class SQLConnection(object):
                         break
                 contrat.debut, contrat.fin, contrat.site, contrat.fonction, contrat.idx = getdate(debut), getdate(fin), site, fonction, idx
                 salarie.contrats.append(contrat)
-                
+
             for contrat in salarie.contrats:
                 cur.execute('SELECT day, value, debut, fin, idx FROM REF_JOURNEES_SALARIES WHERE reference=?', (contrat.idx,))
                 for day, value, debut, fin, idx in cur.fetchall():
@@ -671,7 +683,7 @@ class SQLConnection(object):
                         reference_day = contrat.reference[day]
                         reference_day.AddActivity(debut, fin, value, idx)
                         # print inscrit.prenom, inscrit.prenom, day, debut, fin, value
-                    
+
             cur.execute('SELECT date, value, debut, fin, idx FROM ACTIVITES_SALARIES WHERE salarie=?', (salarie.idx,))
             for date, value, debut, fin, idx in cur.fetchall():
                 key = getdate(date)
@@ -682,7 +694,7 @@ class SQLConnection(object):
                     salarie.journees[key] = journee
                 # print salarie.prenom, salarie.nom, key, debut, fin, value
                 journee.AddActivity(debut, fin, value, idx)
-                    
+
             cur.execute('SELECT debut, fin, label, idx FROM CONGES_SALARIES WHERE salarie=?', (salarie.idx,))
             for conges_entry in cur.fetchall():
                 conge = CongeSalarie(salarie, creation=False)
@@ -736,7 +748,7 @@ class SQLConnection(object):
             for idx, date, valeur, moyen_paiement in cur.fetchall():
                 date = getdate(date)
                 famille.encaissements.append(Encaissement(famille, date, valeur, moyen_paiement, idx))
-           
+
         cur.execute('SELECT idx, prenom, nom, sexe, naissance, handicap, marche, notes, photo, combinaison, categorie, allergies, famille FROM INSCRITS')
         for idx, prenom, nom, sexe, naissance, handicap, marche, notes, photo, combinaison, categorie, allergies, famille in cur.fetchall():
             if photo:
@@ -752,8 +764,8 @@ class SQLConnection(object):
                     inscrit.famille = tmp
                     break
             inscrit.prenom, inscrit.nom, inscrit.sexe, inscrit.naissance, inscrit.handicap, inscrit.marche, inscrit.notes, inscrit.photo, inscrit.combinaison, inscrit.allergies, inscrit.idx = prenom, nom, sexe, getdate(naissance), handicap, getdate(marche), notes, photo, combinaison, allergies, idx
-            cur.execute('SELECT idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_mensuel_heures, semaines_conges, preinscription, site, sites_preinscription, professeur FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
-            for idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_mensuel_heures, semaines_conges, preinscription, site, sites_preinscription, professeur in cur.fetchall():
+            cur.execute('SELECT idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_mensuel_heures, semaines_conges, heures_permanences, preinscription, site, sites_preinscription, professeur FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
+            for idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_mensuel_heures, semaines_conges, heures_permanences, preinscription, site, sites_preinscription, professeur in cur.fetchall():
                 inscription = Inscription(inscrit, duree_reference, creation=False)
                 for tmp in creche.sites:
                     if site == tmp.idx:
@@ -773,7 +785,7 @@ class SQLConnection(object):
                 for tmp in creche.professeurs:
                     if professeur == tmp.idx:
                         inscription.professeur = tmp
-                inscription.debut, inscription.fin, inscription.depart, inscription.mode, inscription.preinscription, inscription.forfait_mensuel_heures, inscription.forfait_mensuel, inscription.frais_inscription, inscription.allocation_mensuelle_caf, inscription.fin_periode_adaptation, inscription.semaines_conges, inscription.idx = getdate(debut), getdate(fin), getdate(depart), mode, preinscription, forfait_mensuel_heures, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, getdate(fin_periode_adaptation), semaines_conges, idx
+                inscription.debut, inscription.fin, inscription.depart, inscription.mode, inscription.preinscription, inscription.forfait_mensuel_heures, inscription.forfait_mensuel, inscription.frais_inscription, inscription.allocation_mensuelle_caf, inscription.fin_periode_adaptation, inscription.semaines_conges, inscription.heures_permanences, inscription.idx = getdate(debut), getdate(fin), getdate(depart), mode, preinscription, forfait_mensuel_heures, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, getdate(fin_periode_adaptation), semaines_conges, heures_permanences, idx
                 inscrit.inscriptions.append(inscription)
             for inscription in inscrit.inscriptions:
                 cur.execute('SELECT day, value, debut, fin, idx FROM REF_ACTIVITIES WHERE reference=?', (inscription.idx,))
@@ -790,7 +802,7 @@ class SQLConnection(object):
                 conge.debut, conge.fin, conge.label, conge.idx = conges_entry
                 inscrit.conges.append(conge)
             inscrit.CalculeJoursConges(creche)
-            
+
             cur.execute('SELECT date, value, debut, fin, idx FROM ACTIVITES WHERE inscrit=?', (inscrit.idx,))
             for date, value, debut, fin, idx in cur.fetchall():
                 key = getdate(date)
@@ -801,6 +813,18 @@ class SQLConnection(object):
                     inscrit.journees[key] = journee
                 # print inscrit.prenom, key, debut, fin, value
                 journee.AddActivity(debut, fin, value, idx)
+
+            cur.execute('SELECT date, activity, value, idx FROM PLANNING_HEBDOMADAIRE WHERE inscrit=?', (inscrit.idx,))
+            for date, activity, value,idx in cur.fetchall():
+                key = getdate(date)
+                if key in inscrit.semaines:
+                    semaine = inscrit.semaines[key]
+                else:
+                    semaine = WeekPlanning(inscrit, date)
+                    inscrit.semaines[key] = semaine
+                # print inscrit.prenom, key, debut, fin, value
+                semaine.SetActivity(activity, value, idx)
+
             cur.execute('SELECT date, commentaire, idx FROM COMMENTAIRES WHERE inscrit=?', (inscrit.idx,))
             for date, commentaire, idx in cur.fetchall():
                 key = getdate(date)
@@ -815,7 +839,7 @@ class SQLConnection(object):
             for idx, date, cotisation_mensuelle, total_contractualise, total_realise, total_facture, supplement_activites, supplement, deduction in cur.fetchall():
                 date = getdate(date)
                 inscrit.factures_cloturees[date] = FactureCloturee(inscrit, date, cotisation_mensuelle, total_contractualise, total_realise, total_facture, supplement_activites, supplement, deduction)
-            
+
             cur.execute('SELECT idx, date, valeur, libelle FROM CORRECTIONS where inscrit=?', (inscrit.idx,))
             for idx, date, valeur, libelle in cur.fetchall():
                 date = getdate(date)
@@ -825,20 +849,19 @@ class SQLConnection(object):
         for idx, date, valeur in cur.fetchall():
             date = getdate(date)
             creche.numeros_facture[date] = NumeroFacture(date, valeur, idx)
-                
+
         cur.execute('SELECT idx, debut, fin, president, vice_president, tresorier, secretaire, directeur, gerant, directeur_adjoint, comptable FROM BUREAUX')
         for idx, debut, fin, president, vice_president, tresorier, secretaire, directeur, gerant, directeur_adjoint, comptable in cur.fetchall():
             bureau = Bureau(creation=False)
             bureau.debut, bureau.fin, bureau.president, bureau.vice_president, bureau.tresorier, bureau.secretaire, bureau.directeur, bureau.gerant, bureau.directeur_adjoint, bureau.comptable, bureau.idx = getdate(debut), getdate(fin), president, vice_president, tresorier, secretaire, directeur, gerant, directeur_adjoint, comptable, idx
             creche.bureaux.append(bureau)
-            
+
         cur.execute('SELECT idx, date, texte, acquittement FROM ALERTES')
         for idx, date, texte, acquittement in cur.fetchall():
             alerte = Alerte(getdate(date), texte, acquittement, creation=False)
             alerte.idx = idx
             creche.alertes[texte] = alerte
 
-        # creche.inscrits.sort()
         return creche
 
     def translate(self, progress_handler=default_progress_handler):
@@ -848,7 +871,7 @@ class SQLConnection(object):
             version = int(cur.fetchall()[0][0])
         except:
             version = 0
-       
+
         if version == VERSION:
             return True
 
@@ -859,12 +882,11 @@ class SQLConnection(object):
         if progress_handler:
             progress_handler.display(u"Conversion de la base de données (version %d => version %d) ..." % (version, VERSION))
 
+        # pour decloturer une facture dans une base plus ancienne
+        # cur.execute('DELETE FROM FACTURES where inscrit=? AND date=?', (93, datetime.date(2014, 7, 1)))
+        # self.commit()
+        # exit(0)
 
-        #pour decloturer une facture dans une base plus ancienne
-        #cur.execute('DELETE FROM FACTURES where inscrit=? AND date=?', (93, datetime.date(2014, 7, 1)))
-        #self.commit()
-        #exit(0)
-                               
         if version < 1:
             cur.execute("""
               CREATE TABLE DATA(
@@ -879,11 +901,6 @@ class SQLConnection(object):
                 password VARCHAR,
                 profile INTEGER
               );""")
-
-##        Not used now
-##        if version < 2:
-##            cur.execute("ALTER TABLE CRECHE ADD server_url VARCHAR;")
-##            cur.execute('UPDATE CRECHE SET server_url=?', ("",))
 
         if version < 3:
             cur.execute("ALTER TABLE PRESENCES RENAME TO OLD;")
@@ -998,14 +1015,14 @@ class SQLConnection(object):
             for inscrit_idx, date, value, previsionnel, val_details in cur.fetchall():
                 if value == 0:
                     if previsionnel:
-                        value += (1 << 30) # PREVISIONNEL
+                        value += (1 << 30)  # PREVISIONNEL
                     if isinstance(val_details, basestring):
                         val_details = eval(val_details)
                     details = 64 * [0]
                     for i in range(64):
                         if val_details & (1 << i):
                             details[i] = 1
-                   
+
                     a = v = 0
                     h = 6*4
                     while h <= 22*4:
@@ -1022,7 +1039,7 @@ class SQLConnection(object):
                 elif value in (1, 2): # VACANCES & MALADE
                     sql_connection.execute('INSERT INTO ACTIVITES (idx, inscrit, date, value, debut, fin) VALUES (NULL,?,?,?,?,?)', (inscrit_idx, date, -value, 32, 72))
             cur.execute("DROP TABLE PRESENCES;")
-                                   
+
         if version < 16:
             cur.execute("""
               CREATE TABLE ACTIVITIES(
@@ -1046,7 +1063,7 @@ class SQLConnection(object):
             ouverture, fermeture = cur.fetchall()[0]
             tranches = [(ouverture, 12), (12, 14), (14, fermeture)]
             __builtin__.creche = Creche()
-            
+
             cur.execute("""
               CREATE TABLE REF_ACTIVITIES(
                 idx INTEGER PRIMARY KEY,
@@ -1067,13 +1084,13 @@ class SQLConnection(object):
                     for i, tranche in enumerate(tranches):
                         debut, fin = tranche
                         if periode_reference[weekday][i]:
-                            day.SetActivity(int(debut*12), int(fin*12), 0)                      
-        
+                            day.SetActivity(int(debut*12), int(fin*12), 0)
+
         if version < 19:
             cur.execute('UPDATE CRECHE SET modes_inscription=? WHERE modes_inscription=?', (1+2+4+8, 7))
             cur.execute('UPDATE CRECHE SET modes_inscription=? WHERE modes_inscription=?', (2, 0))
             cur.execute('UPDATE INSCRIPTIONS SET mode=? WHERE mode=?', (2, 0))
-            
+
         if version < 20:
             for label in ["Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", u"15 août", "1er novembre", "11 novembre", u"25 décembre", u"Lundi de Pâques", "Jeudi de l'Ascension"]:
                 cur.execute("INSERT INTO CONGES (idx, debut) VALUES (NULL, ?)", (label, ))
@@ -1095,9 +1112,9 @@ class SQLConnection(object):
             cur.execute("ALTER TABLE CRECHE ADD type INTEGER;")
             cur.execute('UPDATE CRECHE SET type=?', (0,))
             cur.execute("ALTER TABLE CRECHE ADD telephone VARCHAR;")
-            cur.execute('UPDATE CRECHE SET telephone=?', ("",))           
+            cur.execute('UPDATE CRECHE SET telephone=?', ("",))
 
-        if version < 23 and version >= 21:
+        if 21 <= version > 23:
             cur.execute('SELECT mode_facturation FROM CRECHE')
             mode_facturation = cur.fetchall()[0][0]
             if mode_facturation & 1:
@@ -1109,7 +1126,7 @@ class SQLConnection(object):
         if version < 24:
             cur.execute("ALTER TABLE INSCRIPTIONS ADD duree_reference INTEGER;")
             cur.execute('UPDATE INSCRIPTIONS SET duree_reference=?', (7,))
-        
+
         if version < 25:
             couleurs = [[5, 203, 28, 150, wx.SOLID],
                         [250, 0, 0, 150, wx.BDIAGONAL_HATCH],
@@ -1135,7 +1152,7 @@ class SQLConnection(object):
             for idx, couleur in cur.fetchall():
                 cur.execute('UPDATE ACTIVITIES SET couleur=?, couleur_supplement=?, couleur_previsionnel=? WHERE idx=?', (str(couleurs[couleur]), str(couleurs_supplement[couleur]), str(couleurs_previsionnel[couleur]), idx))
             cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel) VALUES(NULL,?,?,?,?,?,?)', (u"Présences", 0, 0, str(couleurs[0]), str(couleurs_supplement[0]), str(couleurs_previsionnel[0])))
-            
+
         if version < 26:
             vacances = (0, 0, 255, 150, wx.SOLID)
             malade = (190, 35, 29, 150, wx.SOLID)
@@ -1168,7 +1185,7 @@ class SQLConnection(object):
             cur.execute('ALTER TABLE INSCRITS ADD majoration BOOLEAN')
             cur.execute('UPDATE INSCRITS SET majoration=0')
             cur.execute('ALTER TABLE INSCRIPTIONS ADD semaines_conges INTEGER')
-            cur.execute('UPDATE INSCRIPTIONS SET semaines_conges=0')  
+            cur.execute('UPDATE INSCRIPTIONS SET semaines_conges=0')
 
         if version < 30:
             cur.execute('SELECT debut, fin, idx FROM ACTIVITES')
@@ -1178,13 +1195,13 @@ class SQLConnection(object):
             for debut, fin, idx in cur.fetchall():
                 cur.execute('UPDATE REF_ACTIVITIES SET debut=?, fin=? WHERE idx=?', (debut*3, fin*3, idx))
             cur.execute('SELECT granularite FROM CRECHE')
-            granularite = 60 / cur.fetchall()[0][0] 
+            granularite = 60 / cur.fetchall()[0][0]
             cur.execute('UPDATE CRECHE SET granularite=?', (granularite,))
-        
+
         if version < 31:
             cur.execute("ALTER TABLE CRECHE ADD facturation_jours_feries INTEGER")
             cur.execute('UPDATE CRECHE SET facturation_jours_feries=?', (0,))
-            
+
         if version < 32:
             cur.execute("ALTER TABLE CONGES ADD label VARCHAR")
             cur.execute("ALTER TABLE CONGES ADD options INTEGER")
@@ -1199,7 +1216,7 @@ class SQLConnection(object):
                 nom VARCHAR,
                 telephone VARCHAR
               );""")
-            
+
         if version < 34:
             cur.execute("""
               CREATE TABLE SITES(
@@ -1207,7 +1224,7 @@ class SQLConnection(object):
                 nom VARCHAR
               );""")
             cur.execute("ALTER TABLE INSCRIPTIONS ADD site INTEGER REFERENCES SITES(idx)")
-            
+
         if version < 35:
             cur.execute("ALTER TABLE SITES ADD adresse VARCHAR;")
             cur.execute("ALTER TABLE SITES ADD code_postal INTEGER;")
@@ -1225,11 +1242,11 @@ class SQLConnection(object):
               );""")
             cur.execute("ALTER TABLE EMPLOYES ADD diplomes VARCHAR;")
             cur.execute('UPDATE EMPLOYES SET diplomes=?', ('',))
-            
+
         if version < 36:
             cur.execute("ALTER TABLE CRECHE ADD temps_facturation INTEGER;")
             cur.execute("UPDATE CRECHE SET temps_facturation=?;", (0,))
-            
+
         if version < 37:
             cur.execute("ALTER TABLE CRECHE ADD conges_inscription INTEGER;")
             cur.execute("UPDATE CRECHE SET conges_inscription=?;", (0,))
@@ -1241,7 +1258,7 @@ class SQLConnection(object):
                 fin VARCHAR,
                 label VARCHAR
               );""")
-                       
+
         if version < 38:
             cur.execute("ALTER TABLE SITES ADD capacite INTEGER;")
             cur.execute("UPDATE SITES SET capacite=?;", (0,))
@@ -1254,7 +1271,7 @@ class SQLConnection(object):
                 cur.execute("UPDATE CRECHE SET formule_taux_horaire=?;", ('[["", %f]]' % forfait_horaire,))
 
         if version < 39:
-            parents = { }
+            parents = {}
             cur.execute('SELECT prenom, nom, idx FROM PARENTS;')
             for parent_prenom, parent_nom, parent_idx in cur.fetchall():
                 parents[parent_idx] = parent_prenom + " " + parent_nom
@@ -1274,10 +1291,10 @@ class SQLConnection(object):
                 president = parents.get(president, "")
                 vice_president = parents.get(vice_president, "")
                 tresorier = parents.get(tresorier, "")
-                secretaire = parents.get(secretaire, "")                
+                secretaire = parents.get(secretaire, "")
                 cur.execute('INSERT INTO BUREAUX (idx, debut, fin, president, vice_president, tresorier, secretaire) VALUES (NULL,?,?,?,?,?,?)', (debut, fin, president, vice_president, tresorier, secretaire))
             cur.execute('DROP TABLE OLD;')
-            
+
         if version < 40:
             cur.execute("""  
               CREATE TABLE PROFESSEURS (
@@ -1288,16 +1305,16 @@ class SQLConnection(object):
                 sortie DATE
               );""")
             cur.execute("ALTER TABLE INSCRIPTIONS ADD professeur INTEGER REFERENCES PROFESSEURS(idx);")
-            
+
         if version < 41:
-            cur.execute("ALTER TABLE BUREAUX ADD directeur VARCHAR;")          
+            cur.execute("ALTER TABLE BUREAUX ADD directeur VARCHAR;")
 
         if version < 42:
             cur.execute("ALTER TABLE CRECHE ADD facturation_periode_adaptation INTEGER")
             cur.execute('UPDATE CRECHE SET facturation_periode_adaptation=?', (0,))
             cur.execute("ALTER TABLE INSCRIPTIONS ADD fin_periode_adaptation DATE")
             cur.execute('UPDATE INSCRIPTIONS SET fin_periode_adaptation=fin_periode_essai')
-            
+
         if version < 43:
             cur.execute("ALTER TABLE INSCRITS ADD numero_securite_sociale VARCHAR")
             cur.execute("ALTER TABLE INSCRITS ADD numero_allocataire_caf VARCHAR")
@@ -1305,7 +1322,7 @@ class SQLConnection(object):
             cur.execute('UPDATE INSCRITS SET numero_securite_sociale=""')
             cur.execute('UPDATE INSCRITS SET numero_allocataire_caf=""')
             cur.execute('UPDATE INSCRITS SET handicap=0')
-            
+
         if version < 44:
             cur.execute("ALTER TABLE PARENTS ADD relation VARCHAR;")
             cur.execute('SELECT idx FROM INSCRITS')
@@ -1314,7 +1331,7 @@ class SQLConnection(object):
                 papa_idx, maman_idx = cur.fetchall()
                 cur.execute('UPDATE PARENTS SET relation=? WHERE idx=?', ("papa", papa_idx[0]))
                 cur.execute('UPDATE PARENTS SET relation=? WHERE idx=?', ("maman", maman_idx[0]))
-                
+
         if version < 45:
             cur.execute("ALTER TABLE INSCRITS ADD notes VARCHAR;")
             cur.execute('UPDATE INSCRITS SET notes=?', ("",))
@@ -1327,7 +1344,7 @@ class SQLConnection(object):
                 date DATE,
                 acquittement BOOLEAN
               );""")
-            
+
         if version < 46:
             cur.execute("ALTER TABLE CRECHE ADD gestion_alertes BOOLEAN")
             cur.execute('UPDATE CRECHE SET gestion_alertes=?', (False,))
@@ -1336,19 +1353,19 @@ class SQLConnection(object):
             cur.execute("ALTER TABLE INSCRIPTIONS ADD sites_preinscription VARCHAR")
             cur.execute("ALTER TABLE INSCRIPTIONS ADD preinscription BOOLEAN")
             cur.execute("UPDATE INSCRIPTIONS SET preinscription=?", (False,))
-        
+
         if version < 47:
             cur.execute("ALTER TABLE INSCRIPTIONS ADD forfait_mensuel FLOAT")
             cur.execute("UPDATE INSCRIPTIONS SET forfait_mensuel=?", (.0,))
-            
+
         if version < 48:
             cur.execute("UPDATE CONGES SET label='' WHERE label IS NULL")
             cur.execute("UPDATE CONGES_INSCRITS SET label='' WHERE label IS NULL")
-        
+
         if version < 49:
             cur.execute("ALTER TABLE INSCRIPTIONS ADD forfait_heures_presence INTEGER")
             cur.execute("UPDATE INSCRIPTIONS SET forfait_heures_presence=?", (0,))
-            
+
         if version < 50:
             cur.execute("""
               CREATE TABLE CHARGES (
@@ -1356,11 +1373,11 @@ class SQLConnection(object):
                 date DATE,
                 charges FLOAT
               );""")
-            
+
         if version < 51:
             cur.execute("ALTER TABLE CRECHE ADD formule_taux_effort VARCHAR;")
             cur.execute('UPDATE CRECHE SET formule_taux_effort="None"')
-        
+
         if version < 52:
             cur.execute("""
               CREATE TABLE FACTURES (
@@ -1385,17 +1402,17 @@ class SQLConnection(object):
               CREATE TABLE GROUPES (
                 idx INTEGER PRIMARY KEY,
                 nom VARCHAR
-              );""")        
+              );""")
             cur.execute("ALTER TABLE INSCRIPTIONS ADD groupe INTEGER REFERENCES GROUPES(idx)")
-            
+
         if version < 55:
             cur.execute("ALTER TABLE CRECHE ADD arrondi_heures INTEGER")
-            cur.execute('UPDATE CRECHE SET arrondi_heures=?', (0,))    
-            
+            cur.execute('UPDATE CRECHE SET arrondi_heures=?', (0,))
+
         if version < 56:
             cur.execute("ALTER TABLE CRECHE ADD gestion_maladie_hospitalisation BOOLEAN")
             cur.execute('UPDATE CRECHE SET gestion_maladie_hospitalisation=?', (False,))
-        
+
         if version < 57:
             cur.execute("ALTER TABLE GROUPES ADD ordre INTEGER")
             cur.execute("SELECT idx FROM GROUPES")
@@ -1404,7 +1421,7 @@ class SQLConnection(object):
 
         if version < 58:
             cur.execute("ALTER TABLE CRECHE ADD tri_planning INTEGER")
-            cur.execute('UPDATE CRECHE SET tri_planning=?', (TRI_NOM,))    
+            cur.execute('UPDATE CRECHE SET tri_planning=?', (TRI_NOM,))
 
         if version < 59:
             cur.execute("""
@@ -1428,11 +1445,11 @@ class SQLConnection(object):
             cur.execute("ALTER TABLE CRECHE ADD fin_pause FLOAT")
             cur.execute('UPDATE CRECHE SET debut_pause=?', (0,))
             cur.execute('UPDATE CRECHE SET fin_pause=?', (0,))
-            
+
         if version < 61:
             cur.execute("ALTER TABLE INSCRIPTIONS ADD frais_inscription FLOAT")
-            cur.execute("UPDATE INSCRIPTIONS SET frais_inscription=?", (.0,))            
-                        
+            cur.execute("UPDATE INSCRIPTIONS SET frais_inscription=?", (.0,))
+
         if version < 62:
             cur.execute("""
               CREATE TABLE CORRECTIONS (
@@ -1448,7 +1465,7 @@ class SQLConnection(object):
         if version < 63:
             cur.execute("ALTER TABLE CRECHE ADD mode_accueil_defaut INTEGER;")
             cur.execute("ALTER TABLE CRECHE ADD gestion_absences_non_prevenues BOOLEAN;")
-            cur.execute("UPDATE CRECHE SET mode_accueil_defaut=?", (0,))            
+            cur.execute("UPDATE CRECHE SET mode_accueil_defaut=?", (0,))
             cur.execute("UPDATE CRECHE SET gestion_absences_non_prevenues=?", (False,))
 
         if version < 64:
@@ -1461,12 +1478,12 @@ class SQLConnection(object):
                 );""")
 
         if version < 65:
-            cur.execute("ALTER TABLE CRECHE ADD gestion_depart_anticipe BOOLEAN;")           
+            cur.execute("ALTER TABLE CRECHE ADD gestion_depart_anticipe BOOLEAN;")
             cur.execute("UPDATE CRECHE SET gestion_depart_anticipe=?", (False,))
-            cur.execute("ALTER TABLE INSCRIPTIONS ADD depart DATE;")           
+            cur.execute("ALTER TABLE INSCRIPTIONS ADD depart DATE;")
             cur.execute("UPDATE INSCRIPTIONS SET depart=?", (None,))
-        
-        if version < 66:    
+
+        if version < 66:
             cur.execute("""
               CREATE TABLE REF_JOURNEES_SALARIES(
                 idx INTEGER PRIMARY KEY,
@@ -1485,7 +1502,7 @@ class SQLConnection(object):
                 fin VARCHAR,
                 label VARCHAR
               );""")
-           
+
             cur.execute("""
               CREATE TABLE ACTIVITES_SALARIES(
                 idx INTEGER PRIMARY KEY,
@@ -1500,7 +1517,7 @@ class SQLConnection(object):
             cur.execute("ALTER TABLE CONTRATS ADD duree_reference INTEGER;")
             cur.execute('UPDATE CONTRATS SET duree_reference=?', (7,))
             cur.execute('DELETE FROM REF_JOURNEES_SALARIES where day>6')
-            
+
         if version < 68:
             cur.execute('SELECT capacite, ouverture, fermeture, debut_pause, fin_pause FROM CRECHE')
             capacite, ouverture, fermeture, debut_pause, fin_pause = cur.fetchall()[0]
@@ -1544,7 +1561,7 @@ class SQLConnection(object):
             cur.execute('UPDATE CRECHE SET arrondi_heures_salaries=?', (0,))
             cur.execute("ALTER TABLE CRECHE ADD periode_revenus INTEGER;")
             cur.execute('UPDATE CRECHE SET periode_revenus=?', (0,))
-            
+
         if version < 71:
             cur.execute('SELECT arrondi_heures FROM CRECHE')
             arrondi_heures = cur.fetchall()[0][0]
@@ -1564,9 +1581,9 @@ class SQLConnection(object):
             cur.execute('UPDATE INSCRITS SET combinaison=?', ("",))
 
         if version < 74:
-            cur.execute("ALTER TABLE BUREAUX ADD gerant VARCHAR;")          
-            cur.execute("ALTER TABLE BUREAUX ADD directeur_adjoint VARCHAR;")          
-            cur.execute("ALTER TABLE BUREAUX ADD comptable VARCHAR;")          
+            cur.execute("ALTER TABLE BUREAUX ADD gerant VARCHAR;")
+            cur.execute("ALTER TABLE BUREAUX ADD directeur_adjoint VARCHAR;")
+            cur.execute("ALTER TABLE BUREAUX ADD comptable VARCHAR;")
             cur.execute("ALTER TABLE ACTIVITIES ADD owner INTEGER;")
             cur.execute('UPDATE ACTIVITIES SET owner=0;')
             cur.execute("ALTER TABLE CRECHE ADD age_maximum INTEGER")
@@ -1577,11 +1594,11 @@ class SQLConnection(object):
               CREATE TABLE CATEGORIES (
                 idx INTEGER PRIMARY KEY,
                 nom VARCHAR
-              );""")        
+              );""")
             cur.execute("ALTER TABLE INSCRITS ADD categorie INTEGER REFERENCES CATEGORIES(idx)")
 
         if version < 76:
-            cur.execute("ALTER TABLE CRECHE ADD alerte_depassement_planning BOOLEAN;")           
+            cur.execute("ALTER TABLE CRECHE ADD alerte_depassement_planning BOOLEAN;")
             cur.execute("UPDATE CRECHE SET alerte_depassement_planning=?", (False,))
 
         if version < 77:
@@ -1601,7 +1618,7 @@ class SQLConnection(object):
                 flags INTEGER
               );""")
             if debut_pause != 0 and fin_pause != 0:
-                cur.execute('INSERT INTO PLAGESHORAIRES (idx, debut, fin, flags) VALUES (NULL,?,?,?)', (debut_pause, fin_pause, PLAGE_FERMETURE))                    
+                cur.execute('INSERT INTO PLAGESHORAIRES (idx, debut, fin, flags) VALUES (NULL,?,?,?)', (debut_pause, fin_pause, PLAGE_FERMETURE))
 
         if version < 79:
             cur.execute("ALTER TABLE CRECHE ADD last_tablette_synchro VARCHAR;")
@@ -1610,10 +1627,10 @@ class SQLConnection(object):
         if version < 80:
             cur.execute("ALTER TABLE REVENUS ADD conge_parental BOOLEAN;")
             cur.execute("UPDATE REVENUS SET conge_parental=?", (False,))
-            
+
         if version < 81:
             cur.execute("ALTER TABLE CRECHE ADD repartition INTEGER;")
-            cur.execute("UPDATE CRECHE SET repartition=?", (REPARTITION_MENSUALISATION_12MOIS,))          
+            cur.execute("UPDATE CRECHE SET repartition=?", (REPARTITION_MENSUALISATION_12MOIS,))
 
         if version < 82:
             cur.execute("""
@@ -1622,7 +1639,7 @@ class SQLConnection(object):
                 date DATE,
                 valeur INTEGER
               );""")
-            
+
         if version < 83:
             cur.execute('SELECT value, debut, fin, idx FROM CAPACITE')
             capacite = cur.fetchall()
@@ -1630,7 +1647,7 @@ class SQLConnection(object):
             cur.execute("ALTER TABLE CAPACITE ADD jour INTEGER;")
             for value, debut, fin, idx in capacite:
                 for jour in range(7):
-                    cur.execute('INSERT INTO CAPACITE (idx, value, debut, fin, jour) VALUES (NULL,?,?,?,?)', (value, debut, fin, jour))                
+                    cur.execute('INSERT INTO CAPACITE (idx, value, debut, fin, jour) VALUES (NULL,?,?,?,?)', (value, debut, fin, jour))
             cur.execute("ALTER TABLE INSCRITS ADD medecin_traitant VARCHAR;")
             cur.execute("UPDATE INSCRITS SET medecin_traitant=?", ("",))
             cur.execute("ALTER TABLE INSCRITS ADD telephone_medecin_traitant VARCHAR;")
@@ -1656,11 +1673,11 @@ class SQLConnection(object):
 
         if version < 86:
             cur.execute("ALTER TABLE INSCRIPTIONS ADD allocation_mensuelle_caf FLOAT")
-            cur.execute("UPDATE INSCRIPTIONS SET allocation_mensuelle_caf=?", (.0,))            
+            cur.execute("UPDATE INSCRIPTIONS SET allocation_mensuelle_caf=?", (.0,))
 
         if version < 87:
             cur.execute("ALTER TABLE CRECHE ADD regularisation_fin_contrat BOOLEAN;")
-            cur.execute("UPDATE CRECHE SET regularisation_fin_contrat=?", (True,))      
+            cur.execute("UPDATE CRECHE SET regularisation_fin_contrat=?", (True,))
 
         if version < 88:
             # TODO notes_parents marche ?
@@ -1699,7 +1716,7 @@ class SQLConnection(object):
             cur.execute("ALTER TABLE FAMILLES ADD code_client VARCHAR;")
             cur.execute('UPDATE FAMILLES SET code_client=?', ("",))
             cur.execute("ALTER TABLE CRECHE ADD tri_factures INTEGER")
-            cur.execute('UPDATE CRECHE SET tri_factures=?', (TRI_NOM,))    
+            cur.execute('UPDATE CRECHE SET tri_factures=?', (TRI_NOM,))
 
         if version < 91:
             cur.execute("""
@@ -1714,22 +1731,42 @@ class SQLConnection(object):
         if version < 92:
             cur.execute("ALTER TABLE SITES ADD groupe INTEGER;")
             cur.execute("UPDATE SITES SET groupe=?;", (0,))
-      
+
         if version < 93:
-            cur.execute("ALTER TABLE CRECHE ADD arrondi_mensualisation_euros INTEGER")            
+            cur.execute("ALTER TABLE CRECHE ADD arrondi_mensualisation_euros INTEGER")
             cur.execute('UPDATE CRECHE SET arrondi_mensualisation_euros=?', (SANS_ARRONDI,))
-            cur.execute("ALTER TABLE CRECHE ADD arrondi_semaines INTEGER")            
-            cur.execute('UPDATE CRECHE SET arrondi_semaines=?', (ARRONDI_SEMAINE_SUPERIEURE,))  
+            cur.execute("ALTER TABLE CRECHE ADD arrondi_semaines INTEGER")
+            cur.execute('UPDATE CRECHE SET arrondi_semaines=?', (ARRONDI_SEMAINE_SUPERIEURE,))
 
         if version < 94:
             cur.execute("ALTER TABLE INSCRIPTIONS ADD forfait_mensuel_heures FLOAT")
             cur.execute('SELECT idx, forfait_heures_presence FROM INSCRIPTIONS')
             for idx, forfait_heures_presence in cur.fetchall():
                 cur.execute("UPDATE INSCRIPTIONS SET forfait_mensuel_heures=? WHERE idx=?", (forfait_heures_presence, idx))
-            
+
         if version < 95:
             cur.execute("ALTER TABLE CRECHE ADD tri_inscriptions INTEGER")
-            cur.execute('UPDATE CRECHE SET tri_inscriptions=?', (TRI_NOM,))    
+            cur.execute('UPDATE CRECHE SET tri_inscriptions=?', (TRI_NOM,))
+
+        if version < 96:
+            cur.execute("ALTER TABLE CRECHE ADD mode_saisie_planning INTEGER")
+            cur.execute('UPDATE CRECHE SET mode_saisie_planning=?', (0,))
+            cur.execute("""
+              CREATE TABLE PLANNING_HEBDOMADAIRE(
+                idx INTEGER PRIMARY KEY,
+                inscrit INTEGER REFERENCES INSCRITS(idx),
+                date DATE,
+                activity INTEGER,
+                value FLOAT
+              );""")
+            cur.execute("ALTER TABLE ACTIVITIES ADD formule_tarif VARCHAR;")
+            cur.execute('SELECT idx, tarif FROM ACTIVITIES')
+            for (idx, tarif) in cur.fetchall():
+                cur.execute('UPDATE ACTIVITIES SET formule_tarif=? WHERE idx=?', (str(tarif), idx))
+            cur.execute("ALTER TABLE INSCRIPTIONS ADD heures_permanences FLOAT;")
+            cur.execute('UPDATE INSCRIPTIONS SET heures_permanences=?', (0,))
+            cur.execute("ALTER TABLE CRECHE ADD date_raz_permanences;")
+            cur.execute("UPDATE CRECHE SET date_raz_permanences=?", (None,))
 
         if version < VERSION:
             try:

@@ -15,7 +15,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import sys, time, datetime, os.path, wx
+import sys, time, os.path
 from constants import *
 from parameters import *
 
@@ -23,17 +23,24 @@ if sys.platform != "win32":
     HOME = os.path.expanduser("~")
     GERTRUDE_DIRECTORY = HOME + "/.gertrude"
 
+
+def GetNextMonday(date):
+    while date.weekday() != 0:
+        date += datetime.timedelta(1)
+    return date
+
+
 def GetFirstMonday():
-    first_monday = first_date
-    while first_monday.weekday() != 0:
-        first_monday += datetime.timedelta(1)
-    return first_monday
+    return GetNextMonday(first_date)
+
 
 def GetYearStart(date):
     return datetime.date(date.year, 1, 1)
 
+
 def GetYearEnd(date):
     return datetime.date(date.year, 12, 31)
+
 
 def GetDateMinus(date, years, months=0):
     d = date.day
@@ -47,9 +54,11 @@ def GetDateMinus(date, years, months=0):
     if d > end.day:
         d = end.day
     return datetime.date(y, m, d)
-                
+
+
 def GetMonthStart(date):
     return datetime.date(date.year, date.month, 1)
+
 
 def GetMonthEnd(date):
     if date.month == 12:
@@ -57,28 +66,39 @@ def GetMonthEnd(date):
     else:
         return datetime.date(date.year, date.month + 1, 1) - datetime.timedelta(1)
 
+
 def GetNextMonthStart(date):
     if date.month == 12:
         return datetime.date(date.year+1, 1, 1)
     else:
         return datetime.date(date.year, date.month+1, 1)
-    
+
+
 def GetTrimestreStart(date):
-    return datetime.date(date.year, 1 + 3 * ((date.month-1)/3), 1)    
+    return datetime.date(date.year, 1 + 3 * ((date.month - 1) / 3), 1)
+
 
 def GetTrimestreEnd(date):
     nextTrimestre = GetTrimestreStart(date) + datetime.timedelta(80)
     return GetTrimestreStart(nextTrimestre) - datetime.timedelta(1)    
+
 
 def GetHeureString(value):
     if value is None:
         return ""
     if not isinstance(value, int):
         value = int(round(value * 12))
-    minutes = value * 5;
-    heures = minutes / 60
-    minutes -= heures * 60
-    return "%dh%02d" % (heures, minutes)
+    minutes = value * 5
+    if value >= 0:
+        heures = minutes / 60
+        minutes -= heures * 60
+        return "%dh%02d" % (heures, minutes)
+    else:
+        minutes = -minutes
+        heures = (minutes / 60)
+        minutes -= heures * 60
+        return "-%dh%02d" % (heures, minutes)
+
 
 def GetAge(naissance):
     age = 0
@@ -87,7 +107,8 @@ def GetAge(naissance):
         if today.day < naissance.day:
             age -= 1
     return age
- 
+
+
 def GetAgeString(naissance):
     if naissance:
         age = GetAge(naissance)
@@ -103,33 +124,37 @@ def GetAgeString(naissance):
     else:
         return ""
 
+
 def GetDateString(date, weekday=True):
     if date.day == 1:
-        date_str = "1er %s %d" % (months[date.month-1].lower(), date.year)
+        date_str = "1er %s %d" % (months[date.month - 1].lower(), date.year)
     else:
-        date_str = "%d %s %d" % (date.day, months[date.month-1].lower(), date.year)
+        date_str = "%d %s %d" % (date.day, months[date.month - 1].lower(), date.year)
     if weekday:
         return days[date.weekday()].lower() + " " + date_str
     else:
         return date_str
-    
+
+
 def GetDureeArrondie(mode, start, end):
     if mode == ARRONDI_HEURE_ARRIVEE_DEPART:
         return (((end + 11) / 12) - (start / 12)) * 12  
     elif mode == ARRONDI_HEURE:
-        return ((end-start+11) / 12) * 12
+        return ((end - start + 11) / 12) * 12
     elif mode == ARRONDI_HEURE_MARGE_DEMI_HEURE:
-        return ((end-start+5) / 12) * 12
+        return ((end - start + 5) / 12) * 12
     elif mode == ARRONDI_DEMI_HEURE:
-        return ((end-start+5) / 6) * 6
+        return ((end - start + 5) / 6) * 6
     else:
         return end - start
-    
+
+
 def IsPresentDuringTranche(journee, debut, fin):
     for start, end, value in journee.activites:
         if start < fin and end > debut and (not value & PREVISIONNEL or not value & CLOTURE):
             return True
     return False
+
 
 def HeuresTranche(journee, debut, fin):
     result = [0] * (24 * 60 / BASE_GRANULARITY)
@@ -139,6 +164,7 @@ def HeuresTranche(journee, debut, fin):
                 result[i] = 1
     return float(sum(result) * BASE_GRANULARITY) / 60
 
+
 def GetJoursOuvres(annee, mois):
     jours_ouvres = 0
     date = datetime.date(annee, mois, 1)
@@ -147,6 +173,7 @@ def GetJoursOuvres(annee, mois):
             jours_ouvres += 1
         date += datetime.timedelta(1)
     return jours_ouvres        
+
 
 def GetHeuresAccueil(annee, mois, site=None):
     if site is not None:
@@ -158,7 +185,8 @@ def GetHeuresAccueil(annee, mois, site=None):
             result += creche.GetHeuresAccueil(date.weekday()) 
         date += datetime.timedelta(1)
     return result        
-    
+
+
 def GetInitialesPrenom(person):
     if person.prenom:
         for char in ('-', ' '):
@@ -169,11 +197,13 @@ def GetInitialesPrenom(person):
     else:
         return '?'
 
+
 def GetNom(person):
     if person:
         return person.nom
     else:
         return ""
+
 
 def GetNom4P1(inscrit, inscrits):
     if inscrit:
@@ -186,13 +216,15 @@ def GetNom4P1(inscrit, inscrits):
         return result
     else:
         return ""
-        
+
+
 def GetPrenom(person):
     if person:
         return person.prenom
     else:
         return ""
-    
+
+
 def GetPrenomNom(person, maj_nom=False, tri=None):
     if not person:
         return ""
@@ -206,6 +238,11 @@ def GetPrenomNom(person, maj_nom=False, tri=None):
     else:
         return "%s %s" % (person.prenom, nom)
 
+
+def GetDateAnniversaire(date, count=1):
+    return datetime.date(date.year + count, date.month, date.day)
+
+
 def GetInscritsFamille(famille):
     result = []
     for inscrit in creche.inscrits:
@@ -213,12 +250,14 @@ def GetInscritsFamille(famille):
             result.append(inscrit)
     return result
 
+
 def GetInscritsFrereSoeurs(inscrit):
     result = []
     for candidat in creche.inscrits:
         if candidat is not inscrit and candidat.famille == inscrit.famille:
             result.append(candidat)
     return result
+
 
 def GetEnfantsCount(inscrit, date):
     enfants_a_charge = 1
@@ -250,6 +289,7 @@ def GetEnfantsCount(inscrit, date):
                         fin = candidat.naissance 
     return enfants_a_charge, enfants_en_creche, debut, fin
 
+
 def GetTranche(valeur, tranches):
     result = 0
     for tranche in tranches:
@@ -258,11 +298,13 @@ def GetTranche(valeur, tranches):
         result += 1
     return result
 
+
 def GetDepartement(cp):
     if cp:
         return int(cp/1000)
     else:
         return ""
+
 
 def GetFile(filename, site, path, path_dist):
     paths = []
@@ -282,17 +324,21 @@ def GetFile(filename, site, path, path_dist):
             if os.path.isfile(directory + path):
                 return directory + path
     return None
-    
+
+
 def GetBitmapFile(filename, site=None):
     return GetFile(filename, site, "bitmaps", "bitmaps_dist")
 
+
 def GetTemplateFile(filename, site=None):
     return GetFile(filename, site, config.templates, "templates_dist")
+
 
 def IsTemplateFile(filename):
     path1 = "%s/%s" % (config.templates, filename)
     path2 = "templates_dist/%s" % filename
     return os.path.isfile(path1) or os.path.isfile(path2)
+
 
 def str2date(s, year=None, day=None):
     s = s.strip()
@@ -310,17 +356,20 @@ def str2date(s, year=None, day=None):
     except:
         return None
 
+
 def Number2String(value):
     if isinstance(value, float):
         return "%.2f" % value
     else:
         return "%d" % value
-    
+
+
 def date2str(date):
     try:
         return '%.02d/%.02d/%.04d' % (date.day, date.month, date.year)
     except:
         return ''
+
 
 def GetPeriodeString(o):
     if None in (o.debut, o.fin) or (o.debut.year, o.debut.month, o.debut.day) != (o.fin.year, 1, 1) or (o.fin.month, o.fin.day) != (12, 31):
@@ -328,36 +377,42 @@ def GetPeriodeString(o):
     else:
         return u"Année %d" % o.debut.year
 
+
 def JourSemaineAffichable(day):
-    day = day % 7
+    day %= 7
     if days[day] in creche.feries:
         return False
     elif day == 5 or day == 6:
-        return not "Week-end" in creche.feries
+        return "Week-end" not in creche.feries
     else:
         return True
 
-def Select(object, date):
-    for o in object:
+
+def Select(obj, date):
+    for o in obj:
         if o.debut and date >= o.debut and (not o.fin or date <= o.fin):
             return o
     return None
 
-def GetDeStr(str):
-    if len(str) > 0 and str[0].lower() in ('a', 'e', 'i', 'o', 'u'):
-        return "d'" + str
+
+def GetDeStr(s):
+    if len(s) > 0 and s[0].lower() in ('a', 'e', 'i', 'o', 'u'):
+        return "d'" + s
     else:
-        return "de " + str
+        return "de " + s
+
 
 def GetDeMoisStr(mois):
     return GetDeStr(months[mois].lower())
+
 
 def GetBoolStr(val):
     if val:
         return "OUI"
     else:
         return "NON"
-    
+
+
 def GetParentsString(famille):
     if not famille.parents['papa'] and not famille.parents['maman']:
         return "ZZZZ"
@@ -372,6 +427,7 @@ def GetParentsString(famille):
             return '%s et %s %s' % (maman.prenom, papa.prenom, papa.nom)
         else:
             return '%s %s et %s %s' % (maman.prenom, maman.nom, papa.prenom, papa.nom)
+
 
 def GetParentsNomsString(famille):
     if not famille.parents['papa'] and not famille.parents['maman']:
@@ -388,6 +444,7 @@ def GetParentsNomsString(famille):
         else:
             return '%s-%s' % (papa.nom, maman.nom)
 
+
 def GetInscritsByMode(start, end, mode, site=None): # TODO pourquoi retourner les index
     result = []
     for i, inscrit in enumerate(creche.inscrits):
@@ -397,6 +454,7 @@ def GetInscritsByMode(start, end, mode, site=None): # TODO pourquoi retourner le
                 break
     return result
 
+
 def GetInscriptions(start, end):
     result = []
     for inscrit in creche.inscrits:
@@ -404,13 +462,14 @@ def GetInscriptions(start, end):
             result.append(inscription)
     return result
 
+
 def GetTriParCommuneEtNomIndexes(indexes):
     # Tri par commune (Rennes en premier) + ordre alphabetique des noms
     def tri(one, two):
         i1 = creche.inscrits[one] ; i2 = creche.inscrits[two]
-        if (i1.famille.ville.lower() != 'rennes' and i2.famille.ville.lower() == 'rennes'):
+        if i1.famille.ville.lower() != 'rennes' and i2.famille.ville.lower() == 'rennes':
             return 1
-        elif (i1.famille.ville.lower() == 'rennes' and i2.famille.ville.lower() != 'rennes'):
+        elif i1.famille.ville.lower() == 'rennes' and i2.famille.ville.lower() != 'rennes':
             return -1
         else:
             return cmp("%s %s" % (i1.nom, i1.prenom), "%s %s" % (i2.nom, i2.prenom))
@@ -418,23 +477,26 @@ def GetTriParCommuneEtNomIndexes(indexes):
     indexes.sort(tri)
     return indexes
 
+
 def GetTriParPrenomIndexes(indexes):
     # Tri par ordre alphabetique des prenoms
     def tri(one, two):
-        i1 = creche.inscrits[one] ; i2 = creche.inscrits[two]
+        i1, i2 = creche.inscrits[one], creche.inscrits[two]
         return cmp(i1.prenom, i2.prenom)
 
     indexes.sort(tri)
     return indexes
 
+
 def GetTriParNomIndexes(indexes):
     def tri(one, two):
-        i1 = creche.inscrits[one] ; i2 = creche.inscrits[two]
+        i1, i2 = creche.inscrits[one], creche.inscrits[two]
         return cmp(i1.nom, i2.nom)
 
     indexes.sort(tri)
     return indexes
-            
+
+
 def GetEnfantsTries(enfants, tri):
     if enfants is None:
         enfants = creche.inscrits[:]
@@ -442,21 +504,64 @@ def GetEnfantsTries(enfants, tri):
         enfants = enfants[:]
     enfants.sort(tri)
     return enfants
-    
+
+
 def GetEnfantsTriesParNom(enfants=None):
     def tri(one, two):
         return cmp(GetPrenomNom(one, tri=TRI_NOM), GetPrenomNom(two, tri=TRI_NOM))
     return GetEnfantsTries(enfants, tri)
+
 
 def GetEnfantsTriesParPrenom(enfants=None):
     def tri(one, two):
         return cmp(GetPrenomNom(one), GetPrenomNom(two))
     return GetEnfantsTries(enfants, tri)
 
+
 def GetEnfantsTriesParNomParents(enfants=None):
     def tri(one, two):
         return cmp(GetParentsNomsString(one.famille), GetParentsNomsString(two.famille))
     return GetEnfantsTries(enfants, tri)
+
+
+def GetEnfantsTriesParGroupe(lines):
+    groupes = {}
+    for line in lines:
+        groupe = line.inscription.groupe
+        if groupe not in groupes:
+            groupes[groupe] = []
+        groupes[groupe].append(line)
+
+    keys = groupes.keys()
+
+    def tri(one, two):
+        if one is None:
+            return -1
+        elif two is None:
+            return 1
+        else:
+            return cmp(one.ordre, two.ordre)
+
+    keys.sort(tri)
+    lines = []
+    for key in keys:
+        groupe = groupes[key]
+        groupe.sort(key=lambda line: line.label)
+        if key:
+            groupe.insert(0, key.nom)
+        lines.extend(groupe)
+
+    return lines
+
+
+def GetEnfantsTriesSelonParametreTriPlanning(enfants):
+    if creche.tri_planning & TRI_GROUPE:
+        return GetEnfantsTriesParGroupe(enfants)
+    elif creche.tri_planning == TRI_NOM:
+        return GetEnfantsTriesParNom(enfants)
+    else:
+        return GetEnfantsTriesParPrenom(enfants)
+
 
 def GetEnfantsTriesSelonParametreTriFacture(enfants):
     if creche.tri_factures == TRI_NOM:
@@ -468,6 +573,7 @@ def GetEnfantsTriesSelonParametreTriFacture(enfants):
     else:
         return enfants
 
+
 def GetPresentsIndexes(indexes, (debut, fin), site=None):
     if indexes is None:
         indexes = range(len(creche.inscrits))
@@ -478,14 +584,15 @@ def GetPresentsIndexes(indexes, (debut, fin), site=None):
         inscrit = creche.inscrits[indexes[i]]
         #print inscrit.prenom
         for inscription in inscrit.inscriptions:
-            if ((inscription.fin is None or inscription.fin >= debut) and
-                (not creche.preinscriptions or not inscription.preinscription) and
-                (site is None or inscription.site == site) and
-                inscription.debut != None and 
-                (not fin or inscription.debut <= fin)):
+            if (inscription.fin is None or inscription.fin >= debut) and \
+                    (not creche.preinscriptions or not inscription.preinscription) and \
+                    (site is None or inscription.site == site) and \
+                    (inscription.debut is not None) and \
+                    (not fin or inscription.debut <= fin):
                 result.append(indexes[i])
                 break
     return result
+
 
 def GetInscrits(debut, fin, site=None, handicap=None):
     result = []
@@ -493,6 +600,7 @@ def GetInscrits(debut, fin, site=None, handicap=None):
         if inscrit.IsPresent(debut, fin, site, handicap):
             result.append(inscrit)
     return result
+
 
 def GetLines(date, inscrits, presence=False, site=None, groupe=None, summary=SUMMARY_ENFANT):
     lines = []
@@ -518,6 +626,7 @@ def GetLines(date, inscrits, presence=False, site=None, groupe=None, summary=SUM
             line.summary = summary
             lines.append(line)
     return lines
+
 
 def GetEnfantsTriesParReservataire(inscrits):
     reservataires = {}
@@ -551,34 +660,7 @@ def GetEnfantsTriesParReservataire(inscrits):
         lines.extend(reservataires[key])
 
     return lines
-     
-def GetEnfantsTriesParGroupe(lines):
-    groupes = {}
-    for line in lines:
-        groupe = line.inscription.groupe
-        if groupe not in groupes:
-            groupes[groupe] = []
-        groupes[groupe].append(line)
-    
-    keys = groupes.keys()
-    
-    def tri(one, two):
-        if one is None:
-            return -1
-        elif two is None:
-            return 1
-        else:
-            return cmp(one.ordre, two.ordre)
 
-    keys.sort(tri)
-    lines = []
-    for key in keys:
-        groupes[key].sort(key=lambda line: line.label)
-        if key:
-            groupes[key].insert(0, key.nom)                   
-        lines.extend(groupes[key])
-
-    return lines
 
 def GetActivityColor(value):
     if value < 0:
@@ -597,6 +679,7 @@ def GetActivityColor(value):
             return creche.activites[activity].couleur
     else:
         return 0, 0, 0, 0, 100
+
 
 def GetUnionHeures(journee, reference):
     result = []
@@ -629,6 +712,7 @@ def GetUnionHeures(journee, reference):
 
     return result
 
+
 def GetNombreSemainesPeriode(debut, fin):
     jours = (fin - debut).days
     if creche.arrondi_semaines == ARRONDI_SEMAINE_SUPERIEURE:
@@ -637,7 +721,8 @@ def GetNombreSemainesPeriode(debut, fin):
         return round(float(jours) / 7)
     else:
         return float(jours) / 7
-                
+
+
 class State(object):
     def __init__(self, state, heures_contractualisees=.0, heures_realisees=.0, heures_facturees=.0):
         self.state = state
@@ -647,7 +732,8 @@ class State(object):
         
     def __str__(self):
         return "state:%d, contrat:%f, realise:%f, facture:%f" % (self.state, self.heures_contractualisees, self.heures_realisees, self.heures_facturees) 
-                
+
+
 class Summary(list):
     def __init__(self, label):
         self.options = 0
@@ -656,7 +742,8 @@ class Summary(list):
         self.GetDynamicText = None
         for i in range(DAY_SIZE):
             self.append([0, 0])
-            
+
+
 def GetActivitiesSummary(creche, lines):
     activites = {}
     activites_sans_horaires = {}
@@ -689,6 +776,7 @@ def GetActivitiesSummary(creche, lines):
     
     return activites, activites_sans_horaires
 
+
 def GetCrecheFields(creche):
     return [('nom-creche', creche.nom),
             ('adresse-creche', creche.adresse),
@@ -700,25 +788,29 @@ def GetCrecheFields(creche):
             ('capacite', creche.GetCapacite()),
             ('capacite-creche', creche.GetCapacite()),
             ('amplitude-horaire', creche.GetAmplitudeHoraire()),
-           ]
-    
+            ]
+
+
 def GetTarifsHorairesFields(creche):
     if creche.formule_taux_horaire:
         return [('tarif(%s)' % cas[0], cas[1]) for cas in creche.formule_taux_horaire]
     else:
         return []
-    
+
+
 def GetCodePostal(what):
     try:
         return "%.05d" % what.code_postal
     except:
         return ""
 
+
 def GetInscritSexe(inscrit):
     if inscrit.sexe == 1:
         return u"Garçon"
     else:
         return "Fille"
+
 
 def GetTelephone(famille):
     result = []
@@ -729,6 +821,7 @@ def GetTelephone(famille):
             if famille.parents[key].telephone_portable:
                 result.append(famille.parents[key].telephone_portable)
     return ", ".join(set(result))
+
 
 def GetEmail(famille):
     result = []
@@ -754,21 +847,23 @@ def GetFamilleFields(famille):
     
 def GetInscritFields(inscrit):
     return GetFamilleFields(inscrit.famille) + [
-            ('prenom', inscrit.prenom),
-            ('de-prenom', GetDeStr(inscrit.prenom)),
-            ('nom', inscrit.nom),
-            ('sexe', GetInscritSexe(inscrit)),
-            ('naissance', inscrit.naissance),
-            ('age', GetAgeString(inscrit.naissance)),
-            ('entree', inscrit.inscriptions[0].debut),
-            ('sortie', inscrit.inscriptions[-1].fin)
-            ]
-    
+        ('prenom', inscrit.prenom),
+        ('de-prenom', GetDeStr(inscrit.prenom)),
+        ('nom', inscrit.nom),
+        ('sexe', GetInscritSexe(inscrit)),
+        ('naissance', inscrit.naissance),
+        ('age', GetAgeString(inscrit.naissance)),
+        ('entree', inscrit.inscriptions[0].debut),
+        ('sortie', inscrit.inscriptions[-1].fin),
+    ]
+
+
 def GetSalarieFields(salarie):
     return [('nom', salarie.nom),
             ('prenom', salarie.prenom),
             ('de-prenom', GetDeStr(salarie.prenom)),
             ]            
+
 
 def GetInscriptionFields(inscription):
     if inscription.site:
@@ -788,31 +883,33 @@ def GetInscriptionFields(inscription):
             ('professeur-nom', GetNom(inscription.professeur)),
             ]
 
+
 def GetCotisationFields(cotisation):
     result = [('nombre-factures', cotisation.nombre_factures),
-            ('jours-semaine', cotisation.jours_semaine),
-            ('heures-semaine', GetHeureString(cotisation.heures_semaine)),
-            ('heures-mois', GetHeureString(cotisation.heures_mois)),
-            ('heures-periode', GetHeureString(cotisation.heures_periode)),
-            ('semaines-periode', cotisation.semaines_periode),
-            ('frais-inscription', cotisation.frais_inscription, FIELD_EUROS|FIELD_SIGN),
-            ('cotisation-mensuelle', "%.02f" % cotisation.cotisation_mensuelle),
-            ('enfants-a-charge', cotisation.enfants_a_charge),           
-            ('annee-debut', cotisation.debut.year),
-            ('annee-fin', cotisation.debut.year+1),
-            ('semaines-conges', cotisation.conges_inscription),
-            ('liste-conges', ", ".join(cotisation.liste_conges)),
-            ('montant-allocation-caf', cotisation.montant_allocation_caf, FIELD_EUROS|FIELD_SIGN),
-            ('cotisation-mensuelle-apres-allocation-caf', cotisation.cotisation_mensuelle-cotisation.montant_allocation_caf, FIELD_EUROS|FIELD_SIGN),
-           ]
+              ('jours-semaine', cotisation.jours_semaine),
+              ('heures-semaine', GetHeureString(cotisation.heures_semaine)),
+              ('heures-mois', GetHeureString(cotisation.heures_mois)),
+              ('heures-periode', GetHeureString(cotisation.heures_periode)),
+              ('semaines-periode', cotisation.semaines_periode),
+              ('frais-inscription', cotisation.frais_inscription, FIELD_EUROS|FIELD_SIGN),
+              ('cotisation-mensuelle', "%.02f" % cotisation.cotisation_mensuelle),
+              ('enfants-a-charge', cotisation.enfants_a_charge),
+              ('annee-debut', cotisation.debut.year),
+              ('annee-fin', cotisation.debut.year+1),
+              ('semaines-conges', cotisation.conges_inscription),
+              ('liste-conges', ", ".join(cotisation.liste_conges)),
+              ('montant-allocation-caf', cotisation.montant_allocation_caf, FIELD_EUROS|FIELD_SIGN),
+              ('cotisation-mensuelle-apres-allocation-caf', cotisation.cotisation_mensuelle-cotisation.montant_allocation_caf, FIELD_EUROS|FIELD_SIGN),
+              ]
     if cotisation.montant_heure_garde is not None:
         result.append(('montant-semaine', cotisation.heures_semaine*cotisation.montant_heure_garde, FIELD_EUROS|FIELD_SIGN))
         result.append(('montant-periode', cotisation.heures_periode*cotisation.montant_heure_garde, FIELD_EUROS|FIELD_SIGN))
-    if (cotisation.montant_heure_garde and cotisation.cotisation_mensuelle):
+    if cotisation.montant_heure_garde and cotisation.cotisation_mensuelle:
         result.append(('montant-heure-garde-apres-allocation-caf', (cotisation.cotisation_mensuelle-cotisation.montant_allocation_caf) / (cotisation.cotisation_mensuelle/cotisation.montant_heure_garde), FIELD_EUROS|FIELD_SIGN))
     else:
         result.append(('montant-heure-garde-apres-allocation-caf', 0.0, FIELD_EUROS|FIELD_SIGN))
     return result
+
 
 def GetReglementFields(famille, annee, mois):
     total = 0.0
@@ -828,13 +925,14 @@ def GetReglementFields(famille, annee, mois):
               ('moyen-paiement', ', '.join(moyens))
               ]
     return result
-    
+
+
 def GetFactureFields(facture):
     if facture:
         taux_effort = 0.0
         if facture.taux_effort:
             taux_effort = facture.taux_effort
-        if (config.options & HEURES_CONTRAT):
+        if config.options & HEURES_CONTRAT:
             heures_contractualisees = facture.heures_contrat
             heures_facturees = facture.heures_facture
         else:
@@ -887,7 +985,8 @@ def GetFactureFields(facture):
         return [(label, '?') for label in ('mois', 'de-mois', 'de-mois-recap', 'date', 'numfact', 'montant-heure-garde', 'cotisation-mensuelle', 
                                            'heures-contractualisees', 'heures-realisees', 'heures-contractualisees-realisees', 'heures-supplementaires', 'heures-previsionnelles', 
                                            'supplement', 'deduction', 'raison-deduction', 'supplement-activites', 'majoration', 'total')]
-    
+
+
 class ProgressHandler:
     def __init__(self, display_fn=None, gauge_fn=None, min=None, max=None):
         self.display_fn = display_fn
@@ -909,6 +1008,7 @@ class ProgressHandler:
 
 default_progress_handler = ProgressHandler()
 
+
 def SelectValueInChoice(choice, value):
     for i in range(choice.GetCount()):
         if choice.GetClientData(i) == value:
@@ -916,17 +1016,20 @@ def SelectValueInChoice(choice, value):
             return i
     return None
 
+
 def AddYearsToChoice(choice):
     for year in range(first_date.year, last_date.year+1):
         choice.Append(u'Année %d' % year, year)
     choice.SetSelection(today.year-first_date.year)
-            
+
+
 def AddMonthsToChoice(choice):
     date = first_date
     while date < last_date:
         choice.Append(u'%s %d' % (months[date.month-1], date.year), date)
         date = GetNextMonthStart(date)
     choice.SetStringSelection('%s %d' % (months[today.month - 1], today.year))        
+
 
 def AddWeeksToChoice(choice):
     date = first_monday = GetFirstMonday()
@@ -938,6 +1041,7 @@ def AddWeeksToChoice(choice):
     semaine = int(delta.days / 7)
     choice.SetSelection(semaine)
 
+
 class PeriodePresence(object):
     def __init__(self, date, arrivee=None, depart=None, absent=False, malade=False):
         self.date = date
@@ -945,7 +1049,8 @@ class PeriodePresence(object):
         self.depart = depart
         self.absent = absent
         self.malade = malade
-                
+
+
 def SplitLineTablette(line):
     label, idx, date = line.split()
     idx = int(idx)
@@ -956,6 +1061,7 @@ def SplitLineTablette(line):
         return (True, label[:-8], idx, date, heure)
     else:
         return (False, label, idx, date, heure)
+
 
 def AddInscritsToChoice(choice):
     def __add_in_array(array, cell):

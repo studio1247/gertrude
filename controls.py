@@ -479,11 +479,12 @@ class TimeCtrl(wx.lib.masked.TimeCtrl):
 
 
 class AutoMixin:
-    def __init__(self, parent, instance, member, fixed_instance=False, observers=[]):
+    def __init__(self, parent, instance, member, fixed_instance=False, observers=[], mask=None):
         self.__ontext = True
         self.parent = parent
         self.fixed_instance = fixed_instance
         self.observers = observers
+        self.mask = mask
         if not fixed_instance:
             parent.ctrls.append(self)
         self.SetInstance(instance, member)
@@ -499,15 +500,21 @@ class AutoMixin:
             self.member = member
         self.UpdateContents()
 
+    def GetCurrentValue(self):
+        if self.mask:
+            return eval('self.instance.%s & self.mask' % self.member)
+        else:
+            return eval('self.instance.%s' % self.member)
+
     def UpdateContents(self):
         if not self.instance:
             self.Disable()
         else:
             self.__ontext = False
             try:
-                self.SetValue(eval('self.instance.%s' % self.member))
+                self.SetValue(self.GetCurrentValue())
             except:
-                print u"Erreur lors de l'évaluation de self.instance.%s" % self.member
+                print u"Erreur lors de l'evaluation de self.instance.%s" % self.member
             self.__ontext = True
             self.Enable(not readonly)
 
@@ -519,6 +526,8 @@ class AutoMixin:
 
     def AutoChange(self, new_value):
         old_value = eval('self.instance.%s' % self.member)
+        if self.mask is not None:
+            new_value |= old_value & ~self.mask
         if old_value != new_value:
             last = history.Last()
             if last is not None and len(last) == 1 and isinstance(last[-1], Change):
@@ -624,12 +633,12 @@ class ChoiceCtrl(wx.Choice):
 
 
 class AutoChoiceCtrl(wx.Choice, AutoMixin):
-    def __init__(self, parent, instance, member, items=None, fixed_instance=False, observers=[], *args, **kwargs):
+    def __init__(self, parent, instance, member, items=None, fixed_instance=False, observers=[], mask=None, *args, **kwargs):
         wx.Choice.__init__(self, parent, -1, *args, **kwargs)
         self.values = {}
         if items:
             self.SetItems(items)
-        AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
+        AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers, mask)
         parent.Bind(wx.EVT_CHOICE, self.onChoice, self)
 
     def __del__(self):
@@ -644,7 +653,7 @@ class AutoChoiceCtrl(wx.Choice, AutoMixin):
         event.Skip()
 
     def SetValue(self, value):
-        if eval('self.instance.%s' % self.member) != value:
+        if self.GetCurrentValue() != value:
             exec ('self.instance.%s = value' % self.member)
             self.UpdateContents()
 
@@ -652,7 +661,7 @@ class AutoChoiceCtrl(wx.Choice, AutoMixin):
         if not self.instance:
             self.Disable()
         else:
-            value = eval('self.instance.%s' % self.member)
+            value = self.GetCurrentValue()
             if value in self.values:
                 self.SetSelection(self.values[value])
             else:
@@ -1074,6 +1083,24 @@ class ActivityComboBox(HashComboBox):
     def OnChangeActivity(self, evt):
         self.activity = self.GetClientData(self.GetSelection())
         evt.Skip()
+
+    def Update(self):
+        self.Clear()
+        selected = 0
+        if creche.HasActivitesAvecHoraires():
+            self.Show(True)
+            for i, activity in enumerate(creche.activites.values()):
+                if activity.mode not in (MODE_SANS_HORAIRES, MODE_SYSTEMATIQUE_SANS_HORAIRES):
+                    self.Append(activity.label, activity)
+                    try:
+                        if self.activity_choice.activity.value == activity.value:
+                            selected = i
+                    except:
+                        pass
+        else:
+            self.Show(False)
+            self.Append(creche.activites[0].label, creche.activites[0])
+        self.SetSelection(selected)
 
 
 def GetPictoBitmap(index, size=64):

@@ -15,13 +15,12 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import math
-from constants import *
-from functions import *
+
 from facture import *
-from sqlobjects import Parent, Creche, Site
+from sqlobjects import Site
 from cotisation import CotisationException
 from ooffice import *
+
 
 class AttestationModifications(object):
     def __init__(self, who, debut, fin):
@@ -120,24 +119,24 @@ class AttestationModifications(object):
                     last_inscription = tmp 
             
             # Les champs du recu
-            fields = GetCrecheFields(creche) +  GetInscritFields(inscrit) + GetInscriptionFields(last_inscription) + [
-                    ('de-debut', '%s %d' % (GetDeMoisStr(facture_debut.month - 1), facture_debut.year)),
-                    ('de-fin', '%s %d' % (GetDeMoisStr(facture_fin.month - 1), facture_fin.year)),
-                    ('tresorier', tresorier),
-                    ('directeur', directeur),
-                    ('date', '%.2d/%.2d/%d' % (today.day, today.month, today.year)),
-                    ('heures-facturees', GetHeureString(heures_facturees)),
-                    ('ceil-heures-facturees', GetHeureString(math.ceil(heures_facturees))),
-                    ('total', '%.2f' % total),
-                    ('site', GetNom(site)),
-                    ('dernier-mois', GetBoolStr(last_inscription.fin and last_inscription.fin <= facture_fin)),
-                    ]
+            fields = GetCrecheFields(creche) + GetInscritFields(inscrit) + GetInscriptionFields(last_inscription) + [
+                ('de-debut', '%s %d' % (GetDeMoisStr(facture_debut.month - 1), facture_debut.year)),
+                ('de-fin', '%s %d' % (GetDeMoisStr(facture_fin.month - 1), facture_fin.year)),
+                ('tresorier', tresorier),
+                ('directeur', directeur),
+                ('date', '%.2d/%.2d/%d' % (today.day, today.month, today.year)),
+                ('heures-facturees', GetHeureString(heures_facturees)),
+                ('ceil-heures-facturees', GetHeureString(math.ceil(heures_facturees))),
+                ('total', '%.2f' % total),
+                ('site', GetNom(site)),
+                ('dernier-mois', GetBoolStr(last_inscription.fin and last_inscription.fin <= facture_fin)),
+            ]
             
             if IsTemplateFile("Attestation mensuelle.odt"):
                 fields.extend([
                     ('mois', months[facture_debut.month - 1]),
                     ('annee', facture_debut.year)
-                    ])
+                ])
     
             if inscrit.sexe == 1:
                 fields.append(('ne-e', u"né"))
@@ -150,4 +149,3 @@ class AttestationModifications(object):
                 ReplaceTextFields(section, fields)
                 
         return errors
-

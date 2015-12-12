@@ -1,31 +1,36 @@
 # -*- coding: utf-8 -*-
 
-##    This file is part of Gertrude.
-##
-##    Gertrude is free software; you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation; either version 3 of the License, or
-##    (at your option) any later version.
-##
-##    Gertrude is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
-##
-##    You should have received a copy of the GNU General Public License
-##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import __builtin__
-import time, thread, traceback, shutil
-import wx, wx.lib, wx.lib.newevent
-from constants import *
-from functions import *
-from config import LoadConfig, Load, Exit, CONFIG_FILENAME, DEFAULT_DATABASE, DEMO_DATABASE
+import shutil
+import socket
+import thread
+import traceback
 from asyncore import dispatcher
+
+import wx.lib.newevent
+
+from config import LoadConfig, Load, Exit, CONFIG_FILENAME, DEFAULT_DATABASE, DEMO_DATABASE
+from functions import *
+from globals import *
 from mainwindow import GertrudeFrame
-import sys, time, socket
 
 __builtin__.server = None
+
 
 class Server(dispatcher):
     def __init__(self):
@@ -36,6 +41,7 @@ class Server(dispatcher):
         
     def close(self):
         dispatcher.close(self)
+
 
 class StartDialog(wx.Dialog):
     def __init__(self):
@@ -98,9 +104,10 @@ class StartDialog(wx.Dialog):
         __builtin__.force_token = False
 
         if sys.platform != "darwin" and not os.path.isfile(CONFIG_FILENAME) and not os.path.isfile(DEFAULT_DATABASE) and os.path.isfile(DEMO_DATABASE):
-            dlg = wx.MessageDialog(self, u"Vous utilisez Gertrude pour la première fois, voulez-vous installer une base de démonstration ?",
-                                       'Gertrude',
-                                       wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+            dlg = wx.MessageDialog(self,
+                                   u"Vous utilisez Gertrude pour la première fois, voulez-vous installer une base de démonstration ?",
+                                   'Gertrude',
+                                   wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
             if dlg.ShowModal() == wx.ID_YES:
                 shutil.copy(DEMO_DATABASE, DEFAULT_DATABASE)
                 

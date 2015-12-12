@@ -1,27 +1,21 @@
 # -*- coding: utf-8 -*-
 
-##    This file is part of Gertrude.
-##
-##    Gertrude is free software; you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation; either version 3 of the License, or
-##    (at your option) any later version.
-##
-##    Gertrude is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
-##
-##    You should have received a copy of the GNU General Public License
-##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import __builtin__
-import os.path, sys
-import string, datetime
-import wx, wx.lib.scrolledpanel, wx.html
-import xml.dom.minidom
-from constants import *
-from functions import *
+
 from facture import *
 from ooffice import *
 from controls import *
@@ -29,7 +23,8 @@ from doc_facture_mensuelle import FactureModifications
 from doc_export_compta import ExportComptaModifications
 from doc_attestation_paiement import AttestationModifications
 from doc_appel_cotisations import AppelCotisationsModifications
-from sqlobjects import Creche, Site, Inscrit, Correction, NumeroFacture, Encaissement
+from sqlobjects import *
+
 
 class CorrectionsTab(AutoTab):
     def __init__(self, parent):
@@ -82,7 +77,8 @@ class CorrectionsTab(AutoTab):
 
     def UpdateContents(self):
         self.OnMonthChoice()
-        
+
+
 class FacturationTab(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
@@ -342,6 +338,7 @@ class FacturationTab(AutoTab):
         if len(inscrits) > 0:
             DocumentDialog(self, ExportComptaModifications(inscrits, periode)).ShowModal()
 
+
 class ReglementsTab(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
@@ -473,7 +470,8 @@ class ReglementsTab(AutoTab):
         self.inscrit.famille.encaissements.remove(self.current_line)
         self.current_line.delete()
         self.AfficheLignes()
-        
+
+
 class FacturationNotebook(wx.Notebook):
     def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
@@ -484,7 +482,8 @@ class FacturationNotebook(wx.Notebook):
     def UpdateContents(self):
         for page in range(self.GetPageCount()):
             self.GetPage(page).UpdateContents()
-        
+
+
 class FacturationPanel(GPanel):
     name = "Facturation"
     bitmap = GetBitmapFile("facturation.png")

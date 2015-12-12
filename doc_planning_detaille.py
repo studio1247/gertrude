@@ -85,12 +85,19 @@ class PlanningDetailleModifications(object):
         shapes = getNamedShapes(template)
         # print shapes
         for shape in shapes:
-            if shape in ["legende-heure", "ligne-heure", "ligne-quart-heure", "libelle", "separateur", "category"] or shape.startswith("activite-"):
+            if shape in ["legende-heure", "ligne-heure", "ligne-quart-heure", "libelle", "separateur", "ligne-cahier", "category"] or shape.startswith("activite-"):
                 template.removeChild(shapes[shape])
         drawing.removeChild(template)
         if not "activite-%d" % PRESENCE_SALARIE in shapes:
             shapes["activite-%d" % PRESENCE_SALARIE] = shapes["activite-%d" % 0]
-    
+
+        def AddCategoryShape(page, text, y):
+            if "category" in shapes:
+                node = shapes["category"].cloneNode(1)
+                node.setAttribute('svg:y', '%fcm' % y)
+                ReplaceTextFields(node, [('category', text)])
+                page.appendChild(node)
+
         day = self.start
         while day <= self.end:
             if day in creche.jours_fermeture:
@@ -98,17 +105,11 @@ class PlanningDetailleModifications(object):
                 continue
 
             lines_enfants = GetLines(day, creche.inscrits, site=self.site, groupe=self.groupe, summary=SUMMARY_ENFANT)
-            if creche.tri_planning == TRI_GROUPE:
-                lines_enfants = GetEnfantsTriesParGroupe(lines_enfants)
-            elif creche.tri_planning == TRI_NOM:
-                lines_enfants = GetEnfantsTriesParNom(lines_enfants)
-            else:
-                lines_enfants = GetEnfantsTriesParPrenom(lines_enfants)
-                
+            lines_enfants = GetEnfantsTriesSelonParametreTriPlanning(lines_enfants)
             lines_salaries = GetLines(day, creche.salaries, site=self.site, summary=SUMMARY_SALARIE)
-            
+
             if lines_salaries:
-                lines = lines_enfants + [None] + lines_salaries
+                lines = lines_enfants + [u"Salariés"] + lines_salaries
             else:
                 lines = lines_enfants
             
@@ -138,28 +139,31 @@ class PlanningDetailleModifications(object):
                     # node.setAttribute('svg:y2', '29cm')
                     page.appendChild(node)
                     h += creche.granularite / BASE_GRANULARITY
-                
+
+                if "ligne-cahier" in shapes:
+                    ligne_cahier = shapes["ligne-cahier"].cloneNode(1)
+                    ligne_cahier.setAttribute('svg:x1', '%fcm' % left)
+                    ligne_cahier.setAttribute('svg:x2', '%fcm' % (21.0 - right))
+                else:
+                    ligne_cahier = None
+
+                ajoute_ligne_cahier = False
+
                 # les enfants et salaries
                 for i in range(lines_count):
-                    line_idx = i+lines_max*page_index
+                    line_idx = i + lines_max * page_index
                     line = lines[line_idx]
-                    if line is None:
-                        # ligne séparatrice
-                        if "separateur" in shapes:
-                            node = shapes["separateur"].cloneNode(1)
-                            node.setAttribute('svg:x1', '%fcm' % left)
-                            node.setAttribute('svg:y1', '%fcm' % (0.25 + top + line_height * line_idx))
-                            node.setAttribute('svg:x2', '%fcm' % (21.0-right))
-                            node.setAttribute('svg:y2', '%fcm' % (0.25 + top + line_height * line_idx))
-                            page.appendChild(node)
-                    elif isinstance(line, basestring):
-                        if "category" in shapes:
-                            node = shapes["category"].cloneNode(1)
-                            node.setAttribute('svg:x', '%fcm' % left)
-                            node.setAttribute('svg:y', '%fcm' % (0.20+ top + line_height * i))
-                            ReplaceTextFields(node, [('category', line)])
-                            page.appendChild(node)
+                    if isinstance(line, basestring):
+                        AddCategoryShape(page, line, 0.20 + top + line_height * i)
+                        ajoute_ligne_cahier = False
                     else:
+                        if ajoute_ligne_cahier and ligne_cahier and creche.tri_planning & TRI_LIGNES_CAHIER:
+                            node = ligne_cahier.cloneNode(1)
+                            node.setAttribute('svg:y1', '%fcm' % (top + line_height * i))
+                            node.setAttribute('svg:y2', '%fcm' % (top + line_height * i))
+                            page.appendChild(node)
+                        else:
+                            ajoute_ligne_cahier = True
                         node = shapes["libelle"].cloneNode(1)
                         node.setAttribute('svg:x', '%fcm' % left)
                         node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
@@ -171,14 +175,14 @@ class PlanningDetailleModifications(object):
                         page.appendChild(node)
                         for a, b, v in line.activites:
                             if v >= 0:
-                                v = v & (~PREVISIONNEL)
+                                v &= ~PREVISIONNEL
                                 key = "activite-%d" % v
                                 if key in shapes:
                                     # print a,b,v
                                     node = shapes[key].cloneNode(1)
-                                    node.setAttribute('svg:x', '%fcm' % (left + labels_width + float(a-affichage_min) * step))
-                                    node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
-                                    node.setAttribute('svg:width', '%fcm' % ((b-a)*step))
+                                    node.setAttribute('svg:x', '%fcm' % (left + labels_width + float(a - affichage_min) * step))
+                                    node.setAttribute('svg:y', '%fcm' % (0.10 + top + line_height * i))
+                                    node.setAttribute('svg:width', '%fcm' % ((b - a) * step))
                                     if isinstance(line.inscription, Inscription):
                                         allergies = ', '.join(line.inscription.inscrit.GetAllergies())
                                     else:
@@ -188,15 +192,8 @@ class PlanningDetailleModifications(object):
                                 else:
                                     print u"Pas de forme pour %s" % key
                             
-                if page_index+1 == pages_count:
-                    # ligne séparatrice
-                    if "separateur" in shapes:
-                        node = shapes["separateur"].cloneNode(1)
-                        node.setAttribute('svg:x1', '%fcm' % left)
-                        node.setAttribute('svg:y1', '%fcm' % (0.25 + top + line_height * lines_count))
-                        node.setAttribute('svg:x2', '%fcm' % (21.0-right))
-                        node.setAttribute('svg:y2', '%fcm' % (0.25 + top + line_height * lines_count))
-                        page.appendChild(node)
+                if page_index + 1 == pages_count:
+                    AddCategoryShape(page, u"Totaux", 0.20 + top + line_height * lines_count)
                     
                     # le récapitulatif par activité
                     i = lines_count
@@ -229,7 +226,7 @@ class PlanningDetailleModifications(object):
                                 nv, nw = line[x]
                                 
                             if activity == 0 and (nw == 0 or nv > creche.GetCapacite(day.weekday()) or float(nv)/nw > 6.5):
-                                nw = activity|SUPPLEMENT
+                                nw = activity | SUPPLEMENT
                             else:
                                 nw = activity
                                 
@@ -247,9 +244,9 @@ class PlanningDetailleModifications(object):
                                             print u"Pas de forme pour %s" % key
                                             node = None
                                     if node:
-                                        node.setAttribute('svg:x', '%fcm' % (left + labels_width + (float(a-affichage_min) * step)))
-                                        node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
-                                        node.setAttribute('svg:width', '%fcm' % (float(x-a)*step))
+                                        node.setAttribute('svg:x', '%fcm' % (left + labels_width + (float(a - affichage_min) * step)))
+                                        node.setAttribute('svg:y', '%fcm' % (0.10 + top + line_height * i))
+                                        node.setAttribute('svg:width', '%fcm' % (float(x - a) * step))
                                         ReplaceTextFields(node, [('texte', '%d' % v)])
                                     page.appendChild(node)
                                 a = x    
@@ -258,7 +255,7 @@ class PlanningDetailleModifications(object):
     
                 fields = [('nom-creche', creche.nom)]
                 if pages_count > 1:
-                    fields.append(('date', GetDateString(day) + " (%d/%d)" % (page_index+1, pages_count)))
+                    fields.append(('date', GetDateString(day) + " (%d/%d)" % (page_index + 1, pages_count)))
                 else:
                     fields.append(('date', GetDateString(day)))
 
@@ -362,8 +359,8 @@ class PlanningDetailleModifications(object):
         TEMPLATE_LINE_COUNT = HEADER_LINE_COUNT+BODY_LINE_COUNT+FOOTER_LINE_COUNT
         
         templateHeader = lignes[:HEADER_LINE_COUNT]
-        templateLines = lignes[HEADER_LINE_COUNT:HEADER_LINE_COUNT+BODY_LINE_COUNT]
-        templateFooter = lignes[HEADER_LINE_COUNT+BODY_LINE_COUNT:TEMPLATE_LINE_COUNT]
+        templateLines = lignes[HEADER_LINE_COUNT:HEADER_LINE_COUNT + BODY_LINE_COUNT]
+        templateFooter = lignes[HEADER_LINE_COUNT + BODY_LINE_COUNT:TEMPLATE_LINE_COUNT]
 
         date = self.start
         while date <= self.end:
@@ -406,6 +403,5 @@ class PlanningDetailleModifications(object):
             
             date += datetime.timedelta(1)
         
-        for line in templateHeader+templateLines+templateFooter:
+        for line in templateHeader + templateLines + templateFooter:
             table.removeChild(line)
-        

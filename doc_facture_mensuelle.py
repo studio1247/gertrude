@@ -253,6 +253,7 @@ class FactureModifications(object):
                             rows = montants_table.getElementsByTagName('table:table-row')
                             for row in rows:
                                 prettyxml = row.toprettyxml()
+                                print prettyxml
                                 if (("&lt;frais-inscription&gt;" in prettyxml and not facture.frais_inscription) or
                                    ("&lt;correction&gt;" in prettyxml and not facture.correction) or
                                    ("&lt;supplement-activites&gt;" in prettyxml and not facture.supplement_activites) or

@@ -42,11 +42,11 @@ class ReleveDetailleModifications(object):
                 self.errors[GetPrenomNom(inscrit)] = ["Date de naissance incorrecte"]
                 continue
             if agemax:
-                anniversaireMax = datetime.date(inscrit.naissance.year+agemax, inscrit.naissance.month, inscrit.naissance.day)
+                anniversaireMax = GetDateAnniversaire(inscrit.naissance, agemax)
                 if anniversaireMax <= datetime.date(self.annee, 1, 1):
                     continue
             if agemin:
-                anniversaireMin = datetime.date(inscrit.naissance.year+agemin, inscrit.naissance.month, inscrit.naissance.day)
+                anniversaireMin = GetDateAnniversaire(inscrit.naissance, agemin)
                 if anniversaireMin > datetime.date(self.annee, 12, 1):
                     continue
             
@@ -63,7 +63,7 @@ class ReleveDetailleModifications(object):
             
             for mois in range(12):
                 fields = [('heures-facturees', 0), ('heures-realisees', 0), ('total', 0)]
-                date = datetime.date(self.annee, mois+1, 1)
+                date = datetime.date(self.annee, mois + 1, 1)
                 if date <= today and (not agemin or date >= anniversaireMin) and (not agemax or date < anniversaireMax):
                     try:
                         facture = Facture(inscrit, self.annee, mois+1, NO_NUMERO)

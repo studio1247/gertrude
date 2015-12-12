@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 
-##    This file is part of Gertrude.
-##
-##    Gertrude is free software; you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation; either version 3 of the License, or
-##    (at your option) any later version.
-##
-##    Gertrude is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
-##
-##    You should have received a copy of the GNU General Public License
-##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
 months = ["Janvier", u'Février', "Mars", "Avril", "Mai", "Juin", "Juillet", u'Août', "Septembre", "Octobre", "Novembre", u'Décembre']
@@ -39,12 +39,18 @@ TYPE_ASSISTANTE_MATERNELLE = 5
 TYPE_FAMILIAL = 6
 TYPE_MULTI_ACCUEIL = 7
 
+# Mode de saisie des plannings
+SAISIE_HORAIRE = 0
+SAISIE_JOURNALIERE = 1
+SAISIE_HEBDOMADAIRE = 2
+
 # Modes des activités
 MODE_NORMAL = 0
 MODE_LIBERE_PLACE = 1
 MODE_SANS_HORAIRES = 2
 MODE_PRESENCE_NON_FACTUREE = 4
 MODE_SYSTEMATIQUE_SANS_HORAIRES = 5
+MODE_PERMANENCE = 6
 
 # Propriétaires des activités
 ACTIVITY_OWNER_ALL = 0
@@ -67,33 +73,33 @@ MODE_ACCUEIL_URGENCE = 64
 MODE_MAX = MODE_ACCUEIL_URGENCE
 
 ModeAccueilItems = [
-  ("Temps plein", MODE_5_5),
-  ("Temps partiel", MODE_TEMPS_PARTIEL),
-# (u"4/5èmes", MODE_4_5), 
-# (u"3/5èmes", MODE_3_5), 
-  ("Forfait horaire mensuel", MODE_FORFAIT_HORAIRE), 
-  ("Halte-garderie", MODE_HALTE_GARDERIE),
-  ("Accueil urgence", MODE_ACCUEIL_URGENCE)
+    ("Temps plein", MODE_5_5),
+    ("Temps partiel", MODE_TEMPS_PARTIEL),
+    # (u"4/5èmes", MODE_4_5),
+    # (u"3/5èmes", MODE_3_5),
+    ("Forfait horaire mensuel", MODE_FORFAIT_HORAIRE),
+    ("Halte-garderie", MODE_HALTE_GARDERIE),
+    ("Accueil urgence", MODE_ACCUEIL_URGENCE)
 ]
 
 Regimes = [
-  u'Pas de sélection',
-  u'Régime général',
-  u'Régime de la fonction publique', 
-  u'Régime MSA', 
-  u'Régime EDF-GDF', 
-  u'Régime RATP', 
-  u'Régime Pêche maritime',
-  u'Régime Marins du Commerce',
-  u'Régime RSI',
-  u'Régime SNCF'
+    u'Pas de sélection',
+    u'Régime général',
+    u'Régime de la fonction publique',
+    u'Régime MSA',
+    u'Régime EDF-GDF',
+    u'Régime RATP',
+    u'Régime Pêche maritime',
+    u'Régime Marins du Commerce',
+    u'Régime RSI',
+    u'Régime SNCF'
 ]
 
 ModeEncaissementItems = [
-  (u"Espèces", 0),
-  (u"Virement", 1),
-  (u"Chèque", 2),
-  (u"Chèque CESU", 3)
+    (u"Espèces", 0),
+    (u"Virement", 1),
+    (u"Chèque", 2),
+    (u"Chèque CESU", 3)
 ]
 
 # Nombre de semaines de reference
@@ -178,8 +184,8 @@ ARRONDI_EURO_PLUS_PROCHE = 2
 # Modes de tri des enfants sur le planning
 TRI_PRENOM = 0
 TRI_NOM = 1
-TRI_GROUPE = 2
 TRI_NOM_PARENTS = 3
+TRI_GROUPE = 1024
 TRI_SANS_SEPARATION = 256
 TRI_LIGNES_CAHIER = 512
 

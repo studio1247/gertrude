@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 
-##    This file is part of Gertrude.
-##
-##    Gertrude is free software; you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation; either version 3 of the License, or
-##    (at your option) any later version.
-##
-##    Gertrude is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
-##
-##    You should have received a copy of the GNU General Public License
-##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import wx, wx.lib.scrolledpanel
 from buffered_window import BufferedWindow
@@ -74,6 +74,7 @@ class LigneConge(object):
     def GetNombreHeures(self):
         return 0.0
 
+
 class PlanningLineGrid(BufferedWindow):
     def __init__(self, parent, line, pos):
         self.parent = parent
@@ -121,18 +122,18 @@ class PlanningLineGrid(BufferedWindow):
                 dc.SetPen(wx.GREY_PEN)
             else:
                 dc.SetPen(wx.LIGHT_GREY_PEN)
-            dc.DrawLine(x, 0,  x, LINE_HEIGHT)
+            dc.DrawLine(x, 0, x, LINE_HEIGHT)
             heure += creche.granularite / BASE_GRANULARITY
         
         if self.parent.parent.plages_fermeture or self.parent.parent.plages_insecables:
             dc.SetPen(wx.LIGHT_GREY_PEN)
             dc.SetBrush(wx.LIGHT_GREY_BRUSH)
             for debut, fin in self.parent.parent.plages_fermeture:
-                dc.DrawRectangle(1 + (debut-affichage_min) * config.column_width, 0, (fin-debut) * config.column_width - 1, LINE_HEIGHT)
+                dc.DrawRectangle(1 + (debut - affichage_min) * config.column_width, 0, (fin - debut) * config.column_width - 1, LINE_HEIGHT)
             dc.SetPen(wx.TRANSPARENT_PEN)            
             dc.SetBrush(wx.Brush(wx.Colour(250, 250, 0, 100)))
             for debut, fin in self.parent.parent.plages_insecables:
-                dc.DrawRectangle(1 + (debut-affichage_min) * config.column_width, 0, (fin-debut) * config.column_width - 1, LINE_HEIGHT)
+                dc.DrawRectangle(1 + (debut - affichage_min) * config.column_width, 0, (fin - debut) * config.column_width - 1, LINE_HEIGHT)
             
     def Draw(self, dc):
         dc.BeginDrawing()
@@ -145,7 +146,7 @@ class PlanningLineGrid(BufferedWindow):
             pass
 
         # le quadrillage
-        if self.line is not None:
+        if self.line is not None and not isinstance(self.line, basestring):
             self.DrawLineGrid(dc)
         
         # les présences
@@ -158,11 +159,7 @@ class PlanningLineGrid(BufferedWindow):
         dc.EndDrawing()
 
     def DrawActivitiesLine(self, dc, line):
-        if line is None:
-            dc.DrawLine(30, LINE_HEIGHT/2-1, self.width-30, LINE_HEIGHT/2-1)
-            dc.DrawLine(30, LINE_HEIGHT/2, self.width-30, LINE_HEIGHT/2)
-            dc.DrawLine(30, LINE_HEIGHT/2+1, self.width-30, LINE_HEIGHT/2+1)
-        elif isinstance(line, LigneConge):
+        if isinstance(line, LigneConge):
             dc.SetPen(wx.BLACK_PEN)
             dc.DrawText(line.info, 100, 7)
         elif not isinstance(line, basestring):
@@ -178,7 +175,7 @@ class PlanningLineGrid(BufferedWindow):
                         except:
                             dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
                             dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
-                        rect = wx.Rect(1+(start-int(creche.affichage_min*(60 / BASE_GRANULARITY)))*config.column_width, 0, (end-start)*config.column_width-1, LINE_HEIGHT/3)
+                        rect = wx.Rect(1 + (start - int(creche.affichage_min*(60 / BASE_GRANULARITY))) * config.column_width, 0, (end-start) * config.column_width - 1, LINE_HEIGHT/3)
                         dc.DrawRectangleRect(rect)
                 
             for start, end, activity in keys[:]:
@@ -242,7 +239,7 @@ class PlanningLineGrid(BufferedWindow):
                     nv = line[x][0]
                 if nv != v:
                     if v != 0:
-                        rect = wx.Rect(pos+3+(a-debut)*config.column_width, 2, (x-a)*config.column_width-1, LINE_HEIGHT-1)
+                        rect = wx.Rect(pos+3+(a-debut)*config.column_width, 0, (x-a)*config.column_width-1, LINE_HEIGHT-1)
                         if v > 5:
                             r, g, b, t, s = 5, 203, 28, 150, wx.SOLID
                         elif v > 0:
@@ -282,7 +279,7 @@ class PlanningLineGrid(BufferedWindow):
             if creche.presences_previsionnelles and self.line.reference and self.line.date > datetime.date.today():
                 self.value |= PREVISIONNEL
             for a, b, v in self.line.activites.keys():
-                if (self.line.exclusive or v == self.value) and posX >= a and posX <= b:
+                if (self.line.exclusive or v == self.value) and a <= posX <= b:
                     self.state = -1
                     break
             else:
@@ -300,7 +297,7 @@ class PlanningLineGrid(BufferedWindow):
             end = affichage_max
         
         for debut, fin in self.parent.parent.plages_insecables:
-            if (start >= debut and start < fin) or (end > debut and end < fin) or (start <= debut and end > fin): 
+            if (debut <= start < fin) or (debut < end < fin) or (start <= debut and end > fin):
                 if debut < start:
                     start = debut
                 if fin > end:
@@ -315,9 +312,9 @@ class PlanningLineGrid(BufferedWindow):
                     result[i] = (debut, start)
                     result.insert(i+1, (end, fin))
                     break
-                elif start >= debut and start <= fin and end >= fin:
+                elif debut <= start <= fin <= end:
                     result[i] = (debut, start)
-                elif start <= debut and end >= debut and end <= fin:
+                elif start <= debut <= end <= fin:
                     result[i] = (end, fin)
         
         return result
@@ -380,6 +377,7 @@ class PlanningLineGrid(BufferedWindow):
                     
             self.state = None
 
+
 class PlanningLineLabel(wx.Panel):
     def __init__(self, parent, line, pos):
         wx.Panel.__init__(self, parent, -1, pos=pos, size=(LABEL_WIDTH, LINE_HEIGHT-1), style=wx.NO_BORDER)
@@ -393,22 +391,23 @@ class PlanningLineLabel(wx.Panel):
         dc = wx.PaintDC(self)
         dc.BeginDrawing()
         dc.SetTextForeground("BLACK")
+        categoryfont = wx.Font(10, wx.SWISS, wx.BOLD, wx.BOLD)
         labelfont = wx.Font(8, wx.SWISS, wx.NORMAL, wx.NORMAL)
         sublabelfont = wx.Font(6, wx.SWISS, wx.NORMAL, wx.NORMAL)
         dc.SetFont(labelfont)
         
-        if self.line is None:
-            pass
-        elif isinstance(self.line, basestring):
-            rect = wx.Rect(1, 5, 125, LINE_HEIGHT-8)
+        if isinstance(self.line, basestring):
+            rect = wx.Rect(2, 4, 125, LINE_HEIGHT - 8)
             try:
                 dc.SetPen(wx.Pen(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE)))
                 dc.SetBrush(wx.Brush(wx.Colour(128, 128, 128, 128), wx.SOLID))
             except:
                 dc.SetPen(wx.Pen(wx.Colour(0, 0, 0)))
                 dc.SetBrush(wx.Brush(wx.Colour(128, 128, 128), wx.SOLID))
-            dc.DrawRoundedRectangleRect(rect, 3)
+            dc.DrawRectangleRect(rect)
+            dc.SetFont(categoryfont)
             dc.DrawText(self.line, 5, 8)
+            dc.SetFont(labelfont)
         else:
             if self.line.sublabel:
                 dc.DrawText(self.line.label, 5, 4)
@@ -419,7 +418,8 @@ class PlanningLineLabel(wx.Panel):
                 dc.DrawText(self.line.label, 5, 6)
 
         dc.EndDrawing()
-        
+
+
 class PlanningLineStatusIcon(wx.Window):
     def __init__(self, parent, line, pos):
         wx.Window.__init__(self, parent, -1, pos=pos, size=(ICONS_WIDTH, LINE_HEIGHT-1))
@@ -432,7 +432,7 @@ class PlanningLineStatusIcon(wx.Window):
         
     def SetLine(self, line):
         self.line = line
-        if line is None or isinstance(line, basestring):
+        if isinstance(line, basestring):
             self.button.Hide()
         else:
             if isinstance(line, LigneConge):
@@ -473,7 +473,7 @@ class PlanningLineStatusIcon(wx.Window):
                     order.remove(MALADE_SANS_JUSTIFICATIF)
 
                 index = order.index(state)
-                newstate = order[(index+1) % len(order)]
+                newstate = order[(index + 1) % len(order)]
                 if newstate == PRESENT:
                     if self.line.HasPrevisionnelCloture():
                         self.line.RestorePrevisionnelCloture(creche.presences_previsionnelles and self.line.date > datetime.date.today())
@@ -498,13 +498,14 @@ class PlanningLineStatusIcon(wx.Window):
     
             self.parent.OnLineChanged()
 
+
 class PlanningLineComment(wx.StaticText):
     def __init__(self, parent, line, pos):
         wx.StaticText.__init__(self, parent, -1, pos=pos, style=wx.NO_BORDER)
         self.SetLine(line)
         
     def SetLine(self, line):
-        if line is None or isinstance(line, basestring) or not line.GetDynamicText:
+        if isinstance(line, basestring) or not line.GetDynamicText:
             text = None
         else:
             text = line.GetDynamicText(line)
@@ -514,6 +515,7 @@ class PlanningLineComment(wx.StaticText):
         else:
             self.SetWindowStyle(wx.NO_BORDER)
             self.SetLabel("")
+
 
 class PlanningLine(wx.Window):
     def __init__(self, parent, line, pos, size):
@@ -541,7 +543,7 @@ class PlanningLine(wx.Window):
         if self.parent.options & ACTIVITES:
             self.CreateActivitesCheckboxes()
         if self.parent.options & COMMENTS:
-            self.bulle_button = wx.BitmapButton(self, -1, BULLE_BITMAP, pos=(self.width+5, 7), style=wx.NO_BORDER)
+            self.bulle_button = wx.BitmapButton(self, -1, BULLE_BITMAP, pos=(self.width + 5, 7), style=wx.NO_BORDER)
             self.Bind(wx.EVT_BUTTON, self.OnCommentButtonPressed, self.bulle_button)
             self.width += COMMENT_BUTTON_WIDTH
             self.UpdateBulle()
@@ -642,6 +644,7 @@ class PlanningLine(wx.Window):
                     self.line.insert = None
                 self.UpdateContents()
 
+
 class PlanningInternalPanel(wx.Window):
     def __init__(self, parent, activity_combobox, options, check_line=None, on_modify=None):
         wx.Window.__init__(self, parent)
@@ -712,7 +715,7 @@ class PlanningInternalPanel(wx.Window):
         if self.tri_planning != creche.tri_planning:
             self.tri_planning = creche.tri_planning
             if creche.tri_planning & TRI_LIGNES_CAHIER:
-                self.line_height = LINE_HEIGHT-1
+                self.line_height = LINE_HEIGHT - 1
             else:
                 self.line_height = LINE_HEIGHT
             for widget in self.line_widgets:
@@ -762,6 +765,7 @@ class PlanningInternalPanel(wx.Window):
                 height += LINE_HEIGHT
             dc.EndDrawing()
 
+
 class PlanningScrollPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, activity_combobox, options, check_line=None, on_modify=None):
         wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, style=wx.SUNKEN_BORDER)
@@ -786,6 +790,7 @@ class PlanningScrollPanel(wx.lib.scrolledpanel.ScrolledPanel):
         
     def OnSize(self, event):
         self.internal_panel.UpdateSize()
+
 
 class PlanningSummaryPanel(BufferedWindow):
     def __init__(self, parent, options):
@@ -902,7 +907,8 @@ class PlanningSummaryPanel(BufferedWindow):
                 a = x
                 v, w = nv, nw
             x += 1
-        
+
+
 class PlanningWidget(wx.Panel):
     def __init__(self, parent, activity_combobox=None, options=0, check_line=None, on_modify=None):
         wx.Panel.__init__(self, parent, id=-1, style=wx.LB_DEFAULT)
@@ -995,6 +1001,7 @@ class PlanningWidget(wx.Panel):
                 dc.DrawRotatedText(activite.label, i*25 + 10 + offset + (affichage_max - affichage_min) * config.column_width, 12, 18)
             
         dc.EndDrawing()
+
 
 class LinePlanningWidget(PlanningWidget):
     def __init__(self, parent, line, options=0):

@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 
-##    This file is part of Gertrude.
-##
-##    Gertrude is free software; you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation; either version 3 of the License, or
-##    (at your option) any later version.
-##
-##    Gertrude is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
-##
-##    You should have received a copy of the GNU General Public License
-##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import datetime
 from globals import *
@@ -28,14 +28,15 @@ from doc_planning_detaille import PlanningDetailleModifications
 
 TABLETTE_MARGE_ARRIVEE = 10
 
+
 class DayPlanningPanel(PlanningWidget):
     def __init__(self, parent, activity_combobox):
         PlanningWidget.__init__(self, parent, activity_combobox, COMMENTS|ACTIVITES|TWO_PARTS|DEPASSEMENT_CAPACITE, self.CheckLine)
-    
+
     def CheckLine(self, line, plages_selectionnees):
         lines = self.GetSummaryLines()
         activites, activites_sans_horaires = GetActivitiesSummary(creche, lines)
-        for start, end in plages_selectionnees:                        
+        for start, end in plages_selectionnees:
             for i in range(start, end):
                 if activites[0][i][0] > creche.GetCapacite(line.day):
                     dlg = wx.MessageDialog(None, u"Dépassement de la capacité sur ce créneau horaire !", u"Attention", wx.OK|wx.ICON_WARNING)
@@ -43,7 +44,7 @@ class DayPlanningPanel(PlanningWidget):
                     dlg.Destroy()
                     self.state = None
                     return
-                    
+
     def UpdateContents(self):
         if self.date in creche.jours_fermeture:
             conge = creche.jours_fermeture[self.date]
@@ -57,7 +58,7 @@ class DayPlanningPanel(PlanningWidget):
                 return
         else:
             self.SetInfo("")
-        
+
         self.lignes_enfants = []
         for inscrit in creche.inscrits:
             inscription = inscrit.GetInscription(self.date)
@@ -111,12 +112,12 @@ class DayPlanningPanel(PlanningWidget):
                     line.readonly = True
                 line.day = self.date.weekday()
                 self.lignes_enfants.append(line)
-                
-        if creche.tri_planning == TRI_GROUPE:
+
+        if creche.tri_planning & TRI_GROUPE:
             self.lignes_enfants = GetEnfantsTriesParGroupe(self.lignes_enfants)
         else:
-            self.lignes_enfants.sort(key=lambda line: line.label)    
-                 
+            self.lignes_enfants.sort(key=lambda line: line.label)
+
         self.lignes_salaries = []
         for salarie in creche.salaries:
             contrat = salarie.GetContrat(self.date)
@@ -150,12 +151,12 @@ class DayPlanningPanel(PlanningWidget):
                 line.GetDynamicText = GetHeuresSalarie
                 line.summary = SUMMARY_SALARIE
                 self.lignes_salaries.append(line)
-        self.lignes_salaries.sort(key=lambda line: line.label)    
+        self.lignes_salaries.sort(key=lambda line: line.label)
 
         if self.lignes_salaries:
-            self.lignes_enfants.append(None)
+            self.lignes_enfants.append(u"Salariés")
         self.SetLines(self.lignes_enfants + self.lignes_salaries)
-    
+
     def GetSummaryDynamicText(self):
         heures = 0.0
         for line in self.lines:
@@ -164,7 +165,7 @@ class DayPlanningPanel(PlanningWidget):
             elif not isinstance(line, basestring):
                 heures += line.GetNombreHeures()
                 day = line.day
-        
+
         if heures > 0:
             text = GetHeureString(heures)
             if self.site:
@@ -173,7 +174,7 @@ class DayPlanningPanel(PlanningWidget):
                 den = creche.GetHeuresAccueil(day)
             if den > 0:
                 text += " / " + "%.1f%%" % (heures * 100 / den)
-            return text 
+            return text
         else:
             return None
 
@@ -182,68 +183,113 @@ class DayPlanningPanel(PlanningWidget):
         self.groupe = groupe
         self.date = date
         self.UpdateContents()
-        
 
-class PlanningPanel(GPanel):
+
+class PlanningBasePanel(GPanel):
     name = "Planning"
     bitmap = GetBitmapFile("planning.png")
     profil = PROFIL_ALL
 
     def __init__(self, parent):
         GPanel.__init__(self, parent, u'Planning')
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.topsizer = wx.BoxSizer(wx.HORIZONTAL)
         self.current_site = 0
-        
+
         # La combobox pour la selection du site
         self.site_choice = wx.Choice(self, -1)
         for site in creche.sites:
             self.site_choice.Append(site.nom, site)
-        sizer.Add(self.site_choice, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.RIGHT, 5)
+        self.topsizer.Add(self.site_choice, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.RIGHT, 5)
         if len(creche.sites) < 2:
             self.site_choice.Show(False)
         self.site_choice.SetSelection(0)
         self.Bind(wx.EVT_CHOICE, self.OnChangementSemaine, self.site_choice)
-        
+
         # Les raccourcis pour semaine précédente / suivante
         self.previous_button = wx.Button(self, -1, '<', size=(20,0), style=wx.NO_BORDER)
         self.next_button = wx.Button(self, -1, '>', size=(20,0), style=wx.NO_BORDER)
-        self.Bind(wx.EVT_BUTTON, self.onPreviousWeek, self.previous_button)
-        self.Bind(wx.EVT_BUTTON, self.onNextWeek, self.next_button)
-        sizer.Add(self.previous_button, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-        sizer.Add(self.next_button, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-        
+        self.Bind(wx.EVT_BUTTON, self.OnPreviousWeek, self.previous_button)
+        self.Bind(wx.EVT_BUTTON, self.OnNextWeek, self.next_button)
+        self.topsizer.Add(self.previous_button, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+        self.topsizer.Add(self.next_button, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+
         # La combobox pour la selection de la semaine
         self.week_choice = wx.Choice(self, -1)
-        sizer.Add(self.week_choice, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.LEFT, 5)
+        self.topsizer.Add(self.week_choice, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.LEFT, 5)
         AddWeeksToChoice(self.week_choice)
         self.Bind(wx.EVT_CHOICE, self.OnChangementSemaine, self.week_choice)
-        
+
         # La combobox pour la selection du groupe (si groupes)
         self.groupe_choice = wx.Choice(self, -1)
-        sizer.Add(self.groupe_choice, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
+        self.topsizer.Add(self.groupe_choice, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
         self.Bind(wx.EVT_CHOICE, self.OnChangeGroupeDisplayed, self.groupe_choice)
         self.UpdateGroupeCombobox()
-        
+
+        self.sizer.Add(self.topsizer, 0, wx.EXPAND)
+
+    def GetSelectionStart(self):
+        selection = self.week_choice.GetSelection()
+        return self.week_choice.GetClientData(selection)
+
+    def UpdateGroupeCombobox(self):
+        if len(creche.groupes) > 0:
+            self.groupe_choice.Clear()
+            for groupe, value in [("Tous groupes", None)] + [(groupe.nom, groupe) for groupe in creche.groupes]:
+                self.groupe_choice.Append(groupe, value)
+            self.groupe_choice.SetSelection(0)
+            self.groupe_choice.Show(True)
+        else:
+            self.groupe_choice.Show(False)
+        self.groupes_observer = counters['groupes']
+
+    def OnPreviousWeek(self, evt):
+        self.week_choice.SetSelection(self.week_choice.GetSelection() - 1)
+        self.OnChangementSemaine()
+
+    def OnNextWeek(self, evt):
+        self.week_choice.SetSelection(self.week_choice.GetSelection() + 1)
+        self.OnChangementSemaine()
+
+    def OnChangeGroupeDisplayed(self, evt):
+        self.OnChangementSemaine()
+
+    def GetSelectedSite(self):
+        if len(creche.sites) > 1:
+            self.current_site = self.site_choice.GetSelection()
+            return self.site_choice.GetClientData(self.current_site)
+        else:
+            return None
+
+    def GetSelectedGroupe(self):
+        if len(creche.groupes) > 1:
+            selection = self.groupe_choice.GetSelection()
+            return self.groupe_choice.GetClientData(selection)
+        else:
+            return None
+
+
+class PlanningHorairePanel(PlanningBasePanel):
+    def __init__(self, parent):
+        PlanningBasePanel.__init__(self, parent)
+
         # La combobox pour la selection de l'outil (si activités)
         self.activity_choice = ActivityComboBox(self)
-        sizer.Add(self.activity_choice, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
-        
+        self.topsizer.Add(self.activity_choice, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
+
         # Le bouton d'impression
         bmp = wx.Bitmap(GetBitmapFile("printer.png"), wx.BITMAP_TYPE_PNG)
         button = wx.BitmapButton(self, -1, bmp, style=wx.NO_BORDER)
-        sizer.Add(button, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
-        self.Bind(wx.EVT_BUTTON, self.onPrintPlanning, button)
-            
+        self.topsizer.Add(button, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
+        self.Bind(wx.EVT_BUTTON, self.OnPrintPlanning, button)
+
         # Le bouton de synchro tablette
         if config.options & TABLETTE:
             bmp = wx.Bitmap(GetBitmapFile("tablette.png"), wx.BITMAP_TYPE_PNG)
             button = wx.BitmapButton(self, -1, bmp, style=wx.NO_BORDER)
-            sizer.Add(button, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
-            self.Bind(wx.EVT_BUTTON, self.onTabletteSynchro, button)
+            self.topsizer.Add(button, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
+            self.Bind(wx.EVT_BUTTON, self.OnTabletteSynchro, button)
 
-        self.sizer.Add(sizer, 0, wx.EXPAND)
-        
-        # le notebook pour les jours de la semaine
+        # Le notebook pour les jours de la semaine
         self.notebook = wx.Notebook(self, style=wx.LB_DEFAULT)
         self.sizer.Add(self.notebook, 1, wx.EXPAND|wx.TOP, 5)
         first_monday = GetFirstMonday()
@@ -256,55 +302,26 @@ class PlanningPanel(GPanel):
                 self.notebook.AddPage(planning_panel, GetDateString(date))
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnChangementSemaineday, self.notebook)
         self.sizer.Layout()
-    
-    def UpdateGroupeCombobox(self):
-        if len(creche.groupes) > 0:
-            self.groupe_choice.Clear()
-            for groupe, value in [("Tous groupes", None)] + [(groupe.nom, groupe) for groupe in creche.groupes]:
-                self.groupe_choice.Append(groupe, value)
-            self.groupe_choice.SetSelection(0)
-            self.groupe_choice.Show(True)
-        else:
-            self.groupe_choice.Show(False)
-        self.groupes_observer = counters['groupes']
 
-    def onPrintPlanning(self, evt):
+    def OnPrintPlanning(self, evt):
         site = self.GetSelectedSite()
         groupe = self.GetSelectedGroupe()
-        week_selection = self.week_choice.GetSelection()
-        start = self.week_choice.GetClientData(week_selection)
+        start = self.GetSelectionStart()
         end = start + datetime.timedelta(6)
         DocumentDialog(self, PlanningDetailleModifications((start, end), site, groupe)).ShowModal()
 
-    def OnChangeGroupeDisplayed(self, evt):
-        self.OnChangementSemaine()
-    
     def OnChangementSemaineday(self, evt=None):
         self.notebook.GetCurrentPage().UpdateContents()
-    
-    def GetSelectedSite(self):
-        if len(creche.sites) > 1:
-            self.current_site = self.site_choice.GetSelection()
-            return self.site_choice.GetClientData(self.current_site)
-        else:
-            return None    
 
-    def GetSelectedGroupe(self):
-        if len(creche.groupes) > 1:
-            self.current_groupe = self.groupe_choice.GetSelection()
-            return self.groupe_choice.GetClientData(self.current_groupe)
-        else:
-            return None        
-            
     def OnChangementSemaine(self, evt=None):
         self.UpdateWeek()
         self.notebook.SetSelection(0)
         self.sizer.Layout()
-        
+
     def UpdateWeek(self):
         site = self.GetSelectedSite()
         groupe = self.GetSelectedGroupe()
-        
+
         week_selection = self.week_choice.GetSelection()
         self.previous_button.Enable(week_selection is not 0)
         self.next_button.Enable(week_selection is not self.week_choice.GetCount() - 1)
@@ -317,27 +334,19 @@ class PlanningPanel(GPanel):
                 note = self.notebook.GetPage(page_index)
                 note.SetData(site, groupe, day)
                 page_index += 1
-        
-    def onPreviousWeek(self, evt):
-        self.week_choice.SetSelection(self.week_choice.GetSelection() - 1)
-        self.OnChangementSemaine()
-    
-    def onNextWeek(self, evt):
-        self.week_choice.SetSelection(self.week_choice.GetSelection() + 1)
-        self.OnChangementSemaine()
 
-    def onTabletteSynchro(self, evt):
+    def OnTabletteSynchro(self, evt):
         journal = config.connection.LoadJournal()
 
         def AddPeriodes(who, date, periodes, classeJournee):
             if date in who.journees:
                 who.journees[date].RemoveActivities(0)
-                who.journees[date].RemoveActivities(0|PREVISIONNEL)
+                who.journees[date].RemoveActivities(0 | PREVISIONNEL)
             else:
                 who.journees[date] = classeJournee(who, date)
             for periode in periodes:
                 AddPeriode(who, who.journees[date], periode)
-                
+
         def AddPeriode(who, journee, periode):
             value = 0
             if periode.absent:
@@ -350,17 +359,17 @@ class PlanningPanel(GPanel):
             elif not periode.depart:
                 errors.append(u"%s : Pas de départ enregistré le %s" % (GetPrenomNom(who), periode.date))
                 periode.depart = int(creche.fermeture*(60 / BASE_GRANULARITY))
-            
+
             if value < 0:
                 journee.SetState(value)
             else:
                 journee.SetActivity(periode.arrivee, periode.depart, value)
             history.Append(None)
-        
+
         array_enfants = {}
         array_salaries = {}
         lines = journal.split("\n")
-        
+
         index = -1
         if len(creche.last_tablette_synchro) > 20:
             try:
@@ -404,10 +413,10 @@ class PlanningPanel(GPanel):
             except Exception, e:
                 print e
                 pass
-        
+
         # print array_salaries
-        
-        errors = []            
+
+        errors = []
         for key in array_enfants:
             inscrit = creche.GetInscrit(key)
             if inscrit:
@@ -427,9 +436,9 @@ class PlanningPanel(GPanel):
             dlg = wx.MessageDialog(None, u"\n".join(errors), u'Erreurs de saisie tablette', wx.OK|wx.ICON_WARNING)
             dlg.ShowModal()
             dlg.Destroy()
-        
+
         self.UpdateWeek()
-        
+
     def UpdateContents(self):
         if len(creche.sites) > 1:
             self.site_choice.Show(True)
@@ -439,27 +448,83 @@ class PlanningPanel(GPanel):
             self.site_choice.SetSelection(self.current_site)
         else:
             self.site_choice.Show(False)
-            
-        self.activity_choice.Clear()
-        selected = 0
-        if creche.HasActivitesAvecHoraires():
-            self.activity_choice.Show(True)
-            for i, activity in enumerate(creche.activites.values()):
-                if activity.mode not in (MODE_SANS_HORAIRES, MODE_SYSTEMATIQUE_SANS_HORAIRES):
-                    self.activity_choice.Append(activity.label, activity)
-                    try:
-                        if self.activity_choice.activity.value == activity.value:
-                            selected = i
-                    except:
-                        pass
-        else:
-            self.activity_choice.Show(False)
-            self.activity_choice.Append(creche.activites[0].label, creche.activites[0])
-        self.activity_choice.SetSelection(selected)
-        
+
+        self.activity_choice.Update()
+
         if counters['groupes'] > self.groupes_observer:
             self.UpdateGroupeCombobox()
-            
+
         self.OnChangementSemaine()
         self.sizer.Layout()
 
+
+class PlanningHebdomadairePanel(PlanningBasePanel):
+    def __init__(self, parent):
+        PlanningBasePanel.__init__(self, parent)
+        self.activites = []
+        self.inscrits = []
+        self.grid = wx.grid.Grid(self)
+        self.grid.CreateGrid(0, 0)
+        self.grid.SetDefaultColSize(200)
+        self.grid.SetRowLabelSize(250)
+        self.sizer.Add(self.grid, -1, wx.EXPAND|wx.RIGHT|wx.TOP, 5)
+        self.sizer.Layout()
+        self.Bind(wx.grid.EVT_GRID_CELL_CHANGE, self.OnCellChange, self.grid)
+
+    def UpdateContents(self):
+        self.OnChangementSemaine()
+
+    def OnChangementSemaine(self, evt=None):
+        self.grid.ClearGrid()
+        site = self.GetSelectedSite()
+        # groupe = self.GetSelectedGroupe()
+
+        week_selection = self.week_choice.GetSelection()
+        self.previous_button.Enable(week_selection is not 0)
+        self.next_button.Enable(week_selection is not self.week_choice.GetCount() - 1)
+        monday = self.GetSelectionStart()
+        sunday = monday + datetime.timedelta(6)
+
+        old_count = self.grid.GetNumberCols()
+        self.activites = creche.activites.values()
+        new_count = len(self.activites)
+        if new_count > old_count:
+            self.grid.AppendCols(new_count-old_count)
+        elif old_count > new_count:
+            self.grid.DeleteCols(0, old_count - new_count)
+
+        for i, activity in enumerate(self.activites):
+            self.grid.SetColLabelValue(i, activity.label)
+            self.grid.SetColFormatFloat(i, precision=1)
+
+        self.inscrits = [inscrit for inscrit in creche.inscrits if inscrit.IsPresent(monday, sunday, site)]
+        self.inscrits = GetEnfantsTriesSelonParametreTriPlanning(self.inscrits)
+        old_count = self.grid.GetNumberRows()
+        new_count = len(self.inscrits)
+        if new_count > old_count:
+            self.grid.AppendRows(new_count - old_count)
+        elif old_count > new_count:
+            self.grid.DeleteRows(0, old_count - new_count)
+        for row, inscrit in enumerate(self.inscrits):
+            self.grid.SetRowLabelValue(row, GetPrenomNom(inscrit))
+            if monday in inscrit.semaines:
+                semaine = inscrit.semaines[monday]
+                for i, activity in enumerate(self.activites):
+                    if activity.value in semaine.activities:
+                        self.grid.SetCellValue(row, i, locale.format("%f", semaine.activities[activity.value].value))
+        self.sizer.Layout()
+
+    def OnCellChange(self, evt):
+        date = self.GetSelectionStart()
+        value = self.grid.GetCellValue(evt.GetRow(), evt.GetCol())
+        inscrit = self.inscrits[evt.GetRow()]
+        if date not in inscrit.semaines:
+            inscrit.semaines[date] = WeekPlanning(inscrit, date)
+        history.Append(None)
+        inscrit.semaines[date].SetActivity(self.activites[evt.GetCol()].value, float(value.replace(',', '.')))
+
+
+if creche.mode_saisie_planning == SAISIE_HORAIRE:
+    PlanningPanel = PlanningHorairePanel
+else:
+    PlanningPanel = PlanningHebdomadairePanel
