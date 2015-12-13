@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 
-##    This file is part of Gertrude.
-##
-##    Gertrude is free software; you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation; either version 3 of the License, or
-##    (at your option) any later version.
-##
-##    Gertrude is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
-##
-##    You should have received a copy of the GNU General Public License
-##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from constants import *
 from functions import *
@@ -28,7 +28,8 @@ top = 6.0
 labels_width = 3.5
 line_height = 0.75
 lines_max = 25
-    
+
+
 class PlanningDetailleModifications(object):
     def __init__(self, periode, site=None, groupe=None):
         self.multi = False
@@ -45,7 +46,7 @@ class PlanningDetailleModifications(object):
             else:
                 self.default_output = "Planning presences %s-%s.odg" % (GetDateString(self.start, weekday=False), GetDateString(self.end, weekday=False))
         self.errors = {}
-        self.metas = { "Format": 0 }
+        self.metas = {"Format": 0 }
         self.email = None
 
     def execute(self, filename, dom):
@@ -264,7 +265,7 @@ class PlanningDetailleModifications(object):
         return None
     
     def executeTemplateCalc(self, filename, dom):
-        # Garderie Ribambelle, planning detaille
+        # Garderie Ribambelle, planning detaillé
 
         debut, fin = GetMonthStart(self.start), GetMonthEnd(self.start)
         spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
@@ -319,7 +320,7 @@ class PlanningDetailleModifications(object):
                     journee = inscrit.GetJourneeReferenceCopy(date)
                 for t in range(2):
                     if journee and IsPresentDuringTranche(journee, tranches[t][0]*12, tranches[t][1]*12):
-                        heures = HeuresTranche(journee, tranches[t][0]*12, tranches[t][1]*12)
+                        heures = HeuresTranche(journee, tranches[t][0] * 12, tranches[t][1]*12)
                         ReplaceFields(GetCell(row, cell), [('p', heures)])
                     cell += 1
                 date += datetime.timedelta(1)    
@@ -342,8 +343,8 @@ class PlanningDetailleModifications(object):
                 cellule = cellules.item(i)
                 if cellule.hasAttribute('table:formula'):
                     formule = cellule.getAttribute('table:formula')
-                    formule = formule.replace('9', '%d' % (7+len(inscriptions)))
-                    formule = formule.replace('8', '%d' % (6+len(inscriptions)))
+                    formule = formule.replace('9', '%d' % (7 + len(inscriptions)))
+                    formule = formule.replace('8', '%d' % (6 + len(inscriptions)))
                     cellule.setAttribute('table:formula', formule)
                     
         return None

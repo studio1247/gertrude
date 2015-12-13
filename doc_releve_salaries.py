@@ -80,8 +80,8 @@ class ReleveSalariesModifications(object):
         lignes = table.getElementsByTagName("table:table-row")
         
         LINES = 16
-        template = lignes[1:LINES+1]
-        last_line = lignes[LINES+1]
+        template = lignes[1:LINES + 1]
+        last_line = lignes[LINES + 1]
         for line in template:
             table.removeChild(line)
 
@@ -93,7 +93,7 @@ class ReleveSalariesModifications(object):
                 if l == LINES-1 or l < LINES-1-(5-semaines)*2:
                     clone = line.cloneNode(1)
                     lignes.append(clone)
-                    if l == LINES-1:
+                    if l == LINES - 1:
                         ReplaceFormulas(clone, "SUM([.G8:.G16])", "SUM([.G%d:.G%d])" % (8+inc, 8+inc+2*(semaines-1)))
                     else:
                         IncrementFormulas(clone, row=+inc)

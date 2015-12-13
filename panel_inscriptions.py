@@ -426,9 +426,12 @@ class IdentitePanel(InscriptionsTab):
         self.sizer.FitInside(self)
 
     def UpdatePermanencesDues(self):
-        total, effectue = self.inscrit.GetDecomptePermanences()
-        solde = effectue - total
-        self.permanences_dues_widget.SetValue(u"Au %s : Total %s - Effectué %s - Solde %s" % (GetDateString(today), GetHeureString(total), GetHeureString(effectue), GetHeureString(solde)))
+        if self.inscrit:
+            total, effectue = self.inscrit.GetDecomptePermanences()
+            solde = effectue - total
+            self.permanences_dues_widget.SetValue(u"Au %s : Total %s - Effectué %s - Solde %s" % (GetDateString(today), GetHeureString(total), GetHeureString(effectue), GetHeureString(solde)))
+        else:
+            self.permanences_dues_widget.SetValue("")
 
     def UpdateContents(self):
         if counters['tarifs'] > self.tarifs_observer:

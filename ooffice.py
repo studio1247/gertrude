@@ -1,30 +1,31 @@
 # -*- coding: utf-8 -*-
 
-##    This file is part of Gertrude.
-##
-##    Gertrude is free software; you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation; either version 3 of the License, or
-##    (at your option) any later version.
-##
-##    Gertrude is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
-##
-##    You should have received a copy of the GNU General Public License
-##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import datetime, time, locale, numbers
 import sys, os, shutil, types, zipfile
 import xml.dom.minidom
 import re, urllib
-import smtplib, poplib
+import smtplib
 from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import wx, wx.lib.filebrowsebutton
+import wx
+import wx.lib.filebrowsebutton
 import traceback
 import unicodedata
 from functions import *
@@ -32,8 +33,10 @@ import subprocess
 
 NumberTypes = (types.IntType, types.LongType, types.FloatType, types.ComplexType)
 
+
 def GetNodeFromAttribute(nodes, attribute, value):
     pass
+
 
 def GetText(value):
     if isinstance(value, basestring):
@@ -43,18 +46,21 @@ def GetText(value):
     else:
         return str(value)
 
+
 def GetColumnName(index):
     if index < 26:
         return chr(65+index)
     else:
         return chr(64+(index / 26)) + chr(65+(index % 26))
-    
+
+
 def GetColumnIndex(name):
     if len(name) == 1:
         return ord(name) - 65
     elif len(name) == 2:
         return (ord(name[0]) - 64) * 26 + (ord(name[1]) - 65)    
-                    
+
+
 def evalFields(fields):
     for i, field in enumerate(fields[:]):
         if len(field) == 2 or field[2] & FIELD_EUROS:
@@ -70,6 +76,7 @@ def evalFields(fields):
             fields.append((param.upper(), value, text.upper()))
     return fields
 
+
 def GetValue(node):
     result = ""
     text_nodes = node.getElementsByTagName("text:p") + node.getElementsByTagName("text:a")
@@ -78,6 +85,7 @@ def GetValue(node):
             if child.nodeType == child.TEXT_NODE:
                 result += child.wholeText
     return result
+
 
 def SetValue(node, value):
     if node.nodeName == "table:table-cell":
@@ -89,6 +97,7 @@ def SetValue(node, value):
                 child.replaceWholeText(str(value))
                 break
 
+
 def GetRepeat(node):
     if node.hasAttribute("table:number-columns-repeated"):
         return int(node.getAttribute("table:number-columns-repeated"))
@@ -96,7 +105,8 @@ def GetRepeat(node):
         return int(node.getAttribute("table:number-rows-repeated"))
     else:
         return 1
-    
+
+
 def GetRow(table, index):
     rows = table.getElementsByTagName("table:table-row")
     i = 0
@@ -107,12 +117,14 @@ def GetRow(table, index):
             return row
     return None
 
+
 def GetCellsCount(row):
     count = 0
     for child in row.childNodes:
         if child.nodeName in ("table:table-cell", "table:covered-table-cell"):
             count += GetRepeat(child)
     return count
+
 
 def GetCell(row, index):
     i = 0
@@ -123,7 +135,8 @@ def GetCell(row, index):
             else:
                 i += 1
     return None
-    
+
+
 def GetValues(row):
     result = []
     cells = row.getElementsByTagName("table:table-cell")
@@ -132,6 +145,7 @@ def GetValues(row):
         # print GetRepeat(cell), GetValue(cell)
         result.extend([GetValue(cell)] * GetRepeat(cell))
     return result
+
 
 def RemoveColumn(rows, index):
     for row in rows:
@@ -144,9 +158,10 @@ def RemoveColumn(rows, index):
                 if repeat == 1:
                     row.removeChild(cell)
                 else:
-                    cell.setAttribute("table:number-columns-repeated", str(repeat-1))
+                    cell.setAttribute("table:number-columns-repeated", str(repeat - 1))
                 break    
-            
+
+
 def ReplaceTextFields(dom, _fields):
     fields = _fields[:]
     for i, field in enumerate(fields):
@@ -180,8 +195,8 @@ def ReplaceTextFields(dom, _fields):
                                 if isinstance(text, list):
                                     print child.toprettyxml()
                                 else:
-                                    tag = nodeText[nodeText.find(start_tag):nodeText.find(end_tag)+2]
-                                    parameters = tag[len(field)+2:-2]
+                                    tag = nodeText[nodeText.find(start_tag):nodeText.find(end_tag) + 2]
+                                    parameters = tag[len(field) + 2:-2]
                                     try:
                                         replace = True
                                         nodeText = nodeText.replace(tag, eval("value(%s)" % parameters))
@@ -210,12 +225,15 @@ def ReplaceTextFields(dom, _fields):
                 except Exception, e:
                     print e
 
+
 def ReplaceFields(cellules, _fields):
     fields = _fields[:]        
     evalFields(fields)
     
     # Si l'argument est une ligne ...
-    if cellules.__class__ in (xml.dom.minidom.Element, xml.dom.minidom.Document):
+    if cellules is None:
+        return
+    elif cellules.__class__ in (xml.dom.minidom.Element, xml.dom.minidom.Document):
         if cellules.nodeName == "table:table-cell":
             cellules = [cellules]
         else:
@@ -270,6 +288,7 @@ def ReplaceFields(cellules, _fields):
                         
     return result
 
+
 def ReplaceFormulas(cellules, old, new):
     if cellules.__class__ == xml.dom.minidom.Element:
         cellules = cellules.getElementsByTagName("table:table-cell")
@@ -280,6 +299,8 @@ def ReplaceFormulas(cellules, old, new):
             cellule.setAttribute("table:formula", formula)
 
 FLAG_SUM_MAX = 1
+
+
 def IncrementFormulas(cellules, row=0, column=0, flags=0):
     if flags & FLAG_SUM_MAX:
         prefix = ":"
@@ -299,14 +320,18 @@ def IncrementFormulas(cellules, row=0, column=0, flags=0):
             formula = formula.replace('.___', '.')
             cellule.setAttribute("table:formula", formula)
 
+
 def SetCellFormula(cell, formula):
     cell.setAttribute("table:formula", formula)
+
 
 def SetCellFormulaReference(cell, table, other):    
     SetCellFormula(cell, "of:=['%s'.%s]" % (table.getAttribute("table:name"), other))
 
+
 def HideLine(line):
     line.setAttribute("table:visibility", "collapse")
+
 
 def getNamedShapes(dom):
     shapes = {}
@@ -318,6 +343,7 @@ def getNamedShapes(dom):
                 shapes[name] = node
     return shapes
 
+
 def GetDom(filename, part="content.xml"):
     zip = zipfile.ZipFile(filename, 'r')
     data = zip.read(part)
@@ -325,10 +351,12 @@ def GetDom(filename, part="content.xml"):
     zip.close()
     return dom
 
+
 def GetTables(filename):
     dom = GetDom(filename)
     spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
     return spreadsheet.getElementsByTagName("table:table")
+
 
 def GetDimension(node, what):
     attribute = node.getAttribute(what)
@@ -338,10 +366,12 @@ def GetDimension(node, what):
         return float(attribute[:-2])*2.54
     else:
         return 0
-    
+
+
 def SetDimension(node, what, value):
     node.setAttribute(what, "%.3scm" % value)
-    
+
+
 def ModifyLogo(dom, logo):
     bitmap = wx.Bitmap("templates/logo.png", wx.BITMAP_TYPE_PNG)
     for frame in dom.getElementsByTagName('draw:frame'):
@@ -358,6 +388,7 @@ def ModifyLogo(dom, logo):
                     return True
     return False
 
+
 def AddLogo(dom, logo):
     manifests = dom.getElementsByTagName('manifest:manifest')
     for manifest in manifests:
@@ -370,7 +401,8 @@ def AddLogo(dom, logo):
                 return
 
 files_order = ["meta.xml", "content.xml"]
-   
+
+
 def GenerateOODocument(modifications, filename=None, gauge=None):
     if gauge:
         gauge.SetValue(0)
@@ -422,6 +454,7 @@ def GenerateOODocument(modifications, filename=None, gauge=None):
         gauge.SetValue(100)
     return errors
 
+
 def GenerateTextDocument(modifications, filename=None, gauge=None):
     if gauge:
         gauge.SetValue(0)
@@ -440,29 +473,33 @@ def GenerateTextDocument(modifications, filename=None, gauge=None):
         
     return errors
 
+
 def getOOoContext():
     import win32com.client
     objServiceManager = win32com.client.Dispatch("com.sun.star.ServiceManager")
     objServiceManager._FlagAsMethod("CreateInstance")
     objServiceManager._FlagAsMethod("Bridge_GetStruct")
-    corereflection = objServiceManager.CreateInstance("com.sun.star.reflection.CoreReflection")
-    return objServiceManager.createInstance("com.sun.star.frame.Desktop"), objServiceManager, corereflection
+    core_reflection = objServiceManager.CreateInstance("com.sun.star.reflection.CoreReflection")
+    return objServiceManager.createInstance("com.sun.star.frame.Desktop"), objServiceManager, core_reflection
 
-def MakePropertyValue(oServiceManager, Name, Value):
-    oStruct = oServiceManager.Bridge_GetStruct("com.sun.star.beans.PropertyValue")
-    oStruct.Name = Name
-    oStruct.Value = Value
-    return oStruct
 
-def MakePropertyValues(oServiceManager, values):
-    return [MakePropertyValue(oServiceManager, value[0], value[1]) for value in values]
+def MakePropertyValue(manager, Name, Value):
+    struct = manager.Bridge_GetStruct("com.sun.star.beans.PropertyValue")
+    struct.Name = Name
+    struct.Value = Value
+    return struct
+
+
+def MakePropertyValues(manager, values):
+    return [MakePropertyValue(manager, value[0], value[1]) for value in values]
+
 
 def StartLibreOffice(filename):
     if sys.platform == 'win32':
         filename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(filename)).encode("latin-1"))])
         # print filename
         try:
-            StarDesktop, objServiceManager, corereflection = getOOoContext()
+            StarDesktop, objServiceManager, core_reflection = getOOoContext()
             document = StarDesktop.LoadComponentFromURL(filename, "_blank", 0,
                          MakePropertyValues(objServiceManager,
                            [["ReadOnly", False],
@@ -491,6 +528,7 @@ def StartLibreOffice(filename):
         dlg.ShowModal()
         dlg.Destroy()
 
+
 def save_current_document(filename):
     if sys.platform == 'win32':
         filename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(filename)).encode("latin-1"))])
@@ -499,42 +537,49 @@ def save_current_document(filename):
         document = StarDesktop.CurrentComponent
         document.storeToUrl(filename, MakePropertyValues(objServiceManager, []))        
     return 1
-    
-def convert_to_pdf(filename, pdffilename):
-    # print filename, pdffilename
+
+
+def convert_to_pdf(filename, pdf_filename):
+    # print filename, pdf_filename
     if filename.endswith("ods"):
-        filtername = "calc_pdf_Export"
+        filter_name = "calc_pdf_Export"
     else:
-        filtername = "writer_pdf_Export"
+        filter_name = "writer_pdf_Export"
     if sys.platform == 'win32':
         filename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(filename)).encode("utf8"))])
-        pdffilename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(pdffilename)).encode("utf8"))])
-        StarDesktop, objServiceManager, corereflection = getOOoContext()
-        document = StarDesktop.LoadComponentFromURL(filename, "_blank", 0,
-            MakePropertyValues(objServiceManager,
-                        [["ReadOnly", True],
-                        ["Hidden", True]]))
-        document.storeToUrl( pdffilename,
-            MakePropertyValues(objServiceManager,
-                        [["CompressMode", 1],
-                        ["FilterName", filtername]]))
+        pdf_filename = ''.join(["file:", urllib.pathname2url(unicode(os.path.abspath(pdf_filename)).encode("utf8"))])
+        StarDesktop, objServiceManager, core_reflection = getOOoContext()
+        document = StarDesktop.LoadComponentFromURL(
+            filename,
+            "_blank",
+            0,
+            MakePropertyValues(
+                objServiceManager,
+                [["ReadOnly", True],
+                 ["Hidden", True]]))
+        document.storeToUrl(
+            pdf_filename,
+            MakePropertyValues(
+                objServiceManager,
+                [["CompressMode", 1],
+                 ["FilterName", filter_name]]))
         document.close(False)
     else:
-        shutil.copy(filename, pdffilename)
+        shutil.copy(filename, pdf_filename)
 
 DDE_ACROBAT_STRINGS = ["AcroviewR15", "AcroviewA15", "AcroviewR12", "AcroviewA12", "AcroviewR11", "AcroviewA11", "AcroviewR10", "AcroviewA10", "acroview"]
 dde_server = None
+
+
 def StartAcrobatReader(filename):
     global dde_server
-    import win32ui
     import win32api
     import dde
-    from os import spawnl, P_NOWAIT, startfile
     
     filename = unicode(os.path.abspath(filename))
     path, name = os.path.split(filename)
-    readerexe = win32api.FindExecutable(name, path)
-    os.spawnl(os.P_NOWAIT, readerexe[1], " ")
+    reader = win32api.FindExecutable(name, path)
+    os.spawnl(os.P_NOWAIT, reader[1], " ")
     
     for t in range(10):
         time.sleep(1)
@@ -551,19 +596,71 @@ def StartAcrobatReader(filename):
                 pass
         print "Impossible de lancer acrobat reader ; prochain essai dans 1s ...", e
 
-    dlg = wx.MessageDialog(None, "Impossible d'ouvrir le document", 'Erreur', wx.OK|wx.ICON_WARNING)
+    dlg = wx.MessageDialog(None, "Impossible d'ouvrir le document", 'Erreur', wx.OK | wx.ICON_WARNING)
     dlg.ShowModal()
     dlg.Destroy()
 
+
 def IsOODocument(filename):
     return not (filename.endswith(".html") or filename.endswith(".txt"))
+
 
 def GenerateDocument(modifications, filename, gauge=None):
     if IsOODocument(filename):
         return GenerateOODocument(modifications, filename, gauge)
     else:
         return GenerateTextDocument(modifications, filename, gauge)
-                           
+
+
+def SendDocument(filename, text, subject, to):
+    COMMASPACE = ', '
+
+    # Create the container (outer) email message.
+    msg = MIMEMultipart()
+    msg['Subject'] = subject
+    msg['From'] = creche.email
+    msg['To'] = COMMASPACE.join(to)
+    msg['CC'] = creche.email
+
+    try:
+        fp = open(text)
+        doc = MIMEText(fp.read())
+        fp.close()
+        msg.attach(doc)
+    except:
+        pass
+
+    fp = open(filename, 'rb')
+    doc = MIMEBase('application', 'octet-stream')
+    doc.set_payload(fp.read())
+    encoders.encode_base64(doc)
+    doc.add_header('Content-Disposition', 'attachment', filename=unicode(os.path.split(filename)[1]).encode("latin-1"))
+    fp.close()
+    msg.attach(doc)
+
+    smtp_server = creche.smtp_server
+    port = 25
+    login = None
+    try:
+        if "/" in creche.smtp_server:
+            smtp_server, login, password = smtp_server.split("/")
+        if ":" in smtp_server:
+            smtp_server, port = smtp_server.split(":")
+            port = int(port)
+    except:
+        pass
+
+    if 1:
+        s = smtplib.SMTP(smtp_server, port)
+        if login:
+            s.login(login, password)
+        s.sendmail(creche.email, to + [creche.email], msg.as_string())
+        s.quit()
+    else:
+        print u"From: %s, To:" % creche.email, to + [creche.email]
+        print msg.as_string()[:1200], '...'
+
+
 class DocumentDialog(wx.Dialog):
     def __init__(self, parent, modifications):
         self.modifications = modifications
@@ -621,7 +718,7 @@ class DocumentDialog(wx.Dialog):
             self.sauver_ouvrir = wx.Button(self, -1, u"Sauver et ouvrir")
             self.sauver_ouvrir.SetDefault()
             self.Bind(wx.EVT_BUTTON, self.OnSauverOuvrir, self.sauver_ouvrir)
-            sizer.Add(self.sauver_ouvrir, 0, wx.LEFT|wx.RIGHT, 5)
+            sizer.Add(self.sauver_ouvrir, 0, wx.LEFT | wx.RIGHT, 5)
         else:
             self.sauver_ouvrir = None
 
@@ -632,19 +729,19 @@ class DocumentDialog(wx.Dialog):
         if modifications.email:
             self.sauver_envoyer = wx.Button(self, -1, u"Sauver et envoyer par email")
             self.Bind(wx.EVT_BUTTON, self.OnSauverEnvoyer, self.sauver_envoyer)
-            sizer.Add(self.sauver_envoyer, 0, wx.LEFT|wx.RIGHT, 5)
+            sizer.Add(self.sauver_envoyer, 0, wx.LEFT | wx.RIGHT, 5)
             if modifications.multi is False and not modifications.email_to:
                 self.sauver_envoyer.Disable()
                 
             if creche.caf_email:
                 self.sauver_envoyer = wx.Button(self, -1, u"Sauver et envoyer par email à la CAF")
                 self.Bind(wx.EVT_BUTTON, self.OnSauverEnvoyerCAF, self.sauver_envoyer)
-                sizer.Add(self.sauver_envoyer, 0, wx.LEFT|wx.RIGHT, 5)
+                sizer.Add(self.sauver_envoyer, 0, wx.LEFT | wx.RIGHT, 5)
 
         #btnsizer.Add(self.ok)
         btn = wx.Button(self, wx.ID_CANCEL)
         sizer.Add(btn, 0, wx.RIGHT, 5)
-        self.sizer.Add(sizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+        self.sizer.Add(sizer, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
 
         self.SetSizer(self.sizer)
         self.sizer.Fit(self)
@@ -653,9 +750,9 @@ class DocumentDialog(wx.Dialog):
     def onFormat(self, event):
         filename = os.path.splitext(self.fbb.GetValue())[0]
         if self.format.GetSelection() == 0:
-            self.fbb.SetValue(filename+self.extension, None)
+            self.fbb.SetValue(filename + self.extension, None)
         else:
-            self.fbb.SetValue(filename+".pdf", None)
+            self.fbb.SetValue(filename + ".pdf", None)
             
     def OnSauver(self, event):
         self.fbb.Disable()
@@ -697,17 +794,17 @@ class DocumentDialog(wx.Dialog):
                 for label in errors.keys():
                     message += '\n' + label + ' :\n  '
                     message += '\n  '.join(errors[label])
-                dlg = wx.MessageDialog(self, message, 'Message', wx.OK|wx.ICON_WARNING)
+                dlg = wx.MessageDialog(self, message, 'Message', wx.OK | wx.ICON_WARNING)
         except IOError:
             print sys.exc_info()
-            dlg = wx.MessageDialog(self, u"Impossible de sauver le document. Peut-être est-il déjà ouvert ?", 'Erreur', wx.OK|wx.ICON_WARNING)
+            dlg = wx.MessageDialog(self, u"Impossible de sauver le document. Peut-être est-il déjà ouvert ?", 'Erreur', wx.OK | wx.ICON_WARNING)
             dlg.ShowModal()
             dlg.Destroy()
             return
         except Exception, e:
             info = sys.exc_info()
             message = ' [type: %s value: %s traceback: %s]' % (info[0], info[1], traceback.extract_tb(info[2]))
-            dlg = wx.MessageDialog(self, message, 'Erreur', wx.OK|wx.ICON_WARNING)
+            dlg = wx.MessageDialog(self, message, 'Erreur', wx.OK | wx.ICON_WARNING)
         if dlg:
             dlg.ShowModal()
             dlg.Destroy()
@@ -730,7 +827,7 @@ class DocumentDialog(wx.Dialog):
                 emails = '\n'.join([" - %s (%s)" % (modifs.email_subject, ", ".join(modifs.email_to)) for filename, modifs in simple_modifications])
                 if len(emails) > 1000:
                     emails = emails[:1000] + "\n..."
-                dlg = wx.MessageDialog(self, u"Ces emails seront envoyés :\n" + emails, 'Confirmation', wx.OK|wx.CANCEL|wx.ICON_WARNING)
+                dlg = wx.MessageDialog(self, u"Ces emails seront envoyés :\n" + emails, 'Confirmation', wx.OK | wx.CANCEL | wx.ICON_WARNING)
                 response = dlg.ShowModal()
                 dlg.Destroy()
                 if response != wx.ID_OK:
@@ -742,76 +839,26 @@ class DocumentDialog(wx.Dialog):
                         filename, e = os.path.splitext(oo_filename)
                         filename += ".pdf"
                     try:
-                        self.send_document(filename, GetTemplateFile(modifs.email_text), modifs.email_subject, modifs.email_to)
+                        SendDocument(filename, GetTemplateFile(modifs.email_text), modifs.email_subject, modifs.email_to)
                     except Exception, e:
-                        dlg = wx.MessageDialog(self, u"Impossible d'envoyer le document %s\n%r" % (filename, e), 'Erreur', wx.OK|wx.ICON_WARNING)
+                        dlg = wx.MessageDialog(self, u"Impossible d'envoyer le document %s\n%r" % (filename, e), 'Erreur', wx.OK | wx.ICON_WARNING)
                         dlg.ShowModal()
                         dlg.Destroy()
             else:
                 try:
-                    self.send_document(self.filename, GetTemplateFile(self.modifications.email_text), self.modifications.email_subject, self.modifications.email_to)
+                    SendDocument(self.filename, GetTemplateFile(self.modifications.email_text), self.modifications.email_subject, self.modifications.email_to)
                 except Exception, e:
-                    dlg = wx.MessageDialog(self, u"Impossible d'envoyer le document %s\n%r" % (self.filename, e), 'Erreur', wx.OK|wx.ICON_WARNING)
+                    dlg = wx.MessageDialog(self, u"Impossible d'envoyer le document %s\n%r" % (self.filename, e), 'Erreur', wx.OK | wx.ICON_WARNING)
                     dlg.ShowModal()
                     dlg.Destroy()
-                    
-        
+
     def OnSauverEnvoyerCAF(self, event):
         self.modifications.multi = False
         self.OnSauver(event)
         if self.document_generated:
             try:
-                self.send_document(self.filename, GetTemplateFile(self.modifications.email_text[:-4]+" CAF"+self.modifications.email_text[-4:]), self.modifications.email_subject, [creche.caf_email])
+                SendDocument(self.filename, GetTemplateFile(self.modifications.email_text[:-4] + " CAF" + self.modifications.email_text[-4:]), self.modifications.email_subject, [creche.caf_email])
             except Exception, e:
-                dlg = wx.MessageDialog(self, u"Impossible d'envoyer le document %s\n%r" % (self.filename, e), 'Erreur', wx.OK|wx.ICON_WARNING)
+                dlg = wx.MessageDialog(self, u"Impossible d'envoyer le document %s\n%r" % (self.filename, e), 'Erreur', wx.OK | wx.ICON_WARNING)
                 dlg.ShowModal()
                 dlg.Destroy()
-
-    def send_document(self, filename, text, subject, to):
-        COMMASPACE = ', '
-        
-        # Create the container (outer) email message.
-        msg = MIMEMultipart()
-        msg['Subject'] = subject
-        msg['From'] = creche.email
-        msg['To'] = COMMASPACE.join(to)
-        msg['CC'] = creche.email
-    
-        try:
-            fp = open(text)
-            doc = MIMEText(fp.read())
-            fp.close()
-            msg.attach(doc)
-        except:
-            pass            
-        
-        fp = open(filename, 'rb')
-        doc = MIMEBase('application', 'octet-stream')
-        doc.set_payload(fp.read())
-        encoders.encode_base64(doc)
-        doc.add_header('Content-Disposition', 'attachment', filename=unicode(os.path.split(filename)[1]).encode("latin-1"))
-        fp.close()
-        msg.attach(doc)
-        
-        smtp_server = creche.smtp_server
-        port = 25
-        login = None
-        try:
-            if "/" in creche.smtp_server:
-                smtp_server, login, password = smtp_server.split("/")
-            if ":" in smtp_server:
-                smtp_server, port = smtp_server.split(":")
-                port = int(port)
-        except:
-            pass
-        
-        if 1:    
-            s = smtplib.SMTP(smtp_server, port)
-            if login:
-                s.login(login, password)
-            s.sendmail(creche.email, to + [creche.email], msg.as_string())
-            s.quit()
-        else:
-            print u"From: %s, To:" % creche.email, to + [creche.email]
-            print msg.as_string()[:1200], '...'
-        

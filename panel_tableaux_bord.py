@@ -15,33 +15,31 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import __builtin__
-import os.path
-import sys
-import string
-import datetime
-import wx, wx.lib.scrolledpanel, wx.html, wx.grid, wx.lib.expando
-from constants import *
-from functions import *
+import wx
+import wx.grid
+import wx.html
+import wx.lib.expando
+import wx.lib.scrolledpanel
+
 from controls import *
-from ooffice import *
-from doc_planning import PlanningModifications
-from doc_coordonnees_parents import CoordonneesModifications
-from doc_etats_trimestriels import EtatsTrimestrielsModifications
-from doc_releve_siej import ReleveSIEJModifications
-from doc_releve_detaille import ReleveDetailleModifications
-from doc_planning_detaille import PlanningDetailleModifications
-from doc_etat_presences import EtatsPresenceModifications
-from doc_etat_places import EtatPlacesModifications
-from doc_etats_inscriptions import EtatsInscriptionsModifications
-from doc_rapport_frequentation import RapportFrequentationModifications
-from doc_synthese_financiere import SyntheseFinanciereModifications
-from doc_releve_salaries import ReleveSalariesModifications
-from doc_etat_presence_mensuel import EtatPresenceMensuelModifications
-from doc_export_tablette import ExportTabletteModifications
-from doc_compte_exploitation import CompteExploitationModifications
 from doc_commande_repas import CommandeRepasModifications
+from doc_compte_exploitation import CompteExploitationModifications
+from doc_coordonnees_parents import CoordonneesModifications
+from doc_etat_places import EtatPlacesModifications
+from doc_etat_presence_mensuel import EtatPresenceMensuelModifications
+from doc_etat_presences import EtatsPresenceModifications
+from doc_etats_inscriptions import EtatsInscriptionsModifications
+from doc_etats_trimestriels import EtatsTrimestrielsModifications
+from doc_export_tablette import ExportTabletteModifications
+from doc_planning import PlanningModifications, PlanningHoraireModifications
+from doc_planning_detaille import PlanningDetailleModifications
+from doc_rapport_frequentation import RapportFrequentationModifications
+from doc_releve_detaille import ReleveDetailleModifications
+from doc_releve_salaries import ReleveSalariesModifications
+from doc_releve_siej import ReleveSIEJModifications
+from doc_synthese_financiere import SyntheseFinanciereModifications
 from facture import Facture
+from ooffice import *
 from planning import *
 
 
@@ -59,13 +57,13 @@ class SitesPlanningPanel(PlanningWidget):
                 lines.append(days[week_day])
                 for site in creche.sites:
                     line = Summary(site.nom)
-                    for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
+                    for i in range(int(creche.ouverture * 60 / BASE_GRANULARITY), int(creche.fermeture * 60 / BASE_GRANULARITY)):
                         line[i][0] = site.capacite
                     day_lines[site] = line
                     lines.append(line)
             else:
                 site_line = Summary(days[week_day])
-                for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
+                for i in range(int(creche.ouverture * 60 / BASE_GRANULARITY), int(creche.fermeture * 60 / BASE_GRANULARITY)):
                     site_line[i][0] = 0
                 for start, end, value in creche.tranches_capacite[week_day].activites:
                     for i in range(start, end):
@@ -111,14 +109,14 @@ class ReservatairesPlanningPanel(PlanningWidget):
             places_reservees = 0
             for reservataire in creche.reservataires:
                 line = Summary(reservataire.nom)
-                for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
+                for i in range(int(creche.ouverture * 60 / BASE_GRANULARITY), int(creche.fermeture * 60 / BASE_GRANULARITY)):
                     line[i][0] = reservataire.places
                 day_lines[reservataire] = line
                 if reservataire.places:
                     places_reservees += reservataire.places
                 lines.append(line)
             line = Summary("[Structure]")
-            for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
+            for i in range(int(creche.ouverture * 60 / BASE_GRANULARITY), int(creche.fermeture * 60 / BASE_GRANULARITY)):
                 line[i][0] = 0
             for start, end, value in creche.tranches_capacite[week_day].activites:
                 for i in range(start, end):
@@ -161,12 +159,12 @@ class PlacesInformationTab(AutoTab):
         self.next_button = wx.Button(self, -1, '>', size=(20,0), style=wx.NO_BORDER)
         self.Bind(wx.EVT_BUTTON, self.OnPreviousWeek, self.previous_button)
         self.Bind(wx.EVT_BUTTON, self.OnNextWeek, self.next_button)
-        sizer.Add(self.previous_button, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-        sizer.Add(self.next_button, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+        sizer.Add(self.previous_button, 0, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
+        sizer.Add(self.next_button, 0, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
         
         # La combobox pour la selection de la semaine
         self.week_choice = wx.Choice(self, -1)
-        sizer.Add(self.week_choice, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+        sizer.Add(self.week_choice, 1, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
         day = first_monday = GetFirstMonday()
         while day < last_date:
             string = 'Semaine %d (%d %s %d)' % (day.isocalendar()[1], day.day, months[day.month - 1], day.year)
@@ -178,7 +176,7 @@ class PlacesInformationTab(AutoTab):
         self.Bind(wx.EVT_CHOICE, self.OnChangeWeek, self.week_choice)
         self.sizer.Add(sizer, 0, wx.EXPAND)
 
-        self.planning_panel = planning_class(self, options=DRAW_NUMBERS|NO_ICONS|NO_BOTTOM_LINE|READ_ONLY)
+        self.planning_panel = planning_class(self, options=DRAW_NUMBERS | NO_ICONS | NO_BOTTOM_LINE | READ_ONLY)
         self.planning_panel.SetData(semaine)          
         self.sizer.Add(self.planning_panel, 1, wx.EXPAND)
         self.sizer.Layout()
@@ -188,7 +186,6 @@ class PlacesInformationTab(AutoTab):
         week_selection = self.week_choice.GetSelection()
         self.previous_button.Enable(week_selection is not 0)
         self.next_button.Enable(week_selection is not self.week_choice.GetCount() - 1)
-        monday = self.week_choice.GetClientData(week_selection)
         self.planning_panel.SetData(week_selection)
         self.sizer.Layout()
         
@@ -220,7 +217,7 @@ class PlacesUtiliseesPlanningPanel(PlanningWidget):
                 day_lines[groupe] = line
                 lines.append(line)
             line = Summary("[Structure]")
-            for i in range(int(creche.ouverture*60/BASE_GRANULARITY), int(creche.fermeture*60/BASE_GRANULARITY)):
+            for i in range(int(creche.ouverture * 60 / BASE_GRANULARITY), int(creche.fermeture * 60 / BASE_GRANULARITY)):
                 line[i][0] = 0
             day_lines[None] = line
             lines.append(line)
@@ -274,7 +271,7 @@ class EtatsPresenceTab(AutoTab):
         self.inscrits_choice.parameter = "inscrit"
         self.unordered_sizer.AddMany([(self.sites_choice, 0, wx.LEFT, 5), (self.professeurs_choice, 0, wx.LEFT, 5), (self.inscrits_choice, 0, wx.LEFT, 5)])
         self.search_sizer.AddMany([(self.ordered_sizer, 0, wx.ALIGN_CENTER_VERTICAL), (self.unordered_sizer, 0, wx.ALIGN_CENTER_VERTICAL)])
-        self.sizer.Add(self.search_sizer, 0, wx.ALL|wx.EXPAND, 5)
+        self.sizer.Add(self.search_sizer, 0, wx.ALL | wx.EXPAND, 5)
         self.ordered = []
         self.unordered = [self.sites_choice, self.professeurs_choice, self.inscrits_choice]
         self.debut_value = None
@@ -299,7 +296,7 @@ class EtatsPresenceTab(AutoTab):
         self.grid.SetColSize(0, 155)
         self.grid.SetColSize(1, 155)
         self.grid.SetColSize(2, 200)
-        self.sizer.Add(self.grid, -1, wx.EXPAND|wx.ALL, 5)
+        self.sizer.Add(self.grid, -1, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(self.sizer)
         self.UpdateContents()
         
@@ -566,13 +563,13 @@ class StatistiquesFrequentationTab(AutoTab):
         for choice in (self.sitechoice, self.anneechoice, self.periodechoice):
             self.Bind(wx.EVT_CHOICE, self.OnChangementPeriode, choice)
         sizer.AddMany([(self.sitechoice, 0, 0, 0), (self.anneechoice, 0, wx.LEFT, 5), (self.periodechoice, 0, wx.LEFT, 5)])
-        self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 10)
+        self.sizer.Add(sizer, 0, wx.EXPAND | wx.ALL, 10)
         
         self.message = wx.lib.expando.ExpandoTextCtrl(self)
         self.message.Disable()
         self.message.SetValue("")
         self.message.Show(False)
-        self.sizer.Add(self.message, 0, wx.EXPAND|wx.ALL, 10)
+        self.sizer.Add(self.message, 0, wx.EXPAND | wx.ALL, 10)
         
         self.result_sizer = wx.FlexGridSizer(0, 5, 6, 10)
         self.result_sizer.AddMany([(wx.StaticText(self, -1, ''), 0, 0), (wx.StaticText(self, -1, u'Heures'), 0, 0), (wx.StaticText(self, -1, u'Jours'), 0, 0), (wx.StaticText(self, -1, u'Euros'), 0, 0), (wx.StaticText(self, -1, u'%'), 0, 0)])
@@ -607,7 +604,7 @@ class StatistiquesFrequentationTab(AutoTab):
         self.presences_facturees_percent.Disable()
         self.result_sizer.AddMany([(wx.StaticText(self, -1, u'Présences facturées :'), 0, 0), (self.presences_facturees_heures, 0, wx.EXPAND), (self.presences_facturees_jours, 0, wx.EXPAND), (self.presences_facturees_euros, 0, wx.EXPAND), (self.presences_facturees_percent, 0, wx.EXPAND)])              
         
-        self.sizer.Add(self.result_sizer, 0, wx.EXPAND|wx.ALL, 10)
+        self.sizer.Add(self.result_sizer, 0, wx.EXPAND | wx.ALL, 10)
         self.SetSizer(self.sizer)
         self.UpdateContents()
         self.Layout()
@@ -742,8 +739,8 @@ class RelevesTab(AutoTab):
         self.coords_date.SetValue("Aujourd'hui")
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.OnGenerationCoordonnees, button)
-        box_sizer.AddMany([(self.coords_date, 1, wx.EXPAND|wx.ALL, 5), (button, 0, wx.ALL, 5)])
-        self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+        box_sizer.AddMany([(self.coords_date, 1, wx.EXPAND | wx.ALL, 5), (button, 0, wx.ALL, 5)])
+        self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
         
         # Les contrats en cours
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Inscriptions en cours'), wx.HORIZONTAL)
@@ -751,8 +748,8 @@ class RelevesTab(AutoTab):
         self.inscriptions_date.SetValue("Aujourd'hui")
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.OnGenerationEtatsInscriptions, button)
-        box_sizer.AddMany([(self.inscriptions_date, 1, wx.EXPAND|wx.ALL, 5), (button, 0, wx.ALL, 5)])
-        self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+        box_sizer.AddMany([(self.inscriptions_date, 1, wx.EXPAND | wx.ALL, 5), (button, 0, wx.ALL, 5)])
+        self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
 
         # Les releves trimestriels
         if IsTemplateFile("Releve SIEJ.odt"):
@@ -761,16 +758,16 @@ class RelevesTab(AutoTab):
             AddYearsToChoice(self.releves_choice)
             button = wx.Button(self, -1, u'Génération')
             self.Bind(wx.EVT_BUTTON, self.OnGenerationReleveSIEJ, button)
-            box_sizer.AddMany([(self.releves_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
-            self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+            box_sizer.AddMany([(self.releves_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
         else:
             box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés trimestriels'), wx.HORIZONTAL)
             self.releves_choice = wx.Choice(self)
             AddYearsToChoice(self.releves_choice)
             button = wx.Button(self, -1, u'Génération')
             self.Bind(wx.EVT_BUTTON, self.OnGenerationEtatsTrimestriels, button)
-            box_sizer.AddMany([(self.releves_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
-            self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+            box_sizer.AddMany([(self.releves_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
                 
         # Les relevés détaillés
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés annuels détaillés'), wx.HORIZONTAL)
@@ -778,8 +775,8 @@ class RelevesTab(AutoTab):
         AddYearsToChoice(self.releves_detailles_choice)
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.OnGenerationRelevesDetailles, button)
-        box_sizer.AddMany([(self.releves_detailles_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
-        self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+        box_sizer.AddMany([(self.releves_detailles_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
         
         # Les etats des places
         if IsTemplateFile("Etats places.ods"):
@@ -788,8 +785,8 @@ class RelevesTab(AutoTab):
             AddYearsToChoice(self.places_choice)
             button = wx.Button(self, -1, u'Génération')
             self.Bind(wx.EVT_BUTTON, self.OnGenerationEtatsPlaces, button)
-            box_sizer.AddMany([(self.places_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
-            self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+            box_sizer.AddMany([(self.places_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
         
         # Les rapports de fréquentation
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Rapports de fréquentation'), wx.HORIZONTAL)
@@ -797,8 +794,8 @@ class RelevesTab(AutoTab):
         AddYearsToChoice(self.rapports_choice)
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.OnGenerationRapportFrequentation, button)
-        box_sizer.AddMany([(self.rapports_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
-        self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+        box_sizer.AddMany([(self.rapports_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
         
         if IsTemplateFile("Etat presence mensuel.ods"):
             box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Etat de présence mensuel'), wx.HORIZONTAL)
@@ -806,8 +803,8 @@ class RelevesTab(AutoTab):
             AddMonthsToChoice(self.etat_presence_mensuesl_choice)
             button = wx.Button(self, -1, u'Génération')
             self.Bind(wx.EVT_BUTTON, self.OnGenerationEtatPresenceMensuel, button)
-            box_sizer.AddMany([(self.etat_presence_mensuesl_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
-            self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+            box_sizer.AddMany([(self.etat_presence_mensuesl_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
         
         # Les synthèses financières
         if IsTemplateFile("Synthese financiere.ods"):
@@ -816,8 +813,8 @@ class RelevesTab(AutoTab):
             AddYearsToChoice(self.syntheses_choice)
             button = wx.Button(self, -1, u'Génération')
             self.Bind(wx.EVT_BUTTON, self.OnGenerationSyntheseFinanciere, button)
-            box_sizer.AddMany([(self.syntheses_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
-            self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+            box_sizer.AddMany([(self.syntheses_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
 
         # Les comptes d'exploitation
         if IsTemplateFile("Compte exploitation.ods"):
@@ -826,41 +823,51 @@ class RelevesTab(AutoTab):
             AddYearsToChoice(self.comptes_exploitation_choice)
             button = wx.Button(self, -1, u'Génération')
             self.Bind(wx.EVT_BUTTON, self.OnGenerationCompteExploitation, button)
-            box_sizer.AddMany([(self.comptes_exploitation_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
-            self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+            box_sizer.AddMany([(self.comptes_exploitation_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
 
         # Les commandes de repas
         if IsTemplateFile("Commande repas.odt"):
-            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Commande de repas'), wx.HORIZONTAL)
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u"Commande de repas"), wx.HORIZONTAL)
             self.commande_repas_choice = wx.Choice(self)
             AddWeeksToChoice(self.commande_repas_choice)
-            button = wx.Button(self, -1, u'Génération')
+            button = wx.Button(self, -1, u"Génération")
             self.Bind(wx.EVT_BUTTON, self.OnGenerationCommandeRepas, button)
-            box_sizer.AddMany([(self.commande_repas_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
-            self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+            box_sizer.AddMany([(self.commande_repas_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
         
-        # Les plannings de presence enfants
+        # Les plannings hebdomadaires
         if IsTemplateFile('Planning.ods'):
-            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Planning des présences'), wx.HORIZONTAL)
-            self.planning_hebdo_choice = wx.Choice(self)
-            AddWeeksToChoice(self.planning_hebdo_choice)
-            button = wx.Button(self, -1, u'Génération')
-            self.Bind(wx.EVT_BUTTON, self.OnGenerationPlanningPresences, button)
-            box_sizer.AddMany([(self.planning_hebdo_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
-            self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u"Planning des présences"), wx.HORIZONTAL)
+            self.planning_choice = wx.Choice(self)
+            AddWeeksToChoice(self.planning_choice)
+            button = wx.Button(self, -1, u"Génération")
+            self.Bind(wx.EVT_BUTTON, self.OnGenerationPlanning, button)
+            box_sizer.AddMany([(self.planning_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
+
+        # Les plannings hebdomadaires avec horaires
+        if IsTemplateFile('Planning horaire.ods'):
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u"Planning des présences avec horaires"), wx.HORIZONTAL)
+            self.planning_horaire_choice = wx.Choice(self)
+            AddWeeksToChoice(self.planning_horaire_choice)
+            button = wx.Button(self, -1, u"Génération")
+            self.Bind(wx.EVT_BUTTON, self.OnGenerationPlanningHoraire, button)
+            box_sizer.AddMany([(self.planning_horaire_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
 
         # Les plannings détaillés
-        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Planning détaillé'), wx.HORIZONTAL)
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u"Planning détaillé"), wx.HORIZONTAL)
         self.detail_start_date = DateCtrl(self)
         self.detail_end_date = DateCtrl(self)
         day = today
         while day in creche.jours_fermeture:
             day += datetime.timedelta(1)
         self.detail_start_date.SetValue(day)
-        button = wx.Button(self, -1, u'Génération')
+        button = wx.Button(self, -1, u"Génération")
         self.Bind(wx.EVT_BUTTON, self.OnGenerationPlanningDetaille, button)
-        box_sizer.AddMany([(self.detail_start_date, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5), (wx.StaticText(self, -1, "-"), 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5), (self.detail_end_date, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5), (button, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5)])
-        self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+        box_sizer.AddMany([(self.detail_start_date, 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5), (wx.StaticText(self, -1, "-"), 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5), (self.detail_end_date, 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5), (button, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5)])
+        self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
 
         # Les exports tablette
         if (config.options & TABLETTE) and IsTemplateFile('Export tablette.ods'):
@@ -869,8 +876,8 @@ class RelevesTab(AutoTab):
             AddMonthsToChoice(self.export_tablette_choice)
             button = wx.Button(self, -1, u'Génération')
             self.Bind(wx.EVT_BUTTON, self.OnGenerationExportTablette, button)
-            box_sizer.AddMany([(self.export_tablette_choice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
-            self.sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+            box_sizer.AddMany([(self.export_tablette_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
 
         self.UpdateContents()        
         self.SetSizer(self.sizer)
@@ -948,11 +955,16 @@ class RelevesTab(AutoTab):
         semaine = self.commande_repas_choice.GetClientData(self.commande_repas_choice.GetSelection())
         DocumentDialog(self, CommandeRepasModifications(semaine)).ShowModal()
 
-    def OnGenerationPlanningPresences(self, evt):
+    def OnGenerationPlanning(self, evt):
         site = self.GetSelectedSite()
-        date = self.planning_hebdo_choice.GetClientData(self.planning_hebdo_choice.GetSelection())
+        date = self.planning_choice.GetClientData(self.planning_choice.GetSelection())
         DocumentDialog(self, PlanningModifications(site, date)).ShowModal()
             
+    def OnGenerationPlanningHoraire(self, evt):
+        site = self.GetSelectedSite()
+        date = self.planning_horaire_choice.GetClientData(self.planning_horaire_choice.GetSelection())
+        DocumentDialog(self, PlanningHoraireModifications(site, date)).ShowModal()
+
     def OnGenerationPlanningDetaille(self, evt):
         site = self.GetSelectedSite()
         start = self.detail_start_date.GetValue()
@@ -965,7 +977,8 @@ class RelevesTab(AutoTab):
         site = self.GetSelectedSite()
         date = self.export_tablette_choice.GetClientData(self.export_tablette_choice.GetSelection())
         DocumentDialog(self, ExportTabletteModifications(site, date)).ShowModal()
-        
+
+
 class AlertesTab(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
@@ -980,7 +993,7 @@ class AlertesTab(AutoTab):
         self.grid.SetColSize(1, 100)
         self.grid.SetColSize(2, 500)
         self.UpdateContents()
-        self.sizer.Add(self.grid, -1, wx.EXPAND|wx.ALL, 5)
+        self.sizer.Add(self.grid, -1, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(self.sizer)
 
     def UpdateContents(self):
@@ -1010,8 +1023,8 @@ class SalariesTab(AutoTab):
         self.Bind(wx.EVT_CHOICE, self.EvtRelevesMonthChoice, self.releves_monthchoice)
         button = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.OnGenerationReleve, button)
-        box_sizer.AddMany([(self.salaries_choice["releves"], 1, wx.ALL|wx.EXPAND, 5), (self.releves_monthchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
-        sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
+        box_sizer.AddMany([(self.salaries_choice["releves"], 1, wx.ALL | wx.EXPAND, 5), (self.releves_monthchoice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
 
         self.SetSizer(sizer)
         self.UpdateContents()

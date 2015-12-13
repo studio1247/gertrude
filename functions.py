@@ -100,18 +100,18 @@ def GetHeureString(value):
         return "-%dh%02d" % (heures, minutes)
 
 
-def GetAge(naissance):
+def GetAge(naissance, date=today):
     age = 0
     if naissance:
-        age = today.year * 12 + today.month - naissance.year * 12 - naissance.month
-        if today.day < naissance.day:
+        age = (date.year - naissance.year) * 12 + date.month - naissance.month
+        if date.day < naissance.day:
             age -= 1
     return age
 
 
-def GetAgeString(naissance):
+def GetAgeString(naissance, date=today):
     if naissance:
-        age = GetAge(naissance)
+        age = GetAge(naissance, date)
         annees, mois = age / 12, age % 12
         if annees < 0:
             return ""   
@@ -546,7 +546,7 @@ def GetEnfantsTriesParGroupe(lines):
     lines = []
     for key in keys:
         groupe = groupes[key]
-        groupe.sort(key=lambda line: line.label)
+        groupe.sort(key=lambda element: element.label)
         if key:
             groupe.insert(0, key.nom)
         lines.extend(groupe)
@@ -830,31 +830,33 @@ def GetEmail(famille):
             result.append(famille.parents[key].email)
     return ", ".join(result)
 
+
 def GetFamilleFields(famille):
-    return [('adresse', famille.adresse),
-            ('code-postal', GetCodePostal(famille)),
-            ('ville', famille.ville),
-            ('numero-securite-sociale', famille.numero_securite_sociale),
-            ('numero-allocataire-caf', famille.numero_allocataire_caf),
-            ('medecin-traitant', famille.medecin_traitant),
-            ('telephone-medecin-traitant', famille.telephone_medecin_traitant),
-            ('assureur', famille.assureur),
-            ('police-assurance', famille.numero_police_assurance),
-            ('parents', GetParentsString(famille)),
-            ('telephone', GetTelephone(famille)),
-            ('email', GetEmail(famille)),
+    return [('adresse', famille.adresse if famille else ""),
+            ('code-postal', GetCodePostal(famille) if famille else ""),
+            ('ville', famille.ville if famille else ""),
+            ('numero-securite-sociale', famille.numero_securite_sociale if famille else ""),
+            ('numero-allocataire-caf', famille.numero_allocataire_caf if famille else ""),
+            ('medecin-traitant', famille.medecin_traitant if famille else ""),
+            ('telephone-medecin-traitant', famille.telephone_medecin_traitant if famille else ""),
+            ('assureur', famille.assureur if famille else ""),
+            ('police-assurance', famille.numero_police_assurance if famille else ""),
+            ('parents', GetParentsString(famille) if famille else ""),
+            ('telephone', GetTelephone(famille) if famille else ""),
+            ('email', GetEmail(famille) if famille else ""),
             ]
-    
+
+
 def GetInscritFields(inscrit):
-    return GetFamilleFields(inscrit.famille) + [
-        ('prenom', inscrit.prenom),
-        ('de-prenom', GetDeStr(inscrit.prenom)),
-        ('nom', inscrit.nom),
-        ('sexe', GetInscritSexe(inscrit)),
-        ('naissance', inscrit.naissance),
-        ('age', GetAgeString(inscrit.naissance)),
-        ('entree', inscrit.inscriptions[0].debut),
-        ('sortie', inscrit.inscriptions[-1].fin),
+    return GetFamilleFields(inscrit.famille if inscrit else None) + [
+        ('prenom', inscrit.prenom if inscrit else ""),
+        ('de-prenom', GetDeStr(inscrit.prenom) if inscrit else ""),
+        ('nom', inscrit.nom if inscrit else ""),
+        ('sexe', GetInscritSexe(inscrit) if inscrit else ""),
+        ('naissance', inscrit.naissance if inscrit else ""),
+        ('age', GetAgeString(inscrit.naissance) if inscrit else ""),
+        ('entree', inscrit.inscriptions[0].debut if inscrit else ""),
+        ('sortie', inscrit.inscriptions[-1].fin if inscrit else ""),
     ]
 
 
@@ -873,6 +875,7 @@ def GetInscriptionFields(inscription):
     return [('debut-contrat', inscription.debut),
             ('fin-contrat', inscription.fin),
             ('site', GetNom(inscription.site)),
+            ('groupe', inscription.groupe.nom if inscription.groupe else ""),
             ('nom-site', GetNom(inscription.site)),
             ('adresse-site', site_adresse),
             ('code-postal-site', GetCodePostal(inscription.site)),

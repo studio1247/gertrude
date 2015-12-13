@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 
-##    This file is part of Gertrude.
-##
-##    Gertrude is free software; you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation; either version 3 of the License, or
-##    (at your option) any later version.
-##
-##    Gertrude is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
-##
-##    You should have received a copy of the GNU General Public License
-##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from constants import *
 from functions import *
@@ -25,6 +25,7 @@ template_total_lines_count = 19
 template_first_line = 4
 template_lines_count = 8
 
+
 class RapportFrequentationModifications(object):
     def __init__(self, site, annee):
         self.multi = False
@@ -35,16 +36,17 @@ class RapportFrequentationModifications(object):
         self.errors = {}
         self.email = None
         self.site = site
-        self.metas = { "colonne-jour": 2,
-                       "colonne-mois": -1,
-                       "colonne-annee": 4,
-                       "colonne-jours-ouverture": 6,
-                       "ligne-taux-occupation": 5,
-                       "colonne-total-jours-ouverture": 7,
-                       "ligne-total-heures-presence": 3,
-                       "ligne-total-jours-ouverture": -1,
-                       "ligne-recap-jours-ouverture": -1,
-                       "colonne-annee-heures-facturees": -1 }
+        self.metas = {"colonne-jour": 2,
+                      "colonne-mois": -1,
+                      "colonne-annee": 4,
+                      "colonne-jours-ouverture": 6,
+                      "ligne-taux-occupation": 5,
+                      "colonne-total-jours-ouverture": 7,
+                      "ligne-total-heures-presence": 3,
+                      "ligne-total-jours-ouverture": -1,
+                      "ligne-recap-jours-ouverture": -1,
+                      "colonne-annee-heures-facturees": -1
+                      }
     
     def execute(self, filename, dom):
         fields = GetCrecheFields(creche)
@@ -114,7 +116,7 @@ class RapportFrequentationModifications(object):
                     if heures_accueil:
                         taux_remplissage = (100.0 * total_heures_facturees) / heures_accueil
                     
-                    fields = [('mois', months[mois-1]),
+                    fields = [('mois', months[mois - 1]),
                               ('annee', self.annee),
                               ('heures-realisees', total_heures_realisees),
                               ('heures-facturees', total_heures_facturees),
@@ -124,7 +126,7 @@ class RapportFrequentationModifications(object):
                     fields += [('heures-realisees-%s' % tmp, heures_realisees[tmp]) for tmp in heures_realisees]
                     fields += [('heures-facturees-%s' % tmp, heures_realisees[tmp]) for tmp in heures_facturees]
                     
-                    #print fields
+                    # print fields
                     
                     for line in template:
                         clone = line.cloneNode(1)   
@@ -155,16 +157,16 @@ class RapportFrequentationModifications(object):
                     if not inscrits:
                         continue
                     
-                    jours = [jour for jour in range(debut.day, fin.day+1) if datetime.date(debut.year, debut.month, jour) not in creche.jours_fermeture]
+                    jours = [jour for jour in range(debut.day, fin.day + 1) if datetime.date(debut.year, debut.month, jour) not in creche.jours_fermeture]
                     
                     table = template.cloneNode(1)
                     spreadsheet.insertBefore(table, template)
-                    table.setAttribute("table:name", months[mois-1])
+                    table.setAttribute("table:name", months[mois - 1])
                     columns = table.getElementsByTagName("table:table-column")
                     column_template = columns[colonne_jour]
                     lines = table.getElementsByTagName("table:table-row")
                     first_line = lines[0]
-                    ReplaceTextFields(first_line, [('mois', months[mois-1])])
+                    ReplaceTextFields(first_line, [('mois', months[mois - 1])])
                     line_template = lines[1]
                     sum_line = lines[2]
                     cell_template = line_template.getElementsByTagName("table:table-cell")[colonne_jour]
@@ -201,25 +203,25 @@ class RapportFrequentationModifications(object):
                                 state.heures_facturees = ""
                             if not state.heures_realisees:
                                 state.heures_realisees = ""
-                            ReplaceFields(cells[colonne_jour+j], [('heures-realisees', state.heures_realisees),
-                                                                  ('heures-facturees', state.heures_facturees)])
-                        total_cell = cells[len(jours)+colonne_jour]
-                        total_cell.setAttribute("table:formula", "of:=SUM([.%s%d:.%s%d])" % (GetColumnName(colonne_jour), i+2, GetColumnName(colonne_jour-1+len(jours)), i+2))
+                            ReplaceFields(cells[colonne_jour + j], [('heures-realisees', state.heures_realisees),
+                                                                    ('heures-facturees', state.heures_facturees)])
+                        total_cell = cells[len(jours) + colonne_jour]
+                        total_cell.setAttribute("table:formula", "of:=SUM([.%s%d:.%s%d])" % (GetColumnName(colonne_jour), i + 2, GetColumnName(colonne_jour - 1 + len(jours)), i + 2))
                         if i == 0:
-                            IncrementFormulas(cells[len(jours)+colonne_jour+2:], column=len(jours)-1)
-                            cells[len(jours)+self.metas['colonne-jours-ouverture']-1].setAttribute("table:formula", "of:=COUNT([.%s1:.%s1])" % (GetColumnName(colonne_jour), GetColumnName(colonne_jour-1+len(jours))))
-                            jours_mois.append("%s.%s2" % (months[mois-1], GetColumnName(self.metas['colonne-jours-ouverture']-1+len(jours))))
-                            for cell in line_template.getElementsByTagName("table:table-cell")[len(jours)+3:]:
+                            IncrementFormulas(cells[len(jours) + colonne_jour + 2:], column=len(jours) - 1)
+                            cells[len(jours) + self.metas['colonne-jours-ouverture'] - 1].setAttribute("table:formula", "of:=COUNT([.%s1:.%s1])" % (GetColumnName(colonne_jour), GetColumnName(colonne_jour - 1 + len(jours))))
+                            jours_mois.append("%s.%s2" % (months[mois - 1], GetColumnName(self.metas['colonne-jours-ouverture'] - 1 + len(jours))))
+                            for cell in line_template.getElementsByTagName("table:table-cell")[len(jours) + 3:]:
                                 line_template.removeChild(cell)
                         key = GetPrenomNom(inscrit)
                         if key not in inscrits_annee:
                             inscrits_annee[key] = inscrit
                             inscrits_annee_details[key] = {}
-                        inscrits_annee_details[key][mois] = "%s.%s%d" % (months[mois-1], GetColumnName(colonne_jour+len(jours)), i+2)
+                        inscrits_annee_details[key][mois] = "%s.%s%d" % (months[mois - 1], GetColumnName(colonne_jour + len(jours)), i + 2)
                     table.removeChild(line_template)
                     last_line = 1 + len(inscrits)
-                    for i, cell in enumerate(sum_line.getElementsByTagName("table:table-cell")[1:2+len(jours)]):
-                        column = GetColumnName(colonne_jour+i)
+                    for i, cell in enumerate(sum_line.getElementsByTagName("table:table-cell")[1:2 + len(jours)]):
+                        column = GetColumnName(colonne_jour + i)
                         cell.setAttribute("table:formula", "of:=SUM([.%s2:.%s%d])" % (column, column, last_line))
                     
                 spreadsheet.removeChild(template)
@@ -252,7 +254,7 @@ class RapportFrequentationModifications(object):
                     cells[colonne_annee].setAttribute("table:formula", "of:=SUM(%s)" % ';'.join(["[%s]" % c for c in inscrits_annee_details[key].values()]))
                     if i == 0 and self.metas['colonne-total-jours-ouverture'] >= 0:
                         cells[self.metas['colonne-total-jours-ouverture']].setAttribute("table:formula", "of:=SUM(%s)" % ';'.join(["[%s]" % m for m in jours_mois]))
-                        for cell in template.getElementsByTagName("table:table-cell")[colonne_annee+1:]:
+                        for cell in template.getElementsByTagName("table:table-cell")[colonne_annee + 1:]:
                             template.removeChild(cell)
                     if colonne_mois >= 0:
                         cell_template = cells[colonne_mois]
@@ -280,10 +282,10 @@ class RapportFrequentationModifications(object):
                 
                 total_cell = lines[self.metas['ligne-total-heures-presence']].getElementsByTagName("table:table-cell")[2]
                 if colonne_mois >= 0:
-                    colname = GetColumnName(colonne_annee+11)
+                    colname = GetColumnName(colonne_annee + 11)
                 else:
                     colname = 'E'
-                total_cell.setAttribute("table:formula", "of:=SUM([.%s2:.%s%d])" % (colname, colname, 1+len(keys)))
+                total_cell.setAttribute("table:formula", "of:=SUM([.%s2:.%s%d])" % (colname, colname, 1 + len(keys)))
                 
                 if self.metas["ligne-total-jours-ouverture"] >= 0:
                     total_cell = lines[self.metas['ligne-total-jours-ouverture']].getElementsByTagName("table:table-cell")[2]
