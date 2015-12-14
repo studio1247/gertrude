@@ -302,13 +302,20 @@ class Day(object):
                 fin = end
         return debut, fin
 
-    def GetTotalActivitesParMode(self, mode, arrondi=SANS_ARRONDI):
-        result = 0
+    def GetListeActivitesParMode(self, mode):
+        result = []
         for start, end, value in self.activites:
             if value in creche.activites:
                 activite = creche.activites[value]
                 if activite.mode == mode:
-                    result += (5 * GetDureeArrondie(arrondi, start, end))
+                    result.append((start, end))
+        return result
+
+    def GetTotalActivitesParMode(self, mode, arrondi=SANS_ARRONDI):
+        result = 0
+        liste = self.GetListeActivitesParMode(mode)
+        for start, end in liste:
+            result += (5 * GetDureeArrondie(arrondi, start, end))
         return float(result) / 60
 
     def GetTotalActivitesPresenceNonFacturee(self):
@@ -1776,13 +1783,13 @@ class Inscription(PeriodeReference):
     def GetListeActivites(self, activite=0):
         result = []
         for i, jourReference in enumerate(self.reference):
-            str = jourReference.GetHeureArriveeDepart(activite)
-            if str:
+            s = jourReference.GetHeureArriveeDepart(activite)
+            if s:
                 if len(self.reference) <= 7:
-                    str = days[i] + " " + str
+                    s = days[i] + " " + s
                 else:
-                    str = days[i % 7] + " semaine %d" % (1 + (i / 7)) + str
-                result.append(str)
+                    s = days[i % 7] + " semaine %d" % (1 + (i / 7)) + s
+                result.append(s)
         return ', '.join(result)
 
     def create(self):

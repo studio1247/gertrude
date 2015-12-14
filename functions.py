@@ -1111,3 +1111,14 @@ def AddInscritsToChoice(choice):
     autres.sort(key=lambda inscrit: GetPrenomNom(inscrit, tri=creche.tri_inscriptions))
 
     __add_in_inscrits_choice(choice, autres)
+
+
+def GetListePermanences(date):
+    result = []
+    for inscrit in creche.inscrits:
+        journee = inscrit.GetJournee(date)
+        if journee:
+            liste = journee.GetListeActivitesParMode(MODE_PERMANENCE)
+            for start, end in liste:
+                result.append((start, end, inscrit))
+    return result

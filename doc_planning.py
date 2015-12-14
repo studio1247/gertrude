@@ -235,9 +235,7 @@ class PlanningModifications(object):
             total_template = lignes[5]
 
             # Les jours
-
             ligne = lignes.item(1)
-            print ligne.toprettyxml()
             cellules = ligne.getElementsByTagName("table:table-cell")
             for jour in range(5):
                 date = self.debut + datetime.timedelta(jour)
@@ -266,7 +264,7 @@ class PlanningModifications(object):
                 cell = 0
                 tranches = [(creche.ouverture, 12), (14, creche.fermeture)]
                 date = self.debut
-                while date < fin:
+                while date <= fin:
                     if date in inscrit.journees:
                         journee = inscrit.journees[date]
                     else:
@@ -389,3 +387,23 @@ class PlanningHoraireModifications(PlanningModifications):
 
         for template in templates:
             table.removeChild(template)
+
+        self.FillPermanences(lines)
+
+    def FillPermanences(self, lines):
+        for jour in range(5):
+            liste = GetListePermanences(self.debut + datetime.timedelta(jour))
+            for start, end, inscrit in liste:
+                if start <= 12.5 * 12:
+                    line = lines[3 + int(float(start) / 12 - 7.5)]
+                elif start <= 17.75 * 12:
+                    line = lines[10 + int(float(start) / 12 - 14.75)]
+                else:
+                    continue
+                cell = GetCell(line, 7 + jour, multiple=True)
+                cell.setAttribute("table:number-rows-spanned", str((end - start) / 12))
+                ReplaceFields(cell, [("a", GetPrenom(inscrit)),
+                                     ("b", GetPrenom(inscrit))])
+        for line in lines[3:14]:
+            ReplaceFields(line, [("a", ""),
+                                 ("b", "")])
