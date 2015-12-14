@@ -743,7 +743,10 @@ class Activite(object):
         if self.formule_tarif.strip():
             enfants = GetEnfantsCount(inscrit, date)
             for tarif in creche.tarifs_speciaux:
-                exec("%s = %r" % (tarif.label.lower().replace(" ", "_"), inscrit.famille.tarifs & (1 << tarif.idx)))
+                try:
+                    exec("%s = %r" % (tarif.label.lower().replace(" ", "_"), inscrit.famille.tarifs & (1 << tarif.idx)))
+                except:
+                    pass
             return eval(self.formule_tarif)
         else:
             return 0.0
@@ -1289,7 +1292,10 @@ class Creche(object):
         forfait = MODE_FORFAIT_HORAIRE
         urgence = MODE_ACCUEIL_URGENCE
         for tarif in self.tarifs_speciaux:
-            exec("%s = %r" % (tarif.label.lower().replace(" ", "_"), tarifs & (1 << tarif.idx)))
+            try:
+                exec("%s = %r" % (tarif.label.lower().replace(" ", "_"), tarifs & (1 << tarif.idx)))
+            except:
+                pass
         try:
             for cas in formule:
                 if heure_mois is None and "heure_mois" in cas[0]:
@@ -1322,7 +1328,10 @@ class Creche(object):
         nom = "gertrude"
         paje = paje1
         for tarif in self.tarifs_speciaux:
-            exec("%s = False" % tarif.label.lower().replace(" ", "_"))
+            try:
+                exec("%s = False" % tarif.label.lower().replace(" ", "_"))
+            except:
+                pass
         try:
             test = eval(formule[index][0])
             return True
