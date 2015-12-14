@@ -748,7 +748,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.semaines_conges_items = label_conges, semaines_conges, self.jours_poses
         self.heures_and_jours_reference = wx.TextCtrl(self, -1)
         self.heures_and_jours_reference.Disable()
-        self.Bind(wx.EVT_TEXT, self.UpdateDecompteConges, self.semaines_conges_items[1])
+        self.Bind(wx.EVT_TEXT, self.UpdateDecompteConges, semaines_conges)
         sizer3 = wx.BoxSizer(wx.HORIZONTAL)
         sizer3.AddMany([(semaines_conges, 0, wx.EXPAND), (self.jours_poses, 1, wx.EXPAND|wx.LEFT, 5)])
         grid_sizer.AddMany([(label_conges, 0, wx.ALIGN_CENTER_VERTICAL), (sizer3, 0, wx.EXPAND)])
