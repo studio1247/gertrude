@@ -1100,11 +1100,11 @@ class SQLConnection(object):
                 cur.execute('SELECT mode_maladie FROM CRECHE')
                 mode_maladie = cur.fetchall()[0][0]
                 if mode_maladie == 2:
-                    mode_facturation = 2 # DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES
+                    mode_facturation = 2  # DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES
                 else:
                     mode_facturation = 0
             else:
-                mode_facturation = 2 # DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES
+                mode_facturation = 2  # DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES
             cur.execute("ALTER TABLE CRECHE ADD mode_facturation INTEGER;")
             cur.execute('UPDATE CRECHE SET mode_facturation=?', (mode_facturation,))
 
@@ -1114,7 +1114,7 @@ class SQLConnection(object):
             cur.execute("ALTER TABLE CRECHE ADD telephone VARCHAR;")
             cur.execute('UPDATE CRECHE SET telephone=?', ("",))
 
-        if 21 <= version > 23:
+        if 21 <= version < 23:
             cur.execute('SELECT mode_facturation FROM CRECHE')
             mode_facturation = cur.fetchall()[0][0]
             if mode_facturation & 1:
