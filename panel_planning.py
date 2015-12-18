@@ -495,7 +495,7 @@ class PlanningHebdomadairePanel(PlanningBasePanel):
 
         for i, activity in enumerate(self.activites):
             self.grid.SetColLabelValue(i, activity.label)
-            self.grid.SetColFormatFloat(i, precision=1)
+            self.grid.SetColFormatFloat(i, precision=(0 if activity.mode == MODE_SANS_HORAIRES else 1))
 
         self.inscrits = [inscrit for inscrit in creche.inscrits if inscrit.IsPresent(monday, sunday, site)]
         self.inscrits = GetEnfantsTriesSelonParametreTriPlanning(self.inscrits)
