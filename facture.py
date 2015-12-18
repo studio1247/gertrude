@@ -332,25 +332,26 @@ class FactureFinMois(object):
 
                 date += datetime.timedelta(1)
         else:
-            date = GetNextMonday(self.debut_recap)
-            while date.month == mois:
-                if date in inscrit.semaines:
-                    cotisation = Cotisation(inscrit, date, options=NO_ADDRESS|self.options)
-                    semaine = inscrit.semaines[date]
+            monday = GetNextMonday(self.debut_recap)
+            if monday.day >= 6:
+                monday -= datetime.timedelta(7)
+            while (monday + datetime.timedelta(2)).month == mois:
+                if monday in inscrit.semaines:
+                    cotisation = Cotisation(inscrit, monday, options=NO_ADDRESS | self.options)
+                    semaine = inscrit.semaines[monday]
                     for key in semaine.activities:
                         if key in creche.activites:
                             activite = creche.activites[key]
                             compteur = semaine.activities[key]
                             if activite.mode == MODE_SANS_HORAIRES:
-                                tarif = compteur.value * activite.EvalTarif(inscrit, date)
+                                tarif = compteur.value * activite.EvalTarif(inscrit, monday)
                                 self.supplement_activites += tarif
                                 self.detail_supplement_activites[activite.label] += tarif
                             else:
                                 self.heures_realisees += compteur.value
                                 self.heures_facturees_par_mode[cotisation.mode_garde] += compteur.value
                                 self.cotisation_mensuelle += compteur.value * cotisation.montant_heure_garde
-
-                date += datetime.timedelta(7)
+                monday += datetime.timedelta(7)
             
         if options & NO_NUMERO:
             self.numero = 0
