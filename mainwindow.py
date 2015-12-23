@@ -118,7 +118,7 @@ class GertrudeListbook(Listbook):
         for i, panel in enumerate(panels):
             if panel.profil & profil:
                 if progress_handler:
-                    progress_handler.set(10+80*i/len(panels))
+                    progress_handler.set(10 + 80 * i / len(panels))
                     progress_handler.display(u"Chargement de l'outil %s ..." % panel.name)
                 self.AddPage(panel(self), panel.bitmap)
         self.Draw()

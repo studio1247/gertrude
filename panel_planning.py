@@ -489,7 +489,7 @@ class PlanningHebdomadairePanel(PlanningBasePanel):
         self.activites = creche.activites.values()
         new_count = len(self.activites)
         if new_count > old_count:
-            self.grid.AppendCols(new_count-old_count)
+            self.grid.AppendCols(new_count - old_count)
         elif old_count > new_count:
             self.grid.DeleteCols(0, old_count - new_count)
 
