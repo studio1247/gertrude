@@ -17,7 +17,7 @@
 
 
 from facture import *
-from sqlobjects import Site
+from sqlobjects import *
 from cotisation import CotisationException
 from ooffice import *
 
