@@ -635,6 +635,7 @@ def CreateFacture(inscrit, annee, mois, options=0):
     else:
         return FactureDebutMoisPrevisionnel(inscrit, annee, mois, options)
 
+
 class FactureCloturee:
     def __init__(self, inscrit, date, cotisation_mensuelle, total_contractualise, total_realise, total_facture, supplement_activites, supplement, deduction):
         self.inscrit = inscrit
@@ -656,7 +657,6 @@ class FactureCloturee:
             self.facture.total_realise = self.total_realise
             self.facture.total_facture = self.total_facture
             self.facture.supplement_activites = self.supplement_activites
-            self.facture_precedente.supplement_activites
             self.facture.supplement = self.supplement
             self.facture.deduction = self.deduction
             self.facture.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction + self.facture.correction

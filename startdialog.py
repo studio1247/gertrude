@@ -26,7 +26,6 @@ import wx.lib.newevent
 
 from config import LoadConfig, Load, Exit, CONFIG_FILENAME, DEFAULT_DATABASE, DEMO_DATABASE
 from functions import *
-from globals import *
 from mainwindow import GertrudeFrame
 
 __builtin__.server = None
