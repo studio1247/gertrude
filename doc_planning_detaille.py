@@ -38,7 +38,7 @@ class PlanningDetailleModifications(object):
         self.start, self.end = periode
         if IsTemplateFile("Planning detaille.ods"):
             self.template = 'Planning detaille.ods'
-            self.default_output = "Planning detaille %s %d.ods" % (months[self.start.month-1], self.start.year)
+            self.default_output = "Planning detaille %s %d.ods" % (months[self.start.month - 1], self.start.year)
         else:
             self.template = 'Planning detaille.odg'
             if self.start == self.end:
@@ -249,7 +249,7 @@ class PlanningDetailleModifications(object):
                                         node.setAttribute('svg:y', '%fcm' % (0.10 + top + line_height * i))
                                         node.setAttribute('svg:width', '%fcm' % (float(x - a) * step))
                                         ReplaceTextFields(node, [('texte', '%d' % v)])
-                                    page.appendChild(node)
+                                        page.appendChild(node)
                                 a = x    
                                 v, w = nv, nw
                             x += creche.granularite / BASE_GRANULARITY
