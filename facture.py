@@ -18,6 +18,7 @@
 import locale
 import __builtin__
 from cotisation import *
+from globals import history
 
 
 class FactureFinMois(object):
