@@ -467,6 +467,7 @@ class PlanningHebdomadairePanel(PlanningBasePanel):
         self.grid.CreateGrid(0, 0)
         self.grid.SetDefaultColSize(200)
         self.grid.SetRowLabelSize(250)
+        self.grid.EnableEditing(not readonly)
         self.sizer.Add(self.grid, -1, wx.EXPAND|wx.RIGHT|wx.TOP, 5)
         self.sizer.Layout()
         self.Bind(wx.grid.EVT_GRID_CELL_CHANGE, self.OnCellChange, self.grid)
