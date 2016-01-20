@@ -180,7 +180,7 @@ class FactureFinMois(object):
                             cotisation.jours_ouvres += 1
                             cotisation.heures_reference += heures_reference
                         else:
-                            cotisation = Cotisation(inscrit, date, options=NO_ADDRESS|self.options)
+                            cotisation = Cotisation(inscrit, date, options=NO_ADDRESS | self.options)
                             cotisation.jours_ouvres = 1
                             cotisation.heures_mois_ajustees = cotisation.heures_mois
                             cotisation.heures_reference = heures_reference
@@ -453,11 +453,11 @@ class FactureFinMois(object):
                     if depart_anticipe and cotisation.Include(inscription.depart):
                         date = cotisation.debut
                         while date <= inscription.depart:
-                            cotisation_regularisee = Cotisation(inscrit, date, options=NO_ADDRESS|self.options|DEPART_ANTICIPE)
+                            cotisation_regularisee = Cotisation(inscrit, date, options=NO_ADDRESS | DEPART_ANTICIPE | self.options)
                             regularisation_cotisation = cotisation_regularisee.cotisation_mensuelle - cotisation.cotisation_mensuelle
                             if options & TRACES:
                                 print u" régularisation cotisation : %f - %f = %f par mois" % (cotisation_regularisee.cotisation_mensuelle, cotisation.cotisation_mensuelle, regularisation_cotisation)
-                            self.regularisation += regularisation_cotisation 
+                            self.regularisation += regularisation_cotisation * cotisation_regularisee.nombre_factures
                             date = GetNextMonthStart(date)
     
                     jours_presence = inscription.GetNombreJoursPresenceSemaine()

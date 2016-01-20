@@ -105,19 +105,23 @@ class Cotisation(object):
         if self.inscription is None:
             errors.append(u" - Il n'y a pas d'inscription à cette date.")
             raise CotisationException(errors)
-        
+
+        self.fin_inscription = self.inscription.fin
+
+        self.debut = self.inscription.debut
+        self.fin = self.inscription.fin
+        self.fin_inscription = self.inscription.fin
+
+        if creche.gestion_depart_anticipe and self.inscription.depart:
+            self.fin = self.inscription.depart
+            if options & DEPART_ANTICIPE:
+                self.fin_inscription = self.inscription.depart
+
         if creche.facturation_periode_adaptation != PERIODE_ADAPTATION_FACTUREE_NORMALEMENT and self.inscription.fin_periode_adaptation:
             if self.inscription.IsInPeriodeAdaptation(self.date):
-                self.debut, self.fin = self.inscription.debut, self.inscription.fin_periode_adaptation
+                self.fin = self.inscription.fin_periode_adaptation
             else:
-                self.debut, self.fin = self.inscription.fin_periode_adaptation + datetime.timedelta(1), self.inscription.fin
-            self.fin_inscription = self.fin
-        else:
-            if (options & DEPART_ANTICIPE) and creche.gestion_depart_anticipe and self.inscription.depart:
-                self.fin_inscription = self.inscription.depart
-            else:
-                self.fin_inscription = self.inscription.fin
-            self.debut, self.fin = self.inscription.debut, self.fin_inscription
+                self.debut = self.inscription.fin_periode_adaptation + datetime.timedelta(1)
         
         if options & TRACES:
             print u"\nCotisation de %s au %s ..." % (GetPrenomNom(inscrit), date)

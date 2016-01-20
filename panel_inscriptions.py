@@ -815,6 +815,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
             else:
                 inscription.sites_preinscription = [inscription.site]
         inscription.preinscription = not obj.GetValue()
+        history.Append(None)
         self.UpdateContents()
     
     def OnModeAccueilChoice(self, event):

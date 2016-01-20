@@ -169,25 +169,25 @@ class FacturationTab(AutoTab):
                     if inscrit.GetInscriptions(datetime.date(year, 1, 1), datetime.date(year, 12, 31)):
                         self.recus_periodechoice.Append(u"Année %d" % year, (datetime.date(year, 1, 1), datetime.date(year, 12, 31)))
                 for year in range(today.year-10, today.year):
-                    if inscrit.GetInscriptions(datetime.date(year-1, 12, 1), datetime.date(year, 11, 30)):
-                        self.recus_periodechoice.Append(u"Décembre %d - Novembre %d" % (year-1, year), (datetime.date(year-1, 12, 1), datetime.date(year, 11, 30)))
+                    if inscrit.GetInscriptions(datetime.date(year - 1, 12, 1), datetime.date(year, 11, 30)):
+                        self.recus_periodechoice.Append(u"Décembre %d - Novembre %d" % (year - 1, year), (datetime.date(year - 1, 12, 1), datetime.date(year, 11, 30)))
                 if inscrit.GetInscriptions(datetime.date(today.year, 1, 1), GetMonthEnd(today)):
                     debut = 1
                     while not inscrit.GetInscriptions(datetime.date(today.year, debut, 1), GetMonthEnd(datetime.date(today.year, debut, 1))) and debut < today.month:
                         debut += 1
                     if debut == today.month:
-                        self.recus_periodechoice.Append("%s %d" % (months[debut-1], today.year), (datetime.date(today.year, debut, 1), GetMonthEnd(datetime.date(today.year, debut, 1))))
+                        self.recus_periodechoice.Append("%s %d" % (months[debut - 1], today.year), (datetime.date(today.year, debut, 1), GetMonthEnd(datetime.date(today.year, debut, 1))))
                     else:
-                        self.recus_periodechoice.Append(u"%s - %s %d" % (months[debut-1], months[today.month-1], today.year), (datetime.date(today.year, debut, 1), datetime.date(today.year, today.month, 1)))
+                        self.recus_periodechoice.Append(u"%s - %s %d" % (months[debut - 1], months[today.month-1], today.year), (datetime.date(today.year, debut, 1), datetime.date(today.year, today.month, 1)))
             else:
-                for year in range(today.year-3, today.year):
+                for year in range(today.year - 3, today.year):
                     self.recus_periodechoice.Append(u"Année %d" % year, (datetime.date(year, 1, 1), datetime.date(year, 12, 31)))
-                for year in range(today.year-3, today.year):
-                    self.recus_periodechoice.Append(u"Décembre %d - Novembre %d" % (year-1, year), (datetime.date(year-1, 12, 1), datetime.date(year, 11, 30)))
+                for year in range(today.year - 3, today.year):
+                    self.recus_periodechoice.Append(u"Décembre %d - Novembre %d" % (year - 1, year), (datetime.date(year - 1, 12, 1), datetime.date(year, 11, 30)))
                 if today.month == 1:
                     self.recus_periodechoice.Append("Janvier %d" % today.year, (datetime.date(today.year, 1, 1), datetime.date(today.year, 1, 31)))
                 else:
-                    self.recus_periodechoice.Append(u"Janvier - %s %d" % (months[today.month-1], today.year), (datetime.date(today.year, 1, 1), datetime.date(today.year, today.month, 1)))
+                    self.recus_periodechoice.Append(u"Janvier - %s %d" % (months[today.month - 1], today.year), (datetime.date(today.year, 1, 1), datetime.date(today.year, today.month, 1)))
         
         date = GetFirstMonday()
         while date < today:
@@ -222,11 +222,11 @@ class FacturationTab(AutoTab):
             if len(creche.sites) > 1:
                 for site in creche.sites:
                     choice.Append('Enfants du site ' + site.nom.strip(), site)
-            
-        inscrits = { }
-        autres = { }
+
+        inscrits = {}
+        autres = {}
         for inscrit in creche.inscrits:
-            if inscrit.GetInscription(datetime.date.today()) != None:
+            if inscrit.GetInscription(datetime.date.today()) is not None:
                 inscrits[GetPrenomNom(inscrit)] = inscrit
             else:
                 autres[GetPrenomNom(inscrit)] = inscrit
