@@ -542,7 +542,8 @@ class EtatsPresenceTab(AutoTab):
         
         selection = self.GetSelection()
         DocumentDialog(self, EtatsPresenceModifications(debut, fin, site, professeur, inscrit, selection)).ShowModal()
-          
+
+
 class StatistiquesFrequentationTab(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
@@ -554,11 +555,11 @@ class StatistiquesFrequentationTab(AutoTab):
         self.periodechoice = wx.Choice(self)
         for index, month in enumerate(months):
             self.periodechoice.Append(month, [index])
-        self.periodechoice.Append("----") # TODO changer ça 
+        self.periodechoice.Append("----")  # TODO changer ça
         for index, trimestre in enumerate(trimestres):
             self.periodechoice.Append(u"%s trimestre" % trimestre, [3*index, 3*index+1, 3*index+2])
         self.periodechoice.SetStringSelection(months[today.month-1])
-        self.periodechoice.Append("----") # TODO changer ça 
+        self.periodechoice.Append("----")  # TODO changer ça
         self.periodechoice.Append(u"Année complète", range(0, 12))
         for choice in (self.sitechoice, self.anneechoice, self.periodechoice):
             self.Bind(wx.EVT_CHOICE, self.OnChangementPeriode, choice)
@@ -650,15 +651,15 @@ class StatistiquesFrequentationTab(AutoTab):
         total = 0.0
         erreurs = []
         for mois in periode:
-            debut = datetime.date(annee, mois+1, 1)
+            debut = datetime.date(annee, mois + 1, 1)
             fin = GetMonthEnd(debut)
-            heures_accueil += GetHeuresAccueil(annee, mois+1, site)
+            heures_accueil += GetHeuresAccueil(annee, mois + 1, site)
             print "[Statistiques %s %d]" % (months[mois], annee)
             for inscrit in creche.inscrits:
                 try:
                     inscriptions = inscrit.GetInscriptions(debut, fin)
                     if inscriptions and (site is None or inscriptions[0].site == site):
-                        facture = Facture(inscrit, annee, mois+1, NO_NUMERO)
+                        facture = Facture(inscrit, annee, mois + 1, NO_NUMERO)
                         heures_contrat += facture.heures_contrat
                         heures_facture += facture.heures_facture
                         heures_contractualisees += facture.heures_contractualisees
@@ -681,7 +682,6 @@ class StatistiquesFrequentationTab(AutoTab):
                         print ' ', u"total contractualisé", facture.total_contractualise
                         print ' ', u"total réalisé :", facture.total_realise
                         print ' ', u"total facturé :", facture.total_facture
-                        
                 except Exception, e:
                     erreurs.append((inscrit, e))
                               
@@ -696,7 +696,7 @@ class StatistiquesFrequentationTab(AutoTab):
                 ctrl.SetValue("-")
         else:
             self.message.Show(False)
-            if creche.nom == "Dessine moi un mouton" or (config.options & HEURES_CONTRAT):
+            if config.options & HEURES_CONTRAT:
                 presences_contrat_heures = heures_contrat
                 presences_facturees_heures = heures_facture
             else:
