@@ -1009,21 +1009,22 @@ class AlertesTab(AutoTab):
 
         self.grid.ForceRefresh()
 
+
 class SalariesTab(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.salaries_choice = {}
         
-        # Les Etats mensuels des salariés
+        # Les etats mensuels des salariés
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés mensuels'), wx.HORIZONTAL)
         self.salaries_choice["releves"] = wx.Choice(self)
         self.releves_monthchoice = wx.Choice(self)
         self.Bind(wx.EVT_CHOICE, self.EvtRelevesSalarieChoice, self.salaries_choice["releves"])
         self.Bind(wx.EVT_CHOICE, self.EvtRelevesMonthChoice, self.releves_monthchoice)
-        button = wx.Button(self, -1, u'Génération')
-        self.Bind(wx.EVT_BUTTON, self.OnGenerationReleve, button)
-        box_sizer.AddMany([(self.salaries_choice["releves"], 1, wx.ALL | wx.EXPAND, 5), (self.releves_monthchoice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+        self.generation_button = wx.Button(self, -1, u'Génération')
+        self.Bind(wx.EVT_BUTTON, self.OnGenerationReleve, self.generation_button)
+        box_sizer.AddMany([(self.salaries_choice["releves"], 1, wx.ALL | wx.EXPAND, 5), (self.releves_monthchoice, 1, wx.ALL | wx.EXPAND, 5), (self.generation_button, 0, wx.ALL, 5)])
         sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
 
         self.SetSizer(sizer)
@@ -1031,7 +1032,6 @@ class SalariesTab(AutoTab):
         self.Layout()
 
     def EvtRelevesSalarieChoice(self, evt):
-        selection = self.releves_monthchoice.GetStringSelection()
         self.releves_monthchoice.Clear()
         salarie = self.salaries_choice["releves"].GetClientData(self.salaries_choice["releves"].GetSelection())
         date = GetFirstMonday()
@@ -1039,21 +1039,22 @@ class SalariesTab(AutoTab):
             if isinstance(salarie, list) or salarie.GetContrat(date):
                 self.releves_monthchoice.Append('%s %d' % (months[date.month - 1], date.year), date)
             date = GetNextMonthStart(date)
-        self.releves_monthchoice.SetSelection(self.releves_monthchoice.GetCount()-1)
+        self.releves_monthchoice.SetSelection(self.releves_monthchoice.GetCount() - 1)
         self.EvtRelevesMonthChoice()
         
     def EvtRelevesMonthChoice(self, evt=None):
-        pass
-    
+        salaries, periode = self.__get_releves_salaries_periode()
+        self.generation_button.Enable(periode is not None and len(salaries) > 0)
+
     def UpdateContents(self):
         for choice in self.salaries_choice.values():
             choice.Clear()
             choice.Append(u'Tous les salariés', creche.salaries)
             
-        salaries = { }
-        autres = { }
+        salaries = {}
+        autres = {}
         for salarie in creche.salaries:
-            if salarie.GetContrat(datetime.date.today()) != None:
+            if salarie.GetContrat(datetime.date.today()) is not None:
                 salaries[GetPrenomNom(salarie)] = salarie
             else:
                 autres[GetPrenomNom(salarie)] = salarie
@@ -1066,7 +1067,7 @@ class SalariesTab(AutoTab):
         
         if len(salaries) > 0 and len(autres) > 0:
             for choice in self.salaries_choice.values():
-                choice.Append(20 * '-', None)
+                choice.Append('-' * 20, None)
         
         keys = autres.keys()
         keys.sort()
