@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 
-##    This file is part of Gertrude.
-##
-##    Gertrude is free software; you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation; either version 3 of the License, or
-##    (at your option) any later version.
-##
-##    Gertrude is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
-##
-##    You should have received a copy of the GNU General Public License
-##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from constants import *
 from functions import *
@@ -38,8 +38,10 @@ couleurs = { SUPPLEMENT: 'A2',
              CONGES: 'C3'
            }
 
+
 class FactureModifications(object):
-    def GetPrenomNom(self, who):
+    @staticmethod
+    def GetPrenomNom(who):
         if config.options & FACTURES_FAMILLES:
             return who.nom
         else:
@@ -180,7 +182,7 @@ class FactureModifications(object):
         for index, inscrit in enumerate(self.inscrits):
             if config.options & FACTURES_FAMILLES:
                 skip = False
-                enfants = GetInscritsFamille(inscrit.famille)
+                enfants = [enfant for enfant in GetInscritsFamille(inscrit.famille) if enfant.HasFacture(self.periode)]
                 for enfant in enfants:
                     if enfant in done:
                         skip = True
