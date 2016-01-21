@@ -76,7 +76,7 @@ class FraisGardePanel(wx.Panel):
         wx.Panel.__init__(self, parent)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         sizer1 = wx.BoxSizer(wx.HORIZONTAL)
-        self.periodechoice = wx.Choice(self, size=(150,-1))
+        self.periodechoice = wx.Choice(self, size=(150, -1))
         self.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.periodechoice)
         sizer1.Add(self.periodechoice, 0, wx.ALIGN_CENTER_VERTICAL)
         self.frais_accueil_button = wx.Button(self, -1, u"Exporter")
@@ -132,19 +132,16 @@ class FraisGardePanel(wx.Panel):
 
     def GetCotisations(self):
         self.cotisations = []
+        date = first_date
         for inscription in self.inscrit.inscriptions:
-            date = inscription.debut
-            while date and date.year < today.year + 2:
+            date = max(date, inscription.debut)
+            while date.year < today.year + 2:
                 try:
                     cotisation = Cotisation(self.inscrit, date, TRACES)
                     self.cotisations.append((cotisation.debut, cotisation.fin, cotisation))
-                    if cotisation.fin and (not inscription.fin or cotisation.fin < inscription.fin):
-                        date = cotisation.fin + datetime.timedelta(1)
-                    else:
-                        date = None
-                except CotisationException, e:
-                    self.cotisations.append((date, inscription.fin, e))
-                    date = None
+                    date = cotisation.fin + datetime.timedelta(1)
+                except CotisationException:
+                    break
     
     def UpdateContents(self):
         self.periodechoice.Clear()
