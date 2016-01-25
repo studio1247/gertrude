@@ -95,11 +95,18 @@ Regimes = [
     u'Régime SNCF'
 ]
 
+# Modes encaissement
+ENCAISSEMENT_ESPECES = 0
+ENCAISSEMENT_VIREMENT = 1
+ENCAISSEMENT_CHEQUE = 2
+ENCAISSEMENT_CESU = 3
+ENCAISSEMENT_TIPI = 4
+
 ModeEncaissementItems = [
-    (u"Espèces", 0),
-    (u"Virement", 1),
-    (u"Chèque", 2),
-    (u"Chèque CESU", 3)
+    (u"Espèces", ENCAISSEMENT_ESPECES),
+    (u"Virement", ENCAISSEMENT_VIREMENT),
+    (u"Chèque", ENCAISSEMENT_CHEQUE),
+    (u"Chèque CESU", ENCAISSEMENT_CESU)
 ]
 
 # Nombre de semaines de reference

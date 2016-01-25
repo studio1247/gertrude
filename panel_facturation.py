@@ -349,6 +349,7 @@ class ReglementsTab(AutoTab):
         self.sizer.Add(self.choice, 0, wx.ALL|wx.EXPAND, 5)
         self.grid = wx.grid.Grid(self)
         self.grid.CreateGrid(0, 4)
+        self.grid.EnableEditing(False)
         self.grid.SetRowLabelSize(50)
         self.grid.SetColLabelValue(0, "Date")
         self.grid.SetColLabelValue(1, "Type")
