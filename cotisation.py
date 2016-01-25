@@ -215,7 +215,7 @@ class Cotisation(object):
         self.AjustePeriode((debut, fin))
         
         if self.fin is None:
-            self.fin = self.debut + datetime.timedelta(3 * 365)
+            self.fin = today + datetime.timedelta(2 * 365)
 
         if len(errors) > 0:
             raise CotisationException(errors)
