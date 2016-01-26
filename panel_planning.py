@@ -93,6 +93,7 @@ class DayPlanningPanel(PlanningWidget):
                 line.inscription = inscription
                 line.options |= COMMENTS|ACTIVITES
                 line.summary = SUMMARY_ENFANT
+
                 def GetHeuresEnfant(line):
                     heures = line.GetNombreHeures()
                     if line.reference:
@@ -103,6 +104,7 @@ class DayPlanningPanel(PlanningWidget):
                         return GetHeureString(heures) + '/' + GetHeureString(heures_reference)
                     else:
                         return None
+
                 line.GetDynamicText = GetHeuresEnfant
                 if creche.temps_facturation == FACTURATION_FIN_MOIS:
                     date = GetMonthStart(self.date)
@@ -135,6 +137,7 @@ class DayPlanningPanel(PlanningWidget):
                 line.sublabel = contrat.fonction
                 line.contrat = contrat
                 line.day = self.date.weekday()
+
                 def GetHeuresSalarie(line):
                     date = line.date - datetime.timedelta(line.date.weekday())
                     heures_semaine = 0
@@ -148,21 +151,22 @@ class DayPlanningPanel(PlanningWidget):
                             heures_jour = heures
                         date += datetime.timedelta(1)
                     return GetHeureString(heures_jour) + '/' + GetHeureString(heures_semaine)
+
                 line.GetDynamicText = GetHeuresSalarie
                 line.summary = SUMMARY_SALARIE
                 self.lignes_salaries.append(line)
         self.lignes_salaries.sort(key=lambda line: line.label)
 
+        lines = self.lignes_enfants[:]
         if self.lignes_salaries:
-            self.lignes_enfants.append(u"Salariés")
-        self.SetLines(self.lignes_enfants + self.lignes_salaries)
+            lines.append(u"Salariés")
+            lines += self.lignes_salaries
+        self.SetLines(lines)
 
     def GetSummaryDynamicText(self):
         heures = 0.0
-        for line in self.lines:
-            if line is None:
-                break
-            elif not isinstance(line, basestring):
+        for line in self.lignes_enfants:
+            if not isinstance(line, basestring):
                 heures += line.GetNombreHeures()
                 day = line.day
 
@@ -173,7 +177,7 @@ class DayPlanningPanel(PlanningWidget):
             else:
                 den = creche.GetHeuresAccueil(day)
             if den > 0:
-                text += " / " + "%.1f%%" % (heures * 100 / den)
+                text += " /  %.1f%%" % (heures * 100 / den)
             return text
         else:
             return None
