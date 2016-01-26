@@ -764,11 +764,12 @@ def GetActivitiesSummary(creche, lines):
                 if value < PREVISIONNEL+CLOTURE:
                     value &= ~(PREVISIONNEL+CLOTURE)
                     if value in creche.activites:
-                        for i in range(start, end):
-                            if value in activites:
-                                activites[value][i][line.summary-1] += 1
-                                if line.summary == SUMMARY_SALARIE and activite_salaries:
-                                    activite_salaries[i][0] += 1
+                        if value == 0:
+                            for i in range(start, end):
+                                if value in activites:
+                                    activites[value][i][line.summary-1] += 1
+                                    if line.summary == SUMMARY_SALARIE and activite_salaries:
+                                        activite_salaries[i][0] += 1
                                     
             for key in line.activites_sans_horaires:
                 if key in activites_sans_horaires:
