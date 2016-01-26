@@ -310,7 +310,7 @@ class Cotisation(object):
                     self.semaines_periode = GetNombreSemainesPeriode(debut_inscription, self.fin_inscription)
                     self.nombre_factures = GetNombreFacturesContrat(debut_inscription, self.fin_inscription)
                     self.prorata_effectue = True
-                elif creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
+                elif creche.repartition == REPARTITION_MENSUALISATION_CONTRAT or creche.repartition == REPARTITION_SANS_MENSUALISATION:
                     if self.fin_inscription is None:
                         errors.append(u" - La période d'inscription n'a pas de fin.")
                         raise CotisationException(errors)
