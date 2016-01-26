@@ -808,7 +808,7 @@ class PlanningSummaryPanel(BufferedWindow):
         new_activitites_count = len(self.activites)
         if self.activities_count != new_activitites_count:
             self.activities_count = new_activitites_count
-            self.SetMinSize((-1, 2+20*new_activitites_count))
+            self.SetMinSize((-1, 2 + 20 * new_activitites_count))
             self.GetParent().sizer.Layout()
 
         self.ForceRefresh()
@@ -859,8 +859,8 @@ class PlanningSummaryPanel(BufferedWindow):
                 dc.SetPen(wx.BLACK_PEN)
                 dc.SetBrush(wx.WHITE_BRUSH)
                 w, h = dc.GetTextExtent(text)
-                dc.DrawRectangle(x, 4, w+5, 15)
-                dc.DrawText(text, x+2, 4 + (15-h)/2)
+                dc.DrawRectangle(x, 4, w + 5, 15)
+                dc.DrawText(text, x + 2, 4 + (15 - h) / 2)
             
         dc.EndDrawing()
 
@@ -882,8 +882,8 @@ class PlanningSummaryPanel(BufferedWindow):
             else:
                 nv, nw = line[x]
 
-            if (self.options & TWO_PARTS) and activity == 0 and (nw == 0 or nv > creche.GetCapacite() or float(nv)/nw > 6.5):
-                nw = activity|SUPPLEMENT
+            if (self.options & TWO_PARTS) and activity == 0 and (nw == 0 or nv > creche.GetCapacite() or float(nv) / nw > 6.5):
+                nw = activity | SUPPLEMENT
             else:
                 nw = activity
                 
