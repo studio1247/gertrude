@@ -224,6 +224,29 @@ class FactureModifications(object):
                 if clone.hasAttribute("text:anchor-page-number"):
                     clone.setAttribute("text:anchor-page-number", str(index+1))
 
+                tables = clone.getElementsByTagName('table:table')
+                for table in tables:
+                    table_name = table.getAttribute('table:name')
+                    # Le(s) tableau(x) des montants détaillés
+                    if table_name == 'Montants':
+                        for i, facture in enumerate(factures):
+                            if i < len(factures) - 1:
+                                montants_table = table.cloneNode(1)
+                                clone.insertBefore(montants_table, table)
+                            else:
+                                montants_table = table
+                            montants_table.setAttribute('table:name', "Montants%d" % (i + 1))
+                            rows = montants_table.getElementsByTagName('table:table-row')
+                            for row in rows:
+                                prettyxml = row.toprettyxml()
+                                if (("&lt;frais-inscription&gt;" in prettyxml and not facture.frais_inscription) or
+                                   ("&lt;correction&gt;" in prettyxml and not facture.correction) or
+                                   ("&lt;supplement-activites&gt;" in prettyxml and not facture.supplement_activites) or
+                                   ("&lt;supplement&gt;" in prettyxml and not facture.supplement) or
+                                   ("&lt;deduction&gt;" in prettyxml and not facture.deduction)):
+                                    montants_table.removeChild(row)
+                            ReplaceTextFields(montants_table, facture.fields)
+
                 sections = clone.getElementsByTagName('text:section')
                 recap_section_found = False
                 for section in sections:
@@ -238,34 +261,13 @@ class FactureModifications(object):
                             else:
                                 section_clone = section
                             self.FillRecapSection(section_clone, facture)
-                if not recap_section_found:
-                    self.FillRecapSection(clone, facture)
-
-                tables = clone.getElementsByTagName('table:table')
-                for table in tables:
-                    table_name = table.getAttribute('table:name')
-                    # Le(s) tableau(x) des montants détaillés
-                    if table_name == 'Montants':
-                        for i, facture in enumerate(factures):
-                            if i < len(factures) - 1:
-                                montants_table = table.cloneNode(1)
-                                clone.insertBefore(montants_table, table)
-                            else:
-                                montants_table = table
-                            rows = montants_table.getElementsByTagName('table:table-row')
-                            for row in rows:
-                                prettyxml = row.toprettyxml()
-                                if (("&lt;frais-inscription&gt;" in prettyxml and not facture.frais_inscription) or
-                                   ("&lt;correction&gt;" in prettyxml and not facture.correction) or
-                                   ("&lt;supplement-activites&gt;" in prettyxml and not facture.supplement_activites) or
-                                   ("&lt;supplement&gt;" in prettyxml and not facture.supplement) or
-                                   ("&lt;deduction&gt;" in prettyxml and not facture.deduction)):
-                                    montants_table.removeChild(row)
-                            ReplaceTextFields(montants_table, facture.fields)
                                 
                 # Les autres champs de la facture
                 facture_fields = fields + GetFamilleFields(inscrit.famille) + [('total', total_facture, FIELD_EUROS)] + GetFactureFields(factures[0])
                 ReplaceTextFields(clone, facture_fields)
+
+                if not recap_section_found:
+                    self.FillRecapSection(clone, facture)
 
         for template in templates:
             doc.removeChild(template)
