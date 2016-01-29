@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 
-##    This file is part of Gertrude.
-##
-##    Gertrude is free software; you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation; either version 3 of the License, or
-##    (at your option) any later version.
-##
-##    Gertrude is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
-##
-##    You should have received a copy of the GNU General Public License
-##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from constants import *
 from functions import *
@@ -24,6 +24,7 @@ from ooffice import *
 template_total_lines_count = 19
 template_first_line = 4
 template_lines_count = 8
+
 
 class EtatsTrimestrielsModifications(object):
     def __init__(self, site, annee):
@@ -196,8 +197,8 @@ class EtatsTrimestrielsModifications(object):
         ReplaceFields(lignes.item(premiere_ligne), [('annee', self.annee)])
 
         # Les mois
-        fields = [('mois(%d)' % (mois+1), months_abbrev[mois].upper()) for mois in range(12)]
-        ReplaceFields(lignes.item(premiere_ligne+2), fields)
+        fields = [('mois(%d)' % (mois + 1), months_abbrev[mois].upper()) for mois in range(12)]
+        ReplaceFields(lignes.item(premiere_ligne + 2), fields)
 
         # Les valeurs
         template = lignes.item(premiere_ligne+3)
@@ -215,7 +216,7 @@ class EtatsTrimestrielsModifications(object):
             # Calcul du nombre d'heures pour chaque mois
             for mois in range(12):
                 try:
-                    facture = self.get_facture(inscrit, mois+1)
+                    facture = self.get_facture(inscrit, mois + 1)
                 except:
                     continue
                 

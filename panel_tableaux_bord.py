@@ -673,9 +673,9 @@ class StatistiquesFrequentationTab(AutoTab):
                         cotisations_facturees += facture.total_facture
                         total += facture.total
                         print inscrit.prenom, inscrit.nom, facture.date
-                        print ' ', u"heures contractualisées :", facture.heures_contractualisees, facture.heures_contrat
+                        print ' ', u"heures contractualisées :", facture.heures_contractualisees, ", heures contrat :", facture.heures_contrat
                         print ' ', u"heures réalisées :", facture.heures_realisees
-                        print ' ', u"heures facturées :", facture.heures_facturees, facture.heures_facture
+                        print ' ', u"heures facturées :", facture.heures_facturees, ", heures facture :", facture.heures_facture
                         print ' ', u"jours contractualisés :", facture.jours_contractualises
                         print ' ', u"jours réalisés :", facture.jours_realises
                         print ' ', u"jours facturés :", facture.jours_factures
