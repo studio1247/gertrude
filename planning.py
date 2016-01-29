@@ -732,7 +732,7 @@ class PlanningInternalPanel(wx.Window):
         width = max(self.width, self.GetParent().GetSize()[0])
         count = len(self.lines)
         if count > 0:
-            self.SetSize((width, count*LINE_HEIGHT))
+            self.SetMinSize((width, count*LINE_HEIGHT))
         else:
             self.SetSize(self.parent.GetSize())
             self.Refresh()

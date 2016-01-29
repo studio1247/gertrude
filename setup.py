@@ -62,7 +62,6 @@ elif "linux" in sys.platform:
     if not os.path.exists("./gertrude.py"):
         os.symlink("./gertrude.pyw", "./gertrude.py")
     
-    from gertrude import VERSION
     from py2deb import Py2deb
 
     p = Py2deb("gertrude")
