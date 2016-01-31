@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 
-##    This file is part of Gertrude.
-##
-##    Gertrude is free software; you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation; either version 3 of the License, or
-##    (at your option) any later version.
-##
-##    Gertrude is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
-##
-##    You should have received a copy of the GNU General Public License
-##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import __builtin__
 import sys, os.path, shutil, time
@@ -32,18 +32,22 @@ else:
   CONFIG_PATHS = ["./", GERTRUDE_DIRECTORY + "/", "/etc/gertrude/"]
 DEMO_DATABASE = "demo.db"
 
+
 class Database(object):
     def __init__(self, section=None, filename=DEFAULT_DATABASE):
         self.section = section
         self.filename = filename
         self.connection = FileConnection(filename)
+        self.tipi = ""
+
 
 class Section(object):
     def __init__(self, database):
         self.database = database
         self.numfact = None
         self.codeclient = None
-        
+
+
 class Config(object):
     def __init__(self):
         self.filename = CONFIG_FILENAME
@@ -62,6 +66,7 @@ class Config(object):
         self.codeclient = self.sections[section].codeclient
 
 __builtin__.config = Config()
+
 
 def getOptions(parser):
     options = 0
@@ -156,7 +161,8 @@ def getField(parser, section, field):
             return parser.get(DEFAULT_SECTION, field)
         except:
             return None
-        
+
+
 def getDatabase(parser, section):
     try:
         filename = parser.get(section, "database")
@@ -167,7 +173,7 @@ def getDatabase(parser, section):
             filename = DEFAULT_DATABASE
 
     database = Database(section, filename)
-    
+
     try:
         url = parser.get(section, "url")
     except:
@@ -182,21 +188,24 @@ def getDatabase(parser, section):
             identity = parser.get(section, "identity")
         except:
             identity = ""
-        proxy_info = { }
         try:
-            proxy_info = { 'host' : parser.get(DEFAULT_SECTION, "proxy-host"),
-                           'port' : int(parser.get(DEFAULT_SECTION, "proxy-port")),
-                         }
+            proxy_info = {'host': parser.get(DEFAULT_SECTION, "proxy-host"),
+                          'port': int(parser.get(DEFAULT_SECTION, "proxy-port")),
+                          }
             try:
-                proxy_user_info = {'user' : parser.get(DEFAULT_SECTION, "proxy-user"),
-                                   'pass' : parser.get(DEFAULT_SECTION, "proxy-pass")
-                                  }
+                proxy_user_info = {'user': parser.get(DEFAULT_SECTION, "proxy-user"),
+                                   'pass': parser.get(DEFAULT_SECTION, "proxy-pass")
+                                   }
                 proxy_info.extend(proxy_user_info)
             except:
                 pass
         except:
             proxy_info = None
         database.connection = HttpConnection(url, filename, identity, auth_info, proxy_info)
+        try:
+            database.tipi = parser.get(section, "tipi")
+        except:
+            pass
     elif url.startswith("file://"):
         try:
             identity = parser.get(section, "identity")
@@ -205,7 +214,8 @@ def getDatabase(parser, section):
         database.connection = SharedFileConnection(url[7:], filename, identity)
         
     return database
-    
+
+
 def LoadConfig(progress_handler=default_progress_handler):
     progress_handler.display(u"Chargement de la configuration ...")
     
@@ -252,6 +262,7 @@ def LoadConfig(progress_handler=default_progress_handler):
         config.sections[None] = Section(Database())
     if len(config.sections) == 1:
         config.setSection(config.sections.keys()[0])
+
 
 def SaveConfig(progress_handler):
     parameters = {}

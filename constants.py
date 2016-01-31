@@ -102,11 +102,13 @@ ENCAISSEMENT_CHEQUE = 2
 ENCAISSEMENT_CESU = 3
 ENCAISSEMENT_TIPI = 4
 
+ModesEncaissement = (u"Espèces", u"Virement", u"Chèque", u"Chèque CESU", u"TIPI")
+
 ModeEncaissementItems = [
     (u"Espèces", ENCAISSEMENT_ESPECES),
     (u"Virement", ENCAISSEMENT_VIREMENT),
     (u"Chèque", ENCAISSEMENT_CHEQUE),
-    (u"Chèque CESU", ENCAISSEMENT_CESU)
+    (u"Chèque CESU", ENCAISSEMENT_CESU),
 ]
 
 # Nombre de semaines de reference
@@ -140,12 +142,12 @@ REPARTITION_MENSUALISATION_CONTRAT = 3
 REVENUS_YM2 = 0
 REVENUS_CAFPRO = 1
 
-# Types des tarifs speciaux
+# Types des tarifs spéciaux
 TARIF_SPECIAL_MAJORATION = 0
 TARIF_SPECIAL_REDUCTION = 1
 TARIF_SPECIAL_REMPLACEMENT = 2
 
-# Unites des tarif speciaux
+# Unites des tarif spéciaux
 TARIF_SPECIAL_UNITE_EUROS = 0
 TARIF_SPECIAL_UNITE_POURCENTAGE = 1
 TARIF_SPECIAL_UNITE_EUROS_PAR_HEURE = 2
@@ -156,7 +158,7 @@ DEDUCTION_MALADIE_SANS_CARENCE = 0
 DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_OUVRES = 1
 DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES = 2
 
-# Mode de traitement des jours feries
+# Mode de traitement des jours fériés
 JOURS_FERIES_NON_DEDUITS = 0
 JOURS_FERIES_DEDUITS_ANNUELLEMENT = 1
 
@@ -170,9 +172,9 @@ ACTIVITES_FACTUREES_JOURNEE = 1
 ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION = 3
 
 # Options des conges
-ACCUEIL_NON_FACTURE = 1 #  jours de nettoyage par exemple
-MOIS_SANS_FACTURE = 2 # si présence dans cette periode (mois d'août par exemple), elle est répartie sur les autres mois de l'année
-MOIS_FACTURE_UNIQUEMENT_HEURES_SUPP = 4 # si présence dans cette periode (mois d'août par exemple), le contrat réparti sur les autres mois de l'année, seules les suppléments / déductions sont facturés
+ACCUEIL_NON_FACTURE = 1  # jours de nettoyage par exemple
+MOIS_SANS_FACTURE = 2  # si présence dans cette periode (mois d'août par exemple), elle est répartie sur les autres mois de l'année
+MOIS_FACTURE_UNIQUEMENT_HEURES_SUPP = 4  # si présence dans cette periode (mois d'août par exemple), le contrat réparti sur les autres mois de l'année, seules les suppléments / déductions sont facturés
 
 # Modes d'arrondi des heures de presence
 SANS_ARRONDI = 0
@@ -211,10 +213,10 @@ HOPITAL = -3
 MALADE = -2
 VACANCES = -1
 ABSENT = 0
-PRESENT = 1 << 0 # activité 0
-CLOTURE = 1 << 28 # pas d'activité > 27 !
+PRESENT = 1 << 0  # activité 0
+CLOTURE = 1 << 28  # pas d'activité > 27 !
 SUPPLEMENT = 1 << 29
-PREVISIONNEL = 1 << 30 # flag previsionnel
+PREVISIONNEL = 1 << 30  # flag previsionnel
 
 # Types des champs OpenOffice
 FIELD_EUROS = 1
@@ -241,11 +243,11 @@ PLAGE_INSECABLE = 1
 
 # Paramètres pour les factures
 NO_ADDRESS = 1 << 0
-NO_NOM     = 1 << 1
+NO_NOM = 1 << 1
 NO_REVENUS = 1 << 2
 NO_PARENTS = 1 << 3
-NO_NUMERO  = 1 << 4
-TRACES     = 1 << 5
+NO_NUMERO = 1 << 4
+TRACES = 1 << 5
 DEPART_ANTICIPE = 1 << 6
 
 # Tranches PAJE

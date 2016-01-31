@@ -24,19 +24,19 @@ from ooffice import *
 PRESENCE_NON_FACTUREE = 256
 CONGES = 257
 
-couleurs = { SUPPLEMENT: 'A2',
-             MALADE: 'B2',
-             HOPITAL: 'B2',
-             MALADE_SANS_JUSTIFICATIF: 'B2',
-             PRESENT: 'C2',
-             VACANCES: 'D2',
-             ABSENT: 'E2',
-             PRESENCE_NON_FACTUREE: 'A3',
-             ABSENCE_NON_PREVENUE: 'B3',
-             CONGES_DEPASSEMENT: 'D3',
-             ABSENCE_CONGE_SANS_PREAVIS: 'B3',
-             CONGES: 'C3'
-           }
+couleurs = {SUPPLEMENT: 'A2',
+            MALADE: 'B2',
+            HOPITAL: 'B2',
+            MALADE_SANS_JUSTIFICATIF: 'B2',
+            PRESENT: 'C2',
+            VACANCES: 'D2',
+            ABSENT: 'E2',
+            PRESENCE_NON_FACTUREE: 'A3',
+            ABSENCE_NON_PREVENUE: 'B3',
+            CONGES_DEPASSEMENT: 'D3',
+            ABSENCE_CONGE_SANS_PREAVIS: 'B3',
+            CONGES: 'C3'
+            }
 
 
 class FactureModifications(object):
@@ -193,12 +193,14 @@ class FactureModifications(object):
                     continue
             else:
                 enfants = [inscrit]
-            
+
+            prenoms = []
             factures = []
             total_facture = 0.0
             has_errors = False
             for enfant in enfants:
                 try:
+                    prenoms.append(enfant.prenom)
                     facture = Facture(enfant, self.periode.year, self.periode.month, options=TRACES)
                     total_facture += facture.total
                 except CotisationException, e:
@@ -263,7 +265,10 @@ class FactureModifications(object):
                             self.FillRecapSection(section_clone, facture)
                                 
                 # Les autres champs de la facture
-                facture_fields = fields + GetFamilleFields(inscrit.famille) + [('total', total_facture, FIELD_EUROS)] + GetFactureFields(factures[0])
+                solde = inscrit.CalculeSolde(self.periode)
+                facture_fields = fields + GetFamilleFields(inscrit.famille) + \
+                                 [('total', total_facture, FIELD_EUROS), ('solde', solde, FIELD_EUROS), ('prenoms', ", ".join(prenoms)), ('montant-a-regler', total_facture - solde, FIELD_EUROS), ('url-tipi', GetUrlTipi(inscrit.famille))] + \
+                                 GetFactureFields(factures[0])
                 ReplaceTextFields(clone, facture_fields)
 
                 if not recap_section_found:
@@ -274,3 +279,4 @@ class FactureModifications(object):
         
         #print doc.toprettyxml() 
         return errors
+

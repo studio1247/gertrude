@@ -120,8 +120,10 @@ class FactureFinMois(object):
         self.raison_deduction = set()
         self.raison_supplement = set()
         self.supplement_activites = 0.0
+        self.heures_supplement_activites = {}
         self.detail_supplement_activites = {}
         for value in creche.activites:
+            self.heures_supplement_activites[creche.activites[value].label] = 0.0
             self.detail_supplement_activites[creche.activites[value].label] = 0.0
         self.previsionnel = False
         self.cloture = False
@@ -304,12 +306,13 @@ class FactureFinMois(object):
                                     activite = creche.activites[value]
                                     tarif = activite.EvalTarif(self.inscrit, date)
                                     self.supplement_activites += tarif
+                                    self.heures_supplement_activites[activite.label] += 1
                                     self.detail_supplement_activites[activite.label] += tarif
 
                         if 0 < heures_realisees_non_facturees == heures_realisees:
                             self.jours_presence_non_facturee[date] = heures_realisees_non_facturees
 
-                        realise_non_facture = cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees+heures_realisees_non_facturees) - cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees)
+                        realise_non_facture = cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees + heures_realisees_non_facturees) - cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees)
                         cotisation.total_realise_non_facture += realise_non_facture
                         self.total_realise_non_facture += realise_non_facture
 
@@ -344,14 +347,18 @@ class FactureFinMois(object):
                         if key in creche.activites:
                             activite = creche.activites[key]
                             compteur = semaine.activities[key]
-                            if activite.mode == MODE_SANS_HORAIRES:
-                                tarif = compteur.value * activite.EvalTarif(inscrit, monday)
-                                self.supplement_activites += tarif
-                                self.detail_supplement_activites[activite.label] += tarif
-                            else:
+                            if activite.value == 0:
                                 self.heures_realisees += compteur.value
                                 self.heures_facturees_par_mode[cotisation.mode_garde] += compteur.value
                                 self.cotisation_mensuelle += compteur.value * cotisation.montant_heure_garde
+                            else:
+                                tarif = activite.EvalTarif(inscrit, monday)
+                                if tarif == -1:
+                                    tarif = cotisation.montant_heure_garde
+                                total = compteur.value * tarif
+                                self.supplement_activites += total
+                                self.heures_supplement_activites[activite.label] += compteur.value
+                                self.detail_supplement_activites[activite.label] += total
                 monday += datetime.timedelta(7)
             
         if options & NO_NUMERO:
@@ -526,7 +533,7 @@ class FactureFinMois(object):
         self.frais_inscription = 0.0
         self.frais_inscription_reservataire = 0.0    
         for inscription in self.inscrit.inscriptions:
-            if inscription.frais_inscription and inscription.debut and inscription.debut >= self.debut_recap and inscription.debut <= self.fin_recap:
+            if inscription.frais_inscription and inscription.debut and self.debut_recap <= inscription.debut <= self.fin_recap:
                 if inscription.reservataire:
                     self.frais_inscription_reservataire += inscription.frais_inscription
                 else:
@@ -534,7 +541,7 @@ class FactureFinMois(object):
 
         self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction + self.correction
         self.total_facture = self.total + self.report_cotisation_mensuelle
-        
+
         if options & TRACES:
             for var in ["heures_contractualisees", "heures_facturees", "heures_supplementaires", "heures_contractualisees_realisees", "heures_realisees_non_facturees", "cotisation_mensuelle", "supplement", "deduction", "total"]:
                 print "", var, ':', eval("self.%s" % var)  
@@ -544,6 +551,18 @@ class FactureFinMois(object):
         for activite in activites:
             result += self.detail_supplement_activites[activite]
         return locale.format("%+.2f", result)
+
+    def formule_heures_supplement_activites(self, activites):
+        result = 0.0
+        for activite in activites:
+            result += self.heures_supplement_activites[activite]
+        return GetHeureString(result)
+
+    def formule_compte_supplement_activites(self, activites):
+        result = 0.0
+        for activite in activites:
+            result += self.heures_supplement_activites[activite]
+        return "%d" % result
 
     def Cloture(self, date=None):
         if not self.cloture:
@@ -557,7 +576,8 @@ class FactureFinMois(object):
 
     def Restore(self):
         return self
-    
+
+
 class FactureDebutMois(FactureFinMois):
     def __init__(self, inscrit, annee, mois, options=0):
         FactureFinMois.__init__(self, inscrit, annee, mois, options)
@@ -580,7 +600,8 @@ class FactureDebutMois(FactureFinMois):
         self.raison_deduction = self.facture_precedente.raison_deduction
         self.raison_supplement = self.facture_precedente.raison_supplement
         self.previsionnel |= self.facture_precedente.previsionnel
-        
+
+
 class FactureDebutMoisContrat(FactureDebutMois):
     def __init__(self, inscrit, annee, mois, options=0):
         FactureDebutMois.__init__(self, inscrit, annee, mois, options)
@@ -588,8 +609,10 @@ class FactureDebutMoisContrat(FactureDebutMois):
         self.supplement = self.facture_precedente.supplement
         self.deduction = self.facture_precedente.deduction
         self.supplement_activites = self.facture_precedente.supplement_activites
+        self.heures_supplement_activites = self.facture_precedente.heures_supplement_activites
         self.detail_supplement_activites = self.facture_precedente.detail_supplement_activites
         self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction + self.correction
+
 
 class FactureDebutMoisPrevisionnel(FactureDebutMois):
     def __init__(self, inscrit, annee, mois, options=0):
@@ -628,6 +651,7 @@ class FactureDebutMoisPrevisionnel(FactureDebutMois):
                 date += datetime.timedelta(1)
             FactureFinMois.Cloture(self)       
 
+
 def CreateFacture(inscrit, annee, mois, options=0):
     if creche.temps_facturation == FACTURATION_FIN_MOIS:
         return FactureFinMois(inscrit, annee, mois, options)
@@ -650,9 +674,9 @@ class FactureCloturee:
         self.deduction = deduction
         self.facture = None
         
-    def Restore(self):
+    def Restore(self, options=0):
         if not self.facture:
-            self.facture = CreateFacture(self.inscrit, self.date.year, self.date.month)
+            self.facture = CreateFacture(self.inscrit, self.date.year, self.date.month, options=options)
             self.facture.cotisation_mensuelle = self.cotisation_mensuelle
             self.facture.total_contractualise = self.total_contractualise
             self.facture.total_realise = self.total_realise
@@ -676,7 +700,6 @@ class FactureCloturee:
 def Facture(inscrit, annee, mois, options=0):
     date = datetime.date(annee, mois, 1)
     if date in inscrit.factures_cloturees:
-        return inscrit.factures_cloturees[date].Restore()        
+        return inscrit.factures_cloturees[date].Restore(options)
     else:
         return CreateFacture(inscrit, annee, mois, options)
-    

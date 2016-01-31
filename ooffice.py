@@ -176,11 +176,23 @@ def ReplaceTextFields(dom, _fields):
     evalFields(fields)
     # print dom.toprettyxml()
     # print fields
-    
-    if dom.__class__ == xml.dom.minidom.Element and dom.nodeName in ["text:p", "text:span"]:
+
+    nodes = dom.getElementsByTagName("text:a")
+    for node in nodes:
+        href = node.getAttribute("xlink:href")
+        for field, value, text in fields:
+            tag = '%%3C%s%%3E' % field
+            if tag in href:
+                if not isinstance(text, basestring):
+                    text = str(text)
+                node.setAttribute("xlink:href", text)
+                break
+
+    if dom.__class__ == xml.dom.minidom.Element and dom.nodeName in ["text:p", "text:h", "text:span"]:
         nodes = [dom] + dom.getElementsByTagName("text:span")
     else:
-        nodes = dom.getElementsByTagName("text:p") + dom.getElementsByTagName("text:span")
+        nodes = dom.getElementsByTagName("text:p") + dom.getElementsByTagName("text:h") + dom.getElementsByTagName("text:span")
+
     for node in nodes:
         for child in node.childNodes:
             if child.nodeType == child.TEXT_NODE:
@@ -254,7 +266,7 @@ def ReplaceFields(cellules, _fields):
                 if tag in formula:
                     formula = formula.replace(tag, text)
             cellule.setAttribute("table:formula", formula)
-        nodes = cellule.getElementsByTagName("text:p")
+        nodes = cellule.getElementsByTagName("text:p") + cellule.getElementsByTagName("text:h")
         for node in nodes:
             for child in node.childNodes:
                 if child.nodeType == node.TEXT_NODE:
@@ -573,6 +585,7 @@ dde_server = None
 def StartAcrobatReader(filename):
     global dde_server
     import win32api
+    import win32ui
     import dde
     
     filename = unicode(os.path.abspath(filename))

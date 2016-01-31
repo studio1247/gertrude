@@ -942,8 +942,8 @@ def GetFactureFields(facture):
         else:
             heures_contractualisees = facture.heures_contractualisees
             heures_facturees = facture.heures_facturees
-                
         result = [('mois', '%s %d' % (months[facture.mois - 1], facture.annee)),
+                  ('mois+1', '%s %d' % ((months[facture.mois], facture.annee) if facture.mois < 12 else (0, facture.annee + 1))),
                   ('de-mois', '%s %d' % (GetDeMoisStr(facture.mois - 1), facture.annee)),
                   ('de-mois-recap', '%s %d' % (GetDeMoisStr(facture.debut_recap.month - 1), facture.debut_recap.year)),
                   ('date', date2str(facture.date)),
@@ -971,6 +971,8 @@ def GetFactureFields(facture):
                   ('raison-supplement', facture.raison_supplement),
                   ('supplement-activites', facture.supplement_activites, FIELD_EUROS),
                   ('supplement_activites', facture.formule_supplement_activites),
+                  ('heures_activites', facture.formule_heures_supplement_activites),
+                  ('compte_activites', facture.formule_compte_supplement_activites),
                   ('majoration', facture.majoration_mensuelle, FIELD_EUROS|FIELD_SIGN),
                   ('frais-inscription', facture.frais_inscription, FIELD_EUROS|FIELD_SIGN),
                   ('site', GetNom(facture.site)),
@@ -983,7 +985,6 @@ def GetFactureFields(facture):
             result.append(('codeclient', facture.inscrit.famille.code_client))
         elif isinstance(config.codeclient, basestring):
             result.append(('codeclient', config.codeclient % {"inscritid": facture.inscrit.idx, "nom": facture.inscrit.nom, "prenom": facture.inscrit.prenom, "nom4p1": GetNom4P1(facture.inscrit, creche.inscrits)}))
-
         return result
     else:
         return [(label, '?') for label in ('mois', 'de-mois', 'de-mois-recap', 'date', 'numfact', 'montant-heure-garde', 'cotisation-mensuelle', 
@@ -1123,3 +1124,7 @@ def GetListePermanences(date):
             for start, end in liste:
                 result.append((start, end, inscrit))
     return result
+
+
+def GetUrlTipi(famille):
+    return config.database.tipi % {"famille": famille.idx}

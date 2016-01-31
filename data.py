@@ -27,6 +27,7 @@ else:
     BACKUPS_DIRECTORY = GERTRUDE_DIRECTORY + '/backups'
 TOKEN_FILENAME = '.token'
 
+
 class HttpConnection(object):
     def __init__(self, url, filename, identity, auth_info=None, proxy_info=None):
         self.url = url

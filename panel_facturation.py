@@ -393,7 +393,7 @@ class ReglementsTab(AutoTab):
         self.grid.SetCellAlignment(index, 2, wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
         self.grid.SetCellAlignment(index, 3, wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
         if isinstance(ligne, Encaissement):
-            moyen = ModeEncaissementItems[ligne.moyen_paiement][0]
+            moyen = ModesEncaissement[ligne.moyen_paiement]
             valeur = ligne.valeur
             self.index += 1
             self.grid.SetRowLabelValue(index, str(self.index))
@@ -432,7 +432,7 @@ class ReglementsTab(AutoTab):
         while date <= fin:
             try:
                 facture = Facture(self.inscrit, date.year, date.month, NO_NUMERO)
-                if facture.date <= fin:
+                if facture.date <= fin and (not creche.cloture_factures or facture.cloture):
                     self.lignes.append(facture)
             except:
                 pass
