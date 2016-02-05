@@ -748,7 +748,7 @@ class Activite(object):
 
     def EvalTarif(self, inscrit, date):
         if self.formule_tarif.strip():
-            enfants = GetEnfantsCount(inscrit, date)
+            enfants = GetEnfantsCount(inscrit, date)[0]
             for tarif in creche.tarifs_speciaux:
                 try:
                     exec("%s = %r" % (tarif.label.lower().replace(" ", "_"), inscrit.famille.tarifs & (1 << tarif.idx)))
