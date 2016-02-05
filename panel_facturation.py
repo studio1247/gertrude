@@ -489,6 +489,7 @@ class FacturationPanel(GPanel):
     name = "Facturation"
     bitmap = GetBitmapFile("facturation.png")
     profil = PROFIL_TRESORIER
+
     def __init__(self, parent):
         GPanel.__init__(self, parent, u'Facturation')
         self.notebook = FacturationNotebook(self)

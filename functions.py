@@ -920,7 +920,7 @@ def GetReglementFields(famille, annee, mois):
     dates = []
     moyens = set()
     for encaissement in famille.encaissements:
-        if encaissement.date and encaissement.date.month == mois:
+        if encaissement.date and encaissement.date.year == annee and encaissement.date.month == mois:
             total += encaissement.valeur
             dates.append(encaissement.date)
             moyens.add(ModeEncaissementItems[encaissement.moyen_paiement][0])

@@ -1,25 +1,26 @@
 # -*- coding: utf-8 -*-
 
-##    This file is part of Gertrude.
-##
-##    Gertrude is free software; you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation; either version 3 of the License, or
-##    (at your option) any later version.
-##
-##    Gertrude is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
-##
-##    You should have received a copy of the GNU General Public License
-##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from constants import *
 from functions import *
 from facture import *
 from cotisation import CotisationException
 from ooffice import *
+
 
 class AppelCotisationsModifications(object):
     def __init__(self, date, options=0):
@@ -113,18 +114,16 @@ class AppelCotisationsModifications(object):
                         facture = Facture(inscrit, self.debut.year, mois, self.options)
                         commentaire = None
                     except CotisationException, e:
-                        facture = None
-                        commentaire = '\n'.join(e.errors)
                         errors[GetPrenomNom(inscrit)] = e.errors
                         continue
-                    fields = inscrit_fields + GetFactureFields(facture) + GetReglementFields(inscrit.famille, self.debut.year, mois) + [('commentaire', commentaire)]            
-                    mois = mois + 1
+                    fields = inscrit_fields + GetFactureFields(facture) + GetReglementFields(inscrit.famille, self.debut.year, mois) + [('commentaire', commentaire)]
+                    mois += 1
                 else:
                     fields = inscrit_fields
                 ReplaceFields(clone, fields)
                 template.insertBefore(clone, lines_template[0])
             for line in lines_template:
-                IncrementFormulas(line, row=+7+mois)
+                IncrementFormulas(line, row=+7 + mois)
             
         for line in lines_template:
             template.removeChild(line)

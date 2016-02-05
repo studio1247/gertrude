@@ -673,6 +673,7 @@ class FactureCloturee:
         self.supplement = supplement
         self.deduction = deduction
         self.facture = None
+        self.cloture = True
         
     def Restore(self, options=0):
         if not self.facture:
@@ -685,6 +686,7 @@ class FactureCloturee:
             self.facture.supplement = self.supplement
             self.facture.deduction = self.deduction
             self.facture.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction + self.facture.correction
+            self.facture.cloture = True
         return self.facture
     
     def Decloture(self):
