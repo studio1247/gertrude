@@ -754,7 +754,10 @@ class Activite(object):
                     exec("%s = %r" % (tarif.label.lower().replace(" ", "_"), inscrit.famille.tarifs & (1 << tarif.idx)))
                 except:
                     pass
-            return eval(self.formule_tarif)
+            try:
+                return eval(self.formule_tarif)
+            except:
+                return 0.0
         else:
             return 0.0
 
