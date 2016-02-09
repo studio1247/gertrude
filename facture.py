@@ -685,7 +685,7 @@ class FactureCloturee:
             self.facture.supplement_activites = self.supplement_activites
             self.facture.supplement = self.supplement
             self.facture.deduction = self.deduction
-            self.facture.total = self.cotisation_mensuelle + self.supplement + self.supplement_activites - self.deduction + self.facture.correction
+            self.facture.total = self.cotisation_mensuelle + self.facture.frais_inscription + self.supplement + self.supplement_activites - self.deduction + self.facture.correction
             self.facture.cloture = True
         return self.facture
     
