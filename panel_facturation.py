@@ -398,7 +398,7 @@ class ReglementsTab(AutoTab):
             self.index += 1
             self.grid.SetRowLabelValue(index, str(self.index))
         else:
-            moyen = "Facture"
+            moyen = "Facture %s" % ligne.inscrit.prenom
             valeur = -ligne.total
             self.grid.SetRowLabelValue(index, "")
         self.total += valeur
@@ -424,18 +424,27 @@ class ReglementsTab(AutoTab):
     def AfficheLignes(self):
         self.EnableLigneAjout()
         self.EffaceLignes()
-        self.lignes = self.inscrit.famille.encaissements[:]
-        debut, fin = self.inscrit.GetPeriodeInscriptions()
+        famille = self.inscrit.famille
+        inscrits = GetInscritsFamille(famille)
+        self.lignes = famille.encaissements[:]
+        debut, fin = None, None
+        for inscrit in inscrits:
+            debut_inscrit, fin_inscrit = inscrit.GetPeriodeInscriptions()
+            if debut is None or debut_inscrit < debut:
+                debut = debut_inscrit
+            if fin is None or fin_inscrit > fin:
+                fin = fin_inscrit
         if fin is None or today < fin:
             fin = today
         date = GetMonthStart(debut)
         while date <= fin:
-            try:
-                facture = Facture(self.inscrit, date.year, date.month, NO_NUMERO)
-                if facture.date <= fin and (not creche.cloture_factures or facture.cloture):
-                    self.lignes.append(facture)
-            except:
-                pass
+            for inscrit in inscrits:
+                try:
+                    facture = Facture(inscrit, date.year, date.month, NO_NUMERO)
+                    if facture.total != 0 and facture.date <= fin and (not creche.cloture_factures or facture.cloture):
+                        self.lignes.append(facture)
+                except:
+                    pass
             date = GetNextMonthStart(date)
         self.lignes.sort(key=lambda ligne: ligne.date)
         self.index = 0
