@@ -509,8 +509,6 @@ class Cotisation(object):
             for key in creche.activites:
                 activite = creche.activites[key]
                 tarif = activite.EvalTarif(self.inscrit, date)
-                if tarif:
-                    print " tarif %s :" % activite.label, tarif
 
         if options & TRACES:
             print
