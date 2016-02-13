@@ -682,7 +682,7 @@ class ReferencePlanningPanel(PlanningWidget):
         lines = []
         if self.inscription:
             for day in range(self.inscription.duree_reference):
-                if JourSemaineAffichable(day):
+                if IsJourSemaineTravaille(day):
                     line = self.inscription.reference[day]
                     line.insert = None
                     line.day = day
@@ -831,7 +831,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         inscription = self.inscrit.inscriptions[self.periode]
         inscription.mode = MODE_5_5
         for i, day in enumerate(inscription.reference):
-            if JourSemaineAffichable(i):
+            if IsJourSemaineTravaille(i):
                 day.SetState(0)
         self.UpdateContents()
     
@@ -839,7 +839,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         history.Append(None)
         inscription = self.inscrit.inscriptions[self.periode]
         for i, day in enumerate(inscription.reference):
-            if i > 0 and JourSemaineAffichable(i):
+            if i > 0 and IsJourSemaineTravaille(i):
                 day.Copy(inscription.reference[0], False)
                 day.Save()
         self.UpdateContents()

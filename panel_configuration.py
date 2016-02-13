@@ -98,7 +98,7 @@ class CrecheTab(AutoTab):
         self.creche_parentale_widgets = (raz_permanences_label, raz_permanences_ctrl)
         grid_sizer.AddMany([raz_permanences_label, (raz_permanences_ctrl, 0, wx.EXPAND)])
         planning = PlanningWidget(self, None, NO_BOTTOM_LINE | NO_ICONS | DRAW_VALUES | NO_SCROLL)
-        planning.SetLines([line for line in creche.tranches_capacite if JourSemaineAffichable(line.jour)])
+        planning.SetLines([line for line in creche.tranches_capacite if IsJourSemaineTravaille(line.jour)])
         grid_sizer.AddMany([wx.StaticText(self, -1, u"Capacité :"), (planning, 1, wx.EXPAND)])
         self.sizer.Add(grid_sizer, 0, wx.EXPAND|wx.ALL, 5)
         
@@ -933,8 +933,12 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([CreateLabelTuple(u"Alerte dépassement capacité dans les plannings :"), (AutoChoiceCtrl(self, creche, 'alerte_depassement_planning', [(u"Activée", True), (u"Désactivée", False)]), 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple(u"Seuil d'alerte dépassement capacité inscriptions (jours) :"), (AutoNumericCtrl(self, creche, 'seuil_alerte_inscription', min=0, max=100, precision=0), 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple(u"Allergies :"), (CreateRedemarrageSizer(AutoTextCtrl(self, creche, 'allergies')), 0, wx.EXPAND)])
+        self.sizer.Add(sizer, 0, wx.EXPAND | wx.ALL, 5)
 
-        self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 5)
+        salaries_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u"Salariés"), wx.VERTICAL)
+        salaries_sizer.AddMany([CreateLabelTuple(u"Nombre de jours de congés payés :"), (AutoNumericCtrl(self, creche, 'conges_payes_salaries', min=0, precision=0), 0, wx.EXPAND)])
+        salaries_sizer.AddMany([CreateLabelTuple(u"Nombre de jours de congés supplémentaires :"), (AutoNumericCtrl(self, creche, 'conges_supplementaires_salaries', min=0, precision=0), 0, wx.EXPAND)])
+        self.sizer.Add(salaries_sizer, 0, wx.EXPAND|wx.ALL, 5)
 
         self.plages_box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u"Plages horaires spéciales"), wx.VERTICAL)
         self.plages_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -1112,7 +1116,8 @@ class ParametersPanel(AutoTab):
         obj = event.GetEventObject()
         value = event.GetClientData()
         obj.AutoChange(value)
-            
+
+
 class TarifHorairePanel(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
@@ -1212,7 +1217,8 @@ class TarifHorairePanel(AutoTab):
         creche.formule_taux_horaire[object.index][1] = float(object.GetValue())
         creche.UpdateFormuleTauxHoraire()
         history.Append(None)
-        
+
+
 class TauxEffortPanel(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
@@ -1317,6 +1323,7 @@ profiles = [(u"Administrateur", PROFIL_ALL),
             (u"Utilisateur lecture seule", PROFIL_LECTURE_SEULE),
             ]
 
+
 class UsersTab(AutoTab):
     def __init__(self, parent):
         global delbmp
@@ -1400,7 +1407,8 @@ class UsersTab(AutoTab):
                 event.Skip(True)
         else:
             event.Skip(True)
-            
+
+
 class ParametresNotebook(wx.Notebook):
     def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
@@ -1492,10 +1500,12 @@ class ParametresNotebook(wx.Notebook):
         self.professeurs_tab_displayed = enable
         self.Layout()
 
+
 class ConfigurationPanel(GPanel):
     name = "Configuration"
     bitmap = GetBitmapFile("configuration.png")
     profil = PROFIL_ADMIN
+
     def __init__(self, parent):
         GPanel.__init__(self, parent, 'Configuration')
         self.notebook = ParametresNotebook(self)

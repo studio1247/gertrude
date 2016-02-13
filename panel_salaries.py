@@ -200,7 +200,7 @@ class PlanningReferenceSalariePanel(PlanningWidget):
         lines = []
         if self.contrat:
             for day in range(self.contrat.duree_reference):
-                if JourSemaineAffichable(day):
+                if IsJourSemaineTravaille(day):
                     line = self.contrat.reference[day]
                     line.insert = None
                     line.label = days[day % 7]
@@ -273,7 +273,7 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
         contrat = self.salarie.contrats[self.periode]
         contrat.mode = MODE_5_5
         for i, day in enumerate(contrat.reference):
-            if JourSemaineAffichable(i):
+            if IsJourSemaineTravaille(i):
                 day.SetState(0)
         self.UpdateContents()
     
@@ -281,7 +281,7 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
         history.Append(None)
         contrat = self.salarie.contrats[self.periode]
         for i, day in enumerate(contrat.reference):
-            if i > 0 and JourSemaineAffichable(i):
+            if i > 0 and IsJourSemaineTravaille(i):
                 day.Copy(contrat.reference[0], False)
                 day.Save()
         self.UpdateContents()

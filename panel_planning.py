@@ -91,7 +91,7 @@ class DayPlanningPanel(PlanningWidget):
                 line.label = GetPrenomNom(inscrit)
                 line.sublabel = ""
                 line.inscription = inscription
-                line.options |= COMMENTS|ACTIVITES
+                line.options |= COMMENTS | ACTIVITES
                 line.summary = SUMMARY_ENFANT
 
                 def GetHeuresEnfant(line):
@@ -134,23 +134,33 @@ class DayPlanningPanel(PlanningWidget):
                     line.key = self.date
                 line.salarie = salarie
                 line.label = GetPrenomNom(salarie)
+                line.options |= COMMENTS
                 line.sublabel = contrat.fonction
                 line.contrat = contrat
                 line.day = self.date.weekday()
 
                 def GetHeuresSalarie(line):
-                    date = line.date - datetime.timedelta(line.date.weekday())
+                    debut_semaine = line.date - datetime.timedelta(line.date.weekday())
+                    fin_semaine = debut_semaine + datetime.timedelta(6)
+                    debut_mois = GetMonthStart(line.date)
+                    fin_mois = GetMonthEnd(line.date)
                     heures_semaine = 0
-                    for i in range(7):
+                    heures_mois = 0
+                    date = min(debut_semaine, debut_mois)
+                    fin = max(fin_semaine, fin_mois)
+                    while date <= fin_mois:
                         if date in line.salarie.journees:
                             heures = line.salarie.journees[date].GetNombreHeures()
                         else:
                             heures = line.contrat.GetJourneeReference(date).GetNombreHeures()
-                        heures_semaine += heures
                         if date == line.date:
                             heures_jour = heures
+                        if debut_semaine <= date <= fin_semaine:
+                            heures_semaine += heures
+                        if date.month == line.date.month:
+                            heures_mois += heures
                         date += datetime.timedelta(1)
-                    return GetHeureString(heures_jour) + '/' + GetHeureString(heures_semaine)
+                    return GetHeureString(heures_jour) + '/' + GetHeureString(heures_semaine) + '/' + GetHeureString(heures_mois)
 
                 line.GetDynamicText = GetHeuresSalarie
                 line.summary = SUMMARY_SALARIE
@@ -300,7 +310,7 @@ class PlanningHorairePanel(PlanningBasePanel):
         delta = datetime.date.today() - first_monday
         semaine = int(delta.days / 7)
         for week_day in range(7):
-            if JourSemaineAffichable(week_day):
+            if IsJourSemaineTravaille(week_day):
                 date = first_monday + datetime.timedelta(semaine * 7 + week_day)
                 planning_panel = DayPlanningPanel(self.notebook, self.activity_choice)
                 self.notebook.AddPage(planning_panel, GetDateString(date))
@@ -332,7 +342,7 @@ class PlanningHorairePanel(PlanningBasePanel):
         monday = self.week_choice.GetClientData(week_selection)
         page_index = 0
         for week_day in range(7):
-            if JourSemaineAffichable(week_day):
+            if IsJourSemaineTravaille(week_day):
                 day = monday + datetime.timedelta(week_day)
                 self.notebook.SetPageText(page_index, GetDateString(day))
                 note = self.notebook.GetPage(page_index)

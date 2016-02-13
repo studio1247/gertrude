@@ -34,6 +34,7 @@ class Day(object):
     exclusive = False
     options = 0
     GetDynamicText = None
+    table_commentaires = None
 
     def __init__(self):
         self.activites = {}
@@ -42,20 +43,6 @@ class Day(object):
         self.readonly = False
         self.commentaire = ""
         self.commentaire_idx = None
-
-    def SetCommentaire(self, commentaire):
-        self.commentaire = commentaire
-        if sql_connection:
-            if self.commentaire_idx is None:
-                print 'nouveau commentaire'
-                result = sql_connection.execute(
-                    'INSERT INTO COMMENTAIRES (idx, inscrit, date, commentaire) VALUES (NULL,?,?,?)',
-                    (self.inscrit_idx, self.date, commentaire))
-                self.commentaire_idx = result.lastrowid
-            else:
-                print 'update commentaire'
-                result = sql_connection.execute('UPDATE COMMENTAIRES SET commentaire=? WHERE idx=?',
-                                                (commentaire, self.commentaire_idx))
 
     def SetActivity(self, start, end, value):
         self.last_heures = None
@@ -479,6 +466,17 @@ class Journee(Day):
         if reference:
             self.Copy(reference, creche.presences_previsionnelles)
 
+    def SetCommentaire(self, commentaire):
+        self.commentaire = commentaire
+        if sql_connection:
+            if self.commentaire_idx is None:
+                print 'nouveau commentaire'
+                result = sql_connection.execute('INSERT INTO COMMENTAIRES (idx, inscrit, date, commentaire) VALUES (NULL,?,?,?)', (self.inscrit_idx, self.date, commentaire))
+                self.commentaire_idx = result.lastrowid
+            else:
+                print 'update commentaire'
+                sql_connection.execute('UPDATE COMMENTAIRES SET commentaire=? WHERE idx=?', (commentaire, self.commentaire_idx))
+
     def InsertActivity(self, start, end, value):
         if sql_connection:
             print 'nouvelle activite %d (%r, %r, %d)' % (self.inscrit_idx, start, end, value),
@@ -508,6 +506,20 @@ class JourneeSalarie(Day):
         self.mode_arrondi = 'arrondi_heures_salaries'
         if reference:
             self.Copy(reference, creche.presences_previsionnelles)
+
+    def SetCommentaire(self, commentaire):
+        self.commentaire = commentaire
+        if sql_connection:
+            if self.commentaire_idx is None:
+                print 'nouveau commentaire'
+                result = sql_connection.execute(
+                    'INSERT INTO COMMENTAIRES_SALARIES (idx, salarie, date, commentaire) VALUES (NULL,?,?,?)',
+                    (self.salarie_idx, self.date, commentaire))
+                self.commentaire_idx = result.lastrowid
+            else:
+                print 'update commentaire'
+                sql_connection.execute('UPDATE COMMENTAIRES_SALARIES SET commentaire=? WHERE idx=?',
+                                                (commentaire, self.commentaire_idx))
 
     def InsertActivity(self, start, end, value):
         if sql_connection:
@@ -821,7 +833,7 @@ class PeriodeReference(SQLObject):
     def GetNombreJoursPresenceSemaine(self):
         jours = 0
         for i in range(self.duree_reference):
-            if JourSemaineAffichable(i) and self.reference[i].GetState() & PRESENT:
+            if IsJourSemaineTravaille(i) and self.reference[i].GetState() & PRESENT:
                 jours += 1
         if self.duree_reference > 7:
             return float(jours) / (self.duree_reference / 7)
@@ -831,7 +843,7 @@ class PeriodeReference(SQLObject):
     def GetNombreHeuresPresenceSemaine(self):
         heures = 0.0
         for i in range(self.duree_reference):
-            if JourSemaineAffichable(i) and self.reference[i].GetState() & PRESENT:
+            if IsJourSemaineTravaille(i) and self.reference[i].GetState() & PRESENT:
                 heures += self.reference[i].GetNombreHeures()
         if self.duree_reference > 7:
             return heures / (self.duree_reference / 7)
@@ -842,7 +854,7 @@ class PeriodeReference(SQLObject):
         jours = 0
         heures = 0.0
         for i in range(self.duree_reference):
-            if JourSemaineAffichable(i) and self.reference[i].GetState() & PRESENT:
+            if IsJourSemaineTravaille(i) and self.reference[i].GetState() & PRESENT:
                 jours += 1
                 heures += self.reference[i].GetNombreHeures()
         return jours, heures
@@ -935,11 +947,50 @@ class Salarie(object):
                 return contrat
         return None
 
+    def GetCongesAcquis(self, annee):
+        ratio = 0.0
+        for contrat in self.contrats:
+            if contrat.debut:
+                debut = max(contrat.debut, datetime.date(annee, 1, 1))
+                fin = datetime.date(annee, 12, 31)
+                if contrat.fin and contrat.fin < fin:
+                    fin = contrat.fin
+                duree_contrat = (fin - debut).days
+                duree_annee = (datetime.date(annee, 12, 31) - datetime.date(annee, 1, 1)).days
+                ratio += float(duree_contrat) / duree_annee * contrat.GetNombreJoursPresenceSemaine() / GetNombreJoursSemaineTravailles()
+        return round(creche.conges_payes_salaries * ratio), round(creche.conges_supplementaires_salaries * ratio)
+
+    def GetContrats(self, date_debut, date_fin):
+        result = []
+        if not date_debut:
+            date_debut = datetime.date.min
+        if not date_fin:
+            date_fin = datetime.date.max
+        for contrat in self.contrats:
+            if contrat.debut:
+                try:
+                    date_debut_periode = contrat.debut
+                    if contrat.fin:
+                        date_fin_periode = contrat.fin
+                    else:
+                        date_fin_periode = datetime.date.max
+                    if date_fin_periode < date_debut_periode:
+                        print "Periode incorrecte pour %s :" % GetPrenomNom(self), date_debut_periode, date_fin_periode
+                        continue
+                    if ((date_debut_periode <= date_debut <= date_fin_periode) or
+                            (date_debut_periode <= date_fin <= date_fin_periode) or
+                            (date_debut < date_debut_periode and date_fin > date_fin_periode)):
+                        result.append(contrat)
+                except:
+                    pass
+        return result
+
     def GetInscription(self, date):
         # proxy...
         return self.GetContrat(date)
 
     def AddConge(self, conge, calcule=True):
+        print "AddConge", conge, calcule
         self.conges.append(conge)
         if calcule:
             self.CalculeJoursConges()
@@ -1162,6 +1213,8 @@ class Creche(object):
         self.changement_groupe_auto = False
         self.allergies = ""
         self.regularisation_fin_contrat = True
+        self.conges_payes_salaries = 25
+        self.conges_supplementaires_salaries = 0
         self.alertes = {}
         self.CalculeJoursConges()
 
@@ -1414,7 +1467,7 @@ class Creche(object):
         if jour is None:
             jours, result = 0, 0.0
             for jour in range(7):
-                if JourSemaineAffichable(jour):
+                if IsJourSemaineTravaille(jour):
                     jours += 1
                     result += self.GetCapacite(jour)
             return result / jours
@@ -1422,7 +1475,7 @@ class Creche(object):
             return self.GetHeuresAccueil(jour) / self.GetAmplitudeHoraire()
         else:
             for start, end, value in self.tranches_capacite[jour].activites:
-                if tranche >= start and tranche < end:
+                if start <= tranche < end:
                     return value
             else:
                 return 0
@@ -1461,7 +1514,8 @@ class Creche(object):
                     'gestion_depart_anticipe', 'alerte_depassement_planning', 'tri_planning', 'tri_inscriptions',
                     'tri_factures', 'smtp_server', 'caf_email', 'mode_accueil_defaut', 'mode_saisie_planning',
                     'last_tablette_synchro', 'changement_groupe_auto', 'allergies',
-                    'regularisation_fin_contrat', 'date_raz_permanences'] and self.idx:
+                    'regularisation_fin_contrat', 'date_raz_permanences',
+                    'conges_payes_salaries', 'conges_supplementaires_salaries'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 

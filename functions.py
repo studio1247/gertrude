@@ -378,7 +378,7 @@ def GetPeriodeString(o):
         return u"Année %d" % o.debut.year
 
 
-def JourSemaineAffichable(day):
+def IsJourSemaineTravaille(day):
     day %= 7
     if days[day] in creche.feries:
         return False
@@ -386,6 +386,14 @@ def JourSemaineAffichable(day):
         return "Week-end" not in creche.feries
     else:
         return True
+
+
+def GetNombreJoursSemaineTravailles():
+    result = 0
+    for day in range(7):
+        if IsJourSemaineTravaille(day):
+            result += 1
+    return result
 
 
 def Select(obj, date):
@@ -1023,7 +1031,7 @@ def SelectValueInChoice(choice, value):
 
 
 def AddYearsToChoice(choice):
-    for year in range(first_date.year, last_date.year+1):
+    for year in range(first_date.year, last_date.year + 1):
         choice.Append(u'Année %d' % year, year)
     choice.SetSelection(today.year-first_date.year)
 
@@ -1031,9 +1039,9 @@ def AddYearsToChoice(choice):
 def AddMonthsToChoice(choice):
     date = first_date
     while date < last_date:
-        choice.Append(u'%s %d' % (months[date.month-1], date.year), date)
+        choice.Append(u'%s %d' % (months[date.month - 1], date.year), date)
         date = GetNextMonthStart(date)
-    choice.SetStringSelection('%s %d' % (months[today.month - 1], today.year))        
+    choice.SetStringSelection('%s %d' % (months[today.month - 1], today.year))
 
 
 def AddWeeksToChoice(choice):
