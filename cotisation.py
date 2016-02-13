@@ -394,6 +394,21 @@ class Cotisation(object):
                 self.cotisation_mensuelle = 0.0
             else:
                 self.cotisation_mensuelle = self.cotisation_periode / self.nombre_factures
+        elif creche.nom == u"LA VOLIERE":
+            if self.enfants_a_charge == 1:
+                tranche = GetTranche(self.assiette_annuelle, [20281.0, 45068.0])
+            elif self.enfants_a_charge == 2:
+                tranche = GetTranche(self.assiette_annuelle, [23350.0, 51889.0])
+            elif self.enfants_a_charge == 3:
+                tranche = GetTranche(self.assiette_annuelle, [27033.0, 60074.0])
+            else:
+                tranche = GetTranche(self.assiette_annuelle, [30716.0, 68259.0])
+            B20 = creche.cout_journalier / 10
+            B2X = B20 * (1.10, 1.15, 1.20)[tranche]
+            self.a = (B20 - B2X) / 229
+            self.b = (230 * B2X - B20) / 229
+            self.montant_heure_garde = (self.a * self.heures_mois + self.b)
+            self.cotisation_mensuelle = self.heures_mois * self.montant_heure_garde
         else:
             if self.enfants_a_charge > 1:
                 self.mode_taux_effort = u'%d enfants à charge' % self.enfants_a_charge

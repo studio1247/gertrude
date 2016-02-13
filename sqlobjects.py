@@ -1215,6 +1215,7 @@ class Creche(object):
         self.regularisation_fin_contrat = True
         self.conges_payes_salaries = 25
         self.conges_supplementaires_salaries = 0
+        self.cout_journalier = 0.0
         self.alertes = {}
         self.CalculeJoursConges()
 
@@ -1515,7 +1516,7 @@ class Creche(object):
                     'tri_factures', 'smtp_server', 'caf_email', 'mode_accueil_defaut', 'mode_saisie_planning',
                     'last_tablette_synchro', 'changement_groupe_auto', 'allergies',
                     'regularisation_fin_contrat', 'date_raz_permanences',
-                    'conges_payes_salaries', 'conges_supplementaires_salaries'] and self.idx:
+                    'conges_payes_salaries', 'conges_supplementaires_salaries', 'cout_journalier'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 

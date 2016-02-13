@@ -640,16 +640,16 @@ class ActivitesTab(AutoTab):
             if obj.activite.idx is None:
                 obj.activite.create()
 
+
 class ChargesTab(AutoTab, PeriodeMixin):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
         PeriodeMixin.__init__(self, 'charges')
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.annee_choice = wx.Choice(self, -1)
-        for annee in range(today.year - 1, today.year + 2):
-            self.annee_choice.Append(u"Année %d" % annee, annee)
+        AddYearsToChoice(self.annee_choice)
         self.Bind(wx.EVT_CHOICE, self.OnAnneeChoice, self.annee_choice)
-        sizer.Add(self.annee_choice, 0, wx.TOP, 5)
+        sizer.Add(self.annee_choice, 0, wx.EXPAND | wx.ALL, 5)
         sizer2 = wx.FlexGridSizer(12, 2, 5, 5)
         self.charges_ctrls = []
         for m in range(12):
@@ -657,7 +657,6 @@ class ChargesTab(AutoTab, PeriodeMixin):
             self.charges_ctrls.append(ctrl)
             sizer2.AddMany([wx.StaticText(self, -1, months[m] + ' :'), ctrl])
         sizer.Add(sizer2, 0, wx.ALL, 5)
-        self.annee_choice.SetSelection(1)
         self.OnAnneeChoice(None)
         sizer.Fit(self)
         self.SetSizer(sizer)
@@ -710,9 +709,9 @@ class JoursFermeturePanel(AutoTab):
         button_add = wx.Button(self, -1, u"Ajouter une période de fermeture")
         if readonly:
             button_add.Disable()
-        self.sizer.Add(button_add, 0, wx.EXPAND+wx.TOP, 5)
+        self.sizer.Add(button_add, 0, wx.EXPAND | wx.TOP, 5)
         self.Bind(wx.EVT_BUTTON, self.OnAjoutConge, button_add)
-        sizer.Add(self.sizer, 0, wx.EXPAND+wx.ALL, 5)
+        sizer.Add(self.sizer, 0, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(sizer)
 
     def UpdateContents(self):
@@ -918,7 +917,9 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([CreateLabelTuple(u"Gestion des absences prévues au contrat :"), (AutoChoiceCtrl(self, creche, 'conges_inscription', [('Non', 0), (u'Oui', 1), (u"Oui, avec gestion d'heures supplémentaires", 2)]), 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple(u"Déduction des jours fériés et absences prévues au contrat :"), (AutoChoiceCtrl(self, creche, 'facturation_jours_feries', modes_facturation_jours_feries), 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple(u"Tarification des activités :"), (AutoChoiceCtrl(self, creche, 'tarification_activites', [(u'Non géré', ACTIVITES_NON_FACTUREES), (u'A la journée', ACTIVITES_FACTUREES_JOURNEE), (u"Période d'adaptation, à la journée", ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION)]), 0, wx.EXPAND)])
-        sizer.AddMany([CreateLabelTuple(u"Traitement des absences pour maladie :"), (AutoChoiceCtrl(self, creche, 'traitement_maladie', [(u"Avec carence en jours ouvrés", DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_OUVRES), (u"Avec carence en jours calendaires", DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES), ("Sans carence", DEDUCTION_MALADIE_SANS_CARENCE)]), 0, wx.EXPAND)])
+        if creche.nom == u"LA VOLIERE":
+            sizer.AddMany([CreateLabelTuple(u"Coût journalier :"), (AutoNumericCtrl(self, creche, 'cout_journalier', min=0, precision=2), 0, wx.EXPAND)])
+        sizer.AddMany([CreateLabelTuple(u"Traitement des absences pour maladie :"), (AutoChoiceCtrl(self, creche, 'traitement_maladie', [(u"Avec carence en jours ouvrés", DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_OUVRES), (u"Avec carence en jours calendaires", DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES), (u"Avec carence en jours consécutifs", DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CONSECUTIFS), ("Sans carence", DEDUCTION_MALADIE_SANS_CARENCE)]), 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple(u"Durée de la carence :"), (AutoNumericCtrl(self, creche, 'minimum_maladie', min=0, precision=0), 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple(u"Traitement des absences pour hospitalisation :"), (AutoChoiceCtrl(self, creche, 'gestion_maladie_hospitalisation', items=modes_gestion_standard), 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple(u"Traitement des absences pour maladie sans justificatif :"), (AutoChoiceCtrl(self, creche, 'gestion_maladie_sans_justificatif', items=modes_gestion_standard), 0, wx.EXPAND)])
@@ -938,14 +939,14 @@ class ParametersPanel(AutoTab):
         salaries_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u"Salariés"), wx.VERTICAL)
         salaries_sizer.AddMany([CreateLabelTuple(u"Nombre de jours de congés payés :"), (AutoNumericCtrl(self, creche, 'conges_payes_salaries', min=0, precision=0), 0, wx.EXPAND)])
         salaries_sizer.AddMany([CreateLabelTuple(u"Nombre de jours de congés supplémentaires :"), (AutoNumericCtrl(self, creche, 'conges_supplementaires_salaries', min=0, precision=0), 0, wx.EXPAND)])
-        self.sizer.Add(salaries_sizer, 0, wx.EXPAND|wx.ALL, 5)
+        self.sizer.Add(salaries_sizer, 0, wx.EXPAND | wx.ALL, 5)
 
         self.plages_box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u"Plages horaires spéciales"), wx.VERTICAL)
         self.plages_sizer = wx.BoxSizer(wx.VERTICAL)
         for i, plage in enumerate(creche.plages_horaires):
             self.AjouteLignePlageHoraire(i)
         self.plages_box_sizer.Add(self.plages_sizer, 0, wx.EXPAND|wx.ALL, 5)
-        button_add = wx.Button(self, -1, u'Nouvelle plage horaire')
+        button_add = wx.Button(self, -1, u"Nouvelle plage horaire")
         if readonly:
             button_add.Disable()        
         self.plages_box_sizer.Add(button_add, 0, wx.ALL, 5)

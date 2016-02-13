@@ -967,6 +967,7 @@ def GetFactureFields(facture):
                   ('heures-facturees', GetHeureString(heures_facturees)),
                   ('heures-supplementaires', GetHeureString(facture.heures_supplementaires)),
                   ('heures-maladie', GetHeureString(facture.heures_maladie)),
+                  ('heures-absence-maladie', GetHeureString(facture.heures_absence_maladie)),
                   ('heures-previsionnelles', GetHeureString(facture.heures_previsionnelles)),
                   ('taux-effort', '%.2f' % taux_effort),
                   ('supplement', facture.supplement, FIELD_EUROS),
@@ -1033,7 +1034,7 @@ def SelectValueInChoice(choice, value):
 def AddYearsToChoice(choice):
     for year in range(first_date.year, last_date.year + 1):
         choice.Append(u'Année %d' % year, year)
-    choice.SetSelection(today.year-first_date.year)
+    choice.SetSelection(today.year - first_date.year)
 
 
 def AddMonthsToChoice(choice):
