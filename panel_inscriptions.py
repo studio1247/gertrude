@@ -83,20 +83,29 @@ class FraisGardePanel(wx.Panel):
         sizer1.Add(self.frais_accueil_button, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationFraisAccueil, self.frais_accueil_button)
         if IsTemplateFile("Devis accueil.odt"):
-            devis_button = wx.Button(self, -1, u"Générer un devis")
-            sizer1.Add(devis_button, 0, wx.LEFT, 5)
-            self.Bind(wx.EVT_BUTTON, self.EvtGenerationDevis, devis_button)
+            self.devis_button = wx.Button(self, -1, u"Générer un devis")
+            sizer1.Add(self.devis_button, 0, wx.LEFT, 5)
+            self.Bind(wx.EVT_BUTTON, self.EvtGenerationDevis, self.devis_button)
+        else:
+            self.devis_button = None
         self.contrat_button = wx.Button(self, -1, u"Générer le contrat")
         sizer1.Add(self.contrat_button, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationContrat, self.contrat_button)
         if IsTemplateFile("Avenant contrat accueil.odt"):
-            avenant_button = wx.Button(self, -1, u"Générer un avenant")
-            sizer1.Add(avenant_button, 0, wx.LEFT, 5)
-            self.Bind(wx.EVT_BUTTON, self.EvtGenerationAvenant, avenant_button)
+            self.avenant_button = wx.Button(self, -1, u"Générer un avenant")
+            sizer1.Add(self.avenant_button, 0, wx.LEFT, 5)
+            self.Bind(wx.EVT_BUTTON, self.EvtGenerationAvenant, self.avenant_button)
+        else:
+            self.avenant_button = None
         self.sizer.Add(sizer1, 0, wx.ALL, 5)
         self.html_window = wx.html.HtmlWindow(self, style=wx.SUNKEN_BORDER)
         self.sizer.Add(self.html_window, 1, wx.EXPAND|wx.ALL-wx.TOP, 5)
         self.SetSizer(self.sizer)
+
+    def EnableButtons(self, state):
+        for button in (self.contrat_button, self.devis_button, self.avenant_button, self.frais_accueil_button):
+            if button:
+                button.Enable(state)
 
     def UpdatePage(self):      
         if self.inscrit is None:
@@ -110,8 +119,7 @@ class FraisGardePanel(wx.Panel):
             if isinstance(context, CotisationException):
                 error = '<br>'.join(context.errors)
                 self.html = u"<html><body><b>Les frais de garde ne peuvent être calcul&eacute;s pour la (les) raison(s) suivante(s) :</b><br>" + error + "</body></html>"
-                self.frais_accueil_button.Disable()
-                self.contrat_button.Disable()
+                self.EnableButtons(False)
             else:
                 if creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
                     filename = "Frais garde forfait.html"
@@ -122,8 +130,7 @@ class FraisGardePanel(wx.Panel):
                 else:
                     filename = "Frais garde defaut.html"   
                 self.html = ParseHtml(GetTemplateFile(filename), context)
-                self.frais_accueil_button.Enable()
-                self.contrat_button.Enable()
+                self.EnableButtons(True)
         self.html_window.SetPage(self.html)
         
     def SetInscrit(self, inscrit):
@@ -140,7 +147,14 @@ class FraisGardePanel(wx.Panel):
                     cotisation = Cotisation(self.inscrit, date, TRACES)
                     self.cotisations.append((cotisation.debut, cotisation.fin, cotisation))
                     date = cotisation.fin + datetime.timedelta(1)
-                except CotisationException:
+                except CotisationException, e:
+                    if inscription.fin:
+                        fin = inscription.fin
+                    else:
+                        fin = datetime.date(date.year, 12, 31)
+                    if fin >= date:
+                        self.cotisations.append((date, fin, e))
+                        date = fin + datetime.timedelta(1)
                     break
     
     def UpdateContents(self):
@@ -156,21 +170,18 @@ class FraisGardePanel(wx.Panel):
                         index = i
                         break
                 self.periodechoice.Enable()
-                self.frais_accueil_button.Enable()
-                self.contrat_button.Enable()
+                self.EnableButtons(True)
                 for c in self.cotisations:
                     self.periodechoice.Append(date2str(c[0]) + ' - ' + date2str(c[1]))
                 self.periodechoice.SetSelection(index)
             else:
                 self.current_cotisation = None
                 self.periodechoice.Disable()
-                self.frais_accueil_button.Disable()
-                self.contrat_button.Disable()
+                self.EnableButtons(False)
         else:
             self.current_cotisation = None
             self.periodechoice.Disable()
-            self.frais_accueil_button.Disable()
-            self.contrat_button.Disable()
+            self.EnableButtons(False)
         self.UpdatePage()
         
     def EvtPeriodeChoice(self, evt):
