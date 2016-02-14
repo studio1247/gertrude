@@ -299,12 +299,14 @@ class FactureFinMois(object):
                                     cotisation.heures_supplementaires += heures_supplementaires_facturees
                                 elif creche.mode_facturation == FACTURATION_FORFAIT_10H:
                                     affectation_jours_supplementaires = True
+                                    self.CalculeSupplement(cotisation, 10)
                                 elif cotisation.inscription.mode != MODE_FORFAIT_HORAIRE:
                                     cotisation.heures_supplementaires += heures_supplementaires_facturees
                                     self.heures_supplementaires += heures_supplementaires_facturees
                                     self.heures_facture_par_mode[cotisation.mode_garde] += heures_supplementaires_facturees
                                     if creche.mode_facturation != FACTURATION_HORAIRES_REELS and (creche.facturation_periode_adaptation == PERIODE_ADAPTATION_FACTUREE_NORMALEMENT or not cotisation.inscription.IsInPeriodeAdaptation(date)):
                                         affectation_jours_supplementaires = True
+                                        self.CalculeSupplement(cotisation, heures_supplementaires_facturees)
 
                             if affectation_jours_supplementaires:
                                 self.jours_supplementaires[date] = heures_realisees

@@ -652,7 +652,8 @@ class MonPetitBijouTests(GertrudeTestCase):
         self.assertEquals(facture.total, 7.00)
         self.assertEquals(facture.heures_facturees, 1.0)
         self.assertEquals(facture.heures_realisees, 1.0)
-        
+
+
 class VivreADomicileTests(GertrudeTestCase):
     def setUp(self):
         GertrudeTestCase.setUp(self)
@@ -675,20 +676,21 @@ class VivreADomicileTests(GertrudeTestCase):
         inscription.fin = datetime.date(2011, 2, 28)
         inscription.fin_periode_adaptation = datetime.date(2011, 1, 5)
         inscrit.inscriptions.append(inscription)
-        cotisation = Cotisation(inscrit, datetime.date(2011, 1, 3), NO_ADDRESS|NO_PARENTS)
+        cotisation = Cotisation(inscrit, datetime.date(2011, 1, 3), NO_ADDRESS | NO_PARENTS)
         self.assertEquals(cotisation.assiette_mensuelle, 580.00)
         self.assertEquals(cotisation.taux_effort, 0.03)        
-        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 10), 102, 204) # 8h30 
-        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 17), 102, 204) # 8h30
-        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 24), 102, 204) # 8h30 
-        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 31), 102, 204) # 8h30
-        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 5), 102, 126) # 8h30 
-        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 12), 102, 204) # 8h30
-        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 19), 102, 204) # 8h30 
-        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 26), 102, 204) # 8h30
-        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 26), 102, 204) # 8h30
+        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 10), 102, 204)  # 8h30
+        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 17), 102, 204)  # 8h30
+        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 24), 102, 204)  # 8h30
+        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 31), 102, 204)  # 8h30
+        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 5), 102, 126)  # 8h30
+        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 12), 102, 204)  # 8h30
+        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 19), 102, 204)  # 8h30
+        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 26), 102, 204)  # 8h30
+        self.AddJourneePresence(inscrit, datetime.date(2011, 1, 26), 102, 204)  # 8h30
         facture = Facture(inscrit, 2011, 1)
-        self.assertEquals("%.2f" % facture.total, "10.46")
+        self.assertEquals("10.46", "%.2f" % facture.total)
+
 
 class BebebulTests(GertrudeTestCase):
     def setUp(self):
@@ -735,6 +737,7 @@ class BebebulTests(GertrudeTestCase):
         self.AddActivite(inscrit, datetime.date(2012, 10, 25), 105, 147, 1)    # 3h00 adaptation
         facture = Facture(inscrit, 2012, 10)
         self.assertEquals("%.2f" % facture.total, "0.00")
+
 
 class RibambelleTests(GertrudeTestCase):
     def setUp(self):
