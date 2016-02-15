@@ -64,7 +64,7 @@ class DayPlanningPanel(PlanningWidget):
             inscription = inscrit.GetInscription(self.date)
             if inscription is not None and (len(creche.sites) <= 1 or inscription.site is self.site) and (self.groupe is None or inscription.groupe == self.groupe):
                 if creche.conges_inscription == GESTION_CONGES_INSCRIPTION_SIMPLE and self.date in inscrit.jours_conges:
-                    line = LigneConge(inscrit.jours_conges[self.date].label)
+                    line = LigneConge(VACANCES, inscrit.jours_conges[self.date].label)
                 elif self.date in inscrit.journees:
                     line = inscrit.journees[self.date]
                     if creche.conges_inscription == GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT and self.date in inscrit.jours_conges:
@@ -93,6 +93,7 @@ class DayPlanningPanel(PlanningWidget):
                 line.inscription = inscription
                 line.options |= COMMENTS | ACTIVITES
                 line.summary = SUMMARY_ENFANT
+                line.salarie = None
 
                 def GetHeuresEnfant(line):
                     heures = line.GetNombreHeures()
@@ -124,7 +125,9 @@ class DayPlanningPanel(PlanningWidget):
         for salarie in creche.salaries:
             contrat = salarie.GetContrat(self.date)
             if contrat is not None and (len(creche.sites) <= 1 or contrat.site is self.site):
-                if self.date in salarie.journees:
+                if self.date in salarie.jours_conges:
+                    line = LigneConge(CONGES_PAYES, salarie.jours_conges[self.date].label)
+                elif self.date in salarie.journees:
                     line = salarie.journees[self.date]
                     line.reference = contrat.GetJourneeReference(self.date)
                     line.insert = None
@@ -133,6 +136,7 @@ class DayPlanningPanel(PlanningWidget):
                     line.insert = salarie.journees
                     line.key = self.date
                 line.salarie = salarie
+                # line.conge_paye =
                 line.label = GetPrenomNom(salarie)
                 line.options |= COMMENTS
                 line.sublabel = contrat.fonction
@@ -140,6 +144,8 @@ class DayPlanningPanel(PlanningWidget):
                 line.day = self.date.weekday()
 
                 def GetHeuresSalarie(line):
+                    if isinstance(line, LigneConge):
+                        return ""
                     debut_semaine = line.date - datetime.timedelta(line.date.weekday())
                     fin_semaine = debut_semaine + datetime.timedelta(6)
                     debut_mois = GetMonthStart(line.date)

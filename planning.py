@@ -39,18 +39,19 @@ DEPASSEMENT_CAPACITE = 1024
 NO_SCROLL = 2048
 
 # Elements size
-LABEL_WIDTH = 130 # px
-ICONS_WIDTH = 50 # px
+LABEL_WIDTH = 130  # px
+ICONS_WIDTH = 50  # px
 LINE_HEIGHT = 32 # px
-CHECKBOX_WIDTH = 25 # px
-COMMENT_BUTTON_WIDTH = 31 # px
-RECAP_WIDTH = 100 # px
+CHECKBOX_WIDTH = 25  # px
+COMMENT_BUTTON_WIDTH = 31  # px
+RECAP_WIDTH = 100  # px
 
 BUTTON_BITMAPS = { ABSENT: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), u'Absent'),
                    ABSENT+PREVISIONNEL: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), u'Congés'),
                    PRESENT: (wx.Bitmap(GetBitmapFile("icone_presence.png"), wx.BITMAP_TYPE_PNG), u'Présent'),
                    PRESENT+PREVISIONNEL: (wx.Bitmap(GetBitmapFile("icone_presence_prev.png"), wx.BITMAP_TYPE_PNG), u'Présent'),
                    VACANCES: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), u'Congés'),
+                   CONGES_PAYES: (wx.Bitmap(GetBitmapFile("icone_conges_payes.png"), wx.BITMAP_TYPE_PNG), u'Congés payés'),
                    MALADE: (wx.Bitmap(GetBitmapFile("icone_maladie.png"), wx.BITMAP_TYPE_PNG), u'Malade'),
                    HOPITAL: (wx.Bitmap(GetBitmapFile("icone_hopital.png"), wx.BITMAP_TYPE_PNG), u'Maladie avec hospitalisation'),
                    MALADE_SANS_JUSTIFICATIF: (wx.Bitmap(GetBitmapFile("icone_maladie_sans_justificatif.png"), wx.BITMAP_TYPE_PNG), u'Maladie sans justificatif'),
@@ -61,11 +62,14 @@ BUTTON_BITMAPS = { ABSENT: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BI
 
 BULLE_BITMAP = wx.Bitmap(GetBitmapFile("bulle.png"))
 
+
 def GetPlanningWidth():
     return (creche.affichage_max - creche.affichage_min) * (60 / BASE_GRANULARITY) * config.column_width
 
+
 class LigneConge(object):
-    def __init__(self, info):
+    def __init__(self, state, info):
+        self.state = state
         self.info = info
         self.readonly = True
         self.reference = None
@@ -74,6 +78,8 @@ class LigneConge(object):
     def GetNombreHeures(self):
         return 0.0
 
+    def GetDynamicText(self):
+        return None
 
 class PlanningLineGrid(BufferedWindow):
     def __init__(self, parent, line, pos):
@@ -436,7 +442,7 @@ class PlanningLineStatusIcon(wx.Window):
             self.button.Hide()
         else:
             if isinstance(line, LigneConge):
-                state = VACANCES
+                state = line.state
             else:
                 state = line.GetState()
                 if state > 0:
@@ -450,7 +456,7 @@ class PlanningLineStatusIcon(wx.Window):
                             state = CONGES_DEPASSEMENT
                     except:
                         pass
-                    
+
             bitmap, tooltip = BUTTON_BITMAPS[state]
             self.button.SetBitmapLabel(bitmap)
             self.button.SetToolTip(wx.ToolTip(tooltip))

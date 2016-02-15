@@ -1152,14 +1152,19 @@ class SalariesTab(AutoTab):
                     cp += 1
                 else:
                     if date in salarie.journees:
-                        heures_realisees = salarie.journees[date].GetNombreHeures()
+                        journee = salarie.journees[date]
+                        state = journee.GetState()
+                        if state < 0:
+                            if state == VACANCES:
+                                cs += 1
+                            heures_reference = 0
+                            heures_realisees = 0
+                        else:
+                            heures_realisees = journee.GetNombreHeures()
                     else:
                         heures_realisees = heures_reference
-                    if heures_realisees == 0 and heures_reference > 0:
-                        cs += 1
-                    else:
-                        contractualise += heures_reference
-                        realise += heures_realisees
+                    contractualise += heures_reference
+                    realise += heures_realisees
             date += datetime.timedelta(1)
         return affiche, contractualise, realise, cp, cs
 
