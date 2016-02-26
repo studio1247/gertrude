@@ -661,9 +661,10 @@ def SendDocument(filename, text, subject, to):
             port = int(port)
     except:
         pass
-
     if 1:
         s = smtplib.SMTP(smtp_server, port)
+        if "gmail" in smtp_server:
+            s.starttls()
         if login:
             s.login(login, password)
         s.sendmail(creche.email, to + [creche.email], msg.as_string())
