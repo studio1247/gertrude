@@ -437,6 +437,7 @@ class ReglementsTab(AutoTab):
         if fin is None or today < fin:
             fin = today
         date = GetMonthStart(debut)
+        fin = GetMonthEnd(fin)
         while date <= fin:
             for inscrit in inscrits:
                 try:
