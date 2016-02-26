@@ -613,8 +613,6 @@ def GetInscrits(debut, fin, site=None, handicap=None):
 def GetLines(date, inscrits, presence=False, site=None, groupe=None, summary=SUMMARY_ENFANT):
     lines = []
     for inscrit in inscrits:
-        if date in inscrit.jours_conges:
-            continue
         inscription = inscrit.GetInscription(date)
         if inscription and (site is None or inscription.site == site) and (groupe is None or inscription.groupe == groupe):
             if presence:
@@ -625,6 +623,8 @@ def GetLines(date, inscrits, presence=False, site=None, groupe=None, summary=SUM
                 line = inscrit.journees[date]
             else:
                 line = inscription.GetJourneeReferenceCopy(date)
+            if date in inscrit.jours_conges and inscrit.GetState(date).state < 0:
+                continue
             line.nom = inscrit.nom
             line.prenom = inscrit.prenom
             line.label = GetPrenomNom(inscrit)
