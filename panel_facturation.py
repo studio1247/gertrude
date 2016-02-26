@@ -424,29 +424,7 @@ class ReglementsTab(AutoTab):
     def AfficheLignes(self):
         self.EnableLigneAjout()
         self.EffaceLignes()
-        famille = self.inscrit.famille
-        inscrits = GetInscritsFamille(famille)
-        self.lignes = famille.encaissements[:]
-        debut, fin = None, None
-        for inscrit in inscrits:
-            debut_inscrit, fin_inscrit = inscrit.GetPeriodeInscriptions()
-            if debut is None or debut_inscrit < debut:
-                debut = debut_inscrit
-            if fin is None or fin_inscrit > fin:
-                fin = fin_inscrit
-        if fin is None or today < fin:
-            fin = today
-        date = GetMonthStart(debut)
-        fin = GetMonthEnd(fin)
-        while date <= fin:
-            for inscrit in inscrits:
-                try:
-                    facture = Facture(inscrit, date.year, date.month, NO_NUMERO)
-                    if facture.total != 0 and facture.date <= fin and (not creche.cloture_factures or facture.cloture):
-                        self.lignes.append(facture)
-                except:
-                    pass
-            date = GetNextMonthStart(date)
+        self.lignes = GetHistoriqueSolde(self.inscrit.famille, today)
         self.lignes.sort(key=lambda ligne: ligne.date)
         self.index = 0
         self.total = 0

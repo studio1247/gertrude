@@ -19,6 +19,7 @@ import locale
 import __builtin__
 from cotisation import *
 from globals import history
+from sqlobjects import Encaissement
 
 
 class FactureFinMois(object):
@@ -729,3 +730,40 @@ def Facture(inscrit, annee, mois, options=0):
         return inscrit.factures_cloturees[date].Restore(options)
     else:
         return CreateFacture(inscrit, annee, mois, options)
+
+
+def GetHistoriqueSolde(famille, date):
+    inscrits = GetInscritsFamille(famille)
+    lignes = [encaissement for encaissement in famille.encaissements if encaissement.date <= date]
+    debut, fin = None, None
+    for inscrit in inscrits:
+        debut_inscrit, fin_inscrit = inscrit.GetPeriodeInscriptions()
+        if debut is None or debut_inscrit < debut:
+            debut = debut_inscrit
+        if fin is None or fin_inscrit > fin:
+            fin = fin_inscrit
+    if fin is None or fin > date:
+        fin = date
+    date = GetMonthStart(debut)
+    fin = GetMonthEnd(fin)
+    while date <= fin:
+        for inscrit in inscrits:
+            try:
+                facture = Facture(inscrit, date.year, date.month, NO_NUMERO)
+                if facture.total != 0 and facture.date <= fin and (not creche.cloture_factures or facture.cloture):
+                    lignes.append(facture)
+            except:
+                pass
+        date = GetNextMonthStart(date)
+    return lignes
+
+
+def CalculeSolde(famille, date):
+    solde = 0.0
+    historique = GetHistoriqueSolde(famille, date)
+    for ligne in historique:
+        if isinstance(ligne, Encaissement):
+            solde += ligne.valeur
+        else:
+            solde -= ligne.total
+    return solde

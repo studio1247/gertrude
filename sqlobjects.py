@@ -2342,23 +2342,6 @@ class Inscrit(object):
                     break
         return result
 
-    def CalculeSolde(self, date_solde):
-        solde = 0.0
-        for encaissement in self.famille.encaissements:
-            if encaissement.date < date_solde:
-                solde += encaissement.valeur
-        debut, fin = self.GetPeriodeInscriptions()
-        date = GetMonthStart(debut)
-        while date < date_solde:
-            try:
-                facture = Facture(self, date.year, date.month, NO_NUMERO)
-                if facture.date < date_solde and (not creche.cloture_factures or facture.cloture):
-                    solde -= facture.total
-            except:
-                pass
-            date = GetNextMonthStart(date)
-        return solde
-
     def __cmp__(self, other):
         if other is self:
             return 0
