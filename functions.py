@@ -335,9 +335,14 @@ def GetTemplateFile(filename, site=None):
 
 
 def IsTemplateFile(filename):
-    path1 = "%s/%s" % (config.templates, filename)
-    path2 = "templates_dist/%s" % filename
-    return os.path.isfile(path1) or os.path.isfile(path2)
+    if os.path.isfile("%s/%s" % (config.templates, filename)):
+        return True
+    elif os.path.isfile("templates_dist/%s" % filename):
+        return True
+    elif os.path.isfile("%s/[%s] %s" % (config.templates, creche.nom, filename)):
+        return True
+    else:
+        return False
 
 
 def str2date(s, year=None, day=None):
@@ -437,20 +442,46 @@ def GetParentsString(famille):
             return '%s %s et %s %s' % (maman.prenom, maman.nom, papa.prenom, papa.nom)
 
 
-def GetParentsNomsString(famille):
-    if not famille.parents['papa'] and not famille.parents['maman']:
-        return "ZZZZ"
-    elif not famille.parents['maman']:
-        return famille.parents['papa'].nom
-    elif not famille.parents['papa']:
-        return famille.parents['maman'].nom
-    else:
-        papa = famille.parents['papa']
-        maman = famille.parents['maman']
-        if maman.nom == papa.nom:
-            return maman.nom
+def GetParentsPrenomsString(famille):
+    papa = famille.parents['papa']
+    maman = famille.parents['maman']
+    if papa:
+        if maman:
+            return '%s/%s' % (papa.prenom, maman.prenom)
         else:
+            return papa.prenom
+    elif maman:
+        return maman.prenom
+    else:
+        return ""
+
+
+def GetParentsNomsString(famille):
+    papa = famille.parents['papa']
+    maman = famille.parents['maman']
+    if papa:
+        if maman and papa.nom != maman.nom:
             return '%s-%s' % (papa.nom, maman.nom)
+        else:
+            return papa.nom
+    elif maman:
+        return maman.nom
+    else:
+        return ""
+
+
+def GetParentsCivilitesString(famille):
+    papa = famille.parents['papa']
+    maman = famille.parents['maman']
+    if papa:
+        if maman and papa.nom != maman.nom:
+            return 'Monsieur/Madame'
+        else:
+            return 'Monsieur'
+    elif maman:
+        return 'Madame'
+    else:
+        return ""
 
 
 def GetInscritsByMode(start, end, mode, site=None): # TODO pourquoi retourner les index
@@ -840,6 +871,10 @@ def GetEmail(famille):
     return ", ".join(result)
 
 
+def GetTarifsFamilleFields(famille):
+    return [(tarif.label.lower().replace(" ", "_"), tarif.label if famille.tarifs & (1 << tarif.idx) else "") for tarif in creche.tarifs_speciaux]
+
+
 def GetFamilleFields(famille):
     return [('adresse', famille.adresse if famille else ""),
             ('code-postal', GetCodePostal(famille) if famille else ""),
@@ -850,10 +885,13 @@ def GetFamilleFields(famille):
             ('telephone-medecin-traitant', famille.telephone_medecin_traitant if famille else ""),
             ('assureur', famille.assureur if famille else ""),
             ('police-assurance', famille.numero_police_assurance if famille else ""),
+            ('noms-parents', GetParentsNomsString(famille) if famille else ""),
+            ('civilites-parents', GetParentsCivilitesString(famille) if famille else ""),
+            ('prenoms-parents', GetParentsPrenomsString(famille) if famille else ""),
             ('parents', GetParentsString(famille) if famille else ""),
             ('telephone', GetTelephone(famille) if famille else ""),
             ('email', GetEmail(famille) if famille else ""),
-            ]
+    ] + GetTarifsFamilleFields(famille)
 
 
 def GetInscritFields(inscrit):
@@ -956,11 +994,13 @@ def GetFactureFields(facture):
                   ('de-mois-recap', '%s %d' % (GetDeMoisStr(facture.debut_recap.month - 1), facture.debut_recap.year)),
                   ('date', date2str(facture.date)),
                   ('montant-heure-garde', facture.montant_heure_garde, FIELD_EUROS),
+                  ('montant-jour-garde', facture.montant_jour_garde, FIELD_EUROS),
                   ('cotisation-mensuelle', facture.cotisation_mensuelle, FIELD_EUROS),
                   ('heures-cotisation-mensuelle', GetHeureString(facture.heures_cotisation_mensuelle)),
                   ('heures-contractualisees', GetHeureString(heures_contractualisees)),
                   ('heures-contrat', GetHeureString(facture.heures_contrat)),
                   ('heures-realisees', GetHeureString(facture.heures_realisees)),
+                  ('jours-realises', facture.jours_realises),
                   ('heures-realisees-non-facturees', GetHeureString(facture.heures_realisees_non_facturees)),
                   ('heures-facturees-non-realisees', GetHeureString(facture.heures_facturees_non_realisees)),
                   ('heures-contractualisees-realisees', GetHeureString(facture.heures_contractualisees_realisees)),
@@ -978,6 +1018,7 @@ def GetFactureFields(facture):
                   ('libelle-correction', facture.libelle_correction),
                   ('raison-deduction', facture.raison_deduction),
                   ('raison-supplement', facture.raison_supplement),
+                  ('tarif_activite', facture.formule_tarif_activite),
                   ('supplement-activites', facture.supplement_activites, FIELD_EUROS),
                   ('supplement_activites', facture.formule_supplement_activites),
                   ('heures_activites', facture.formule_heures_supplement_activites),
@@ -1043,6 +1084,14 @@ def AddMonthsToChoice(choice):
         choice.Append(u'%s %d' % (months[date.month - 1], date.year), date)
         date = GetNextMonthStart(date)
     choice.SetStringSelection('%s %d' % (months[today.month - 1], today.year))
+
+
+def Add2MonthsToChoice(choice):
+    date = first_date
+    while date < last_date:
+        choice.Append(u'%s %d' % (months[date.month - 1], date.year), date)
+        date = GetNextMonthStart(GetNextMonthStart(date))
+    choice.SetStringSelection('%s %d' % (months[(today.month - 1) & 0xfe], today.year))
 
 
 def AddWeeksToChoice(choice):

@@ -758,7 +758,7 @@ class Activite(object):
         if creation:
             self.create()
 
-    def EvalTarif(self, inscrit, date):
+    def EvalTarif(self, inscrit, date, montant_heure_garde=0.0):
         if self.formule_tarif.strip():
             enfants, enfants_inscrits = GetEnfantsCount(inscrit, date)[0:2]
             for tarif in creche.tarifs_speciaux:

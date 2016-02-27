@@ -38,6 +38,7 @@ from doc_releve_detaille import ReleveDetailleModifications
 from doc_releve_salaries import ReleveSalariesModifications
 from doc_releve_siej import ReleveSIEJModifications
 from doc_synthese_financiere import SyntheseFinanciereModifications
+from doc_export_facturation import ExportFacturationModifications
 from facture import Facture
 from ooffice import *
 from planning import *
@@ -724,6 +725,7 @@ class StatistiquesFrequentationTab(AutoTab):
         self.sizer.FitInside(self)
         self.Layout()
 
+
 class RelevesTab(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
@@ -805,7 +807,17 @@ class RelevesTab(AutoTab):
             self.Bind(wx.EVT_BUTTON, self.OnGenerationEtatPresenceMensuel, button)
             box_sizer.AddMany([(self.etat_presence_mensuesl_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
-        
+
+        # Les exports facturation (Moulon ALSH)
+        if IsTemplateFile("Export facturation.ods"):
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Export facturation'), wx.HORIZONTAL)
+            self.export_facturation_choice = wx.Choice(self)
+            AddYearsToChoice(self.export_facturation_choice)
+            button = wx.Button(self, -1, u'Génération')
+            self.Bind(wx.EVT_BUTTON, self.OnGenerationExportFacturation, button)
+            box_sizer.AddMany([(self.export_facturation_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
+
         # Les synthèses financières
         if IsTemplateFile("Synthese financiere.ods"):
             box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Synthèse financière'), wx.HORIZONTAL)
@@ -1019,7 +1031,11 @@ class RelevesTab(AutoTab):
         site = self.GetSelectedSite()
         date = self.etat_presence_mensuesl_choice.GetClientData(self.etat_presence_mensuesl_choice.GetSelection())
         DocumentDialog(self, EtatPresenceMensuelModifications(site, date)).ShowModal()
-        
+
+    def OnGenerationExportFacturation(self, evt):
+        annee = self.export_facturation_choice.GetClientData(self.export_facturation_choice.GetSelection())
+        DocumentDialog(self, ExportFacturationModifications(annee)).ShowModal()
+
     def OnGenerationSyntheseFinanciere(self, evt):
         annee = self.syntheses_choice.GetClientData(self.syntheses_choice.GetSelection())
         DocumentDialog(self, SyntheseFinanciereModifications(annee)).ShowModal()

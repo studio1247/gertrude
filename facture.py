@@ -124,12 +124,15 @@ class FactureFinMois(object):
         self.supplement_activites = 0.0
         self.heures_supplement_activites = {}
         self.detail_supplement_activites = {}
+        self.tarif_supplement_activites = {}
         for value in creche.activites:
             self.heures_supplement_activites[creche.activites[value].label] = 0.0
             self.detail_supplement_activites[creche.activites[value].label] = 0.0
+            self.tarif_supplement_activites[creche.activites[value].label] = 0.0
         self.previsionnel = False
         self.cloture = False
         self.montant_heure_garde = 0.0
+        self.montant_jour_garde = 0.0
         self.correction = 0.0
         self.libelle_correction = ""
         self.regularisation = 0.0
@@ -327,7 +330,7 @@ class FactureFinMois(object):
                                     self.supplement_activites += tarif
                                     self.heures_supplement_activites[activite.label] += 1
                                     self.detail_supplement_activites[activite.label] += tarif
-
+                                    self.tarif_supplement_activites[activite.label] = tarif
                         if 0 < heures_realisees_non_facturees == heures_realisees:
                             self.jours_presence_non_facturee[date] = heures_realisees_non_facturees
 
@@ -361,23 +364,31 @@ class FactureFinMois(object):
             while (monday + datetime.timedelta(2)).month == mois:
                 if monday in inscrit.semaines:
                     cotisation = Cotisation(inscrit, monday, options=NO_ADDRESS | self.options)
+                    self.taux_effort = cotisation.taux_effort
+                    if creche.mode_saisie_planning == SAISIE_JOURS_SEMAINE:
+                        self.montant_jour_garde = cotisation.montant_heure_garde
+                    else:
+                        self.montant_heure_garde = cotisation.montant_heure_garde
                     semaine = inscrit.semaines[monday]
                     for key in semaine.activities:
                         if key in creche.activites:
                             activite = creche.activites[key]
                             compteur = semaine.activities[key]
                             if activite.value == 0:
-                                self.heures_realisees += compteur.value
-                                self.heures_facturees_par_mode[cotisation.mode_garde] += compteur.value
+                                if creche.mode_saisie_planning == SAISIE_JOURS_SEMAINE:
+                                    self.jours_realises += compteur.value
+                                else:
+                                    self.heures_realisees += compteur.value
+                                    self.heures_facturees_par_mode[cotisation.mode_garde] += compteur.value
                                 self.cotisation_mensuelle += compteur.value * cotisation.montant_heure_garde
                             else:
-                                tarif = activite.EvalTarif(inscrit, monday)
-                                if tarif == -1:
-                                    tarif = cotisation.montant_heure_garde
+                                tarif = activite.EvalTarif(inscrit, monday, cotisation.montant_heure_garde)
                                 total = compteur.value * tarif
                                 self.supplement_activites += total
                                 self.heures_supplement_activites[activite.label] += compteur.value
                                 self.detail_supplement_activites[activite.label] += total
+                                self.tarif_supplement_activites[activite.label] = tarif
+
                 monday += datetime.timedelta(7)
             
         if options & NO_NUMERO:
@@ -581,13 +592,20 @@ class FactureFinMois(object):
         result = 0.0
         for activite in activites:
             result += self.heures_supplement_activites[activite]
-        return GetHeureString(result)
+        if creche.mode_saisie_planning == SAISIE_JOURS_SEMAINE:
+            return str(result)
+        else:
+            return GetHeureString(result)
 
     def formule_compte_supplement_activites(self, activites):
         result = 0.0
         for activite in activites:
             result += self.heures_supplement_activites[activite]
         return "%d" % result
+
+    def formule_tarif_activite(self, activite):
+        tarif = self.tarif_supplement_activites[activite]
+        return str(tarif)
 
     def Cloture(self, date=None):
         if not self.cloture:
@@ -636,6 +654,7 @@ class FactureDebutMoisContrat(FactureDebutMois):
         self.supplement_activites = self.facture_precedente.supplement_activites
         self.heures_supplement_activites = self.facture_precedente.heures_supplement_activites
         self.detail_supplement_activites = self.facture_precedente.detail_supplement_activites
+        self.tarif_supplement_activites = self.facture.tarif_supplement_activites
         self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction + self.correction
 
 

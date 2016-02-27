@@ -62,7 +62,8 @@ temps_facturation = [(u"Fin de mois", FACTURATION_FIN_MOIS),
                      ]
 
 modes_saisie_planning = [(u"A partir de l'interface planning (recommandé)", SAISIE_HORAIRE),
-                         (u"En volume horaire hebdomadaire", SAISIE_HEBDOMADAIRE),
+                         (u"En volume horaire par semaine", SAISIE_HEURES_SEMAINE),
+                         (u"En jours par semaine", SAISIE_JOURS_SEMAINE),
                          ]
 
 modes_inscription = [(u'Crèche à plein-temps uniquement', MODE_5_5),

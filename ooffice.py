@@ -272,28 +272,44 @@ def ReplaceFields(cellules, _fields):
                 if child.nodeType == node.TEXT_NODE:
                     nodeText = child.wholeText
                     if '<' in nodeText and '>' in nodeText:
-                        for param, value, text in fields:
-                            tag = '<%s>' % param
-                            if tag in nodeText:
-                                result = True
-                                if value is None:
-                                    nodeText = nodeText.replace(tag, '')
-                                elif isinstance(value, int) or isinstance(value, float):
-                                    if len(nodes) == 1 and nodeText == tag:
-                                        cellule.setAttribute("office:value-type", 'float')
-                                        cellule.setAttribute("office:value", str(value))
-                                    nodeText = nodeText.replace(tag, text)
-                                elif isinstance(value, datetime.date):
-                                    if len(nodes) == 1 and nodeText == tag:
-                                        cellule.setAttribute("office:value-type", 'date')
-                                        cellule.setAttribute("office:date-value", '%04d-%02d-%02d' % (value.year, value.month, value.day))
-                                    nodeText = nodeText.replace(tag, text)
-                                else:
-                                    nodeText = nodeText.replace(tag, text)
-    
-                            if '<' not in nodeText or '>' not in nodeText:
-                                break
-    
+                        for field, value, text in fields:
+                            if isinstance(text, basestring) and callable(value):
+                                start_tag, end_tag = '<%s(' % field, ')>'
+                                if start_tag in nodeText and end_tag in nodeText:
+                                    if isinstance(text, list):
+                                        print child.toprettyxml()
+                                    else:
+                                        tag = nodeText[nodeText.find(start_tag):nodeText.find(end_tag) + 2]
+                                        parameters = tag[len(field) + 2:-2]
+                                        try:
+                                            cellule.setAttribute("office:value-type", 'float')
+                                            val = eval("value(%s)" % parameters)
+                                            cellule.setAttribute("office:value", val)
+                                            nodeText = nodeText.replace(tag, val)
+                                        except Exception, e:
+                                            print 'erreur :', tag, parameters, e
+                            else:
+                                tag = '<%s>' % field
+                                if tag in nodeText:
+                                    result = True
+                                    if value is None:
+                                        nodeText = nodeText.replace(tag, '')
+                                    elif isinstance(value, int) or isinstance(value, float):
+                                        if len(nodes) == 1 and nodeText == tag:
+                                            cellule.setAttribute("office:value-type", 'float')
+                                            cellule.setAttribute("office:value", str(value))
+                                        nodeText = nodeText.replace(tag, text)
+                                    elif isinstance(value, datetime.date):
+                                        if len(nodes) == 1 and nodeText == tag:
+                                            cellule.setAttribute("office:value-type", 'date')
+                                            cellule.setAttribute("office:date-value", '%04d-%02d-%02d' % (value.year, value.month, value.day))
+                                        nodeText = nodeText.replace(tag, text)
+                                    else:
+                                        nodeText = nodeText.replace(tag, text)
+
+                                if '<' not in nodeText or '>' not in nodeText:
+                                    break
+
                         # print child.wholeText, '=>', text
                         child.replaceWholeText(nodeText)
                         
