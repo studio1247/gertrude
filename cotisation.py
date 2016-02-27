@@ -29,9 +29,9 @@ class CotisationException(Exception):
 
 def GetDateRevenus(date):
     if creche.periode_revenus == REVENUS_CAFPRO:
-        return datetime.date(date.year, date.month, date.day)
+        return datetime.date(date.year, date.month, 1)
     elif date >= datetime.date(2008, 9, 1):
-        return datetime.date(date.year - 2, date.month, date.day)
+        return datetime.date(date.year - 2, date.month, 1)
     elif date < datetime.date(date.year, 9, 1):
         return datetime.date(date.year - 2, 1, 1)
     else:
