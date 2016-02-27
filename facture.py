@@ -654,7 +654,7 @@ class FactureDebutMoisContrat(FactureDebutMois):
         self.supplement_activites = self.facture_precedente.supplement_activites
         self.heures_supplement_activites = self.facture_precedente.heures_supplement_activites
         self.detail_supplement_activites = self.facture_precedente.detail_supplement_activites
-        self.tarif_supplement_activites = self.facture.tarif_supplement_activites
+        self.tarif_supplement_activites = self.facture_precedente.tarif_supplement_activites
         self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction + self.correction
 
 
