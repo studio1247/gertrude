@@ -141,21 +141,22 @@ class FraisGardePanel(wx.Panel):
         self.cotisations = []
         date = first_date
         for inscription in self.inscrit.inscriptions:
-            date = max(date, inscription.debut)
-            while date.year < today.year + 2:
-                try:
-                    cotisation = Cotisation(self.inscrit, date, TRACES)
-                    self.cotisations.append((cotisation.debut, cotisation.fin, cotisation))
-                    date = cotisation.fin + datetime.timedelta(1)
-                except CotisationException, e:
-                    if inscription.fin:
-                        fin = inscription.fin
-                    else:
-                        fin = datetime.date(date.year, 12, 31)
-                    if fin >= date:
-                        self.cotisations.append((date, fin, e))
-                        date = fin + datetime.timedelta(1)
-                    break
+            if inscription.debut:
+                date = max(date, inscription.debut)
+                while date.year < today.year + 2:
+                    try:
+                        cotisation = Cotisation(self.inscrit, date, TRACES)
+                        self.cotisations.append((cotisation.debut, cotisation.fin, cotisation))
+                        date = cotisation.fin + datetime.timedelta(1)
+                    except CotisationException, e:
+                        if inscription.fin:
+                            fin = inscription.fin
+                        else:
+                            fin = datetime.date(date.year, 12, 31)
+                        if fin >= date:
+                            self.cotisations.append((date, fin, e))
+                            date = fin + datetime.timedelta(1)
+                        break
     
     def UpdateContents(self):
         self.periodechoice.Clear()

@@ -217,7 +217,7 @@ class FactureModifications(object):
             if has_errors:
                 continue
 
-            solde = CalculeSolde(inscrit.famille, self.periode)
+            solde = CalculeSolde(inscrit.famille, GetMonthEnd(self.periode))
 
             for template in templates:
                 clone = template.cloneNode(1)
@@ -268,7 +268,7 @@ class FactureModifications(object):
                                 
                 # Les autres champs de la facture
                 facture_fields = fields + GetFamilleFields(inscrit.famille) + \
-                                 [('total', total_facture, FIELD_EUROS), ('solde', solde, FIELD_EUROS), ('prenoms', ", ".join(prenoms)), ('montant-a-regler', total_facture - solde, FIELD_EUROS), ('url-tipi', GetUrlTipi(inscrit.famille))] + \
+                                 [('total', total_facture, FIELD_EUROS), ('solde', solde, FIELD_EUROS), ('prenoms', ", ".join(prenoms)), ('montant-a-regler', total_facture + solde, FIELD_EUROS), ('url-tipi', GetUrlTipi(inscrit.famille))] + \
                                  GetFactureFields(factures[0])
                 ReplaceTextFields(clone, facture_fields)
 
