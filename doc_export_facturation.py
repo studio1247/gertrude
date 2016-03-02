@@ -73,7 +73,7 @@ class ExportFacturationModifications(object):
                             facture.heures_supplement_activites[label] += facture2.heures_supplement_activites[label]
                         fields.extend(GetFactureFields(facture))
                     except CotisationException, e:
-                        pass
+                        self.errors[GetPrenomNom(inscrit)] = e.errors
 
                     # print fields
                     ReplaceFields(line, fields)
