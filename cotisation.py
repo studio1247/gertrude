@@ -296,6 +296,8 @@ class Cotisation(object):
                     self.nombre_factures = 1
                 if options & TRACES:
                     print u' nombres de factures :', self.nombre_factures
+                # TODO pour Villefranche de Rouergue avec un paramètre supplémentaire
+                # self.heures_mois = (self.heures_periode / self.nombre_factures)
                 self.heures_mois = math.ceil(self.heures_periode / self.nombre_factures)
                 if options & TRACES:
                     print u' heures mensuelles : %f (%f)' % (self.heures_mois, self.heures_periode / self.nombre_factures)
