@@ -393,7 +393,7 @@ class ReglementsTab(AutoTab):
         self.grid.SetCellAlignment(index, 2, wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
         self.grid.SetCellAlignment(index, 3, wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
         if isinstance(ligne, Encaissement):
-            moyen = ModesEncaissement[ligne.moyen_paiement]
+            moyen = ModesEncaissement[ligne.moyen_paiement] if ligne.moyen_paiement is not None else ""
             valeur = ligne.valeur
             self.index += 1
             self.grid.SetRowLabelValue(index, str(self.index))
@@ -401,10 +401,13 @@ class ReglementsTab(AutoTab):
             moyen = "Facture %s" % ligne.inscrit.prenom
             valeur = -ligne.total
             self.grid.SetRowLabelValue(index, "")
-        self.total += valeur
+        if isinstance(valeur, float):
+            self.total += valeur
+            self.grid.SetCellValue(index, 2, u"%.02f €" % valeur)
+        else:
+            self.grid.SetCellValue(index, 2, valeur)
         self.grid.SetCellValue(index, 0, date2str(ligne.date))
         self.grid.SetCellValue(index, 1, moyen)
-        self.grid.SetCellValue(index, 2, u"%.02f €" % valeur)
         self.grid.SetCellValue(index, 3, u"%.02f €" % self.total)
             
     def Disable(self):
@@ -425,7 +428,7 @@ class ReglementsTab(AutoTab):
         self.EnableLigneAjout()
         self.EffaceLignes()
         self.lignes = GetHistoriqueSolde(self.inscrit.famille, today)
-        self.lignes.sort(key=lambda ligne: ligne.date)
+        self.lignes.sort(key=lambda ligne: ligne.date if ligne.date else today)
         self.index = 0
         self.total = 0
         for ligne in self.lignes:

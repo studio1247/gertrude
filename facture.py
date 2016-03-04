@@ -753,7 +753,7 @@ def Facture(inscrit, annee, mois, options=0):
 
 def GetHistoriqueSolde(famille, date):
     inscrits = GetInscritsFamille(famille)
-    lignes = [encaissement for encaissement in famille.encaissements if encaissement.date <= date]
+    lignes = [encaissement for encaissement in famille.encaissements if not encaissement.date or encaissement.date <= date]
     debut, fin = None, None
     for inscrit in inscrits:
         debut_inscrit, fin_inscrit = inscrit.GetPeriodeInscriptions()
@@ -761,6 +761,8 @@ def GetHistoriqueSolde(famille, date):
             debut = debut_inscrit
         if fin is None or fin_inscrit > fin:
             fin = fin_inscrit
+    if debut is None:
+        return lignes
     if fin is None or fin > date:
         fin = date
     date = GetMonthStart(debut)
