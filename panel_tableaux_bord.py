@@ -1228,10 +1228,13 @@ class TableauxDeBordNotebook(wx.Notebook):
             self.AddPage(SalariesTab(self), u'Salariés')
         if creche.gestion_alertes:
             self.AddPage(AlertesTab(self), u'Alertes')
+        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
     def UpdateContents(self):
-        for page in range(self.GetPageCount()):
-            self.GetPage(page).UpdateContents()
+        self.OnPageChanged(None)
+
+    def OnPageChanged(self, event):
+        self.GetCurrentPage().UpdateContents()
         
 class TableauxDeBordPanel(GPanel):
     name = "Tableaux de bord"

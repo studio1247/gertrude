@@ -47,6 +47,7 @@ class CorrectionsTab(AutoTab):
         self.Layout()
         
     def OnMonthChoice(self, evt=None):
+        self.Hide()
         while len(self.corrections_sizer.GetChildren()):
             sizer = self.corrections_sizer.GetItem(0)
             sizer.DeleteWindows()
@@ -61,7 +62,7 @@ class CorrectionsTab(AutoTab):
             inscrits = GetEnfantsTriesParPrenom()
         else:
             inscrits = GetEnfantsTriesParNom()
-                
+
         for inscrit in inscrits:
             if inscrit.HasFacture(date): # TODO and date not in inscrit.factures_cloturees:
                 if not date in inscrit.corrections:
@@ -73,7 +74,8 @@ class CorrectionsTab(AutoTab):
                 self.corrections_sizer.Add(sizer)
         
         AutoTab.UpdateContents(self)
-        self.sizer.FitInside(self)              
+        self.sizer.FitInside(self)
+        self.Show()
 
     def UpdateContents(self):
         self.OnMonthChoice()
@@ -470,10 +472,13 @@ class FacturationNotebook(wx.Notebook):
         self.AddPage(FacturationTab(self), "Edition")
         self.AddPage(CorrectionsTab(self), u"Corrections")
         self.AddPage(ReglementsTab(self), u"Règlements")
+        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
     def UpdateContents(self):
-        for page in range(self.GetPageCount()):
-            self.GetPage(page).UpdateContents()
+        self.OnPageChanged(None)
+
+    def OnPageChanged(self, event):
+        self.GetCurrentPage().UpdateContents()
 
 
 class FacturationPanel(GPanel):
