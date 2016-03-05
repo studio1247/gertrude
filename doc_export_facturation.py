@@ -60,27 +60,34 @@ class ExportFacturationModifications(object):
                 total_cell = total_line.getElementsByTagName("table:table-cell")[2]
 
                 inscrits = GetInscrits(debut, fin)
+                index = 0
                 for i, inscrit in enumerate(inscrits):
-                    line = template_line.cloneNode(1)
-                    fields = GetInscritFields(inscrit)
-
                     try:
                         facture = Facture(inscrit, self.annee, m+1, NO_NUMERO)
-                        facture2 = Facture(inscrit, self.annee, m+2, NO_NUMERO)
-                        facture.jours_realises += facture2.jours_realises
-                        for value in creche.activites:
-                            label = creche.activites[value].label
-                            facture.heures_supplement_activites[label] += facture2.heures_supplement_activites[label]
-                        fields.extend(GetFactureFields(facture))
+                        if facture.total > 0:
+                            facture2 = Facture(inscrit, self.annee, m+2, NO_NUMERO)
+                            facture.jours_realises += facture2.jours_realises
+                            for value in creche.activites:
+                                label = creche.activites[value].label
+                                facture.heures_supplement_activites[label] += facture2.heures_supplement_activites[label]
+                        else:
+                            facture = Facture(inscrit, self.annee, m+2, NO_NUMERO)
+                        if facture.total == 0:
+                            continue
+                        line = template_line.cloneNode(1)
+                        fields = GetInscritFields(inscrit) + GetFactureFields(facture)
                     except CotisationException, e:
                         self.errors[GetPrenomNom(inscrit)] = e.errors
+                        continue
 
                     # print fields
                     ReplaceFields(line, fields)
-                    IncrementFormulas(line, row=+i)
+                    IncrementFormulas(line, row=+index)
                     table.insertBefore(line, template_line)
+                    index += 1
+
                 table.removeChild(template_line)
-                total_cell.setAttribute("table:formula", "of:=SUM([.R3:.R%d])" % (2+len(inscrits)))
+                total_cell.setAttribute("table:formula", "of:=SUM([.R3:.R%d])" % (2+index))
 
             spreadsheet.removeChild(template_table)
 
