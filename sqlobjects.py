@@ -1803,9 +1803,15 @@ class Inscription(PeriodeReference):
         else:
             return self.debut
 
+    def GetFinDecompteJoursConges(self):
+        if creche.gestion_depart_anticipe and self.depart:
+            return self.depart
+        else:
+            return self.fin
+
     def GetNombreJoursCongesPoses(self):
         if self.debut and self.fin:
-            return self.GetNombreJoursCongesPris(self.GetDebutDecompteJoursConges(), self.fin)
+            return self.GetNombreJoursCongesPris(self.GetDebutDecompteJoursConges(), self.GetFinDecompteJoursConges())
         else:
             return 0
 

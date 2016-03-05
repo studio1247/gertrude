@@ -498,7 +498,7 @@ class FactureFinMois(object):
                             if options & TRACES:
                                 print u" régularisation cotisation : %f - %f = %f par mois" % (cotisation_regularisee.cotisation_mensuelle, cotisation.cotisation_mensuelle, regularisation_cotisation)
                             self.regularisation += regularisation_cotisation * cotisation_regularisee.nombre_factures
-                            date = GetNextMonthStart(date)
+                            date = cotisation.fin + datetime.timedelta(1)
     
                     jours_presence = inscription.GetNombreJoursPresenceSemaine()
                     if jours_presence and inscription.semaines_conges:
