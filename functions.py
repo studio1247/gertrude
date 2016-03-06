@@ -31,7 +31,7 @@ def GetNextMonday(date):
 
 
 def GetFirstMonday():
-    return GetNextMonday(first_date)
+    return first_date - datetime.timedelta(first_date.weekday())
 
 
 def GetYearStart(date):
