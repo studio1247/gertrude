@@ -766,12 +766,12 @@ def GetHistoriqueSolde(famille, date):
     if fin is None or fin > date:
         fin = date
     date = GetMonthStart(debut)
-    fin = GetMonthEnd(fin)
+    fin = min(today, GetMonthEnd(fin))
     while date <= fin:
         for inscrit in inscrits:
             try:
                 facture = Facture(inscrit, date.year, date.month, NO_NUMERO)
-                if facture.total != 0 and facture.date <= fin and (not creche.cloture_factures or facture.cloture):
+                if facture.total != 0 and facture.fin_recap <= fin and (not creche.cloture_factures or facture.cloture):
                     lignes.append(facture)
             except:
                 pass
