@@ -759,7 +759,7 @@ def GetHistoriqueSolde(famille, date):
         debut_inscrit, fin_inscrit = inscrit.GetPeriodeInscriptions()
         if debut is None or debut_inscrit < debut:
             debut = debut_inscrit
-        if fin is None or fin_inscrit > fin:
+        if fin is None or fin_inscrit is None or fin_inscrit > fin:
             fin = fin_inscrit
     if debut is None:
         return lignes
