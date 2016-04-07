@@ -105,7 +105,7 @@ class PlanningDetailleModifications(object):
                 day += datetime.timedelta(1)
                 continue
 
-            lines_enfants = GetLines(day, creche.inscrits, site=self.site, groupe=self.groupe, summary=SUMMARY_ENFANT)
+            lines_enfants = GetLines(day, creche.inscrits, presence=True, site=self.site, groupe=self.groupe, summary=SUMMARY_ENFANT)
             lines_enfants = GetEnfantsTriesSelonParametreTriPlanning(lines_enfants)
             lines_salaries = GetLines(day, creche.salaries, site=self.site, summary=SUMMARY_SALARIE)
 
