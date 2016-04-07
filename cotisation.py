@@ -375,8 +375,9 @@ class Cotisation(object):
             elif self.enfants_a_charge == 2:
                 self.tranche_paje = 1 + GetTranche(self.assiette_annuelle, [23164.0, 51475.01])
             else:
-                supplement_tranche = (self.enfants_a_charge - 3) * 6398.0
-                self.tranche_paje = 1 + GetTranche(self.assiette_annuelle, [26043.0 + supplement_tranche, 57873.01 + supplement_tranche])
+                supplement_tranche_bas = (self.enfants_a_charge - 3) * 2879.0
+                supplement_tranche_haut = (self.enfants_a_charge - 3) * 6398.0
+                self.tranche_paje = 1 + GetTranche(self.assiette_annuelle, [26043.0 + supplement_tranche_bas, 57873.01 + supplement_tranche_haut])
             try:
                 self.montant_heure_garde = creche.EvalTauxHoraire(self.mode_garde, self.inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, self.inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, None, self.tranche_paje, self.inscrit.famille.tarifs)
                 if options & TRACES:
