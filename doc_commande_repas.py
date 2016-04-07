@@ -1,24 +1,25 @@
 # -*- coding: utf-8 -*-
 
-##    This file is part of Gertrude.
-##
-##    Gertrude is free software; you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation; either version 3 of the License, or
-##    (at your option) any later version.
-##
-##    Gertrude is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
-##
-##    You should have received a copy of the GNU General Public License
-##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from constants import *
 from functions import *
 from facture import *
 from ooffice import *
+
 
 class CommandeRepasModifications(object):
     def __init__(self, debut):
@@ -32,12 +33,12 @@ class CommandeRepasModifications(object):
 
     def repas(self, jour, categories=None):
         try:
-            return self.presents(jour, categories, 12*12, 14*12, True)
+            return self.presents(jour, categories, 12 * 12, 14 * 12, True)
         except Exception, e:
             print e
     
     def gouters(self, jour, categories=None):
-        return self.presents(jour, categories, 16*12, 17*12, False)
+        return self.presents(jour, categories, 16 * 12, 17 * 12, False)
 
     def presents(self, jour, categories, debut, fin, allergies):
         if categories is None:
@@ -51,7 +52,7 @@ class CommandeRepasModifications(object):
         for inscrit in creche.inscrits:
             if not categories or (inscrit.categorie and inscrit.categorie.nom in categories):
                 journee = inscrit.GetJournee(date)
-                if journee and IsPresentDuringTranche(journee, 12*12, 14*12):
+                if journee and IsPresentDuringTranche(journee, debut, fin):
                     total += 1
                     if allergies and inscrit.allergies:
                         if inscrit.allergies in allergiques:
