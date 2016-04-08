@@ -757,7 +757,9 @@ def GetHistoriqueSolde(famille, date):
     debut, fin = None, None
     for inscrit in inscrits:
         debut_inscrit, fin_inscrit = inscrit.GetPeriodeInscriptions()
-        if debut is None or debut_inscrit < debut:
+        if debut_inscrit is None:
+            print u"Erreur sur la période d'accueil de %s" % GetPrenomNom(inscrit)
+        elif debut is None or debut_inscrit < debut:
             debut = debut_inscrit
         if fin is None or fin_inscrit is None or fin_inscrit > fin:
             fin = fin_inscrit
