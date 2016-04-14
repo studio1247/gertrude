@@ -106,8 +106,6 @@ class Cotisation(object):
             errors.append(u" - Il n'y a pas d'inscription à cette date.")
             raise CotisationException(errors)
 
-        self.fin_inscription = self.inscription.fin
-
         self.debut = self.inscription.debut
         self.fin = self.inscription.fin
         self.fin_inscription = self.inscription.fin
@@ -254,7 +252,7 @@ class Cotisation(object):
                     date = self.debut
                 
                 # debut_conge = None
-                while date <= self.fin:
+                while date <= self.fin_inscription:
                     heures = self.inscription.GetJourneeReference(date).GetNombreHeures()
                     if heures:
                         if date in creche.jours_fermeture:
@@ -291,7 +289,7 @@ class Cotisation(object):
                 if options & TRACES:
                     print u' heures période :', self.heures_periode
                 self.semaines_periode = 1 + (self.fin_inscription - self.inscription.debut).days / 7
-                self.nombre_factures = GetNombreFacturesContrat(self.debut, self.fin)
+                self.nombre_factures = GetNombreFacturesContrat(self.debut, self.fin_inscription)
                 if self.nombre_factures == 0:
                     self.nombre_factures = 1
                 if options & TRACES:
