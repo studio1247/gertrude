@@ -1235,6 +1235,8 @@ class TableauxDeBordNotebook(wx.Notebook):
 
     def OnPageChanged(self, event):
         self.GetCurrentPage().UpdateContents()
+        if event:
+            event.Skip()
         
 class TableauxDeBordPanel(GPanel):
     name = "Tableaux de bord"
