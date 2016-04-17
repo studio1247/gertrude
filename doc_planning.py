@@ -88,26 +88,26 @@ class PlanningModifications(object):
             indexes = GetInscritsByMode(self.debut, date_fin, MODE_HALTE_GARDERIE, self.site)
             indexes = GetTriParPrenomIndexes(indexes)
             self.printPresences(table, indexes, 11)
-            nb_hg = max(2, len(indexes))
+            nb_hg = 1 + max(2, len(indexes)) if len(indexes) > 0 else 0
     
             # Les mi-temps
             indexes = GetInscritsByMode(self.debut, date_fin, MODE_4_5 | MODE_3_5, self.site)
             indexes = GetTriParPrenomIndexes(indexes)
             self.printPresences(table, indexes, 7)
-            nb_45 = max(2, len(indexes))
+            nb_45 = 1 + max(2, len(indexes)) if len(indexes) > 0 else 0
     
             # Les plein-temps
             indexes = GetInscritsByMode(self.debut, date_fin, MODE_5_5, self.site)
             indexes = GetTriParPrenomIndexes(indexes)
             self.printPresences(table, indexes, 3)
-            nb_55 = max(2, len(indexes))
+            nb_55 = 1 + max(2, len(indexes)) if len(indexes) > 0 else 0
     
             cellules = ligne_total.getElementsByTagName("table:table-cell")
             for i in range(cellules.length):
                 cellule = cellules.item(i)
                 if cellule.hasAttribute('table:formula'):
                     formule = cellule.getAttribute('table:formula')
-                    formule = formule.replace('14', '%d' % (3 + nb_55 + 1 + nb_45 + 1 + nb_hg + 1))
+                    formule = formule.replace('14', '%d' % (3 + nb_55 + nb_45 + nb_hg))
                     cellule.setAttribute('table:formula', formule)
         elif self.metas["Format"] == 2:
             # Le format utilisé par une garderie périscolaire (tri par professeur)
@@ -289,6 +289,12 @@ class PlanningModifications(object):
 
     def printPresences(self, dom, indexes, ligne_depart):
         lignes = dom.getElementsByTagName("table:table-row")
+        if len(indexes) == 0:
+            dom.removeChild(lignes.item(ligne_depart + 2))
+            dom.removeChild(lignes.item(ligne_depart + 1))
+            dom.removeChild(lignes.item(ligne_depart))
+            dom.removeChild(lignes.item(ligne_depart - 1))
+            return
         nb_lignes = 3
         if len(indexes) > 3:
             for i in range(3, len(indexes)):
