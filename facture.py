@@ -238,7 +238,7 @@ class FactureFinMois(object):
                                 pile = 0
                                 while tmp > inscrit.inscriptions[0].debut:
                                     tmp -= datetime.timedelta(1)
-                                    state = inscrit.GetState(tmp).state
+                                    state = inscrit.GetStateSimple(tmp)
                                     if not tmp in creche.jours_fermeture:
                                         pile += 1
                                     if state == MALADE:
@@ -258,7 +258,7 @@ class FactureFinMois(object):
                                     dernier_jour_maladie = tmp = date
                                     while not inscrit.inscriptions[-1].fin or tmp < inscrit.inscriptions[-1].fin:
                                         tmp += datetime.timedelta(1)
-                                        state = inscrit.GetState(tmp).state
+                                        state = inscrit.GetStateSimple(tmp)
                                         if state == MALADE:
                                             dernier_jour_maladie = tmp
                                         else:

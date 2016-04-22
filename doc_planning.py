@@ -120,7 +120,7 @@ class PlanningModifications(object):
                     tableau[inscription.professeur] = [inscription]
 
             def GetState(local_inscription, delta):
-                state = local_inscription.inscrit.GetState(self.debut + datetime.timedelta(delta)).state
+                state = local_inscription.inscrit.GetStateSimple(self.debut + datetime.timedelta(delta))
                 if state <= 0:
                     return 0
                 else:

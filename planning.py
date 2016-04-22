@@ -637,7 +637,6 @@ class PlanningLine(wx.Window):
 
     def OnCommentButtonPressed(self, event):
         if not (self.line.readonly or readonly):
-            state = self.line.GetState()
             dlg = TextDialog(self, u"Commentaire", self.line.commentaire)
             response = dlg.ShowModal()
             dlg.Destroy()

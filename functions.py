@@ -647,14 +647,14 @@ def GetLines(date, inscrits, presence=False, site=None, groupe=None, summary=SUM
         inscription = inscrit.GetInscription(date)
         if inscription and (site is None or inscription.site == site) and (groupe is None or inscription.groupe == groupe):
             if presence:
-                state = inscrit.GetState(date).state
+                state = inscrit.GetStateSimple(date)
                 if state < 0 or not state & PRESENT:
                     continue 
             if date in inscrit.journees:
                 line = inscrit.journees[date]
             else:
                 line = inscription.GetJourneeReferenceCopy(date)
-            if date in inscrit.jours_conges and inscrit.GetState(date).state < 0:
+            if date in inscrit.jours_conges and inscrit.GetStateSimple(date) < 0:
                 continue
             line.nom = inscrit.nom
             line.prenom = inscrit.prenom

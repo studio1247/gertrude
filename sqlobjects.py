@@ -1028,6 +1028,35 @@ class Salarie(object):
             except:
                 pass
 
+    def GetStateSimple(self, date):
+        if self.IsDateConge(date):
+            return ABSENT
+
+        inscription = self.GetInscription(date)
+        if inscription is None:
+            return ABSENT
+
+        reference = self.GetJourneeReference(date)
+        ref_state = reference.GetState()  # TODO on peut s'en passer ?
+
+        if date in self.journees:
+            journee = self.journees[date]
+            state = journee.GetState()  # TODO on peut s'en passer ?
+            if state in (MALADE, HOPITAL, ABSENCE_NON_PREVENUE):
+                return state
+            elif state in (ABSENT, VACANCES):
+                if inscription.mode == MODE_5_5 or ref_state:
+                    return VACANCES
+                else:
+                    return ABSENT
+            else:
+                return PRESENT
+        else:
+            if ref_state:
+                return PRESENT
+            else:
+                return ABSENT
+
     def create(self):
         print 'nouveau salarie'
         result = sql_connection.execute(
@@ -1783,13 +1812,13 @@ class Inscription(PeriodeReference):
         date = debut
         # print "GetNombreJoursCongesPris(%s-%s)" % (debut, fin)
         while date < fin:
-            state = self.inscrit.GetState(date)
+            state = self.inscrit.GetStateSimple(date)
             if creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
-                if state.state == VACANCES:
+                if state == VACANCES:
                     # print date
                     jours += 1
             else:
-                if state.state in (ABSENT, VACANCES):
+                if state in (ABSENT, VACANCES):
                     reference = self.GetJourneeReference(date)
                     if reference.GetNombreHeures() > 0:
                         # print date
@@ -2256,6 +2285,35 @@ class Inscrit(object):
             return self.journees[date]
         else:
             return self.GetJourneeReference(date)
+
+    def GetStateSimple(self, date):
+        if self.IsDateConge(date):
+            return ABSENT
+
+        inscription = self.GetInscription(date)
+        if inscription is None:
+            return ABSENT
+
+        reference = self.GetJourneeReference(date)
+        ref_state = reference.GetState()  # TODO on peut s'en passer ?
+
+        if date in self.journees:
+            journee = self.journees[date]
+            state = journee.GetState()  # TODO on peut s'en passer ?
+            if state in (MALADE, HOPITAL, ABSENCE_NON_PREVENUE):
+                return state
+            elif state in (ABSENT, VACANCES):
+                if inscription.mode == MODE_5_5 or ref_state:
+                    return VACANCES
+                else:
+                    return ABSENT
+            else:
+                return PRESENT
+        else:
+            if ref_state:
+                return PRESENT
+            else:
+                return ABSENT
 
     def GetState(self, date):
         """Retourne les infos sur une journée
