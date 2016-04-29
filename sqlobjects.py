@@ -2201,8 +2201,8 @@ class Inscrit(object):
 
     def GetInscription(self, date, preinscription=False, departanticipe=True):
         for inscription in self.inscriptions:
-            if (preinscription or not creche.preinscriptions or not inscription.preinscription) and\
-                    inscription.debut and date >= inscription.debut and (not inscription.fin or date <= inscription.fin)\
+            if (preinscription or not creche.preinscriptions or not inscription.preinscription) and \
+                    inscription.debut and date >= inscription.debut and (not inscription.fin or date <= inscription.fin) \
                     and (not departanticipe or not inscription.depart or date <= inscription.depart):
                 return inscription
         return None

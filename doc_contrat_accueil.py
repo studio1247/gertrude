@@ -1,25 +1,26 @@
 # -*- coding: utf-8 -*-
 
-##    This file is part of Gertrude.
-##
-##    Gertrude is free software; you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation; either version 3 of the License, or
-##    (at your option) any later version.
-##
-##    Gertrude is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
-##
-##    You should have received a copy of the GNU General Public License
-##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from constants import *
 from functions import *
 from sqlobjects import Parent
 from cotisation import Cotisation, CotisationException
 from ooffice import *
+
 
 class DocumentAccueilModifications(object):
     def __init__(self, who, date):
@@ -48,19 +49,19 @@ class DocumentAccueilModifications(object):
         self.cotisation = Cotisation(self.inscrit, self.date)
         
         fields = GetCrecheFields(creche) + GetInscritFields(self.inscrit) + GetCotisationFields(self.cotisation)
-        fields += [ ('president', president),
-                    ('tresorier', tresorier),
-                    ('directeur', directeur),
-                    ('plancher-caf', plancher_caf),
-                    ('plafond-caf', plafond_caf),
-                    ('semaines-type', len(inscription.reference) / 7),
-                    ('date', '%.2d/%.2d/%d' % (self.date.day, self.date.month, self.date.year)),
-                    ('debut-inscription', inscription.debut),
-                    ('fin-inscription', inscription.fin),
-                    ('permanences', self.GetPermanences(inscription)),
-                    ('carence-maladie', creche.minimum_maladie),
-                    ('IsPresentDuringTranche', self.IsPresentDuringTranche),
-                    ]
+        fields += [('president', president),
+                   ('tresorier', tresorier),
+                   ('directeur', directeur),
+                   ('plancher-caf', plancher_caf),
+                   ('plafond-caf', plafond_caf),
+                   ('semaines-type', len(inscription.reference) / 7),
+                   ('date', '%.2d/%.2d/%d' % (self.date.day, self.date.month, self.date.year)),
+                   ('debut-inscription', inscription.debut),
+                   ('fin-inscription', inscription.fin),
+                   ('permanences', self.GetPermanences(inscription)),
+                   ('carence-maladie', creche.minimum_maladie),
+                   ('IsPresentDuringTranche', self.IsPresentDuringTranche),
+                   ]
         
         if creche.mode_facturation != FACTURATION_FORFAIT_MENSUEL:
             fields.append(('montant-heure-garde', self.cotisation.montant_heure_garde))
@@ -131,6 +132,7 @@ class DocumentAccueilModifications(object):
         else:
             return result        
 
+
 class OdtDocumentAccueilModifications(DocumentAccueilModifications):
     def __init__(self, who, date):
         DocumentAccueilModifications.__init__(self, who, date)
@@ -151,28 +153,30 @@ class OdtDocumentAccueilModifications(DocumentAccueilModifications):
         for table in doc.getElementsByTagName("table:table"):
             if table.getAttribute("table:name") == "Tableau3":
                 rows = table.getElementsByTagName("table:table-row")
-                for semaine in range(1, len(self.inscription.reference)/7):
+                for semaine in range(1, len(self.inscription.reference) / 7):
                     for row in rows[1:-1]:
                         clone = row.cloneNode(1)
                         for textNode in clone.getElementsByTagName("text:p"):
                             for child in textNode.childNodes:
                                 text = child.wholeText
                                 for i in range(7):
-                                    text = text.replace("[%d]" % i, "[%d]" % (i+semaine*7))
+                                    text = text.replace("[%d]" % i, "[%d]" % (i + semaine * 7))
                                 child.replaceWholeText(text)
                         table.insertBefore(clone, rows[-1])
                 # print table.toprettyxml()
-                break;
+                break
         
         # print doc.toprettyxml()
         ReplaceTextFields(doc, fields)
         return {}
+
 
 class DevisAccueilModifications(OdtDocumentAccueilModifications):
     def __init__(self, who, date):
         OdtDocumentAccueilModifications.__init__(self, who, date)
         self.template = "Devis accueil.odt"
         self.default_output = u"Devis accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
+
 
 class ContratAccueilModifications(OdtDocumentAccueilModifications):
     def __init__(self, who, date):
@@ -187,11 +191,13 @@ class ContratAccueilModifications(OdtDocumentAccueilModifications):
             self.template = 'Contrat accueil.odt'
         self.default_output = u"Contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
 
+
 class AvenantContratAccueilModifications(OdtDocumentAccueilModifications):
     def __init__(self, who, date):
         OdtDocumentAccueilModifications.__init__(self, who, date)
         self.template = "Avenant contrat accueil.odt"
         self.default_output = u"Avenant contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
+
 
 class FraisGardeModifications(DocumentAccueilModifications):
     def __init__(self, who, date):

@@ -125,12 +125,12 @@ class Cotisation(object):
         errors = []
         if not inscrit.prenom or (not options & NO_NOM and not inscrit.nom):
             errors.append(u" - L'état civil de l'enfant est incomplet.")
-        if self.date is None:
+        if date is None:
             errors.append(u" - La date de début de la période n'est pas renseignée.")
             raise CotisationException(errors)
-        self.inscription = inscrit.GetInscription(self.date, preinscription=True)
+        self.inscription = inscrit.GetInscription(date, preinscription=True)
         if self.inscription is None:
-            errors.append(u" - Il n'y a pas d'inscription à cette date.")
+            errors.append(u" - Il n'y a pas d'inscription à cette date (%s)." % str(date))
             raise CotisationException(errors)
 
         self.debut = self.inscription.debut
