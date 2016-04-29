@@ -2207,7 +2207,7 @@ class Inscrit(object):
                 return inscription
         return None
 
-    def GetInscriptions(self, date_debut, date_fin):
+    def GetInscriptions(self, date_debut=None, date_fin=None):
         result = []
         if not date_debut:
             date_debut = datetime.date.min
@@ -2230,6 +2230,7 @@ class Inscrit(object):
                         result.append(inscription)
                 except:
                     pass
+        result.sort(key=lambda i: i.debut)
         return result
 
     def HasFacture(self, date):

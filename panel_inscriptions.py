@@ -140,7 +140,7 @@ class FraisGardePanel(wx.Panel):
     def GetCotisations(self):
         self.cotisations = []
         date = first_date
-        for inscription in self.inscrit.inscriptions:
+        for inscription in self.inscrit.GetInscriptions():
             if inscription.debut:
                 date = max(date, inscription.debut)
                 while date.year < today.year + 2:
@@ -308,7 +308,7 @@ class IdentitePanel(InscriptionsTab):
         self.SetSizer(self.sizer)
         self.sizer.FitInside(self)
 
-    def OnToggleAllergie(self, event):
+    def OnToggleAllergie(self, _):
         if self.inscrit:
             allergies = []
             for checkbox in self.allergies_checkboxes:
@@ -397,7 +397,7 @@ class IdentitePanel(InscriptionsTab):
                     self.sizer.Layout()
                     break
                     
-    def OnRattachementFamille(self, event):
+    def OnRattachementFamille(self, _):
         if not self.famille_button.GetValue():
             self.inscrit.famille = Famille()
         else:
@@ -407,11 +407,11 @@ class IdentitePanel(InscriptionsTab):
                     break
         self.UpdateContents()
                         
-    def OnChangementDateNaissance(self, event):
+    def OnChangementDateNaissance(self, _):
         date_naissance = self.date_naissance_ctrl.GetValue()
         self.age_ctrl.SetValue(GetAgeString(date_naissance))
 
-    def OnChangementCodePostal(self, event):
+    def OnChangementCodePostal(self, _):
         code_postal = self.code_postal_ctrl.GetValue()
         if code_postal and not self.ville_ctrl.GetValue():
             for famille in creche.familles:
@@ -419,7 +419,7 @@ class IdentitePanel(InscriptionsTab):
                     self.ville_ctrl.SetValue(famille.ville)
                     break
 
-    def OnAjoutFrere(self, event):
+    def OnAjoutFrere(self, _):
         history.Append(Delete(self.inscrit.famille.freres_soeurs, -1))
         self.inscrit.famille.freres_soeurs.append(Frere_Soeur(self.inscrit.famille))
         self.AjouteLigneFrere(len(self.inscrit.famille.freres_soeurs) - 1)
@@ -827,18 +827,18 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         history.Append(None)
         self.UpdateContents()
     
-    def OnModeAccueilChoice(self, event):
+    def OnModeAccueilChoice(self, _):
         history.Append(None)
         self.inscrit.inscriptions[self.periode].mode = self.mode_accueil_choice.GetClientData(self.mode_accueil_choice.GetSelection())
         self.UpdateContents()        
         
-    def OnDureeReferenceChoice(self, event):
+    def OnDureeReferenceChoice(self, _):
         history.Append(None)
         duration = self.duree_reference_choice.GetClientData(self.duree_reference_choice.GetSelection())
         self.inscrit.inscriptions[self.periode].SetReferenceDuration(duration)
         self.UpdateContents()
         
-    def OnMode_5_5(self, event):
+    def OnMode_5_5(self, _):
         history.Append(None)
         inscription = self.inscrit.inscriptions[self.periode]
         inscription.mode = MODE_5_5
@@ -847,7 +847,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
                 day.SetState(0)
         self.UpdateContents()
     
-    def OnMondayCopy(self, event):
+    def OnMondayCopy(self, _):
         history.Append(None)
         inscription = self.inscrit.inscriptions[self.periode]
         for i, day in enumerate(inscription.reference):
@@ -1138,7 +1138,8 @@ class InscriptionsNotebook(wx.Notebook):
             self.conges_panel.Destroy()
             self.conges_panel = None
         self.GetCurrentPage().UpdateContents()
-            
+
+
 class InscriptionsPanel(GPanel):
     name = "Inscriptions"
     bitmap = GetBitmapFile("inscriptions.png")

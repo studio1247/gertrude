@@ -809,6 +809,7 @@ class SQLConnection(object):
                         inscription.professeur = tmp
                 inscription.debut, inscription.fin, inscription.depart, inscription.mode, inscription.preinscription, inscription.forfait_mensuel_heures, inscription.forfait_mensuel, inscription.frais_inscription, inscription.allocation_mensuelle_caf, inscription.fin_periode_adaptation, inscription.semaines_conges, inscription.heures_permanences, inscription.idx = getdate(debut), getdate(fin), getdate(depart), mode, preinscription, forfait_mensuel_heures, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, getdate(fin_periode_adaptation), semaines_conges, heures_permanences, idx
                 inscrit.inscriptions.append(inscription)
+                inscrit.inscriptions.sort(key=lambda element: element.debut)
             for inscription in inscrit.inscriptions:
                 cur.execute('SELECT day, value, debut, fin, idx FROM REF_ACTIVITIES WHERE reference=?', (inscription.idx,))
                 for day, value, debut, fin, idx in cur.fetchall():
