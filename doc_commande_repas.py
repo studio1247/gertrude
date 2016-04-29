@@ -22,14 +22,14 @@ from ooffice import *
 
 
 class CommandeRepasModifications(object):
-    def __init__(self, debut):
+    def __init__(self, site, debut):
         self.multi = False
         self.template = 'Commande repas.odt'
         self.default_output = "Commande repas %s.odt" % str(debut)
         self.debut = debut
         self.metas = {"Format": 1, "Periodicite": 11}
         self.email = None
-        self.site = None
+        self.site = site
 
     def repas(self, jour, categories=None):
         try:
@@ -49,7 +49,7 @@ class CommandeRepasModifications(object):
         normal = 0
         allergiques = {}
         date = self.debut + datetime.timedelta(jour)
-        for inscrit in creche.inscrits:
+        for inscrit in GetInscrits(date, date, site=self.site):
             if not categories or (inscrit.categorie and inscrit.categorie.nom in categories):
                 journee = inscrit.GetJournee(date)
                 if journee and IsPresentDuringTranche(journee, debut, fin):
@@ -85,7 +85,7 @@ class CommandeRepasModifications(object):
         elif filename != 'content.xml':
             return None
               
-        fields = GetCrecheFields(creche)
+        fields = GetCrecheFields(creche) + GetSiteFields(self.site)
         fields.append(('numero-semaine', self.debut.isocalendar()[1]))
         fields.append(('debut-semaine', date2str(self.debut)))
         fields.append(('fin-semaine', date2str(self.debut+datetime.timedelta(4))))

@@ -484,7 +484,7 @@ def GetParentsCivilitesString(famille):
         return ""
 
 
-def GetInscritsByMode(start, end, mode, site=None): # TODO pourquoi retourner les index
+def GetInscritsByMode(start, end, mode, site=None):  # TODO pourquoi retourner les index
     result = []
     for i, inscrit in enumerate(creche.inscrits):
         for inscription in inscrit.GetInscriptions(start, end):
@@ -817,6 +817,17 @@ def GetActivitiesSummary(creche, lines):
     return activites, activites_sans_horaires
 
 
+def GetSiteFields(site):
+    return [('site', GetNom(site)),
+            ('nom-site', GetNom(site)),
+            ('adresse-site', site.adresse if site else creche.adresse),
+            ('code-postal-site', GetCodePostal(site) if site else GetCodePostal(creche)),
+            ('ville-site', site.ville if site else creche.ville),
+            ('telephone-site', site.telephone if site else creche.telephone),
+            ('capacite-site', site.capacite if site else creche.GetCapacite()),
+            ]
+
+
 def GetCrecheFields(creche):
     return [('nom-creche', creche.nom),
             ('adresse-creche', creche.adresse),
@@ -915,23 +926,12 @@ def GetSalarieFields(salarie):
 
 
 def GetInscriptionFields(inscription):
-    if inscription.site:
-        site_adresse, site_ville, site_telephone, site_capacite = inscription.site.adresse, inscription.site.ville, inscription.site.telephone, inscription.site.capacite 
-    else:
-        site_adresse, site_ville, site_telephone, site_capacite = creche.adresse, creche.ville, creche.telephone, creche.GetCapacite()
     return [('debut-contrat', inscription.debut),
             ('fin-contrat', inscription.fin),
-            ('site', GetNom(inscription.site)),
             ('groupe', inscription.groupe.nom if inscription.groupe else ""),
-            ('nom-site', GetNom(inscription.site)),
-            ('adresse-site', site_adresse),
-            ('code-postal-site', GetCodePostal(inscription.site)),
-            ('ville-site', site_ville),
-            ('telephone-site', site_telephone),
-            ('capacite-site', site_capacite),
             ('professeur-prenom', GetPrenom(inscription.professeur)),
             ('professeur-nom', GetNom(inscription.professeur)),
-            ]
+            ] + GetSiteFields(inscription.site)
 
 
 def GetCotisationFields(cotisation):

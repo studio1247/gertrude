@@ -504,7 +504,7 @@ class EtatsPresenceTab(AutoTab):
                         date += datetime.timedelta(1)
         return selection
     
-    def OnOk(self, event):
+    def OnOk(self, _):
         selection = self.GetSelection()
         if self.grid.GetNumberRows() > 0:
             self.grid.DeleteRows(0, self.grid.GetNumberRows())
@@ -528,7 +528,7 @@ class EtatsPresenceTab(AutoTab):
                 row += 1
         self.grid.ForceRefresh()
         
-    def OnExport(self, event):
+    def OnExport(self, _):
         debut = self.debut_control.GetValue()
         fin = self.fin_control.GetValue()
         if len(creche.sites) < 2:
@@ -625,7 +625,7 @@ class StatistiquesFrequentationTab(AutoTab):
             self.sitechoice.Show(False)
         self.OnChangementPeriode(None)
         
-    def OnChangementPeriode(self, evt):
+    def OnChangementPeriode(self, _):
         if len(creche.sites) > 1:
             current_site = self.sitechoice.GetSelection()
             site = self.sitechoice.GetClientData(current_site)
@@ -964,7 +964,7 @@ class RelevesTab(AutoTab):
         else:
             return None
 
-    def EvtReleveSalariesSalarieChoice(self, evt):
+    def EvtReleveSalariesSalarieChoice(self, _):
         self.releve_salaries_monthchoice.Clear()
         salarie = self.salaries_choice["releves"].GetClientData(self.salaries_choice["releves"].GetSelection())
         date = GetFirstMonday()
@@ -975,7 +975,7 @@ class RelevesTab(AutoTab):
         self.releve_salaries_monthchoice.SetSelection(self.releve_salaries_monthchoice.GetCount() - 1)
         self.EvtReleveSalariesMonthChoice()
 
-    def EvtReleveSalariesMonthChoice(self, evt=None):
+    def EvtReleveSalariesMonthChoice(self, _=None):
         salaries, periode = self.__get_releve_salaries_periode()
         self.releve_salaries_button.Enable(periode is not None and len(salaries) > 0)
 
@@ -988,78 +988,79 @@ class RelevesTab(AutoTab):
             salaries = [salaries]
         return salaries, periode
 
-    def OnGenerationReleveSalaries(self, evt):
+    def OnGenerationReleveSalaries(self, _):
         salaries, periode = self.__get_releve_salaries_periode()
         DocumentDialog(self, ReleveSalariesModifications(salaries, periode)).ShowModal()
             
-    def OnGenerationCoordonnees(self, evt):
+    def OnGenerationCoordonnees(self, _):
         site = self.GetSelectedSite()
         date = str2date(self.coords_date.GetValue())
         DocumentDialog(self, CoordonneesModifications(site, date)).ShowModal()
 
-    def OnGenerationEtatsInscriptions(self, evt):
+    def OnGenerationEtatsInscriptions(self, _):
         site = self.GetSelectedSite()
         date = str2date(self.inscriptions_date.GetValue())
         DocumentDialog(self, EtatsInscriptionsModifications(site, date)).ShowModal()
 
-    def OnGenerationReleveSIEJ(self, evt):
+    def OnGenerationReleveSIEJ(self, _):
         site = self.GetSelectedSite()
         annee = self.releves_choice.GetClientData(self.releves_choice.GetSelection())
         DocumentDialog(self, ReleveSIEJModifications(site, annee)).ShowModal()
         
-    def OnGenerationEtatsTrimestriels(self, evt):
+    def OnGenerationEtatsTrimestriels(self, _):
         site = self.GetSelectedSite()
         annee = self.releves_choice.GetClientData(self.releves_choice.GetSelection())
         DocumentDialog(self, EtatsTrimestrielsModifications(site, annee)).ShowModal()
     
-    def OnGenerationRelevesDetailles(self, evt):
+    def OnGenerationRelevesDetailles(self, _):
         site = self.GetSelectedSite()
         annee = self.releves_detailles_choice.GetClientData(self.releves_detailles_choice.GetSelection())
         DocumentDialog(self, ReleveDetailleModifications(site, annee)).ShowModal()
         
-    def OnGenerationEtatsPlaces(self, evt):
+    def OnGenerationEtatsPlaces(self, _):
         site = self.GetSelectedSite()
         annee = self.places_choice.GetClientData(self.places_choice.GetSelection())
         DocumentDialog(self, EtatPlacesModifications(site, annee)).ShowModal()
         
-    def OnGenerationRapportFrequentation(self, evt):
+    def OnGenerationRapportFrequentation(self, _):
         site = self.GetSelectedSite()
         annee = self.rapports_choice.GetClientData(self.rapports_choice.GetSelection())
         DocumentDialog(self, RapportFrequentationModifications(site, annee)).ShowModal()
         
-    def OnGenerationEtatPresenceMensuel(self, evt):
+    def OnGenerationEtatPresenceMensuel(self, _):
         site = self.GetSelectedSite()
         date = self.etat_presence_mensuesl_choice.GetClientData(self.etat_presence_mensuesl_choice.GetSelection())
         DocumentDialog(self, EtatPresenceMensuelModifications(site, date)).ShowModal()
 
-    def OnGenerationExportFacturation(self, evt):
+    def OnGenerationExportFacturation(self, _):
         annee = self.export_facturation_choice.GetClientData(self.export_facturation_choice.GetSelection())
         DocumentDialog(self, ExportFacturationModifications(annee)).ShowModal()
 
-    def OnGenerationSyntheseFinanciere(self, evt):
+    def OnGenerationSyntheseFinanciere(self, _):
         annee = self.syntheses_choice.GetClientData(self.syntheses_choice.GetSelection())
         DocumentDialog(self, SyntheseFinanciereModifications(annee)).ShowModal()
 
-    def OnGenerationCompteExploitation(self, evt):
+    def OnGenerationCompteExploitation(self, _):
         site = self.GetSelectedSite()
         annee = self.comptes_exploitation_choice.GetClientData(self.comptes_exploitation_choice.GetSelection())
         DocumentDialog(self, CompteExploitationModifications(site, annee)).ShowModal()
 
-    def OnGenerationCommandeRepas(self, evt):
+    def OnGenerationCommandeRepas(self, _):
+        site = self.GetSelectedSite()
         semaine = self.commande_repas_choice.GetClientData(self.commande_repas_choice.GetSelection())
-        DocumentDialog(self, CommandeRepasModifications(semaine)).ShowModal()
+        DocumentDialog(self, CommandeRepasModifications(site, semaine)).ShowModal()
 
-    def OnGenerationPlanning(self, evt):
+    def OnGenerationPlanning(self, _):
         site = self.GetSelectedSite()
         date = self.planning_choice.GetClientData(self.planning_choice.GetSelection())
         DocumentDialog(self, PlanningModifications(site, date)).ShowModal()
             
-    def OnGenerationPlanningHoraire(self, evt):
+    def OnGenerationPlanningHoraire(self, _):
         site = self.GetSelectedSite()
         date = self.planning_horaire_choice.GetClientData(self.planning_horaire_choice.GetSelection())
         DocumentDialog(self, PlanningHoraireModifications(site, date)).ShowModal()
 
-    def OnGenerationPlanningDetaille(self, evt):
+    def OnGenerationPlanningDetaille(self, _):
         site = self.GetSelectedSite()
         start = self.detail_start_date.GetValue()
         end = self.detail_end_date.GetValue()
@@ -1067,7 +1068,7 @@ class RelevesTab(AutoTab):
             end = start
         DocumentDialog(self, PlanningDetailleModifications((start, end), site)).ShowModal()
         
-    def OnGenerationExportTablette(self, evt):
+    def OnGenerationExportTablette(self, _):
         site = self.GetSelectedSite()
         date = self.export_tablette_choice.GetClientData(self.export_tablette_choice.GetSelection())
         DocumentDialog(self, ExportTabletteModifications(site, date)).ShowModal()
