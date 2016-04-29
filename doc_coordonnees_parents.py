@@ -63,7 +63,7 @@ class CoordonneesModifications(object):
                             if parent:
                                 emails.add(parent.email)
                                 for phoneType in ["domicile", "portable", "travail"]:
-                                    phone = getattr(parent, "telephone_"+phoneType)
+                                    phone = getattr(parent, "telephone_" + phoneType)
                                     if phone:
                                         if phone in phones.keys():
                                             phones[phone][1] = ""
