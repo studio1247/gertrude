@@ -454,12 +454,17 @@ class ReglementsTab(AutoTab):
             self.grid.PopupMenu(menu, event.GetPosition())
             menu.Destroy()
     
-    def OnAjoutReglement(self, event):
-        history.Append(Delete(self.inscrit.famille.encaissements, -1))
-        self.inscrit.famille.encaissements.append(Encaissement(self.inscrit.famille, self.add_date.GetValue(), self.add_montant.GetValue(), self.add_moyen_paiement.GetValue()))
-        self.AfficheLignes()
+    def OnAjoutReglement(self, _):
+        if self.add_date.GetValue() <= today:
+            history.Append(Delete(self.inscrit.famille.encaissements, -1))
+            self.inscrit.famille.encaissements.append(Encaissement(self.inscrit.famille, self.add_date.GetValue(), self.add_montant.GetValue(), self.add_moyen_paiement.GetValue()))
+            self.AfficheLignes()
+        else:
+            dlg = wx.MessageDialog(None, u"Date erronée", 'Erreur', wx.OK | wx.ICON_WARNING)
+            dlg.ShowModal()
+            dlg.Destroy()
 
-    def OnSuppressionReglement(self, event):
+    def OnSuppressionReglement(self, _):
         history.Append(None)
         self.inscrit.famille.encaissements.remove(self.current_line)
         self.current_line.delete()

@@ -750,9 +750,9 @@ def Facture(inscrit, annee, mois, options=0):
         return CreateFacture(inscrit, annee, mois, options)
 
 
-def GetHistoriqueSolde(famille, date):
+def GetHistoriqueSolde(famille, jalon, derniere_facture=True):
     inscrits = GetInscritsFamille(famille)
-    lignes = [encaissement for encaissement in famille.encaissements if not encaissement.date or encaissement.date <= date]
+    lignes = [encaissement for encaissement in famille.encaissements if not encaissement.date or encaissement.date <= jalon]
     debut, fin = None, None
     for inscrit in inscrits:
         debut_inscrit, fin_inscrit = inscrit.GetPeriodeInscriptions()
@@ -764,25 +764,30 @@ def GetHistoriqueSolde(famille, date):
             fin = fin_inscrit
     if debut is None:
         return lignes
-    if fin is None or fin > date:
-        fin = date
+    if fin is None or fin > jalon:
+        fin = jalon
     date = GetMonthStart(debut)
     fin = min(today, GetMonthEnd(fin))
     while date <= fin:
         for inscrit in inscrits:
             try:
                 facture = Facture(inscrit, date.year, date.month, NO_NUMERO)
-                if facture.total != 0 and facture.fin_recap <= fin and (not creche.cloture_factures or facture.cloture):
-                    lignes.append(facture)
-            except:
-                pass
+                if facture.total != 0 and (not creche.cloture_factures or facture.cloture):
+                    if derniere_facture:
+                        if facture.fin_recap <= fin:
+                            lignes.append(facture)
+                    else:
+                        if facture.fin_recap < GetMonthStart(jalon):
+                            lignes.append(facture)
+            except Exception, e:
+                print e
         date = GetNextMonthStart(date)
     return lignes
 
 
 def CalculeSolde(famille, date):
     solde = 0.0
-    historique = GetHistoriqueSolde(famille, date)
+    historique = GetHistoriqueSolde(famille, date, False)
     for ligne in historique:
         if isinstance(ligne, Encaissement):
             solde -= ligne.valeur
