@@ -395,6 +395,9 @@ class Cotisation(object):
             self.cotisation_periode = None
             self.cotisation_mensuelle, self.montants_heure_garde = self.CalculeFraisGardeComplete(self.forfait_mensuel_heures, self.heures_mois)                    
         elif creche.mode_facturation == FACTURATION_PAJE:
+            if not inscrit.naissance:
+                errors.append(u" - La date de naissance n'est pas renseignée.")
+                raise CotisationException(errors)
             self.tranche_paje = 1 + GetTranche(self.assiette_annuelle, GetTranchesPaje(date, inscrit.naissance, self.enfants_a_charge))
             if date < datetime.date(2016, 1, 1):
                 self.AjustePeriode((debut, datetime.date(2015, 12, 31)))
