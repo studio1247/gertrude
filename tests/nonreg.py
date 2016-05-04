@@ -47,6 +47,7 @@ class GertrudeTestCase(unittest.TestCase):
         inscrit = Inscrit(creation=False)
         inscrit.famille = Famille(creation=False)
         inscrit.prenom, inscrit.nom = 'Gertrude', 'GPL'
+        inscrit.naissance = datetime.date(2010, 1, 1)
         inscrit.idx = 0
         self.AddParents(inscrit)
         creche.inscrits.append(inscrit)
