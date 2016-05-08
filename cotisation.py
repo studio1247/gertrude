@@ -274,6 +274,8 @@ class Cotisation(object):
 
                 if creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
                     date = GetMonthStart(self.debut)
+                    if options & TRACES:
+                        print u' début théorique en date du', date
                 else:
                     self.prorata_effectue = True
                     date = self.debut
