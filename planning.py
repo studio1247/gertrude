@@ -342,7 +342,7 @@ class PlanningLineGrid(BufferedWindow):
             self.temp_line = line_copy
             self.UpdateDrawing()
 
-    def OnLeftButtonUp(self, event):
+    def OnLeftButtonUp(self, _):
         self.temp_line = None
         if self.state is not None:
             line = self.line
@@ -462,7 +462,7 @@ class PlanningLineStatusIcon(wx.Window):
             self.button.SetToolTip(wx.ToolTip(tooltip))
             self.button.Show(True)
             
-    def OnButtonPressed(self, event):
+    def OnButtonPressed(self, _):
         if not (self.line.readonly or readonly):
             history.Append([Call(self.line.Restore, self.line.Backup())])        
             state = self.line.GetState()
@@ -635,7 +635,7 @@ class PlanningLine(wx.Window):
                 self.line.insert = None
             self.OnLineChanged()
 
-    def OnCommentButtonPressed(self, event):
+    def OnCommentButtonPressed(self, _):
         if not (self.line.readonly or readonly):
             dlg = TextDialog(self, u"Commentaire", self.line.commentaire)
             response = dlg.ShowModal()
