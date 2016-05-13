@@ -71,15 +71,14 @@ class Day(object):
                         self.InsertActivity(a, start, v)
                     if b > end:
                         self.InsertActivity(end, b, v)
-                elif creche.activites[
-                            v & ~(PREVISIONNEL + CLOTURE)].mode == MODE_LIBERE_PLACE and start < b and end > a:
+                elif creche.activites[v & ~(PREVISIONNEL + CLOTURE)].mode == MODE_LIBERE_PLACE and start < b and end > a:
                     self.RemoveActivity(a, b, v)
                     if a < start:
                         self.InsertActivity(a, start, v)
                     if b > end:
                         self.InsertActivity(end, b, v)
             self.InsertActivity(start, end, value)
-            if activity_value != 0 and activity.mode == MODE_NORMAL:
+            if activity_value != 0 and activity.mode in (MODE_NORMAL, MODE_PRESENCE_NON_FACTUREE):
                 self.SetActivity(start, end, value & PREVISIONNEL)
 
     def ClearActivity(self, start, end, value):
