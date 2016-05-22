@@ -732,10 +732,10 @@ class SQLConnection(object):
             professeur.idx = idx
             creche.professeurs.append(professeur)
 
-        cur.execute('SELECT idx, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, code_client, tarifs, notes FROM FAMILLES')
-        for idx, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, code_client, tarifs, notes in cur.fetchall():
+        cur.execute('SELECT idx, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, code_client, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, code_client, tarifs, notes FROM FAMILLES')
+        for idx, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, code_client, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, code_client, tarifs, notes in cur.fetchall():
             famille = Famille(creation=False)
-            famille.adresse, famille.code_postal, famille.ville, famille.numero_securite_sociale, famille.numero_allocataire_caf, famille.medecin_traitant, famille.telephone_medecin_traitant, famille.assureur, famille.numero_police_assurance, famille.code_client, famille.tarifs, famille.notes, famille.idx = adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, code_client, tarifs, notes, idx
+            famille.adresse, famille.code_postal, famille.ville, famille.numero_securite_sociale, famille.numero_allocataire_caf, famille.code_client, famille.medecin_traitant, famille.telephone_medecin_traitant, famille.assureur, famille.numero_police_assurance, famille.code_client, famille.tarifs, famille.notes, famille.idx = adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, code_client, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, code_client, tarifs, notes, idx
             creche.familles.append(famille)
             cur.execute('SELECT relation, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email, idx FROM PARENTS WHERE famille=?', (famille.idx,))
             for parent_entry in cur.fetchall():

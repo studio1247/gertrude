@@ -20,7 +20,7 @@ from facture import *
 from ooffice import *
 from controls import *
 from doc_facture_mensuelle import FactureModifications
-from doc_export_compta import ExportComptaModifications
+from doc_export_compta import ExportComptaCotisationsModifications, ExportComptaReglementsModifications
 from doc_attestation_paiement import AttestationModifications
 from doc_appel_cotisations import AppelCotisationsModifications
 from sqlobjects import *
@@ -107,9 +107,13 @@ class FacturationTab(AutoTab):
         button2 = wx.Button(self, -1, u'Génération')
         self.Bind(wx.EVT_BUTTON, self.OnGenerationFacture, button2)
         box_sizer.AddMany([(self.inscrits_choice["factures"], 1, wx.ALL|wx.EXPAND, 5), (self.factures_monthchoice, 1, wx.ALL|wx.EXPAND, 5), (self.cloture_button, 0, wx.ALL, 5), (button2, 0, wx.ALL, 5)])
-        if IsTemplateFile("Export compta.txt"):
-            exportButton = wx.Button(self, -1, u'Export compta')
-            self.Bind(wx.EVT_BUTTON, self.OnExportCompta, exportButton)
+        if IsTemplateFile("Export compta cotisations.txt"):
+            exportButton = wx.Button(self, -1, u'Export compta cotisations')
+            self.Bind(wx.EVT_BUTTON, self.OnExportComptaCotisations, exportButton)
+            box_sizer.Add(exportButton, 0, wx.ALL, 5)
+        if IsTemplateFile("Export compta reglements.txt"):
+            exportButton = wx.Button(self, -1, u'Export compta règlements')
+            self.Bind(wx.EVT_BUTTON, self.OnExportComptaReglements, exportButton)
             box_sizer.Add(exportButton, 0, wx.ALL, 5)
         if config.options & DECLOTURE:
             self.decloture_button = wx.Button(self, -1, u'Dé-clôture')
@@ -141,8 +145,7 @@ class FacturationTab(AutoTab):
         self.UpdateContents()
         self.Layout()
 
-    def OnFacturesInscritChoice(self, evt):
-        selection = self.factures_monthchoice.GetStringSelection()
+    def OnFacturesInscritChoice(self, _):
         self.factures_monthchoice.Clear()
         inscrit = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
         date = GetFirstMonday()
@@ -153,7 +156,7 @@ class FacturationTab(AutoTab):
         self.factures_monthchoice.SetSelection(self.factures_monthchoice.GetCount()-1)
         self.OnFacturesMonthChoice()
         
-    def OnFacturesMonthChoice(self, evt=None):
+    def OnFacturesMonthChoice(self, _=None):
         inscrits, periode = self.__GetFactureSelection()
         for inscrit in inscrits:
             if inscrit.HasFacture(periode) and periode not in inscrit.factures_cloturees:
@@ -199,7 +202,7 @@ class FacturationTab(AutoTab):
         self.recus_periodechoice.SetSelection(0)
         self.OnRecusPeriodeChoice(evt)
 
-    def OnRecusPeriodeChoice(self, evt):
+    def OnRecusPeriodeChoice(self, _):
         inscrit = self.inscrits_choice["recus"].GetClientData(self.inscrits_choice["recus"].GetSelection())
         periode = self.recus_periodechoice.GetClientData(self.recus_periodechoice.GetSelection())
         if self.recus_endchoice:
@@ -259,7 +262,7 @@ class FacturationTab(AutoTab):
         
         self.Layout()
         
-    def OnGenerationAppelCotisations(self, evt):
+    def OnGenerationAppelCotisations(self, _):
         periode = self.appels_monthchoice.GetClientData(self.appels_monthchoice.GetSelection())
         DocumentDialog(self, AppelCotisationsModifications(periode, options=NO_NOM)).ShowModal()
 
@@ -283,7 +286,7 @@ class FacturationTab(AutoTab):
             inscrits = [data]
         return inscrits, periode
     
-    def OnClotureFacture(self, evt):
+    def OnClotureFacture(self, _):
         inscrits, periode = self.__GetFactureSelection()
         errors = {}
         for inscrit in inscrits:
@@ -301,7 +304,7 @@ class FacturationTab(AutoTab):
             wx.MessageDialog(self, message, 'Message', wx.OK|wx.ICON_WARNING).ShowModal()
         self.OnFacturesMonthChoice()
 
-    def OnDeclotureFacture(self, evt):
+    def OnDeclotureFacture(self, _):
         inscrits, periode = self.__GetFactureSelection()
         errors = {}
         for inscrit in inscrits:
@@ -321,24 +324,29 @@ class FacturationTab(AutoTab):
             wx.MessageDialog(self, message, 'Message', wx.OK|wx.ICON_WARNING).ShowModal()
         self.OnFacturesMonthChoice()
 
-    def OnGenerationFacture(self, evt):
+    def OnGenerationFacture(self, _):
         inscrits, periode = self.__GetFactureSelection()
         if len(inscrits) > 0:
             DocumentDialog(self, FactureModifications(inscrits, periode)).ShowModal()
         else:
             wx.MessageDialog(self, u'Aucune facture pour cette période', 'Message', wx.OK|wx.ICON_WARNING).ShowModal()
 
-    def OnGenerationAttestationPaiement(self, evt):
+    def OnGenerationAttestationPaiement(self, _):
         inscrits = self.inscrits_choice["recus"].GetClientData(self.inscrits_choice["recus"].GetSelection())
         debut, fin = self.recus_periodechoice.GetClientData(self.recus_periodechoice.GetSelection())
         if self.recus_endchoice and self.recus_endchoice.IsEnabled():
             fin = self.recus_endchoice.GetClientData(self.recus_endchoice.GetSelection())[1]
         DocumentDialog(self, AttestationModifications(inscrits, debut, fin)).ShowModal()
         
-    def OnExportCompta(self, evt):
+    def OnExportComptaCotisations(self, _):
         inscrits, periode = self.__GetFactureSelection()
         if len(inscrits) > 0:
-            DocumentDialog(self, ExportComptaModifications(inscrits, periode)).ShowModal()
+            DocumentDialog(self, ExportComptaCotisationsModifications(inscrits, periode)).ShowModal()
+
+    def OnExportComptaReglements(self, _):
+        inscrits, periode = self.__GetFactureSelection()
+        if len(inscrits) > 0:
+            DocumentDialog(self, ExportComptaReglementsModifications(inscrits, periode)).ShowModal()
 
 
 class ReglementsTab(AutoTab):
@@ -474,7 +482,7 @@ class ReglementsTab(AutoTab):
 class FacturationNotebook(wx.Notebook):
     def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
-        self.AddPage(FacturationTab(self), "Edition")
+        self.AddPage(FacturationTab(self), u"Edition")
         self.AddPage(CorrectionsTab(self), u"Corrections")
         self.AddPage(ReglementsTab(self), u"Règlements")
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
@@ -482,7 +490,7 @@ class FacturationNotebook(wx.Notebook):
     def UpdateContents(self):
         self.OnPageChanged(None)
 
-    def OnPageChanged(self, event):
+    def OnPageChanged(self, _):
         self.GetCurrentPage().UpdateContents()
 
 
