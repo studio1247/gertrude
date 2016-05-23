@@ -56,6 +56,24 @@ modes_facturation_adaptation = [(u'Facturation normale', PERIODE_ADAPTATION_FACT
                                 (u"Période d'adaptation gratuite", PERIODE_ADAPTATION_GRATUITE)
                                 ]
 
+modes_arrondi_horaires_enfants = [(u"Pas d'arrondi", SANS_ARRONDI),
+                                  (u"Arrondi à l'heure", ARRONDI_HEURE),
+                                  (u"Arrondi à l'heure avec marge d'1/2heure", ARRONDI_HEURE_MARGE_DEMI_HEURE),
+                                  (u"Arrondi à la demi heure", ARRONDI_DEMI_HEURE),
+                                  (u"Arrondi des heures d'arrivée et de départ", ARRONDI_HEURE_ARRIVEE_DEPART)
+                                  ]
+
+modes_arrondi_factures_enfants = [(u"Pas d'arrondi", SANS_ARRONDI),
+                                  (u"Arrondi à l'heure", ARRONDI_HEURE),
+                                  (u"Arrondi à la demi heure", ARRONDI_DEMI_HEURE),
+                                  (u"Arrondi des heures d'arrivée et de départ", ARRONDI_HEURE_ARRIVEE_DEPART)
+                                  ]
+
+modes_arrondi_horaires_salaries = [(u"Pas d'arrondi", SANS_ARRONDI),
+                                   (u"Arrondi à l'heure", ARRONDI_HEURE),
+                                   (u"Arrondi des heures d'arrivée et de départ", ARRONDI_HEURE_ARRIVEE_DEPART)
+                                   ]
+
 temps_facturation = [(u"Fin de mois", FACTURATION_FIN_MOIS),
                      (u"Début de mois : contrat mois + réalisé mois-1", FACTURATION_DEBUT_MOIS_CONTRAT),
                      (u"Début de mois : prévisionnel mois + réalisé mois-1", FACTURATION_DEBUT_MOIS_PREVISIONNEL),
@@ -910,9 +928,9 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([CreateLabelTuple(u"Clôture des factures :"),
                        (AutoChoiceCtrl(self, creche, 'cloture_factures', [(u'Activée', True), (u'Désactivée', False)]), 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple(u"Mode de facturation des périodes d'adaptation :"), (AutoChoiceCtrl(self, creche, 'facturation_periode_adaptation', modes_facturation_adaptation), 1, wx.EXPAND)])
-        sizer.AddMany([CreateLabelTuple(u"Mode d'arrondi des horaires des enfants :"), (AutoChoiceCtrl(self, creche, 'arrondi_heures', [(u"Pas d'arrondi", SANS_ARRONDI), (u"Arrondi à l'heure", ARRONDI_HEURE), (u"Arrondi à l'heure avec marge d'1/2heure", ARRONDI_HEURE_MARGE_DEMI_HEURE), (u"Arrondi à la demi heure", ARRONDI_DEMI_HEURE), (u"Arrondi des heures d'arrivée et de départ", ARRONDI_HEURE_ARRIVEE_DEPART)]), 0, wx.EXPAND)])
-        sizer.AddMany([CreateLabelTuple(u"Mode d'arrondi de la facturation des enfants :"), (AutoChoiceCtrl(self, creche, 'arrondi_facturation', [(u"Pas d'arrondi", SANS_ARRONDI), (u"Arrondi à l'heure", ARRONDI_HEURE), (u"Arrondi à la demi heure", ARRONDI_DEMI_HEURE), (u"Arrondi des heures d'arrivée et de départ", ARRONDI_HEURE_ARRIVEE_DEPART)]), 0, wx.EXPAND)])
-        sizer.AddMany([CreateLabelTuple(u"Mode d'arrondi des horaires des salariés :"), (AutoChoiceCtrl(self, creche, 'arrondi_heures_salaries', [(u"Pas d'arrondi", SANS_ARRONDI), (u"Arrondi à l'heure", ARRONDI_HEURE), (u"Arrondi des heures d'arrivée et de départ", ARRONDI_HEURE_ARRIVEE_DEPART)]), 0, wx.EXPAND)])
+        sizer.AddMany([CreateLabelTuple(u"Mode d'arrondi des horaires des enfants :"), (AutoChoiceCtrl(self, creche, 'arrondi_heures', modes_arrondi_horaires_enfants), 0, wx.EXPAND)])
+        sizer.AddMany([CreateLabelTuple(u"Mode d'arrondi de la facturation des enfants :"), (AutoChoiceCtrl(self, creche, 'arrondi_facturation', modes_arrondi_factures_enfants), 0, wx.EXPAND)])
+        sizer.AddMany([CreateLabelTuple(u"Mode d'arrondi des horaires des salariés :"), (AutoChoiceCtrl(self, creche, 'arrondi_heures_salaries', modes_arrondi_horaires_salaries), 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple(u"Mode d'arrondi des semaines des contrats :"), (AutoChoiceCtrl(self, creche, 'arrondi_semaines', [(u"Arrondi à la semaine supérieure", ARRONDI_SEMAINE_SUPERIEURE), (u"Arrondi à la semaine la plus proche", ARRONDI_SEMAINE_PLUS_PROCHE)]), 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple(u"Mode d'arrondi des mensualisations en Euros :"), (AutoChoiceCtrl(self, creche, 'arrondi_mensualisation_euros', [(u"Pas d'arrondi", SANS_ARRONDI), (u"Arrondi à l'euro le plus proche", ARRONDI_EURO_PLUS_PROCHE)]), 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple(u"Gestion des absences prévues au contrat :"), (AutoChoiceCtrl(self, creche, 'conges_inscription', [('Non', 0), (u'Oui', 1), (u"Oui, avec gestion d'heures supplémentaires", 2)]), 0, wx.EXPAND)])
