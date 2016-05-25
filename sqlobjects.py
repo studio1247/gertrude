@@ -213,7 +213,7 @@ class Day(object):
                 return PRESENT | PREVISIONNEL
         return state
 
-    def GetNombreHeures(self, facturation=False):
+    def GetNombreHeures(self, facturation=False, adaptation=False):
         #        if self.last_heures is not None:
         #            return self.last_heures
         self.last_heures = 0.0
@@ -222,7 +222,9 @@ class Day(object):
                 self.last_heures = 0.0
                 return self.last_heures
             elif value == 0 or value == PREVISIONNEL:
-                if facturation:
+                if facturation and adaptation:
+                    mode_arrondi = creche.arrondi_facturation_periode_adaptation
+                elif facturation:
                     mode_arrondi = creche.arrondi_facturation
                 else:
                     mode_arrondi = eval('creche.' + self.mode_arrondi)
@@ -1872,7 +1874,7 @@ class Inscription(PeriodeReference):
     def IsInPeriodeAdaptation(self, date):
         if self.debut is None or self.fin_periode_adaptation is None:
             return False
-        return date >= self.debut and date <= self.fin_periode_adaptation
+        return self.debut <= date <= self.fin_periode_adaptation
 
     def GetListeActivites(self, activite=0):
         result = []
@@ -2353,8 +2355,12 @@ class Inscrit(object):
                         heures_realisees += tranche * GetDureeArrondie(creche.arrondi_heures, start, end)
 
                 union = GetUnionHeures(journee, reference)
-                for start, end in union:
-                    heures_facturees += tranche * GetDureeArrondie(creche.arrondi_facturation, start, end)
+                if inscription.IsInPeriodeAdaptation(date):
+                    for start, end in union:
+                        heures_facturees += tranche * GetDureeArrondie(creche.arrondi_facturation_periode_adaptation, start, end)
+                else:
+                    for start, end in union:
+                        heures_facturees += tranche * GetDureeArrondie(creche.arrondi_facturation, start, end)
 
                 return State(PRESENT, heures_reference, heures_realisees, heures_facturees)
         else:
