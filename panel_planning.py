@@ -111,7 +111,7 @@ class DayPlanningPanel(PlanningWidget):
                     date = GetMonthStart(self.date)
                 else:
                     date = GetNextMonthStart(self.date)
-                if date in inscrit.factures_cloturees:
+                if creche.cloture_factures and date in inscrit.factures_cloturees:
                     line.readonly = True
                 line.day = self.date.weekday()
                 self.lignes_enfants.append(line)

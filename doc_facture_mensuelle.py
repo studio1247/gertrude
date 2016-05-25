@@ -130,10 +130,10 @@ class FactureModifications(object):
                             details = " (%s)" % GetHeureString(facture.jours_absence_non_prevenue[date])                                    
                         elif date in facture.jours_presence_selon_contrat:
                             state = PRESENT
-                            details = " (%s)" % GetHeureString(facture.jours_presence_selon_contrat[date][1])
+                            details = " (%s)" % GetHeureString(facture.jours_presence_selon_contrat[date])
                         elif date in facture.jours_supplementaires:
                             state = SUPPLEMENT
-                            details = " (%s)" % GetHeureString(facture.jours_supplementaires[date][1])
+                            details = " (%s)" % GetHeureString(facture.jours_supplementaires[date])
                         elif date in facture.jours_maladie:
                             state = MALADE
                         elif facture.inscrit.IsDateConge(date):
