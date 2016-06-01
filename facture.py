@@ -789,8 +789,11 @@ def CalculeSolde(famille, date):
     solde = 0.0
     historique = GetHistoriqueSolde(famille, date, False)
     for ligne in historique:
-        if isinstance(ligne, Encaissement):
-            solde -= ligne.valeur
-        else:
-            solde += ligne.total
+        try:
+            if isinstance(ligne, Encaissement):
+                solde -= ligne.valeur
+            else:
+                solde += ligne.total
+        except:
+            pass
     return solde
