@@ -2202,13 +2202,20 @@ class Inscrit(object):
                     fin = inscription.fin
             return debut, fin
 
-    def GetInscription(self, date, preinscription=False, departanticipe=True):
+    def GetInscription(self, date, preinscription=False, departanticipe=True, array=False):
+        result = []
         for inscription in self.inscriptions:
             if (preinscription or not creche.preinscriptions or not inscription.preinscription) and \
                     inscription.debut and date >= inscription.debut and (not inscription.fin or date <= inscription.fin) \
                     and (not departanticipe or not inscription.depart or date <= inscription.depart):
-                return inscription
-        return None
+                if array:
+                    result.append(inscription)
+                else:
+                    return inscription
+        if array:
+            return result
+        else:
+            return None
 
     def GetInscriptions(self, date_debut=None, date_fin=None):
         result = []

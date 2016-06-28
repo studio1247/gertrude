@@ -128,10 +128,16 @@ class Cotisation(object):
         if date is None:
             errors.append(u" - La date de début de la période n'est pas renseignée.")
             raise CotisationException(errors)
-        self.inscription = inscrit.GetInscription(date, preinscription=True)
-        if self.inscription is None:
+
+        inscription = inscrit.GetInscription(date, preinscription=True, array=True)
+        if len(inscription) == 0:
             errors.append(u" - Il n'y a pas d'inscription à cette date (%s)." % str(date))
             raise CotisationException(errors)
+        elif len(inscription) > 1:
+            errors.append(u" - Il y a plusieurs inscriptions à cette date (%s)." % str(date))
+            raise CotisationException(errors)
+        else:
+            self.inscription = inscription[0]
 
         self.debut = self.inscription.debut
         self.fin = self.inscription.fin
@@ -273,7 +279,7 @@ class Cotisation(object):
                     raise CotisationException(errors)
 
                 if creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
-                    date = GetMonthStart(self.debut)
+                    date = GetMonthStart(self.inscription.debut)
                     if options & TRACES:
                         print u' début théorique en date du', date
                 else:
@@ -318,7 +324,10 @@ class Cotisation(object):
                 if options & TRACES:
                     print u' heures période :', self.heures_periode
                 self.semaines_periode = 1 + (self.fin_inscription - self.inscription.debut).days / 7
-                self.nombre_factures = GetNombreFacturesContrat(self.debut, self.fin_inscription)
+                if creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
+                    self.nombre_factures = GetNombreFacturesContrat(self.inscription.debut, self.fin_inscription)
+                else:
+                    self.nombre_factures = GetNombreFacturesContrat(self.debut, self.fin_inscription)
                 if self.nombre_factures == 0:
                     self.nombre_factures = 1
                 if options & TRACES:
@@ -540,7 +549,8 @@ class Cotisation(object):
                     else:
                         self.cotisation_mensuelle = cotisation_diff
                         self.montant_heure_garde = heure_garde_diff
-                    
+                        self.montants_heure_garde = [self.montant_heure_garde]
+
         self.cotisation_mensuelle += self.majoration_mensuelle
         
         if creche.arrondi_mensualisation_euros == ARRONDI_EURO_PLUS_PROCHE:
