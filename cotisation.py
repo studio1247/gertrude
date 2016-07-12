@@ -81,7 +81,7 @@ def GetTranchesPaje(date, naissance, enfants_a_charge):
             return [23420.0, 52044.0]
         else:
             enfants_a_charge -= 3
-            return [23420.0 + (enfants_a_charge * 2911.0), 52044.01 + (enfants_a_charge * 6469.0)]
+            return [26331.0 + (enfants_a_charge * 2911.0), 58513.00 + (enfants_a_charge * 6469.0)]
     else:
         if enfants_a_charge == 1:
             return [21332.0, 47405.0]
