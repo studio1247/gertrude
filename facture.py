@@ -772,14 +772,17 @@ def GetHistoriqueSolde(famille, jalon, derniere_facture=True):
         for inscrit in inscrits:
             try:
                 facture = Facture(inscrit, date.year, date.month, NO_NUMERO)
+                print facture.total, facture.cloture, derniere_facture, facture.fin_recap, fin
                 if facture.total != 0 and (not creche.cloture_factures or facture.cloture):
                     if derniere_facture:
-                        if facture.fin_recap <= fin:
-                            lignes.append(facture)
+                        # desactivé pour Moulon (la dernière facture de juillet clôturée le 10 juillet et non visible dans les règlements
+                        # if facture.fin_recap <= fin:
+                        lignes.append(facture)
                     else:
                         if facture.fin_recap < GetMonthStart(jalon):
                             lignes.append(facture)
-            except:
+            except Exception, e:
+                print "Exception", e
                 pass
         date = GetNextMonthStart(date)
     return lignes
