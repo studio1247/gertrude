@@ -178,8 +178,10 @@ class FactureFinMois(object):
                         heures_facturees_non_realisees = 0.0
                         heures_realisees_non_facturees = inscrit.GetTotalActivitesPresenceNonFacturee(date)
                         heures_supplementaires_facturees = (heures_facturees - heures_reference)
-                        if heures_realisees_non_facturees > heures_reference:
-                            heures_supplementaires_facturees -= heures_realisees_non_facturees - heures_reference
+                        #  retiré le 19 juillet 2017 pb d'heures supp marquées non facturées (retirées en double)
+                        #  if heures_realisees_non_facturees > heures_reference:
+                        #    heures_supplementaires_facturees -= heures_realisees_non_facturees - heures_reference
+                        #    print "RETRANCHE" , heures_supplementaires_facturees
 
                         if last_cotisation and last_cotisation.Include(date):
                             cotisation = last_cotisation
