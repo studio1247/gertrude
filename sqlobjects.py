@@ -2251,7 +2251,7 @@ class Inscrit(object):
             day = month_start
             while day.month == date.month:
                 journee = self.GetJournee(day)
-                if journee and journee.GetState() > 0:
+                if journee and journee.GetState() != 0:  # TODO si < 0 on n'émet pas de facture pour les enfants malades
                     return True
                 day += datetime.timedelta(1)
         else:

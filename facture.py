@@ -274,6 +274,8 @@ class FactureFinMois(object):
                                     self.jours_maladie_deduits.append(date)
                                     cotisation.nombre_jours_maladie_deduits += 1
                                     cotisation.heures_maladie += heures_reference
+                                    if options & TRACES:
+                                        print u"heures déduites : %02f (total %02f)" % (heures_reference, cotisation.heures_maladie)
                                     self.heures_facturees_par_mode[cotisation.mode_garde] -= heures_reference
                                     if creche.nom == u"LA VOLIERE":
                                         pass
@@ -784,8 +786,9 @@ def GetHistoriqueSolde(famille, jalon, derniere_facture=True):
                         if facture.fin_recap < GetMonthStart(jalon):
                             lignes.append(facture)
             except Exception, e:
-                print "Exception", e
                 pass
+                # print u"Exception %r" % e
+
         date = GetNextMonthStart(date)
     return lignes
 
