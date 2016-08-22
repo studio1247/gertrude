@@ -107,11 +107,7 @@ class DayPlanningPanel(PlanningWidget):
                         return None
 
                 line.GetDynamicText = GetHeuresEnfant
-                if creche.temps_facturation == FACTURATION_FIN_MOIS:
-                    date = GetMonthStart(self.date)
-                else:
-                    date = GetNextMonthStart(self.date)
-                if creche.cloture_factures and date in inscrit.factures_cloturees:
+                if creche.cloture_factures and inscrit.IsFactureCloturee(self.date):
                     line.readonly = True
                 line.day = self.date.weekday()
                 self.lignes_enfants.append(line)
@@ -400,7 +396,7 @@ class PlanningHorairePanel(PlanningBasePanel):
         for line in lines[index+1:]:
             try:
                 salarie, label, idx, date, heure = SplitLineTablette(line)
-                if date >= today:
+                if date > today or (date == today and heure > creche.fermeture * 60):
                     break
                 if salarie:
                     array = array_salaries
@@ -441,7 +437,8 @@ class PlanningHorairePanel(PlanningBasePanel):
             inscrit = creche.GetInscrit(key)
             if inscrit:
                 for date in array_enfants[key]:
-                    AddPeriodes(inscrit, date, array_enfants[key][date], Journee)
+                    if not creche.cloture_factures or not inscrit.IsFactureCloturee(date):
+                        AddPeriodes(inscrit, date, array_enfants[key][date], Journee)
             else:
                 errors.append(u"Inscrit %d: Inconnu!" % key)
         for key in array_salaries:

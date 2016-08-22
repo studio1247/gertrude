@@ -2263,6 +2263,13 @@ class Inscrit(object):
                 return True
         return False
 
+    def IsFactureCloturee(self, date):
+        if creche.temps_facturation == FACTURATION_FIN_MOIS:
+            date_cloture = GetMonthStart(date)
+        else:
+            date_cloture = GetNextMonthStart(date)
+        return date_cloture in self.factures_cloturees
+
     def GetJourneeReference(self, date):
         if date in self.jours_conges:
             return JourneeReferenceInscription(None, 0)
