@@ -940,7 +940,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.activity_choice.Update()
 
         for item in self.semaines_conges_items:
-            item.Show(creche.mode_facturation in (FACTURATION_PAJE, FACTURATION_PSU))
+            item.Show(creche.mode_facturation in (FACTURATION_PAJE, FACTURATION_PSU, FACTURATION_FORFAIT_10H))
             
         for item in self.facturation_items:
             item.Show(creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL)
