@@ -710,35 +710,36 @@ class CafTab(AutoTab, PeriodeMixin):
 class JoursFermeturePanel(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
-        sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         labels_conges = [j[0] for j in jours_fermeture]
+        self.jours_feries_sizer = wx.BoxSizer(wx.VERTICAL)
         for text in labels_conges:
             checkbox = wx.CheckBox(self, -1, text)
             if readonly:
                 checkbox.Disable()
             if text in creche.feries:
                 checkbox.SetValue(True)
-            self.sizer.Add(checkbox, 0, wx.EXPAND)
+            self.jours_feries_sizer.Add(checkbox, 0, wx.EXPAND)
             self.Bind(wx.EVT_CHECKBOX, self.feries_check, checkbox)
         self.conges_sizer = wx.BoxSizer(wx.VERTICAL)
         for i, conge in enumerate(creche.conges):
             self.AjouteLigneConge(i)
+        self.sizer.Add(self.jours_feries_sizer, 0, wx.ALL, 5)
         self.sizer.Add(self.conges_sizer, 0, wx.ALL, 5)
         button_add = wx.Button(self, -1, u"Ajouter une période de fermeture")
         if readonly:
             button_add.Disable()
         self.sizer.Add(button_add, 0, wx.EXPAND | wx.TOP, 5)
         self.Bind(wx.EVT_BUTTON, self.OnAjoutConge, button_add)
-        sizer.Add(self.sizer, 0, wx.EXPAND | wx.ALL, 5)
-        self.SetSizer(sizer)
+        self.SetSizer(self.sizer)
+        self.Layout()
 
     def UpdateContents(self):
         for i in range(len(self.conges_sizer.GetChildren()), len(creche.conges)):
             self.AjouteLigneConge(i)
         for i in range(len(creche.conges), len(self.conges_sizer.GetChildren())):
             self.RemoveLine()
-        self.GetSizer().Layout()
+        self.sizer.Layout()
         AutoTab.UpdateContents(self)
 
     def AjouteLigneConge(self, index):
@@ -766,7 +767,8 @@ class JoursFermeturePanel(AutoTab):
         history.Append(Delete(creche.conges, -1))
         creche.AddConge(Conge(creche))
         self.AjouteLigneConge(len(creche.conges) - 1)
-        self.GetSizer().Layout()
+        self.sizer.FitInside(self)
+        self.sizer.Layout()
 
     def OnSuppressionConge(self, event):
         counters['conges'] += 1
@@ -789,6 +791,7 @@ class JoursFermeturePanel(AutoTab):
             del creche.feries[label]
             conge.delete()            
         history.Append(None)
+
 
 class ReservatairesTab(AutoTab):
     def __init__(self, parent):
