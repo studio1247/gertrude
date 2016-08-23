@@ -98,7 +98,14 @@ class DocumentAccueilModifications(object):
                     else:
                         fields.append(('semaines-brut-periode', "0"))
 
-        fields.append(('dates-conges-creche', ", ".join([(GetDateString(debut) + ' - ' + GetDateString(fin)) for debut, fin in creche.liste_conges if inscription.debut < fin and (not inscription.fin or inscription.fin > debut)])))
+        dates_conges_creche = []
+        for debut, fin in creche.liste_conges:
+            if inscription.debut < fin and (not inscription.fin or inscription.fin > debut):
+                if debut == fin:
+                    dates_conges_creche.append(GetDateString(debut))
+                else:
+                    dates_conges_creche.append(GetDateString(debut) + ' - ' + GetDateString(fin))
+        fields.append(('dates-conges-creche', ", ".join(dates_conges_creche)))
         
         for jour in range(len(inscription.reference)):
             jour_reference = inscription.reference[jour]
