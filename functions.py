@@ -928,6 +928,9 @@ def GetSalarieFields(salarie):
 def GetInscriptionFields(inscription):
     return [('debut-contrat', inscription.debut),
             ('fin-contrat', inscription.fin),
+            ('debut-inscription', inscription.debut),
+            ('fin-inscription', inscription.fin),
+            ('nombre-semaines-conges', inscription.semaines_conges),
             ('groupe', inscription.groupe.nom if inscription.groupe else ""),
             ('professeur-prenom', GetPrenom(inscription.professeur)),
             ('professeur-nom', GetNom(inscription.professeur)),
@@ -939,17 +942,20 @@ def GetCotisationFields(cotisation):
               ('jours-semaine', cotisation.jours_semaine),
               ('heures-semaine', GetHeureString(cotisation.heures_semaine)),
               ('heures-mois', GetHeureString(cotisation.heures_mois)),
+              ('debut-periode', cotisation.debut),
+              ('fin-periode', cotisation.fin),
               ('heures-periode', GetHeureString(cotisation.heures_periode)),
               ('semaines-periode', cotisation.semaines_periode),
-              ('frais-inscription', cotisation.frais_inscription, FIELD_EUROS|FIELD_SIGN),
+              ('factures-periode', cotisation.nombre_factures),
+              ('frais-inscription', cotisation.frais_inscription, FIELD_EUROS | FIELD_SIGN),
               ('cotisation-mensuelle', "%.02f" % cotisation.cotisation_mensuelle),
               ('enfants-a-charge', cotisation.enfants_a_charge),
               ('annee-debut', cotisation.debut.year),
               ('annee-fin', cotisation.debut.year+1),
               ('semaines-conges', cotisation.conges_inscription),
               ('liste-conges', ", ".join(cotisation.liste_conges)),
-              ('montant-allocation-caf', cotisation.montant_allocation_caf, FIELD_EUROS|FIELD_SIGN),
-              ('cotisation-mensuelle-apres-allocation-caf', cotisation.cotisation_mensuelle-cotisation.montant_allocation_caf, FIELD_EUROS|FIELD_SIGN),
+              ('montant-allocation-caf', cotisation.montant_allocation_caf, FIELD_EUROS | FIELD_SIGN),
+              ('cotisation-mensuelle-apres-allocation-caf', cotisation.cotisation_mensuelle-cotisation.montant_allocation_caf, FIELD_EUROS | FIELD_SIGN),
               ]
     if cotisation.montant_heure_garde is not None:
         result.append(('montant-semaine', cotisation.heures_semaine*cotisation.montant_heure_garde, FIELD_EUROS|FIELD_SIGN))

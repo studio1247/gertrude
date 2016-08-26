@@ -48,7 +48,7 @@ class DocumentAccueilModifications(object):
         inscription = self.inscrit.GetInscription(self.date, preinscription=True)
         self.cotisation = Cotisation(self.inscrit, self.date)
         
-        fields = GetCrecheFields(creche) + GetInscritFields(self.inscrit) + GetCotisationFields(self.cotisation)
+        fields = GetCrecheFields(creche) + GetInscritFields(self.inscrit) + GetInscriptionFields(inscription) + GetCotisationFields(self.cotisation)
         fields += [('president', president),
                    ('tresorier', tresorier),
                    ('directeur', directeur),
@@ -56,8 +56,6 @@ class DocumentAccueilModifications(object):
                    ('plafond-caf', plafond_caf),
                    ('semaines-type', len(inscription.reference) / 7),
                    ('date', '%.2d/%.2d/%d' % (self.date.day, self.date.month, self.date.year)),
-                   ('debut-inscription', inscription.debut),
-                   ('fin-inscription', inscription.fin),
                    ('permanences', self.GetPermanences(inscription)),
                    ('carence-maladie', creche.minimum_maladie),
                    ('IsPresentDuringTranche', self.IsPresentDuringTranche),
@@ -86,7 +84,8 @@ class DocumentAccueilModifications(object):
             
             if creche.mode_facturation != FACTURATION_FORFAIT_10H:
                 if creche.conges_inscription:
-                    fields.append(('dates-conges-inscription', ", ".join([GetDateString(d) for d in self.cotisation.conges_inscription])))
+                    fields.append(('dates-conges-inscription', ", ".join([GetDateString(d) for d in self.cotisation.conges_inscription]) if self.cotisation.conges_inscription else "(aucune)"))
+                    fields.append(('nombre-jours-conges-inscription', len(self.cotisation.conges_inscription)))
                     
                 if creche.conges_inscription or creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
                     fields.append(('heures-fermeture-creche', GetHeureString(self.cotisation.heures_fermeture_creche)))
