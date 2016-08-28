@@ -37,7 +37,7 @@ class FactureFinMois(object):
         cotisation.heures_mois_ajustees += heures
         if supplement != 0:
             self.supplement += supplement
-            self.raison_supplement.add(u"heures supplémentaires")
+            self.heures_supplementaires_facture += heures
             if cotisation.montant_heure_garde is not None:
                 self.formule_supplement.append(u"%s * %.2f" % (GetHeureString(heures), cotisation.montant_heure_garde))
             else:
@@ -105,6 +105,7 @@ class FactureFinMois(object):
         self.total_realise_non_facture = 0.0
         self.taux_effort = 0.0
         self.supplement = 0.0
+        self.heures_supplementaires_facture = 0.0
         self.deduction = 0.0
         self.formule_supplement = []
         self.formule_deduction = []
@@ -513,7 +514,10 @@ class FactureFinMois(object):
                                 if options & TRACES:
                                     print u" régularisation congés non pris (%d semaines, %d jours pris) : %dh * %f = %f" % (inscription.semaines_conges, inscription.GetNombreJoursCongesPoses(), heures, cotisation.montant_heure_garde, regularisation_conges_non_pris)
                                 self.regularisation += regularisation_conges_non_pris
-        
+
+        if self.supplement > 0 and self.heures_supplementaires_facture > 0:
+            self.raison_supplement.add(u"%s heures supplémentaires" % GetHeureString(self.heures_supplementaires_facture))
+
         if self.regularisation > 0:
             self.supplement += self.regularisation
             self.raison_supplement.add(u"régularisation")
@@ -548,7 +552,7 @@ class FactureFinMois(object):
         if self.raison_deduction:
             self.raison_deduction = "(" + ", ".join(self.raison_deduction) + ")"
         else:
-            self.raison_deduction = "" 
+            self.raison_deduction = ""
         if self.raison_supplement:
             self.raison_supplement = "(" + ", ".join(self.raison_supplement) + ")"
         else:
@@ -776,7 +780,6 @@ def GetHistoriqueSolde(famille, jalon, derniere_facture=True):
         for inscrit in inscrits:
             try:
                 facture = Facture(inscrit, date.year, date.month, NO_NUMERO)
-                print facture.total, facture.cloture, derniere_facture, facture.fin_recap, fin
                 if facture.total != 0 and (not creche.cloture_factures or facture.cloture):
                     if derniere_facture:
                         # desactivé pour Moulon (la dernière facture de juillet clôturée le 10 juillet et non visible dans les règlements
