@@ -16,6 +16,7 @@ from config import Config
 
 __builtin__.first_date = datetime.date(2010, 1, 1) 
 
+
 class GertrudeTestCase(unittest.TestCase):
     def setUp(self):
         __builtin__.creche = Creche()
@@ -74,7 +75,8 @@ class GertrudeTestCase(unittest.TestCase):
         result.naissance = naissance
         inscrit.famille.freres_soeurs.append(result)
         return result
-        
+
+
 class DatabaseTests(unittest.TestCase):
     def test_creation(self):
         filename = "gertrude.db"
@@ -82,6 +84,7 @@ class DatabaseTests(unittest.TestCase):
             os.remove(filename)
         con = sqlinterface.SQLConnection(filename)
         con.Create()
+
 
 class PlanningTests(GertrudeTestCase):
     def setUp(self):
@@ -108,6 +111,7 @@ class PlanningTests(GertrudeTestCase):
         day.InsertActivity(0, 10, PREVISIONNEL|CLOTURE)
         day.SetActivity(2, 8, 0)
         self.assertEquals(len(day.activites), 2)
+
 
 class DocumentsTests(GertrudeTestCase):
     def setUp(self):
@@ -168,7 +172,8 @@ class DocumentsTests(GertrudeTestCase):
         errors = GenerateOODocument(modifications, filename="./test.ods", gauge=None)
         self.assertEquals(len(errors), 0)
         os.unlink("./test.ods")    
-        
+
+
 class PSUTests(GertrudeTestCase):
     def test_nombre_mois_facturation(self):
         creche.mode_facturation = FACTURATION_PSU
@@ -183,7 +188,8 @@ class PSUTests(GertrudeTestCase):
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2010, 1, 1), NO_ADDRESS|NO_PARENTS)
         self.assertEquals(cotisation.nombre_factures, 8)
-        
+
+
 class PAJETests(GertrudeTestCase):
     def test_pas_de_taux_horaire(self):
         creche.mode_facturation = FACTURATION_PAJE
@@ -281,6 +287,7 @@ class PAJETests(GertrudeTestCase):
         facture = Facture(inscrit, 2014, 11, NO_ADDRESS|NO_PARENTS)
         self.assertEquals(float("%.2f" % facture.total), 1054.69)
 
+
 class MarmousetsTests(GertrudeTestCase):
     def test_1(self):
         creche.mode_facturation = FACTURATION_PSU
@@ -314,7 +321,8 @@ class MarmousetsTests(GertrudeTestCase):
         self.assertEquals(float("%.2f" % cotisation.heures_semaine), 37.0)
         self.assertEquals(cotisation.heures_periode, 971.0)
         self.assertEquals(cotisation.nombre_factures, 7)
-                
+
+
 class DessineMoiUnMoutonTests(GertrudeTestCase):
     def setUp(self):
         GertrudeTestCase.setUp(self)
@@ -409,6 +417,7 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         facture = Facture(inscrit, 2010, 9)
         self.assertEquals(facture.heures_supplementaires, 1.0)
 
+
 class PetitsMoussesTests(GertrudeTestCase):
     def setUp(self):
         GertrudeTestCase.setUp(self)
@@ -470,6 +479,7 @@ class LoupandisesTests(GertrudeTestCase):
         self.assertEquals(round(facture.heures_supplementaires, 2), 6.0)
         self.assertEquals(round(facture.heures_realisees, 2), 29.0)
         self.assertEquals(facture.total, 36.25)
+
 
 class FacturationDebutMoisContratTests(GertrudeTestCase):
     def setUp(self):
@@ -544,6 +554,7 @@ class FacturationDebutMoisContratTests(GertrudeTestCase):
         self.AddJourneePresence(inscrit, datetime.date(2011, 2, 15), 90, 189) # 8h15 
         facture = Facture(inscrit, 2011, 3)
         self.assertEquals(facture.total, 1520.0 - (1.75 * 2) * 9.5)
+
 
 class MonPetitBijouTests(GertrudeTestCase):
     def setUp(self):
