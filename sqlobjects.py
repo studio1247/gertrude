@@ -1227,6 +1227,7 @@ class Creche(object):
         self.arrondi_heures = SANS_ARRONDI
         self.arrondi_facturation = SANS_ARRONDI
         self.arrondi_facturation_periode_adaptation = SANS_ARRONDI
+        self.arrondi_mensualisation = ARRONDI_HEURE_PLUS_PROCHE
         self.arrondi_heures_salaries = SANS_ARRONDI
         self.arrondi_mensualisation_euros = SANS_ARRONDI
         self.arrondi_semaines = ARRONDI_SEMAINE_SUPERIEURE

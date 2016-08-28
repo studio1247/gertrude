@@ -332,11 +332,14 @@ class Cotisation(object):
                     self.nombre_factures = 1
                 if options & TRACES:
                     print u' nombres de factures :', self.nombre_factures
-                # TODO pour Villefranche de Rouergue avec un paramètre supplémentaire
-                # self.heures_mois = (self.heures_periode / self.nombre_factures)
-                self.heures_mois = math.ceil(self.heures_periode / self.nombre_factures)
-                if options & TRACES:
-                    print u' heures mensuelles : %f (%f)' % (self.heures_mois, self.heures_periode / self.nombre_factures)
+                if creche.arrondi_mensualisation == SANS_ARRONDI:
+                    self.heures_mois = (self.heures_periode / self.nombre_factures)
+                    if options & TRACES:
+                        print u' heures mensuelles : %f' % self.heures_mois
+                else:
+                    self.heures_mois = math.ceil(self.heures_periode / self.nombre_factures)
+                    if options & TRACES:
+                        print u' heures mensuelles : %f (%f)' % (self.heures_mois, self.heures_periode / self.nombre_factures)
             else:
                 if creche.repartition == REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS:
                     if self.fin_inscription is None:
