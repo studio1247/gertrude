@@ -213,6 +213,21 @@ class Day(object):
                 return PRESENT | PREVISIONNEL
         return state
 
+    def GetStateIcon(self):
+        state = self.GetState()
+        if state > 0:
+            activities_state = state & ~(PRESENT | PREVISIONNEL)
+            if activities_state:
+                state &= ~activities_state
+                state |= PRESENT
+        elif state == VACANCES and creche.repartition == REPARTITION_SANS_MENSUALISATION:
+            try:
+                if self.inscription.IsNombreSemainesCongesAtteint(self.key):
+                    state = CONGES_DEPASSEMENT
+            except:
+                pass
+        return state
+
     def GetNombreHeures(self, facturation=False, adaptation=False):
         #        if self.last_heures is not None:
         #            return self.last_heures

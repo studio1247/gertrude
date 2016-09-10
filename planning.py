@@ -81,6 +81,9 @@ class LigneConge(object):
     def GetDynamicText(self):
         return None
 
+    def GetStateIcon(self):
+        return self.state
+
 class PlanningLineGrid(BufferedWindow):
     def __init__(self, parent, line, pos):
         self.parent = parent
@@ -444,19 +447,7 @@ class PlanningLineStatusIcon(wx.Window):
             if isinstance(line, LigneConge):
                 state = line.state
             else:
-                state = line.GetState()
-                if state > 0:
-                    activities_state = state & ~(PRESENT|PREVISIONNEL)
-                    if activities_state:
-                        state &= ~activities_state
-                        state |= PRESENT
-                elif state == VACANCES and creche.repartition == REPARTITION_SANS_MENSUALISATION:
-                    try:
-                        if line.inscription.IsNombreSemainesCongesAtteint(line.key):
-                            state = CONGES_DEPASSEMENT
-                    except:
-                        pass
-
+                state = line.GetStateIcon()
             bitmap, tooltip = BUTTON_BITMAPS[state]
             self.button.SetBitmapLabel(bitmap)
             self.button.SetToolTip(wx.ToolTip(tooltip))
@@ -468,18 +459,9 @@ class PlanningLineStatusIcon(wx.Window):
             state = self.line.GetState()
             
             if state < 0:
-                order = [VACANCES, ABSENCE_CONGE_SANS_PREAVIS, ABSENCE_NON_PREVENUE, MALADE, HOPITAL, MALADE_SANS_JUSTIFICATIF, PRESENT]
-                if not creche.gestion_preavis_conges:
-                    order.remove(ABSENCE_CONGE_SANS_PREAVIS)
-                if not creche.gestion_absences_non_prevenues:
-                    order.remove(ABSENCE_NON_PREVENUE)
-                if not creche.gestion_maladie_hospitalisation:
-                    order.remove(HOPITAL)
-                if not creche.gestion_maladie_sans_justificatif:
-                    order.remove(MALADE_SANS_JUSTIFICATIF)
-
-                index = order.index(state)
-                newstate = order[(index + 1) % len(order)]
+                states = GetPlanningStates()
+                index = states.index(state)
+                newstate = states[(index + 1) % len(states)]
                 if newstate == PRESENT:
                     if self.line.HasPrevisionnelCloture():
                         self.line.RestorePrevisionnelCloture(creche.presences_previsionnelles and self.line.date > datetime.date.today())

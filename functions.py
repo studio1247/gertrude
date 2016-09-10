@@ -1192,3 +1192,16 @@ def GetListePermanences(date):
 
 def GetUrlTipi(famille):
     return config.database.tipi % {"famille": famille.idx}
+
+
+def GetPlanningStates():
+    states = [VACANCES, ABSENCE_CONGE_SANS_PREAVIS, ABSENCE_NON_PREVENUE, MALADE, HOPITAL, MALADE_SANS_JUSTIFICATIF, PRESENT]
+    if not creche.gestion_preavis_conges:
+        states.remove(ABSENCE_CONGE_SANS_PREAVIS)
+    if not creche.gestion_absences_non_prevenues:
+        states.remove(ABSENCE_NON_PREVENUE)
+    if not creche.gestion_maladie_hospitalisation:
+        states.remove(HOPITAL)
+    if not creche.gestion_maladie_sans_justificatif:
+        states.remove(MALADE_SANS_JUSTIFICATIF)
+    return states
