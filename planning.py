@@ -20,7 +20,7 @@ from buffered_window import BufferedWindow
 import datetime, time
 from constants import *
 from controls import GetActivityColor, TextDialog
-from functions import GetActivitiesSummary, GetBitmapFile, GetHeureString
+from functions import GetActivitiesSummary, GetBitmapFile, GetHeureString, GetPlanningStates
 from sqlobjects import Day, JourneeCapacite
 from globals import *
 
