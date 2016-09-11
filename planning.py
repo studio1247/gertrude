@@ -84,6 +84,7 @@ class LigneConge(object):
     def GetStateIcon(self):
         return self.state
 
+
 class PlanningLineGrid(BufferedWindow):
     def __init__(self, parent, line, pos):
         self.parent = parent
