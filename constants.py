@@ -202,6 +202,20 @@ TRI_GROUPE = 1024
 TRI_SANS_SEPARATION = 256
 TRI_LIGNES_CAHIER = 512
 
+# Options affichage du planning
+NO_ICONS = 1
+READ_ONLY = 2
+PRESENCES_ONLY = 4
+NO_BOTTOM_LINE = 8
+DRAW_NUMBERS = 16
+COMMENTS = 32
+TWO_PARTS = 64
+ACTIVITES = 128
+NO_LABELS = 256
+DRAW_VALUES = 512
+DEPASSEMENT_CAPACITE = 1024
+NO_SCROLL = 2048
+
 # Types de lignes sur le planning (sert pour le Summary à séparer numérateur et dénominateur)
 SUMMARY_NONE = 0
 SUMMARY_ENFANT = 1

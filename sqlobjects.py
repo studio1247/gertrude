@@ -931,6 +931,10 @@ class Salarie(object):
         if creation:
             self.create()
 
+    def AddJournee(self, date):
+        self.journees[date] = JourneeSalarie(self, date)
+        return self.journees[date]
+
     def IsDateConge(self, date):
         return date in creche.jours_fermeture or date in self.jours_conges
 
@@ -2111,6 +2115,10 @@ class Inscrit(object):
             self.famille = Famille()
             self.create()
             self.inscriptions.append(Inscription(self))
+
+    def AddJournee(self, date):
+        self.journees[date] = Journee(self, date)
+        return self.journees[date]
 
     def GetAllergies(self):
         return [allergie.strip() for allergie in self.allergies.split(",")]

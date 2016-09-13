@@ -22,7 +22,7 @@ from parameters import *
 from functions import *
 from sqlobjects import *
 from controls import *
-from planning import PlanningWidget, LigneConge, COMMENTS, ACTIVITES, TWO_PARTS, DEPASSEMENT_CAPACITE, SUMMARY_ENFANT, SUMMARY_SALARIE
+from planning import PlanningWidget # , COMMENTS, ACTIVITES, TWO_PARTS, DEPASSEMENT_CAPACITE, SUMMARY_ENFANT, SUMMARY_SALARIE
 from ooffice import *
 from doc_planning_detaille import PlanningDetailleModifications
 
@@ -59,117 +59,19 @@ class DayPlanningPanel(PlanningWidget):
         else:
             self.SetInfo("")
 
-        self.lignes_enfants = []
-        for inscrit in creche.inscrits:
-            inscription = inscrit.GetInscription(self.date)
-            if inscription is not None and (len(creche.sites) <= 1 or inscription.site is self.site) and (self.groupe is None or inscription.groupe == self.groupe):
-                if creche.conges_inscription == GESTION_CONGES_INSCRIPTION_SIMPLE and self.date in inscrit.jours_conges:
-                    line = LigneConge(VACANCES, inscrit.jours_conges[self.date].label)
-                elif self.date in inscrit.journees:
-                    line = inscrit.journees[self.date]
-                    if creche.conges_inscription == GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT and self.date in inscrit.jours_conges:
-                        line.reference = JourneeReferenceInscription(None, 0)
-                        if not line.commentaire:
-                            line.commentaire = inscrit.jours_conges[self.date].label
-                    else:
-                        line.reference = inscription.GetJourneeReference(self.date)
-                    line.insert = None
-                    line.key = self.date
-                elif creche.conges_inscription == GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT and self.date in inscrit.jours_conges:
-                    reference = JourneeReferenceInscription(None, 0)
-                    line = Journee(inscrit, self.date, reference)
-                    line.reference = reference
-                    line.commentaire = inscrit.jours_conges[self.date].label
-                    line.insert = inscrit.journees
-                    line.key = self.date
-                else:
-                    line = inscription.GetJourneeReferenceCopy(self.date)
-                    line.reference = inscription.GetJourneeReference(self.date)
-                    line.insert = inscrit.journees
-                    line.key = self.date
-
-                line.label = GetPrenomNom(inscrit)
-                line.sublabel = ""
-                line.inscription = inscription
-                line.options |= COMMENTS | ACTIVITES
-                line.summary = SUMMARY_ENFANT
-                line.salarie = None
-
-                def GetHeuresEnfant(line):
-                    heures = line.GetNombreHeures()
-                    if line.reference:
-                        heures_reference = line.reference.GetNombreHeures()
-                    else:
-                        heures_reference = 0
-                    if heures > 0 or heures_reference > 0:
-                        return GetHeureString(heures) + '/' + GetHeureString(heures_reference)
-                    else:
-                        return None
-
-                line.GetDynamicText = GetHeuresEnfant
-                if creche.cloture_factures and inscrit.IsFactureCloturee(self.date):
-                    line.readonly = True
-                line.day = self.date.weekday()
-                self.lignes_enfants.append(line)
-
-        if creche.tri_planning & TRI_GROUPE:
-            self.lignes_enfants = GetEnfantsTriesParGroupe(self.lignes_enfants)
+        self.lignes_enfants = GetPlanningLinesChildren(self.date, self.site, self.groupe)
+        if creche.tri_planning == TRI_GROUPE:
+            groupe = 0
+            lines = []
+            for line in self.lignes_enfants:
+                if groupe != line.inscription.groupe:
+                    groupe = line.inscription.groupe
+                    lines.append(groupe.nom if groupe else "")
+                lines.append(line)
         else:
-            self.lignes_enfants.sort(key=lambda line: line.label)
+            lines = self.lignes_enfants[:]
 
-        self.lignes_salaries = []
-        for salarie in creche.salaries:
-            contrat = salarie.GetContrat(self.date)
-            if contrat is not None and (len(creche.sites) <= 1 or contrat.site is self.site):
-                if self.date in salarie.jours_conges:
-                    line = LigneConge(CONGES_PAYES, salarie.jours_conges[self.date].label)
-                elif self.date in salarie.journees:
-                    line = salarie.journees[self.date]
-                    line.reference = contrat.GetJourneeReference(self.date)
-                    line.insert = None
-                else:
-                    line = contrat.GetJourneeReferenceCopy(self.date)
-                    line.insert = salarie.journees
-                    line.key = self.date
-                line.salarie = salarie
-                # line.conge_paye =
-                line.label = GetPrenomNom(salarie)
-                line.options |= COMMENTS
-                line.sublabel = contrat.fonction
-                line.contrat = contrat
-                line.day = self.date.weekday()
-
-                def GetHeuresSalarie(line):
-                    if isinstance(line, LigneConge):
-                        return ""
-                    debut_semaine = line.date - datetime.timedelta(line.date.weekday())
-                    fin_semaine = debut_semaine + datetime.timedelta(6)
-                    debut_mois = GetMonthStart(line.date)
-                    fin_mois = GetMonthEnd(line.date)
-                    heures_semaine = 0
-                    heures_mois = 0
-                    date = min(debut_semaine, debut_mois)
-                    fin = max(fin_semaine, fin_mois)
-                    while date <= fin_mois:
-                        if date in line.salarie.journees:
-                            heures = line.salarie.journees[date].GetNombreHeures()
-                        else:
-                            heures = line.contrat.GetJourneeReference(date).GetNombreHeures()
-                        if date == line.date:
-                            heures_jour = heures
-                        if debut_semaine <= date <= fin_semaine:
-                            heures_semaine += heures
-                        if date.month == line.date.month:
-                            heures_mois += heures
-                        date += datetime.timedelta(1)
-                    return GetHeureString(heures_jour) + '/' + GetHeureString(heures_semaine) + '/' + GetHeureString(heures_mois)
-
-                line.GetDynamicText = GetHeuresSalarie
-                line.summary = SUMMARY_SALARIE
-                self.lignes_salaries.append(line)
-        self.lignes_salaries.sort(key=lambda line: line.label)
-
-        lines = self.lignes_enfants[:]
+        self.lignes_salaries = GetPlanningLinesSalaries(self.date, self.site)
         if self.lignes_salaries:
             lines.append(u"Salariés")
             lines += self.lignes_salaries
@@ -178,9 +80,8 @@ class DayPlanningPanel(PlanningWidget):
     def GetSummaryDynamicText(self):
         heures = 0.0
         for line in self.lignes_enfants:
-            if not isinstance(line, basestring):
-                heures += line.GetNombreHeures()
-                day = line.day
+            heures += line.GetNombreHeures()
+            day = line.day
 
         if heures > 0:
             text = GetHeureString(heures)
@@ -354,14 +255,15 @@ class PlanningHorairePanel(PlanningBasePanel):
     def OnTabletteSynchro(self, evt):
         journal = config.connection.LoadJournal()
 
-        def AddPeriodes(who, date, periodes, classeJournee):
+        def AddPeriodes(who, date, periodes):
             if date in who.journees:
-                who.journees[date].RemoveActivities(0)
-                who.journees[date].RemoveActivities(0 | PREVISIONNEL)
+                journee = who.journees[date]
+                journee.RemoveActivities(0)
+                journee.RemoveActivities(0 | PREVISIONNEL)
             else:
-                who.journees[date] = classeJournee(who, date)
+                journee = who.AddJournee(date)
             for periode in periodes:
-                AddPeriode(who, who.journees[date], periode)
+                AddPeriode(who, journee, periode)
 
         def AddPeriode(who, journee, periode):
             value = 0
@@ -438,7 +340,7 @@ class PlanningHorairePanel(PlanningBasePanel):
             if inscrit:
                 for date in array_enfants[key]:
                     if not creche.cloture_factures or not inscrit.IsFactureCloturee(date):
-                        AddPeriodes(inscrit, date, array_enfants[key][date], Journee)
+                        AddPeriodes(inscrit, date, array_enfants[key][date])
             else:
                 errors.append(u"Inscrit %d: Inconnu!" % key)
         for key in array_salaries:
@@ -446,7 +348,7 @@ class PlanningHorairePanel(PlanningBasePanel):
             if salarie:
                 for date in array_salaries[key]:
                     # print key, GetPrenomNom(salarie), periode
-                    AddPeriodes(salarie, date, array_salaries[key][date], JourneeSalarie)
+                    AddPeriodes(salarie, date, array_salaries[key][date])
             else:
                 errors.append(u"Salarié %d: Inconnu!" % key)
         if errors:

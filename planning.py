@@ -20,23 +20,10 @@ from buffered_window import BufferedWindow
 import datetime, time
 from constants import *
 from controls import GetActivityColor, TextDialog
-from functions import GetActivitiesSummary, GetBitmapFile, GetHeureString, GetPlanningStates
+from functions import * # LigneConge, GetActivitiesSummary, GetBitmapFile, GetHeureString, GetPlanningStates
 from sqlobjects import Day, JourneeCapacite
 from globals import *
 
-# PlanningWidget options
-NO_ICONS = 1
-READ_ONLY = 2
-PRESENCES_ONLY = 4
-NO_BOTTOM_LINE = 8
-DRAW_NUMBERS = 16
-COMMENTS = 32
-TWO_PARTS = 64
-ACTIVITES = 128
-NO_LABELS = 256
-DRAW_VALUES = 512
-DEPASSEMENT_CAPACITE = 1024
-NO_SCROLL = 2048
 
 # Elements size
 LABEL_WIDTH = 130  # px
@@ -65,24 +52,6 @@ BULLE_BITMAP = wx.Bitmap(GetBitmapFile("bulle.png"))
 
 def GetPlanningWidth():
     return (creche.affichage_max - creche.affichage_min) * (60 / BASE_GRANULARITY) * config.column_width
-
-
-class LigneConge(object):
-    def __init__(self, state, info):
-        self.state = state
-        self.info = info
-        self.readonly = True
-        self.reference = None
-        self.options = 0
-    
-    def GetNombreHeures(self):
-        return 0.0
-
-    def GetDynamicText(self):
-        return None
-
-    def GetStateIcon(self):
-        return self.state
 
 
 class PlanningLineGrid(BufferedWindow):

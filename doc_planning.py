@@ -244,7 +244,7 @@ class PlanningModifications(object):
 
             inscriptions = GetInscriptions(self.debut, fin)
             lines = [Ligne(inscription) for inscription in inscriptions]
-            lines = [line for line in GetEnfantsTriesParGroupe(lines) if not isinstance(line, basestring)]
+            lines = GetEnfantsTriesParGroupe(lines)
 
             for index, ligne in enumerate(lines):
                 # if index != 0 and index % 24 == 0:
@@ -358,7 +358,7 @@ class PlanningHoraireModifications(PlanningModifications):
 
         inscriptions = GetInscriptions(self.debut, date_fin)
         lignes = [Ligne(inscription) for inscription in inscriptions]
-        lignes = [ligne for ligne in GetEnfantsTriesParGroupe(lignes) if not isinstance(ligne, basestring)]
+        lignes = GetEnfantsTriesParGroupe(lignes)
 
         for index, ligne in enumerate(lignes):
             # if index != 0 and index % 24 == 0:

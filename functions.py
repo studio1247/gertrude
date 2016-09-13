@@ -24,10 +24,12 @@ if sys.platform != "win32":
     GERTRUDE_DIRECTORY = HOME + "/.gertrude"
 
 
+def GetCurrentMonday(date):
+    return date - datetime.timedelta(date.weekday())
+
+
 def GetNextMonday(date):
-    while date.weekday() != 0:
-        date += datetime.timedelta(1)
-    return date
+    return date + datetime.timedelta(7 - date.weekday())
 
 
 def GetFirstMonday():
@@ -563,7 +565,7 @@ def GetEnfantsTriesParNomParents(enfants=None):
     return GetEnfantsTries(enfants, tri)
 
 
-def GetEnfantsTriesParGroupe(lines):
+def GetGroupesEnfants(lines):
     groupes = {}
     for line in lines:
         groupe = line.inscription.groupe
@@ -582,15 +584,21 @@ def GetEnfantsTriesParGroupe(lines):
             return cmp(one.ordre, two.ordre)
 
     keys.sort(tri)
-    lines = []
+
+    result = []
     for key in keys:
         groupe = groupes[key]
         groupe.sort(key=lambda element: element.label)
-        if key:
-            groupe.insert(0, key.nom)
-        lines.extend(groupe)
+        result.append({"groupe": key, "enfants": groupe})
+    return result
 
-    return lines
+
+def GetEnfantsTriesParGroupe(lines):
+    result = []
+    groupes = GetGroupesEnfants(lines)
+    for groupe in groupes:
+        result.extend(groupe["enfants"])
+    return result
 
 
 def GetEnfantsTriesSelonParametreTriPlanning(enfants):
@@ -1205,3 +1213,143 @@ def GetPlanningStates():
     if not creche.gestion_maladie_sans_justificatif:
         states.remove(MALADE_SANS_JUSTIFICATIF)
     return states
+
+
+class LigneConge(object):
+    def __init__(self, state, info):
+        self.state = state
+        self.info = info
+        self.readonly = True
+        self.reference = None
+        self.options = 0
+
+    def GetNombreHeures(self):
+        return 0.0
+
+    def GetDynamicText(self):
+        return None
+
+    def GetStateIcon(self):
+        return self.state
+
+
+def GetPlanningLinesChildren(date, site=None, groupe=None):
+    result = []
+    for inscrit in creche.inscrits:
+        inscription = inscrit.GetInscription(date)
+        if inscription is not None and (site is None or len(creche.sites) <= 1 or inscription.site is site) and (groupe is None or inscription.groupe == groupe):
+            if creche.conges_inscription == GESTION_CONGES_INSCRIPTION_SIMPLE and date in inscrit.jours_conges:
+                line = LigneConge(VACANCES, inscrit.jours_conges[self.date].label)
+            elif date in inscrit.journees:
+                line = inscrit.journees[date]
+                if creche.conges_inscription == GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT and date in inscrit.jours_conges:
+                    line.reference = JourneeReferenceInscription(None, 0)
+                    if not line.commentaire:
+                        line.commentaire = inscrit.jours_conges[date].label
+                else:
+                    line.reference = inscription.GetJourneeReference(date)
+                line.insert = None
+                line.key = date
+            elif creche.conges_inscription == GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT and date in inscrit.jours_conges:
+                reference = JourneeReferenceInscription(None, 0)
+                line = Journee(inscrit, date, reference)
+                line.reference = reference
+                line.commentaire = inscrit.jours_conges[date].label
+                line.insert = inscrit.journees
+                line.key = date
+            else:
+                line = inscription.GetJourneeReferenceCopy(date)
+                line.reference = inscription.GetJourneeReference(date)
+                line.insert = inscrit.journees
+                line.key = date
+
+            line.label = GetPrenomNom(inscrit)
+            line.idx = inscrit.idx
+            line.sublabel = ""
+            line.inscription = inscription
+            line.options |= COMMENTS | ACTIVITES
+            line.summary = SUMMARY_ENFANT
+            line.salarie = None
+
+            def GetHeuresEnfant(line):
+                heures = line.GetNombreHeures()
+                if line.reference:
+                    heures_reference = line.reference.GetNombreHeures()
+                else:
+                    heures_reference = 0
+                if heures > 0 or heures_reference > 0:
+                    return GetHeureString(heures) + '/' + GetHeureString(heures_reference)
+                else:
+                    return None
+
+            line.GetDynamicText = GetHeuresEnfant
+            if creche.temps_facturation == FACTURATION_FIN_MOIS:
+                date_facture = GetMonthStart(date)
+            else:
+                date_facture = GetNextMonthStart(date)
+            if date_facture in inscrit.factures_cloturees:
+                line.readonly = True
+            line.day = date.weekday()
+            result.append(line)
+
+    if creche.tri_planning & TRI_GROUPE:
+        result = GetEnfantsTriesParGroupe(result)
+    else:
+        result.sort(key=lambda line: line.label)
+
+    return result
+
+
+def GetPlanningLinesSalaries(date, site=None):
+    result = []
+    for salarie in creche.salaries:
+        contrat = salarie.GetContrat(date)
+        if contrat is not None and (site is None or len(creche.sites) <= 1 or contrat.site is site):
+            if date in salarie.jours_conges:
+                line = LigneConge(CONGES_PAYES, salarie.jours_conges[date].label)
+            elif date in salarie.journees:
+                line = salarie.journees[date]
+                line.reference = contrat.GetJourneeReference(date)
+                line.insert = None
+            else:
+                line = contrat.GetJourneeReferenceCopy(date)
+                line.insert = salarie.journees
+                line.key = date
+            line.salarie = salarie
+            line.label = GetPrenomNom(salarie)
+            line.idx = salarie.idx
+            line.options |= COMMENTS
+            line.sublabel = contrat.fonction
+            line.contrat = contrat
+            line.day = date.weekday()
+
+            def GetHeuresSalarie(line):
+                if isinstance(line, LigneConge):
+                    return ""
+                debut_semaine = line.date - datetime.timedelta(line.date.weekday())
+                fin_semaine = debut_semaine + datetime.timedelta(6)
+                debut_mois = GetMonthStart(line.date)
+                fin_mois = GetMonthEnd(line.date)
+                heures_semaine = 0
+                heures_mois = 0
+                date = min(debut_semaine, debut_mois)
+                while date <= fin_mois:
+                    if date in line.salarie.journees:
+                        heures = line.salarie.journees[date].GetNombreHeures()
+                    else:
+                        heures = line.contrat.GetJourneeReference(date).GetNombreHeures()
+                    if date == line.date:
+                        heures_jour = heures
+                    if debut_semaine <= date <= fin_semaine:
+                        heures_semaine += heures
+                    if date.month == line.date.month:
+                        heures_mois += heures
+                    date += datetime.timedelta(1)
+                return GetHeureString(heures_jour) + '/' + GetHeureString(heures_semaine) + '/' + GetHeureString(
+                    heures_mois)
+
+            line.GetDynamicText = GetHeuresSalarie
+            line.summary = SUMMARY_SALARIE
+            result.append(line)
+    result.sort(key=lambda line: line.label)
+    return result
