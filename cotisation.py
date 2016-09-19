@@ -153,7 +153,7 @@ class Cotisation(object):
                 self.fin = self.inscription.fin_periode_adaptation
             else:
                 self.debut = self.inscription.fin_periode_adaptation + datetime.timedelta(1)
-        
+
         if options & TRACES:
             print u"\nCotisation de %s au %s ..." % (GetPrenomNom(inscrit), date)
 
@@ -204,7 +204,7 @@ class Cotisation(object):
 
         if options & TRACES:
             print u" assiette annuelle :", self.assiette_annuelle
-            
+
         self.bareme_caf = Select(creche.baremes_caf, self.date)
         if self.bareme_caf:
             if self.bareme_caf.plafond and self.assiette_annuelle > self.bareme_caf.plafond:
@@ -248,13 +248,16 @@ class Cotisation(object):
         if self.fin is None:
             self.fin = today + datetime.timedelta(2 * 365)
 
+        if self.date < self.debut or self.date > self.fin:
+            errors.append(u" - Problème dans les périodes d'inscription.")
+
         if len(errors) > 0:
             raise CotisationException(errors)
         
         if options & TRACES:
             print u" période du %s au %s" % (self.debut, self.fin)
             print u" heures hebdomadaires (réelles) :", self.heures_reelles_semaine
-        
+
         self.prorata_effectue = False
         self.heures_periode = 0.0
         self.heures_fermeture_creche = 0.0
