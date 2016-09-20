@@ -402,6 +402,7 @@ class FactureFinMois(object):
 
         if inscrit.HasFacture(self.debut_recap):
             for cotisation in cotisations_mensuelles:
+                prorata_effectue = cotisation.prorata_effectue
                 inscription = cotisation.inscription
                 self.heures_maladie += cotisation.heures_maladie
                 self.heures_facture_par_mode[cotisation.mode_garde] -= cotisation.heures_maladie
@@ -420,7 +421,7 @@ class FactureFinMois(object):
                         self.heures_facturees_par_mode[cotisation.mode_garde] += cotisation.heures_realisees - cotisation.heures_realisees_non_facturees
                     report = cotisation.CalculeFraisGarde(cotisation.heures_realisees)
                     self.report_cotisation_mensuelle += report
-                    cotisation.prorata_effectue = True
+                    prorata_effectue = True
                     if options & TRACES:
                         print " cotisation periode adaptation :", report
                 elif inscription.mode == MODE_FORFAIT_HORAIRE:
@@ -451,7 +452,7 @@ class FactureFinMois(object):
                         # print '(', cotisation.heures_realisees, '-', cotisation.heures_realisees_non_facturees, '+', cotisation.heures_facturees_non_realisees, '-', cotisation.heures_supplementaires, ') *', cotisation.montant_heure_garde, '=', self.cotisation_mensuelle  
                 elif creche.mode_facturation == FACTURATION_PSU and self.heures_contractualisees:
                     prorata_heures = cotisation.heures_mois * cotisation.jours_ouvres / jours_ouvres
-                    if not cotisation.prorata_effectue:
+                    if not prorata_effectue:
                         prorata = cotisation.cotisation_mensuelle * cotisation.jours_ouvres / jours_ouvres
                     else:
                         prorata = cotisation.cotisation_mensuelle
@@ -463,11 +464,14 @@ class FactureFinMois(object):
                     self.heures_contrat += prorata_heures
                     self.heures_facture_par_mode[cotisation.mode_garde] += prorata_heures
                 else:
-                    if self.heures_contractualisees:
+                    # Bug sur la Cabane aux familles le 20/09/2016
+                    # Un enfant en adaptation du 15 janvier au 19 janvier
+                    # Le prorata etait fait ici, et la mensualisation etait beaucoup trop haute
+                    if 0:  # self.heures_contractualisees:
                         if cotisation.heures_reference != self.heures_contractualisees:
                             prorata = cotisation.cotisation_mensuelle * cotisation.heures_reference / self.heures_contractualisees
                             prorata_heures = cotisation.heures_mois * cotisation.heures_reference / self.heures_contractualisees
-                            cotisation.prorata_effectue = True
+                            prorata_effectue = True
                             if options & TRACES: 
                                 print " prorata : %f * %f / %f = %f" % (cotisation.cotisation_mensuelle, cotisation.heures_reference, self.heures_contractualisees, prorata)
                         else:
@@ -479,7 +483,7 @@ class FactureFinMois(object):
                     # ajoute FACTURATION_PSU bloc plus haut pour eviter 2 * la regle de 3
                     # avant il y avait ce commentaire: ne marche pas pour saint julien, mais c'est redemande (2 octobre 2012), normal pour le premier mois pour un enfant qui arrive mi-septembre
                     # avec le test suivant on devrait etre bon, parce que sinon on effectue la regle de 3 dans la cotisation + ici
-                    if not cotisation.prorata_effectue:                            
+                    if not prorata_effectue:
                         new_prorata = (prorata * cotisation.jours_ouvres) / jours_ouvres
                         if options & TRACES:
                             print " prorata : %f * %f / %f = %f" % (prorata, cotisation.jours_ouvres, jours_ouvres, new_prorata)
