@@ -47,7 +47,6 @@ class CorrectionsTab(AutoTab):
         self.Layout()
         
     def OnMonthChoice(self, evt=None):
-        self.Hide()
         while len(self.corrections_sizer.GetChildren()):
             sizer = self.corrections_sizer.GetItem(0)
             sizer.DeleteWindows()
@@ -75,7 +74,6 @@ class CorrectionsTab(AutoTab):
         
         AutoTab.UpdateContents(self)
         self.sizer.FitInside(self)
-        self.Show()
 
     def UpdateContents(self):
         self.OnMonthChoice()
