@@ -16,10 +16,14 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import __builtin__
-import sys, os.path, shutil
-import urllib2, mimetypes, uuid
-from sqlinterface import SQLConnection
+import mimetypes
+import os.path
+import shutil
+import urllib2
+import uuid
+
 from functions import *
+from sqlinterface import SQLConnection
 
 if sys.platform == "win32":
     BACKUPS_DIRECTORY = "./backups"
@@ -42,7 +46,8 @@ class HttpConnection(object):
             self.token = 0
         self.progress_handler = default_progress_handler
 
-    def get_content_type(self, filename):
+    @staticmethod
+    def get_content_type(filename):
         return mimetypes.guess_type(filename)[0] or 'application/octet-stream'
 
     def encode_multipart_formdata(self, fields, files):
@@ -245,7 +250,8 @@ class SharedFileConnection(object):
         self.token = self.read_token(TOKEN_FILENAME)
         self.progress_handler = default_progress_handler
     
-    def read_token(self, filename):
+    @staticmethod
+    def read_token(filename):
         try:
             return file(filename).read()
         except:

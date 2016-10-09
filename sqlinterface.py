@@ -566,7 +566,7 @@ class SQLConnection(object):
     def Liste(self):
         con = sqlite3.connect(self.filename)
         cur = con.cursor()
-        cur.execute('SELECT prenom, nom FROM INSCRITS')
+        cur.execute('SELECT prenom, nom FROM INSCRITS WHERE prenom != "" AND nom != ""')
         return ["%s %s" % entry for entry in cur.fetchall()]
 
     def Load(self, progress_handler=default_progress_handler):

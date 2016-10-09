@@ -1169,7 +1169,7 @@ class TabletteSizer(wx.StaticBoxSizer):
         internalSizer.Add(self.button, 0, wx.LEFT, 10)
         self.Add(internalSizer, 0, wx.TOP | wx.BOTTOM, 10)
 
-    def OnModifyCombinaison(self, event):
+    def OnModifyCombinaison(self, _):
         dlg = CombinaisonDialog(self.parent)
         res = dlg.ShowModal()
         if res == wx.ID_OK:
