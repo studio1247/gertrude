@@ -384,8 +384,8 @@ class PlanningHoraireModifications(PlanningModifications):
             for jour in range(5):
                 date = self.debut + datetime.timedelta(jour)
                 journee = inscrit.GetJournee(date)
-                fields = [("arrivee", journee.GetHeureArrivee()),
-                          ("depart", journee.GetHeureDepart())]
+                fields = [("arrivee", journee.GetHeureArrivee() if journee else ""),
+                          ("depart", journee.GetHeureDepart() if journee else "")]
                 ReplaceFields(GetCell(line, 2 + 2 * jour), fields)
                 ReplaceFields(GetCell(line, 3 + 2 * jour), fields)
 
