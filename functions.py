@@ -894,6 +894,19 @@ def GetTarifsFamilleFields(famille):
     return [(tarif.label.lower().replace(" ", "_"), tarif.label if famille.tarifs & (1 << tarif.idx) else "") for tarif in creche.tarifs_speciaux]
 
 
+def GetParentFields(parent):
+    return[('prenom-parent', parent.prenom),
+           ('nom-parent', parent.nom),
+           ('adresse-parent', parent.adresse),
+           ('code-postal-parent', parent.code_postal),
+           ('ville-parent', parent.ville),
+           ('email-parent', parent.email),
+           ('telephone-domicile-parent', parent.telephone_domicile),
+           ('telephone-portable-parent', parent.telephone_portable),
+           ('email-parent', parent.email),
+           ]
+
+
 def GetFamilleFields(famille):
     return [('adresse', famille.adresse if famille else ""),
             ('code-postal', GetCodePostal(famille) if famille else ""),
@@ -910,7 +923,7 @@ def GetFamilleFields(famille):
             ('parents', GetParentsString(famille) if famille else ""),
             ('telephone', GetTelephone(famille) if famille else ""),
             ('email', GetEmail(famille) if famille else ""),
-    ] + GetTarifsFamilleFields(famille)
+            ] + GetTarifsFamilleFields(famille)
 
 
 def GetInscritFields(inscrit):

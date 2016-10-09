@@ -1,38 +1,72 @@
 # -*- coding: utf-8 -*-
 
-##    This file is part of Gertrude.
-##
-##    Gertrude is free software; you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation; either version 3 of the License, or
-##    (at your option) any later version.
-##
-##    Gertrude is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
-##
-##    You should have received a copy of the GNU General Public License
-##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from constants import *
 from functions import *
 from facture import *
 from ooffice import *
 
+
 class CoordonneesModifications(object):
     def __init__(self, site, date):
         self.multi = False
-        self.template = 'Coordonnees parents.odt'
         self.site = site
         if date is None:
             self.date = today
         else:
             self.date = date
-        self.default_output = u"Coordonnees parents %s.ods" % GetDateString(self.date, weekday=False)
         self.email = None
-        
+        if IsTemplateFile("Coordonnees parents.ods"):
+            self.template = "Coordonnees parents.ods"
+            self.default_output = u"Coordonnees parents %s.ods" % GetDateString(self.date, weekday=False)
+        else:
+            self.template = 'Coordonnees parents.odt'
+            self.default_output = u"Coordonnees parents %s.odt" % GetDateString(self.date, weekday=False)
+
     def execute(self, filename, dom):
+        if self.template == "Coordonnees parents.ods":
+            return self.execute_ods(filename, dom)
+        else:
+            return self.execute_odt(filename, dom)
+
+    def execute_ods(self, filename, dom):
+        if filename != 'content.xml':
+            return None
+
+        errors = {}
+        spreadsheet = dom.getElementsByTagName('office:spreadsheet')[0]
+        table = spreadsheet.getElementsByTagName("table:table")[0]
+        lignes = table.getElementsByTagName("table:table-row")
+        template = lignes[1]
+        for inscrit in GetEnfantsTriesParPrenom():
+            inscription = inscrit.GetInscription(self.date)
+            if inscription and (self.site is None or inscription.site == self.site):
+                inscrit_fields = GetInscritFields(inscrit)
+                for parent in inscrit.famille.parents.values():
+                    if parent:
+                        fields = inscrit_fields + GetParentFields(parent)
+                        line = template.cloneNode(1)
+                        ReplaceFields(line, fields)
+                        table.insertBefore(line, template)
+                        inscrit_fields = [(field[0], "") for field in inscrit_fields]
+        table.removeChild(template)
+        return errors
+
+    def execute_odt(self, filename, dom):
         # print dom.toprettyxml()
         if filename != 'content.xml':
             return None
@@ -47,7 +81,7 @@ class CoordonneesModifications(object):
                 #print template.toprettyxml()
                 for inscrit in GetEnfantsTriesParPrenom():
                     inscription = inscrit.GetInscription(self.date) 
-                    if inscription and (self.site == None or inscription.site == self.site):
+                    if inscription and (self.site is None or inscription.site == self.site):
                         line = template.cloneNode(1)
                         referents = [GetPrenomNom(referent) for referent in inscrit.famille.referents]
                         parents = [GetPrenomNom(parent) for parent in inscrit.famille.parents.values() if parent is not None]
@@ -70,7 +104,6 @@ class CoordonneesModifications(object):
                                         else:
                                             phones[phone] = [phone, GetInitialesPrenom(parent), phoneType=="travail"]
                         for phone, initiales, phoneType in phones.values():
-                            remark = initiales
                             if initiales and phoneType:
                                 remark = "(%s travail)" % initiales
                             elif initiales:
@@ -98,7 +131,7 @@ class CoordonneesModifications(object):
                 template = table.getElementsByTagName('table:table-row')[0]
                 #print template.toprettyxml()
                 for salarie in creche.salaries:
-                    if 1: # TODO
+                    if 1:  # TODO
                         line = template.cloneNode(1)
                         ReplaceTextFields(line, [('prenom', salarie.prenom),
                                                  ('nom', salarie.nom),
