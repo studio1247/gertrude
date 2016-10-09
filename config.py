@@ -94,35 +94,38 @@ def getOptions(parser):
         pass
     return options
 
+
 def getWindowSize(parser):
     try:
         window_width = int(parser.get(DEFAULT_SECTION, "window-width"))
         window_height = int(parser.get(DEFAULT_SECTION, "window-height"))
         return window_width, window_height
     except:
-        return (1000, 600)
-    
+        return 1000, 600
+
+
 def getColumnWidth(parser):
     try:
         result = int(parser.get(DEFAULT_SECTION, "column-width"))
     except:
-        result = 4 # px
+        result = 4  # px
     return result
-    
+
+
 def getDefaultDocumentsDirectory():
     if sys.platform == 'win32':
         try:
             from win32com.shell import shell
             df = shell.SHGetDesktopFolder()
-            pidl = df.ParseDisplayName(0, None,
-                                   "::{450d8fba-ad25-11d0-98a8-0800361b1103}")[1]
+            pidl = df.ParseDisplayName(0, None, "::{450d8fba-ad25-11d0-98a8-0800361b1103}")[1]
             return shell.SHGetPathFromIDList(pidl)
         except:
             print u"L'extension win32com pour python est recommandée (plateforme windows) !"
             return os.getcwd()
     else:
         return os.getcwd()
-    
+
+
 def getDocumentsDirectory(parser):
     try:
         directory = parser.get(DEFAULT_SECTION, "documents-directory")
@@ -131,6 +134,14 @@ def getDocumentsDirectory(parser):
     except:
         return getDefaultDocumentsDirectory()
 
+
+def getImportDatabase(parser):
+    try:
+        return parser.get(DEFAULT_SECTION, "import-database")
+    except:
+        return None
+
+
 def getTemplatesDirectory(parser):
     try:
         directory = parser.get(DEFAULT_SECTION, "templates")
@@ -138,7 +149,8 @@ def getTemplatesDirectory(parser):
         return directory
     except:
         return "templates"
-    
+
+
 def getBackupsDirectory(parser):
     try:
         directory = parser.get(DEFAULT_SECTION, "backups-directory")
@@ -249,7 +261,10 @@ def LoadConfig(progress_handler=default_progress_handler):
     
     config.original_default_section = getDefaultSection(parser)
     config.default_section = config.original_default_section
-   
+
+    config.original_import_database = getImportDatabase(parser)
+    config.import_database = config.original_import_database
+
     if parser:
         for section in parser.sections():
             database = getDatabase(parser, section)

@@ -23,6 +23,7 @@ from planning import *
 from cotisation import *
 from ooffice import *
 from doc_contrat_accueil import ContratAccueilModifications, DevisAccueilModifications, FraisGardeModifications
+import sqlinterface
 
 
 def ParseHtml(filename, context):
@@ -1140,6 +1141,31 @@ class InscriptionsNotebook(wx.Notebook):
         self.GetCurrentPage().UpdateContents()
 
 
+class InscritImportDialog(wx.Dialog):
+    def __init__(self, parent):
+        wx.Dialog.__init__(self, parent, -1, "Import d'une fiche d'inscription", wx.DefaultPosition, wx.DefaultSize)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.creche_import = sqlinterface.SQLConnection(config.import_database).Load(None)
+        self.combo = wx.ListBox(self, style=wx.LB_SORT)
+        for child in self.creche_import.inscrits:
+            label = GetPrenomNom(child)
+            if label.strip() != "":
+                self.combo.Append(label, child)
+        self.sizer.Add(self.combo, 0, wx.ALL, 5)
+        btnsizer = wx.StdDialogButtonSizer()
+        btn = wx.Button(self, wx.ID_OK)
+        btnsizer.AddButton(btn)
+        btn = wx.Button(self, wx.ID_CANCEL)
+        btnsizer.AddButton(btn)
+        btnsizer.Realize()
+        self.sizer.Add(btnsizer, 0, wx.ALL, 5)
+        self.SetSizer(self.sizer)
+        self.sizer.Fit(self)
+
+    def GetInscritSelected(self):
+        return self.combo.GetClientData(self.combo.GetSelection())
+
+
 class InscriptionsPanel(GPanel):
     name = "Inscriptions"
     bitmap = GetBitmapFile("inscriptions.png")
@@ -1153,14 +1179,22 @@ class InscriptionsPanel(GPanel):
         self.choice = wx.Choice(self)
         self.Bind(wx.EVT_CHOICE, self.OnInscritChoice, self.choice)
         plusbmp = wx.Bitmap(GetBitmapFile("plus.png"), wx.BITMAP_TYPE_PNG)
-        delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
         self.addbutton = wx.BitmapButton(self, -1, plusbmp)
-        self.delbutton = wx.BitmapButton(self, -1, delbmp)
         self.addbutton.SetToolTipString(u"Ajouter un enfant")
-        self.delbutton.SetToolTipString(u"Supprimer cet enfant")
         self.Bind(wx.EVT_BUTTON, self.OnAjoutInscrit, self.addbutton)
+        delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
+        self.delbutton = wx.BitmapButton(self, -1, delbmp)
+        self.delbutton.SetToolTipString(u"Supprimer cet enfant")
         self.Bind(wx.EVT_BUTTON, self.OnSuppressionInscrit, self.delbutton)
-        sizer.AddMany([(self.choice, 1, wx.EXPAND|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (self.addbutton, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (self.delbutton, 0, wx.ALIGN_CENTER_VERTICAL)])
+        sizer.AddMany([(self.choice, 1, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL),
+                       (self.addbutton, 0, wx.LEFT | wx.ALIGN_CENTER_VERTICAL, 5),
+                       (self.delbutton, 0, wx.LEFT | wx.ALIGN_CENTER_VERTICAL, 5)])
+        if config.import_database:
+            importbmp = wx.Bitmap(GetBitmapFile("import.png"), wx.BITMAP_TYPE_PNG)
+            self.importbutton = wx.BitmapButton(self, -1, importbmp)
+            self.importbutton.SetToolTipString(u"Importer un enfant")
+            self.Bind(wx.EVT_BUTTON, self.OnImportInscrit, self.importbutton)
+            sizer.Add(self.importbutton, 0, wx.LEFT | wx.ALIGN_CENTER_VERTICAL, 5)
         self.sizer.Add(sizer, 0, wx.EXPAND|wx.LEFT, MACOS_MARGIN)
         # le notebook pour la fiche d'inscription
         self.notebook = InscriptionsNotebook(self)
@@ -1202,15 +1236,30 @@ class InscriptionsPanel(GPanel):
             self.choice.SetSelection(-1)
         self.notebook.SetInscrit(inscrit)
 
-    def OnAjoutInscrit(self, evt):
-        history.Append(Delete(creche.inscrits, -1))
-        inscrit = Inscrit()
+    def AjouteInscrit(self, inscrit):
         creche.inscrits.append(inscrit)
         self.InitInscrits(inscrit)
         self.notebook.SetInscrit(inscrit)
-        self.notebook.SetSelection(0) # Selectionne la page identite
+        self.notebook.SetSelection(0)  # Selectionne la page identite
 
-    def OnSuppressionInscrit(self, evt):
+    def OnImportInscrit(self, _):
+        dlg = InscritImportDialog(self)
+        res = dlg.ShowModal()
+        if res == wx.ID_OK:
+            history.Append(Delete(creche.inscrits, -1))
+            inscrit = dlg.GetInscritSelected()
+            inscrit.inscriptions[:] = [Inscription(inscrit)]
+            inscrit.create()
+            inscrit.famille.create()
+            self.AjouteInscrit(inscrit)
+        dlg.Destroy()
+
+    def OnAjoutInscrit(self, _):
+        history.Append(Delete(creche.inscrits, -1))
+        inscrit = Inscrit()
+        self.AjouteInscrit(inscrit)
+
+    def OnSuppressionInscrit(self, _):
         selected = self.choice.GetSelection()
         inscrit = self.choice.GetClientData(selected)
         if inscrit:
@@ -1237,4 +1286,3 @@ class InscriptionsPanel(GPanel):
             selection = self.choice.GetSelection()
             self.choice.SetString(selection, '  ' + inscritId)
             self.choice.SetSelection(selection)
-                                
