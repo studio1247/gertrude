@@ -25,7 +25,7 @@ from sqlobjects import *
 from facture import FactureCloturee
 import wx
 
-VERSION = 99
+VERSION = 100
 
 
 def getdate(s):
@@ -275,6 +275,9 @@ class SQLConnection(object):
             relation VARCHAR,
             prenom VARCHAR,
             nom VARCHAR,
+            adresse VARCHAR,
+            code_postal INTEGER,
+            ville VARCHAR,
             telephone_domicile VARCHAR,
             telephone_domicile_notes VARCHAR,
             telephone_portable VARCHAR,
@@ -739,10 +742,10 @@ class SQLConnection(object):
             famille = Famille(creation=False)
             famille.adresse, famille.code_postal, famille.ville, famille.numero_securite_sociale, famille.numero_allocataire_caf, famille.code_client, famille.medecin_traitant, famille.telephone_medecin_traitant, famille.assureur, famille.numero_police_assurance, famille.code_client, famille.tarifs, famille.notes, famille.idx = adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, code_client, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, code_client, tarifs, notes, idx
             creche.familles.append(famille)
-            cur.execute('SELECT relation, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email, idx FROM PARENTS WHERE famille=?', (famille.idx,))
+            cur.execute('SELECT relation, prenom, nom, adresse, code_postal, ville, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email, idx FROM PARENTS WHERE famille=?', (famille.idx,))
             for parent_entry in cur.fetchall():
                 parent = Parent(famille, creation=False)
-                parent.relation, parent.prenom, parent.nom, parent.telephone_domicile, parent.telephone_domicile_notes, parent.telephone_portable, parent.telephone_portable_notes, parent.telephone_travail, parent.telephone_travail_notes, parent.email, parent.idx = parent_entry
+                parent.relation, parent.prenom, parent.nom, parent.adresse, parent.code_postal, parent.ville, parent.telephone_domicile, parent.telephone_domicile_notes, parent.telephone_portable, parent.telephone_portable_notes, parent.telephone_travail, parent.telephone_travail_notes, parent.email, parent.idx = parent_entry
                 famille.parents[parent.relation] = parent
                 cur.execute('SELECT debut, fin, revenu, chomage, conge_parental, regime, idx FROM REVENUS WHERE parent=?', (parent.idx,))
                 for revenu_entry in cur.fetchall():
@@ -1817,6 +1820,14 @@ class SQLConnection(object):
         if version < 99:
             cur.execute("ALTER TABLE CRECHE ADD arrondi_mensualisation INTEGER")
             cur.execute('UPDATE CRECHE SET arrondi_mensualisation=?', (ARRONDI_HEURE_PLUS_PROCHE,))
+
+        if version < 100:
+            cur.execute("ALTER TABLE PARENTS ADD adresse VARCHAR;")
+            cur.execute("ALTER TABLE PARENTS ADD code_postal INTEGER;")
+            cur.execute("ALTER TABLE PARENTS ADD ville VARCHAR;")
+            cur.execute('SELECT adresse, code_postal, ville, idx FROM FAMILLES')
+            for adresse, code_postal, ville, famille in cur.fetchall():
+                cur.execute("UPDATE PARENTS SET adresse=?, code_postal=?, ville=? WHERE famille=?", (adresse, code_postal, ville, famille))
 
         if version < VERSION:
             try:

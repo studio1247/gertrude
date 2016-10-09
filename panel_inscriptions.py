@@ -514,6 +514,12 @@ class ParentsPanel(InscriptionsTab):
             sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
             self.parents_items[-1].extend([wx.StaticText(self, -1, u'Nom :'), AutoTextCtrl(self, None, 'nom')])
             sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
+            self.parents_items[-1].extend([wx.StaticText(self, -1, u'Adresse :'), AutoTextCtrl(self, None, 'adresse')])
+            sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
+            self.parents_items[-1].extend([wx.StaticText(self, -1, u'Code postal :'), AutoNumericCtrl(self, None, 'code_postal', min=0, precision=0)])
+            sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
+            self.parents_items[-1].extend([wx.StaticText(self, -1, u'Ville :'), AutoTextCtrl(self, None, 'ville')])
+            sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
             for label, field in (u"Téléphone domicile", "telephone_domicile"), (u"Téléphone portable", "telephone_portable"), (u"Téléphone travail", "telephone_travail"):
                 sizer3 = wx.BoxSizer(wx.HORIZONTAL)
                 self.parents_items[-1].extend([wx.StaticText(self, -1, label+' :'), AutoPhoneCtrl(self, None, field), AutoTextCtrl(self, None, field+'_notes')])

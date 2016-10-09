@@ -1612,6 +1612,9 @@ class Parent(object):
         self.relation = relation
         self.prenom = ""
         self.nom = ""
+        self.adresse = ""
+        self.code_postal = ""
+        self.ville = ""
         self.telephone_domicile = ""
         self.telephone_domicile_notes = ""
         self.telephone_portable = ""
@@ -1653,7 +1656,7 @@ class Parent(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['relation', 'prenom', 'nom', 'telephone_domicile', 'telephone_domicile_notes', 'telephone_portable',
+        if name in ['relation', 'prenom', 'nom', 'adresse', 'code_postal', 'ville', 'telephone_domicile', 'telephone_domicile_notes', 'telephone_portable',
                     'telephone_portable_notes', 'telephone_travail', 'telephone_travail_notes', 'email'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE PARENTS SET %s=? WHERE idx=?' % name, (value, self.idx))
