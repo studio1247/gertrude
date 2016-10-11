@@ -572,9 +572,45 @@ class SQLConnection(object):
         cur.execute('SELECT prenom, nom FROM INSCRITS WHERE prenom != "" AND nom != ""')
         return ["%s %s" % entry for entry in cur.fetchall()]
 
+    def decloture(self):
+        cur = self.cursor()
+        cur.execute('DELETE FROM FACTURES where inscrit=? AND date=?', (93, datetime.date(2014, 7, 1)))
+        self.commit()
+
+    def remove_all_inscrits(self):
+        cur = self.cursor()
+        cur.execute('DELETE FROM INSCRITS')
+        cur.execute('DELETE FROM FAMILLES')
+        cur.execute('DELETE FROM PARENTS')
+        cur.execute('DELETE FROM REVENUS')
+        cur.execute('DELETE FROM COMMENTAIRES')
+        cur.execute('DELETE FROM REFERENTS')
+        cur.execute('DELETE FROM FRATRIES')
+        cur.execute('DELETE FROM INSCRIPTIONS')
+        cur.execute('DELETE FROM EMPLOYES')
+        cur.execute('DELETE FROM CONTRATS')
+        cur.execute('DELETE FROM PROFESSEURS')
+        cur.execute('DELETE FROM CONGES_INSCRITS')
+        cur.execute('DELETE FROM CONGES_SALARIES')
+        cur.execute('DELETE FROM ALERTES')
+        cur.execute('DELETE FROM FACTURES')
+        cur.execute('DELETE FROM CORRECTIONS')
+        cur.execute('DELETE FROM ENCAISSEMENTS')
+        self.commit()
+
     def Load(self, progress_handler=default_progress_handler):
         if not self.con:
             self.open()
+
+        # pour decloturer une facture dans une base plus ancienne
+        if 0:
+            self.decloture()
+            exit(0)
+
+        # pour supprimer toutes les inscriptions
+        if 0:
+            self.remove_all_inscrits()
+            exit(0)
 
         if not self.translate(progress_handler):
             return None
@@ -909,11 +945,6 @@ class SQLConnection(object):
 
         if progress_handler:
             progress_handler.display(u"Conversion de la base de données (version %d => version %d) ..." % (version, VERSION))
-
-        # pour decloturer une facture dans une base plus ancienne
-        # cur.execute('DELETE FROM FACTURES where inscrit=? AND date=?', (93, datetime.date(2014, 7, 1)))
-        # self.commit()
-        # exit(0)
 
         if version < 1:
             cur.execute("""
