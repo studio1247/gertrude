@@ -1252,7 +1252,7 @@ def GetPlanningLinesChildren(date, site=None, groupe=None):
         inscription = inscrit.GetInscription(date)
         if inscription is not None and (site is None or len(creche.sites) <= 1 or inscription.site is site) and (groupe is None or inscription.groupe == groupe):
             if creche.conges_inscription == GESTION_CONGES_INSCRIPTION_SIMPLE and date in inscrit.jours_conges:
-                line = LigneConge(VACANCES, inscrit.jours_conges[self.date].label)
+                line = LigneConge(VACANCES, inscrit.jours_conges[date].label)
             elif date in inscrit.journees:
                 line = inscrit.journees[date]
                 if creche.conges_inscription == GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT and date in inscrit.jours_conges:
