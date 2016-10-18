@@ -745,7 +745,7 @@ class PlanningScrollPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def SetInfo(self, info):
         self.internal_panel.SetInfo(info)
         
-    def OnSize(self, event):
+    def OnSize(self, _):
         self.internal_panel.UpdateSize()
 
 
