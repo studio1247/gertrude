@@ -22,7 +22,7 @@ from parameters import *
 from functions import *
 from sqlobjects import *
 from controls import *
-from planning import PlanningWidget # , COMMENTS, ACTIVITES, TWO_PARTS, DEPASSEMENT_CAPACITE, SUMMARY_ENFANT, SUMMARY_SALARIE
+from planning import PlanningWidget, GetPlanningLinesChildren, GetPlanningLinesSalaries
 from ooffice import *
 from doc_planning_detaille import PlanningDetailleModifications
 
