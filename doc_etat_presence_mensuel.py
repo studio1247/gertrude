@@ -73,9 +73,13 @@ class EtatPresenceMensuelModifications(object):
                             garderie += 1
                     date += datetime.timedelta(days=1)
             else:
-                facture = Facture(inscrit, self.date.year, self.date.month, NO_NUMERO)
-                for key in facture.heures_supplement_activites:
-                    fields.append((key, facture.heures_supplement_activites[key]))
+                try:
+                    facture = Facture(inscrit, self.date.year, self.date.month, NO_NUMERO)
+                    for key in facture.heures_supplement_activites:
+                        fields.append((key, facture.heures_supplement_activites[key]))
+                except CotisationException, e:
+                    errors[GetPrenomNom(inscrit)] = e.errors
+                    continue
 
             fields.extend([('cantine', cantine),
                            ('garderie', garderie),
