@@ -1255,6 +1255,10 @@ class InscriptionsPanel(GPanel):
             history.Append(Delete(creche.inscrits, -1))
             inscrit = dlg.GetInscritSelected()
             inscrit.inscriptions[:] = [Inscription(inscrit)]
+            inscrit.journees = {}
+            inscrit.semaines = {}
+            inscrit.factures_cloturees = {}
+            inscrit.corrections = {}
             inscrit.create()
             inscrit.famille.create()
             self.AjouteInscrit(inscrit)
