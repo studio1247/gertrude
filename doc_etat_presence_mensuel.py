@@ -75,6 +75,7 @@ class EtatPresenceMensuelModifications(object):
             else:
                 try:
                     facture = Facture(inscrit, self.date.year, self.date.month, NO_NUMERO)
+                    fields.append(("heures-facturees", facture.heures_facturees))
                     for key in facture.heures_supplement_activites:
                         fields.append((key, facture.heures_supplement_activites[key]))
                 except CotisationException, e:
