@@ -1404,7 +1404,7 @@ class Creche(object):
         # print 'EvalFormule', 'mode=%d' % mode, handicap, 'revenus=%f' % revenus, 'enfants=%d' % enfants, 'jours=%d' % jours, 'heures=%f' % heures, reservataire, nom, 'parents=%d' % parents, chomage, conge_parental, 'heures_mois=%f' % heures_mois, heure_mois
         hg = MODE_HALTE_GARDERIE
         creche = MODE_CRECHE
-        forfait = MODE_FORFAIT_HORAIRE
+        forfait = MODE_FORFAIT_MENSUEL
         urgence = MODE_ACCUEIL_URGENCE
         for tarif in self.tarifs_speciaux:
             try:
@@ -1426,7 +1426,7 @@ class Creche(object):
     def CheckFormule(self, formule, index):
         hg = MODE_HALTE_GARDERIE
         creche = MODE_CRECHE
-        forfait = MODE_FORFAIT_HORAIRE
+        forfait = MODE_FORFAIT_MENSUEL
         urgence = MODE_ACCUEIL_URGENCE
         handicap = False
         chomage = 0

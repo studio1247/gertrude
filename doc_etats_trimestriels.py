@@ -167,7 +167,7 @@ class EtatsTrimestrielsModifications(object):
                     lignes = table.getElementsByTagName("table:table-row")
     
                     # Les inscrits en creche
-                    indexes = GetInscritsByMode(debut, fin, MODE_5_5|MODE_4_5|MODE_3_5|MODE_FORFAIT_HORAIRE|MODE_TEMPS_PARTIEL, self.site)
+                    indexes = GetInscritsByMode(debut, fin, MODE_5_5|MODE_4_5|MODE_3_5|MODE_FORFAIT_MENSUEL|MODE_TEMPS_PARTIEL, self.site)
                     self.Synthese(table, lignes, indexes, MODE_CRECHE, 'creche', 0)
                     # Les inscrits en halte-garderie
                     indexes = GetInscritsByMode(debut, fin, MODE_HALTE_GARDERIE, self.site)

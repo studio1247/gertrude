@@ -64,7 +64,7 @@ class DocumentAccueilModifications(object):
         if creche.mode_facturation != FACTURATION_FORFAIT_MENSUEL:
             fields.append(('montant-heure-garde', self.cotisation.montant_heure_garde))
             
-        if inscription.mode == MODE_FORFAIT_HORAIRE:
+        if inscription.mode == MODE_FORFAIT_MENSUEL:
             fields.append(('forfait-heures-presence', self.cotisation.forfait_mensuel_heures))
 
         if self.cotisation.assiette_annuelle is not None:
@@ -189,7 +189,7 @@ class ContratAccueilModifications(OdtDocumentAccueilModifications):
         OdtDocumentAccueilModifications.__init__(self, who, date)
         if self.inscription.mode == MODE_TEMPS_PARTIEL and IsTemplateFile("Contrat accueil temps partiel.odt"):
             self.template = "Contrat accueil temps partiel.odt"
-        elif self.inscription.mode == MODE_FORFAIT_HORAIRE and IsTemplateFile("Contrat accueil forfait mensuel.odt"):
+        elif self.inscription.mode == MODE_FORFAIT_MENSUEL and IsTemplateFile("Contrat accueil forfait mensuel.odt"):
             self.template = "Contrat accueil forfait mensuel.odt"
         elif self.inscription.mode == MODE_HALTE_GARDERIE and IsTemplateFile("Contrat accueil halte garderie.odt"):
             self.template = "Contrat accueil halte garderie.odt"

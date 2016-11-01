@@ -226,7 +226,7 @@ class FactureFinMois(object):
                                 pass
                             elif creche.mode_facturation == FACTURATION_FORFAIT_10H:
                                 self.CalculeDeduction(cotisation, 10)
-                            elif inscription.mode != MODE_FORFAIT_HORAIRE:
+                            elif inscription.mode not in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE):
                                 self.CalculeDeduction(cotisation, heures_reference)
                             self.raison_deduction.add('hospitalisation')
                         elif state == MALADE or state == MALADE_SANS_JUSTIFICATIF:
@@ -234,7 +234,7 @@ class FactureFinMois(object):
                                 print "jour maladie", date
                             if heures_reference > 0:
                                 self.jours_maladie.append(date)
-                            if state == MALADE and (creche.mode_facturation != FACTURATION_HORAIRES_REELS or inscription.mode == MODE_FORFAIT_HORAIRE):
+                            if state == MALADE and (creche.mode_facturation != FACTURATION_HORAIRES_REELS or inscription.mode in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE)):
                                 # recherche du premier et du dernier jour
                                 premier_jour_maladie = tmp = date
                                 nombre_jours_ouvres_maladie = 0
@@ -282,7 +282,7 @@ class FactureFinMois(object):
                                         pass
                                     elif creche.mode_facturation == FACTURATION_FORFAIT_10H:
                                         self.CalculeDeduction(cotisation, 10)
-                                    elif inscription.mode != MODE_FORFAIT_HORAIRE:
+                                    elif inscription.mode not in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE):
                                         self.CalculeDeduction(cotisation, heures_reference)
                                     self.raison_deduction.add(u"maladie > %dj consécutifs" % creche.minimum_maladie)
                         elif state == VACANCES:
@@ -308,7 +308,7 @@ class FactureFinMois(object):
                                 elif creche.mode_facturation == FACTURATION_FORFAIT_10H:
                                     affectation_jours_supplementaires = True
                                     self.CalculeSupplement(cotisation, 10)
-                                elif cotisation.inscription.mode != MODE_FORFAIT_HORAIRE:
+                                elif cotisation.inscription.mode not in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE):
                                     cotisation.heures_supplementaires += heures_supplementaires_facturees
                                     self.heures_supplementaires += heures_supplementaires_facturees
                                     self.heures_facture_par_mode[cotisation.mode_garde] += heures_supplementaires_facturees
@@ -349,7 +349,7 @@ class FactureFinMois(object):
                         cotisation.heures_realisees_non_facturees += heures_realisees_non_facturees
                         cotisation.heures_facturees_non_realisees += heures_facturees_non_realisees
 
-                        if cotisation.inscription.mode != MODE_FORFAIT_HORAIRE:
+                        if cotisation.inscription.mode not in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE):
                             cotisation.heures_contractualisees += heures_reference
                             self.heures_contractualisees += heures_reference
                             self.heures_contractualisees_realisees += min(heures_realisees, heures_reference)
@@ -417,14 +417,14 @@ class FactureFinMois(object):
                     self.cotisation_mensuelle += montant
                     self.total_contractualise += montant
                 elif creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(cotisation.debut):
-                    if inscription.mode == MODE_FORFAIT_HORAIRE:
+                    if inscription.mode in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE):
                         self.heures_facturees_par_mode[cotisation.mode_garde] += cotisation.heures_realisees - cotisation.heures_realisees_non_facturees
                     report = cotisation.CalculeFraisGarde(cotisation.heures_realisees)
                     self.report_cotisation_mensuelle += report
                     prorata_effectue = True
                     if options & TRACES:
                         print " cotisation periode adaptation :", report
-                elif inscription.mode == MODE_FORFAIT_HORAIRE:
+                elif inscription.mode in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE):
                     self.cotisation_mensuelle += cotisation.cotisation_mensuelle * cotisation.jours_ouvres / jours_ouvres
                     cotisation.heures_contractualisees = inscription.forfait_mensuel_heures * cotisation.jours_ouvres / jours_ouvres
                     self.heures_contractualisees += cotisation.heures_contractualisees

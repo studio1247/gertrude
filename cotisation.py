@@ -274,8 +274,13 @@ class Cotisation(object):
             self.heures_mois = self.heures_semaine * 4
             self.heures_periode = self.heures_mois * 12
             self.nombre_factures = 12 - GetNombreMoisSansFactureContrat(self.date.year)
-        else:                
-            self.heures_semaine = self.heures_reelles_semaine
+        else:
+            if self.inscription.mode == MODE_FORFAIT_MENSUEL:
+                self.heures_semaine = self.inscription.forfait_mensuel_heures / 4
+            elif self.inscription.mode == MODE_FORFAIT_HEBDOMADAIRE:
+                self.heures_semaine = self.inscription.forfait_mensuel_heures  # TODO rename to forfait
+            else:
+                self.heures_semaine = self.heures_reelles_semaine
             if creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
                 if self.fin_inscription is None:
                     errors.append(u" - La période d'inscription n'a pas de fin.")
@@ -398,8 +403,8 @@ class Cotisation(object):
             self.montant_heure_garde = 0.0
             self.cotisation_periode = 0.0
             self.cotisation_mensuelle = self.inscription.forfait_mensuel
-        elif creche.mode_facturation == FACTURATION_HORAIRES_REELS or self.inscription.mode == MODE_FORFAIT_HORAIRE:
-            if self.inscription.mode == MODE_FORFAIT_HORAIRE:
+        elif creche.mode_facturation == FACTURATION_HORAIRES_REELS or self.inscription.mode == MODE_FORFAIT_MENSUEL:
+            if self.inscription.mode == MODE_FORFAIT_MENSUEL:
                 self.forfait_mensuel_heures = self.inscription.forfait_mensuel_heures
             try:
                 self.montant_heure_garde = creche.EvalTauxHoraire(self.mode_garde, inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, 0, self.tranche_paje, inscrit.famille.tarifs)

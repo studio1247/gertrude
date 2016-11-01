@@ -64,13 +64,13 @@ class SyntheseFinanciereModifications(object):
                 for inscrit in creche.inscrits:
                     if inscrit.GetInscriptions(debut, fin):
                         facture = FactureFinMois(inscrit, self.annee, mois)
-                        for mode in (MODE_FORFAIT_HORAIRE, MODE_HALTE_GARDERIE):                        
+                        for mode in (MODE_FORFAIT_MENSUEL, MODE_HALTE_GARDERIE):
                             heures_facturees_par_mode[mode] += facture.heures_facturees_par_mode[mode]
                         heures_facturees += facture.heures_facturees
                         cotisations_facturees += facture.total
 
                 fields.append(("heures-accueil[%d]" % (mois), heures_accueil))
-                fields.append(("heures-facturees[forfait][%d]" % (mois), heures_facturees_par_mode[MODE_FORFAIT_HORAIRE]))
+                fields.append(("heures-facturees[forfait][%d]" % (mois), heures_facturees_par_mode[MODE_FORFAIT_MENSUEL]))
                 fields.append(("heures-facturees[hg][%d]" % (mois), heures_facturees_par_mode[MODE_HALTE_GARDERIE]))
                 fields.append(("heures-facturees[%d]" % (mois), heures_facturees))
                 fields.append(("cotisations[%d]" % (mois), cotisations_facturees))
