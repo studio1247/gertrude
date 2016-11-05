@@ -21,7 +21,7 @@ import datetime, time
 from constants import *
 from controls import GetActivityColor, TextDialog
 from functions import *
-from sqlobjects import Day, JourneeCapacite, JourneeReferenceInscription
+from sqlobjects import Day, Journee, JourneeCapacite, JourneeReferenceInscription
 from globals import *
 
 
