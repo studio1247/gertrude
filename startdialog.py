@@ -161,7 +161,7 @@ class StartDialog(wx.Dialog):
             except Exception, e:
                 # print e
                 self.info.AppendText(u"Gertrude est déjà lancée. Les données seront accessibles en lecture seule !\n")
-                __builtin__.readonly = True;
+                __builtin__.readonly = True
 
         self.loaded = True        
         sql_connection.open()

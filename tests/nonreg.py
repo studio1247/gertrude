@@ -35,11 +35,11 @@ class GertrudeTestCase(unittest.TestCase):
         creche.AddConge(conge)
     
     def AddParents(self, inscrit, salaire=30000.0):
-        inscrit.famille.parents["papa"] = papa = Parent(inscrit.famille, creation=False)
+        inscrit.famille.parents[0] = papa = Parent(inscrit.famille, "papa", creation=False)
         revenu = Revenu(papa, creation=False)
         revenu.debut, revenu.revenu = datetime.date(2008, 1, 1), salaire
         papa.revenus.append(revenu)
-        inscrit.famille.parents["maman"] = maman = Parent(inscrit.famille, creation=False)
+        inscrit.famille.parents[1] = maman = Parent(inscrit.famille, "maman", creation=False)
         revenu = Revenu(maman, creation=False)
         revenu.debut, revenu.revenu = datetime.date(2008, 1, 1), 0.0
         maman.revenus.append(revenu)
@@ -681,7 +681,7 @@ class VivreADomicileTests(GertrudeTestCase):
         inscrit = self.AddInscrit()
         self.AddFrere(inscrit, datetime.date(2002, 9, 13))
         self.AddFrere(inscrit, datetime.date(2003, 9, 19))
-        inscrit.famille.parents["papa"].revenus[0].revenu = 6960.0
+        inscrit.famille.parents[0].revenus[0].revenu = 6960.0
         inscription = Inscription(inscrit, creation=False)
         inscription.mode = MODE_HALTE_GARDERIE
         inscription.debut = datetime.date(2011, 1, 3)
@@ -717,7 +717,7 @@ class BebebulTests(GertrudeTestCase):
         inscrit = self.AddInscrit()
         self.AddFrere(inscrit, datetime.date(2009, 8, 11))
         self.AddFrere(inscrit, datetime.date(2012, 8, 18))
-        inscrit.famille.parents["papa"].revenus[0].revenu = 42966.0
+        inscrit.famille.parents[0].revenus[0].revenu = 42966.0
         inscription = Inscription(inscrit, creation=False)
         inscription.mode = MODE_HALTE_GARDERIE
         inscription.debut = datetime.date(2012, 10, 1)
@@ -740,7 +740,7 @@ class BebebulTests(GertrudeTestCase):
         inscrit = self.AddInscrit()
         self.AddFrere(inscrit, datetime.date(2009, 8, 11))
         self.AddFrere(inscrit, datetime.date(2012, 8, 18))
-        inscrit.famille.parents["papa"].revenus[0].revenu = 42966.0
+        inscrit.famille.parents[0].revenus[0].revenu = 42966.0
         inscription = Inscription(inscrit, creation=False)
         inscription.mode = MODE_HALTE_GARDERIE
         inscription.debut = datetime.date(2012, 10, 1)

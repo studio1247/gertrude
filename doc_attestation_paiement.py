@@ -50,7 +50,7 @@ class AttestationModifications(object):
             else:
                 self.email_subject = u"Attestation de paiement %s %s %s-%s %d" % (who.prenom, who.nom, months[debut.month - 1], months[fin.month - 1], debut.year)
             self.default_output = self.email_subject + ".odt"
-            self.email_to = list(set([parent.email for parent in who.famille.parents.values() if parent and parent.email]))
+            self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
             self.multi = False
         self.inscrits = GetEnfantsTriesSelonParametreTriFacture(self.inscrits)
         self.email = True

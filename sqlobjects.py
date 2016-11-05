@@ -2050,14 +2050,14 @@ class Famille(object):
         self.tarifs = 0
         self.notes = ""
         self.freres_soeurs = []
-        self.parents = {"papa": None, "maman": None}
+        self.parents = [None, None]
         self.referents = []
         self.encaissements = []
 
         if creation:
             self.create()
-            self.parents["papa"] = Parent(self, "papa")
-            self.parents["maman"] = Parent(self, "maman")
+            self.parents[0] = Parent(self, "papa")
+            self.parents[1] = Parent(self, "maman")
 
     def create(self):
         print 'nouvelle famille'
@@ -2067,15 +2067,15 @@ class Famille(object):
              self.tarifs, self.notes, self.medecin_traitant, self.telephone_medecin_traitant, self.assureur,
              self.numero_police_assurance, self.code_client))
         self.idx = result.lastrowid
-        for obj in self.parents.values() + self.freres_soeurs + self.referents:
+        for obj in self.parents + self.freres_soeurs + self.referents:
             if obj:
                 obj.create()
 
     def delete(self):
         print 'suppression famille'
         sql_connection.execute('DELETE FROM FAMILLES WHERE idx=?', (self.idx,))
-        for obj in self.parents.values() + self.freres_soeurs + self.referents:
-            if obj is not None:
+        for obj in self.parents + self.freres_soeurs + self.referents:
+            if obj:
                 obj.delete()
 
     def __setattr__(self, name, value):
@@ -2446,7 +2446,7 @@ class Inscrit(object):
 
     def GetRegime(self, date):
         result = 0
-        for parent in self.famille.parents.values():
+        for parent in self.famille.parents:
             if parent:
                 revenu = Select(parent.revenus, date)
                 if revenu and revenu.regime:

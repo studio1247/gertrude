@@ -212,7 +212,7 @@ def GetNom4P1(inscrit, inscrits):
         result = inscrit.nom[:4].upper()
         noms = [p.nom[:4].upper() for p in inscrits]
         if noms.count(result) > 1 and len(inscrit.prenom) > 0:
-            for parent in inscrit.famille.parents.values():
+            for parent in inscrit.famille.parents:
                 if parent and len(parent.prenom) > 0:
                     result += parent.prenom[0].upper()
         return result
@@ -429,61 +429,52 @@ def GetBoolStr(val):
 
 
 def GetParentsString(famille):
-    if not famille.parents['papa'] and not famille.parents['maman']:
-        return "ZZZZ"
-    elif not famille.parents['maman']:
-        return GetPrenomNom(famille.parents['papa'])
-    elif not famille.parents['papa']:
-        return GetPrenomNom(famille.parents['maman'])
+    if not famille.parents[0] and not famille.parents[1]:
+        return "Pas de parents"
+    elif not famille.parents[1]:
+        return GetPrenomNom(famille.parents[0])
+    elif not famille.parents[0]:
+        return GetPrenomNom(famille.parents[1])
     else:
-        papa = famille.parents['papa']
-        maman = famille.parents['maman']
-        if maman.nom == papa.nom:
-            return '%s et %s %s' % (maman.prenom, papa.prenom, papa.nom)
+        parent1 = famille.parents[0]
+        parent2 = famille.parents[1]
+        if parent1.nom == parent2.nom:
+            return '%s et %s %s' % (parent2.prenom, parent1.prenom, parent1.nom)
         else:
-            return '%s %s et %s %s' % (maman.prenom, maman.nom, papa.prenom, papa.nom)
+            return '%s %s et %s %s' % (parent2.prenom, parent2.nom, parent1.prenom, parent1.nom)
 
 
 def GetParentsPrenomsString(famille):
-    papa = famille.parents['papa']
-    maman = famille.parents['maman']
-    if papa:
-        if maman:
-            return '%s/%s' % (papa.prenom, maman.prenom)
+    parent1 = famille.parents[0]
+    parent2 = famille.parents[1]
+    if parent1:
+        if parent2:
+            return '%s/%s' % (parent1.prenom, parent2.prenom)
         else:
-            return papa.prenom
-    elif maman:
-        return maman.prenom
+            return parent1.prenom
+    elif parent2:
+        return parent2.prenom
     else:
         return ""
 
 
 def GetParentsNomsString(famille):
-    papa = famille.parents['papa']
-    maman = famille.parents['maman']
-    if papa:
-        if maman and papa.nom != maman.nom:
-            return '%s-%s' % (papa.nom, maman.nom)
+    parent1 = famille.parents[0]
+    parent2 = famille.parents[1]
+    if parent1:
+        if parent2 and parent1.nom != parent2.nom:
+            return '%s-%s' % (parent1.nom, parent2.nom)
         else:
-            return papa.nom
-    elif maman:
-        return maman.nom
+            return parent1.nom
+    elif parent2:
+        return parent2.nom
     else:
         return ""
 
 
 def GetParentsCivilitesString(famille):
-    papa = famille.parents['papa']
-    maman = famille.parents['maman']
-    if papa:
-        if maman and papa.nom != maman.nom:
-            return 'Monsieur/Madame'
-        else:
-            return 'Monsieur'
-    elif maman:
-        return 'Madame'
-    else:
-        return ""
+    relations = set([parent.relation for parent in famille.parents])
+    return "/".join(relations)
 
 
 def GetInscritsByMode(start, end, mode, site=None):  # TODO pourquoi retourner les index
@@ -873,20 +864,20 @@ def GetInscritSexe(inscrit):
 
 def GetTelephone(famille):
     result = []
-    for key in famille.parents:
-        if famille.parents[key]:
-            if famille.parents[key].telephone_domicile:
-                result.append(famille.parents[key].telephone_domicile)
-            if famille.parents[key].telephone_portable:
-                result.append(famille.parents[key].telephone_portable)
+    for parent in famille.parents:
+        if parent:
+            if parent.telephone_domicile:
+                result.append(parent.telephone_domicile)
+            if parent.telephone_portable:
+                result.append(parent.telephone_portable)
     return ", ".join(set(result))
 
 
 def GetEmail(famille):
     result = []
-    for key in famille.parents:
-        if famille.parents[key] and famille.parents[key].email:
-            result.append(famille.parents[key].email)
+    for parent in famille.parents:
+        if parent and parent.email:
+            result.append(parent.email)
     return ", ".join(result)
 
 

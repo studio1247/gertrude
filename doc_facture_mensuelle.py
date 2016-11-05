@@ -65,7 +65,7 @@ class FactureModifications(object):
             who = self.inscrits[0]
             self.site = who.GetInscriptions(self.periode_facturation, None)[0].site
             self.email_subject = u"Facture %s %s %d" % (self.GetPrenomNom(who), months[periode.month - 1], periode.year)
-            self.email_to = list(set([parent.email for parent in who.famille.parents.values() if parent and parent.email]))
+            self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
             self.default_output = self.email_subject + ".odt"
         
         if self.site and IsTemplateFile("Facture mensuelle simple %s.odt" % self.site.nom):

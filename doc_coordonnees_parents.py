@@ -56,7 +56,7 @@ class CoordonneesModifications(object):
             inscription = inscrit.GetInscription(self.date)
             if inscription and (self.site is None or inscription.site == self.site):
                 inscrit_fields = GetInscritFields(inscrit)
-                for parent in inscrit.famille.parents.values():
+                for parent in inscrit.famille.parents:
                     if parent:
                         fields = inscrit_fields + GetParentFields(parent)
                         line = template.cloneNode(1)
@@ -84,7 +84,7 @@ class CoordonneesModifications(object):
                     if inscription and (self.site is None or inscription.site == self.site):
                         line = template.cloneNode(1)
                         referents = [GetPrenomNom(referent) for referent in inscrit.famille.referents]
-                        parents = [GetPrenomNom(parent) for parent in inscrit.famille.parents.values() if parent is not None]
+                        parents = [GetPrenomNom(parent) for parent in inscrit.famille.parents if parent is not None]
                         ReplaceTextFields(line, [('prenom', inscrit.prenom),
                                                  ('parents', parents),
                                                  ('referents', referents),
@@ -93,7 +93,7 @@ class CoordonneesModifications(object):
                         phoneTemplate = phoneCell.getElementsByTagName('text:p')[0]
                         phones = { } # clé: [téléphone, initiales, ?travail]
                         emails = set()
-                        for parent in inscrit.famille.parents.values():
+                        for parent in inscrit.famille.parents:
                             if parent:
                                 emails.add(parent.email)
                                 for phoneType in ["domicile", "portable", "travail"]:

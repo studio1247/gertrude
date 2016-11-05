@@ -134,14 +134,14 @@ def main():
         obj.famille.code_postal = parent['code_postal_papa']
         obj.famille.numero_allocataire_caf = parent['allocataire']
         # les parents
-        obj.famille.parents["papa"].nom = parent['nom_papa']
-        obj.famille.parents["papa"].prenom = parent['prenom_papa']
-        obj.famille.parents["papa"].revenus[0].debut = datetime.date(2010, 1, 1)
-        obj.famille.parents["papa"].revenus[0].revenu = parent['revenu_papa']
-        obj.famille.parents["maman"].nom = parent['nom_maman']
-        obj.famille.parents["maman"].prenom = parent['prenom_maman']
-        obj.famille.parents["maman"].revenus[0].debut = datetime.date(2010, 1, 1)
-        obj.famille.parents["maman"].revenus[0].revenu = parent['revenu_maman']
+        obj.famille.parents[0].nom = parent['nom_papa']
+        obj.famille.parents[0].prenom = parent['prenom_papa']
+        obj.famille.parents[0].revenus[0].debut = datetime.date(2010, 1, 1)
+        obj.famille.parents[0].revenus[0].revenu = parent['revenu_papa']
+        obj.famille.parents[1].nom = parent['nom_maman']
+        obj.famille.parents[1].prenom = parent['prenom_maman']
+        obj.famille.parents[1].revenus[0].debut = datetime.date(2010, 1, 1)
+        obj.famille.parents[1].revenus[0].revenu = parent['revenu_maman']
         # l'inscription
         obj2 = obj.inscriptions[0]
         obj2.mode = MODE_TEMPS_PARTIEL

@@ -167,7 +167,7 @@ class Cotisation(object):
         self.parents = 0
         self.frais_inscription = self.inscription.frais_inscription
         self.montant_allocation_caf = self.inscription.allocation_mensuelle_caf
-        for parent in inscrit.famille.parents.values():
+        for parent in inscrit.famille.parents:
             if parent:
                 self.parents += 1
                 revenus_parent = Select(parent.revenus, self.date_revenus)

@@ -779,10 +779,14 @@ class SQLConnection(object):
             famille.adresse, famille.code_postal, famille.ville, famille.numero_securite_sociale, famille.numero_allocataire_caf, famille.code_client, famille.medecin_traitant, famille.telephone_medecin_traitant, famille.assureur, famille.numero_police_assurance, famille.code_client, famille.tarifs, famille.notes, famille.idx = adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, code_client, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, code_client, tarifs, notes, idx
             creche.familles.append(famille)
             cur.execute('SELECT relation, prenom, nom, adresse, code_postal, ville, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email, idx FROM PARENTS WHERE famille=?', (famille.idx,))
-            for parent_entry in cur.fetchall():
+            for i, parent_entry in enumerate(cur.fetchall()):
                 parent = Parent(famille, creation=False)
                 parent.relation, parent.prenom, parent.nom, parent.adresse, parent.code_postal, parent.ville, parent.telephone_domicile, parent.telephone_domicile_notes, parent.telephone_portable, parent.telephone_portable_notes, parent.telephone_travail, parent.telephone_travail_notes, parent.email, parent.idx = parent_entry
-                famille.parents[parent.relation] = parent
+                if i < 2:
+                    famille.parents[i] = parent
+                else:
+                    print u"Famille avec plus de 2 parents : fonction non supportée"
+                    continue
                 cur.execute('SELECT debut, fin, revenu, chomage, conge_parental, regime, idx FROM REVENUS WHERE parent=?', (parent.idx,))
                 for revenu_entry in cur.fetchall():
                     revenu = Revenu(parent, creation=False)

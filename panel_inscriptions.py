@@ -502,14 +502,15 @@ class ParentsPanel(InscriptionsTab):
             self.parents_items.append([])
             sizer2 = wx.FlexGridSizer(0, 2, 5, 5)
             sizer2.AddGrowableCol(1, 1)
-            self.relations_items.append(wx.Choice(self, -1))
+            relation_item = wx.Choice(self, -1)
+            self.relations_items.append(relation_item)
             for item, value in (('Papa', 'papa'), ('Maman', 'maman'), ('Parent manquant', None)):
-                self.relations_items[-1].Append(item, value)
-            self.relations_items[-1].index = index
+                relation_item.Append(item, value)
+                relation_item.index = index
             if readonly:
-                self.relations_items[-1].Disable()
-            self.Bind(wx.EVT_CHOICE, self.OnParentRelationChoice, self.relations_items[-1])
-            sizer2.AddMany([(wx.StaticText(self, -1, u'Relation :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.relations_items[-1], 0, wx.EXPAND)])           
+                relation_item.Disable()
+            self.Bind(wx.EVT_CHOICE, self.OnParentRelationChoice, relation_item)
+            sizer2.AddMany([(wx.StaticText(self, -1, u'Relation :'), 0, wx.ALIGN_CENTER_VERTICAL), (relation_item, 0, wx.EXPAND)])
             self.parents_items[-1].extend([wx.StaticText(self, -1, u'Prénom :'), AutoTextCtrl(self, None, 'prenom')])           
             sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
             self.parents_items[-1].extend([wx.StaticText(self, -1, u'Nom :'), AutoTextCtrl(self, None, 'nom')])
@@ -579,17 +580,17 @@ class ParentsPanel(InscriptionsTab):
         self.SetSizer(self.sizer)
 
     def OnParentRelationChoice(self, event):
-        object = event.GetEventObject()
-        value = object.GetClientData(object.GetSelection())
-        if value is None:
-            self.inscrit.famille.parents[object.instance.relation] = None
-            object.instance.delete()
-            for item in self.parents_items[object.index]:
+        obj = event.GetEventObject()
+        relation = obj.GetClientData(obj.GetSelection())
+        if relation is None:
+            self.inscrit.famille.parents[obj.index] = None
+            obj.instance.delete()
+            for item in self.parents_items[obj.index]:
                 item.Show(False)
             self.sizer.FitInside(self)
-        elif not self.inscrit.famille.parents[value]:
-            self.inscrit.famille.parents[value] = parent = Parent(self.inscrit.famille, value)
-            for item in self.parents_items[object.index]:
+        elif not self.inscrit.famille.parents[obj.index]:
+            self.inscrit.famille.parents[obj.index] = parent = Parent(self.inscrit.famille, relation)
+            for item in self.parents_items[obj.index]:
                 try:
                     item.SetInstance(parent)
                 except:
@@ -598,16 +599,18 @@ class ParentsPanel(InscriptionsTab):
             self.UpdateContents()
             self.sizer.FitInside(self)
         else:
+            obj.instance.relation = relation
             event.Skip()
     
     def UpdateContents(self):
         if self.inscrit:
-            for index, key in enumerate(self.inscrit.famille.parents.keys()):
-                parent = self.inscrit.famille.parents[key]
-                if parent:
-                    self.relations_items[index].SetStringSelection(key.capitalize())
-                else:
+            for index, parent in enumerate(self.inscrit.famille.parents):
+                if parent is None:
                     self.relations_items[index].SetSelection(2)
+                elif parent.relation == "papa":
+                    self.relations_items[index].SetSelection(0)
+                else:
+                    self.relations_items[index].SetSelection(1)
                 self.relations_items[index].instance = parent
                 for i, item in enumerate(self.parents_items[index]):
                     item.Show(parent is not None)
