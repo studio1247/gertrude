@@ -354,7 +354,7 @@ class Cotisation(object):
                         errors.append(u" - La période d'inscription n'a pas de fin.")
                         raise CotisationException(errors)
                     debut_inscription = self.inscription.debut
-                    if creche.facturation_periode_adaptation == PERIODE_ADAPTATION_GRATUITE and self.inscription.fin_periode_adaptation:
+                    if creche.facturation_periode_adaptation in (PERIODE_ADAPTATION_GRATUITE, PERIODE_ADAPTATION_HORAIRES_REELS) and self.inscription.fin_periode_adaptation:
                         debut_inscription = self.inscription.fin_periode_adaptation + datetime.timedelta(1)
                     self.semaines_periode = GetNombreSemainesPeriode(debut_inscription, self.fin_inscription)
                     self.nombre_factures = GetNombreFacturesContrat(debut_inscription, self.fin_inscription)
@@ -363,8 +363,11 @@ class Cotisation(object):
                     if self.fin_inscription is None:
                         errors.append(u" - La période d'inscription n'a pas de fin.")
                         raise CotisationException(errors)
-                    self.semaines_periode = GetNombreSemainesPeriode(self.inscription.debut, self.fin_inscription)
-                    self.nombre_factures = GetNombreFacturesContrat(self.inscription.debut, self.fin_inscription)
+                    debut_inscription = self.inscription.debut
+                    if creche.facturation_periode_adaptation in (PERIODE_ADAPTATION_GRATUITE, PERIODE_ADAPTATION_HORAIRES_REELS) and self.inscription.fin_periode_adaptation:
+                        debut_inscription = self.inscription.fin_periode_adaptation + datetime.timedelta(1)
+                    self.semaines_periode = GetNombreSemainesPeriode(debut_inscription, self.fin_inscription)
+                    self.nombre_factures = GetNombreFacturesContrat(debut_inscription, self.fin_inscription)
                 elif creche.repartition == REPARTITION_SANS_MENSUALISATION:
                     if self.fin_inscription is None:
                         self.semaines_periode = 52
