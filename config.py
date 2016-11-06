@@ -303,15 +303,19 @@ def SaveConfig(progress_handler):
             print e
             progress_handler.display(u"Impossible d'enregistrer les paramètres de configuration !")    
 
+
 def Load(progress_handler=default_progress_handler):
     __builtin__.creche, __builtin__.readonly = config.connection.Load(progress_handler)
     return creche is not None
 
+
 def Save(progress_handler=default_progress_handler):
     return config.connection.Save(progress_handler)
 
+
 def Restore(progress_handler=default_progress_handler):
     return config.connection.Restore(progress_handler)
+
 
 def Update():
     return config.connection.Update()
@@ -319,6 +323,7 @@ def Update():
 def Exit(progress_handler=default_progress_handler):
     SaveConfig(progress_handler)
     return config.connection.Exit(progress_handler)
+
 
 def Liste(progress_handler=default_progress_handler):
     result = {}
