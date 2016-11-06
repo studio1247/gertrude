@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import sys, os, __builtin__
-sys.path.append("..")
 import unittest
+import sys
+import os
+import __builtin__
+sys.path.append("..")
 import sqlinterface
 from sqlobjects import *
 from cotisation import *

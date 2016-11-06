@@ -1041,8 +1041,9 @@ def GetFactureFields(facture):
                   ('supplement_activites', facture.formule_supplement_activites),
                   ('heures_activites', facture.formule_heures_supplement_activites),
                   ('compte_activites', facture.formule_compte_supplement_activites),
-                  ('majoration', facture.majoration_mensuelle, FIELD_EUROS|FIELD_SIGN),
-                  ('frais-inscription', facture.frais_inscription, FIELD_EUROS|FIELD_SIGN),
+                  ('majoration', facture.majoration_mensuelle, FIELD_EUROS | FIELD_SIGN),
+                  ('frais-inscription', facture.frais_inscription, FIELD_EUROS | FIELD_SIGN),
+                  ('total-sans-activites', facture.total - facture.supplement_activites, FIELD_EUROS),
                   ('site', GetNom(facture.site)),
                   ('total', facture.total, FIELD_EUROS)]
         if config.numfact:
