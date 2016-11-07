@@ -47,6 +47,8 @@ class CorrectionsTab(AutoTab):
         self.Layout()
         
     def OnMonthChoice(self, evt=None):
+        if sys.platform == 'win32':
+            self.Hide()
         while len(self.corrections_sizer.GetChildren()):
             sizer = self.corrections_sizer.GetItem(0)
             sizer.DeleteWindows()
@@ -63,7 +65,7 @@ class CorrectionsTab(AutoTab):
             inscrits = GetEnfantsTriesParNom()
 
         for inscrit in inscrits:
-            if inscrit.HasFacture(date): # TODO and date not in inscrit.factures_cloturees:
+            if inscrit.HasFacture(date):  # TODO and date not in inscrit.factures_cloturees:
                 if not date in inscrit.corrections:
                     inscrit.corrections[date] = Correction(inscrit, date)
                 sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -74,6 +76,8 @@ class CorrectionsTab(AutoTab):
         
         AutoTab.UpdateContents(self)
         self.sizer.FitInside(self)
+        if sys.platform == 'win32':
+            self.Show()
 
     def UpdateContents(self):
         self.OnMonthChoice()
