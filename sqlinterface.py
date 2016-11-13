@@ -731,21 +731,22 @@ class SQLConnection(object):
             for contrat in salarie.contrats:
                 cur.execute('SELECT day, value, debut, fin, idx FROM REF_JOURNEES_SALARIES WHERE reference=?', (contrat.idx,))
                 for day, value, debut, fin, idx in cur.fetchall():
-                    if day < len(contrat.reference):
+                    if value in creche.activites and day < len(contrat.reference):
                         reference_day = contrat.reference[day]
                         reference_day.AddActivity(debut, fin, value, idx)
                         # print inscrit.prenom, inscrit.prenom, day, debut, fin, value
 
             cur.execute('SELECT date, value, debut, fin, idx FROM ACTIVITES_SALARIES WHERE salarie=?', (salarie.idx,))
             for date, value, debut, fin, idx in cur.fetchall():
-                key = getdate(date)
-                if key in salarie.journees:
-                    journee = salarie.journees[key]
-                else:
-                    journee = JourneeSalarie(salarie, key)
-                    salarie.journees[key] = journee
-                # print salarie.prenom, salarie.nom, key, debut, fin, value
-                journee.AddActivity(debut, fin, value, idx)
+                if value in creche.activites:
+                    key = getdate(date)
+                    if key in salarie.journees:
+                        journee = salarie.journees[key]
+                    else:
+                        journee = JourneeSalarie(salarie, key)
+                        salarie.journees[key] = journee
+                    # print salarie.prenom, salarie.nom, key, debut, fin, value
+                    journee.AddActivity(debut, fin, value, idx)
 
             cur.execute('SELECT date, commentaire, idx FROM COMMENTAIRES_SALARIES WHERE salarie=?', (salarie.idx,))
             for date, commentaire, idx in cur.fetchall():
