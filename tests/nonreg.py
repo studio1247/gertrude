@@ -342,7 +342,11 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         self.AddConge("19/04/2010", "23/04/2010")
         self.AddConge("20/12/2010", "24/12/2010")
         self.AddConge(u"Août", options=MOIS_SANS_FACTURE)
-        
+        self.AddConge("06/04/2016")
+        self.AddConge("26/12/2016", "02/01/2017")
+        self.AddConge("29/07/2016", "22/08/2016")
+        self.AddConge("18/04/2016", "23/04/2016")
+
     def test_24aout_31dec(self):
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
@@ -419,6 +423,30 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         self.AddJourneePresence(inscrit, datetime.date(2010, 9, 8), 88, 94)
         facture = Facture(inscrit, 2010, 9)
         self.assertEquals(facture.heures_supplementaires, 1.0)
+
+    def test_prorata_suite_a_naissance_enfant(self):
+        creche.type = TYPE_ASSOCIATIF
+        inscrit = self.AddInscrit()
+        inscrit.naissance = datetime.date(2014, 12, 5)
+        self.AddFrere(inscrit, datetime.date(2016, 10, 21))
+        inscription = Inscription(inscrit, creation=False)
+        inscription.debut = datetime.date(2016, 1, 1)
+        inscription.fin = datetime.date(2016, 12, 31)
+        inscription.reference[0].AddActivity(90, 198, 0, -1)
+        inscription.reference[1].AddActivity(90, 198, 0, -1)
+        inscription.reference[2].AddActivity(96, 198, 0, -1)
+        inscription.reference[3].AddActivity(90, 198, 0, -1)
+        inscription.reference[4].AddActivity(90, 198, 0, -1)
+        inscrit.inscriptions.append(inscription)
+        facture = Facture(inscrit, 2016, 9)
+        self.assertEquals(facture.total_contractualise, 277.5)
+        self.assertEquals(facture.total_facture, 277.5)
+        facture = Facture(inscrit, 2016, 11)
+        self.assertEquals(facture.total_contractualise, 165.0)
+        self.assertEquals(facture.total_facture, 165.0)
+        facture = Facture(inscrit, 2016, 10)
+        self.assertEquals(facture.total_contractualise, 245.36)
+        self.assertEquals(facture.total_facture, 245.36)
 
 
 class PetitsMoussesTests(GertrudeTestCase):

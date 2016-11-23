@@ -515,7 +515,7 @@ class Cotisation(object):
                     else:
                         self.taux_effort = 0.06
             if options & TRACES:
-                print u" taux d'effort :", self.taux_effort
+                print u" taux d'effort=%.02f, mode=%s, type creche=%d" % (self.taux_effort, self.mode_taux_effort, creche.type)
                 
             self.montant_heure_garde = self.assiette_mensuelle * self.taux_effort / 100
             if creche.mode_facturation in (FACTURATION_PSU, FACTURATION_PSU_TAUX_PERSONNALISES):
