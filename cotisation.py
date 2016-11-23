@@ -292,7 +292,6 @@ class Cotisation(object):
                     if options & TRACES:
                         print u' début théorique en date du', date
                 else:
-                    print "Cotisation prorata", self.fin_inscription, self.fin
                     self.prorata = (self.fin_inscription != self.fin or self.debut_inscription != self.debut)
                     date = self.debut
                 
