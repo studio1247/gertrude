@@ -140,7 +140,7 @@ class FraisGardePanel(wx.Panel):
 
     def GetCotisations(self):
         self.cotisations = []
-        date = first_date
+        date = config.first_date
         for inscription in self.inscrit.GetInscriptions():
             if inscription.debut:
                 date = max(date, inscription.debut)

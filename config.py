@@ -57,6 +57,8 @@ class Config(object):
         self.numfact = None
         self.codeclient = None
         self.templates = "templates"
+        self.first_date = datetime.date(today.year - 2, 1, 1)
+        self.last_date = datetime.date(today.year + 1, 12, 31)
         
     def setSection(self, section):
         self.default_section = section
@@ -102,6 +104,15 @@ def getWindowSize(parser):
         return window_width, window_height
     except:
         return 1000, 600
+
+
+def getYearsDisplayed(parser):
+    try:
+        years_before = int(parser.get(DEFAULT_SECTION, "years-before"))
+        years_after = int(parser.get(DEFAULT_SECTION, "years-after"))
+        return years_before, years_after
+    except:
+        return 2, 1
 
 
 def getColumnWidth(parser):
@@ -159,11 +170,13 @@ def getBackupsDirectory(parser):
     except:
         return ""
 
+
 def getDefaultSection(parser):
     try:
         return parser.get(DEFAULT_SECTION, "default-database")
     except:
         return None
+
 
 def getField(parser, section, field):
     try:
@@ -249,6 +262,10 @@ def LoadConfig(progress_handler=default_progress_handler):
     config.original_window_size = getWindowSize(parser)
     config.window_size = config.original_window_size
     config.column_width = getColumnWidth(parser)
+
+    years_before, years_after = getYearsDisplayed(parser)
+    config.first_date = datetime.date(today.year - years_before, 1, 1)
+    config.last_date = datetime.date(today.year + years_after, 12, 31)
      
     config.options = getOptions(parser)
     config.templates = getTemplatesDirectory(parser)

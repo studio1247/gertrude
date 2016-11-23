@@ -167,7 +167,7 @@ class PlacesInformationTab(AutoTab):
         self.week_choice = wx.Choice(self, -1)
         sizer.Add(self.week_choice, 1, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
         day = first_monday = GetFirstMonday()
-        while day < last_date:
+        while day < config.last_date:
             string = 'Semaine %d (%d %s %d)' % (day.isocalendar()[1], day.day, months[day.month - 1], day.year)
             self.week_choice.Append(string, day)
             day += datetime.timedelta(7)
@@ -478,7 +478,7 @@ class EtatsPresenceTab(AutoTab):
         if not debut:
             debut = datetime.date(2004, 1, 1)
         if not fin:
-            fin = last_date
+            fin = config.last_date
         
         selection = {}
         for inscrit in inscrits:

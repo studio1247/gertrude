@@ -16,7 +16,8 @@ from doc_etats_trimestriels import EtatsTrimestrielsModifications
 from ooffice import GenerateOODocument
 from config import Config
 
-__builtin__.first_date = datetime.date(2010, 1, 1) 
+__builtin__.config = Config()
+config.first_date = datetime.date(2010, 1, 1)
 
 
 class GertrudeTestCase(unittest.TestCase):

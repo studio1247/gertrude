@@ -1038,7 +1038,7 @@ class Salarie(object):
                         fin = str2date(conge.fin)
                     AddPeriode(debut, fin, conge)
                 elif count == 1:
-                    for year in range(first_date.year, last_date.year + 1):
+                    for year in range(config.first_date.year, config.last_date.year + 1):
                         debut = str2date(conge.debut, year)
                         if conge.fin.strip() == "":
                             fin = debut
@@ -1279,7 +1279,7 @@ class Creche(object):
         self.jours_weekend = []
         self.mois_sans_facture = {}
         self.mois_facture_uniquement_heures_supp = {}
-        for year in range(first_date.year, last_date.year + 1):
+        for year in range(config.first_date.year, config.last_date.year + 1):
             self.mois_sans_facture[year] = set()
             self.mois_facture_uniquement_heures_supp[year] = set()
             for label, func, enable in jours_fermeture:
@@ -1349,7 +1349,7 @@ class Creche(object):
                             fin = str2date(conge.fin)
                         AddPeriode(debut, fin, conge)
                     elif count == 1:
-                        for year in range(first_date.year, last_date.year + 1):
+                        for year in range(config.first_date.year, config.last_date.year + 1):
                             debut = str2date(conge.debut, year)
                             if conge.fin.strip() == "":
                                 fin = debut
@@ -2196,7 +2196,7 @@ class Inscrit(object):
                         fin = str2date(conge.fin)
                     AddPeriode(debut, fin, conge)
                 elif count == 1:
-                    for year in range(first_date.year, last_date.year + 1):
+                    for year in range(config.first_date.year, config.last_date.year + 1):
                         debut = str2date(conge.debut, year)
                         if conge.fin.strip() == "":
                             fin = debut

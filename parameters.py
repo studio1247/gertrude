@@ -1,23 +1,24 @@
 # -*- coding: utf-8 -*-
 
-##    This file is part of Gertrude.
-##
-##    Gertrude is free software; you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation; either version 3 of the License, or
-##    (at your option) any later version.
-##
-##    Gertrude is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
-##
-##    You should have received a copy of the GNU General Public License
-##    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import datetime
 from paques import getPaquesDate
 import __builtin__
+
 
 def getWeekDays(year, weekday):
     result = []
@@ -29,13 +30,11 @@ def getWeekDays(year, weekday):
         date += datetime.timedelta(7)
     return result
 
+
 def getWeekEnds(year):
     return getWeekDays(year, 5) +  getWeekDays(year, 6)
 
-# Période de visualisation
 today = datetime.date.today()
-__builtin__.first_date = datetime.date(today.year - 2, 1, 1)
-last_date = datetime.date(today.year + 1, 12, 31)
 
 # Jours fériés
 jours_fermeture = []

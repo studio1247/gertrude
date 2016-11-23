@@ -33,7 +33,7 @@ def GetNextMonday(date):
 
 
 def GetFirstMonday():
-    return first_date - datetime.timedelta(first_date.weekday())
+    return config.first_date - datetime.timedelta(config.first_date.weekday())
 
 
 def GetYearStart(date):
@@ -1092,22 +1092,22 @@ def SelectValueInChoice(choice, value):
 
 
 def AddYearsToChoice(choice):
-    for year in range(first_date.year, last_date.year + 1):
+    for year in range(config.first_date.year, config.last_date.year + 1):
         choice.Append(u'Année %d' % year, year)
-    choice.SetSelection(today.year - first_date.year)
+    choice.SetSelection(today.year - config.first_date.year)
 
 
 def AddMonthsToChoice(choice):
-    date = first_date
-    while date < last_date:
+    date = config.first_date
+    while date < config.last_date:
         choice.Append(u'%s %d' % (months[date.month - 1], date.year), date)
         date = GetNextMonthStart(date)
     choice.SetStringSelection('%s %d' % (months[today.month - 1], today.year))
 
 
 def Add2MonthsToChoice(choice):
-    date = first_date
-    while date < last_date:
+    date = config.first_date
+    while date < config.last_date:
         choice.Append(u'%s %d' % (months[date.month - 1], date.year), date)
         date = GetNextMonthStart(GetNextMonthStart(date))
     choice.SetStringSelection('%s %d' % (months[(today.month - 1) & 0xfe], today.year))
@@ -1115,7 +1115,7 @@ def Add2MonthsToChoice(choice):
 
 def AddWeeksToChoice(choice):
     date = first_monday = GetFirstMonday()
-    while date < last_date:
+    while date < config.last_date:
         str = 'Semaine %d (%d %s %d)' % (date.isocalendar()[1], date.day, months[date.month - 1], date.year)
         choice.Append(str, date)
         date += datetime.timedelta(7)
