@@ -839,7 +839,7 @@ class LaCabaneAuxFamillesTests(GertrudeTestCase):
         creche.repartition = REPARTITION_MENSUALISATION_12MOIS
         creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
 
-    def test_normal(self):
+    def test_arrivee_et_depart_en_cours_de_mois(self):
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
         inscription.mode = MODE_TEMPS_PARTIEL
