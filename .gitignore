@@ -20,5 +20,4 @@ csv.py
 split.py
 *.txt
 *.pyc
-
 /release.py
