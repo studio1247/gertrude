@@ -1,7 +1,6 @@
 install:
   - sudo apt-get update
-  - sudo apt-get install -y python-wxversion
-  - sudo apt-get install -y python-wxgtk2.8
+  - sudo apt-get install -y python-wxversion python-wxgtk2.8 python-bcrypt
 
 script:
   - cd tests && python ./nonreg.py -v
