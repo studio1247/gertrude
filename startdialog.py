@@ -20,10 +20,9 @@ import shutil
 import socket
 import thread
 import traceback
+import bcrypt
 from asyncore import dispatcher
-
 import wx.lib.newevent
-
 from config import LoadConfig, Load, Exit, CONFIG_FILENAME, DEFAULT_DATABASE, DEMO_DATABASE
 from functions import *
 from mainwindow import GertrudeFrame
@@ -235,10 +234,11 @@ class StartDialog(wx.Dialog):
             return
             
         login = self.login_ctrl.GetValue()
-        password = self.passwd_ctrl.GetValue()
+        password = self.passwd_ctrl.GetValue().encode('utf-8')
 
         for user in creche.users:
-            if login == user.login and password == user.password:
+            hashed = user.password.encode('utf-8')
+            if login == user.login and bcrypt.hashpw(password, hashed) == hashed:
                 if user.profile == PROFIL_LECTURE_SEULE:
                     if __builtin__.server:
                         __builtin__.server.close()

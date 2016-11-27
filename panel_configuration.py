@@ -21,6 +21,7 @@ from constants import *
 from controls import *
 from sqlobjects import *
 import wx
+import bcrypt
 from planning import PlanningWidget, NO_BOTTOM_LINE, NO_ICONS, DRAW_VALUES, NO_SCROLL
 
 types_creche = [(u"Parental", TYPE_PARENTAL),
@@ -1378,10 +1379,19 @@ class UsersTab(AutoTab):
         self.sizer.Layout()
         AutoTab.UpdateContents(self)
 
+    def OnPasswordChange(self, event):
+        obj = event.GetEventObject()
+        user = creche.users[obj.user_index]
+        history.Append(Change(user, "password", user.password))
+        user.password = bcrypt.hashpw(obj.GetValue().encode("utf-8"), bcrypt.gensalt())
+
     def AjouteLigneUtilisateur(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, u'Login :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, creche, 'users[%d].login' % index), 0, wx.ALIGN_CENTER_VERTICAL)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Mot de passe :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoTextCtrl(self, creche, 'users[%d].password' % index, style=wx.TE_PASSWORD), 0, wx.ALIGN_CENTER_VERTICAL)])
+        password_ctrl = wx.TextCtrl(self, style=wx.TE_PASSWORD)
+        password_ctrl.user_index = index
+        self.Bind(wx.EVT_TEXT, self.OnPasswordChange, password_ctrl)
+        sizer.AddMany([(wx.StaticText(self, -1, u'Mot de passe :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (password_ctrl, 0, wx.ALIGN_CENTER_VERTICAL)])
         profile_choice = AutoChoiceCtrl(self, creche, 'users[%d].profile' % index, items=profiles)
         profile_choice.index = index
         self.Bind(wx.EVT_CHOICE, self.OnUserProfileModified, profile_choice)

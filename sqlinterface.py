@@ -24,8 +24,9 @@ from functions import *
 from sqlobjects import *
 from facture import FactureCloturee
 import wx
+import bcrypt
 
-VERSION = 100
+VERSION = 101
 
 
 def getdate(s):
@@ -1864,6 +1865,12 @@ class SQLConnection(object):
             cur.execute('SELECT adresse, code_postal, ville, idx FROM FAMILLES')
             for adresse, code_postal, ville, famille in cur.fetchall():
                 cur.execute("UPDATE PARENTS SET adresse=?, code_postal=?, ville=? WHERE famille=?", (adresse, code_postal, ville, famille))
+
+        if version < 101:
+            cur.execute('SELECT login, password, idx FROM USERS')
+            for login, password, idx in cur.fetchall():
+                hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+                cur.execute("UPDATE USERS SET password=? WHERE idx=?", (hashed, idx))
 
         if version < VERSION:
             try:
