@@ -252,7 +252,7 @@ class PlanningHorairePanel(PlanningBasePanel):
                 note.SetData(site, groupe, day)
                 page_index += 1
 
-    def OnTabletteSynchro(self, evt):
+    def OnTabletteSynchro(self, _):
         journal = config.connection.LoadJournal()
 
         def AddPeriodes(who, date, periodes):
@@ -295,10 +295,16 @@ class PlanningHorairePanel(PlanningBasePanel):
             except:
                 pass
 
+        last_imported_day = today
+        date = datetime.datetime.now()
+        hour = float(date.hour) + float(date.minute) / 60
+        if hour < creche.fermeture:
+            last_imported_day -= datetime.timedelta(1)
+
         for line in lines[index+1:]:
             try:
                 salarie, label, idx, date, heure = SplitLineTablette(line)
-                if date > today or (date == today and heure > creche.fermeture * 60):
+                if date > last_imported_day:
                     break
                 if salarie:
                     array = array_salaries

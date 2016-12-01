@@ -656,6 +656,7 @@ def SendDocument(filename, text, subject, to):
         fp.close()
         msg.attach(doc)
     except:
+        print "ERREUR"
         pass
 
     fp = open(filename, 'rb')
