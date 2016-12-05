@@ -1,7 +1,18 @@
 # -*- mode: python -*-
 a = Analysis(['gertrude.pyw'],
              pathex=['C:\\Perso\\Workspace\\Gertrude'],
-             hiddenimports=[],
+             datas=[
+                 ("*.ini.dist", "."),
+                 ("demo.db", "."),
+                 ("*.php", "."),
+                 ("bitmaps_dist\\*.png", "bitmaps_dist"),
+                 ("bitmaps_dist\\pictos\\*.png", "bitmaps_dist\\pictos"),
+                 ("bitmaps_dist\\*.ico", "bitmaps_dist"),
+                 ("templates_dist\\*.html", "templates_dist"),
+                 ("templates_dist\\*.txt", "templates_dist"),
+                 ("templates_dist\\*.od?", "templates_dist")
+             ],
+             hiddenimports=["_cffi_backend"],
              hookspath=None,
              runtime_hooks=None)
 pyz = PYZ(a.pure)
@@ -15,7 +26,7 @@ exe = EXE(pyz,
           console=False,
           icon='bitmaps_dist\\gertrude.ico' )
 coll = COLLECT(exe,
-               a.binaries + [(x, x, 'DATA') for x in glob.glob("*.ini.dist") + glob.glob("demo.db") + glob.glob("*.php") + glob.glob("bitmaps_dist\\*.png") + glob.glob("bitmaps_dist\\pictos\\*.png") + glob.glob("bitmaps_dist\\*.ico") + glob.glob("templates_dist\\*.html") + glob.glob("templates_dist\\*.txt") + glob.glob("templates_dist\\*.od?")],
+               a.binaries,
                a.zipfiles,
                a.datas,
                strip=None,
