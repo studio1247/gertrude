@@ -50,8 +50,9 @@ elif sys.platform == 'darwin':
     OPTIONS = {'site_packages': True,
                'arch': 'i386',
                'iconfile': 'bitmaps_dist/gertrude.icns',
-               'argv_emulation': True}
-
+               'argv_emulation': True,
+               'includes': ['bcrypt', "_cffi_backend"]
+               }
     setup(
         name="Gertrude",
         app=APP,
@@ -79,8 +80,8 @@ elif "linux" in sys.platform:
 
     p["/usr/share/applications"] =["./linux/gertrude.desktop|gertrude.desktop"]
     p["/usr/share/gertrude"] = glob.glob("./*.py") + glob.glob("./demo.db") + glob.glob("./bitmaps_dist/*.*") + glob.glob("./bitmaps_dist/pictos/*") + glob.glob("./templates_dist/*.html") + glob.glob("./templates_dist/*.txt") + glob.glob("./templates_dist/*.od?")
-    p["/usr/bin"]=["./linux/gertrude|gertrude"]
-    p["/usr/share/doc/gertrude"]=["COPYING"]
+    p["/usr/bin"] = ["./linux/gertrude|gertrude"]
+    p["/usr/share/doc/gertrude"] = ["COPYING"]
     p.generate(VERSION, u"", rpm=True, src=True)
 else:
     print u"Plateforme %s non supportée" % sys.platform
