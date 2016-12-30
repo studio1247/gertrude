@@ -1871,7 +1871,7 @@ class Inscription(PeriodeReference):
             return 0
 
     def IsNombreSemainesCongesAtteint(self, jalon):
-        if creche.repartition != REPARTITION_SANS_MENSUALISATION or creche.facturation_jours_feries == ABSENCES_DEDUITES_SANS_LIMITE:
+        if creche.facturation_jours_feries == ABSENCES_DEDUITES_SANS_LIMITE:
             return False
         if self.debut:
             if not self.semaines_conges:
