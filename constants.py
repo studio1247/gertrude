@@ -79,7 +79,7 @@ ModeAccueilItems = [
     # (u"4/5èmes", MODE_4_5),
     # (u"3/5èmes", MODE_3_5),
     ("Forfait horaire mensuel", MODE_FORFAIT_MENSUEL),
-    # ("Forfait horaire hebdomadaire", MODE_FORFAIT_HEBDOMADAIRE),
+    ("Forfait horaire hebdomadaire", MODE_FORFAIT_HEBDOMADAIRE),
     ("Halte-garderie", MODE_HALTE_GARDERIE),
     ("Accueil urgence", MODE_ACCUEIL_URGENCE)
 ]
@@ -163,9 +163,10 @@ DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_OUVRES = 1
 DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES = 2
 DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CONSECUTIFS = 3
 
-# Mode de traitement des jours fériés
-JOURS_FERIES_NON_DEDUITS = 0
-JOURS_FERIES_DEDUITS_ANNUELLEMENT = 1
+# Mode de traitement des absences (congés / jours fériés)
+ABSENCES_DEDUITES_EN_SEMAINES = 0
+ABSENCES_DEDUITES_EN_JOURS = 1
+ABSENCES_DEDUITES_SANS_LIMITE = 2
 
 # Mode de gestion des congés à l'inscription
 GESTION_CONGES_INSCRIPTION_SIMPLE = 1
@@ -217,6 +218,7 @@ NO_LABELS = 256
 DRAW_VALUES = 512
 DEPASSEMENT_CAPACITE = 1024
 NO_SCROLL = 2048
+NO_SALARIES = 4096
 
 # Types de lignes sur le planning (sert pour le Summary à séparer numérateur et dénominateur)
 SUMMARY_NONE = 0

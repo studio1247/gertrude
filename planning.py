@@ -166,8 +166,7 @@ def GetPlanningLinesSalaries(date, site=None):
                     if date.month == line.date.month:
                         heures_mois += heures
                     date += datetime.timedelta(1)
-                return GetHeureString(heures_jour) + '/' + GetHeureString(heures_semaine) + '/' + GetHeureString(
-                    heures_mois)
+                return GetHeureString(heures_jour) + '/' + GetHeureString(heures_semaine) + '/' + GetHeureString(heures_mois)
 
             line.GetDynamicText = GetHeuresSalarie
             line.summary = SUMMARY_SALARIE
@@ -552,8 +551,11 @@ class PlanningLineStatusIcon(wx.Window):
             
             if state < 0:
                 states = GetPlanningStates()
-                index = states.index(state)
-                newstate = states[(index + 1) % len(states)]
+                try:
+                    index = states.index(state)
+                    newstate = states[(index + 1) % len(states)]
+                except:
+                    newstate = PRESENT
                 if newstate == PRESENT:
                     if self.line.HasPrevisionnelCloture():
                         self.line.RestorePrevisionnelCloture(creche.presences_previsionnelles and self.line.date > datetime.date.today())
@@ -882,7 +884,7 @@ class PlanningSummaryPanel(BufferedWindow):
 
     def UpdateContents(self):
         lines = self.GetParent().GetSummaryLines()
-        self.activites, self.activites_sans_horaires = GetActivitiesSummary(creche, lines)
+        self.activites, self.activites_sans_horaires = GetActivitiesSummary(creche, lines, options=self.options)
         
         new_activitites_count = len(self.activites)
         if self.activities_count != new_activitites_count:
@@ -924,7 +926,7 @@ class PlanningSummaryPanel(BufferedWindow):
             
             # total horaire + pourcentage remplissage
             text = self.parent.GetSummaryDynamicText()
-            if text: 
+            if text:
                 x = GetPlanningWidth()
                 if not self.options & NO_LABELS:
                     x += LABEL_WIDTH

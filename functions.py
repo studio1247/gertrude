@@ -473,8 +473,15 @@ def GetParentsNomsString(famille):
 
 
 def GetParentsCivilitesString(famille):
-    relations = set([parent.relation for parent in famille.parents])
-    return "/".join(relations)
+    messieurs = []
+    mesdames = []
+    for parent in famille.parents:
+        if parent is not None:
+            if parent.relation == "papa":
+                messieurs.append("M.")
+            elif parent.relation == "maman":
+                mesdames.append("Mme")
+    return "/".join(mesdames + messieurs)
 
 
 def GetInscritsByMode(start, end, mode, site=None):  # TODO pourquoi retourner les index
@@ -782,7 +789,7 @@ class Summary(list):
             self.append([0, 0])
 
 
-def GetActivitiesSummary(creche, lines):
+def GetActivitiesSummary(creche, lines, options=0):
     activites = {}
     activites_sans_horaires = {}
     for key in creche.activites:
@@ -791,7 +798,7 @@ def GetActivitiesSummary(creche, lines):
             activites_sans_horaires[key] = 0
         elif activite.mode != MODE_SYSTEMATIQUE_SANS_HORAIRES:
             activites[key] = Summary(activite.label)
-    if len(creche.salaries) > 0:
+    if not (options & NO_SALARIES) and len(creche.salaries) > 0:
         activite_salaries = activites[PRESENCE_SALARIE] = Summary(u"Présences salariés")
     else:
         activite_salaries = None
@@ -806,7 +813,7 @@ def GetActivitiesSummary(creche, lines):
                             for i in range(start, end):
                                 if value in activites:
                                     activites[value][i][line.summary-1] += 1
-                                    if line.summary == SUMMARY_SALARIE and activite_salaries:
+                                    if not (options & NO_SALARIES) and line.summary == SUMMARY_SALARIE and activite_salaries:
                                         activite_salaries[i][0] += 1
                                     
             for key in line.activites_sans_horaires:
@@ -885,36 +892,44 @@ def GetTarifsFamilleFields(famille):
     return [(tarif.label.lower().replace(" ", "_"), tarif.label if famille.tarifs & (1 << tarif.idx) else "") for tarif in creche.tarifs_speciaux]
 
 
-def GetParentFields(parent):
-    return[('prenom-parent', parent.prenom),
-           ('nom-parent', parent.nom),
-           ('adresse-parent', parent.adresse),
-           ('code-postal-parent', parent.code_postal),
-           ('ville-parent', parent.ville),
-           ('email-parent', parent.email),
-           ('telephone-domicile-parent', parent.telephone_domicile),
-           ('telephone-portable-parent', parent.telephone_portable),
-           ('email-parent', parent.email),
+def GetParentFields(parent, index=None):
+    ref = "parent%d" % index if index else "parent"
+    return[(ref, GetPrenomNom(parent)),
+           ('prenom-%s' % ref, parent.prenom),
+           ('nom-%s' % ref, parent.nom),
+           ('relation-%s' % ref, parent.relation),
+           ('adresse-%s' % ref, parent.adresse),
+           ('code-postal-%s' % ref, parent.code_postal),
+           ('ville-%s' % ref, parent.ville),
+           ('email-%s' % ref, parent.email),
+           ('telephone-domicile-%s' % ref, parent.telephone_domicile),
+           ('telephone-portable-%s' % ref, parent.telephone_portable),
+           ('email-%s' % ref, parent.email),
            ]
 
 
 def GetFamilleFields(famille):
-    return [('adresse', famille.adresse if famille else ""),
-            ('code-postal', GetCodePostal(famille) if famille else ""),
-            ('ville', famille.ville if famille else ""),
-            ('numero-securite-sociale', famille.numero_securite_sociale if famille else ""),
-            ('numero-allocataire-caf', famille.numero_allocataire_caf if famille else ""),
-            ('medecin-traitant', famille.medecin_traitant if famille else ""),
-            ('telephone-medecin-traitant', famille.telephone_medecin_traitant if famille else ""),
-            ('assureur', famille.assureur if famille else ""),
-            ('police-assurance', famille.numero_police_assurance if famille else ""),
-            ('noms-parents', GetParentsNomsString(famille) if famille else ""),
-            ('civilites-parents', GetParentsCivilitesString(famille) if famille else ""),
-            ('prenoms-parents', GetParentsPrenomsString(famille) if famille else ""),
-            ('parents', GetParentsString(famille) if famille else ""),
-            ('telephone', GetTelephone(famille) if famille else ""),
-            ('email', GetEmail(famille) if famille else ""),
-            ] + GetTarifsFamilleFields(famille)
+    result = [('adresse', famille.adresse if famille else ""),
+              ('code-postal', GetCodePostal(famille) if famille else ""),
+              ('ville', famille.ville if famille else ""),
+              ('numero-securite-sociale', famille.numero_securite_sociale if famille else ""),
+              ('numero-allocataire-caf', famille.numero_allocataire_caf if famille else ""),
+              ('medecin-traitant', famille.medecin_traitant if famille else ""),
+              ('telephone-medecin-traitant', famille.telephone_medecin_traitant if famille else ""),
+              ('assureur', famille.assureur if famille else ""),
+              ('police-assurance', famille.numero_police_assurance if famille else ""),
+              ('noms-parents', GetParentsNomsString(famille) if famille else ""),
+              ('civilites-parents', GetParentsCivilitesString(famille) if famille else ""),
+              ('prenoms-parents', GetParentsPrenomsString(famille) if famille else ""),
+              ('parents', GetParentsString(famille) if famille else ""),
+              ('telephone', GetTelephone(famille) if famille else ""),
+              ('email', GetEmail(famille) if famille else ""),
+              ]
+    result += GetTarifsFamilleFields(famille)
+    for i, parent in enumerate(famille.parents):
+        if parent:
+            result += GetParentFields(parent, i+1)
+    return result
 
 
 def GetInscritFields(inscrit):
@@ -937,11 +952,21 @@ def GetSalarieFields(salarie):
             ]            
 
 
+def GetTypeContratString(type_contrat):
+    for label, value in ModeAccueilItems:
+        if type_contrat == value:
+            return label
+    else:
+        return ""
+
+
 def GetInscriptionFields(inscription):
     return [('debut-contrat', inscription.debut),
             ('fin-contrat', inscription.fin),
+            ('type-contrat', GetTypeContratString(inscription.type)),
             ('debut-inscription', inscription.debut),
             ('fin-inscription', inscription.fin),
+            ('fin-adaptation', inscription.fin_periode_adaptation),
             ('nombre-semaines-conges', inscription.semaines_conges),
             ('groupe', inscription.groupe.nom if inscription.groupe else ""),
             ('professeur-prenom', GetPrenom(inscription.professeur)),
@@ -950,6 +975,8 @@ def GetInscriptionFields(inscription):
 
 
 def GetCotisationFields(cotisation):
+    if cotisation is None:
+        return []
     result = [('nombre-factures', cotisation.nombre_factures),
               ('jours-semaine', cotisation.jours_semaine),
               ('heures-semaine', GetHeureString(cotisation.heures_semaine)),
@@ -1045,7 +1072,8 @@ def GetFactureFields(facture):
                   ('frais-inscription', facture.frais_inscription, FIELD_EUROS | FIELD_SIGN),
                   ('total-sans-activites', facture.total - facture.supplement_activites, FIELD_EUROS),
                   ('site', GetNom(facture.site)),
-                  ('total', facture.total, FIELD_EUROS)]
+                  ('total', facture.total, FIELD_EUROS)
+                  ]
         if config.numfact:
             result.append(('numfact', config.numfact % {"inscritid": facture.inscrit.idx, "numero": facture.numero, "annee": facture.annee, "mois": facture.mois}))
         else:

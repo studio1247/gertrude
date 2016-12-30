@@ -220,7 +220,7 @@ class Day(object):
             if activities_state:
                 state &= ~activities_state
                 state |= PRESENT
-        elif state == VACANCES and creche.repartition == REPARTITION_SANS_MENSUALISATION:
+        elif state == VACANCES:
             try:
                 if self.inscription.IsNombreSemainesCongesAtteint(self.key):
                     state = CONGES_DEPASSEMENT
@@ -1234,7 +1234,7 @@ class Creche(object):
         self.mode_saisie_planning = SAISIE_HORAIRE
         self.tranches_capacite = [JourneeCapacite(i) for i in range(7)]
         self.facturation_periode_adaptation = PERIODE_ADAPTATION_FACTUREE_NORMALEMENT
-        self.facturation_jours_feries = JOURS_FERIES_NON_DEDUITS
+        self.facturation_jours_feries = ABSENCES_DEDUITES_EN_SEMAINES
         self.formule_taux_horaire = None
         self.conversion_formule_taux_horaire = None
         self.formule_taux_effort = None
@@ -1839,7 +1839,7 @@ class Inscription(PeriodeReference):
         # print "GetNombreJoursCongesPris(%s-%s)" % (debut, fin)
         while date < fin:
             state = self.inscrit.GetStateSimple(date)
-            if creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
+            if creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS:
                 if state == VACANCES:
                     # print date
                     jours += 1
@@ -1871,6 +1871,8 @@ class Inscription(PeriodeReference):
             return 0
 
     def IsNombreSemainesCongesAtteint(self, jalon):
+        if creche.repartition != REPARTITION_SANS_MENSUALISATION or creche.facturation_jours_feries == ABSENCES_DEDUITES_SANS_LIMITE:
+            return False
         if self.debut:
             if not self.semaines_conges:
                 return True

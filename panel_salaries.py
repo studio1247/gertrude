@@ -28,6 +28,7 @@ wildcard = "PNG (*.png)|*.png|"     \
            "BMP (*.pmp)|*.bmp|"     \
            "All files (*.*)|*.*"
 
+
 class SalariesTab(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
@@ -37,6 +38,7 @@ class SalariesTab(AutoTab):
         self.salarie = salarie
         for ctrl in self.ctrls:
             ctrl.SetInstance(salarie)
+
 
 class IdentiteSalariePanel(SalariesTab):
     def __init__(self, parent):
@@ -192,9 +194,10 @@ class CongesPanel(SalariesTab):
         self.sizer.Layout()
         self.UpdateContents()
 
+
 class PlanningReferenceSalariePanel(PlanningWidget):
     def __init__(self, parent, activity_choice):
-        PlanningWidget.__init__(self, parent, activity_choice, options=NO_ICONS|PRESENCES_ONLY)
+        PlanningWidget.__init__(self, parent, activity_choice, options=NO_ICONS | PRESENCES_ONLY | NO_SALARIES)
         
     def UpdateContents(self):
         lines = []
@@ -213,7 +216,11 @@ class PlanningReferenceSalariePanel(PlanningWidget):
     def SetContrat(self, contrat):
         self.contrat = contrat
         self.UpdateContents()
-        
+
+    def GetSummaryDynamicText(self):
+        return GetHeureString(self.contrat.GetNombreHeuresPresenceSemaine())
+
+
 class ContratsSalariePanel(SalariesTab, PeriodeMixin):
     def __init__(self, parent):
         SalariesTab.__init__(self, parent)

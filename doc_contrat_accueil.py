@@ -28,6 +28,38 @@ class DocumentAccueilModifications(object):
         self.date = date
         self.email = None
         self.site = None
+        self.metas = {}
+
+    def GetMetas(self, dom):
+        metas = dom.getElementsByTagName('meta:user-defined')
+        for meta in metas:
+            # print meta.toprettyxml()
+            name = meta.getAttribute('meta:name')
+            try:
+                value = meta.childNodes[0].wholeText
+                if meta.getAttribute('meta:value-type') == 'float':
+                    self.metas[name] = float(value)
+                else:
+                    self.metas[name] = value
+            except:
+                pass
+
+    def GetCustomFields(self, inscrit, famille, inscription, cotisation):
+        fields = []
+        for key in self.metas:
+            if key.startswith("formule "):
+                label = key[8:]
+                try:
+                    value = eval(self.metas[key])
+                except Exception, e:
+                    print "Exception formule:", label, self.metas[key], e
+                    continue
+                if isinstance(value, tuple):
+                    field = label, value[0], value[1]
+                else:
+                    field = label, value
+                fields.append(field)
+        return fields
 
     def GetFields(self):
         president = tresorier = directeur = ""
@@ -77,8 +109,6 @@ class DocumentAccueilModifications(object):
             
             for i, (parent, revenu, abattement) in enumerate(self.cotisation.revenus_parents):
                 i += 1
-                fields.append(('parent%d' % i, GetPrenomNom(parent)))
-                fields.append(('relation-parent%d' % i, parent.relation))
                 fields.append(('revenu-parent%d' % i, revenu))
                 fields.append(('abattement-parent%d' % i, abattement))
             
@@ -87,7 +117,7 @@ class DocumentAccueilModifications(object):
                     fields.append(('dates-conges-inscription', ", ".join([GetDateString(d) for d in self.cotisation.conges_inscription]) if self.cotisation.conges_inscription else "(aucune)"))
                     fields.append(('nombre-jours-conges-inscription', len(self.cotisation.conges_inscription)))
                     
-                if creche.conges_inscription or creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
+                if creche.conges_inscription or creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS:
                     fields.append(('heures-fermeture-creche', GetHeureString(self.cotisation.heures_fermeture_creche)))
                     fields.append(('heures-accueil-non-facture', GetHeureString(self.cotisation.heures_accueil_non_facture)))
                     heures_brut_periode = self.cotisation.heures_periode + self.cotisation.heures_fermeture_creche + self.cotisation.heures_accueil_non_facture
@@ -115,6 +145,8 @@ class DocumentAccueilModifications(object):
 
         for key in creche.activites:
             fields.append(('liste-activites[%d]' % key, inscription.GetListeActivites(key)))
+
+        fields += self.GetCustomFields(self.inscrit, self.inscrit.famille, inscription, self.cotisation)
 
         return fields
 
@@ -147,7 +179,8 @@ class OdtDocumentAccueilModifications(DocumentAccueilModifications):
 
     def execute(self, filename, dom):
         fields = self.GetFields()
-        
+        if filename == 'meta.xml':
+            self.GetMetas(dom)
         if filename != 'content.xml':
             ReplaceTextFields(dom, fields)
             return None

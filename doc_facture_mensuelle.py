@@ -46,15 +46,16 @@ class FactureModifications(object):
             return who.nom
         else:
             return GetPrenomNom(who)
-        
+
     def __init__(self, inscrits, periode):
+        self.metas = {}
         self.multi = False
         self.inscrits = GetEnfantsTriesSelonParametreTriFacture(inscrits)
         self.periode = periode
         self.periode_facturation = periode
         if creche.temps_facturation != FACTURATION_FIN_MOIS:
             self.periode_facturation = GetMonthStart(periode - datetime.timedelta(1))
-            
+
         self.email = True
         if len(self.inscrits) > 1:
             self.site = self.inscrits[0].GetInscriptions(self.periode_facturation, None)[0].site
@@ -67,7 +68,7 @@ class FactureModifications(object):
             self.email_subject = u"Facture %s %s %d" % (self.GetPrenomNom(who), months[periode.month - 1], periode.year)
             self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
             self.default_output = self.email_subject + ".odt"
-        
+
         if self.site and IsTemplateFile("Facture mensuelle simple %s.odt" % self.site.nom):
             self.template = "Facture mensuelle simple %s.odt" % self.site.nom
             if len(self.inscrits) > 1:
@@ -89,17 +90,18 @@ class FactureModifications(object):
                 self.default_output = u"Facture <enfant> %s %d.odt" % (months[periode.month - 1], periode.year)
         else:
             self.template = 'Facture mensuelle.odt'
-        
+
         self.email_text = "Accompagnement facture.txt"
 
     def GetSimpleModifications(self, filename):
-        return [(filename.replace("<enfant>", self.GetPrenomNom(inscrit)).replace("<prenom>", inscrit.prenom).replace("<nom>", inscrit.nom), FactureModifications([inscrit], self.periode)) for inscrit in self.inscrits]
-    
+        return [(filename.replace("<enfant>", self.GetPrenomNom(inscrit)).replace("<prenom>", inscrit.prenom).replace(
+            "<nom>", inscrit.nom), FactureModifications([inscrit], self.periode)) for inscrit in self.inscrits]
+
     def FillRecapSection(self, section, facture):
         empty_cells = facture.debut_recap.weekday()
         if "Week-end" in creche.feries and empty_cells > 4:
             empty_cells -= 7
-                    
+
         tables = section.getElementsByTagName('table:table')
         for table in tables:
             if table.getAttribute('table:name').startswith('Presences'):
@@ -127,7 +129,7 @@ class FactureModifications(object):
                             details = " (%s)" % GetHeureString(facture.jours_presence_non_facturee[date])
                         elif date in facture.jours_absence_non_prevenue:
                             state = ABSENCE_NON_PREVENUE
-                            details = " (%s)" % GetHeureString(facture.jours_absence_non_prevenue[date])                                    
+                            details = " (%s)" % GetHeureString(facture.jours_absence_non_prevenue[date])
                         elif date in facture.jours_presence_selon_contrat:
                             state = PRESENT
                             details = " (%s)" % GetHeureString(facture.jours_presence_selon_contrat[date])
@@ -151,20 +153,38 @@ class FactureModifications(object):
                 for i in range(row + 1, len(rows)):
                     table.removeChild(rows[i])
         ReplaceTextFields(section, facture.fields)
-        
+
+    def GetMetas(self, dom):
+        metas = dom.getElementsByTagName('meta:user-defined')
+        for meta in metas:
+            # print meta.toprettyxml()
+            name = meta.getAttribute('meta:name')
+            try:
+                value = meta.childNodes[0].wholeText
+                if meta.getAttribute('meta:value-type') == 'float':
+                    self.metas[name] = float(value)
+                else:
+                    self.metas[name] = value
+            except:
+                pass
+
     def execute(self, filename, dom):
+        if filename == 'meta.xml':
+            self.GetMetas(dom)
+            return None
+
         fields = GetCrecheFields(creche)
         if filename != 'content.xml':
             ReplaceTextFields(dom, fields)
             return None
 
         errors = {}
-        
+
         # print dom.toprettyxml()
-        
+
         doc = dom.getElementsByTagName("office:text")[0]
         templates = doc.childNodes[:]
-        
+
         styleC3, styleD3 = False, False
         for style in doc.getElementsByTagName('style:style'):
             if style.name == 'Presences.C3':
@@ -172,13 +192,13 @@ class FactureModifications(object):
             elif style.name == 'Presences.D3':
                 styleD3 = True
 
-        #if not styleC3:
+        # if not styleC3:
         #    couleurs[CONGES] = 'B3'
         if not styleD3:
             couleurs[CONGES_DEPASSEMENT] = 'B3'
-        
+
         done = []
-        
+
         for index, inscrit in enumerate(self.inscrits):
             if config.options & FACTURES_FAMILLES:
                 skip = False
@@ -210,10 +230,10 @@ class FactureModifications(object):
                 last_inscription = None
                 for tmp in enfant.inscriptions:
                     if not last_inscription or not last_inscription.fin or (tmp.fin and tmp.fin > last_inscription.fin):
-                        last_inscription = tmp 
-                facture.fields = fields + GetInscritFields(enfant) + GetInscriptionFields(last_inscription) + GetFactureFields(facture)
+                        last_inscription = tmp
+                facture.fields = fields + GetInscritFields(enfant) + GetInscriptionFields(last_inscription) + GetFactureFields(facture) + GetCotisationFields(facture.last_cotisation)
                 factures.append(facture)
-                
+
             if has_errors:
                 continue
 
@@ -226,7 +246,7 @@ class FactureModifications(object):
                 else:
                     doc.appendChild(clone)
                 if clone.hasAttribute("text:anchor-page-number"):
-                    clone.setAttribute("text:anchor-page-number", str(index+1))
+                    clone.setAttribute("text:anchor-page-number", str(index + 1))
 
                 tables = clone.getElementsByTagName('table:table')
                 for table in tables:
@@ -244,10 +264,10 @@ class FactureModifications(object):
                             for row in rows:
                                 prettyxml = row.toprettyxml()
                                 if (("&lt;frais-inscription&gt;" in prettyxml and not facture.frais_inscription) or
-                                   ("&lt;correction&gt;" in prettyxml and not facture.correction) or
-                                   ("&lt;supplement-activites&gt;" in prettyxml and not facture.supplement_activites) or
-                                   ("&lt;supplement&gt;" in prettyxml and not facture.supplement) or
-                                   ("&lt;deduction&gt;" in prettyxml and not facture.deduction)):
+                                        ("&lt;correction&gt;" in prettyxml and not facture.correction) or
+                                        ("&lt;supplement-activites&gt;" in prettyxml and not facture.supplement_activites) or
+                                        ("&lt;supplement&gt;" in prettyxml and not facture.supplement) or
+                                        ("&lt;deduction&gt;" in prettyxml and not facture.deduction)):
                                     montants_table.removeChild(row)
                             ReplaceTextFields(montants_table, facture.fields)
 
@@ -265,11 +285,15 @@ class FactureModifications(object):
                             else:
                                 section_clone = section
                             self.FillRecapSection(section_clone, facture)
-                                
+
                 # Les autres champs de la facture
                 facture_fields = fields + GetFamilleFields(inscrit.famille) + \
-                                 [('total', total_facture, FIELD_EUROS), ('solde', solde, FIELD_EUROS), ('prenoms', ", ".join(prenoms)), ('montant-a-regler', total_facture + solde, FIELD_EUROS), ('url-tipi', GetUrlTipi(inscrit.famille))] + \
-                                 GetFactureFields(factures[0])
+                    [('total', total_facture, FIELD_EUROS), ('solde', solde, FIELD_EUROS),
+                     ('prenoms', ", ".join(prenoms)),
+                     ('montant-a-regler', total_facture + solde, FIELD_EUROS),
+                     ('url-tipi', GetUrlTipi(inscrit.famille))] + \
+                    GetFactureFields(factures[0]) + \
+                    self.GetFactureCustomFields(inscrit, inscrit.famille, facture)
                 ReplaceTextFields(clone, facture_fields)
 
                 if not recap_section_found:
@@ -277,7 +301,23 @@ class FactureModifications(object):
 
         for template in templates:
             doc.removeChild(template)
-        
-        #print doc.toprettyxml() 
+
+        # print doc.toprettyxml()
         return errors
 
+    def GetFactureCustomFields(self, inscrit, famille, facture):
+        fields = []
+        for key in self.metas:
+            if key.startswith("formule "):
+                label = key[8:]
+                try:
+                    value = eval(self.metas[key])
+                except Exception, e:
+                    print "Exception formule:", label, self.metas[key], e
+                    continue
+                if isinstance(value, tuple):
+                    field = label, value[0], value[1]
+                else:
+                    field = label, value
+                fields.append(field)
+        return fields

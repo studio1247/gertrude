@@ -249,7 +249,7 @@ class IdentitePanel(InscriptionsTab):
         sizer.AddMany([(self.date_naissance_ctrl, 1, wx.EXPAND), (self.age_ctrl, 1, wx.EXPAND|wx.LEFT, 5)])
         grid_sizer.AddMany([(wx.StaticText(self, -1, u'Date de naissance :'), 0, wx.ALIGN_CENTER_VERTICAL), (sizer, 0, wx.EXPAND)])
         grid_sizer.AddMany([(wx.StaticText(self, -1, u'Adresse :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'famille.adresse'), 0, wx.EXPAND)])
-        self.ville_ctrl = AutoTextCtrl(self, None, 'famille.ville') # A laisser avant le code postal !
+        self.ville_ctrl = AutoTextCtrl(self, None, 'famille.ville')  # A laisser avant le code postal !
         self.code_postal_ctrl = AutoNumericCtrl(self, None, 'famille.code_postal', min=0, precision=0)
         self.Bind(wx.EVT_TEXT, self.OnChangementCodePostal, self.code_postal_ctrl)
         grid_sizer.AddMany([(wx.StaticText(self, -1, u'Code Postal :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.code_postal_ctrl, 0, wx.EXPAND)])
@@ -671,7 +671,7 @@ class ParentsPanel(InscriptionsTab):
 
 class ReferencePlanningPanel(PlanningWidget):
     def __init__(self, parent, activity_choice):
-        PlanningWidget.__init__(self, parent, activity_choice, options=NO_ICONS|PRESENCES_ONLY|ACTIVITES|DEPASSEMENT_CAPACITE, check_line=self.CheckLine, on_modify=self.OnPlanningChanged)
+        PlanningWidget.__init__(self, parent, activity_choice, options=NO_ICONS | PRESENCES_ONLY | ACTIVITES | DEPASSEMENT_CAPACITE | NO_SALARIES, check_line=self.CheckLine, on_modify=self.OnPlanningChanged)
         self.parent = parent
         
     def CheckLine(self, line, plages):
@@ -757,6 +757,8 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.mode_accueil_choice = AutoChoiceCtrl(self, None, 'mode', items=ModeAccueilItems)
         self.Bind(wx.EVT_CHOICE, self.OnModeAccueilChoice, self.mode_accueil_choice)
         grid_sizer.AddMany([(wx.StaticText(self, -1, u"Mode d'accueil :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.mode_accueil_choice, 0, wx.EXPAND)])
+        self.forfait_heures_items = wx.StaticText(self, -1, u"Forfait en heures :"), AutoNumericCtrl(self, None, 'forfait_mensuel_heures', min=0, precision=2)
+        grid_sizer.AddMany([(self.forfait_heures_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.forfait_heures_items[1], 0, wx.EXPAND)])
         grid_sizer.AddMany([(wx.StaticText(self, -1, u"Frais d'inscription :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'frais_inscription', min=0, precision=2), 0, wx.EXPAND)])
         if creche.mode_facturation == FACTURATION_PAJE:
             grid_sizer.AddMany([(wx.StaticText(self, -1, u"Allocation mensuelle CAF :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'allocation_mensuelle_caf', min=0, precision=2), 0, wx.EXPAND)])
@@ -773,8 +775,8 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         grid_sizer.AddMany([(label_conges, 0, wx.ALIGN_CENTER_VERTICAL), (sizer3, 0, wx.EXPAND)])
         if creche.type == TYPE_PARENTAL:
             grid_sizer.AddMany([(wx.StaticText(self, -1, u"Heures de permanences à effectuer :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'heures_permanences', min=0, precision=2), 0, wx.EXPAND)])
-        self.facturation_items = wx.StaticText(self, -1, u"Forfait mensuel :"), AutoNumericCtrl(self, None, 'forfait_mensuel', min=0, precision=2)
-        grid_sizer.AddMany([(self.facturation_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.facturation_items[1], 0, wx.EXPAND)])
+        self.forfait_mensuel_items = wx.StaticText(self, -1, u"Forfait mensuel :"), AutoNumericCtrl(self, None, 'forfait_mensuel', min=0, precision=2)
+        grid_sizer.AddMany([(self.forfait_mensuel_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.forfait_mensuel_items[1], 0, wx.EXPAND)])
         grid_sizer.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_adaptation'), 0, wx.EXPAND)])
         if creche.gestion_depart_anticipe:
             grid_sizer.AddMany([(wx.StaticText(self, -1, u"Date de départ anticipé :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'depart'), 0, wx.EXPAND)])
@@ -783,9 +785,6 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
             self.duree_reference_choice.Append(item, data)
         self.Bind(wx.EVT_CHOICE, self.OnDureeReferenceChoice, self.duree_reference_choice)
         grid_sizer.AddMany([(wx.StaticText(self, -1, u"Durée de la période de référence :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.duree_reference_choice, 0, wx.EXPAND)])
-        self.forfait_mensuel_heures_static = wx.StaticText(self, -1, u"Forfait mensuel en heures :")
-        self.forfait_mensuel_heures_ctrl = AutoNumericCtrl(self, None, 'forfait_mensuel_heures', min=0, precision=2)
-        grid_sizer.AddMany([(self.forfait_mensuel_heures_static, 0, wx.ALIGN_CENTER_VERTICAL), (self.forfait_mensuel_heures_ctrl, 0, wx.EXPAND)])
         sizer.Add(grid_sizer, 0, wx.ALL|wx.EXPAND, 5)
         sizer2 = wx.BoxSizer(wx.HORIZONTAL)
         sizer2.Add(self.heures_and_jours_reference, 1, wx.ALIGN_CENTER_VERTICAL)
@@ -950,9 +949,9 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.activity_choice.Update()
 
         for item in self.semaines_conges_items:
-            item.Show(creche.mode_facturation in (FACTURATION_PAJE, FACTURATION_PSU, FACTURATION_FORFAIT_10H))
+            item.Show(creche.facturation_jours_feries != ABSENCES_DEDUITES_SANS_LIMITE and creche.mode_facturation in (FACTURATION_PAJE, FACTURATION_PSU, FACTURATION_FORFAIT_10H))
             
-        for item in self.facturation_items:
+        for item in self.forfait_mensuel_items:
             item.Show(creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL)
                             
         self.Layout()
@@ -989,12 +988,10 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
                     item.Show(True)
                 for item in self.sites_items[2:4]:
                     item.Show(False)
-                    
-            forfait_mode = inscription.mode in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE)
-            self.forfait_mensuel_heures_ctrl.Show(forfait_mode)
-            self.forfait_mensuel_heures_static.Show(forfait_mode)
             self.duree_reference_choice.SetSelection(inscription.duree_reference / 7 - 1)
             self.planning_panel.SetInscription(inscription)
+            for item in self.forfait_heures_items:
+                item.Show(inscription.mode in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE))
             self.UpdateDecompteConges(inscription=inscription)
         else:
             self.planning_panel.SetInscription(None)
@@ -1098,14 +1095,16 @@ class CongesPanel(InscriptionsTab):
         conge.delete()
         self.sizer.Layout()
         self.UpdateContents()
-        
+
+
 class NotesPanel(InscriptionsTab):
     def __init__(self, parent):        
         InscriptionsTab.__init__(self, parent)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(AutoTextCtrl(self, None, 'notes', style=wx.TE_MULTILINE), 1, wx.EXPAND|wx.ALL, 5)
         self.SetSizer(self.sizer)
-        
+
+
 class InscriptionsNotebook(wx.Notebook):
     def __init__(self, parent, *args, **kwargs):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT, *args, **kwargs)      
@@ -1294,7 +1293,7 @@ class InscriptionsPanel(GPanel):
         
     def ChangePrenom(self, inscrit):
         if creche and inscrit:
-            inscritId = GetPrenomNom(inscrit)
+            inscritId = GetPrenomNom(inscrit, tri=creche.tri_inscriptions)
             if inscritId.isspace():
                 inscritId = 'Nouvelle inscription'
             selection = self.choice.GetSelection()

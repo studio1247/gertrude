@@ -147,7 +147,7 @@ class FactureFinMois(object):
         jours_ouvres = 0
         cotisations_mensuelles = []
         heures_hebdomadaires = {}
-        last_cotisation = None
+        self.last_cotisation = None
 
         if options & TRACES:
             print '\nFacture de', inscrit.prenom, inscrit.nom, 'pour', months[mois - 1], annee
@@ -184,8 +184,8 @@ class FactureFinMois(object):
                         #    heures_supplementaires_facturees -= heures_realisees_non_facturees - heures_reference
                         #    print "RETRANCHE" , heures_supplementaires_facturees
 
-                        if last_cotisation and last_cotisation.Include(date):
-                            cotisation = last_cotisation
+                        if self.last_cotisation and self.last_cotisation.Include(date):
+                            cotisation = self.last_cotisation
                             cotisation.jours_ouvres += 1
                             cotisation.heures_reference += heures_reference
                         else:
@@ -202,7 +202,7 @@ class FactureFinMois(object):
                             cotisation.heures_supplementaires = 0.0
                             cotisation.total_realise_non_facture = 0.0
                             cotisations_mensuelles.append(cotisation)
-                            last_cotisation = cotisation
+                            self.last_cotisation = cotisation
                             self.taux_effort = cotisation.taux_effort
                             self.montant_heure_garde = cotisation.montant_heure_garde
                             if options & TRACES:
@@ -288,7 +288,7 @@ class FactureFinMois(object):
                         elif state == VACANCES:
                             if heures_reference > 0:
                                 self.jours_vacances.append(date)
-                            if creche.repartition == REPARTITION_SANS_MENSUALISATION and not inscription.IsNombreSemainesCongesAtteint(date):
+                            if not inscription.IsNombreSemainesCongesAtteint(date):
                                 self.jours_conges_non_factures.append(date)
                                 self.heures_facturees_par_mode[cotisation.mode_garde] -= heures_reference
                                 self.CalculeDeduction(cotisation, heures_reference)
@@ -309,6 +309,7 @@ class FactureFinMois(object):
                                     affectation_jours_supplementaires = True
                                     self.CalculeSupplement(cotisation, 10)
                                 elif cotisation.inscription.mode not in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE):
+                                    print "ICI1", heures_supplementaires_facturees
                                     cotisation.heures_supplementaires += heures_supplementaires_facturees
                                     self.heures_supplementaires += heures_supplementaires_facturees
                                     self.heures_facture_par_mode[cotisation.mode_garde] += heures_supplementaires_facturees
@@ -338,7 +339,27 @@ class FactureFinMois(object):
                         if 0 < heures_realisees_non_facturees == heures_realisees:
                             self.jours_presence_non_facturee[date] = heures_realisees_non_facturees
 
-                        realise_non_facture = cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees + heures_realisees_non_facturees) - cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees)
+                        if inscription.mode == MODE_FORFAIT_HEBDOMADAIRE and date.weekday() == 4:
+                            debut_semaine = date - datetime.timedelta(date.weekday())
+                            fin_semaine = debut_semaine + datetime.timedelta(6)
+                            heures_semaine = 0
+                            it = debut_semaine
+                            while it <= fin_semaine:
+                                if it in inscrit.journees:
+                                    heures = inscrit.journees[it].GetNombreHeures()
+                                else:
+                                    heures = inscription.GetJourneeReference(it).GetNombreHeures()
+                                if heures > 0:
+                                    heures_semaine += heures
+                                    if heures_semaine > inscription.forfait_mensuel_heures:
+                                        self.jours_supplementaires[it] = heures_realisees
+                                        if it in self.jours_presence_selon_contrat:
+                                            del self.jours_presence_selon_contrat[it]
+                                it += datetime.timedelta(1)
+                            if heures_semaine > inscription.forfait_mensuel_heures:
+                                cotisation.heures_supplementaires += heures_semaine - inscription.forfait_mensuel_heures
+
+                        realise_non_facture = cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees) - cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees - heures_realisees_non_facturees)
                         cotisation.total_realise_non_facture += realise_non_facture
                         self.total_realise_non_facture += realise_non_facture
 
@@ -423,7 +444,13 @@ class FactureFinMois(object):
                     # cotisation.prorata = False // TODO ? si oui => unittest
                     if options & TRACES:
                         print " cotisation periode adaptation :", report
-                elif inscription.mode in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE):
+                elif inscription.mode == MODE_FORFAIT_HEBDOMADAIRE:
+                    self.cotisation_mensuelle += cotisation.cotisation_mensuelle * cotisation.jours_ouvres / jours_ouvres
+                    cotisation.heures_contractualisees = inscription.forfait_mensuel_heures * cotisation.jours_ouvres / jours_ouvres
+                    self.total_contractualise += cotisation.heures_contractualisees * cotisation.montant_heure_garde
+                    self.heures_supplementaires += cotisation.heures_supplementaires
+                    self.CalculeSupplement(cotisation, cotisation.heures_supplementaires)
+                elif inscription.mode == MODE_FORFAIT_MENSUEL:
                     self.cotisation_mensuelle += cotisation.cotisation_mensuelle * cotisation.jours_ouvres / jours_ouvres
                     cotisation.heures_contractualisees = inscription.forfait_mensuel_heures * cotisation.jours_ouvres / jours_ouvres
                     self.heures_contractualisees += cotisation.heures_contractualisees

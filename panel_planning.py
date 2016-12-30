@@ -31,7 +31,7 @@ TABLETTE_MARGE_ARRIVEE = 10
 
 class DayPlanningPanel(PlanningWidget):
     def __init__(self, parent, activity_combobox):
-        PlanningWidget.__init__(self, parent, activity_combobox, COMMENTS|ACTIVITES|TWO_PARTS|DEPASSEMENT_CAPACITE, self.CheckLine)
+        PlanningWidget.__init__(self, parent, activity_combobox, COMMENTS | ACTIVITES | TWO_PARTS | DEPASSEMENT_CAPACITE, self.CheckLine)
 
     def CheckLine(self, line, plages_selectionnees):
         lines = self.GetSummaryLines()

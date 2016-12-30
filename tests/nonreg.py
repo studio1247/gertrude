@@ -180,7 +180,7 @@ class DocumentsTests(GertrudeTestCase):
 class PSUTests(GertrudeTestCase):
     def test_nombre_mois_facturation(self):
         creche.mode_facturation = FACTURATION_PSU
-        creche.facturation_jours_feries = JOURS_FERIES_DEDUITS_ANNUELLEMENT
+        creche.facturation_jours_feries = ABSENCES_DEDUITES_EN_JOURS
         bureau = Bureau(creation=False)
         bureau.debut = datetime.date(2010, 1, 1)
         creche.bureaux.append(bureau)
@@ -295,7 +295,7 @@ class MarmousetsTests(GertrudeTestCase):
     def test_1(self):
         creche.mode_facturation = FACTURATION_PSU
         creche.temps_facturation = FACTURATION_DEBUT_MOIS_CONTRAT
-        creche.facturation_jours_feries = JOURS_FERIES_DEDUITS_ANNUELLEMENT
+        creche.facturation_jours_feries = ABSENCES_DEDUITES_EN_JOURS
         creche.conges_inscription = 1
         for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", u"15 août", "1er novembre", "11 novembre", u"25 décembre", u"Lundi de Pâques", "Jeudi de l'Ascension"):
             self.AddJourFerie(label)
@@ -331,7 +331,7 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         GertrudeTestCase.setUp(self)
         creche.mode_facturation = FACTURATION_PSU
         creche.temps_facturation = FACTURATION_FIN_MOIS
-        creche.facturation_jours_feries = JOURS_FERIES_DEDUITS_ANNUELLEMENT
+        creche.facturation_jours_feries = ABSENCES_DEDUITES_EN_JOURS
         creche.arrondi_heures = ARRONDI_HEURE
         creche.arrondi_facturation = ARRONDI_HEURE
         for label in ("Week-end", "1er janvier", "14 juillet", "1er novembre", "11 novembre", u"Lundi de Pâques", "Jeudi de l'Ascension", u"Lundi de Pentecôte"):
@@ -488,7 +488,7 @@ class LoupandisesTests(GertrudeTestCase):
         creche.mode_facturation = FACTURATION_PSU
         creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
         creche.temps_facturation = FACTURATION_FIN_MOIS
-        creche.facturation_jours_feries = JOURS_FERIES_DEDUITS_ANNUELLEMENT 
+        creche.facturation_jours_feries = ABSENCES_DEDUITES_EN_JOURS
         for label in ("Week-end", "1er janvier", "14 juillet", "1er novembre", "11 novembre", u"Lundi de Pâques", "Jeudi de l'Ascension", u"Lundi de Pentecôte"):
             self.AddJourFerie(label)
         self.AddConge("23/10/2010", "02/11/2010")

@@ -48,9 +48,10 @@ modes_mensualisation = [(u'Avec mensualisation (sur 12 mois). Uniquement disponi
                         (u'Sans mensualisation', REPARTITION_SANS_MENSUALISATION)
                         ]
 
-modes_facturation_jours_feries = [(u"En semaines (nombre de semaines entré à l'inscription)", JOURS_FERIES_NON_DEDUITS),
-                                  (u"En jours (décompte précis des jours de présence sur l'ensemble du contrat)", JOURS_FERIES_DEDUITS_ANNUELLEMENT)
-                                  ]
+modes_facturation_absences = [(u"En semaines (nombre de semaines entré à l'inscription)", ABSENCES_DEDUITES_EN_SEMAINES),
+                              (u"En jours (décompte précis des jours de présence sur l'ensemble du contrat)", ABSENCES_DEDUITES_EN_JOURS),
+                              (u"Sans limite (pour les contrats sans mensualisation)", ABSENCES_DEDUITES_SANS_LIMITE),
+                              ]
 
 modes_facturation_adaptation = [(u'Facturation normale', PERIODE_ADAPTATION_FACTUREE_NORMALEMENT),
                                 (u"Facturation aux horaires réels", PERIODE_ADAPTATION_HORAIRES_REELS),
@@ -944,7 +945,7 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([CreateLabelTuple(u"Mode d'arrondi de la mensualisation en heures :"), (AutoChoiceCtrl(self, creche, 'arrondi_mensualisation', modes_arrondi_mensualisation), 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple(u"Mode d'arrondi de la mensualisation en euros :"), (AutoChoiceCtrl(self, creche, 'arrondi_mensualisation_euros', [(u"Pas d'arrondi", SANS_ARRONDI), (u"Arrondi à l'euro le plus proche", ARRONDI_EURO_PLUS_PROCHE)]), 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple(u"Gestion des absences prévues au contrat :"), (AutoChoiceCtrl(self, creche, 'conges_inscription', [('Non', 0), (u'Oui', 1), (u"Oui, avec gestion d'heures supplémentaires", 2)]), 0, wx.EXPAND)])
-        sizer.AddMany([CreateLabelTuple(u"Déduction des jours fériés et absences prévues au contrat :"), (AutoChoiceCtrl(self, creche, 'facturation_jours_feries', modes_facturation_jours_feries), 0, wx.EXPAND)])
+        sizer.AddMany([CreateLabelTuple(u"Déduction des jours fériés et absences prévues au contrat :"), (AutoChoiceCtrl(self, creche, 'facturation_jours_feries', modes_facturation_absences), 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple(u"Tarification des activités :"), (AutoChoiceCtrl(self, creche, 'tarification_activites', [(u'Non géré', ACTIVITES_NON_FACTUREES), (u'A la journée', ACTIVITES_FACTUREES_JOURNEE), (u"Période d'adaptation, à la journée", ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION)]), 0, wx.EXPAND)])
         if creche.nom == u"LA VOLIERE":
             sizer.AddMany([CreateLabelTuple(u"Coût journalier :"), (AutoNumericCtrl(self, creche, 'cout_journalier', min=0, precision=2), 0, wx.EXPAND)])

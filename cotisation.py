@@ -282,7 +282,7 @@ class Cotisation(object):
                 self.heures_semaine = self.inscription.forfait_mensuel_heures  # TODO rename to forfait
             else:
                 self.heures_semaine = self.heures_reelles_semaine
-            if creche.facturation_jours_feries == JOURS_FERIES_DEDUITS_ANNUELLEMENT:
+            if creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS:
                 if self.fin_inscription is None:
                     errors.append(u" - La période d'inscription n'a pas de fin.")
                     raise CotisationException(errors)
