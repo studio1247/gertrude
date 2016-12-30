@@ -752,18 +752,18 @@ class BebebulTests(GertrudeTestCase):
         inscription = Inscription(inscrit, creation=False)
         inscription.mode = MODE_HALTE_GARDERIE
         inscription.debut = datetime.date(2012, 10, 1)
-        inscription.reference[1].AddActivity(102, 144, 0, -1) # 3h30
-        inscription.reference[3].AddActivity(102, 144, 0, -1) # 3h30
+        inscription.reference[1].AddActivity(102, 144, 0, -1)  # 3h30
+        inscription.reference[3].AddActivity(102, 144, 0, -1)  # 3h30
         inscrit.inscriptions.append(inscription)
-        cotisation = Cotisation(inscrit, datetime.date(2012, 10, 1), NO_ADDRESS|NO_PARENTS)
-        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 2), 105, 138) # 2h45
-        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 4), 105, 141) # 3h00
-        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 9), 105, 138) # 2h45
-        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 11), 105, 132) # 2h15
-        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 16), 105, 144) # 3h15
-        self.AddActivite(inscrit, datetime.date(2012, 10, 18), 102, 144, -1) # conge
-        self.AddActivite(inscrit, datetime.date(2012, 10, 23), 105, 147, ABSENCE_NON_PREVENUE) # 3h30 absence non prevenue 
-        self.AddActivite(inscrit, datetime.date(2012, 10, 25), 105, 147, 1) # 3h30 permanence
+        cotisation = Cotisation(inscrit, datetime.date(2012, 10, 1), NO_ADDRESS | NO_PARENTS)
+        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 2), 105, 138)  # 2h45
+        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 4), 105, 141)  # 3h00
+        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 9), 105, 138)  # 2h45
+        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 11), 105, 132)  # 2h15
+        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 16), 105, 144)  # 3h15
+        self.AddActivite(inscrit, datetime.date(2012, 10, 18), 102, 144, -1)  # conge
+        self.AddActivite(inscrit, datetime.date(2012, 10, 23), 105, 147, ABSENCE_NON_PREVENUE)  # 3h30 absence non prevenue
+        self.AddActivite(inscrit, datetime.date(2012, 10, 25), 105, 147, 1)  # 3h30 permanence
         facture = Facture(inscrit, 2012, 10)
         self.assertEquals("%.2f" % facture.total, "18.73")
 

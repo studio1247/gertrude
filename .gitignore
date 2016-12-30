@@ -11,8 +11,6 @@ templates
 *.db
 gertrude.ini.*
 importations
-gertrude.db.*
-warngertrude.txt
 *.csv
 *.od?
 perms.py
