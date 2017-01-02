@@ -947,7 +947,7 @@ class SQLConnection(object):
             return True
 
         if version > VERSION:
-            progress_handler.display(u"Base de données plus récente que votre version de Gertrude !")
+            progress_handler.display(u"Base de données plus récente que votre version de Gertrude (%d > %d) !" % (version, VERSION))
             return False
 
         if progress_handler:
