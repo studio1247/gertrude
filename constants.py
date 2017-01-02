@@ -259,6 +259,7 @@ FACTURES_FAMILLES = 1 << 5
 READONLY = 1 << 6
 GROUPES_SITES = 1 << 7
 NO_BACKUPS = 1 << 8
+COMPATIBILITY_MODE_CONGES_2016 = 1 << 9
 
 # Atributs de plages horaires spéciales
 PLAGE_FERMETURE = 0

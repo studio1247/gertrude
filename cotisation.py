@@ -294,9 +294,14 @@ class Cotisation(object):
                 else:
                     self.prorata = (self.fin_inscription != self.fin or self.debut_inscription != self.debut)
                     date = self.debut
-                
+
+                if config.options & COMPATIBILITY_MODE_CONGES_2016:
+                    fin_decompte_conges_et_factures = self.fin
+                else:
+                    fin_decompte_conges_et_factures = self.fin_inscription
+
                 # debut_conge = None
-                while date <= self.fin_inscription:
+                while date <= fin_decompte_conges_et_factures:
                     heures = self.inscription.GetJourneeReference(date).GetNombreHeures()
                     if heures:
                         if date in creche.jours_fermeture:
@@ -336,7 +341,7 @@ class Cotisation(object):
                 if creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
                     self.nombre_factures = GetNombreFacturesContrat(self.debut_inscription, self.fin_inscription)
                 else:
-                    self.nombre_factures = GetNombreFacturesContrat(self.debut, self.fin_inscription)
+                    self.nombre_factures = GetNombreFacturesContrat(self.debut, fin_decompte_conges_et_factures)
                 if self.nombre_factures == 0:
                     self.nombre_factures = 1
                 if options & TRACES:

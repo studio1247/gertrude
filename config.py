@@ -92,6 +92,8 @@ def getOptions(parser):
             options |= GROUPES_SITES
         if "no-backups" in str:
             options |= NO_BACKUPS
+        if "compatibility-conges-2016" in str:
+            options |= COMPATIBILITY_MODE_CONGES_2016
     except:
         pass
     return options
