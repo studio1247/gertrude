@@ -445,9 +445,11 @@ class FactureFinMois(object):
                         print " cotisation periode adaptation :", report
                 elif inscription.mode == MODE_FORFAIT_HEBDOMADAIRE:
                     self.cotisation_mensuelle += cotisation.cotisation_mensuelle * cotisation.jours_ouvres / jours_ouvres
-                    cotisation.heures_contractualisees = inscription.forfait_mensuel_heures * cotisation.jours_ouvres / jours_ouvres
+                    cotisation.heures_contractualisees = cotisation.heures_mois * cotisation.jours_ouvres / jours_ouvres
                     self.total_contractualise += cotisation.heures_contractualisees * cotisation.montant_heure_garde
                     self.heures_supplementaires += cotisation.heures_supplementaires
+                    self.heures_facturees_par_mode[cotisation.mode_garde] += cotisation.heures_realisees - cotisation.heures_realisees_non_facturees
+                    self.heures_facture_par_mode[cotisation.mode_garde] += cotisation.heures_mois + cotisation.heures_supplementaires
                     self.CalculeSupplement(cotisation, cotisation.heures_supplementaires)
                 elif inscription.mode == MODE_FORFAIT_MENSUEL:
                     self.cotisation_mensuelle += cotisation.cotisation_mensuelle * cotisation.jours_ouvres / jours_ouvres
