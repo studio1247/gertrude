@@ -1257,13 +1257,14 @@ class InscriptionsPanel(GPanel):
         if res == wx.ID_OK:
             history.Append(Delete(creche.inscrits, -1))
             inscrit = dlg.GetInscritSelected()
+            inscrit.idx = None
             inscrit.inscriptions[:] = [Inscription(inscrit)]
             inscrit.journees = {}
             inscrit.semaines = {}
             inscrit.factures_cloturees = {}
             inscrit.corrections = {}
-            inscrit.create()
             inscrit.famille.create()
+            inscrit.create()
             self.AjouteInscrit(inscrit)
         dlg.Destroy()
 
