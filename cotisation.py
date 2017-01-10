@@ -339,7 +339,7 @@ class Cotisation(object):
                     print u' heures période :', self.heures_periode
                 self.semaines_periode = 1 + (self.fin_inscription - self.debut_inscription).days / 7
                 if creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
-                    self.nombre_factures = GetNombreFacturesContrat(self.debut_inscription, self.fin_inscription)
+                    self.nombre_factures = GetNombreFacturesContrat(self.debut_inscription, fin_decompte_conges_et_factures)
                 else:
                     self.nombre_factures = GetNombreFacturesContrat(self.debut, fin_decompte_conges_et_factures)
                 if self.nombre_factures == 0:
