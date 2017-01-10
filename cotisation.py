@@ -282,6 +282,12 @@ class Cotisation(object):
                 self.heures_semaine = self.inscription.forfait_mensuel_heures  # TODO rename to forfait
             else:
                 self.heures_semaine = self.heures_reelles_semaine
+
+            if config.options & COMPATIBILITY_MODE_CONGES_2016:
+                fin_decompte_conges_et_factures = self.fin
+            else:
+                fin_decompte_conges_et_factures = self.fin_inscription
+
             if creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS:
                 if self.fin_inscription is None:
                     errors.append(u" - La période d'inscription n'a pas de fin.")
@@ -294,11 +300,6 @@ class Cotisation(object):
                 else:
                     self.prorata = (self.fin_inscription != self.fin or self.debut_inscription != self.debut)
                     date = self.debut
-
-                if config.options & COMPATIBILITY_MODE_CONGES_2016:
-                    fin_decompte_conges_et_factures = self.fin
-                else:
-                    fin_decompte_conges_et_factures = self.fin_inscription
 
                 # debut_conge = None
                 while date <= fin_decompte_conges_et_factures:
@@ -368,8 +369,9 @@ class Cotisation(object):
                     if self.fin_inscription is None:
                         errors.append(u" - La période d'inscription n'a pas de fin.")
                         raise CotisationException(errors)
-                    if creche.facturation_periode_adaptation in (PERIODE_ADAPTATION_GRATUITE, PERIODE_ADAPTATION_HORAIRES_REELS) and self.inscription.fin_periode_adaptation:
-                        self.debut_inscription = self.inscription.fin_periode_adaptation + datetime.timedelta(1)
+                    if not config.options & COMPATIBILITY_MODE_ADAPTATIONS_2016:
+                        if creche.facturation_periode_adaptation in (PERIODE_ADAPTATION_GRATUITE, PERIODE_ADAPTATION_HORAIRES_REELS) and self.inscription.fin_periode_adaptation:
+                            self.debut_inscription = self.inscription.fin_periode_adaptation + datetime.timedelta(1)
                     self.semaines_periode = GetNombreSemainesPeriode(self.debut_inscription, self.fin_inscription)
                     self.nombre_factures = GetNombreFacturesContrat(self.debut_inscription, self.fin_inscription)
                 elif creche.repartition == REPARTITION_SANS_MENSUALISATION:
