@@ -437,9 +437,12 @@ class IdentitePanel(InscriptionsTab):
 
     def UpdatePermanencesDues(self):
         if self.inscrit:
-            total, effectue = self.inscrit.GetDecomptePermanences()
-            solde = effectue - total
-            self.permanences_dues_widget.SetValue(u"Au %s : Total %s - Effectué %s - Solde %s" % (GetDateString(today), GetHeureString(total), GetHeureString(effectue), GetHeureString(solde)))
+            if creche.date_raz_permanences:
+                total, effectue = self.inscrit.GetDecomptePermanences()
+                solde = effectue - total
+                self.permanences_dues_widget.SetValue(u"Au %s : Total %s - Effectué %s - Solde %s" % (GetDateString(today), GetHeureString(total), GetHeureString(effectue), GetHeureString(solde)))
+            else:
+                self.permanences_dues_widget.SetValue(u"Veuillez saisir une date de remise à zéro du décompte (outil Configuration / Structure)")
         else:
             self.permanences_dues_widget.SetValue("")
 

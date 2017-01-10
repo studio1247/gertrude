@@ -420,9 +420,10 @@ class ResponsabilitesTab(AutoTab, PeriodeMixin):
 
     def GetNomsParents(self, periode):
         noms = set()
-        for inscrit in GetInscrits(periode.debut, periode.fin):
-            for parent in inscrit.famille.parents:
-                noms.add(GetPrenomNom(parent))
+        if periode.debut and periode.fin:
+            for inscrit in GetInscrits(periode.debut, periode.fin):
+                for parent in inscrit.famille.parents:
+                    noms.add(GetPrenomNom(parent))
         noms = list(noms)
         noms.sort(cmp=lambda x, y: cmp(x.lower(), y.lower()))
         return noms
