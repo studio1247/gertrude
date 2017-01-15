@@ -1034,7 +1034,7 @@ def GetFactureFields(facture):
             heures_contractualisees = facture.heures_contractualisees
             heures_facturees = facture.heures_facturees
         result = [('mois', '%s %d' % (months[facture.mois - 1], facture.annee)),
-                  ('mois+1', '%s %d' % ((months[facture.mois], facture.annee) if facture.mois < 12 else (0, facture.annee + 1))),
+                  ('mois+1', '%s %d' % ((months[facture.mois], facture.annee) if facture.mois < 12 else (months[0], facture.annee + 1))),
                   ('de-mois', '%s %d' % (GetDeMoisStr(facture.mois - 1), facture.annee)),
                   ('de-mois-recap', '%s %d' % (GetDeMoisStr(facture.debut_recap.month - 1), facture.debut_recap.year)),
                   ('date', date2str(facture.date)),
