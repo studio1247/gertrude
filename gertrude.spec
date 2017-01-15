@@ -1,6 +1,5 @@
 # -*- mode: python -*-
 a = Analysis(['gertrude.pyw'],
-             pathex=['C:\\Perso\\Workspace\\Gertrude'],
              datas=[
                  ("*.ini.dist", "."),
                  ("demo.db", "."),
