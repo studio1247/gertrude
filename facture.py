@@ -435,7 +435,7 @@ class FactureFinMois(object):
                         montant = (cotisation.heures_contractualisees - cotisation.heures_realisees_non_facturees) * cotisation.montant_heure_garde
                     self.cotisation_mensuelle += montant
                     self.total_contractualise += montant
-                elif creche.facturation_periode_adaptation == PERIODE_ADAPTATION_GRATUITE and inscription.IsInPeriodeAdaptation:
+                elif creche.facturation_periode_adaptation == PERIODE_ADAPTATION_GRATUITE and inscription.IsInPeriodeAdaptation(cotisation.debut):
                     pass
                 elif creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(cotisation.debut):
                     if inscription.mode in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE):
