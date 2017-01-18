@@ -182,6 +182,7 @@ class CongesPanel(SalariesTab):
         history.Append(Delete(self.salarie.conges, -1))
         self.salarie.AddConge(CongeSalarie(self.salarie))
         self.AddLine(len(self.salarie.conges) - 1)
+        self.sizer.FitInside(self)
         self.sizer.Layout()
 
     def OnCongeRemove(self, event):

@@ -1087,6 +1087,7 @@ class CongesPanel(InscriptionsTab):
         history.Append(Delete(self.inscrit.conges, -1))
         self.inscrit.AddConge(CongeInscrit(self.inscrit))
         self.AjouteLigneConge(len(self.inscrit.conges) - 1)
+        self.sizer.FitInside(self)
         self.sizer.Layout()
 
     def OnSuppressionConge(self, event):
