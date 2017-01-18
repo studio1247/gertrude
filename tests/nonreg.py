@@ -863,5 +863,37 @@ class LaCabaneAuxFamillesTests(GertrudeTestCase):
         self.assertEquals(facture.total, 663.31)
 
 
+class OPagaioTests(GertrudeTestCase):
+    def setUp(self):
+        GertrudeTestCase.setUp(self)
+        creche.type = TYPE_MICRO_CRECHE
+        creche.mode_facturation = FACTURATION_PAJE
+        creche.formule_taux_horaire = [["", 9.5]]
+        creche.UpdateFormuleTauxHoraire(changed=False)
+        creche.temps_facturation = FACTURATION_FIN_MOIS
+        creche.repartition = REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS
+        creche.facturation_periode_adaptation = PERIODE_ADAPTATION_GRATUITE
+
+    def test_adaptation_a_cheval_sur_2_mois(self):
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit, creation=False)
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.semaines_conges = 5
+        inscription.debut = datetime.date(2016, 9, 26)
+        inscription.fin_periode_adaptation = datetime.date(2016, 10, 2)
+        inscription.fin = datetime.date(2017, 8, 31)
+        inscription.reference[0].AddActivity(96, 216, 0, -1)  # 10h
+        inscription.reference[4].AddActivity(96, 150, 0, -1)  # 4h30
+        inscrit.inscriptions.append(inscription)
+        cotisation = Cotisation(inscrit, datetime.date(2016, 9, 26), NO_ADDRESS | NO_PARENTS)
+        self.assertEquals(cotisation.cotisation_mensuelle, 0.0)
+        cotisation = Cotisation(inscrit, datetime.date(2016, 10, 3), NO_ADDRESS | NO_PARENTS | TRACES)
+        self.assertEquals("%.2f" % cotisation.cotisation_mensuelle, "538.48")
+        facture = Facture(inscrit, 2016, 9)
+        self.assertEquals(facture.total, 0.0)
+        facture = Facture(inscrit, 2016, 10)
+        self.assertEquals(facture.total, 538.48)
+
+
 if __name__ == '__main__':
     unittest.main()
