@@ -364,7 +364,7 @@ class Cotisation(object):
                         self.debut_inscription = self.inscription.fin_periode_adaptation + datetime.timedelta(1)
                     self.semaines_periode = GetNombreSemainesPeriode(self.debut_inscription, self.fin_inscription)
                     self.nombre_factures = GetNombreFacturesContrat(self.debut_inscription, self.fin_inscription)
-                    self.prorata = (self.fin_inscription != self.fin or self.debut_inscription != self.debut)
+                    self.prorata = False  # Fait pour O-pagaio (self.fin_inscription != self.fin or self.debut_inscription != self.debut)
                 elif creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
                     if self.fin_inscription is None:
                         errors.append(u" - La période d'inscription n'a pas de fin.")
