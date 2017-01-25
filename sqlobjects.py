@@ -337,13 +337,13 @@ class Day(object):
     def RemoveActivity(self, start, end, value):
         if start is None and end is None:
             if self.activites_sans_horaires[value] is not None:
-                print 'suppression %s %d' % (self.nom, self.activites_sans_horaires[value])
+                print u'suppression %r %d' % (self.nom, self.activites_sans_horaires[value])
                 sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.table,
                                        (self.activites_sans_horaires[value],))
             del self.activites_sans_horaires[value]
         else:
             if self.activites[(start, end, value)] is not None:
-                print 'suppression %s %d' % (self.nom, self.activites[(start, end, value)])
+                print u'suppression %r %d' % (self.nom, self.activites[(start, end, value)])
                 sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.table,
                                        (self.activites[(start, end, value)],))
             del self.activites[(start, end, value)]
@@ -352,7 +352,7 @@ class Day(object):
         if not isinstance(heure, int):
             heure = int(round(heure * 12))
         for start, end, value in self.activites:
-            if start <= heure and heure < end:
+            if start <= heure < end:
                 return self.activites[(start, end, value)]
         else:
             return None
