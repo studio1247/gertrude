@@ -1053,6 +1053,8 @@ def GetFactureFields(facture):
                   ('heures-facturees', heures_facturees, FIELD_HEURES),
                   ('heures-supplementaires', facture.heures_supplementaires, FIELD_HEURES),
                   ('heures-maladie', facture.heures_maladie, FIELD_HEURES),
+                  ('heures-maladie-non-deduites', sum(facture.jours_maladie_non_deduits.values()), FIELD_HEURES),
+                  ('heures-absence-non-prevenue', sum(facture.jours_absence_non_prevenue.values()), FIELD_HEURES),
                   ('heures-absence-maladie', facture.heures_absence_maladie, FIELD_HEURES),
                   ('heures-previsionnelles', facture.heures_previsionnelles, FIELD_HEURES),
                   ('taux-effort', '%.2f' % taux_effort),
