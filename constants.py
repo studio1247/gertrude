@@ -244,6 +244,7 @@ PREVISIONNEL = 1 << 30  # flag previsionnel
 # Types des champs OpenOffice
 FIELD_EUROS = 1
 FIELD_SIGN = 2
+FIELD_HEURES = 4
 
 # IDs de boutons
 ID_SYNCHRO = 10001

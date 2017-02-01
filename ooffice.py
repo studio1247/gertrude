@@ -63,7 +63,7 @@ def GetColumnIndex(name):
 
 def evalFields(fields):
     for i, field in enumerate(fields[:]):
-        if len(field) == 2 or field[2] & FIELD_EUROS:
+        if len(field) == 2 or field[2] & (FIELD_EUROS | FIELD_HEURES):
             param, value = field[0:2]
             if isinstance(value, list):
                 text = [GetText(v) for v in value]
@@ -164,14 +164,17 @@ def RemoveColumn(rows, index):
 def ReplaceTextFields(dom, _fields):
     fields = _fields[:]
     for i, field in enumerate(fields):
-        if len(field) == 3 and (field[2] & FIELD_EUROS) and field[1] is not None:
-            v = field[1]
-            if not isinstance(v, numbers.Real):
-                v = 0
-            if field[2] & FIELD_SIGN:
-                fields[i] = (field[0], locale.format("%+.2f", v))
-            else:
-                fields[i] = (field[0], locale.format("%.2f", v))
+        if len(field) == 3 and field[1] is not None:
+            if field[2] & FIELD_EUROS:
+                v = field[1]
+                if not isinstance(v, numbers.Real):
+                    v = 0
+                if field[2] & FIELD_SIGN:
+                    fields[i] = (field[0], locale.format("%+.2f", v))
+                else:
+                    fields[i] = (field[0], locale.format("%.2f", v))
+            elif field[2] & FIELD_HEURES:
+                fields[i] = (field[0], GetHeureString(field[1]))
 
     evalFields(fields)
     # print dom.toprettyxml()
