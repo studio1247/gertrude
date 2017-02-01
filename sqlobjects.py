@@ -2381,7 +2381,7 @@ class Inscrit(object):
         if date in self.journees:
             journee = self.journees[date]
             state = journee.GetState()  # TODO on peut s'en passer ?
-            if state in (MALADE, HOPITAL, ABSENCE_NON_PREVENUE):
+            if state in (MALADE, HOPITAL, ABSENCE_NON_PREVENUE, ABSENCE_CONGE_SANS_PREAVIS):
                 return State(state, heures_reference, 0, heures_reference)
             elif state in (ABSENT, VACANCES):
                 if inscription.mode == MODE_5_5 or ref_state:

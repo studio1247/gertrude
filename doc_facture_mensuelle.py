@@ -136,6 +136,9 @@ class FactureModifications(object):
                         elif date in facture.jours_supplementaires:
                             state = SUPPLEMENT
                             details = " (%s)" % GetHeureString(facture.jours_supplementaires[date])
+                        elif date in facture.jours_maladie_non_deduits:
+                            state = MALADE
+                            details = " (%s)" % GetHeureString(facture.jours_maladie_non_deduits[date])
                         elif date in facture.jours_maladie:
                             state = MALADE
                         elif facture.inscrit.IsDateConge(date):

@@ -124,6 +124,7 @@ class FactureFinMois(object):
         self.heures_supplementaires = 0.0
         self.jours_maladie = []
         self.jours_maladie_deduits = []
+        self.jours_maladie_non_deduits = {}
         self.heures_absence_maladie = 0.0
         self.jours_vacances = []
         self.jours_conges_non_factures = []
@@ -294,6 +295,8 @@ class FactureFinMois(object):
                                     elif inscription.mode not in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE):
                                         self.CalculeDeduction(cotisation, heures_reference)
                                     self.raison_deduction.add(u"maladie > %dj consécutifs" % creche.minimum_maladie)
+                                else:
+                                    self.jours_maladie_non_deduits[date] = heures_reference
                         elif state == VACANCES:
                             if heures_reference > 0:
                                 self.jours_vacances.append(date)
