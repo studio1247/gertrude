@@ -2438,7 +2438,7 @@ class Inscrit(object):
                 date += datetime.timedelta(1)
             anniversaire = GetDateAnniversaire(creche.date_raz_permanences)
             for inscription in self.inscriptions:
-                if creche.date_raz_permanences <= inscription.debut < today:
+                if inscription.debut is not None and creche.date_raz_permanences <= inscription.debut < today:
                     fin = inscription.fin if inscription.fin else anniversaire
                     if fin < today:
                         total += inscription.heures_permanences
