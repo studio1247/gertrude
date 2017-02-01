@@ -75,6 +75,13 @@ class FactureFinMois(object):
                 elif inscrit.HasFacture(self.debut_recap):
                     numero += 1
 
+    @staticmethod
+    def join_raison(raison):
+        if raison:
+            return "(" + ", ".join(raison) + ")"
+        else:
+            return ""
+
     def __init__(self, inscrit, annee, mois, options=0):
         creche = __builtin__.creche
         self.inscrit = inscrit
@@ -105,6 +112,7 @@ class FactureFinMois(object):
         self.total_realise_non_facture = 0.0
         self.taux_effort = 0.0
         self.supplement = 0.0
+        self.supplement_heures_supplementaires = 0.0
         self.heures_supplementaires_facture = 0.0
         self.deduction = 0.0
         self.formule_supplement = []
@@ -136,6 +144,7 @@ class FactureFinMois(object):
         self.correction = 0.0
         self.libelle_correction = ""
         self.regularisation = 0.0
+        self.raison_regularisation = set()
         if self.debut_recap in inscrit.corrections:
             try:
                 if inscrit.corrections[self.debut_recap].valeur:
@@ -536,6 +545,7 @@ class FactureFinMois(object):
                             if options & TRACES:
                                 print u" régularisation cotisation : %f - %f = %f par mois" % (cotisation_regularisee.cotisation_mensuelle, cotisation.cotisation_mensuelle, regularisation_cotisation)
                             self.regularisation += regularisation_cotisation * cotisation_regularisee.nombre_factures
+                            self.raison_regularisation.add(u"régularisation cotisation")
                             date = cotisation.fin + datetime.timedelta(1)
     
                     jours_presence = inscription.GetNombreJoursPresenceSemaine()
@@ -548,16 +558,18 @@ class FactureFinMois(object):
                                 if options & TRACES:
                                     print u" régularisation congés non pris (%d semaines, %d jours pris) : %dh * %f = %f" % (inscription.semaines_conges, inscription.GetNombreJoursCongesPoses(), heures, cotisation.montant_heure_garde, regularisation_conges_non_pris)
                                 self.regularisation += regularisation_conges_non_pris
+                                self.raison_regularisation.add(u"congés non pris")
 
         if self.supplement > 0 and self.heures_supplementaires_facture > 0:
+            self.supplement_heures_supplementaires = self.supplement
             self.raison_supplement.add(u"%s heures supplémentaires" % GetHeureString(self.heures_supplementaires_facture))
 
         if self.regularisation > 0:
             self.supplement += self.regularisation
-            self.raison_supplement.add(u"régularisation")
+            self.raison_supplement.update(self.raison_regularisation)
         elif self.regularisation < 0:
             self.deduction -= self.regularisation
-            self.raison_deduction.add(u"régularisation")
+            self.raison_deduction.update(self.raison_regularisation)
             
         self.heures_facturees = sum(self.heures_facturees_par_mode)
         if creche.mode_saisie_planning == SAISIE_HORAIRE:
@@ -583,14 +595,9 @@ class FactureFinMois(object):
         self.supplement_activites = round(self.supplement_activites, 2)
         self.deduction = round(self.deduction, 2)
         self.formule_deduction = ' + '.join(self.formule_deduction)
-        if self.raison_deduction:
-            self.raison_deduction = "(" + ", ".join(self.raison_deduction) + ")"
-        else:
-            self.raison_deduction = ""
-        if self.raison_supplement:
-            self.raison_supplement = "(" + ", ".join(self.raison_supplement) + ")"
-        else:
-            self.raison_supplement = "" 
+        self.raison_regularisation = self.join_raison(self.raison_regularisation)
+        self.raison_deduction = self.join_raison(self.raison_deduction)
+        self.raison_supplement = self.join_raison(self.raison_supplement)
         self.total_contractualise = round(self.total_contractualise, 2)
         self.total_realise = round(self.total_realise, 2)
         
