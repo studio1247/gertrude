@@ -740,15 +740,14 @@ class SQLConnection(object):
 
             cur.execute('SELECT date, value, debut, fin, idx FROM ACTIVITES_SALARIES WHERE salarie=?', (salarie.idx,))
             for date, value, debut, fin, idx in cur.fetchall():
-                if value in creche.activites:
-                    key = getdate(date)
-                    if key in salarie.journees:
-                        journee = salarie.journees[key]
-                    else:
-                        journee = JourneeSalarie(salarie, key)
-                        salarie.journees[key] = journee
-                    # print salarie.prenom, salarie.nom, key, debut, fin, value
-                    journee.AddActivity(debut, fin, value, idx)
+                key = getdate(date)
+                if key in salarie.journees:
+                    journee = salarie.journees[key]
+                else:
+                    journee = JourneeSalarie(salarie, key)
+                    salarie.journees[key] = journee
+                # print salarie.prenom, salarie.nom, key, debut, fin, value
+                journee.AddActivity(debut, fin, value, idx)
 
             cur.execute('SELECT date, commentaire, idx FROM COMMENTAIRES_SALARIES WHERE salarie=?', (salarie.idx,))
             for date, commentaire, idx in cur.fetchall():

@@ -1172,7 +1172,9 @@ class SalariesTab(AutoTab):
                         journee = salarie.journees[date]
                         state = journee.GetState()
                         if state < 0:
-                            if state == VACANCES:
+                            if state == CONGES_PAYES:
+                                cp += 1
+                            elif state == VACANCES:
                                 cs += 1
                             heures_reference = 0
                             heures_realisees = 0
@@ -1238,7 +1240,8 @@ class TableauxDeBordNotebook(wx.Notebook):
         self.GetCurrentPage().UpdateContents()
         if event:
             event.Skip()
-        
+
+
 class TableauxDeBordPanel(GPanel):
     name = "Tableaux de bord"
     bitmap = GetBitmapFile("tableaux-bord.png")

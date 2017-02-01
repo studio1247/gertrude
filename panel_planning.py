@@ -60,7 +60,7 @@ class DayPlanningPanel(PlanningWidget):
             self.SetInfo("")
 
         self.lignes_enfants = GetPlanningLinesChildren(self.date, self.site, self.groupe)
-        if creche.tri_planning == TRI_GROUPE:
+        if creche.groupes and (creche.tri_planning & TRI_GROUPE):
             groupe = 0
             lines = []
             for line in self.lignes_enfants:

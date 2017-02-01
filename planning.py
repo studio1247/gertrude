@@ -463,7 +463,7 @@ class PlanningLineGrid(BufferedWindow):
                 for start, end in self.GetPlagesSelectionnees():                        
                     line.ClearActivity(start, end, self.value)
                 
-            if not (self.options & PRESENCES_ONLY) and len(line.activites) == 0 and line.reference and len(line.reference.activites) > 0:
+            if not line.salarie and not (self.options & PRESENCES_ONLY) and len(line.activites) == 0 and line.reference and len(line.reference.activites) > 0:
                 line.SetState(VACANCES)
                 
             if line.insert is not None:
@@ -550,7 +550,7 @@ class PlanningLineStatusIcon(wx.Window):
             state = self.line.GetState()
             
             if state < 0:
-                states = GetPlanningStates()
+                states = GetPlanningStates(self.line.salarie)
                 try:
                     index = states.index(state)
                     newstate = states[(index + 1) % len(states)]

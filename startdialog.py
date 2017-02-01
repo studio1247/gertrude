@@ -126,7 +126,7 @@ class StartDialog(wx.Dialog):
             self.info.AppendText("Choix de la structure ...\n")
             self.sizer.Show(self.creche_sizer)
             sections = config.sections.keys()
-            sections.sort()
+            sections.sort(key=lambda v: v.upper())
             for section in sections:
                 self.creche_ctrl.Append(section)
             if config.default_section:
