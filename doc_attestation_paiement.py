@@ -91,7 +91,7 @@ class AttestationModifications(object):
         for inscrit in self.inscrits:
             facture_debut = facture_fin = None
             date = self.debut
-            heures_facturees, heures_realisees, total_sans_activites = 0.0, 0.0, 0.0
+            heures_facturees, heures_facture, heures_realisees, total_sans_activites = 0.0, 0.0, 0.0, 0.0
             total = 0.0
             site = None
             try:
@@ -106,6 +106,7 @@ class AttestationModifications(object):
                         total_sans_activites += facture.total - facture.supplement_activites
                         heures_realisees += facture.heures_realisees
                         heures_facturees += facture.heures_facturees
+                        heures_facture += facture.heures_facture
                     date = GetNextMonthStart(date)
             except CotisationException, e:
                 errors[GetPrenomNom(inscrit)] = e.errors
@@ -119,7 +120,7 @@ class AttestationModifications(object):
                 if not last_inscription or not last_inscription.fin or (tmp.fin and tmp.fin > last_inscription.fin):
                     last_inscription = tmp 
             
-            # Les champs du recu
+            # Les champs de l'attestation
             fields = GetCrecheFields(creche) + GetInscritFields(inscrit) + GetInscriptionFields(last_inscription) + [
                 ('de-debut', '%s %d' % (GetDeMoisStr(facture_debut.month - 1), facture_debut.year)),
                 ('de-fin', '%s %d' % (GetDeMoisStr(facture_fin.month - 1), facture_fin.year)),
@@ -128,6 +129,7 @@ class AttestationModifications(object):
                 ('date', '%.2d/%.2d/%d' % (today.day, today.month, today.year)),
                 ('heures-facturees', GetHeureString(heures_facturees)),
                 ('ceil-heures-facturees', GetHeureString(math.ceil(heures_facturees))),
+                ('ceil-heures-facture', GetHeureString(math.ceil(heures_facture))),
                 ('ceil-heures-realisees', GetHeureString(math.ceil(heures_realisees))),
                 ('total-sans-activites', "%.2f" % total_sans_activites),
                 ('total', '%.2f' % total),
