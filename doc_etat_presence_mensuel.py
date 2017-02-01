@@ -78,6 +78,7 @@ class EtatPresenceMensuelModifications(object):
                     fields.extend(GetFactureFields(facture))
                     for key in facture.heures_supplement_activites:
                         fields.append((key, facture.heures_supplement_activites[key]))
+                        fields.append(("montant-%s" % key, facture.detail_supplement_activites[key], FIELD_EUROS))
                 except CotisationException, e:
                     errors[GetPrenomNom(inscrit)] = e.errors
                     continue
