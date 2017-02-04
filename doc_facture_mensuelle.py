@@ -267,13 +267,15 @@ class FactureModifications(object):
                             for row in rows:
                                 prettyxml = row.toprettyxml()
                                 if (("&lt;frais-inscription&gt;" in prettyxml and not facture.frais_inscription) or
-                                        ("&lt;correction&gt;" in prettyxml and not facture.correction) or
-                                        ("&lt;supplement-activites&gt;" in prettyxml and not facture.supplement_activites) or
-                                        ("&lt;supplement&gt;" in prettyxml and not facture.supplement) or
-                                        ("&lt;regularisation&gt;" in prettyxml and not facture.regularisation) or
-                                        ("&lt;heures-absence-non-prevenue&gt;" in prettyxml and not facture.jours_absence_non_prevenue) or
-                                        ("&lt;heures-maladie-non-deduites&gt;" in prettyxml and not facture.jours_maladie_non_deduits) or
-                                        ("&lt;deduction&gt;" in prettyxml and not facture.deduction)):
+                                    ("&lt;correction&gt;" in prettyxml and not facture.correction) or
+                                    ("&lt;supplement-activites&gt;" in prettyxml and not facture.supplement_activites) or
+                                    ("&lt;supplement&gt;" in prettyxml and not facture.supplement) or
+                                    ("&lt;supplement-avant-regularisation&gt;" in prettyxml and not facture.supplement_avant_regularisation) or
+                                    ("&lt;deduction-avant-regularisation&gt;" in prettyxml and not facture.deduction_avant_regularisation) or
+                                    ("&lt;regularisation&gt;" in prettyxml and not facture.regularisation) or
+                                    ("&lt;heures-absence-non-prevenue&gt;" in prettyxml and not facture.jours_absence_non_prevenue) or
+                                    ("&lt;heures-maladie-non-deduites&gt;" in prettyxml and not facture.jours_maladie_non_deduits) or
+                                    ("&lt;deduction&gt;" in prettyxml and not facture.deduction)):
                                     montants_table.removeChild(row)
                             ReplaceTextFields(montants_table, facture.fields)
 

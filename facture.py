@@ -567,13 +567,18 @@ class FactureFinMois(object):
             self.supplement_heures_supplementaires = self.supplement
             self.raison_supplement.add(u"%s heures supplémentaires" % GetHeureString(self.heures_supplementaires_facture))
 
+        self.supplement_avant_regularisation = self.supplement
+        self.raison_supplement_avant_regularisation = self.raison_supplement
+        self.deduction_avant_regularisation = self.deduction
+        self.raison_deduction_avant_regularisation = self.raison_deduction
+
         if self.regularisation > 0:
             self.supplement += self.regularisation
             self.raison_supplement.update(self.raison_regularisation)
         elif self.regularisation < 0:
             self.deduction -= self.regularisation
             self.raison_deduction.update(self.raison_regularisation)
-            
+
         self.heures_facturees = sum(self.heures_facturees_par_mode)
         if creche.mode_saisie_planning == SAISIE_HORAIRE:
             self.heures_facture = self.heures_contrat + self.heures_supplementaires - self.heures_maladie
@@ -600,7 +605,9 @@ class FactureFinMois(object):
         self.formule_deduction = ' + '.join(self.formule_deduction)
         self.raison_regularisation = self.join_raison(self.raison_regularisation)
         self.raison_deduction = self.join_raison(self.raison_deduction)
+        self.raison_deduction_avant_regularisation = self.join_raison(self.raison_deduction_avant_regularisation)
         self.raison_supplement = self.join_raison(self.raison_supplement)
+        self.raison_supplement_avant_regularisation = self.join_raison(self.raison_supplement_avant_regularisation)
         self.total_contractualise = round(self.total_contractualise, 2)
         self.total_realise = round(self.total_realise, 2)
         
