@@ -36,17 +36,17 @@ class ReleveSalariesModifications(object):
     
     def GetFields(self, salarie):
         fields = [('nom-creche', creche.nom),
-                ('adresse-creche', creche.adresse),
-                ('code-postal-creche', str(creche.code_postal)),
-                ('departement-creche', GetDepartement(creche.code_postal)),
-                ('ville-creche', creche.ville),
-                ('telephone-creche', creche.telephone),
-                ('email-creche', creche.email),
-                ('prenom', salarie.prenom),
-                ('nom', salarie.nom),
-                ('mois', months[self.periode.month-1]),
-                ('annee', self.periode.year)
-                ]
+                  ('adresse-creche', creche.adresse),
+                  ('code-postal-creche', str(creche.code_postal)),
+                  ('departement-creche', GetDepartement(creche.code_postal)),
+                  ('ville-creche', creche.ville),
+                  ('telephone-creche', creche.telephone),
+                  ('email-creche', creche.email),
+                  ('prenom', salarie.prenom),
+                  ('nom', salarie.nom),
+                  ('mois', months[self.periode.month-1]),
+                  ('annee', self.periode.year)
+                  ]
         day = self.periode
         weekday = day.weekday()
         if weekday >= 5:
@@ -70,6 +70,8 @@ class ReleveSalariesModifications(object):
                     heures = ""
                 fields.append(("%s-%d" % (days[i].lower(), semaines), heures))                    
                 day += datetime.timedelta(1)
+        _, contrat, realise, _, _ = salarie.GetDecompteHeuresEtConges(GetMonthStart(self.periode), GetMonthEnd(self.periode))
+        fields.append(('delta', realise - contrat))
         return semaines, fields
 
     def execute(self, filename, dom):

@@ -980,6 +980,37 @@ class Salarie(object):
                 ratio += float(duree_contrat) / duree_annee * contrat.GetNombreJoursPresenceSemaine() / GetNombreJoursSemaineTravailles()
         return round(creche.conges_payes_salaries * ratio), round(creche.conges_supplementaires_salaries * ratio)
 
+    def GetDecompteHeuresEtConges(self, debut, fin):
+        affiche, contractualise, realise, cp, cs = False, 0.0, 0.0, 0, 0
+        date = debut
+        while date <= fin:
+            contrat = self.GetContrat(date)
+            if contrat:
+                journee_reference = contrat.GetJourneeReference(date)
+                affiche = True
+                heures_reference = journee_reference.GetNombreHeures()
+                if heures_reference > 0 and (date in self.jours_conges or date in creche.jours_conges):
+                    cp += 1
+                else:
+                    if date in self.journees:
+                        journee = self.journees[date]
+                        state = journee.GetState()
+                        if state < 0:
+                            if state == CONGES_PAYES:
+                                cp += 1
+                            elif state == VACANCES:
+                                cs += 1
+                            heures_reference = 0
+                            heures_realisees = 0
+                        else:
+                            heures_realisees = journee.GetNombreHeures()
+                    else:
+                        heures_realisees = heures_reference
+                    contractualise += heures_reference
+                    realise += heures_realisees
+            date += datetime.timedelta(1)
+        return affiche, contractualise, realise, cp, cs
+
     def GetContrats(self, date_debut, date_fin):
         result = []
         if not date_debut:

@@ -1117,7 +1117,7 @@ class SalariesTab(AutoTab):
         self.Bind(wx.EVT_CHOICE, self.OnMonthChoice, self.choice)
         self.sizer.Add(self.choice, 0, wx.ALL | wx.EXPAND, 5)
         self.grid = wx.grid.Grid(self)
-        self.grid.CreateGrid(0, 6)
+        self.grid.CreateGrid(0, 5)
         self.grid.EnableEditing(False)
         self.grid.SetRowLabelSize(200)
         self.grid.SetColLabelValue(0, u"Heures contrat")
@@ -1158,38 +1158,6 @@ class SalariesTab(AutoTab):
         if self.grid.GetNumberRows() > 0:
             self.grid.DeleteRows(0, self.grid.GetNumberRows())
 
-    @staticmethod
-    def compte(salarie, debut, fin):
-        affiche, contractualise, realise, cp, cs = False, 0.0, 0.0, 0, 0
-        date = debut
-        while date <= fin:
-            contrat = salarie.GetContrat(date)
-            if contrat:
-                journee_reference = contrat.GetJourneeReference(date)
-                affiche = True
-                heures_reference = journee_reference.GetNombreHeures()
-                if heures_reference > 0 and (date in salarie.jours_conges or date in creche.jours_conges):
-                    cp += 1
-                else:
-                    if date in salarie.journees:
-                        journee = salarie.journees[date]
-                        state = journee.GetState()
-                        if state < 0:
-                            if state == CONGES_PAYES:
-                                cp += 1
-                            elif state == VACANCES:
-                                cs += 1
-                            heures_reference = 0
-                            heures_realisees = 0
-                        else:
-                            heures_realisees = journee.GetNombreHeures()
-                    else:
-                        heures_realisees = heures_reference
-                    contractualise += heures_reference
-                    realise += heures_realisees
-            date += datetime.timedelta(1)
-        return affiche, contractualise, realise, cp, cs
-
     def AfficheLignes(self):
         self.EffaceLignes()
         if self.selection:
@@ -1198,13 +1166,13 @@ class SalariesTab(AutoTab):
                 if isinstance(self.selection, int):
                     debut, fin = datetime.date(self.selection, 1, 1), datetime.date(self.selection, 12, 31)
                     cp_total, cs_total = salarie.GetCongesAcquis(self.selection)
-                    affiche, contrat, realise, cp, cs = self.compte(salarie, debut, fin)
+                    affiche, contrat, realise, cp, cs = salarie.GetDecompteHeuresEtConges(debut, fin)
                     lignes.append((GetPrenomNom(salarie), contrat, realise, (cp, cp_total), (cs, cs_total)))
                 else:
                     debut, fin = self.selection, GetMonthEnd(self.selection)
-                    affiche, contrat, realise, cp, cs = self.compte(salarie, debut, fin)
+                    affiche, contrat, realise, cp, cs = salarie.GetDecompteHeuresEtConges(debut, fin)
                     if affiche:
-                        _, contrat_depuis_debut_annee, realise_depuis_debut_annee, _, _ = self.compte(salarie, datetime.date(debut.year, 1, 1), fin)
+                        _, contrat_depuis_debut_annee, realise_depuis_debut_annee, _, _ = salarie.GetDecompteHeuresEtConges(datetime.date(debut.year, 1, 1), fin)
                         lignes.append((GetPrenomNom(salarie), (contrat, contrat_depuis_debut_annee), (realise, realise_depuis_debut_annee), cp, cs))
             lignes.sort(key=lambda l: l[0])
             for ligne in lignes:
