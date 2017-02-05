@@ -1117,7 +1117,7 @@ class SalariesTab(AutoTab):
         self.Bind(wx.EVT_CHOICE, self.OnMonthChoice, self.choice)
         self.sizer.Add(self.choice, 0, wx.ALL | wx.EXPAND, 5)
         self.grid = wx.grid.Grid(self)
-        self.grid.CreateGrid(0, 5)
+        self.grid.CreateGrid(0, 6)
         self.grid.EnableEditing(False)
         self.grid.SetRowLabelSize(200)
         self.grid.SetColLabelValue(0, u"Heures contrat")
@@ -1125,7 +1125,7 @@ class SalariesTab(AutoTab):
         self.grid.SetColLabelValue(2, u"Delta contrat / réalisé")
         self.grid.SetColLabelValue(3, u"Congés payés")
         self.grid.SetColLabelValue(4, u"Congés supplémentaires")
-        for i in range(5):
+        for i in range(6):
             self.grid.SetColSize(i, 200)
         self.sizer.Add(self.grid, -1, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(self.sizer)
@@ -1136,17 +1136,20 @@ class SalariesTab(AutoTab):
         self.OnMonthChoice(None)
 
     def AjouteLigne(self, ligne):
-        identite, contrat, realise, (cp_pris, cp_total), (cs_pris, cs_total) = ligne
+        identite, contrat, realise, cp, cs = ligne
         index = self.grid.GetNumberRows()
         self.grid.AppendRows(1)
         for i in range(5):
             self.grid.SetCellAlignment(index, i, wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
         self.grid.SetRowLabelValue(index, identite)
-        self.grid.SetCellValue(index, 0, GetHeureString(contrat))
-        self.grid.SetCellValue(index, 1, GetHeureString(realise))
-        self.grid.SetCellValue(index, 2, GetHeureString(realise - contrat))
-        self.grid.SetCellValue(index, 3, "%d/%d" % (cp_pris, cp_total) if cp_total else str(cp_pris))
-        self.grid.SetCellValue(index, 4, "%d/%d" % (cs_pris, cs_total) if cs_total else str(cs_pris))
+        self.grid.SetCellValue(index, 0, GetHeureString(contrat[0] if isinstance(contrat, tuple) else contrat))
+        self.grid.SetCellValue(index, 1, GetHeureString(realise[0] if isinstance(realise, tuple) else realise))
+        if isinstance(contrat, tuple):
+            self.grid.SetCellValue(index, 2, GetHeureString(realise[0] - contrat[0]) + " (" + GetHeureString(realise[1] - contrat[1]) + ")")
+        else:
+            self.grid.SetCellValue(index, 2, GetHeureString(realise - contrat))
+        self.grid.SetCellValue(index, 3, "%d/%d" % cp if isinstance(cp, tuple) else str(cp))
+        self.grid.SetCellValue(index, 4, "%d/%d" % cs if isinstance(cs, tuple) else str(cs))
 
     def Disable(self):
         self.EffaceLignes()
@@ -1156,7 +1159,7 @@ class SalariesTab(AutoTab):
             self.grid.DeleteRows(0, self.grid.GetNumberRows())
 
     @staticmethod
-    def Compte(salarie, debut, fin):
+    def compte(salarie, debut, fin):
         affiche, contractualise, realise, cp, cs = False, 0.0, 0.0, 0, 0
         date = debut
         while date <= fin:
@@ -1195,12 +1198,14 @@ class SalariesTab(AutoTab):
                 if isinstance(self.selection, int):
                     debut, fin = datetime.date(self.selection, 1, 1), datetime.date(self.selection, 12, 31)
                     cp_total, cs_total = salarie.GetCongesAcquis(self.selection)
+                    affiche, contrat, realise, cp, cs = self.compte(salarie, debut, fin)
+                    lignes.append((GetPrenomNom(salarie), contrat, realise, (cp, cp_total), (cs, cs_total)))
                 else:
                     debut, fin = self.selection, GetMonthEnd(self.selection)
-                    cp_total, cs_total = 0, 0
-                affiche, contrat, realise, cp, cs = self.Compte(salarie, debut, fin)
-                if affiche:
-                    lignes.append((GetPrenomNom(salarie), contrat, realise, (cp, cp_total), (cs, cs_total)))
+                    affiche, contrat, realise, cp, cs = self.compte(salarie, debut, fin)
+                    if affiche:
+                        _, contrat_depuis_debut_annee, realise_depuis_debut_annee, _, _ = self.compte(salarie, datetime.date(debut.year, 1, 1), fin)
+                        lignes.append((GetPrenomNom(salarie), (contrat, contrat_depuis_debut_annee), (realise, realise_depuis_debut_annee), cp, cs))
             lignes.sort(key=lambda l: l[0])
             for ligne in lignes:
                 self.AjouteLigne(ligne)
