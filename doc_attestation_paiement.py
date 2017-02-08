@@ -26,8 +26,10 @@ class AttestationModifications(object):
     def __init__(self, who, debut, fin, attestation_mensuelle=False):
         if attestation_mensuelle and IsTemplateFile("Attestation mensuelle.odt"):
             self.template = 'Attestation mensuelle.odt'
+            self.attestation_mensuelle = True
         else:
             self.template = 'Attestation paiement.odt'
+            self.attestation_mensuelle = False
         self.debut, self.fin = debut, fin
         if isinstance(who, list):
             self.inscrits = [inscrit for inscrit in who if inscrit.GetInscriptions(debut, fin)]
@@ -98,7 +100,7 @@ class AttestationModifications(object):
                 while date <= self.fin:
                     facture = Facture(inscrit, date.year, date.month, NO_NUMERO)
                     site = facture.site
-                    if facture.total != 0:
+                    if facture.total != 0 or (self.attestation_mensuelle and len(self.inscrits) == 1):
                         if facture_debut is None:
                             facture_debut = date
                         facture_fin = GetMonthEnd(date)
@@ -138,7 +140,7 @@ class AttestationModifications(object):
                 ('dernier-mois', GetBoolStr(last_inscription.fin and last_inscription.fin <= facture_fin)),
             ]
             
-            if IsTemplateFile("Attestation mensuelle.odt"):
+            if self.attestation_mensuelle:
                 fields.extend([
                     ('mois', months[facture_debut.month - 1]),
                     ('annee', facture_debut.year)
