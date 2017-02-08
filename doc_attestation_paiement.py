@@ -23,8 +23,8 @@ from ooffice import *
 
 
 class AttestationModifications(object):
-    def __init__(self, who, debut, fin):
-        if IsTemplateFile("Attestation mensuelle.odt"):
+    def __init__(self, who, debut, fin, attestation_mensuelle=False):
+        if attestation_mensuelle and IsTemplateFile("Attestation mensuelle.odt"):
             self.template = 'Attestation mensuelle.odt'
         else:
             self.template = 'Attestation paiement.odt'
