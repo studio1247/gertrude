@@ -211,6 +211,7 @@ class PlanningReferenceSalariePanel(PlanningWidget):
                     line.sublabel = ""
                     line.reference = None
                     line.summary = True
+                    line.salarie = self.contrat.salarie
                     lines.append(line)
         self.SetLines(lines)
 
@@ -381,7 +382,8 @@ class SalariesNotebook(wx.Notebook):
             
     def UpdateContents(self):
         self.GetCurrentPage().UpdateContents()
-            
+
+
 class SalariesPanel(GPanel):
     name = u"Salariés"
     bitmap = GetBitmapFile("salaries.png")

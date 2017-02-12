@@ -805,7 +805,7 @@ class DocumentDialog(wx.Dialog):
         dlg = None
         try:
             if self.modifications.multi is not False:
-                errors = { }
+                errors = {}
                 simple_modifications = self.modifications.GetSimpleModifications(self.oo_filename)
                 for i, (filename, modifs) in enumerate(simple_modifications):
                     self.gauge.SetValue((100 * i) / len(simple_modifications))

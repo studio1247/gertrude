@@ -716,6 +716,7 @@ class ReferencePlanningPanel(PlanningWidget):
                     line.reference = None
                     line.summary = SUMMARY_ENFANT
                     line.options |= ACTIVITES
+                    line.salarie = None
                     lines.append(line)
         self.SetLines(lines)
 
