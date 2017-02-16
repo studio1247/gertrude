@@ -15,7 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import wx, wx.lib.scrolledpanel
+import wx
+import wx.lib.scrolledpanel
 from buffered_window import BufferedWindow
 import datetime, time
 from constants import *
@@ -33,21 +34,24 @@ CHECKBOX_WIDTH = 25  # px
 COMMENT_BUTTON_WIDTH = 31  # px
 RECAP_WIDTH = 100  # px
 
-BUTTON_BITMAPS = { ABSENT: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), u'Absent'),
-                   ABSENT+PREVISIONNEL: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), u'Congés'),
-                   PRESENT: (wx.Bitmap(GetBitmapFile("icone_presence.png"), wx.BITMAP_TYPE_PNG), u'Présent'),
-                   PRESENT+PREVISIONNEL: (wx.Bitmap(GetBitmapFile("icone_presence_prev.png"), wx.BITMAP_TYPE_PNG), u'Présent'),
-                   VACANCES: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), u'Congés'),
-                   CONGES_PAYES: (wx.Bitmap(GetBitmapFile("icone_conges_payes.png"), wx.BITMAP_TYPE_PNG), u'Congés payés'),
-                   MALADE: (wx.Bitmap(GetBitmapFile("icone_maladie.png"), wx.BITMAP_TYPE_PNG), u'Malade'),
-                   HOPITAL: (wx.Bitmap(GetBitmapFile("icone_hopital.png"), wx.BITMAP_TYPE_PNG), u'Maladie avec hospitalisation'),
-                   MALADE_SANS_JUSTIFICATIF: (wx.Bitmap(GetBitmapFile("icone_maladie_sans_justificatif.png"), wx.BITMAP_TYPE_PNG), u'Maladie sans justificatif'),
-                   ABSENCE_NON_PREVENUE: (wx.Bitmap(GetBitmapFile("icone_absence_non_prevenue.png"), wx.BITMAP_TYPE_PNG), u'Absence non prévenue'),
-                   ABSENCE_CONGE_SANS_PREAVIS: (wx.Bitmap(GetBitmapFile("icone_absence_sans_preavis.png"), wx.BITMAP_TYPE_PNG), u'Congés sans préavis'),
-                   CONGES_DEPASSEMENT: (wx.Bitmap(GetBitmapFile("icone_conges_depassement.png"), wx.BITMAP_TYPE_PNG), u'Absence non déductible (dépassement)'),
-                   }
+try:
+    BUTTON_BITMAPS = {ABSENT: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), u'Absent'),
+                      ABSENT+PREVISIONNEL: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), u'Congés'),
+                      PRESENT: (wx.Bitmap(GetBitmapFile("icone_presence.png"), wx.BITMAP_TYPE_PNG), u'Présent'),
+                      PRESENT+PREVISIONNEL: (wx.Bitmap(GetBitmapFile("icone_presence_prev.png"), wx.BITMAP_TYPE_PNG), u'Présent'),
+                      VACANCES: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), u'Congés'),
+                      CONGES_PAYES: (wx.Bitmap(GetBitmapFile("icone_conges_payes.png"), wx.BITMAP_TYPE_PNG), u'Congés payés'),
+                      MALADE: (wx.Bitmap(GetBitmapFile("icone_maladie.png"), wx.BITMAP_TYPE_PNG), u'Malade'),
+                      HOPITAL: (wx.Bitmap(GetBitmapFile("icone_hopital.png"), wx.BITMAP_TYPE_PNG), u'Maladie avec hospitalisation'),
+                      MALADE_SANS_JUSTIFICATIF: (wx.Bitmap(GetBitmapFile("icone_maladie_sans_justificatif.png"), wx.BITMAP_TYPE_PNG), u'Maladie sans justificatif'),
+                      ABSENCE_NON_PREVENUE: (wx.Bitmap(GetBitmapFile("icone_absence_non_prevenue.png"), wx.BITMAP_TYPE_PNG), u'Absence non prévenue'),
+                      ABSENCE_CONGE_SANS_PREAVIS: (wx.Bitmap(GetBitmapFile("icone_absence_sans_preavis.png"), wx.BITMAP_TYPE_PNG), u'Congés sans préavis'),
+                      CONGES_DEPASSEMENT: (wx.Bitmap(GetBitmapFile("icone_conges_depassement.png"), wx.BITMAP_TYPE_PNG), u'Absence non déductible (dépassement)'),
+                      }
 
-BULLE_BITMAP = wx.Bitmap(GetBitmapFile("bulle.png"))
+    BULLE_BITMAP = wx.Bitmap(GetBitmapFile("bulle.png"))
+except:
+    pass
 
 
 def GetPlanningWidth():

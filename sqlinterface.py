@@ -42,8 +42,12 @@ class SQLConnection(object):
         self.filename = filename
         self.con = None
 
-    def open(self):
-        self.con = sqlite3.connect(self.filename)
+    def open(self, autosave=False):
+        print "Open database %s" % self.filename
+        if autosave:
+            self.con = sqlite3.connect(self.filename, isolation_level=None)
+        else:
+            self.con = sqlite3.connect(self.filename)
 
     def commit(self):
         if self.con:
@@ -600,9 +604,9 @@ class SQLConnection(object):
         cur.execute('DELETE FROM ENCAISSEMENTS')
         self.commit()
 
-    def Load(self, progress_handler=default_progress_handler):
+    def Load(self, progress_handler=default_progress_handler, autosave=False):
         if not self.con:
-            self.open()
+            self.open(autosave=autosave)
 
         # pour decloturer une facture dans une base plus ancienne
         if 0:

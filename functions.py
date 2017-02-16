@@ -1194,7 +1194,7 @@ def AddInscritsToChoice(choice):
         count = array.count(key)
         array.append(key)
         if count > 0:
-            key = key + " (%d)" % count
+            key += " (%d)" % count
         return '  ' + key 
 
     def __add_in_inscrits_choice(choice, inscrits):
