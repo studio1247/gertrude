@@ -1396,6 +1396,8 @@ class Creche(object):
 
     def AddConge(self, conge, calcule=True):
         conge.creche = self
+        if conge.debut is None:
+            return
         if '/' in conge.debut or conge.debut not in [tmp[0] for tmp in jours_fermeture]:
             self.conges.append(conge)
         else:
@@ -1637,7 +1639,7 @@ class Revenu(object):
 
 
 class Parent(object):
-    def __init__(self, famille, relation=None, creation=True):
+    def __init__(self, famille, relation=None, creation=True, automatic=True):
         self.famille = famille
         self.idx = None
         self.relation = relation
@@ -1659,10 +1661,11 @@ class Parent(object):
 
         if creation:
             self.create()
-            date_revenus = GetDateRevenus(today)
-            debut = datetime.date(date_revenus.year, 1, 1)
-            fin = datetime.date(date_revenus.year, 12, 31)
-            self.revenus.append(Revenu(self, debut, fin))
+            if automatic:
+                date_revenus = GetDateRevenus(today)
+                debut = datetime.date(date_revenus.year, 1, 1)
+                fin = datetime.date(date_revenus.year, 12, 31)
+                self.revenus.append(Revenu(self, debut, fin))
 
     def create(self):
         print 'nouveau parent'
@@ -2068,7 +2071,7 @@ class Correction(SQLObject):
 
 
 class Famille(object):
-    def __init__(self, creation=True):
+    def __init__(self, creation=True, automatic=True):
         self.idx = None
         self.adresse = ""
         self.code_postal = ""
@@ -2083,14 +2086,18 @@ class Famille(object):
         self.tarifs = 0
         self.notes = ""
         self.freres_soeurs = []
-        self.parents = [None, None]
+        if automatic:
+            self.parents = [None, None]
+        else:
+            self.parents = []
         self.referents = []
         self.encaissements = []
 
         if creation:
             self.create()
-            self.parents[0] = Parent(self, "papa")
-            self.parents[1] = Parent(self, "maman")
+            if automatic:
+                self.parents[0] = Parent(self, "papa")
+                self.parents[1] = Parent(self, "maman")
 
     def create(self):
         print 'nouvelle famille'
@@ -2125,7 +2132,7 @@ class Famille(object):
 
 
 class Inscrit(object):
-    def __init__(self, creation=True):
+    def __init__(self, creation=True, automatic=True):
         self.idx = None
         self.prenom = ""
         self.nom = ""
@@ -2148,9 +2155,10 @@ class Inscrit(object):
         self.famille = None
 
         if creation:
-            self.famille = Famille()
+            self.famille = Famille(automatic=automatic)
             self.create()
-            self.inscriptions.append(Inscription(self))
+            if automatic:
+                self.inscriptions.append(Inscription(self))
 
     def AddJournee(self, date):
         self.journees[date] = Journee(self, date)

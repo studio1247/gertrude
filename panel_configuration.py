@@ -125,7 +125,7 @@ class CrecheTab(AutoTab):
         planning = PlanningWidget(self, None, NO_BOTTOM_LINE | NO_ICONS | DRAW_VALUES | NO_SCROLL)
         planning.SetLines([line for line in creche.tranches_capacite if IsJourSemaineTravaille(line.jour)])
         grid_sizer.AddMany([wx.StaticText(self, -1, u"Capacité :"), (planning, 1, wx.EXPAND)])
-        self.sizer.Add(grid_sizer, 0, wx.EXPAND|wx.ALL, 5)
+        self.sizer.Add(grid_sizer, 0, wx.EXPAND | wx.ALL, 5)
         
         self.sites_box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, "Sites"), wx.VERTICAL)
         self.sites_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -435,14 +435,6 @@ class ResponsabilitesTab(AutoTab, PeriodeMixin):
         noms.sort(cmp=lambda x,y: cmp(x.lower(), y.lower()))
         return noms
 
-activity_modes = [(u"Normal", 0),
-                  (u"Libère une place", MODE_LIBERE_PLACE),
-                  (u"Sans horaires", MODE_SANS_HORAIRES),
-                  (u"Présence non facturée", MODE_PRESENCE_NON_FACTUREE),
-                  (u"Sans horaire, systématique", MODE_SYSTEMATIQUE_SANS_HORAIRES),
-                  (u"Permanence", MODE_PERMANENCE)
-                  ]
-
 activity_ownership = [(u"Enfants et Salariés", ACTIVITY_OWNER_ALL),
                       (u"Enfants", ACTIVITY_OWNER_ENFANTS),
                       (u"Salariés", ACTIVITY_OWNER_SALARIES)
@@ -527,7 +519,7 @@ class ActivitesTab(AutoTab):
     def AjouteLigneActivite(self, activity):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, u'Libellé :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, 'activites[%d].label' % activity.value), 1, wx.EXPAND)])
-        mode_choice = AutoChoiceCtrl(self, creche, 'activites[%d].mode' % activity.value, items=activity_modes, observers=['activites'])
+        mode_choice = AutoChoiceCtrl(self, creche, 'activites[%d].mode' % activity.value, items=ActivityModes, observers=['activites'])
         self.Bind(wx.EVT_CHOICE, self.OnChangementMode, mode_choice)
         sizer.AddMany([(wx.StaticText(self, -1, u'Mode :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (mode_choice, 0, 0)])
         color_button = mode_choice.color_button = wx.Button(self, -1, "", size=(20, 20))
@@ -754,7 +746,7 @@ class JoursFermeturePanel(AutoTab):
         sizer.AddMany([(wx.StaticText(self, -1, u'Debut :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, creche, 'conges[%d].debut' % index, mois=True, observers=['conges'])])
         sizer.AddMany([(wx.StaticText(self, -1, u'Fin :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, creche, 'conges[%d].fin' % index, mois=True, observers=['conges'])])
         sizer.AddMany([(wx.StaticText(self, -1, u'Libellé :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, creche, 'conges[%d].label' % index, observers=['conges'])])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Options :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'conges[%d].options' % index, [(u'Congé', 0), (u'Accueil non facturé', ACCUEIL_NON_FACTURE), (u'Pas de facture pendant ce mois', MOIS_SANS_FACTURE), (u'Uniquement supplément/déduction', MOIS_FACTURE_UNIQUEMENT_HEURES_SUPP)], observers=['conges']), 0, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, u'Options :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, 'conges[%d].options' % index, ModeCongeItems, observers=['conges']), 0, wx.EXPAND)])
         delbutton = wx.BitmapButton(self, -1, delbmp)
         if readonly:
             delbutton.Disable()

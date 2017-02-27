@@ -16,6 +16,7 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import math
+import xml.dom.minidom
 from functions import *
 
 
@@ -169,7 +170,7 @@ class Cotisation(object):
         self.frais_inscription = self.inscription.frais_inscription
         self.montant_allocation_caf = self.inscription.allocation_mensuelle_caf
         for parent in inscrit.famille.parents:
-            if parent:
+            if parent and parent.relation is not None:
                 self.parents += 1
                 revenus_parent = Select(parent.revenus, self.date_revenus)
                 are_revenus_needed = creche.AreRevenusNeeded()
@@ -595,3 +596,84 @@ class Cotisation(object):
             
     def Include(self, date):
         return self.debut <= date <= self.fin
+
+
+def GetCotisations(inscrit):
+    result = []
+    date = config.first_date
+    for inscription in inscrit.GetInscriptions():
+        if inscription.debut:
+            date = max(date, inscription.debut)
+            while date.year < today.year + 2:
+                try:
+                    cotisation = Cotisation(inscrit, date, TRACES)
+                    result.append((cotisation.debut, cotisation.fin, cotisation))
+                    date = cotisation.fin + datetime.timedelta(1)
+                except CotisationException, e:
+                    if inscription.fin:
+                        fin = inscription.fin
+                    else:
+                        fin = datetime.date(date.year, 12, 31)
+                    if fin >= date:
+                        result.append((date, fin, e))
+                        date = fin + datetime.timedelta(1)
+                    break
+    return result
+
+
+def ParseHtml(filename, context):
+    locals().update(context.__dict__)
+    data = file(filename, 'r').read()
+
+    # remplacement des <if>
+    while 1:
+        start = data.find('<if ')
+        if start == -1:
+            break
+        end = data.find('</if>', start) + 5
+        text = data[start:end]
+        dom = xml.dom.minidom.parseString(text[:text.index('>') + 1] + '</if>')
+        test = dom.getElementsByTagName('if')[0].getAttribute('value')
+        try:
+            if eval(test):
+                replacement = text[text.index('>') + 1:-5]
+            else:
+                replacement = ''
+
+        except:
+            print 'TODO', text
+            replacement = ''  # TODO la période de référence du contrat est cassée
+        data = data.replace(text, replacement)
+
+    # remplacement des <var>
+    while 1:
+        start = data.find('<var ')
+        if start == -1:
+            break
+        end = data.find('/>', start) + 2
+        text = data[start:end]
+        dom = xml.dom.minidom.parseString(text)
+        try:
+            replacement = eval(dom.getElementsByTagName('var')[0].getAttribute('value'))
+        except:
+            replacement = "<erreur (%s)>" % dom.getElementsByTagName('var')[0].getAttribute('value')
+        if type(replacement) == datetime.date:
+            replacement = date2str(replacement)
+        elif type(replacement) != str and type(replacement) != unicode:
+            replacement = str(replacement)
+        data = data.replace(text, replacement)
+
+    return data
+
+
+def generateFraisGardeHtml(cotisation):
+    if creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
+        filename = "Frais garde forfait.html"
+    elif creche.mode_facturation == FACTURATION_HORAIRES_REELS:
+        filename = "Frais garde reel.html"
+    elif creche.mode_facturation == FACTURATION_PAJE:
+        filename = "Frais garde paje.html"
+    else:
+        filename = "Frais garde defaut.html"
+    print filename
+    return ParseHtml(GetTemplateFile(filename), cotisation)

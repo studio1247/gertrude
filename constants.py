@@ -52,13 +52,22 @@ MODE_PRESENCE_NON_FACTUREE = 4
 MODE_SYSTEMATIQUE_SANS_HORAIRES = 5
 MODE_PERMANENCE = 6
 
+ActivityModes = [
+    (u"Normal", 0),
+    (u"Libère une place", MODE_LIBERE_PLACE),
+    (u"Sans horaires", MODE_SANS_HORAIRES),
+    (u"Présence non facturée", MODE_PRESENCE_NON_FACTUREE),
+    (u"Sans horaire, systématique", MODE_SYSTEMATIQUE_SANS_HORAIRES),
+    (u"Permanence", MODE_PERMANENCE)
+]
+
 # Propriétaires des activités
 ACTIVITY_OWNER_ALL = 0
 ACTIVITY_OWNER_ENFANTS = 1
 ACTIVITY_OWNER_SALARIES = 2
 
 # Granularité du planning dans la base
-BASE_GRANULARITY = 5 # 5 minutes
+BASE_GRANULARITY = 5  # 5 minutes
 DAY_SIZE = 24 * 60 / BASE_GRANULARITY
 
 # Modes d'inscription
@@ -181,6 +190,13 @@ ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION = 3
 ACCUEIL_NON_FACTURE = 1  # jours de nettoyage par exemple
 MOIS_SANS_FACTURE = 2  # si présence dans cette periode (mois d'août par exemple), elle est répartie sur les autres mois de l'année
 MOIS_FACTURE_UNIQUEMENT_HEURES_SUPP = 4  # si présence dans cette periode (mois d'août par exemple), le contrat réparti sur les autres mois de l'année, seules les suppléments / déductions sont facturés
+
+ModeCongeItems = [
+    (u"Fermeture de l'établissement", 0),
+    (u"Accueil non facturé", ACCUEIL_NON_FACTURE),
+    (u"Pas de facture pendant ce mois", MOIS_SANS_FACTURE),
+    (u"Uniquement supplément/déduction", MOIS_FACTURE_UNIQUEMENT_HEURES_SUPP)
+]
 
 # Modes d'arrondi des heures de presence
 SANS_ARRONDI = 0

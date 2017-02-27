@@ -15,7 +15,6 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-import xml.dom.minidom
 import wx.html
 from sqlobjects import *
 from controls import *
@@ -24,51 +23,6 @@ from cotisation import *
 from ooffice import *
 from doc_contrat_accueil import ContratAccueilModifications, DevisAccueilModifications, FraisGardeModifications
 import sqlinterface
-
-
-def ParseHtml(filename, context):
-    locals().update(context.__dict__)
-    data = file(filename, 'r').read()
-
-    # remplacement des <if>
-    while 1:
-        start = data.find('<if ')
-        if start == -1:
-            break
-        end = data.find('</if>', start) + 5
-        text = data[start:end]
-        dom = xml.dom.minidom.parseString(text[:text.index('>')+1] + '</if>')
-        test = dom.getElementsByTagName('if')[0].getAttribute('value')
-        try:
-            if eval(test):
-                replacement = text[text.index('>')+1:-5]
-            else:
-                replacement = ''
-            
-        except:
-            print 'TODO', text
-            replacement = '' # TODO la période de référence du contrat est cassée
-        data = data.replace(text, replacement)
-
-    # remplacement des <var>
-    while 1:
-        start = data.find('<var ')
-        if start == -1:
-            break
-        end = data.find('/>', start) + 2
-        text = data[start:end]
-        dom = xml.dom.minidom.parseString(text)
-        try:
-            replacement = eval(dom.getElementsByTagName('var')[0].getAttribute('value'))
-        except:
-            replacement = "<erreur (%s)>" % dom.getElementsByTagName('var')[0].getAttribute('value')
-        if type(replacement) == datetime.date:
-            replacement = date2str(replacement)
-        elif type(replacement) != str and type(replacement) != unicode:
-            replacement = str(replacement)
-        data = data.replace(text, replacement)
-
-    return data
 
 
 class FraisGardePanel(wx.Panel):
@@ -108,7 +62,7 @@ class FraisGardePanel(wx.Panel):
             if button:
                 button.Enable(state)
 
-    def UpdatePage(self):      
+    def UpdatePage(self):
         if self.inscrit is None:
             self.html = '<html><body>Aucun inscrit s&eacute;lectionn&eacute; !</body></html>'
             self.periodechoice.Disable()
@@ -122,47 +76,18 @@ class FraisGardePanel(wx.Panel):
                 self.html = u"<html><body><b>Les frais de garde ne peuvent être calcul&eacute;s pour la (les) raison(s) suivante(s) :</b><br>" + error + "</body></html>"
                 self.EnableButtons(False)
             else:
-                if creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
-                    filename = "Frais garde forfait.html"
-                elif creche.mode_facturation == FACTURATION_HORAIRES_REELS:
-                    filename = "Frais garde reel.html"
-                elif creche.mode_facturation == FACTURATION_PAJE:
-                    filename = "Frais garde paje.html"
-                else:
-                    filename = "Frais garde defaut.html"   
-                self.html = ParseHtml(GetTemplateFile(filename), context)
+                self.html = generateFraisGardeHtml(context)
                 self.EnableButtons(True)
         self.html_window.SetPage(self.html)
         
     def SetInscrit(self, inscrit):
         self.inscrit = inscrit
         self.UpdateContents()
-
-    def GetCotisations(self):
-        self.cotisations = []
-        date = config.first_date
-        for inscription in self.inscrit.GetInscriptions():
-            if inscription.debut:
-                date = max(date, inscription.debut)
-                while date.year < today.year + 2:
-                    try:
-                        cotisation = Cotisation(self.inscrit, date, TRACES)
-                        self.cotisations.append((cotisation.debut, cotisation.fin, cotisation))
-                        date = cotisation.fin + datetime.timedelta(1)
-                    except CotisationException, e:
-                        if inscription.fin:
-                            fin = inscription.fin
-                        else:
-                            fin = datetime.date(date.year, 12, 31)
-                        if fin >= date:
-                            self.cotisations.append((date, fin, e))
-                            date = fin + datetime.timedelta(1)
-                        break
     
     def UpdateContents(self):
         self.periodechoice.Clear()
         if self.inscrit:
-            self.GetCotisations()
+            self.cotisations = GetCotisations(self.inscrit)
             if len(self.cotisations) > 0:
                 index = len(self.cotisations) - 1
                 self.current_cotisation = self.cotisations[index]
