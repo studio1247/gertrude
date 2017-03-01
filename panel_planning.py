@@ -316,9 +316,11 @@ class PlanningHorairePanel(PlanningBasePanel):
                     array[idx][date] = []
                 if label == "arrivee":
                     arrivee = (heure+TABLETTE_MARGE_ARRIVEE) / creche.granularite * (creche.granularite/BASE_GRANULARITY)
-                    while len(array[idx][date]) > 0 and not array[idx][date][-1].depart:
-                        del array[idx][date][-1]
-                    array[idx][date].append(PeriodePresence(date, arrivee))
+                    if len(array[idx][date]) == 0 or (array[idx][date][-1].arrivee and array[idx][date][-1].depart):
+                        array[idx][date].append(PeriodePresence(date, arrivee))
+                    elif array[idx][date][-1].depart:
+                        array[idx][date].arrivee = array[idx][date][-1].depart
+                        array[idx][date][-1].depart = None
                 elif label == "depart":
                     depart = (heure+creche.granularite-TABLETTE_MARGE_ARRIVEE) / creche.granularite * (creche.granularite/BASE_GRANULARITY)
                     if len(array[idx][date]) > 0:
