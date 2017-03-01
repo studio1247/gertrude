@@ -1178,9 +1178,9 @@ def SplitLineTablette(line):
     date = datetime.date(tm.tm_year, tm.tm_mon, tm.tm_mday)
     heure = tm.tm_hour * 60 + tm.tm_min
     if label.endswith("_salarie"):
-        return (True, label[:-8], idx, date, heure)
+        return True, label[:-8], idx, date, heure
     else:
-        return (False, label, idx, date, heure)
+        return False, label, idx, date, heure
 
 
 def AddInscritsToChoice(choice):
