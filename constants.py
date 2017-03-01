@@ -39,6 +39,17 @@ TYPE_ASSISTANTE_MATERNELLE = 5
 TYPE_FAMILIAL = 6
 TYPE_MULTI_ACCUEIL = 7
 
+TypesCreche = [
+    (u"Parental", TYPE_PARENTAL),
+    (u"Familial", TYPE_FAMILIAL),
+    (u"Associatif", TYPE_ASSOCIATIF),
+    (u"Municipal", TYPE_MUNICIPAL),
+    (u"Micro-crèche", TYPE_MICRO_CRECHE),
+    (u"Multi-accueil", TYPE_MULTI_ACCUEIL),
+    (u"Assistante maternelle", TYPE_ASSISTANTE_MATERNELLE),
+    (u"Garderie périscolaire", TYPE_GARDERIE_PERISCOLAIRE)
+]
+
 # Mode de saisie des plannings
 SAISIE_HORAIRE = 0
 SAISIE_JOURS_SEMAINE = 1

@@ -24,16 +24,6 @@ import wx
 import bcrypt
 from planning import PlanningWidget, NO_BOTTOM_LINE, NO_ICONS, DRAW_VALUES, NO_SCROLL
 
-types_creche = [(u"Parental", TYPE_PARENTAL),
-                (u"Familial", TYPE_FAMILIAL),
-                (u"Associatif", TYPE_ASSOCIATIF),
-                (u"Municipal", TYPE_MUNICIPAL),
-                (u"Micro-crèche", TYPE_MICRO_CRECHE),
-                (u"Multi-accueil", TYPE_MULTI_ACCUEIL),
-                (u"Assistante maternelle", TYPE_ASSISTANTE_MATERNELLE),
-                (u"Garderie périscolaire", TYPE_GARDERIE_PERISCOLAIRE)
-                ]
-
 modes_facturation = [(u"Forfait 10h / jour", FACTURATION_FORFAIT_10H),
                      (u"PSU", FACTURATION_PSU),
                      (u"PSU avec taux d'effort personnalisés", FACTURATION_PSU_TAUX_PERSONNALISES),
@@ -115,7 +105,7 @@ class CrecheTab(AutoTab):
         grid_sizer.AddMany([wx.StaticText(self, -1, u"E-mail :"), (AutoTextCtrl(self, creche, 'email'), 0, wx.EXPAND)])
         grid_sizer.AddMany([wx.StaticText(self, -1, u"Serveur pour l'envoi d'emails :"), (AutoTextCtrl(self, creche, 'smtp_server'), 0, wx.EXPAND)])
         grid_sizer.AddMany([wx.StaticText(self, -1, u"Email de la CAF :"), (AutoTextCtrl(self, creche, 'caf_email'), 0, wx.EXPAND)])
-        type_structure_choice = AutoChoiceCtrl(self, creche, 'type', items=types_creche)
+        type_structure_choice = AutoChoiceCtrl(self, creche, 'type', items=TypesCreche)
         self.Bind(wx.EVT_CHOICE, self.OnChangementTypeStructure, type_structure_choice)
         grid_sizer.AddMany([wx.StaticText(self, -1, u"Type :"), (type_structure_choice, 0, wx.EXPAND)])
         raz_permanences_label = wx.StaticText(self, -1, u"Date remise à zéro des permanences :")
