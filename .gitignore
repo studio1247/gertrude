@@ -4,13 +4,12 @@ dist
 backups
 bitmaps
 templates
+databases
+importations
 .project
 .pydevproject
 .settings
 *.ini
-*.db
-gertrude.ini.*
-importations
 *.csv
 *.od?
 perms.py
