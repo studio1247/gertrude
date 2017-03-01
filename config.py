@@ -208,7 +208,7 @@ def getDatabase(parser, section):
     except:
         return database
 
-    if url.startswith("http://"):
+    if url.startswith("http://") or url.startswith("https://"):
         try:
             auth_info = (parser.get(section, "login"), parser.get(section, "password"))
         except:
