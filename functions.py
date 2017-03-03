@@ -313,7 +313,7 @@ def GetFile(filename, site, path, path_dist):
     if site and site.nom:
         paths.append("%s/%s_%s" % (path, site.nom, filename))
     try:
-        paths.append("%s/%s_%s" % (path, creche.nom.lower(), filename))
+        paths.append("%s/[%s] %s" % (path, creche.nom.replace('"', ''), filename))
         paths.append("%s/[%s] %s" % (path, creche.nom.lower().replace('"', ''), filename))
     except:
         pass
