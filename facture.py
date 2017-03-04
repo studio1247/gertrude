@@ -189,6 +189,8 @@ class FactureFinMois(object):
                         heures_facturees_non_realisees = 0.0
                         heures_realisees_non_facturees = inscrit.GetTotalActivitesPresenceNonFacturee(date)
                         heures_supplementaires_facturees = (heures_facturees - heures_reference)
+                        if (options & TRACES) and heures_supplementaires_facturees:
+                            print u"%f heures supplémentaires le %r" % (heures_supplementaires_facturees, date)
                         #  retiré le 19 juillet 2017 pb d'heures supp marquées non facturées (retirées en double)
                         #  if heures_realisees_non_facturees > heures_reference:
                         #    heures_supplementaires_facturees -= heures_realisees_non_facturees - heures_reference
