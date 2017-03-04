@@ -209,12 +209,12 @@ class HttpConnection(object):
         else:
             return []
         
-    def Load(self, progress_handler=default_progress_handler):
+    def Load(self, progress_handler=default_progress_handler, autosave=False):
         self.progress_handler = progress_handler
         if self.download():
-            result = FileConnection(self.filename).Load(progress_handler)
+            result = FileConnection(self.filename).Load(progress_handler, autosave)
         elif self.do_download():
-            result = FileConnection(self.filename).Load(progress_handler)[0], 1
+            result = FileConnection(self.filename).Load(progress_handler, autosave)[0], 1
         else:
             result = None, 0
         return result
@@ -332,12 +332,12 @@ class SharedFileConnection(object):
         else:
             return []
         
-    def Load(self, progress_handler=default_progress_handler):
+    def Load(self, progress_handler=default_progress_handler, autosave=False):
         self.progress_handler = progress_handler
         if self.download():
-            result = FileConnection(self.filename).Load(progress_handler)
+            result = FileConnection(self.filename).Load(progress_handler, autosave)
         elif self.do_download():
-            result = FileConnection(self.filename).Load(progress_handler)[0], 1
+            result = FileConnection(self.filename).Load(progress_handler, autosave)[0], 1
         else:
             result = None, 0
         return result
@@ -395,7 +395,7 @@ class FileConnection(object):
             print e
         return _sql_connection, _creche
     
-    def Load(self, progress_handler=default_progress_handler):
+    def Load(self, progress_handler=default_progress_handler, autosave=False):
         if os.path.isfile(self.filename):
             self.file_mtime = os.stat(self.filename).st_mtime
             self.Backup(progress_handler)
@@ -407,7 +407,7 @@ class FileConnection(object):
                 sql_connection.close()
                 os.remove(self.filename)
                 raise
-        creche = sql_connection.Load(progress_handler)
+        creche = sql_connection.Load(progress_handler, autosave)
         return creche, 0
 
     def Save(self, progress_handler=default_progress_handler):

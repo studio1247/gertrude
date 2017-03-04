@@ -127,6 +127,14 @@ def getColumnWidth(parser):
     return result
 
 
+def getSAASPort(parser):
+    try:
+        result = int(parser.get(DEFAULT_SECTION, "port"))
+    except:
+        result = None
+    return result
+
+
 def getDefaultDocumentsDirectory():
     if sys.platform == 'win32':
         try:
@@ -245,27 +253,32 @@ def getDatabase(parser, section):
     return database
 
 
-def LoadConfig(progress_handler=default_progress_handler):
-    progress_handler.display(u"Chargement de la configuration ...")
-    
-    parser = None
-    
+def GetConfigFile():
     for folder in CONFIG_PATHS:
         path = folder + CONFIG_FILENAME
         if os.path.isfile(path):
-            try:
-                parser = ConfigParser.SafeConfigParser()
-                parser.read(path)
-                config.filename = path
-                break
-            except:
-                progress_handler.display(u"Fichier %s erroné. Utilisation de la configuration par défaut." % path)
-    else:
-        progress_handler.display(u"Pas de fichier %s. Utilisation de la configuration par défaut." % CONFIG_FILENAME)
+            return path
+    return None
+
+
+def LoadConfig(path=None, progress_handler=default_progress_handler):
+    if path is None:
+        path = GetConfigFile()
+    progress_handler.display(u"Chargement de la configuration %s ..." % path if path else "default")
+
+    if path:
+        try:
+            parser = ConfigParser.SafeConfigParser()
+            parser.read(path)
+            config.filename = path
+        except:
+            progress_handler.display(u"Fichier %s erroné. Utilisation de la configuration par défaut." % path)
 
     config.original_window_size = getWindowSize(parser)
     config.window_size = config.original_window_size
     config.column_width = getColumnWidth(parser)
+
+    config.saas_port = getSAASPort(parser)
 
     years_before, years_after = getYearsDisplayed(parser)
     config.first_date = datetime.date(today.year - years_before, 1, 1)
@@ -325,8 +338,8 @@ def SaveConfig(progress_handler):
             progress_handler.display(u"Impossible d'enregistrer les paramètres de configuration !")    
 
 
-def Load(progress_handler=default_progress_handler):
-    __builtin__.creche, __builtin__.readonly = config.connection.Load(progress_handler)
+def Load(progress_handler=default_progress_handler, autosave=False):
+    __builtin__.creche, __builtin__.readonly = config.connection.Load(progress_handler, autosave)
     return creche is not None
 
 
