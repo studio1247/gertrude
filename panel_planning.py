@@ -253,6 +253,58 @@ class PlanningHorairePanel(PlanningBasePanel):
                 page_index += 1
 
     def OnTabletteSynchro(self, _):
+        if 0:
+            # Recuperation des logs Apache
+            lines = file("D:/requests").readlines()
+            result = []
+            for line in lines:
+                print line
+                splitted = line.split()
+                url = splitted[6]
+                action = None
+                combinaison = None
+                ts = None
+                params = url.split("?")[1].split("&")
+                for param in params:
+                    key, val = param.split("=")
+                    if key == "action":
+                        action = val
+                    elif key == "combinaison":
+                        combinaison = val
+                    elif key == "ts":
+                        ts = int(val)
+
+                who = None
+                for inscrit in creche.inscrits:
+                    toto = urllib.quote_plus(inscrit.nom.encode("utf-8")) + "+" + urllib.quote_plus(inscrit.prenom.encode("utf-8"))
+                    if toto == combinaison:
+                        who = inscrit
+
+                if who is None:
+                    for inscrit in creche.salaries:
+                        toto = urllib.quote_plus(inscrit.nom.encode("utf-8")) + "+" + urllib.quote_plus(inscrit.prenom.encode("utf-8"))
+                        if toto == combinaison:
+                            action += "_salarie"
+                            who = inscrit
+
+                if who is None:
+                    if combinaison.strip():
+                        print "-----ERREUR-----", date, action, combinaison, ts
+                else:
+                    date = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d@%H:%M')
+                    if (action, who.idx, date) in result:
+                        print "-----ENTREE EN DOUBLE-----", url
+                    else:
+                        result.append((action, who.idx, date))
+
+            result.sort(key=lambda tup: tup[-1])  # sorts in place
+            f = file("journal.txt", "w")
+            for action, idx, date in result:
+                print action, idx, date
+                f.write("%s %d %s\n" % (action, idx, date))
+            f.close()
+            return
+
         journal = config.connection.LoadJournal()
 
         def AddPeriodes(who, date, periodes):
@@ -319,7 +371,7 @@ class PlanningHorairePanel(PlanningBasePanel):
                     if len(array[idx][date]) == 0 or (array[idx][date][-1].arrivee and array[idx][date][-1].depart):
                         array[idx][date].append(PeriodePresence(date, arrivee))
                     elif array[idx][date][-1].depart:
-                        array[idx][date].arrivee = array[idx][date][-1].depart
+                        array[idx][date][-1].arrivee = array[idx][date][-1].depart
                         array[idx][date][-1].depart = None
                 elif label == "depart":
                     depart = (heure+creche.granularite-TABLETTE_MARGE_ARRIVEE) / creche.granularite * (creche.granularite/BASE_GRANULARITY)
