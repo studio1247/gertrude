@@ -140,7 +140,7 @@ class FactureModifications(object):
                             state = MALADE
                             details = " (%s)" % GetHeureString(facture.jours_maladie_non_deduits[date])
                         elif date in facture.jours_maladie:
-                            state = MALADE
+                            state = HOPITAL
                         elif facture.inscrit.IsDateConge(date):
                             state = CONGES
                         elif date in facture.jours_conges_non_factures:
@@ -172,6 +172,8 @@ class FactureModifications(object):
                 pass
 
     def execute(self, filename, dom):
+        global couleurs
+
         if filename == 'meta.xml':
             self.GetMetas(dom)
             return None
@@ -188,17 +190,16 @@ class FactureModifications(object):
         doc = dom.getElementsByTagName("office:text")[0]
         templates = doc.childNodes[:]
 
-        styleC3, styleD3 = False, False
-        for style in doc.getElementsByTagName('style:style'):
-            if style.name == 'Presences.C3':
-                styleC3 = True
-            elif style.name == 'Presences.D3':
-                styleD3 = True
-
-        # if not styleC3:
-        #    couleurs[CONGES] = 'B3'
-        if not styleD3:
-            couleurs[CONGES_DEPASSEMENT] = 'B3'
+        if "Couleurs" in self.metas:
+            couleurs = eval(self.metas["Couleurs"])
+            print "METAS COULEURS", couleurs
+        else:
+            styleC3, styleD3 = False, False
+            for style in doc.getElementsByTagName('style:style'):
+                if style.name == 'Presences.D3':
+                    styleD3 = True
+            if not styleD3:
+                couleurs[CONGES_DEPASSEMENT] = 'B3'
 
         done = []
 
