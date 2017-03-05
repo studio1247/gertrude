@@ -193,7 +193,7 @@ class StartDialog(wx.Dialog):
             time.sleep(1)
         try:
             if section is None:
-                LoadConfig(ProgressHandler(self.AppendMessage, self.SetGauge, 0, 5))
+                LoadConfig(progress_handler=ProgressHandler(self.AppendMessage, self.SetGauge, 0, 5))
                 if config.connection is None:
                     wx.PostEvent(self, self.LoadedEvent(result=None))
                     return
