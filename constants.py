@@ -29,6 +29,16 @@ PROFIL_ADMIN = 16
 PROFIL_LECTURE_SEULE = 32
 PROFIL_ALL = PROFIL_ADMIN + PROFIL_INSCRIPTIONS + PROFIL_TRESORIER + PROFIL_BUREAU + PROFIL_SAISIE_PRESENCES
 
+TypesProfil = [
+    (u"Administrateur", PROFIL_ALL),
+    (u"Equipe", PROFIL_ALL-PROFIL_ADMIN),
+    (u"Bureau", PROFIL_BUREAU),
+    (u"Trésorier", PROFIL_TRESORIER),
+    (u"Inscriptions", PROFIL_INSCRIPTIONS),
+    (u"Saisie présences", PROFIL_SAISIE_PRESENCES),
+    (u"Utilisateur lecture seule", PROFIL_LECTURE_SEULE),
+]
+
 # Types de structures
 TYPE_PARENTAL = 0
 TYPE_ASSOCIATIF = 1

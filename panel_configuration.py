@@ -1328,15 +1328,6 @@ class TauxEffortPanel(AutoTab):
         creche.UpdateFormuleTauxEffort()
         history.Append(None)    
 
-profiles = [(u"Administrateur", PROFIL_ALL),
-            (u"Equipe", PROFIL_ALL-PROFIL_ADMIN),
-            (u"Bureau", PROFIL_BUREAU),
-            (u"Trésorier", PROFIL_TRESORIER),
-            (u"Inscriptions", PROFIL_INSCRIPTIONS),
-            (u"Saisie présences", PROFIL_SAISIE_PRESENCES),
-            (u"Utilisateur lecture seule", PROFIL_LECTURE_SEULE),
-            ]
-
 
 class UsersTab(AutoTab):
     def __init__(self, parent):
@@ -1376,7 +1367,7 @@ class UsersTab(AutoTab):
         password_ctrl.user_index = index
         self.Bind(wx.EVT_TEXT, self.OnPasswordChange, password_ctrl)
         sizer.AddMany([(wx.StaticText(self, -1, u'Mot de passe :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (password_ctrl, 0, wx.ALIGN_CENTER_VERTICAL)])
-        profile_choice = AutoChoiceCtrl(self, creche, 'users[%d].profile' % index, items=profiles)
+        profile_choice = AutoChoiceCtrl(self, creche, 'users[%d].profile' % index, items=TypesProfil)
         profile_choice.index = index
         self.Bind(wx.EVT_CHOICE, self.OnUserProfileModified, profile_choice)
         sizer.AddMany([(wx.StaticText(self, -1, u'Profil :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), profile_choice])

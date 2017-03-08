@@ -16,6 +16,7 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import binascii
+import bcrypt
 import wx
 from functions import *
 from cotisation import GetDateRevenus
@@ -644,8 +645,8 @@ class Charges(object):
 class User(object):
     def __init__(self, creation=True):
         self.idx = None
-        self.login = "anonymous"
-        self.password = "anonymous"
+        self.login = "admin"
+        self.password = bcrypt.hashpw(self.login.encode("utf-8"), bcrypt.gensalt())
         self.profile = PROFIL_ALL
 
         if creation:
