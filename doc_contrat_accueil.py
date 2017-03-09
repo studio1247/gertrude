@@ -213,6 +213,7 @@ class OdtDocumentAccueilModifications(DocumentAccueilModifications):
 class DevisAccueilModifications(OdtDocumentAccueilModifications):
     def __init__(self, who, date):
         OdtDocumentAccueilModifications.__init__(self, who, date)
+        self.title = "Devis"
         self.template = "Devis accueil.odt"
         self.default_output = u"Devis accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
 
@@ -220,6 +221,7 @@ class DevisAccueilModifications(OdtDocumentAccueilModifications):
 class ContratAccueilModifications(OdtDocumentAccueilModifications):
     def __init__(self, who, date):
         OdtDocumentAccueilModifications.__init__(self, who, date)
+        self.title = "Contrat d'accueil"
         if self.inscription.mode == MODE_TEMPS_PARTIEL and IsTemplateFile("Contrat accueil temps partiel.odt"):
             self.template = "Contrat accueil temps partiel.odt"
         elif self.inscription.mode == MODE_FORFAIT_MENSUEL and IsTemplateFile("Contrat accueil forfait mensuel.odt"):
@@ -234,6 +236,7 @@ class ContratAccueilModifications(OdtDocumentAccueilModifications):
 class AvenantContratAccueilModifications(OdtDocumentAccueilModifications):
     def __init__(self, who, date):
         OdtDocumentAccueilModifications.__init__(self, who, date)
+        self.title = "Avenant au contrat d'accueil"
         self.template = "Avenant contrat accueil.odt"
         self.default_output = u"Avenant contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
 
@@ -241,6 +244,7 @@ class AvenantContratAccueilModifications(OdtDocumentAccueilModifications):
 class FraisGardeModifications(DocumentAccueilModifications):
     def __init__(self, who, date):
         DocumentAccueilModifications.__init__(self, who, date)
+        self.title = "Frais de garde"
         self.multi = False
         self.template = 'Frais de garde.ods'
         self.default_output = u"Frais de garde %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
