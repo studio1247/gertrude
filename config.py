@@ -264,11 +264,12 @@ def GetConfigFile():
 def LoadConfig(path=None, progress_handler=default_progress_handler):
     if path is None:
         path = GetConfigFile()
+
     progress_handler.display(u"Chargement de la configuration %s ..." % path if path else "default")
+    parser = ConfigParser.SafeConfigParser()
 
     if path:
         try:
-            parser = ConfigParser.SafeConfigParser()
             parser.read(path)
             config.filename = path
         except:

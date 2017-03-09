@@ -19,7 +19,7 @@ import locale
 import __builtin__
 from cotisation import *
 from globals import history
-from sqlobjects import Encaissement
+from sqlobjects import Encaissement, Inscrit
 
 
 class FactureFinMois(object):
@@ -868,3 +868,15 @@ def CalculeSolde(famille, date):
         except:
             pass
     return solde
+
+
+def GetFacturesList(inscrit):
+    result = []
+    date = GetFirstMonday()
+    while date <= datetime.date.today():
+        if not isinstance(inscrit, Inscrit) or inscrit.HasFacture(date):
+            result.append(date)
+        date = GetNextMonthStart(date)
+    return result
+
+
