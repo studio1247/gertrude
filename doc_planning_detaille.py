@@ -32,6 +32,7 @@ lines_max = 25
 
 class PlanningDetailleModifications(object):
     def __init__(self, periode, site=None, groupe=None):
+        self.title = u"Planning détaillé"
         self.multi = False
         self.site = site
         self.groupe = groupe
