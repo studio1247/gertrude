@@ -27,6 +27,7 @@ class Ligne(object):
 
 class PlanningModifications(object):
     def __init__(self, site, debut):
+        self.title = u"Planning"
         self.multi = False
         self.template = 'Planning.ods'
         self.default_output = "Planning %s.ods" % str(debut)
