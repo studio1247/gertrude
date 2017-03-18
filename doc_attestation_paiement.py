@@ -24,6 +24,7 @@ from ooffice import *
 
 class AttestationModifications(object):
     def __init__(self, who, debut, fin, attestation_mensuelle=False):
+        self.title = "Attestation mensuelle"
         if attestation_mensuelle and IsTemplateFile("Attestation mensuelle.odt"):
             self.template = 'Attestation mensuelle.odt'
             self.attestation_mensuelle = True
