@@ -427,4 +427,8 @@ class FileConnection(object):
     def Exit(self, progress_handler=default_progress_handler):
         sql_connection.commit()
         sql_connection.close()
-        return True        
+        return True
+
+    def LoadJournal(self):
+        directory = os.path.dirname(self.filename)
+        return file(os.path.join(directory, 'journal.txt')).read()
