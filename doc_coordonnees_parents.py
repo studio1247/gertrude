@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 from constants import *
 from functions import *
 from facture import *
@@ -23,6 +25,7 @@ from ooffice import *
 
 class CoordonneesModifications(object):
     def __init__(self, site, date):
+        self.title = "Coordonnées des parents"
         self.multi = False
         self.site = site
         if date is None:
@@ -32,10 +35,10 @@ class CoordonneesModifications(object):
         self.email = None
         if IsTemplateFile("Coordonnees parents.ods"):
             self.template = "Coordonnees parents.ods"
-            self.default_output = u"Coordonnees parents %s.ods" % GetDateString(self.date, weekday=False)
+            self.default_output = "Coordonnees parents %s.ods" % GetDateString(self.date, weekday=False)
         else:
             self.template = 'Coordonnees parents.odt'
-            self.default_output = u"Coordonnees parents %s.odt" % GetDateString(self.date, weekday=False)
+            self.default_output = "Coordonnees parents %s.odt" % GetDateString(self.date, weekday=False)
 
     def execute(self, filename, dom):
         if self.template == "Coordonnees parents.ods":
