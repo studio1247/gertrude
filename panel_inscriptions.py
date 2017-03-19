@@ -724,7 +724,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.Bind(wx.EVT_BUTTON, self.OnMondayCopy, self.button_copy)
         self.activity_choice = ActivityComboBox(self)        
         sizer2.Add(self.activity_choice, 0, wx.ALIGN_RIGHT)
-        grid_sizer.AddMany([(wx.StaticText(self, -1, u"Temps de présence :"), 0, wx.ALIGN_CENTER_VERTICAL), (sizer2, 0, wx.EXPAND|wx.ALIGN_CENTER_VERTICAL)])
+        grid_sizer.AddMany([(wx.StaticText(self, -1, u"Temps de présence :"), 0, wx.ALIGN_CENTER_VERTICAL), (sizer2, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)])
         self.planning_panel = ReferencePlanningPanel(self, self.activity_choice)
         sizer.Add(self.planning_panel, 1, wx.EXPAND)
         self.SetSizer(sizer)
