@@ -413,7 +413,7 @@ class ReglementsTab(AutoTab):
 
     def UpdateContents(self):
         AddInscritsToChoice(self.choice)
-        if len(creche.inscrits) > 0 and self.inscrit != None and self.inscrit in creche.inscrits:
+        if len(creche.inscrits) > 0 and self.inscrit is not None and self.inscrit in creche.inscrits:
             SelectValueInChoice(self.choice, self.inscrit)
             self.AfficheLignes()
         else:
