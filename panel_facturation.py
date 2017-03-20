@@ -307,14 +307,7 @@ class FacturationTab(AutoTab):
     
     def OnClotureFacture(self, _):
         inscrits, periode = self.__GetFactureSelection()
-        errors = {}
-        for inscrit in inscrits:
-            try:
-                facture = Facture(inscrit, periode.year, periode.month, NO_NUMERO)
-                facture.Cloture()
-            except CotisationException, e:
-                errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
-                continue
+        errors = ClotureFactures(inscrits, periode)
         if errors:
             message = u"Erreurs lors de la clôture :\n"
             for label in errors.keys():

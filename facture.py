@@ -880,3 +880,13 @@ def GetFacturesList(inscrit):
     return result
 
 
+def ClotureFactures(inscrits, date):
+    errors = {}
+    for inscrit in inscrits:
+        try:
+            facture = Facture(inscrit, date.year, date.month, NO_NUMERO)
+            facture.Cloture()
+        except CotisationException, e:
+            errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
+            continue
+    return errors
