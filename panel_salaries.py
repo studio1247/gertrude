@@ -97,6 +97,7 @@ class IdentiteSalariePanel(SalariesTab):
         self.UpdateContents()
         SalariesTab.SetSalarie(self, salarie)
 
+
 class CongesPanel(SalariesTab):
     def __init__(self, parent):
         global delbmp
