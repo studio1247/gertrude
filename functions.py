@@ -1014,7 +1014,7 @@ def GetReglementFields(famille, annee, mois):
         if encaissement.date and encaissement.date.year == annee and encaissement.date.month == mois:
             total += encaissement.valeur
             dates.append(encaissement.date)
-            moyens.add(ModesEncaissement[encaissement.moyen_paiement][0])
+            moyens.add(ModesEncaissement[encaissement.moyen_paiement][0] if isinstance(encaissement.moyen_paiement, int) else encaissement.moyen_paiement)
     result = [('date-reglement', ', '.join([date2str(date) for date in dates])),
               ('reglement', total, FIELD_EUROS),
               ('moyen-paiement', ', '.join(moyens))
