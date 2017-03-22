@@ -643,13 +643,18 @@ def GenerateDocument(modifications, filename, gauge=None):
         return GenerateTextDocument(modifications, filename, gauge)
 
 
-def SendDocument(filename, text, subject, to):
+def SendDocument(filename, text, subject, to, saas=False):
     COMMASPACE = ', '
 
     # Create the container (outer) email message.
     msg = MIMEMultipart()
     msg['Subject'] = subject
-    msg['From'] = creche.email
+    if saas:
+        msg_from = "saas@gertrude-logiciel.org"
+        msg['Reply-to'] = creche.email
+    else:
+        msg_from = creche.email
+    msg['From'] = msg_from
     msg['To'] = COMMASPACE.join(to)
     msg['CC'] = creche.email
 
@@ -670,7 +675,10 @@ def SendDocument(filename, text, subject, to):
     fp.close()
     msg.attach(doc)
 
-    smtp_server = creche.smtp_server
+    if saas:
+        smtp_server = "localhost"
+    else:
+        smtp_server = creche.smtp_server
     port = 25
     login = None
     try:
@@ -687,7 +695,7 @@ def SendDocument(filename, text, subject, to):
             s.starttls()
         if login:
             s.login(login, password)
-        s.sendmail(creche.email, to + [creche.email], msg.as_string())
+        s.sendmail(msg_from, to + [creche.email], msg.as_string())
         s.quit()
     else:
         print u"From: %s, To:" % creche.email, to + [creche.email]
