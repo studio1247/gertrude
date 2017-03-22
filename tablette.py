@@ -118,7 +118,7 @@ def sync_tablette():
         except:
             pass
 
-    last_imported_day = today
+    last_imported_day = datetime.date.today()
     date = datetime.datetime.now()
     hour = float(date.hour) + float(date.minute) / 60
     if hour < creche.fermeture:

@@ -729,7 +729,6 @@ class StatistiquesFrequentationTab(AutoTab):
 class RelevesTab(AutoTab):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
-        today = datetime.date.today()
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
         self.site_choice = wx.Choice(self, -1)
