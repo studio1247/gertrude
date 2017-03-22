@@ -16,7 +16,7 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
-from __future__ import division
+# TODO pb in GetActivitiesSummary from __future__ import division
 
 import datetime
 from constants import *
