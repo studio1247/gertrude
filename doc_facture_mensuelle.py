@@ -75,11 +75,10 @@ class FactureModifications(object):
             if len(self.inscrits) > 1:
                 self.multi = True
                 self.default_output = u"Facture <enfant> %s %d.odt" % (months[periode.month - 1], periode.year)
-        elif IsTemplateFile("Facture mensuelle simple %s.odt" % creche.nom):
-            self.template = "Facture mensuelle simple %s.odt" % creche.nom
-            if len(self.inscrits) > 1:
-                self.multi = True
-                self.default_output = u"Facture <enfant> %s %d.odt" % (months[periode.month - 1], periode.year)
+        elif IsTemplateFile("Facture mensuelle simple.odt"):
+            self.template = "Facture mensuelle simple.odt"
+            self.multi = True
+            self.default_output_multi = u"Facture <enfant> %s %d.odt" % (months[periode.month - 1], periode.year)
         elif self.site and IsTemplateFile("Facture mensuelle %s.odt" % self.site.nom):
             self.template = "Facture mensuelle %s.odt" % self.site.nom
         elif IsTemplateFile("Facture mensuelle %s.odt" % creche.nom):
