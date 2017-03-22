@@ -228,7 +228,7 @@ class FactureModifications(object):
                     facture = Facture(enfant, self.periode.year, self.periode.month, options=TRACES)
                     total_facture += facture.total
                 except CotisationException, e:
-                    errors["%s %s" % (enfant.prenom, enfant.nom)] = e.errors
+                    errors[GetPrenomNom(enfant)] = e.errors
                     has_errors = True
                     continue
                 last_inscription = None
