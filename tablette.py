@@ -19,6 +19,7 @@ from __future__ import unicode_literals
 from __future__ import division
 
 import datetime
+from functions import SplitLineTablette
 
 
 def write_apache_logs_to_journal():
