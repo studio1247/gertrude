@@ -19,7 +19,11 @@ from __future__ import unicode_literals
 from __future__ import division
 
 import datetime
-from functions import SplitLineTablette
+from constants import *
+from functions import *
+
+
+TABLETTE_MARGE_ARRIVEE = 10
 
 
 def write_apache_logs_to_journal():
