@@ -21,6 +21,7 @@ from __future__ import division
 import datetime
 from constants import *
 from functions import *
+from globals import *
 
 
 TABLETTE_MARGE_ARRIVEE = 10
