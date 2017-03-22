@@ -18,6 +18,8 @@
 from __future__ import unicode_literals
 from __future__ import division
 
+import datetime
+
 
 def write_apache_logs_to_journal():
     # Recuperation des logs Apache
