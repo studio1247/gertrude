@@ -727,9 +727,9 @@ class DocumentDialog(wx.Dialog):
         if not IsOODocument(modifications.template):
             self.format = wx.Choice(self, -1, choices=["Texte"])
         elif sys.platform == 'win32':
-            self.format = wx.Choice(self, -1, choices=["OpenOffice", "PDF"])
+            self.format = wx.Choice(self, -1, choices=["LibreOffice", "PDF"])
         else:
-            self.format = wx.Choice(self, -1, choices=["OpenOffice"])
+            self.format = wx.Choice(self, -1, choices=["LibreOffice"])
         self.format.SetSelection(0)
         self.Bind(wx.EVT_CHOICE, self.onFormat, self.format)
         sizer.Add(self.format, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 5)
