@@ -864,11 +864,12 @@ class SQLConnection(object):
             for inscription in inscrit.inscriptions:
                 cur.execute('SELECT day, value, debut, fin, idx FROM REF_ACTIVITIES WHERE reference=?', (inscription.idx,))
                 for day, value, debut, fin, idx in cur.fetchall():
-                    try:
-                        reference_day = inscription.reference[day]
-                        reference_day.AddActivity(debut, fin, value, idx)
-                    except Exception, e:
-                        print inscrit.prenom, inscrit.nom, day, debut, fin, value, e
+                    if value <= 0 or (value & 0xffff) in creche.activites:
+                        try:
+                            reference_day = inscription.reference[day]
+                            reference_day.AddActivity(debut, fin, value, idx)
+                        except Exception, e:
+                            print inscrit.prenom, inscrit.nom, day, debut, fin, value, e
                     # print inscrit.prenom, day, debut, fin, value
             cur.execute('SELECT debut, fin, label, idx FROM CONGES_INSCRITS WHERE inscrit=?', (inscrit.idx,))
             for conges_entry in cur.fetchall():
@@ -886,7 +887,8 @@ class SQLConnection(object):
                     journee = Journee(inscrit, key)
                     inscrit.journees[key] = journee
                 # print inscrit.prenom, key, debut, fin, value
-                journee.AddActivity(debut, fin, value, idx)
+                if value <= 0 or (value & 0xffff) in creche.activites:
+                    journee.AddActivity(debut, fin, value, idx)
 
             cur.execute('SELECT date, activity, value, idx FROM PLANNING_HEBDOMADAIRE WHERE inscrit=?', (inscrit.idx,))
             for date, activity, value,idx in cur.fetchall():

@@ -96,7 +96,6 @@ class Day(object):
             activity_value = value & ~PREVISIONNEL
             if value == activity_value:
                 self.Confirm()
-            activity = creche.activites[activity_value]
             for a, b, v in self.activites.keys():
                 if value == v:
                     if start <= b + 1 and end >= a - 1:
@@ -105,8 +104,7 @@ class Day(object):
                             self.InsertActivity(a, start, v)
                         if end < b:
                             self.InsertActivity(end, b, v)
-                elif activity_value == 0 and (not v & CLOTURE) and creche.activites[
-                            v & ~PREVISIONNEL].mode == MODE_NORMAL and start < b and end > a:
+                elif activity_value == 0 and (not v & CLOTURE) and creche.activites[v & ~PREVISIONNEL].mode == MODE_NORMAL and start < b and end > a:
                     self.RemoveActivity(a, b, v)
                     if a < start:
                         self.InsertActivity(a, start, v)
