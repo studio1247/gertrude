@@ -460,7 +460,11 @@ class FactureFinMois(object):
                     if options & TRACES:
                         print " cotisation periode adaptation :", report
                 elif inscription.mode == MODE_FORFAIT_HEBDOMADAIRE:
-                    self.cotisation_mensuelle += cotisation.cotisation_mensuelle * cotisation.jours_ouvres / jours_ouvres
+                    if cotisation.prorata:
+                        prorata = cotisation.cotisation_mensuelle * cotisation.jours_ouvres / jours_ouvres
+                    else:
+                        prorata = cotisation.cotisation_mensuelle
+                    self.cotisation_mensuelle += prorata
                     cotisation.heures_contractualisees = cotisation.heures_mois * cotisation.jours_ouvres / jours_ouvres
                     self.total_contractualise += cotisation.heures_contractualisees * cotisation.montant_heure_garde
                     self.heures_supplementaires += cotisation.heures_supplementaires
@@ -468,7 +472,11 @@ class FactureFinMois(object):
                     self.heures_facture_par_mode[cotisation.mode_garde] += cotisation.heures_mois + cotisation.heures_supplementaires
                     self.CalculeSupplement(cotisation, cotisation.heures_supplementaires)
                 elif inscription.mode == MODE_FORFAIT_MENSUEL:
-                    self.cotisation_mensuelle += cotisation.cotisation_mensuelle * cotisation.jours_ouvres / jours_ouvres
+                    if cotisation.prorata:
+                        prorata = cotisation.cotisation_mensuelle * cotisation.jours_ouvres / jours_ouvres
+                    else:
+                        prorata = cotisation.cotisation_mensuelle
+                    self.cotisation_mensuelle += prorata
                     cotisation.heures_contractualisees = inscription.forfait_mensuel_heures * cotisation.jours_ouvres / jours_ouvres
                     self.heures_contractualisees += cotisation.heures_contractualisees
                     self.total_contractualise += cotisation.heures_contractualisees * cotisation.montant_heure_garde
