@@ -871,6 +871,7 @@ class OPagaioTests(GertrudeTestCase):
         GertrudeTestCase.setUp(self)
         creche.type = TYPE_MICRO_CRECHE
         creche.mode_facturation = FACTURATION_PAJE
+        creche.gestion_depart_anticipe = True
         creche.formule_taux_horaire = [["", 9.5]]
         creche.UpdateFormuleTauxHoraire(changed=False)
         creche.temps_facturation = FACTURATION_FIN_MOIS
@@ -895,7 +896,31 @@ class OPagaioTests(GertrudeTestCase):
         facture = Facture(inscrit, 2016, 9)
         self.assertEquals(facture.total, 0.0)
         facture = Facture(inscrit, 2016, 10)
-        self.assertEquals(facture.total, 538.48)
+        self.assertPrec2Equals(facture.total, 538.48)
+
+    def test_changement_de_contrat(self):
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit, creation=False)
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.semaines_conges = 10
+        inscription.debut = datetime.date(2016, 10, 3)
+        inscription.fin_periode_adaptation = datetime.date(2016, 10, 3)
+        inscription.fin = datetime.date(2017, 8, 31)
+        inscription.depart = datetime.date(2017, 2, 5)
+        inscription.reference[0].AddActivity(102, 216, 0, -1)  # 9.5h
+        inscrit.inscriptions.append(inscription)
+        inscription = Inscription(inscrit, creation=False)
+        inscription.mode = MODE_FORFAIT_HEBDOMADAIRE
+        inscription.forfait_mensuel_heures = 9.0
+        inscription.debut = datetime.date(2017, 2, 6)
+        inscription.fin = datetime.date(2017, 3, 10)
+        inscrit.inscriptions.append(inscription)
+        cotisation = Cotisation(inscrit, datetime.date(2016, 10, 4), NO_ADDRESS | NO_PARENTS)
+        self.assertPrec2Equals(cotisation.cotisation_mensuelle, 311.77)
+        cotisation = Cotisation(inscrit, datetime.date(2017, 2, 6), NO_ADDRESS | NO_PARENTS)
+        self.assertPrec2Equals(cotisation.cotisation_mensuelle, 213.75)
+        facture = Facture(inscrit, 2017, 2)
+        self.assertPrec2Equals(facture.cotisation_mensuelle, 525.52)
 
 
 if __name__ == '__main__':
