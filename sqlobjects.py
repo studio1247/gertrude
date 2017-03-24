@@ -1451,9 +1451,9 @@ class Creche(object):
                     # print cas[0], cas[1]
                     return cas[1]
             else:
-                raise "Aucune condition ne matche"
+                raise Exception("Aucune condition ne matche")
         except:
-            raise "Erreur dans la formule"
+            raise Exception("Erreur dans la formule")
 
     def CheckFormule(self, formule, index):
         hg = MODE_HALTE_GARDERIE

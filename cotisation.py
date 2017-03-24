@@ -598,7 +598,7 @@ class Cotisation(object):
         return self.debut <= date <= self.fin
 
 
-def GetCotisations(inscrit):
+def GetCotisations(inscrit, options=TRACES):
     result = []
     date = config.first_date
     for inscription in inscrit.GetInscriptions():
@@ -606,7 +606,7 @@ def GetCotisations(inscrit):
             date = max(date, inscription.debut)
             while date.year < today.year + 2:
                 try:
-                    cotisation = Cotisation(inscrit, date, TRACES)
+                    cotisation = Cotisation(inscrit, date, options)
                     result.append((cotisation.debut, cotisation.fin, cotisation))
                     date = cotisation.fin + datetime.timedelta(1)
                 except CotisationException, e:

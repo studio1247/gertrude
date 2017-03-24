@@ -95,6 +95,7 @@ def GetPlanningLinesChildren(date, site=None, groupe=None):
             line.options |= COMMENTS | ACTIVITES
             line.summary = SUMMARY_ENFANT
             line.salarie = None
+            line.site = inscription.site
 
             def GetHeuresEnfant(line):
                 heures = line.GetNombreHeures()
@@ -140,6 +141,7 @@ def GetPlanningLinesSalaries(date, site=None):
                 line = contrat.GetJourneeReferenceCopy(date)
                 line.insert = salarie.journees
                 line.key = date
+            line.site = contrat.site
             line.salarie = salarie
             line.label = GetPrenomNom(salarie)
             line.idx = salarie.idx
