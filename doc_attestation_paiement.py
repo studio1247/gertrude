@@ -94,7 +94,7 @@ class AttestationModifications(object):
         for inscrit in self.inscrits:
             facture_debut = facture_fin = None
             date = self.debut
-            heures_facturees, heures_facture, heures_realisees, total_sans_activites = 0.0, 0.0, 0.0, 0.0
+            heures_contractualisees, heures_facturees, heures_facture, heures_realisees, total_sans_activites = 0.0, 0.0, 0.0, 0.0, 0.0
             total = 0.0
             site = None
             try:
@@ -110,6 +110,7 @@ class AttestationModifications(object):
                         heures_realisees += facture.heures_realisees
                         heures_facturees += facture.heures_facturees
                         heures_facture += facture.heures_facture
+                        heures_contractualisees += facture.heures_contractualisees
                     date = GetNextMonthStart(date)
             except CotisationException, e:
                 errors[GetPrenomNom(inscrit)] = e.errors
@@ -133,6 +134,7 @@ class AttestationModifications(object):
                 ('heures-facture', GetHeureString(heures_facture)),
                 ('ceil-heures-facture', GetHeureString(math.ceil(heures_facture))),
                 ('heures-facturees', GetHeureString(heures_facturees)),
+                ('heures-contractualisees', GetHeureString(heures_contractualisees)),
                 ('ceil-heures-facturees', GetHeureString(math.ceil(heures_facturees))),
                 ('ceil-heures-realisees', GetHeureString(math.ceil(heures_realisees))),
                 ('total-sans-activites', "%.2f" % total_sans_activites),
