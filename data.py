@@ -431,4 +431,8 @@ class FileConnection(object):
 
     def LoadJournal(self):
         directory = os.path.dirname(self.filename)
-        return file(os.path.join(directory, 'journal.txt')).read()
+        journal_path = os.path.join(directory, 'journal.txt')
+        if os.path.isfile(journal_path):
+            return file().read()
+        else:
+            return None

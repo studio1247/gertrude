@@ -85,6 +85,8 @@ def sync_tablette():
     print "Synchro tablette ..."
 
     journal = config.connection.LoadJournal()
+    if not journal:
+        return
 
     def AddPeriodes(who, date, periodes):
         if date in who.journees:
