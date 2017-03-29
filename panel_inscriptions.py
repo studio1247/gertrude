@@ -531,6 +531,8 @@ class ParentsPanel(InscriptionsTab):
             event.Skip()
     
     def UpdateContents(self):
+        for i in range(0, len(self.referents_sizer.GetChildren())):
+            self.SupprimeLigneReferent()
         if self.inscrit:
             for index, parent in enumerate(self.inscrit.famille.parents):
                 if parent is None:
@@ -546,13 +548,8 @@ class ParentsPanel(InscriptionsTab):
                         item.SetInstance(parent)
                     except:
                         pass
-            referents_count = len(self.inscrit.famille.referents)
-            for i in range(len(self.referents_sizer.GetChildren()), referents_count):
+            for i in range(0, len(self.inscrit.famille.referents)):
                 self.AjoutLigneReferent(i)
-        else:
-            referents_count = 0
-        for i in range(referents_count, len(self.referents_sizer.GetChildren())):
-            self.SupprimeLigneReferent()
         for item in self.revenus_items:
             item.Show(creche.AreRevenusNeeded())
         AutoTab.UpdateContents(self)
