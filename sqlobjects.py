@@ -24,7 +24,7 @@ from cotisation import GetDateRevenus
 
 class SQLObject(object):
     def delete(self):
-        print 'suppression %s' % self.__class__.__name__
+        print 'suppression %s (table=%s, idx=%d)' % (self.__class__.__name__, self.table, self.idx)
         sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.table, (self.idx,))
         self.idx = None
 
@@ -336,13 +336,13 @@ class Day(object):
     def RemoveActivity(self, start, end, value):
         if start is None and end is None:
             if self.activites_sans_horaires[value] is not None:
-                print u'suppression %r %d' % (self.nom, self.activites_sans_horaires[value])
+                print u'delete %r (table=%s, idx=%d)' % (self.nom, self.table, self.activites_sans_horaires[value])
                 sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.table,
                                        (self.activites_sans_horaires[value],))
             del self.activites_sans_horaires[value]
         else:
             if self.activites[(start, end, value)] is not None:
-                print u'suppression %r %d' % (self.nom, self.activites[(start, end, value)])
+                print u'delete %r (table=%s, idx=%d)' % (self.nom, self.table, self.activites[(start, end, value)])
                 sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.table,
                                        (self.activites[(start, end, value)],))
             del self.activites[(start, end, value)]
