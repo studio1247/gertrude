@@ -24,8 +24,10 @@ from ooffice import *
 
 
 class CoordonneesModifications(object):
+    title = "Coordonnées des parents"
+    template = "Coordonnees parents.odt"
+
     def __init__(self, site, date):
-        self.title = "Coordonnées des parents"
         self.multi = False
         self.site = site
         if date is None:

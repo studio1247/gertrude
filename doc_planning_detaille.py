@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 from constants import *
 from functions import *
 from facture import *
@@ -31,8 +33,10 @@ lines_max = 25
 
 
 class PlanningDetailleModifications(object):
+    title = "Planning détaillé"
+    template = "Planning detaille.odg"
+
     def __init__(self, periode, site=None, groupe=None):
-        self.title = u"Planning détaillé"
         self.multi = False
         self.site = site
         self.groupe = groupe
@@ -113,7 +117,7 @@ class PlanningDetailleModifications(object):
             lines_salaries = GetLines(day, creche.salaries, site=self.site, summary=SUMMARY_SALARIE)
 
             if lines_salaries:
-                lines = lines_enfants + [u"Salariés"] + lines_salaries
+                lines = lines_enfants + ["Salariés"] + lines_salaries
             else:
                 lines = lines_enfants
             
@@ -194,10 +198,10 @@ class PlanningDetailleModifications(object):
                                     ReplaceTextFields(node, [('texte', ''), ('allergies', allergies)])
                                     page.appendChild(node)
                                 else:
-                                    print u"Pas de forme pour %s" % key
+                                    print "Pas de forme pour %s" % key
                             
                 if page_index + 1 == pages_count:
-                    AddCategoryShape(page, u"Totaux", 0.20 + top + line_height * lines_count)
+                    AddCategoryShape(page, "Totaux", 0.20 + top + line_height * lines_count)
                     
                     # le récapitulatif par activité
                     i = lines_count
@@ -205,9 +209,9 @@ class PlanningDetailleModifications(object):
                     for activity in summary.keys():
                         i += 1
                         if activity == PRESENCE_SALARIE:
-                            label = u"Présences salariés"
+                            label = "Présences salariés"
                         elif activity == 0:
-                            label = u"Présences"
+                            label = "Présences"
                         else:
                             label = creche.activites[activity].label
                         node = shapes["libelle"].cloneNode(1)
@@ -245,7 +249,7 @@ class PlanningDetailleModifications(object):
                                         if key in shapes:
                                             node = shapes[key].cloneNode(1)
                                         else:
-                                            print u"Pas de forme pour %s" % key
+                                            print "Pas de forme pour %s" % key
                                             node = None
                                     if node:
                                         node.setAttribute('svg:x', '%fcm' % (left + labels_width + (float(a - affichage_min) * step)))

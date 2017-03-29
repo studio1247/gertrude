@@ -22,10 +22,11 @@ from ooffice import *
 
 
 class ExportTabletteModifications(object):
+    title = "Export tablette"
+    template = "Export tablette.ods"
+
     def __init__(self, site, date):
-        self.title = "Export tablette"
         self.multi = False
-        self.template = 'Export tablette.ods'
         self.default_output = "Export tablette.ods"
         self.site, self.date = site, date
         self.gauge = None

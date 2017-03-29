@@ -211,42 +211,45 @@ class OdtDocumentAccueilModifications(DocumentAccueilModifications):
 
 
 class DevisAccueilModifications(OdtDocumentAccueilModifications):
+    title = "Devis"
+    template = "Devis accueil.odt"
+
     def __init__(self, who, date):
         OdtDocumentAccueilModifications.__init__(self, who, date)
-        self.title = "Devis"
-        self.template = "Devis accueil.odt"
         self.default_output = u"Devis accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
 
 
 class ContratAccueilModifications(OdtDocumentAccueilModifications):
+    title = "Contrat d'accueil"
+    template = 'Contrat accueil.odt'
+
     def __init__(self, who, date):
         OdtDocumentAccueilModifications.__init__(self, who, date)
-        self.title = "Contrat d'accueil"
         if self.inscription.mode == MODE_TEMPS_PARTIEL and IsTemplateFile("Contrat accueil temps partiel.odt"):
             self.template = "Contrat accueil temps partiel.odt"
         elif self.inscription.mode == MODE_FORFAIT_MENSUEL and IsTemplateFile("Contrat accueil forfait mensuel.odt"):
             self.template = "Contrat accueil forfait mensuel.odt"
         elif self.inscription.mode == MODE_HALTE_GARDERIE and IsTemplateFile("Contrat accueil halte garderie.odt"):
             self.template = "Contrat accueil halte garderie.odt"
-        else:
-            self.template = 'Contrat accueil.odt'
         self.default_output = u"Contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
 
 
 class AvenantContratAccueilModifications(OdtDocumentAccueilModifications):
+    title = "Avenant au contrat d'accueil"
+    template = "Avenant contrat accueil.odt"
+
     def __init__(self, who, date):
         OdtDocumentAccueilModifications.__init__(self, who, date)
-        self.title = "Avenant au contrat d'accueil"
-        self.template = "Avenant contrat accueil.odt"
         self.default_output = u"Avenant contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
 
 
 class FraisGardeModifications(DocumentAccueilModifications):
+    title = "Frais de garde"
+    template = 'Frais de garde.ods'
+
     def __init__(self, who, date):
         DocumentAccueilModifications.__init__(self, who, date)
-        self.title = "Frais de garde"
         self.multi = False
-        self.template = 'Frais de garde.ods'
         self.default_output = u"Frais de garde %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
         
     def execute(self, filename, dom):

@@ -336,12 +336,19 @@ def GetTemplateFile(filename, site=None):
     return GetFile(filename, site, config.templates, "templates_dist")
 
 
-def IsTemplateFile(filename):
+def IsCustomTemplateFile(filename):
     if os.path.isfile("%s/%s" % (config.templates, filename)):
         return True
-    elif os.path.isfile("templates_dist/%s" % filename):
-        return True
     elif os.path.isfile("%s/[%s] %s" % (config.templates, creche.nom, filename)):
+        return True
+    else:
+        return False
+
+
+def IsTemplateFile(filename):
+    if IsCustomTemplateFile(filename):
+        return True
+    elif os.path.isfile("templates_dist/%s" % filename):
         return True
     else:
         return False

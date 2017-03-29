@@ -40,6 +40,9 @@ couleurs = {SUPPLEMENT: 'A2',
 
 
 class FactureModifications(object):
+    title = "Facture mensuelle"
+    template = "Facture mensuelle.odt"
+
     @staticmethod
     def GetPrenomNom(who):
         if config.options & FACTURES_FAMILLES:
@@ -48,7 +51,6 @@ class FactureModifications(object):
             return GetPrenomNom(who)
 
     def __init__(self, inscrits, periode):
-        self.title = "Facture mensuelle"
         self.metas = {}
         self.multi = False
         self.inscrits = GetEnfantsTriesSelonParametreTriFacture(inscrits)
