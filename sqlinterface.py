@@ -593,8 +593,10 @@ class SQLConnection(object):
         cur.execute('DELETE FROM REFERENTS')
         cur.execute('DELETE FROM FRATRIES')
         cur.execute('DELETE FROM INSCRIPTIONS')
+        cur.execute('DELETE FROM REF_ACTIVITIES')
         cur.execute('DELETE FROM EMPLOYES')
         cur.execute('DELETE FROM CONTRATS')
+        cur.execute('DELETE FROM REF_JOURNEES_SALARIES')
         cur.execute('DELETE FROM PROFESSEURS')
         cur.execute('DELETE FROM CONGES_INSCRITS')
         cur.execute('DELETE FROM CONGES_SALARIES')
@@ -602,6 +604,10 @@ class SQLConnection(object):
         cur.execute('DELETE FROM FACTURES')
         cur.execute('DELETE FROM CORRECTIONS')
         cur.execute('DELETE FROM ENCAISSEMENTS')
+        cur.execute('DELETE FROM ACTIVITES')
+        cur.execute('DELETE FROM ACTIVITES_SALARIES')
+        cur.execute('DELETE FROM PLANNING_HEBDOMADAIRE')
+        cur.execute('DELETE FROM NUMEROS_FACTURE')
         self.commit()
 
     def Load(self, progress_handler=default_progress_handler, autosave=False):
