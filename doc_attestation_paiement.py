@@ -70,6 +70,7 @@ class AttestationModifications(object):
             self.email_subject = u"Attestations de paiement %s-%s %d" % (months[self.debut.month - 1], months[self.fin.month - 1], self.debut.year)
         self.email_to = None
         self.multi = True
+        self.default_output_multi = u"Attestation de paiement <enfant> %s %d.odt" % (months[self.debut.month - 1], self.debut.year)
 
     def GetSimpleModifications(self, filename):
         return [(filename.replace("<prenom>", inscrit.prenom).replace("<nom>", inscrit.nom), AttestationModifications(inscrit, self.debut, self.fin)) for inscrit in self.inscrits]
