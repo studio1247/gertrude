@@ -433,6 +433,6 @@ class FileConnection(object):
         directory = os.path.dirname(self.filename)
         journal_path = os.path.join(directory, 'journal.txt')
         if os.path.isfile(journal_path):
-            return file().read()
+            return file(journal_path).read()
         else:
             return None
