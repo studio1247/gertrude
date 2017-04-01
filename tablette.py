@@ -135,6 +135,9 @@ def sync_tablette():
         last_imported_day -= datetime.timedelta(1)
 
     for line in lines[index + 1:]:
+        if len(line) < 20:
+            break
+
         try:
             salarie, label, idx, date, heure = SplitLineTablette(line)
             if date > last_imported_day:
