@@ -209,7 +209,7 @@ def sync_tablette():
 
 
 if __name__ == "__main__":
-    _import __builtin__
+    import __builtin__
     import config
     import sqlinterface
 
