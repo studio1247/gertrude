@@ -224,12 +224,13 @@ class FactureModifications(object):
             for enfant in enfants:
                 try:
                     prenoms.append(enfant.prenom)
-                    facture = Facture(enfant, self.periode.year, self.periode.month, options=TRACES)
+                    facture = Facture(enfant, self.periode.year, self.periode.month, options=0 if config.saas_port else TRACES)
                     total_facture += facture.total
                 except CotisationException, e:
                     errors[GetPrenomNom(enfant)] = e.errors
                     has_errors = True
                     continue
+
                 last_inscription = None
                 for tmp in enfant.inscriptions:
                     if not last_inscription or not last_inscription.fin or (tmp.fin and tmp.fin > last_inscription.fin):
