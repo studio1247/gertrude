@@ -82,6 +82,12 @@ def write_apache_logs_to_journal():
 
 
 def sync_tablette_lines(lines):
+    last_imported_day = datetime.date.today()
+    date = datetime.datetime.now()
+    hour = float(date.hour) + float(date.minute) / 60
+    if hour < creche.fermeture:
+        last_imported_day -= datetime.timedelta(1)
+
     def AddPeriodes(who, date, periodes):
         if date in who.journees:
             journee = who.journees[date]
@@ -199,17 +205,16 @@ def sync_tablette():
         except:
             pass
 
-    last_imported_day = datetime.date.today()
-    date = datetime.datetime.now()
-    hour = float(date.hour) + float(date.minute) / 60
-    if hour < creche.fermeture:
-        last_imported_day -= datetime.timedelta(1)
-
     sync_tablette_lines(lines[index + 1:])
 
 
 if __name__ == "__main__":
-    __builtin__.sql_connection = sqlinterface.SQLConnection(sys.argv[1])
+    _import __builtin__
+    import config
+    import sqlinterface
+
+    _builtin__.sql_connection = sqlinterface.SQLConnection(sys.argv[1])
     __builtin__.creche = sql_connection.Load(None)
     lines = file(sys.argv[2]).readlines()
     sync_tablette_lines(lines)
+    sql_connection.close()
