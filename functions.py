@@ -1276,6 +1276,7 @@ class LigneConge(object):
         self.readonly = True
         self.reference = None
         self.options = 0
+        self.commentaire = ""
 
     def GetNombreHeures(self):
         return 0.0
