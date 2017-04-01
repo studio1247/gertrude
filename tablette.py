@@ -81,13 +81,7 @@ def write_apache_logs_to_journal():
     f.close()
 
 
-def sync_tablette():
-    print "Synchro tablette ..."
-
-    journal = config.connection.LoadJournal()
-    if not journal:
-        return
-
+def sync_tablette_lines(lines):
     def AddPeriodes(who, date, periodes):
         if date in who.journees:
             journee = who.journees[date]
@@ -119,22 +113,8 @@ def sync_tablette():
 
     array_enfants = {}
     array_salaries = {}
-    lines = journal.split("\n")
 
-    index = -1
-    if len(creche.last_tablette_synchro) > 20:
-        try:
-            index = lines.index(creche.last_tablette_synchro)
-        except:
-            pass
-
-    last_imported_day = datetime.date.today()
-    date = datetime.datetime.now()
-    hour = float(date.hour) + float(date.minute) / 60
-    if hour < creche.fermeture:
-        last_imported_day -= datetime.timedelta(1)
-
-    for line in lines[index + 1:]:
+    for line in lines:
         if len(line) < 20:
             break
 
@@ -201,3 +181,35 @@ def sync_tablette():
             errors.append(u"Salarié %d: Inconnu!" % key)
 
     return errors
+
+
+def sync_tablette():
+    print "Synchro tablette ..."
+
+    journal = config.connection.LoadJournal()
+    if not journal:
+        return
+
+    lines = journal.split("\n")
+
+    index = -1
+    if len(creche.last_tablette_synchro) > 20:
+        try:
+            index = lines.index(creche.last_tablette_synchro)
+        except:
+            pass
+
+    last_imported_day = datetime.date.today()
+    date = datetime.datetime.now()
+    hour = float(date.hour) + float(date.minute) / 60
+    if hour < creche.fermeture:
+        last_imported_day -= datetime.timedelta(1)
+
+    sync_tablette_lines(lines[index + 1:])
+
+
+if __name__ == "__main__":
+    __builtin__.sql_connection = sqlinterface.SQLConnection(sys.argv[1])
+    __builtin__.creche = sql_connection.Load(None)
+    lines = file(sys.argv[2]).readlines()
+    sync_tablette_lines(lines)
