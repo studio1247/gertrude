@@ -752,25 +752,28 @@ class DocumentDialog(wx.Dialog):
         self.sizer.Add(self.gauge, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.RIGHT|wx.LEFT|wx.TOP, 5)
         
         line = wx.StaticLine(self, -1, size=(20,-1), style=wx.LI_HORIZONTAL)
-        self.sizer.Add(line, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.TOP|wx.BOTTOM, 5)
+        self.sizer.Add(line, 0, wx.GROW | wx.ALIGN_CENTER_VERTICAL | wx.TOP | wx.BOTTOM, 5)
         
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        if modifications.multi is not True:
-            self.sauver_ouvrir = wx.Button(self, -1, u"Sauver et ouvrir")
-            self.sauver_ouvrir.SetDefault()
-            self.Bind(wx.EVT_BUTTON, self.OnSauverOuvrir, self.sauver_ouvrir)
-            sizer.Add(self.sauver_ouvrir, 0, wx.LEFT | wx.RIGHT, 5)
-        else:
-            self.sauver_ouvrir = None
+
+        self.sauver_ouvrir = wx.Button(self, -1, u"Sauver et ouvrir")
+        self.sauver_ouvrir.SetDefault()
+        self.Bind(wx.EVT_BUTTON, self.OnSauverOuvrir, self.sauver_ouvrir)
+        sizer.Add(self.sauver_ouvrir, 0, wx.LEFT | wx.RIGHT, 5)
 
         self.sauver = wx.Button(self, -1, u"Sauver")
         self.Bind(wx.EVT_BUTTON, self.OnSauver, self.sauver)
         sizer.Add(self.sauver, 0, wx.RIGHT, 5)
-        
+
+        if modifications.multi:
+            button = wx.Button(self, -1, u"Sauver individuellement")
+            self.Bind(wx.EVT_BUTTON, self.OnSauverUnitaire, button)
+            sizer.Add(button, 0, wx.RIGHT, 5)
+
         if modifications.email:
             self.sauver_envoyer = wx.Button(self, -1, u"Sauver et envoyer par email")
             self.Bind(wx.EVT_BUTTON, self.OnSauverEnvoyer, self.sauver_envoyer)
-            sizer.Add(self.sauver_envoyer, 0, wx.LEFT | wx.RIGHT, 5)
+            sizer.Add(self.sauver_envoyer, 0, wx.RIGHT, 5)
             if modifications.multi is False and not modifications.email_to:
                 self.sauver_envoyer.Disable()
                 
@@ -788,14 +791,14 @@ class DocumentDialog(wx.Dialog):
         self.sizer.Fit(self)
         self.CenterOnScreen()
     
-    def onFormat(self, event):
+    def onFormat(self, _):
         filename = os.path.splitext(self.fbb.GetValue())[0]
         if self.format.GetSelection() == 0:
             self.fbb.SetValue(filename + self.extension, None)
         else:
             self.fbb.SetValue(filename + ".pdf", None)
             
-    def OnSauver(self, event):
+    def Sauver(self):
         self.fbb.Disable()
         self.sauver.Disable()
         if self.sauver_ouvrir:
@@ -850,9 +853,12 @@ class DocumentDialog(wx.Dialog):
             dlg.ShowModal()
             dlg.Destroy()
         self.EndModal(wx.ID_OK)
-        
-    def OnSauverOuvrir(self, event):
+
+    def OnSauver(self, _):
         self.modifications.multi = False
+        self.Sauver()
+
+    def OnSauverOuvrir(self, event):
         self.OnSauver(event)
         if self.document_generated:
             if self.filename.endswith("pdf"):
@@ -860,8 +866,11 @@ class DocumentDialog(wx.Dialog):
             else:
                 StartLibreOffice(self.filename)
                 
+    def OnSauverUnitaire(self, _):
+        self.Sauver()
+
     def OnSauverEnvoyer(self, event):
-        self.OnSauver(event)
+        self.OnSauverUnitaire(event)
         if self.document_generated:
             if self.modifications.multi is not False:
                 simple_modifications = self.modifications.GetSimpleModifications(self.oo_filename)
@@ -894,7 +903,6 @@ class DocumentDialog(wx.Dialog):
                     dlg.Destroy()
 
     def OnSauverEnvoyerCAF(self, event):
-        self.modifications.multi = False
         self.OnSauver(event)
         if self.document_generated:
             try:

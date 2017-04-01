@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 from constants import *
 from functions import *
 from facture import *
@@ -62,42 +64,37 @@ class FactureModifications(object):
         self.email = True
         if len(self.inscrits) > 1:
             self.site = self.inscrits[0].GetInscriptions(self.periode_facturation, None)[0].site
-            self.email_subject = u"Factures %s %d" % (months[periode.month - 1], periode.year)
-            self.default_output = u"Factures %s %d.odt" % (months[periode.month - 1], periode.year)
+            self.email_subject = "Factures %s %d" % (months[periode.month - 1], periode.year)
+            self.default_output = "Factures %s %d.odt" % (months[periode.month - 1], periode.year)
             self.email_to = None
         else:
             who = self.inscrits[0]
             self.site = who.GetInscriptions(self.periode_facturation, None)[0].site
-            self.email_subject = u"Facture %s %s %d" % (self.GetPrenomNom(who), months[periode.month - 1], periode.year)
+            self.email_subject = "Facture %s %s %d" % (self.GetPrenomNom(who), months[periode.month - 1], periode.year)
             self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
             self.default_output = self.email_subject + ".odt"
 
-        if self.site and IsTemplateFile("Facture mensuelle simple %s.odt" % self.site.nom):
-            self.template = "Facture mensuelle simple %s.odt" % self.site.nom
-            if len(self.inscrits) > 1:
-                self.multi = True
-                self.default_output = u"Facture <enfant> %s %d.odt" % (months[periode.month - 1], periode.year)
-        elif IsTemplateFile("Facture mensuelle simple.odt"):
-            self.template = "Facture mensuelle simple.odt"
-            self.multi = True
-            self.default_output_multi = u"Facture <enfant> %s %d.odt" % (months[periode.month - 1], periode.year)
-        elif self.site and IsTemplateFile("Facture mensuelle %s.odt" % self.site.nom):
+        if self.site and IsTemplateFile("Facture mensuelle %s.odt" % self.site.nom):
             self.template = "Facture mensuelle %s.odt" % self.site.nom
         elif IsTemplateFile("Facture mensuelle %s.odt" % creche.nom):
             self.template = "Facture mensuelle %s.odt" % creche.nom
-        elif IsTemplateFile("Facture mensuelle simple.odt"):
-            self.template = "Facture mensuelle simple.odt"
-            if len(self.inscrits) > 1:
-                self.multi = True
-                self.default_output = u"Facture <enfant> %s %d.odt" % (months[periode.month - 1], periode.year)
         else:
             self.template = 'Facture mensuelle.odt'
 
+        self.multi = True
         self.email_text = "Accompagnement facture.txt"
 
+    def GetSimpleFilename(self, filename, inscrit):
+        result = filename.replace("Factures", "Facture %s" % GetPrenomNom(inscrit)) \
+                         .replace("<enfant>", GetPrenomNom(inscrit)) \
+                         .replace("<prenom>", inscrit.prenom) \
+                         .replace("<nom>", inscrit.nom)
+        if result == filename:
+            result = "[%s] %s" % (GetPrenomNom(inscrit), filename)
+        return result
+
     def GetSimpleModifications(self, filename):
-        return [(filename.replace("<enfant>", self.GetPrenomNom(inscrit)).replace("<prenom>", inscrit.prenom).replace(
-            "<nom>", inscrit.nom), FactureModifications([inscrit], self.periode)) for inscrit in self.inscrits]
+        return [(self.GetSimpleFilename(filename, inscrit), FactureModifications([inscrit], self.periode)) for inscrit in self.inscrits]
 
     def FillRecapSection(self, section, facture):
         empty_cells = facture.debut_recap.weekday()
