@@ -81,9 +81,9 @@ def write_apache_logs_to_journal():
     f.close()
 
 
-def sync_tablette_lines(lines):
+def sync_tablette_lines(lines, tz=None):
     last_imported_day = datetime.date.today()
-    date = datetime.datetime.now()
+    date = datetime.datetime.now(tz=tz)
     hour = float(date.hour) + float(date.minute) / 60
     if hour < creche.fermeture:
         last_imported_day -= datetime.timedelta(1)
@@ -205,7 +205,12 @@ def sync_tablette():
         except:
             pass
 
-    sync_tablette_lines(lines[index + 1:])
+    if config.saas_port:
+        import pytz
+        tz = pytz.timezone('Europe/Paris')
+    else:
+        tz = None
+    sync_tablette_lines(lines[index + 1:], tz)
 
 
 if __name__ == "__main__":
