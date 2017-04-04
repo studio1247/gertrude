@@ -370,6 +370,7 @@ class JourneeCapacite(Day):
         self.insert = None
         self.mode_arrondi = 'arrondi_heures'
         self.summary = None
+        self.salarie = None
 
     def InsertActivity(self, start, end, value):
         print u'nouvelle tranche horaire %s de capacité (%r, %r %d)' % (self.label, start, end, value),
