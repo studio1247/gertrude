@@ -127,6 +127,14 @@ def getColumnWidth(parser):
     return result
 
 
+def getDebugMode(parser):
+    try:
+        result = int(parser.get(DEFAULT_SECTION, "debug"))
+    except:
+        result = 0
+    return result
+
+
 def getSAASPort(parser):
     try:
         result = int(parser.get(DEFAULT_SECTION, "port"))
@@ -279,6 +287,7 @@ def LoadConfig(path=None, progress_handler=default_progress_handler):
     config.window_size = config.original_window_size
     config.column_width = getColumnWidth(parser)
 
+    config.debug = getDebugMode(parser)
     config.saas_port = getSAASPort(parser)
 
     years_before, years_after = getYearsDisplayed(parser)
