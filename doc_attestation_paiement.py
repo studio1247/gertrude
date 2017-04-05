@@ -82,7 +82,7 @@ class AttestationModifications(object):
         return result
 
     def GetSimpleModifications(self, filename):
-        return [(self.GetSimpleFilename(filename, inscrit), AttestationModifications(inscrit, self.debut, self.fin)) for inscrit in self.inscrits]
+        return [(self.GetSimpleFilename(filename, inscrit), AttestationModifications(inscrit, self.debut, self.fin, self.attestation_mensuelle)) for inscrit in self.inscrits]
         
     def execute(self, filename, dom):
         if filename != 'content.xml':
