@@ -414,7 +414,11 @@ class Cotisation(object):
         self.taux_effort = None
         self.forfait_mensuel_heures = 0.0
         self.montants_heure_garde = []
-        
+
+        if not inscrit.naissance:
+            errors.append(u" - La date de naissance n'est pas renseignée.")
+            raise CotisationException(errors)
+
         if creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
             self.montant_heure_garde = 0.0
             self.cotisation_periode = 0.0
@@ -423,6 +427,7 @@ class Cotisation(object):
             if self.inscription.mode == MODE_FORFAIT_MENSUEL:
                 self.forfait_mensuel_heures = self.inscription.forfait_mensuel_heures
             try:
+                self.tranche_paje = 1 + GetTranche(self.assiette_annuelle, GetTranchesPaje(date, inscrit.naissance, self.enfants_a_charge))
                 self.montant_heure_garde = creche.EvalTauxHoraire(self.mode_garde, inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, 0, self.tranche_paje, inscrit.famille.tarifs)
                 if options & TRACES:
                     print " montant heure de garde (Forfait horaire) :", self.montant_heure_garde
@@ -433,9 +438,6 @@ class Cotisation(object):
             self.cotisation_periode = None
             self.cotisation_mensuelle, self.montants_heure_garde = self.CalculeFraisGardeComplete(self.forfait_mensuel_heures, self.heures_mois)                    
         elif creche.mode_facturation == FACTURATION_PAJE:
-            if not inscrit.naissance:
-                errors.append(u" - La date de naissance n'est pas renseignée.")
-                raise CotisationException(errors)
             self.tranche_paje = 1 + GetTranche(self.assiette_annuelle, GetTranchesPaje(date, inscrit.naissance, self.enfants_a_charge))
             if date < datetime.date(2016, 1, 1):
                 self.AjustePeriode((debut, datetime.date(2015, 12, 31)))
