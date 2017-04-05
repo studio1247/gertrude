@@ -911,6 +911,7 @@ def GetParentFields(parent, index=None):
            ('ville-%s' % ref, parent.ville),
            ('email-%s' % ref, parent.email),
            ('telephone-domicile-%s' % ref, parent.telephone_domicile),
+           ('telephone-travail-%s' % ref, parent.telephone_travail),
            ('telephone-portable-%s' % ref, parent.telephone_portable),
            ('email-%s' % ref, parent.email),
            ]

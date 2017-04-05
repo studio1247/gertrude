@@ -252,11 +252,14 @@ class FactureModifications(object):
                 if clone.hasAttribute("text:anchor-page-number"):
                     clone.setAttribute("text:anchor-page-number", str(index + 1))
 
-                tables = clone.getElementsByTagName('table:table')
+                if clone.tagName == "table:table":
+                    tables = [clone]
+                else:
+                    tables = clone.getElementsByTagName('table:table')
                 for table in tables:
                     table_name = table.getAttribute('table:name')
                     # Le(s) tableau(x) des montants détaillés
-                    if table_name == 'Montants':
+                    if table_name == "Montants":
                         for i, facture in enumerate(factures):
                             if i < len(factures) - 1:
                                 montants_table = table.cloneNode(1)
@@ -317,7 +320,7 @@ class FactureModifications(object):
     def GetFactureCustomFields(self, inscrit, famille, facture):
         fields = []
         for key in self.metas:
-            if key.startswith("formule "):
+            if key.lower().startswith("formule "):
                 label = key[8:]
                 try:
                     value = eval(self.metas[key])
