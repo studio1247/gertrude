@@ -170,6 +170,25 @@ class FactureModifications(object):
             except:
                 pass
 
+    def IsRowRemovable(self, row, facture):
+        prettyxml = row.toprettyxml()
+        if (("&lt;frais-inscription&gt;" in prettyxml and not facture.frais_inscription) or
+            ("&lt;correction&gt;" in prettyxml and not facture.correction) or
+            ("&lt;supplement-activites&gt;" in prettyxml and not facture.supplement_activites) or
+            ("&lt;supplement&gt;" in prettyxml and not facture.supplement) or
+            ("&lt;supplement-avant-regularisation&gt;" in prettyxml and not facture.supplement_avant_regularisation) or
+            ("&lt;deduction-avant-regularisation&gt;" in prettyxml and not facture.deduction_avant_regularisation) or
+            ("&lt;regularisation&gt;" in prettyxml and not facture.regularisation) or
+            ("&lt;heures-absence-non-prevenue&gt;" in prettyxml and not facture.jours_absence_non_prevenue) or
+            ("&lt;heures-maladie-non-deduites&gt;" in prettyxml and not facture.jours_maladie_non_deduits) or
+            ("&lt;deduction&gt;" in prettyxml and not facture.deduction)):
+            return True
+        for field in self.GetFactureCustomFields(facture):
+            if field[0] in row.toprettyxml() and not field[1]:
+                return True
+        return False
+
+
     def execute(self, filename, dom):
         global couleurs
 
@@ -269,17 +288,7 @@ class FactureModifications(object):
                             montants_table.setAttribute('table:name', "Montants%d" % (i + 1))
                             rows = montants_table.getElementsByTagName('table:table-row')
                             for row in rows:
-                                prettyxml = row.toprettyxml()
-                                if (("&lt;frais-inscription&gt;" in prettyxml and not facture.frais_inscription) or
-                                    ("&lt;correction&gt;" in prettyxml and not facture.correction) or
-                                    ("&lt;supplement-activites&gt;" in prettyxml and not facture.supplement_activites) or
-                                    ("&lt;supplement&gt;" in prettyxml and not facture.supplement) or
-                                    ("&lt;supplement-avant-regularisation&gt;" in prettyxml and not facture.supplement_avant_regularisation) or
-                                    ("&lt;deduction-avant-regularisation&gt;" in prettyxml and not facture.deduction_avant_regularisation) or
-                                    ("&lt;regularisation&gt;" in prettyxml and not facture.regularisation) or
-                                    ("&lt;heures-absence-non-prevenue&gt;" in prettyxml and not facture.jours_absence_non_prevenue) or
-                                    ("&lt;heures-maladie-non-deduites&gt;" in prettyxml and not facture.jours_maladie_non_deduits) or
-                                    ("&lt;deduction&gt;" in prettyxml and not facture.deduction)):
+                                if self.IsRowRemovable(row, facture):
                                     montants_table.removeChild(row)
                             ReplaceTextFields(montants_table, facture.fields)
 
@@ -305,7 +314,7 @@ class FactureModifications(object):
                      ('montant-a-regler', total_facture + solde, FIELD_EUROS),
                      ('url-tipi', GetUrlTipi(inscrit.famille))] + \
                     GetFactureFields(factures[0]) + \
-                    self.GetFactureCustomFields(inscrit, inscrit.famille, facture)
+                    self.GetFactureCustomFields(facture)
                 ReplaceTextFields(clone, facture_fields)
 
                 if not recap_section_found:
@@ -317,7 +326,9 @@ class FactureModifications(object):
         # print doc.toprettyxml()
         return errors
 
-    def GetFactureCustomFields(self, inscrit, famille, facture):
+    def GetFactureCustomFields(self, facture):
+        inscrit = facture.inscrit
+        famille = inscrit.famille
         fields = []
         for key in self.metas:
             if key.lower().startswith("formule "):
