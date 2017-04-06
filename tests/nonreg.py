@@ -40,13 +40,20 @@ class GertrudeTestCase(unittest.TestCase):
     def AddParents(self, inscrit, salaire=30000.0):
         inscrit.famille.parents[0] = papa = Parent(inscrit.famille, "papa", creation=False)
         revenu = Revenu(papa, creation=False)
-        revenu.debut, revenu.revenu = datetime.date(2008, 1, 1), salaire
+        revenu.debut, revenu.fin, revenu.revenu = datetime.date(2008, 1, 1), datetime.date(2014, 12, 31), salaire
         papa.revenus.append(revenu)
         inscrit.famille.parents[1] = maman = Parent(inscrit.famille, "maman", creation=False)
         revenu = Revenu(maman, creation=False)
-        revenu.debut, revenu.revenu = datetime.date(2008, 1, 1), 0.0
+        revenu.debut, revenu.fin, revenu.revenu = datetime.date(2008, 1, 1), datetime.date(2014, 12, 31), 0.0
         maman.revenus.append(revenu)
-        
+        for year in range(2015, 2020):
+            revenu = Revenu(papa, creation=False)
+            revenu.debut, revenu.fin, revenu.revenu = datetime.date(year, 1, 1), datetime.date(year, 12, 31), salaire
+            papa.revenus.append(revenu)
+            revenu = Revenu(maman, creation=False)
+            revenu.debut, revenu.fin, revenu.revenu = datetime.date(year, 1, 1), datetime.date(year, 12, 31), salaire
+            maman.revenus.append(revenu)
+
     def AddInscrit(self):
         inscrit = Inscrit(creation=False)
         inscrit.famille = Famille(creation=False)
@@ -832,8 +839,6 @@ class LaCabaneAuxFamillesTests(GertrudeTestCase):
     def setUp(self):
         GertrudeTestCase.setUp(self)
         creche.mode_facturation = FACTURATION_PAJE
-        creche.formule_taux_horaire = [["", 7.5]]
-        creche.UpdateFormuleTauxHoraire(changed=False)
         bureau = Bureau(creation=False)
         bureau.debut = datetime.date(2010, 1, 1)
         creche.bureaux.append(bureau)
@@ -841,8 +846,12 @@ class LaCabaneAuxFamillesTests(GertrudeTestCase):
         creche.type = TYPE_MICRO_CRECHE
         creche.repartition = REPARTITION_MENSUALISATION_12MOIS
         creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
+        creche.gestion_depart_anticipe = True
+        creche.regularisation_fin_contrat = True
 
     def test_arrivee_et_depart_en_cours_de_mois(self):
+        creche.formule_taux_horaire = [["", 7.5]]
+        creche.UpdateFormuleTauxHoraire(changed=False)
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
         inscription.mode = MODE_TEMPS_PARTIEL
@@ -857,13 +866,40 @@ class LaCabaneAuxFamillesTests(GertrudeTestCase):
         inscription.reference[4].AddActivity(93, 213, 0, -1)  # 10h
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2015, 1, 15), NO_ADDRESS | NO_PARENTS)
-        self.assertEquals(cotisation.cotisation_mensuelle, 0.0)
+        self.assertPrec2Equals(cotisation.cotisation_mensuelle, 0.0)
         cotisation = Cotisation(inscrit, datetime.date(2015, 1, 20), NO_ADDRESS | NO_PARENTS)
-        self.assertEquals(cotisation.cotisation_mensuelle, 1468.75)
+        self.assertPrec2Equals(cotisation.cotisation_mensuelle, 1468.75)
         facture = Facture(inscrit, 2015, 1)
         self.assertPrec2Equals(facture.total, 568.55)
         facture = Facture(inscrit, 2016, 1)
         self.assertPrec2Equals(facture.total, 663.31)
+
+    def test_regularisation_conges_non_pris(self):
+        creche.formule_taux_horaire = [["revenus>0", 10.0]]
+        creche.UpdateFormuleTauxHoraire(changed=False)
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit, creation=False)
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.semaines_conges = 5
+        inscription.debut = datetime.date(2016, 11, 1)
+        inscription.fin = datetime.date(2017, 8, 25)
+        inscription.depart = datetime.date(2017, 3, 31)
+        inscription.reference[0].AddActivity(111, 216, 0, -1)
+        inscrit.inscriptions.append(inscription)
+        inscription = Inscription(inscrit, creation=False)
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.semaines_conges = 5
+        inscription.debut = datetime.date(2017, 4, 1)
+        inscription.fin = datetime.date(2017, 8, 25)
+        inscription.reference[0].AddActivity(111, 216, 0, -1)
+        inscription.reference[3].AddActivity(111, 216, 0, -1)
+        inscrit.inscriptions.append(inscription)
+        cotisation = Cotisation(inscrit, datetime.date(2017, 1, 1), NO_ADDRESS | NO_PARENTS)
+        self.assertPrec2Equals(cotisation.cotisation_mensuelle, 342.71)
+        cotisation = Cotisation(inscrit, datetime.date(2017, 4, 1), NO_ADDRESS | NO_PARENTS)
+        self.assertPrec2Equals(cotisation.cotisation_mensuelle, 685.42)
+        facture = Facture(inscrit, 2017, 4)
+        self.assertPrec2Equals(facture.total, 685.42 + 179.79)
 
 
 class OPagaioTests(GertrudeTestCase):

@@ -577,7 +577,7 @@ class FactureFinMois(object):
                     if jours_presence and inscription.semaines_conges:
                         if dernier_mois:
                             if creche.repartition == REPARTITION_MENSUALISATION_12MOIS:
-                                semaines_conges_a_prendre = float(inscription.semaines_conges) * (date_fin_cotisation - cotisation.debut).days / 365
+                                semaines_conges_a_prendre = float(inscription.semaines_conges) * (date_fin_cotisation - inscription.debut).days / 365
                             else:
                                 semaines_conges_a_prendre = inscription.semaines_conges
                             semaines_conges_non_pris = semaines_conges_a_prendre - float(inscription.GetNombreJoursCongesPoses()) / jours_presence

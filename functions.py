@@ -663,7 +663,6 @@ def GetLines(date, inscrits, presence=False, site=None, groupe=None, summary=SUM
                 state = inscrit.GetStateSimple(date)
                 if state < 0 or not state & PRESENT:
                     continue
-            print date, date in inscrit.jours_conges, inscrit.GetStateSimple(date)
             if date in inscrit.jours_conges or inscrit.GetStateSimple(date) < 0:
                 continue
             if date in inscrit.journees:
