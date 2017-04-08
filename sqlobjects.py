@@ -1096,7 +1096,7 @@ class Salarie(object):
             if state in (MALADE, HOPITAL, ABSENCE_NON_PREVENUE):
                 return state
             elif state in (ABSENT, VACANCES):
-                if inscription.mode == MODE_5_5 or ref_state:
+                if ref_state:
                     return VACANCES
                 else:
                     return ABSENT
@@ -1571,19 +1571,24 @@ class Creche(object):
             result += value * (end - start)
         return result / 12
 
+    def GetObject(self, objects, idx):
+        try:
+            idx = int(idx)
+            for o in objects:
+                if o.idx == idx:
+                    return o
+        except:
+            pass
+        return None
+
+    def GetSite(self, idx):
+        return self.GetObject(self.sites, idx)
+
     def GetInscrit(self, idx):
-        for inscrit in self.inscrits:
-            if inscrit.idx == idx:
-                return inscrit
-        else:
-            return None
+        return self.GetObject(self.inscrits, idx)
 
     def GetSalarie(self, idx):
-        for salarie in self.salaries:
-            if salarie.idx == idx:
-                return salarie
-        else:
-            return None
+        return self.GetObject(self.salaries, idx)
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
