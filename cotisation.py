@@ -580,7 +580,8 @@ class Cotisation(object):
                         self.montant_heure_garde = heure_garde_diff
                         self.montants_heure_garde = [self.montant_heure_garde]
 
-        self.cotisation_mensuelle += self.majoration_mensuelle
+        if self.majoration_mensuelle:
+            self.cotisation_mensuelle += self.majoration_mensuelle
         
         if creche.arrondi_mensualisation_euros == ARRONDI_EURO_PLUS_PROCHE:
             self.cotisation_mensuelle = round(self.cotisation_mensuelle)
