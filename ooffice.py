@@ -660,7 +660,7 @@ def SendDocument(filename, text, subject, to, saas=False):
 
     try:
         fp = open(text)
-        doc = MIMEText(fp.read())
+        doc = MIMEText(fp.read(), _charset='UTF-8')
         fp.close()
         msg.attach(doc)
     except:
