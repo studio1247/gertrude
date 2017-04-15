@@ -509,6 +509,15 @@ def GetInscriptions(start, end):
     return result
 
 
+def GetSalaries(date):
+    result = []
+    for salarie in creche.salaries:
+        for contrat in salarie.GetContrats(date, date):
+            result.append(salarie)
+            break
+    return result
+
+
 def GetTriParCommuneEtNomIndexes(indexes):
     # Tri par commune (Rennes en premier) + ordre alphabetique des noms
     def tri(one, two):
@@ -646,7 +655,9 @@ def GetPresentsIndexes(indexes, (debut, fin), site=None):
     return result
 
 
-def GetInscrits(debut, fin, site=None, handicap=None):
+def GetInscrits(debut, fin=None, site=None, handicap=None):
+    if fin is None:
+        fin = debut
     result = []
     for inscrit in creche.inscrits:
         if inscrit.IsPresent(debut, fin, site, handicap):

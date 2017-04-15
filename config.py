@@ -119,6 +119,15 @@ def getYearsDisplayed(parser):
         return 2, 1
 
 
+def getPictos(parser):
+    try:
+        pictos_enfants = int(parser.get(DEFAULT_SECTION, "pictos-enfants"))
+        pictos_salaries = int(parser.get(DEFAULT_SECTION, "pictos-salaries"))
+        return pictos_enfants, pictos_salaries
+    except:
+        return None, None
+
+
 def getColumnWidth(parser):
     try:
         result = int(parser.get(DEFAULT_SECTION, "column-width"))
@@ -293,7 +302,9 @@ def LoadConfig(path=None, progress_handler=default_progress_handler):
     years_before, years_after = getYearsDisplayed(parser)
     config.first_date = datetime.date(today.year - years_before, 1, 1)
     config.last_date = datetime.date(today.year + years_after, 12, 31)
-     
+
+    config.pictos = getPictos(parser)
+
     config.options = getOptions(parser)
     config.templates = getTemplatesDirectory(parser)
     
