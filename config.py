@@ -128,6 +128,13 @@ def getPictos(parser):
         return None, None
 
 
+def getHide(parser):
+    try:
+        return parser.get(DEFAULT_SECTION, "")
+    except:
+        return ""
+
+
 def getColumnWidth(parser):
     try:
         result = int(parser.get(DEFAULT_SECTION, "column-width"))
@@ -304,6 +311,7 @@ def LoadConfig(path=None, progress_handler=default_progress_handler):
     config.last_date = datetime.date(today.year + years_after, 12, 31)
 
     config.pictos = getPictos(parser)
+    config.hide = getHide(parser)
 
     config.options = getOptions(parser)
     config.templates = getTemplatesDirectory(parser)
