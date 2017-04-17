@@ -130,7 +130,7 @@ def getPictos(parser):
 
 def getHide(parser):
     try:
-        return parser.get(DEFAULT_SECTION, "")
+        return parser.get(DEFAULT_SECTION, "hide")
     except:
         return ""
 
