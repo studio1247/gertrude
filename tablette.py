@@ -24,9 +24,6 @@ from functions import *
 from globals import *
 
 
-TABLETTE_MARGE_ARRIVEE = 10
-
-
 def write_apache_logs_to_journal():
     # Recuperation des logs Apache
     lines = file("D:/requests").readlines()
@@ -137,8 +134,7 @@ def sync_tablette_lines(lines, tz=None):
             if date not in array[idx]:
                 array[idx][date] = []
             if label == "arrivee":
-                arrivee = (heure + TABLETTE_MARGE_ARRIVEE) / creche.granularite * (
-                creche.granularite / BASE_GRANULARITY)
+                arrivee = (heure + TABLETTE_MARGE_ARRIVEE) / creche.granularite * (creche.granularite / BASE_GRANULARITY)
                 if len(array[idx][date]) == 0 or (array[idx][date][-1].arrivee and array[idx][date][-1].depart):
                     array[idx][date].append(PeriodePresence(date, arrivee))
                 elif array[idx][date][-1].depart:

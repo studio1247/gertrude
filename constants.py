@@ -317,3 +317,6 @@ DEPART_ANTICIPE = 1 << 6
 paje1 = 1
 paje2 = 2
 paje3 = 3
+
+# Constantes tablette
+TABLETTE_MARGE_ARRIVEE = 10
