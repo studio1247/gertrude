@@ -509,12 +509,13 @@ def GetInscriptions(start, end):
     return result
 
 
-def GetSalaries(date):
+def GetSalaries(date, site=None):
     result = []
     for salarie in creche.salaries:
         for contrat in salarie.GetContrats(date, date):
-            result.append(salarie)
-            break
+            if site is None or contrat.site == site:
+                result.append(salarie)
+                break
     return result
 
 
