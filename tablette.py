@@ -214,7 +214,7 @@ if __name__ == "__main__":
     import config
     import sqlinterface
 
-    _builtin__.sql_connection = sqlinterface.SQLConnection(sys.argv[1])
+    __builtin__.sql_connection = sqlinterface.SQLConnection(sys.argv[1])
     __builtin__.creche = sql_connection.Load(None)
     lines = file(sys.argv[2]).readlines()
     sync_tablette_lines(lines)

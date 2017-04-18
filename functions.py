@@ -946,9 +946,10 @@ def GetFamilleFields(famille):
               ('email', GetEmail(famille) if famille else ""),
               ]
     result += GetTarifsFamilleFields(famille)
-    for i, parent in enumerate(famille.parents):
-        if parent:
-            result += GetParentFields(parent, i+1)
+    if famille:
+        for i, parent in enumerate(famille.parents):
+            if parent:
+                result += GetParentFields(parent, i+1)
     return result
 
 
