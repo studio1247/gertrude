@@ -104,7 +104,7 @@ class DayPlanningPanel(PlanningWidget):
 class PlanningBasePanel(GPanel):
     name = "Planning"
     bitmap = GetBitmapFile("planning.png")
-    profil = PROFIL_ALL
+    profil = PROFIL_PLANNING
 
     def __init__(self, parent):
         GPanel.__init__(self, parent, u'Planning')

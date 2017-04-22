@@ -646,7 +646,7 @@ class User(object):
         self.idx = None
         self.login = "admin"
         self.password = bcrypt.hashpw(self.login.encode("utf-8"), bcrypt.gensalt())
-        self.profile = PROFIL_ALL
+        self.profile = PROFIL_ALL | PROFIL_ADMIN
 
         if creation:
             self.create()

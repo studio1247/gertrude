@@ -1393,7 +1393,7 @@ class UsersTab(AutoTab):
 
     def RemoveUser(self, event):
         index = event.GetEventObject().index
-        nb_admins = len([user for i, user in enumerate(creche.users) if (i != index and user.profile == PROFIL_ALL)])
+        nb_admins = len([user for i, user in enumerate(creche.users) if (i != index and (user.profile & PROFIL_ADMIN))])
         if len(creche.users) == 1 or nb_admins > 0:
             history.Append(Insert(creche.users, index, creche.users[index]))
             self.RemoveLine()
@@ -1409,8 +1409,8 @@ class UsersTab(AutoTab):
     def OnUserProfileModified(self, event):
         obj = event.GetEventObject()
         index = obj.index
-        if creche.users[index].profile == PROFIL_ALL and event.GetClientData() != PROFIL_ALL:
-            nb_admins = len([user for i, user in enumerate(creche.users) if (i != index and user.profile == PROFIL_ALL)])
+        if (creche.users[index].profile & PROFIL_ADMIN) and not (event.GetClientData() & PROFIL_ADMIN):
+            nb_admins = len([user for i, user in enumerate(creche.users) if (i != index and (user.profile & PROFIL_ADMIN))])
             if nb_admins == 0:
                 dlg = wx.MessageDialog(self, "Il faut au moins un administrateur", "Message", wx.ICON_INFORMATION)
                 dlg.ShowModal()

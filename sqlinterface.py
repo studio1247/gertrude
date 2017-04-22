@@ -26,7 +26,7 @@ from facture import FactureCloturee
 import wx
 import bcrypt
 
-VERSION = 101
+VERSION = 102
 
 
 def getdate(s):
@@ -1883,6 +1883,25 @@ class SQLConnection(object):
             for login, password, idx in cur.fetchall():
                 hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
                 cur.execute("UPDATE USERS SET password=? WHERE idx=?", (hashed, idx))
+
+        if version < 102:
+            cur.execute('SELECT profile, idx FROM USERS')
+            for old_profile, idx in cur.fetchall():
+                if old_profile == 31:
+                    profile = 127
+                else:
+                    profile = old_profile & 1
+                    if old_profile & 2:
+                        profile |= 4 + 8
+                    if old_profile & 4:
+                        profile |= 16 + 8
+                    if old_profile & 8:
+                        profile |= 2
+                    if old_profile & 16:
+                        profile |= 64
+                    if old_profile & 32:
+                        profile |= 128
+                cur.execute("UPDATE USERS SET profile=? WHERE idx=?", (profile, idx))
 
         if version < VERSION:
             try:

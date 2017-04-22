@@ -1105,7 +1105,7 @@ class InscritImportDialog(wx.Dialog):
 class InscriptionsPanel(GPanel):
     name = "Inscriptions"
     bitmap = GetBitmapFile("inscriptions.png")
-    profil = PROFIL_ALL
+    profil = PROFIL_INSCRIPTIONS
     
     def __init__(self, parent):
         GPanel.__init__(self, parent, "Inscriptions")
