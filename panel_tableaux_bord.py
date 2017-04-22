@@ -1216,7 +1216,7 @@ class TableauxDeBordNotebook(wx.Notebook):
 
 class TableauxDeBordPanel(GPanel):
     name = "Tableaux de bord"
-    bitmap = GetBitmapFile("tableaux-bord.png")
+    bitmap = GetBitmapFile("tableaux-de-bord.png")
     profil = PROFIL_ALL
     def __init__(self, parent):
         GPanel.__init__(self, parent, u'Tableaux de bord')

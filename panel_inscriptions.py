@@ -457,7 +457,7 @@ class ParentsPanel(InscriptionsTab):
             self.parents_items[-1].extend([wx.StaticText(self, -1, 'E-mail :'), AutoTextCtrl(self, None, 'email')])
             sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
             sizer11.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)
-            if profil & PROFIL_TRESORIER:
+            if profil & PROFIL_FACTURATION:
                 panel = PeriodePanel(self, 'revenus')
                 self.parents_items[-1].append(panel)
                 if not creche.AreRevenusNeeded():
@@ -1047,7 +1047,7 @@ class InscriptionsNotebook(wx.Notebook):
         else:
             self.conges_panel = None
         self.AddPage(NotesPanel(self), "Notes")
-        if profil & PROFIL_TRESORIER:
+        if profil & PROFIL_FACTURATION:
             self.AddPage(FraisGardePanel(self), 'Frais de garde')
 
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)  

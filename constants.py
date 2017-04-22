@@ -22,21 +22,23 @@ trimestres = ["1er", u'2ème', u'3ème', u'4ème']
 
 # Profils des utilisateurs
 PROFIL_INSCRIPTIONS = 1
-PROFIL_TRESORIER = 2
-PROFIL_BUREAU = 4
-PROFIL_SAISIE_PRESENCES = 8
-PROFIL_ADMIN = 16
-PROFIL_LECTURE_SEULE = 32
-PROFIL_ALL = PROFIL_ADMIN + PROFIL_INSCRIPTIONS + PROFIL_TRESORIER + PROFIL_BUREAU + PROFIL_SAISIE_PRESENCES
+PROFIL_PLANNING = 2
+PROFIL_FACTURATION = 4
+PROFIL_SALARIES = 8
+PROFIL_TABLEAUX_DE_BORD = 16
+PROFIL_ALL = 63
+PROFIL_ADMIN = 64
+PROFIL_LECTURE_SEULE = 128
 
 TypesProfil = [
-    (u"Administrateur", PROFIL_ALL),
-    (u"Equipe", PROFIL_ALL-PROFIL_ADMIN),
-    (u"Bureau", PROFIL_BUREAU),
-    (u"Trésorier", PROFIL_TRESORIER),
+    (u"Administrateur", PROFIL_ALL | PROFIL_ADMIN),
+    (u"Equipe", PROFIL_ALL),
+    (u"Bureau", PROFIL_ALL),
+    (u"Trésorier", PROFIL_ALL),
     (u"Inscriptions", PROFIL_INSCRIPTIONS),
-    (u"Saisie présences", PROFIL_SAISIE_PRESENCES),
-    (u"Utilisateur lecture seule", PROFIL_LECTURE_SEULE),
+    (u"Saisie planning", PROFIL_PLANNING),
+    (u"Utilisateur lecture seule", PROFIL_ALL | PROFIL_LECTURE_SEULE),
+    (u"Planning lecture seule", PROFIL_PLANNING | PROFIL_LECTURE_SEULE),
 ]
 
 # Types de structures
