@@ -1889,7 +1889,7 @@ class SQLConnection(object):
             for old_profile, idx in cur.fetchall():
                 if old_profile == 31:
                     profile = 127
-                else:
+                elif old_profile:
                     profile = old_profile & 1
                     if old_profile & 2:
                         profile |= 4 + 8
