@@ -2438,7 +2438,7 @@ class Inscrit(object):
                 heures_facturees = 0.0
 
                 for start, end, value in journee.activites:
-                    if value == 0:
+                    if value in (0, PREVISIONNEL):
                         heures_realisees += tranche * GetDureeArrondie(creche.arrondi_heures, start, end)
 
                 union = GetUnionHeures(journee, reference)

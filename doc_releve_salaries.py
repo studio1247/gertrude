@@ -21,13 +21,15 @@ from ooffice import *
 
 
 class ReleveSalariesModifications(object):
+    title = "Relevés salariés"
+    template = "Releve salaries.ods"
+
     def __init__(self, salaries, periode):
         self.salaries = salaries
         self.periode = periode
         self.email = None
         self.site = None
         self.multi = False
-        self.template = 'Releve salaries.ods'
         if len(salaries) > 1:
             self.default_output = u"Releve salaries %s %d.ods" % (months[periode.month-1], periode.year)
         else:
