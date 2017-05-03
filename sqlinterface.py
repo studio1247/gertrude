@@ -1796,14 +1796,17 @@ class SQLConnection(object):
             cur.execute('UPDATE CRECHE SET tri_factures=?', (TRI_NOM,))
 
         if version < 91:
-            cur.execute("""
-              CREATE TABLE ENCAISSEMENTS (
-                idx INTEGER PRIMARY KEY,
-                famille INTEGER REFERENCES FAMILLES(idx),
-                date DATE,
-                valeur FLOAT,
-                moyen_paiement INTEGER
-              );""")
+            try:
+                cur.execute("""
+                  CREATE TABLE ENCAISSEMENTS (
+                    idx INTEGER PRIMARY KEY,
+                    famille INTEGER REFERENCES FAMILLES(idx),
+                    date DATE,
+                    valeur FLOAT,
+                    moyen_paiement INTEGER
+                  );""")
+            except:
+                print "Erreur sur creation table ENCAISSEMENTS"
 
         if version < 92:
             cur.execute("ALTER TABLE SITES ADD groupe INTEGER;")
