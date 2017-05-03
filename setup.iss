@@ -11,7 +11,7 @@ AppUpdatesURL=https://www.gertrude-logiciel.org
 VersionInfoVersion={#GertrudeVersion}
 VersionInfoCompany=Bertrand Songis
 VersionInfoProductName=Gertrude
-AppCopyright=Copyright ï¿½ 2005-2017 - Bertrand Songis
+AppCopyright=Copyright © 2005-2017 - Bertrand Songis
 
 DefaultDirName={pf}\Gertrude
 DefaultGroupName=Gertrude
