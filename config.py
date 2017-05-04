@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 import __builtin__
 import sys, os.path, shutil, time
 import urllib2
@@ -167,7 +169,7 @@ def getDefaultDocumentsDirectory():
             pidl = df.ParseDisplayName(0, None, "::{450d8fba-ad25-11d0-98a8-0800361b1103}")[1]
             return shell.SHGetPathFromIDList(pidl)
         except:
-            print u"L'extension win32com pour python est recommandée (plateforme windows) !"
+            print "L'extension win32com pour python est recommandée (plateforme windows) !"
             return os.getcwd()
     else:
         return os.getcwd()
@@ -289,7 +291,7 @@ def LoadConfig(path=None, progress_handler=default_progress_handler):
     if path is None:
         path = GetConfigFile()
 
-    progress_handler.display(u"Chargement de la configuration %s ..." % path if path else "default")
+    progress_handler.display("Chargement de la configuration %s ..." % path if path else "default")
     parser = ConfigParser.SafeConfigParser()
 
     if path:
@@ -297,7 +299,7 @@ def LoadConfig(path=None, progress_handler=default_progress_handler):
             parser.read(path)
             config.filename = path
         except:
-            progress_handler.display(u"Fichier %s erroné. Utilisation de la configuration par défaut." % path)
+            progress_handler.display("Fichier %s erroné. Utilisation de la configuration par défaut." % path)
 
     config.original_window_size = getWindowSize(parser)
     config.window_size = config.original_window_size
@@ -364,7 +366,7 @@ def SaveConfig(progress_handler):
             parser.write(file(config.filename, "w"))
         except Exception, e:
             print e
-            progress_handler.display(u"Impossible d'enregistrer les paramètres de configuration !")    
+            progress_handler.display("Impossible d'enregistrer les paramètres de configuration !")    
 
 
 def Load(progress_handler=default_progress_handler, autosave=False):

@@ -22,6 +22,8 @@ import os
 import sys
 import wx
 
+sys.stdout = codecs.getwriter('utf8')(sys.stdout)
+
 from startdialog import StartDialog
 
 try:
@@ -34,7 +36,7 @@ if sys.platform != "win32":
     if not os.path.exists(GERTRUDE_DIRECTORY):
         os.mkdir(GERTRUDE_DIRECTORY)
     try:
-        print u"Démarrage de Gertrude ..."
+        print "Démarrage de Gertrude ..."
     except:
         sys.stdout = codecs.open(GERTRUDE_DIRECTORY + "/gertrude.log", "w", "utf-8")
 

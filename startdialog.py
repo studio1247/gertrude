@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 import __builtin__
 import shutil
 import socket
@@ -54,7 +56,7 @@ class StartDialog(wx.Dialog):
         bmp = wx.StaticBitmap(self, -1, wx.Bitmap(GetBitmapFile("splash_gertrude.png"), wx.BITMAP_TYPE_PNG), style=wx.SUNKEN_BORDER)
         self.sizer.Add(bmp, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
 
-        self.info = wx.TextCtrl(self, -1, u"Démarrage ...\n", size=(-1, 70), style=wx.TE_READONLY|wx.TE_MULTILINE)
+        self.info = wx.TextCtrl(self, -1, "Démarrage ...\n", size=(-1, 70), style=wx.TE_READONLY|wx.TE_MULTILINE)
         self.sizer.Add(self.info, 0, wx.EXPAND|wx.ALL, 5)
         self.gauge = wx.Gauge(self, -1, 100, style=wx.GA_SMOOTH)
         self.sizer.Add(self.gauge, 0, wx.EXPAND|wx.ALL, 5)
@@ -103,7 +105,7 @@ class StartDialog(wx.Dialog):
 
         if sys.platform != "darwin" and not os.path.isfile(CONFIG_FILENAME) and not os.path.isfile(DEFAULT_DATABASE) and os.path.isfile(DEMO_DATABASE):
             dlg = wx.MessageDialog(self,
-                                   u"Vous utilisez Gertrude pour la première fois, voulez-vous installer une base de démonstration ?",
+                                   "Vous utilisez Gertrude pour la première fois, voulez-vous installer une base de démonstration ?",
                                    'Gertrude',
                                    wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
             if dlg.ShowModal() == wx.ID_YES:
@@ -143,8 +145,8 @@ class StartDialog(wx.Dialog):
             __builtin__.readonly = True
         elif readonly:
             dlg = wx.MessageDialog(self,
-                                   u"Le jeton n'a pas pu être pris. Gertrude sera accessible en lecture seule. Voulez-vous forcer la prise du jeton ?",
-                                   'Gertrude',
+                                   "Le jeton n'a pas pu être pris. Gertrude sera accessible en lecture seule. Voulez-vous forcer la prise du jeton ?",
+                                   "Gertrude",
                                    wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
             result = dlg.ShowModal()
             dlg.Destroy()
@@ -159,7 +161,7 @@ class StartDialog(wx.Dialog):
                 __builtin__.server = Server()
             except Exception, e:
                 # print e
-                self.info.AppendText(u"Gertrude est déjà lancée. Les données seront accessibles en lecture seule !\n")
+                self.info.AppendText("Gertrude est déjà lancée. Les données seront accessibles en lecture seule !\n")
                 __builtin__.readonly = True
 
         self.loaded = True        
@@ -201,9 +203,9 @@ class StartDialog(wx.Dialog):
         except Exception, e:
             traceback.print_exc()
             try:
-                self.info.AppendText(str(e) + u'\n')
+                self.info.AppendText(str(e) + "\n")
             except:
-                self.info.AppendText(u'Erreur : ' + repr(e) + '\n')
+                self.info.AppendText("Erreur : " + repr(e) + "\n")
             result = False
         # we close database since it's opened from an other thread
         try:
@@ -228,16 +230,16 @@ class StartDialog(wx.Dialog):
             self.sizer.Layout()
             self.sizer.Fit(self)
             section = self.creche_ctrl.GetStringSelection()
-            self.info.AppendText(u"Structure %s sélectionnée.\n" % section)
+            self.info.AppendText("Structure %s sélectionnée.\n" % section)
             config.setSection(section)
             thread.start_new_thread(self.Load, (section, ))
             return
             
         login = self.login_ctrl.GetValue()
-        password = self.passwd_ctrl.GetValue().encode('utf-8')
+        password = self.passwd_ctrl.GetValue().encode("utf-8")
 
         for user in creche.users:
-            hashed = user.password.encode('utf-8')
+            hashed = user.password.encode("utf-8")
             if login == user.login and bcrypt.hashpw(password, hashed) == hashed:
                 if user.profile & PROFIL_LECTURE_SEULE:
                     if __builtin__.server:

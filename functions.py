@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 import sys, time, os.path
 from constants import *
 from parameters import *
@@ -389,7 +391,7 @@ def GetPeriodeString(o):
     if None in (o.debut, o.fin) or (o.debut.year, o.debut.month, o.debut.day) != (o.fin.year, 1, 1) or (o.fin.month, o.fin.day) != (12, 31):
         return date2str(o.debut) + ' - ' + date2str(o.fin)
     else:
-        return u"Année %d" % o.debut.year
+        return "Année %d" % o.debut.year
 
 
 def IsJourSemaineTravaille(day):
@@ -818,7 +820,7 @@ def GetActivitiesSummary(creche, lines, options=0):
         elif activite.mode != MODE_SYSTEMATIQUE_SANS_HORAIRES:
             activites[key] = Summary(activite.label)
     if not (options & NO_SALARIES) and len(creche.salaries) > 0:
-        activite_salaries = activites[PRESENCE_SALARIE] = Summary(u"Présences salariés")
+        activite_salaries = activites[PRESENCE_SALARIE] = Summary("Présences salariés")
     else:
         activite_salaries = None
         
@@ -883,7 +885,7 @@ def GetCodePostal(what):
 
 def GetInscritSexe(inscrit):
     if inscrit.sexe == 1:
-        return u"Garçon"
+        return "Garçon"
     else:
         return "Fille"
 
