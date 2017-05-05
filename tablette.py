@@ -19,14 +19,15 @@ from __future__ import unicode_literals
 # TODO pb in GetActivitiesSummary from __future__ import division
 
 import datetime
+import urllib
 from constants import *
 from functions import *
 from globals import *
 
 
-def write_apache_logs_to_journal():
+def write_apache_logs_to_journal(filename):
     # Recuperation des logs Apache
-    lines = file("D:/requests").readlines()
+    lines = file(filename).readlines()
     result = []
     for line in lines:
         print line
@@ -47,22 +48,24 @@ def write_apache_logs_to_journal():
 
         who = None
         for inscrit in creche.inscrits:
-            toto = urllib.quote_plus(inscrit.nom.encode("utf-8")) + "+" + urllib.quote_plus(
-                inscrit.prenom.encode("utf-8"))
-            if toto == combinaison:
+            letter = inscrit.nom[0] if len(inscrit.nom) > 0 else ""
+            name = urllib.quote_plus(inscrit.prenom.encode("utf-8")) + "+" + urllib.quote_plus(letter.encode("utf-8"))
+            # print "comparaison", name, combinaison
+            if name == combinaison:
                 who = inscrit
 
         if who is None:
             for inscrit in creche.salaries:
-                toto = urllib.quote_plus(inscrit.nom.encode("utf-8")) + "+" + urllib.quote_plus(
-                    inscrit.prenom.encode("utf-8"))
-                if toto == combinaison:
+                letter = inscrit.nom[0] if len(inscrit.nom) > 0 else ""
+                name = urllib.quote_plus(inscrit.prenom.encode("utf-8")) + "+" + urllib.quote_plus(letter.encode("utf-8"))
+                # print "comparaison", name, combinaison
+                if name == combinaison:
                     action += "_salarie"
                     who = inscrit
 
         if who is None:
             if combinaison.strip():
-                print "-----ERREUR-----", date, action, combinaison, ts
+                print "-----ERREUR-----", action, combinaison, ts
         else:
             date = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d@%H:%M')
             if (action, who.idx, date) in result:
@@ -216,6 +219,9 @@ if __name__ == "__main__":
 
     __builtin__.sql_connection = sqlinterface.SQLConnection(sys.argv[1])
     __builtin__.creche = sql_connection.Load(None)
-    lines = file(sys.argv[2]).readlines()
-    sync_tablette_lines(lines)
-    sql_connection.close()
+
+    # write_apache_logs_to_journal("D:/logs")
+
+    # lines = file(sys.argv[2]).readlines()
+    # sync_tablette_lines(lines)
+    # sql_connection.close()
