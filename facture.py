@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 import locale
 import __builtin__
 from cotisation import *
@@ -39,9 +41,9 @@ class FactureFinMois(object):
             self.supplement += supplement
             self.heures_supplementaires_facture += heures
             if cotisation.montant_heure_garde is not None:
-                self.formule_supplement.append(u"%s * %.2f" % (GetHeureString(heures), cotisation.montant_heure_garde))
+                self.formule_supplement.append("%s * %.2f" % (GetHeureString(heures), cotisation.montant_heure_garde))
             else:
-                self.formule_supplement.append(u"%s = %.2f" % (GetHeureString(heures), supplement))
+                self.formule_supplement.append("%s = %.2f" % (GetHeureString(heures), supplement))
         return supplement
 
     def GetNumeroFacture(self):
@@ -168,7 +170,7 @@ class FactureFinMois(object):
             fin = self.debut_recap - datetime.timedelta(1)
             debut = GetMonthStart(fin)
             if inscrit.GetInscriptions(debut, fin) and debut not in inscrit.factures_cloturees and IsFacture(debut) and self.debut_recap >= config.first_date:
-                error = u" - La facture du mois " + GetDeMoisStr(debut.month-1) + " " + str(debut.year) + u" n'est pas clôturée"
+                error = " - La facture du mois " + GetDeMoisStr(debut.month-1) + " " + str(debut.year) + " n'est pas clôturée"
                 raise CotisationException([error])
 
         if creche.mode_saisie_planning == SAISIE_HORAIRE:
@@ -192,7 +194,7 @@ class FactureFinMois(object):
                         heures_realisees_non_facturees = inscrit.GetTotalActivitesPresenceNonFacturee(date)
                         heures_supplementaires_facturees = (heures_facturees - heures_reference)
                         if (options & TRACES) and heures_supplementaires_facturees:
-                            print u"%f heures supplémentaires le %r" % (heures_supplementaires_facturees, date)
+                            print "%f heures supplémentaires le %r" % (heures_supplementaires_facturees, date)
                         #  retiré le 19 juillet 2017 pb d'heures supp marquées non facturées (retirées en double)
                         #  if heures_realisees_non_facturees > heures_reference:
                         #    heures_supplementaires_facturees -= heures_realisees_non_facturees - heures_reference
@@ -220,7 +222,7 @@ class FactureFinMois(object):
                             self.taux_effort = cotisation.taux_effort
                             self.montant_heure_garde = cotisation.montant_heure_garde
                             if options & TRACES:
-                                print u" cotisation mensuelle à partir de %s" % date, cotisation.cotisation_mensuelle
+                                print " cotisation mensuelle à partir de %s" % date, cotisation.cotisation_mensuelle
 
                         if (cotisation.mode_inscription, cotisation.heures_semaine) in heures_hebdomadaires:
                             heures_hebdomadaires[(cotisation.mode_inscription, cotisation.heures_semaine)] += 1
@@ -236,7 +238,7 @@ class FactureFinMois(object):
                             cotisation.nombre_jours_maladie_deduits += 1
                             cotisation.heures_maladie += heures_reference
                             self.heures_facturees_par_mode[cotisation.mode_garde] -= heures_reference
-                            if creche.nom == u"LA VOLIERE":
+                            if creche.nom == "LA VOLIERE":
                                 pass
                             elif creche.mode_facturation == FACTURATION_FORFAIT_10H:
                                 self.CalculeDeduction(cotisation, 10)
@@ -290,15 +292,15 @@ class FactureFinMois(object):
                                     cotisation.nombre_jours_maladie_deduits += 1
                                     cotisation.heures_maladie += heures_reference
                                     if options & TRACES:
-                                        print u"heures déduites : %02f (total %02f)" % (heures_reference, cotisation.heures_maladie)
+                                        print "heures déduites : %02f (total %02f)" % (heures_reference, cotisation.heures_maladie)
                                     self.heures_facturees_par_mode[cotisation.mode_garde] -= heures_reference
-                                    if creche.nom == u"LA VOLIERE":
+                                    if creche.nom == "LA VOLIERE":
                                         pass
                                     elif creche.mode_facturation == FACTURATION_FORFAIT_10H:
                                         self.CalculeDeduction(cotisation, 10)
                                     elif inscription.mode not in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE):
                                         self.CalculeDeduction(cotisation, heures_reference)
-                                    self.raison_deduction.add(u"maladie > %dj consécutifs" % creche.minimum_maladie)
+                                    self.raison_deduction.add("maladie > %dj consécutifs" % creche.minimum_maladie)
                                 else:
                                     self.jours_maladie_non_deduits[date] = heures_reference
                         elif state == VACANCES:
@@ -308,7 +310,7 @@ class FactureFinMois(object):
                                 self.jours_conges_non_factures.append(date)
                                 self.heures_facturees_par_mode[cotisation.mode_garde] -= heures_reference
                                 self.CalculeDeduction(cotisation, heures_reference)
-                                self.raison_deduction.add(u"absence prévenue")
+                                self.raison_deduction.add("absence prévenue")
                         elif state == ABSENCE_NON_PREVENUE or state == ABSENCE_CONGE_SANS_PREAVIS:
                             heures_facturees_non_realisees = heures_reference
                             self.jours_absence_non_prevenue[date] = heures_reference
@@ -317,7 +319,7 @@ class FactureFinMois(object):
                                 self.previsionnel = True
                             affectation_jours_supplementaires = False
                             if heures_supplementaires_facturees > 0:
-                                if creche.nom == u"LA VOLIERE":
+                                if creche.nom == "LA VOLIERE":
                                     affectation_jours_supplementaires = True
                                     self.heures_supplementaires += heures_supplementaires_facturees
                                     cotisation.heures_supplementaires += heures_supplementaires_facturees
@@ -448,7 +450,7 @@ class FactureFinMois(object):
                 inscription = cotisation.inscription
                 self.heures_maladie += cotisation.heures_maladie
                 self.heures_facture_par_mode[cotisation.mode_garde] -= cotisation.heures_maladie
-                if creche.nom == u"LA VOLIERE":
+                if creche.nom == "LA VOLIERE":
                     heures = cotisation.heures_contractualisees + cotisation.heures_supplementaires - cotisation.heures_maladie
                     self.cotisation_mensuelle += heures * (cotisation.a * heures + cotisation.b)
                 elif creche.repartition == REPARTITION_SANS_MENSUALISATION:
@@ -518,7 +520,7 @@ class FactureFinMois(object):
                         prorata = cotisation.cotisation_mensuelle
                     if cotisation.total_realise_non_facture:
                         self.deduction += cotisation.total_realise_non_facture
-                        self.raison_deduction.add(u"heures non facturées")
+                        self.raison_deduction.add("heures non facturées")
                     self.cotisation_mensuelle += prorata
                     self.total_contractualise += prorata
                     self.heures_contrat += prorata_heures
@@ -566,9 +568,9 @@ class FactureFinMois(object):
                             cotisation_regularisee = Cotisation(inscrit, date, options=NO_ADDRESS | DEPART_ANTICIPE | self.options)
                             regularisation_cotisation = cotisation_regularisee.cotisation_mensuelle - cotisation.cotisation_mensuelle
                             if options & TRACES:
-                                print u" régularisation cotisation : %f - %f = %f par mois" % (cotisation_regularisee.cotisation_mensuelle, cotisation.cotisation_mensuelle, regularisation_cotisation)
+                                print " régularisation cotisation : %f - %f = %f par mois" % (cotisation_regularisee.cotisation_mensuelle, cotisation.cotisation_mensuelle, regularisation_cotisation)
                             self.regularisation += regularisation_cotisation * cotisation_regularisee.nombre_factures
-                            self.raison_regularisation.add(u"régularisation cotisation")
+                            self.raison_regularisation.add("régularisation cotisation")
                             date = cotisation.fin + datetime.timedelta(1)
                     else:
                         date_fin_cotisation = inscription.fin
@@ -585,13 +587,13 @@ class FactureFinMois(object):
                                 heures = cotisation.heures_semaine * semaines_conges_non_pris
                                 regularisation_conges_non_pris = heures * cotisation.montant_heure_garde
                                 if options & TRACES:
-                                    print u" régularisation congés non pris (%f semaines, %d jours pris) : %dh * %f = %f" % (semaines_conges_a_prendre, inscription.GetNombreJoursCongesPoses(), heures, cotisation.montant_heure_garde, regularisation_conges_non_pris)
+                                    print " régularisation congés non pris (%f semaines, %d jours pris) : %dh * %f = %f" % (semaines_conges_a_prendre, inscription.GetNombreJoursCongesPoses(), heures, cotisation.montant_heure_garde, regularisation_conges_non_pris)
                                 self.regularisation += regularisation_conges_non_pris
-                                self.raison_regularisation.add(u"congés non pris")
+                                self.raison_regularisation.add("congés non pris")
 
         if self.supplement > 0 and self.heures_supplementaires_facture > 0:
             self.supplement_heures_supplementaires = self.supplement
-            self.raison_supplement.add(u"%s heures supplémentaires" % GetHeureString(self.heures_supplementaires_facture))
+            self.raison_supplement.add("%s heures supplémentaires" % GetHeureString(self.heures_supplementaires_facture))
 
         self.supplement_avant_regularisation = self.supplement
         self.raison_supplement_avant_regularisation = self.raison_supplement
@@ -751,7 +753,7 @@ class FactureDebutMoisPrevisionnel(FactureDebutMois):
         if today > self.fin_recap:
             if inscrit.GetInscriptions(self.facture_precedente.debut_recap, self.facture_precedente.fin_recap):
                 if self.facture_precedente.fin_recap not in inscrit.factures_cloturees:
-                    error = u" - La facture du mois " + GetDeMoisStr(self.facture_precedente.fin_recap.month-1) + " " + str(self.facture_precedente.fin_recap.year) + u" n'est pas clôturée"
+                    error = " - La facture du mois " + GetDeMoisStr(self.facture_precedente.fin_recap.month-1) + " " + str(self.facture_precedente.fin_recap.year) + " n'est pas clôturée"
                     raise CotisationException([error])
                 
                 facture_cloturee = inscrit.factures_cloturees[self.facture_precedente.fin_recap].Restore()
@@ -844,7 +846,7 @@ def GetHistoriqueSolde(famille, jalon, derniere_facture=True):
     for inscrit in inscrits:
         debut_inscrit, fin_inscrit = inscrit.GetPeriodeInscriptions()
         if debut_inscrit is None:
-            print u"Erreur sur la période d'accueil de %s" % GetPrenomNom(inscrit)
+            print "Erreur sur la période d'accueil de %s" % GetPrenomNom(inscrit)
         elif debut is None or debut_inscrit < debut:
             debut = debut_inscrit
         if fin is None or fin_inscrit is None or fin_inscrit > fin:
@@ -869,7 +871,7 @@ def GetHistoriqueSolde(famille, jalon, derniere_facture=True):
                             lignes.append(facture)
             except Exception, e:
                 pass
-                # print u"Exception %r" % e
+                # print "Exception %r" % e
 
         date = GetNextMonthStart(date)
     return lignes

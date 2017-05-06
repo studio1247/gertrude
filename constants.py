@@ -15,6 +15,9 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
+
 days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
 months = ["Janvier", u'Février', "Mars", "Avril", "Mai", "Juin", "Juillet", u'Août', "Septembre", "Octobre", "Novembre", u'Décembre']
 months_abbrev = ["Janv", u'Fév', "Mars", "Avril", "Mai", "Juin", "Juil", u'Août', "Sept", "Oct", "Nov", u'Déc']
@@ -31,14 +34,14 @@ PROFIL_ADMIN = 64
 PROFIL_LECTURE_SEULE = 128
 
 TypesProfil = [
-    (u"Administrateur", PROFIL_ALL | PROFIL_ADMIN),
-    (u"Equipe", PROFIL_ALL),
-    (u"Bureau", PROFIL_ALL),
-    (u"Trésorier", PROFIL_ALL),
-    (u"Inscriptions", PROFIL_INSCRIPTIONS),
-    (u"Saisie planning", PROFIL_PLANNING),
-    (u"Utilisateur lecture seule", PROFIL_ALL | PROFIL_LECTURE_SEULE),
-    (u"Planning lecture seule", PROFIL_PLANNING | PROFIL_LECTURE_SEULE),
+    ("Administrateur", PROFIL_ALL | PROFIL_ADMIN),
+    ("Equipe", PROFIL_ALL),
+    ("Bureau", PROFIL_ALL),
+    ("Trésorier", PROFIL_ALL),
+    ("Inscriptions", PROFIL_INSCRIPTIONS),
+    ("Saisie planning", PROFIL_PLANNING),
+    ("Utilisateur lecture seule", PROFIL_ALL | PROFIL_LECTURE_SEULE),
+    ("Planning lecture seule", PROFIL_PLANNING | PROFIL_LECTURE_SEULE),
 ]
 
 # Types de structures
@@ -52,14 +55,14 @@ TYPE_FAMILIAL = 6
 TYPE_MULTI_ACCUEIL = 7
 
 TypesCreche = [
-    (u"Parental", TYPE_PARENTAL),
-    (u"Familial", TYPE_FAMILIAL),
-    (u"Associatif", TYPE_ASSOCIATIF),
-    (u"Municipal", TYPE_MUNICIPAL),
-    (u"Micro-crèche", TYPE_MICRO_CRECHE),
-    (u"Multi-accueil", TYPE_MULTI_ACCUEIL),
-    (u"Assistante maternelle", TYPE_ASSISTANTE_MATERNELLE),
-    (u"Garderie périscolaire", TYPE_GARDERIE_PERISCOLAIRE)
+    ("Parental", TYPE_PARENTAL),
+    ("Familial", TYPE_FAMILIAL),
+    ("Associatif", TYPE_ASSOCIATIF),
+    ("Municipal", TYPE_MUNICIPAL),
+    ("Micro-crèche", TYPE_MICRO_CRECHE),
+    ("Multi-accueil", TYPE_MULTI_ACCUEIL),
+    ("Assistante maternelle", TYPE_ASSISTANTE_MATERNELLE),
+    ("Garderie périscolaire", TYPE_GARDERIE_PERISCOLAIRE)
 ]
 
 # Mode de saisie des plannings
@@ -76,12 +79,12 @@ MODE_SYSTEMATIQUE_SANS_HORAIRES = 5
 MODE_PERMANENCE = 6
 
 ActivityModes = [
-    (u"Normal", 0),
-    (u"Libère une place", MODE_LIBERE_PLACE),
-    (u"Sans horaires", MODE_SANS_HORAIRES),
-    (u"Présence non facturée", MODE_PRESENCE_NON_FACTUREE),
-    (u"Sans horaire, systématique", MODE_SYSTEMATIQUE_SANS_HORAIRES),
-    (u"Permanence", MODE_PERMANENCE)
+    ("Normal", 0),
+    ("Libère une place", MODE_LIBERE_PLACE),
+    ("Sans horaires", MODE_SANS_HORAIRES),
+    ("Présence non facturée", MODE_PRESENCE_NON_FACTUREE),
+    ("Sans horaire, systématique", MODE_SYSTEMATIQUE_SANS_HORAIRES),
+    ("Permanence", MODE_PERMANENCE)
 ]
 
 # Propriétaires des activités
@@ -108,8 +111,8 @@ MODE_MAX = MODE_FORFAIT_HEBDOMADAIRE
 ModeAccueilItems = [
     ("Temps plein", MODE_5_5),
     ("Temps partiel", MODE_TEMPS_PARTIEL),
-    # (u"4/5èmes", MODE_4_5),
-    # (u"3/5èmes", MODE_3_5),
+    # ("4/5èmes", MODE_4_5),
+    # ("3/5èmes", MODE_3_5),
     ("Forfait horaire mensuel", MODE_FORFAIT_MENSUEL),
     ("Forfait horaire hebdomadaire", MODE_FORFAIT_HEBDOMADAIRE),
     ("Halte-garderie", MODE_HALTE_GARDERIE),
@@ -137,14 +140,14 @@ ENCAISSEMENT_CESU = 3
 ENCAISSEMENT_TIPI = 4
 ENCAISSEMENT_TITRE_RECETTE = 5
 
-ModesEncaissement = (u"Espèces", u"Virement", u"Chèque", u"Chèque CESU", u"TIPI", u"Titre de recette")
+ModesEncaissement = ("Espèces", "Virement", "Chèque", "Chèque CESU", "TIPI", "Titre de recette")
 
 ModeEncaissementItems = [
-    (u"Espèces", ENCAISSEMENT_ESPECES),
-    (u"Virement", ENCAISSEMENT_VIREMENT),
-    (u"Chèque", ENCAISSEMENT_CHEQUE),
-    (u"Chèque CESU", ENCAISSEMENT_CESU),
-    (u"Titre de recette", ENCAISSEMENT_TITRE_RECETTE),
+    ("Espèces", ENCAISSEMENT_ESPECES),
+    ("Virement", ENCAISSEMENT_VIREMENT),
+    ("Chèque", ENCAISSEMENT_CHEQUE),
+    ("Chèque CESU", ENCAISSEMENT_CESU),
+    ("Titre de recette", ENCAISSEMENT_TITRE_RECETTE),
 ]
 
 # Nombre de semaines de reference
@@ -215,10 +218,10 @@ MOIS_SANS_FACTURE = 2  # si présence dans cette periode (mois d'août par exemp
 MOIS_FACTURE_UNIQUEMENT_HEURES_SUPP = 4  # si présence dans cette periode (mois d'août par exemple), le contrat réparti sur les autres mois de l'année, seules les suppléments / déductions sont facturés
 
 ModeCongeItems = [
-    (u"Fermeture de l'établissement", 0),
-    (u"Accueil non facturé", ACCUEIL_NON_FACTURE),
-    (u"Pas de facture pendant ce mois", MOIS_SANS_FACTURE),
-    (u"Uniquement supplément/déduction", MOIS_FACTURE_UNIQUEMENT_HEURES_SUPP)
+    ("Fermeture de l'établissement", 0),
+    ("Accueil non facturé", ACCUEIL_NON_FACTURE),
+    ("Pas de facture pendant ce mois", MOIS_SANS_FACTURE),
+    ("Uniquement supplément/déduction", MOIS_FACTURE_UNIQUEMENT_HEURES_SUPP)
 ]
 
 # Modes d'arrondi des heures de presence

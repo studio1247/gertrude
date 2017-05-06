@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 import datetime, __builtin__
 try:
     import sqlite3
@@ -71,7 +73,7 @@ class SQLConnection(object):
         if not self.con:
             self.open()
 
-        progress_handler.display(u"Création d'une nouvelle base ...")
+        progress_handler.display("Création d'une nouvelle base ...")
 
         cur = self.con.cursor()
         cur.execute("""
@@ -547,7 +549,7 @@ class SQLConnection(object):
             flags INTEGER
           );""")
 
-        for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", u"15 août", "1er novembre", "11 novembre", u"25 décembre", u"Lundi de Pâques", "Jeudi de l'Ascension"):
+        for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", "15 août", "1er novembre", "11 novembre", "25 décembre", "Lundi de Pâques", "Jeudi de l'Ascension"):
             cur.execute("INSERT INTO CONGES (idx, debut) VALUES (NULL, ?)", (label, ))
         cur.execute("INSERT INTO DATA (key, value) VALUES (?, ?)", ("VERSION", VERSION))
         cur.execute('INSERT INTO CRECHE(idx, nom, adresse, code_postal, ville, telephone, ouverture, fermeture, affichage_min, affichage_max, granularite, preinscriptions, presences_previsionnelles, presences_supplementaires, modes_inscription,                         minimum_maladie, email, type,          mode_saisie_planning, periode_revenus, mode_facturation, temps_facturation,    repartition,                       conges_inscription, tarification_activites, traitement_maladie,                          facturation_jours_feries,      facturation_periode_adaptation,          formule_taux_horaire, formule_taux_effort, gestion_alertes, age_maximum, seuil_alerte_inscription, cloture_factures, arrondi_heures, arrondi_facturation, arrondi_facturation_periode_adaptation, arrondi_mensualisation,    arrondi_heures_salaries, arrondi_mensualisation_euros, arrondi_semaines,           gestion_maladie_hospitalisation, tri_inscriptions, tri_planning, tri_factures, smtp_server, caf_email, mode_accueil_defaut, gestion_absences_non_prevenues, gestion_maladie_sans_justificatif, gestion_preavis_conges, gestion_depart_anticipe, alerte_depassement_planning, last_tablette_synchro, changement_groupe_auto, allergies, regularisation_fin_contrat, date_raz_permanences, conges_payes_salaries, conges_supplementaires_salaries, cout_journalier) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
@@ -563,11 +565,11 @@ class SQLConnection(object):
         couleur = [5, 203, 28, 150, wx.SOLID]
         couleur_supplement = [5, 203, 28, 250, wx.SOLID]
         couleur_previsionnel = [5, 203, 28, 50, wx.SOLID]
-        cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)', (u"Présences", 0, 0, str(couleur), str(couleur_supplement), str(couleur_previsionnel), ""))
+        cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)', ("Présences", 0, 0, str(couleur), str(couleur_supplement), str(couleur_previsionnel), ""))
         vacances = (0, 0, 255, 150, wx.SOLID)
         malade = (190, 35, 29, 150, wx.SOLID)
-        cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)', (u"Vacances", -1, 0, str(vacances), str(vacances), str(vacances), ""))
-        cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)', (u"Malade", -2, 0, str(malade), str(malade), str(malade), ""))
+        cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)', ("Vacances", -1, 0, str(vacances), str(vacances), str(vacances), ""))
+        cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)', ("Malade", -2, 0, str(malade), str(malade), str(malade), ""))
 
         self.con.commit()
 
@@ -628,7 +630,7 @@ class SQLConnection(object):
             return None
 
         if progress_handler:
-            progress_handler.display(u"Chargement en mémoire de la base ...")
+            progress_handler.display("Chargement en mémoire de la base ...")
 
         cur = self.cursor()
 
@@ -797,7 +799,7 @@ class SQLConnection(object):
                 if i < 2:
                     famille.parents[i] = parent
                 else:
-                    print u"Famille avec plus de 2 parents : fonction non supportée"
+                    print "Famille avec plus de 2 parents : fonction non supportée"
                     continue
                 cur.execute('SELECT debut, fin, revenu, chomage, conge_parental, regime, idx FROM REVENUS WHERE parent=?', (parent.idx,))
                 for revenu_entry in cur.fetchall():
@@ -958,11 +960,11 @@ class SQLConnection(object):
             return True
 
         if version > VERSION:
-            progress_handler.display(u"Base de données plus récente que votre version de Gertrude (%d > %d) !" % (version, VERSION))
+            progress_handler.display("Base de données plus récente que votre version de Gertrude (%d > %d) !" % (version, VERSION))
             return False
 
         if progress_handler:
-            progress_handler.display(u"Conversion de la base de données (version %d => version %d) ..." % (version, VERSION))
+            progress_handler.display("Conversion de la base de données (version %d => version %d) ..." % (version, VERSION))
 
         if version < 1:
             cur.execute("""
@@ -1169,7 +1171,7 @@ class SQLConnection(object):
             cur.execute('UPDATE INSCRIPTIONS SET mode=? WHERE mode=?', (2, 0))
 
         if version < 20:
-            for label in ["Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", u"15 août", "1er novembre", "11 novembre", u"25 décembre", u"Lundi de Pâques", "Jeudi de l'Ascension"]:
+            for label in ["Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", "15 août", "1er novembre", "11 novembre", "25 décembre", "Lundi de Pâques", "Jeudi de l'Ascension"]:
                 cur.execute("INSERT INTO CONGES (idx, debut) VALUES (NULL, ?)", (label, ))
 
         if version < 21:
@@ -1228,13 +1230,13 @@ class SQLConnection(object):
             cur.execute('SELECT idx, color FROM ACTIVITIES')
             for idx, couleur in cur.fetchall():
                 cur.execute('UPDATE ACTIVITIES SET couleur=?, couleur_supplement=?, couleur_previsionnel=? WHERE idx=?', (str(couleurs[couleur]), str(couleurs_supplement[couleur]), str(couleurs_previsionnel[couleur]), idx))
-            cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel) VALUES(NULL,?,?,?,?,?,?)', (u"Présences", 0, 0, str(couleurs[0]), str(couleurs_supplement[0]), str(couleurs_previsionnel[0])))
+            cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel) VALUES(NULL,?,?,?,?,?,?)', ("Présences", 0, 0, str(couleurs[0]), str(couleurs_supplement[0]), str(couleurs_previsionnel[0])))
 
         if version < 26:
             vacances = (0, 0, 255, 150, wx.SOLID)
             malade = (190, 35, 29, 150, wx.SOLID)
-            cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel) VALUES(NULL,?,?,?,?,?,?)', (u"Vacances", -1, 0, str(vacances), str(vacances), str(vacances)))
-            cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel) VALUES(NULL,?,?,?,?,?,?)', (u"Malade", -2, 0, str(malade), str(malade), str(malade)))
+            cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel) VALUES(NULL,?,?,?,?,?,?)', ("Vacances", -1, 0, str(vacances), str(vacances), str(vacances)))
+            cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel) VALUES(NULL,?,?,?,?,?,?)', ("Malade", -2, 0, str(malade), str(malade), str(malade)))
 
         if version < 27:
             cur.execute("ALTER TABLE CRECHE ADD tarification_activites INTEGER;")
@@ -1514,7 +1516,7 @@ class SQLConnection(object):
             cur.execute('SELECT majoration_localite FROM CRECHE')
             majoration = cur.fetchall()[0][0]
             if majoration:
-                result = cur.execute('INSERT INTO TARIFSSPECIAUX (idx, label, reduction, pourcentage, valeur) VALUES (NULL,?,?,?,?)', (u"Majoration (enfant hors localité)", False, False, majoration))
+                result = cur.execute('INSERT INTO TARIFSSPECIAUX (idx, label, reduction, pourcentage, valeur) VALUES (NULL,?,?,?,?)', ("Majoration (enfant hors localité)", False, False, majoration))
                 cur.execute('UPDATE INSCRITS SET tarifs=? WHERE majoration=?', (1<<result.lastrowid, True))
 
         if version < 60:

@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 import binascii
 import bcrypt
 import wx
@@ -264,7 +266,7 @@ class Day(object):
     def GetHeureArriveeDepart(self, activite=0):
         for start, end, value in self.activites:
             if value & ~(PREVISIONNEL + CLOTURE) == activite:
-                return u"de %s à %s" % (GetHeureString(start), GetHeureString(end))
+                return "de %s à %s" % (GetHeureString(start), GetHeureString(end))
         return ''
 
     def Copy(self, day, previsionnel=True):
@@ -336,13 +338,13 @@ class Day(object):
     def RemoveActivity(self, start, end, value):
         if start is None and end is None:
             if self.activites_sans_horaires[value] is not None:
-                print u'delete %r (table=%s, idx=%d)' % (self.nom, self.table, self.activites_sans_horaires[value])
+                print 'delete %r (table=%s, idx=%d)' % (self.nom, self.table, self.activites_sans_horaires[value])
                 sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.table,
                                        (self.activites_sans_horaires[value],))
             del self.activites_sans_horaires[value]
         else:
             if self.activites[(start, end, value)] is not None:
-                print u'delete %r (table=%s, idx=%d)' % (self.nom, self.table, self.activites[(start, end, value)])
+                print 'delete %r (table=%s, idx=%d)' % (self.nom, self.table, self.activites[(start, end, value)])
                 sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.table,
                                        (self.activites[(start, end, value)],))
             del self.activites[(start, end, value)]
@@ -359,7 +361,7 @@ class Day(object):
 
 class JourneeCapacite(Day):
     table = "CAPACITE"
-    nom = u"capacité"
+    nom = "capacité"
     exclusive = True
 
     def __init__(self, jour):
@@ -373,7 +375,7 @@ class JourneeCapacite(Day):
         self.salarie = None
 
     def InsertActivity(self, start, end, value):
-        print u'nouvelle tranche horaire %s de capacité (%r, %r %d)' % (self.label, start, end, value),
+        print 'nouvelle tranche horaire %s de capacité (%r, %r %d)' % (self.label, start, end, value),
         result = sql_connection.execute('INSERT INTO CAPACITE (idx, value, debut, fin, jour) VALUES (NULL,?,?,?,?)',
                                         (value, start, end, self.jour))
         idx = result.lastrowid
@@ -383,7 +385,7 @@ class JourneeCapacite(Day):
 
 class JourneeReferenceInscription(Day):
     table = "REF_ACTIVITIES"
-    nom = u"activité de référence"
+    nom = "activité de référence"
 
     def __init__(self, inscription, day):
         Day.__init__(self)
@@ -406,7 +408,7 @@ class JourneeReferenceInscription(Day):
 
 class JourneeReferenceSalarie(Day):
     table = "REF_JOURNEES_SALARIES"
-    nom = u"journée de référence (salarié)"
+    nom = "journée de référence (salarié)"
 
     def __init__(self, contrat, day):
         Day.__init__(self)
@@ -429,7 +431,7 @@ class JourneeReferenceSalarie(Day):
 
 class WeekActivity(SQLObject):
     table = "PLANNING_HEBDOMADAIRE"
-    nom = u"semaine"
+    nom = "semaine"
 
     def __init__(self, inscrit, date, activity, value, idx=None):
         self.idx = None
@@ -471,7 +473,7 @@ class WeekPlanning(object):
 
 class Journee(Day):
     table = "ACTIVITES"
-    nom = u"activité"
+    nom = "activité"
 
     def __init__(self, inscrit, date, reference=None):
         Day.__init__(self)
@@ -512,7 +514,7 @@ class Journee(Day):
 
 class JourneeSalarie(Day):
     table = "ACTIVITES_SALARIES"
-    nom = u"activité salarié"
+    nom = "activité salarié"
 
     def __init__(self, salarie, date, reference=None):
         Day.__init__(self)

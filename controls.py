@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 import sys, __builtin__
 import wx, wx.lib, wx.lib.scrolledpanel, wx.lib.masked, wx.lib.stattext, wx.combo
 from wx.lib.masked import Field
@@ -514,7 +516,7 @@ class AutoMixin:
             try:
                 self.SetValue(self.GetCurrentValue())
             except:
-                print u"Erreur lors de l'evaluation de self.instance.%s" % self.member
+                print "Erreur lors de l'evaluation de self.instance.%s" % self.member
             self.__ontext = True
             self.Enable(not readonly)
 
@@ -811,7 +813,7 @@ class TextDialog(wx.Dialog):
 
 class PeriodeDialog(wx.Dialog):
     def __init__(self, parent, periode):
-        wx.Dialog.__init__(self, parent, -1, u"Modifier une période", wx.DefaultPosition, wx.DefaultSize)
+        wx.Dialog.__init__(self, parent, -1, "Modifier une période", wx.DefaultPosition, wx.DefaultSize)
         self.periode = periode
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.fields_sizer = wx.FlexGridSizer(0, 2, 5, 10)
@@ -819,7 +821,7 @@ class PeriodeDialog(wx.Dialog):
         self.debut_ctrl = DateCtrl(self)
         self.debut_ctrl.SetValue(periode.debut)
         self.fields_sizer.AddMany(
-            [(wx.StaticText(self, -1, u"Début :"), 0, wx.ALIGN_CENTRE_VERTICAL | wx.ALL - wx.BOTTOM, 5),
+            [(wx.StaticText(self, -1, "Début :"), 0, wx.ALIGN_CENTRE_VERTICAL | wx.ALL - wx.BOTTOM, 5),
              (self.debut_ctrl, 0, wx.EXPAND | wx.ALIGN_CENTRE_VERTICAL | wx.ALL - wx.BOTTOM, 5)])
         self.fin_ctrl = DateCtrl(self)
         self.fin_ctrl.SetValue(periode.fin)
@@ -857,11 +859,11 @@ class PeriodeChoice(wx.BoxSizer):
         plusbmp = wx.Bitmap(GetBitmapFile("plus.png"), wx.BITMAP_TYPE_PNG)
         settingsbmp = wx.Bitmap(GetBitmapFile("settings.png"), wx.BITMAP_TYPE_PNG)
         self.periodeaddbutton = wx.BitmapButton(parent, -1, plusbmp, size=SIMPLE_BUTTONS_SIZE)
-        self.periodeaddbutton.SetToolTipString(u"Ajouter une période")
+        self.periodeaddbutton.SetToolTipString("Ajouter une période")
         self.periodedelbutton = wx.BitmapButton(parent, -1, delbmp, size=SIMPLE_BUTTONS_SIZE)
-        self.periodedelbutton.SetToolTipString(u"Supprimer la période")
+        self.periodedelbutton.SetToolTipString("Supprimer la période")
         self.periodesettingsbutton = wx.BitmapButton(parent, -1, settingsbmp, size=SIMPLE_BUTTONS_SIZE)
-        self.periodesettingsbutton.SetToolTipString(u"Modifier la période")
+        self.periodesettingsbutton.SetToolTipString("Modifier la période")
 
         self.Add(self.periodechoice, 1, wx.EXPAND | wx.LEFT, 5)
         self.Add(self.periodeaddbutton, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.RIGHT, 5)

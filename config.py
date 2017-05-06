@@ -291,7 +291,7 @@ def LoadConfig(path=None, progress_handler=default_progress_handler):
     if path is None:
         path = GetConfigFile()
 
-    progress_handler.display("Chargement de la configuration %s ..." % path if path else "default")
+    progress_handler.display("Chargement de la configuration %s ..." % (path if path else "par défaut"))
     parser = ConfigParser.SafeConfigParser()
 
     if path:
@@ -366,7 +366,7 @@ def SaveConfig(progress_handler):
             parser.write(file(config.filename, "w"))
         except Exception, e:
             print e
-            progress_handler.display("Impossible d'enregistrer les paramètres de configuration !")    
+            progress_handler.display("Impossible d'enregistrer les paramètres de configuration !")
 
 
 def Load(progress_handler=default_progress_handler, autosave=False):

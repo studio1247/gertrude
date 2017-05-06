@@ -1,11 +1,25 @@
+# -*- coding: utf-8 -*-
+
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
+
 import wx
 
+
 class BufferedWindow(wx.Window):
-    def __init__(self, parent,
-                 id = -1,
-                 pos = wx.DefaultPosition,
-                 size = wx.DefaultSize,
-                 style=wx.NO_FULL_REPAINT_ON_RESIZE):
+    def __init__(self, parent, id=-1, pos=wx.DefaultPosition, size=wx.DefaultSize, style=wx.NO_FULL_REPAINT_ON_RESIZE):
         wx.Window.__init__(self, parent, id, pos, size, style)
         
         self.Bind(wx.EVT_PAINT, self.OnPaint)

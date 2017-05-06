@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 import datetime
 from paques import getPaquesDate
 import __builtin__
@@ -45,11 +47,11 @@ jours_fermeture.append(("1er janvier", lambda year: datetime.date(year, 1, 1), T
 jours_fermeture.append(("1er mai", lambda year: datetime.date(year, 5, 1), True))
 jours_fermeture.append(("8 mai", lambda year: datetime.date(year, 5, 8), True))
 jours_fermeture.append(("14 juillet", lambda year: datetime.date(year, 7, 14), True))
-jours_fermeture.append((u"15 août", lambda year: datetime.date(year, 8, 15), True))
+jours_fermeture.append(("15 août", lambda year: datetime.date(year, 8, 15), True))
 jours_fermeture.append(("1er novembre", lambda year: datetime.date(year, 11, 1), True))
 jours_fermeture.append(("11 novembre", lambda year: datetime.date(year, 11, 11), True))
-jours_fermeture.append((u"25 décembre", lambda year: datetime.date(year, 12, 25), True))
-jours_fermeture.append((u"Lundi de Pâques", lambda year: getPaquesDate(year) + datetime.timedelta(1), True))
+jours_fermeture.append(("25 décembre", lambda year: datetime.date(year, 12, 25), True))
+jours_fermeture.append(("Lundi de Pâques", lambda year: getPaquesDate(year) + datetime.timedelta(1), True))
 jours_fermeture.append(("Jeudi de l'Ascension", lambda year: getPaquesDate(year) + datetime.timedelta(39), True))
-jours_fermeture.append((u"Lundi de Pentecôte", lambda year: getPaquesDate(year) + datetime.timedelta(50), False))
+jours_fermeture.append(("Lundi de Pentecôte", lambda year: getPaquesDate(year) + datetime.timedelta(50), False))
 

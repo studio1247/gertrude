@@ -17,6 +17,8 @@
 #    along with Gertrude; if not, write to the Free Software
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+from __future__ import unicode_literals
+
 import __builtin__
 import os, sys, codecs, imp, time, locale, shutil, glob, thread, urllib2
 import wx, wx.lib.wordwrap
@@ -119,7 +121,7 @@ class GertrudeListbook(Listbook):
             if panel.profil & profil:
                 if progress_handler:
                     progress_handler.set(10 + 80 * i / len(panels))
-                    progress_handler.display(u"Chargement de l'outil %s ..." % panel.name)
+                    progress_handler.display("Chargement de l'outil %s ..." % panel.name)
                 self.AddPage(panel(self), panel.bitmap)
         self.Draw()
  
@@ -156,19 +158,19 @@ class GertrudeFrame(wx.Frame):
             self.db_menu.Append(1099, "Rechercher...")
             self.Bind(wx.EVT_MENU, self.OnRechercher, id=1099)
             menu.AppendMenu(1000, "Changer de structure", self.db_menu)
-        menu.Append(101, "&Enregistrer\tCtrl+S", u"Enregistre")
+        menu.Append(101, "&Enregistrer\tCtrl+S", "Enregistre")
         self.Bind(wx.EVT_MENU, self.OnSave, id=101)
-        menu.Append(102, u"&Copie de secours des données", u"Crée une copie de toutes les données")
+        menu.Append(102, "&Copie de secours des données", "Crée une copie de toutes les données")
         self.Bind(wx.EVT_MENU, self.OnBackup, id=102)
-        menu.Append(103, "&Fermer\tAlt+F4", u"Ferme la fenêtre")
+        menu.Append(103, "&Fermer\tAlt+F4", "Ferme la fenêtre")
         self.Bind(wx.EVT_MENU, self.OnExit, id=103)
         menuBar.Append(menu, "&Fichier")
         menu = wx.Menu()
-        menu.Append(201, "&Annuler\tCtrl+Z", u"Annule l'action précédente")
+        menu.Append(201, "&Annuler\tCtrl+Z", "Annule l'action précédente")
         self.Bind(wx.EVT_MENU, self.OnUndo, id=201)
         menuBar.Append(menu, "&Edition")
         menu = wx.Menu()
-        menu.Append(301, "A &propos de Gertrude", u"A propos de Gertrude")
+        menu.Append(301, "A &propos de Gertrude", "A propos de Gertrude")
         self.Bind(wx.EVT_MENU, self.OnAbout, id=301)
         menuBar.Append(menu, "&?")
         self.SetMenuBar(menuBar)
@@ -257,7 +259,7 @@ class GertrudeFrame(wx.Frame):
         
     def CheckForUpdates(self):
         try:
-            url = u'http://gertrude.creches.free.fr/checkupdate.php?binary=%s&version=%s&creche=%s&ville=%s' % (os.path.splitext(os.path.basename(sys.argv[0]))[0], VERSION, urllib2.quote(creche.nom.encode("utf-8")), urllib2.quote(creche.ville.encode("utf-8")))
+            url = 'https://www.gertrude-logiciel.org/checkupdate.php?version=%s&creche=%s&ville=%s' % (VERSION, urllib2.quote(creche.nom.encode("utf-8")), urllib2.quote(creche.ville.encode("utf-8")))
             req = urllib2.Request(url)
             result = urllib2.urlopen(req).read()
             if result:
@@ -299,7 +301,7 @@ class GertrudeFrame(wx.Frame):
             __builtin__.readonly = True
         elif readonly:
             dlg = wx.MessageDialog(frame,
-                                   u"Le jeton n'a pas pu être pris. Gertrude sera accessible en lecture seule. Voulez-vous forcer la prise du jeton ?",
+                                   "Le jeton n'a pas pu être pris. Gertrude sera accessible en lecture seule. Voulez-vous forcer la prise du jeton ?",
                                    'Gertrude',
                                    wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
             result = dlg.ShowModal()
@@ -316,7 +318,7 @@ class GertrudeFrame(wx.Frame):
     def OnRechercher(self, event):
         class RechercherDialog(wx.Dialog):
             def __init__(self, parent):
-                wx.Dialog.__init__(self, parent, -1, u"Rechercher un enfant", wx.DefaultPosition, wx.DefaultSize)
+                wx.Dialog.__init__(self, parent, -1, "Rechercher un enfant", wx.DefaultPosition, wx.DefaultSize)
                 self.sizer = wx.BoxSizer(wx.VERTICAL)
                 self.fields_sizer = wx.FlexGridSizer(0, 2, 5, 10)
                 self.fields_sizer.AddGrowableCol(1, 1)
@@ -327,7 +329,7 @@ class GertrudeFrame(wx.Frame):
                 self.combo.SetItems(self.choices)
                 self.text.Bind(wx.EVT_TEXT, self.OnText)
                 self.combo.Bind(wx.EVT_LEFT_DCLICK, self.OnOK)
-                self.fields_sizer.AddMany([(wx.StaticText(self, -1, u"Recherche :"), 0, wx.ALIGN_CENTRE_VERTICAL|wx.ALL-wx.BOTTOM, 5), (self.text, 0, wx.EXPAND|wx.ALIGN_CENTRE_VERTICAL|wx.ALL-wx.BOTTOM, 5)])
+                self.fields_sizer.AddMany([(wx.StaticText(self, -1, "Recherche :"), 0, wx.ALIGN_CENTRE_VERTICAL|wx.ALL-wx.BOTTOM, 5), (self.text, 0, wx.EXPAND|wx.ALIGN_CENTRE_VERTICAL|wx.ALL-wx.BOTTOM, 5)])
                 self.sizer.Add(self.fields_sizer, 0, wx.EXPAND|wx.ALL, 5)
                 self.sizer.Add(self.combo, 0, wx.EXPAND|wx.ALL, 5)
                 self.btnsizer = wx.StdDialogButtonSizer()
@@ -366,7 +368,7 @@ class GertrudeFrame(wx.Frame):
         
     def OnUpdateAvailable(self, event):
         if sys.platform == 'win32' and sys.argv[0].endswith("exe"):
-            dlg = wx.MessageDialog(self, u'La version %s est disponible. Voulez-vous la télécharger maintenant ?' % event.version,
+            dlg = wx.MessageDialog(self, 'La version %s est disponible. Voulez-vous la télécharger maintenant ?' % event.version,
                                    'Nouvelle version disponible',
                                    wx.YES_NO | wx.NO_DEFAULT | wx.ICON_INFORMATION)
             result = dlg.ShowModal()
@@ -378,7 +380,7 @@ class GertrudeFrame(wx.Frame):
     def OnSave(self, evt):
         self.SetStatusText("Enregistrement en cours ...")
         if readonly:
-            dlg = wx.MessageDialog(self, u"Gertrude est en lecture seule !", 'Erreur', wx.OK|wx.ICON_WARNING)
+            dlg = wx.MessageDialog(self, "Gertrude est en lecture seule !", 'Erreur', wx.OK|wx.ICON_WARNING)
             dlg.ShowModal()
             dlg.Destroy()
         else:
@@ -439,9 +441,9 @@ class GertrudeFrame(wx.Frame):
         info.Version = VERSION
         info.Copyright = "(C) 2005-2013 Bertrand Songis"
         info.Description = wx.lib.wordwrap.wordwrap(
-            u"Gertrude est un logiciel libre adapté aux besoins de gestion des crèches et haltes-garderies en France.\n\n"
-            u"Développé pour une crèche parentale rennaise début 2005, il a été adapté de 2007 à 2015 pour d’autres crèches ; il est désormais accessible à tous.\n\n"
-            u"Il permet l'édition de contrats, la gestion de planning, la facturation, les appels de cotisations, les attestations de paiement, les rapports de fréquentation, la synthèse des contributions familiales.\n\n",
+            "Gertrude est un logiciel libre adapté aux besoins de gestion des crèches et haltes-garderies en France.\n\n"
+            "Développé pour une crèche parentale rennaise début 2005, il a été adapté de 2007 à 2015 pour d’autres crèches ; il est désormais accessible à tous.\n\n"
+            "Il permet l'édition de contrats, la gestion de planning, la facturation, les appels de cotisations, les attestations de paiement, les rapports de fréquentation, la synthèse des contributions familiales.\n\n",
             350, wx.ClientDC(self))
         info.WebSite = ("http://gertrude.creches.free.fr", "Gertrude")
         info.Contributors = [ "Mairie des Orres" ]
