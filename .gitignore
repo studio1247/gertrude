@@ -1,6 +1,4 @@
 Output
-build
-dist
 backups
 bitmaps
 templates
@@ -12,9 +10,7 @@ importations
 /*.ini
 /*.csv
 /*.od?
-/perms.py
-/csv.py
-/split.py
 /*.txt
 *.pyc
-/release.py
+*.iss
+/tools/release.py

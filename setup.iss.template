@@ -1,4 +1,4 @@
-#define GertrudeVersion "1.11.1"
+#define GertrudeVersion "@VERSION@"
 
 [Setup]
 AppName=Gertrude
