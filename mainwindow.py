@@ -236,7 +236,7 @@ class GertrudeFrame(wx.Frame):
             messages.append("%s passe dans le groupe %s" % (GetPrenomNom(inscription.inscrit, tri=TRI_PRENOM), groupe.nom))
         texte = "\n".join(messages)
         dlg = wx.MessageDialog(self, texte, "Changements de groupe")
-        result = dlg.ShowModal()
+        dlg.ShowModal()
         dlg.Destroy()
             
     def OnAlertesAvailable(self, event):
