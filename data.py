@@ -18,10 +18,9 @@
 from __future__ import unicode_literals
 
 import __builtin__
-import mimetypes
+import requests
 import os.path
 import shutil
-import urllib2
 import uuid
 
 from functions import *
@@ -39,8 +38,14 @@ class HttpConnection(object):
         self.url = url
         self.filename = filename
         self.identity = identity
-        self.auth_info = auth_info
-        self.proxy_info = proxy_info
+        self.auth = auth_info
+        if proxy_info:
+            if 'user' in proxy_info:
+                self.proxies = {"http": "http://%(user)s:%(pass)s@%(host)s:%(port)d" % proxy_info}
+            else:
+                self.proxies = {"http": "http://%(host)s:%(port)d" % proxy_info}
+        else:
+            self.proxies = None
         if os.path.isfile(TOKEN_FILENAME):
             self.token = file(TOKEN_FILENAME).read()
             self.check_token()
@@ -48,81 +53,40 @@ class HttpConnection(object):
             self.token = 0
         self.progress_handler = default_progress_handler
 
-    @staticmethod
-    def get_content_type(filename):
-        return mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+    def get_url(self, action):
+        result = "%s?action=%s&identity=%s" % (self.url, action, self.identity)
+        if self.token:
+            result += "&token=%s" % self.token
+        return result
 
-    def encode_multipart_formdata(self, fields, files):
-        """
-        fields is a sequence of (name, value) elements for regular form fields.
-        files is a sequence of (name, filename, value) elements for data to be uploaded as files
-        Return (content_type, body) ready for httplib.HTTP instance
-        """
-        BOUNDARY = '----------ThIs_Is_tHe_bouNdaRY_$'
-        CRLF = '\r\n'
-        L = []
-        for (key, value) in fields:
-                L.append('--' + BOUNDARY)
-                L.append('Content-Disposition: form-data; name="%s"' % key)
-                L.append('')
-                L.append(value)
-        for (key, filename) in files:
-                L.append('--' + BOUNDARY)
-                L.append('Content-Disposition: form-data; name="%s"; filename="%s"' % (key, filename))
-                L.append('Content-Type: %s' % self.get_content_type(filename))
-                L.append('Content-Transfer-Encoding: binary')
-                L.append('')
-                fp = file(filename, 'rb')
-                L.append(fp.read())
-                fp.close()
-        L.append('--' + BOUNDARY + '--')
-        L.append('')
-        body = CRLF.join(L)
-        content_type = 'multipart/form-data; boundary=%s' % BOUNDARY
-        return content_type, body
-
-    def urlopen(self, action, body=None, headers=None):
-        opener = urllib2.build_opener()
-        if self.auth_info:
-            password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-            password_mgr.add_password(None, self.url, self.auth_info[0], self.auth_info[1])
-            opener.add_handler(urllib2.HTTPBasicAuthHandler(password_mgr))
-        if self.proxy_info:
-            if 'user' in self.proxy_info:
-                opener.add_handler(urllib2.ProxyHandler({"http": "http://%(user)s:%(pass)s@%(host)s:%(port)d" % self.proxy_info}))
-            else:
-                opener.add_handler(urllib2.ProxyHandler({"http": "http://%(host)s:%(port)d" % self.proxy_info}))
-        urllib2.install_opener(opener)
-
+    def send_action(self, action):
+        url = self.get_url(action)
+        print url
+        response = requests.get(url, auth=self.auth, proxies=self.proxies)
+        if response.status_code != requests.codes.ok:
+            return 0
+        result = response.content
         try:
-            url = '%s?action=%s&identity=%s' % (self.url, action, self.identity)
-            print url
-            if self.token:
-                url += "&token=%s" % self.token
-            # print url
-            if body:
-                req = urllib2.Request(url, body, headers)
-            else:
-                req = urllib2.Request(url)
-            result = urllib2.urlopen(req).read()
-            # pas sur mac print '=>', result[:64]
-            if len(result) == 1:
-                return eval(result)
-            else:
-                return result
-        except urllib2.HTTPError, e:
-            if e.code == 404:
-                raise Exception(u"Echec - code 404 (page non trouvee)")
-            else:
-                raise Exception(u"Echec - code %d" % e.code)
-        except urllib2.URLError, e:
-            raise Exception("Echec - cause:", e.reason)
-        except Exception, e:
-            raise
+            # (pas sur mac)
+            print '=>', result[:64]
+        except:
+            pass
+        if result.isdigit():
+            return int(result)
+        else:
+            return 0
+
+    def get_server_data(self, action):
+        url = self.get_url(action)
+        print url
+        response = requests.get(url, auth=self.auth, proxies=self.proxies)
+        if response.status_code != requests.codes.ok:
+            return 0
+        return response.content
 
     def has_token(self):
-        self.progress_handler.display(u"Vérification du jeton ...")
-        return self.token and self.urlopen('has_token')
+        self.progress_handler.display("Vérification du jeton ...")
+        return self.token and self.send_action('has_token')
 
     def check_token(self):
         try:
@@ -132,11 +96,12 @@ class HttpConnection(object):
             self.token = 0
                 
     def get_token(self):
-        self.progress_handler.display(u"Récupération du jeton ...")
+        self.progress_handler.display("Récupération du jeton ...")
         if force_token:
-            self.token = self.urlopen('force_token')
+            self.token = self.get_server_data('force_token')
         else:
-            self.token = self.urlopen('get_token')
+            self.token = self.get_server_data('get_token')
+        print self.token
         self.check_token()
         if not self.token:
             return 0
@@ -147,13 +112,13 @@ class HttpConnection(object):
     def rel_token(self):
         if not self.token:
             return 1
-        self.progress_handler.display(u"Libération du jeton ...")
-        if not self.urlopen('rel_token'):
-            self.progress_handler.display(u"Libération du jeton refusée...")
+        self.progress_handler.display("Libération du jeton ...")
+        if not self.send_action('rel_token'):
+            self.progress_handler.display("Libération du jeton refusée...")
             time.sleep(1)
             return 0
         else:
-            self.progress_handler.display(u"Libération du jeton accordée...")
+            self.progress_handler.display("Libération du jeton accordée...")
             time.sleep(1)
             self.token = 0
             if os.path.exists(TOKEN_FILENAME):
@@ -161,22 +126,22 @@ class HttpConnection(object):
             return 1
 
     def do_download(self):
-        self.progress_handler.display(u"Téléchargement de la base ...")
-        data = self.urlopen('download')
+        self.progress_handler.display("Téléchargement de la base ...")
+        data = self.get_server_data('download')
         if data:
             f = file(self.filename, 'wb')
             f.write(data)
             f.close()
-            self.progress_handler.display(u'%d octets transférés.' % len(data))
+            self.progress_handler.display('%d octets transférés.' % len(data))
         else:
-            self.progress_handler.display(u'Pas de base présente sur le serveur.')
+            self.progress_handler.display('Pas de base présente sur le serveur.')
             if os.path.isfile(self.filename):
                 self.progress_handler.display("Utilisation de la base locale ...")
         return 1
 
     def download(self):       
         if self.has_token():
-            self.progress_handler.display(u"Jeton déjà pris => pas de download")
+            self.progress_handler.display("Jeton déjà pris => pas de download")
             return 1
         elif self.get_token():
             self.progress_handler.set(30)
@@ -186,7 +151,7 @@ class HttpConnection(object):
             else:
                 self.progress_handler.set(90)
                 self.rel_token()
-                self.progress_handler.display(u"Le download a échoué")
+                self.progress_handler.display("Le download a échoué")
                 return 0
         else:
             self.progress_handler.display("Impossible de prendre le jeton.")
@@ -194,13 +159,19 @@ class HttpConnection(object):
        
     def do_upload(self):
         self.progress_handler.display("Envoi vers le serveur ...")
-        content_type, body = self.encode_multipart_formdata([], [("database", self.filename)])
-        headers = {"Content-Type": content_type, 'Content-Length': str(len(body))}
-        return self.urlopen('upload', body, headers)
+        files = {'database': ('database', open(self.filename, 'rb'))}
+        try:
+            response = requests.post(self.get_url("upload"), files=files, auth=self.auth, proxies=self.proxies)
+            if len(response.content) == 1:
+                return eval(response.content)
+            else:
+                return response.content
+        except Exception, e:
+            raise
 
     def upload(self):
         if not self.has_token():
-            self.progress_handler.display(u"Pas de jeton présent => pas d'envoi vers le serveur.")
+            self.progress_handler.display("Pas de jeton présent => pas d'envoi vers le serveur.")
             return 0
         return self.do_upload()
 
@@ -222,7 +193,7 @@ class HttpConnection(object):
         return result
     
     def LoadJournal(self):
-        return self.urlopen('journal')
+        return self.get_server_data('journal')
 
     def Update(self):
         return None, None
@@ -260,11 +231,11 @@ class SharedFileConnection(object):
             return None
             
     def has_token(self):
-        self.progress_handler.display(u"Vérification du jeton ...")
+        self.progress_handler.display("Vérification du jeton ...")
         return self.token and self.token == self.read_token(self.token_url)
 
     def get_token(self):
-        self.progress_handler.display(u"Récupération du jeton ...")
+        self.progress_handler.display("Récupération du jeton ...")
         if force_token or self.read_token(self.token_url) is None:
             self.token = self.identity
             file(TOKEN_FILENAME, 'w').write(self.token)
@@ -276,32 +247,32 @@ class SharedFileConnection(object):
     def rel_token(self):
         if not self.token:
             return 1
-        self.progress_handler.display(u"Libération du jeton ...")
+        self.progress_handler.display("Libération du jeton ...")
         if self.read_token(self.token_url) == self.token:
             os.remove(self.token_url)
             os.remove(TOKEN_FILENAME)
-            self.progress_handler.display(u"Libération du jeton accordée...")
+            self.progress_handler.display("Libération du jeton accordée ...")
             time.sleep(1)
             self.token = None
             return 1
         else:
-            self.progress_handler.display(u"Libération du jeton refusée...")
+            self.progress_handler.display("Libération du jeton refusée ...")
             time.sleep(1)
             return 0
 
     def do_download(self):
-        self.progress_handler.display(u"Téléchargement de la base ...")
+        self.progress_handler.display("Téléchargement de la base ...")
         if os.path.isfile(self.url):
             shutil.copyfile(self.url, self.filename)
         else:
-            self.progress_handler.display(u'Pas de base présente sur le serveur.')
+            self.progress_handler.display('Pas de base présente sur le serveur.')
             if os.path.isfile(self.filename):
                 self.progress_handler.display("Utilisation de la base locale ...")
         return 1
 
     def download(self):       
         if self.has_token():
-            self.progress_handler.display(u"Jeton déjà pris => pas de download")
+            self.progress_handler.display("Jeton déjà pris => pas de download")
             return 1
         elif self.get_token():
             self.progress_handler.set(30)
@@ -311,7 +282,7 @@ class SharedFileConnection(object):
             else:
                 self.progress_handler.set(90)
                 self.rel_token()
-                self.progress_handler.display(u"Le download a échoué")
+                self.progress_handler.display("Le download a échoué")
                 return 0
         else:
             self.progress_handler.display("Impossible de prendre le jeton.")
@@ -323,7 +294,7 @@ class SharedFileConnection(object):
 
     def upload(self):
         if not self.has_token():
-            self.progress_handler.display(u"Pas de jeton présent => pas d'envoi vers le serveur.")
+            self.progress_handler.display("Pas de jeton présent => pas d'envoi vers le serveur.")
             return 0
         return self.do_upload()
 
