@@ -11,6 +11,5 @@ importations
 /*.csv
 /*.od?
 /*.txt
-*.pyc
-*.iss
-/tools/release.py
+/*.pyc
+/*.iss
