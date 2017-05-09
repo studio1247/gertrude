@@ -574,8 +574,11 @@ class FactureFinMois(object):
                             date = cotisation.fin + datetime.timedelta(1)
                     else:
                         date_fin_cotisation = inscription.fin
-    
-                    jours_presence = inscription.GetNombreJoursPresenceSemaine()
+
+                    if inscription.mode in (MODE_FORFAIT_HEBDOMADAIRE, MODE_FORFAIT_MENSUEL):
+                        jours_presence = GetNombreJoursSemaineTravailles()
+                    else:
+                        jours_presence = inscription.GetNombreJoursPresenceSemaine()
                     if jours_presence and inscription.semaines_conges:
                         if dernier_mois:
                             if creche.repartition == REPARTITION_MENSUALISATION_12MOIS:

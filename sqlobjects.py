@@ -1307,6 +1307,7 @@ class Creche(object):
         return [allergie.strip() for allergie in self.allergies.split(",") if allergie.strip()]
 
     def CalculeJoursConges(self):
+        self.periodes_fermeture = {}
         self.jours_fermeture = {}
         self.jours_fete = set()
         self.jours_weekend = []
@@ -1334,6 +1335,7 @@ class Creche(object):
         def AddPeriode(debut, fin, conge):
             date = debut
             while date <= fin:
+                self.periodes_fermeture[date] = conge
                 self.jours_fermeture[date] = conge
                 if date not in self.jours_feries:
                     self.jours_conges.add(date)
@@ -1877,10 +1879,19 @@ class Inscription(PeriodeReference):
     def GetNombreJoursCongesPris(self, debut, fin):
         jours = 0
         date = debut
-        # print "GetNombreJoursCongesPris(%s-%s)" % (debut, fin)
-        while date < fin:
+        # print "GetNombreJoursCongesPris(%s - %s)" % (debut, fin)
+        while date <= fin:
             state = self.inscrit.GetStateSimple(date)
-            if creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS:
+            if creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_SEMAINES:
+                if date in creche.periodes_fermeture:
+                    # print date
+                    jours += 1
+                elif state in (VACANCES, ABSENT):
+                    reference = self.GetJourneeReference(date)
+                    if reference.GetNombreHeures() > 0:
+                        # print date
+                        jours += 1
+            elif creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS:
                 if state == VACANCES:
                     # print date
                     jours += 1
