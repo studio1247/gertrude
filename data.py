@@ -90,7 +90,7 @@ class HttpConnection(object):
 
     def check_token(self):
         try:
-            if '<' in self.token or '>' in self.token or '&' in self.token:
+            if self.token == '0' or '<' in self.token or '>' in self.token or '&' in self.token:
                 self.token = 0
         except:
             self.token = 0
