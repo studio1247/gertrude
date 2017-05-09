@@ -1,4 +1,24 @@
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
+
+#    This file is part of Gertrude.
+#
+#    Gertrude is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    Gertrude is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Gertrude; if not, write to the Free Software
+#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+
+from __future__ import unicode_literals
 
 import unittest
 import sys
@@ -307,7 +327,7 @@ class MarmousetsTests(GertrudeTestCase):
         creche.temps_facturation = FACTURATION_DEBUT_MOIS_CONTRAT
         creche.facturation_jours_feries = ABSENCES_DEDUITES_EN_JOURS
         creche.conges_inscription = 1
-        for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", u"15 août", "1er novembre", "11 novembre", u"25 décembre", u"Lundi de Pâques", "Jeudi de l'Ascension"):
+        for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", "15 août", "1er novembre", "11 novembre", "25 décembre", "Lundi de Pâques", "Jeudi de l'Ascension"):
             self.AddJourFerie(label)
         conge = Conge(creche, creation=False)
         conge.debut = conge.fin = "14/05/2010"
@@ -330,7 +350,7 @@ class MarmousetsTests(GertrudeTestCase):
         conge = CongeInscrit(inscrit, creation=False)
         conge.debut, conge.fin = "01/02/2010", "20/02/2010"
         inscrit.AddConge(conge)
-        cotisation = Cotisation(inscrit, datetime.date(2010, 1, 4), NO_ADDRESS|NO_PARENTS)
+        cotisation = Cotisation(inscrit, datetime.date(2010, 1, 4), NO_ADDRESS | NO_PARENTS)
         self.assertPrec2Equals(cotisation.heures_semaine, 37.0)
         self.assertEquals(cotisation.heures_periode, 971.0)
         self.assertEquals(cotisation.nombre_factures, 7)
@@ -344,14 +364,14 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         creche.facturation_jours_feries = ABSENCES_DEDUITES_EN_JOURS
         creche.arrondi_heures = ARRONDI_HEURE
         creche.arrondi_facturation = ARRONDI_HEURE
-        for label in ("Week-end", "1er janvier", "14 juillet", "1er novembre", "11 novembre", u"Lundi de Pâques", "Jeudi de l'Ascension", u"Lundi de Pentecôte"):
+        for label in ("Week-end", "1er janvier", "14 juillet", "1er novembre", "11 novembre", "Lundi de Pâques", "Jeudi de l'Ascension", "Lundi de Pentecôte"):
             self.AddJourFerie(label)
         self.AddConge("30/07/2010", options=ACCUEIL_NON_FACTURE)
         self.AddConge("23/08/2010")
         self.AddConge("02/08/2010", "20/08/2010")
         self.AddConge("19/04/2010", "23/04/2010")
         self.AddConge("20/12/2010", "24/12/2010")
-        self.AddConge(u"Août", options=MOIS_SANS_FACTURE)
+        self.AddConge("Août", options=MOIS_SANS_FACTURE)
         self.AddConge("06/04/2016")
         self.AddConge("26/12/2016", "02/01/2017")
         self.AddConge("29/07/2016", "22/08/2016")
@@ -464,9 +484,9 @@ class PetitsMoussesTests(GertrudeTestCase):
         GertrudeTestCase.setUp(self)
         creche.mode_facturation = FACTURATION_PSU
         creche.temps_facturation = FACTURATION_FIN_MOIS
-        for label in ("Week-end", "1er janvier", "14 juillet", "1er novembre", "11 novembre", u"Lundi de Pâques", "Jeudi de l'Ascension", u"Lundi de Pentecôte"):
+        for label in ("Week-end", "1er janvier", "14 juillet", "1er novembre", "11 novembre", "Lundi de Pâques", "Jeudi de l'Ascension", "Lundi de Pentecôte"):
             self.AddJourFerie(label)
-        self.AddConge(u"Août", options=MOIS_SANS_FACTURE)
+        self.AddConge("Août", options=MOIS_SANS_FACTURE)
         bareme = BaremeCAF(creation=False)
         bareme.debut, bareme.plancher, bareme.plafond = datetime.date(2013, 1, 1), 6876.00, 56665.32
         creche.baremes_caf.append(bareme)
@@ -499,7 +519,7 @@ class LoupandisesTests(GertrudeTestCase):
         creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
         creche.temps_facturation = FACTURATION_FIN_MOIS
         creche.facturation_jours_feries = ABSENCES_DEDUITES_EN_JOURS
-        for label in ("Week-end", "1er janvier", "14 juillet", "1er novembre", "11 novembre", u"Lundi de Pâques", "Jeudi de l'Ascension", u"Lundi de Pentecôte"):
+        for label in ("Week-end", "1er janvier", "14 juillet", "1er novembre", "11 novembre", "Lundi de Pâques", "Jeudi de l'Ascension", "Lundi de Pentecôte"):
             self.AddJourFerie(label)
         self.AddConge("23/10/2010", "02/11/2010")
         inscrit = self.AddInscrit()
@@ -716,7 +736,7 @@ class VivreADomicileTests(GertrudeTestCase):
         creche.type = TYPE_PARENTAL
         self.AddConge("01/08/2011", "26/08/2011")
         self.AddConge("03/06/2011", "03/06/2011")
-        self.AddConge(u"Août", options=MOIS_SANS_FACTURE)       
+        self.AddConge("Août", options=MOIS_SANS_FACTURE)
         
     def test_heures_supplementaires(self):
         inscrit = self.AddInscrit()
