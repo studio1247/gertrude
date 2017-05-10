@@ -19,9 +19,9 @@ from __future__ import unicode_literals
 
 
 days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
-months = ["Janvier", u'Février', "Mars", "Avril", "Mai", "Juin", "Juillet", u'Août', "Septembre", "Octobre", "Novembre", u'Décembre']
-months_abbrev = ["Janv", u'Fév', "Mars", "Avril", "Mai", "Juin", "Juil", u'Août', "Sept", "Oct", "Nov", u'Déc']
-trimestres = ["1er", u'2ème', u'3ème', u'4ème']
+months = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
+months_abbrev = ["Janv", "Fév", "Mars", "Avril", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"]
+trimestres = ["1er", "2ème", "3ème", "4ème"]
 
 # Profils des utilisateurs
 PROFIL_INSCRIPTIONS = 1
@@ -36,9 +36,8 @@ PROFIL_LECTURE_SEULE = 128
 TypesProfil = [
     ("Administrateur", PROFIL_ALL | PROFIL_ADMIN),
     ("Equipe", PROFIL_ALL),
-    ("Bureau", PROFIL_ALL),
-    ("Trésorier", PROFIL_ALL),
-    ("Inscriptions", PROFIL_INSCRIPTIONS),
+    ("Inscriptions, planning et salariés", PROFIL_INSCRIPTIONS | PROFIL_SALARIES),
+    ("Inscriptions et planning", PROFIL_INSCRIPTIONS | PROFIL_PLANNING),
     ("Saisie planning", PROFIL_PLANNING),
     ("Utilisateur lecture seule", PROFIL_ALL | PROFIL_LECTURE_SEULE),
     ("Planning lecture seule", PROFIL_PLANNING | PROFIL_LECTURE_SEULE),
@@ -120,16 +119,16 @@ ModeAccueilItems = [
 ]
 
 Regimes = [
-    u'Pas de sélection',
-    u'Régime général',
-    u'Régime de la fonction publique',
-    u'Régime MSA',
-    u'Régime EDF-GDF',
-    u'Régime RATP',
-    u'Régime Pêche maritime',
-    u'Régime Marins du Commerce',
-    u'Régime RSI',
-    u'Régime SNCF'
+    "Pas de sélection",
+    "Régime général",
+    "Régime de la fonction publique",
+    "Régime MSA",
+    "Régime EDF-GDF",
+    "Régime RATP",
+    "Régime Pêche maritime",
+    "Régime Marins du Commerce",
+    "Régime RSI",
+    "Régime SNCF"
 ]
 
 # Modes encaissement
