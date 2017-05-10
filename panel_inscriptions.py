@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 import wx.html
 from sqlobjects import *
 from controls import *
@@ -34,20 +36,20 @@ class FraisGardePanel(wx.Panel):
         self.periodechoice = wx.Choice(self, size=(150, -1))
         self.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.periodechoice)
         sizer1.Add(self.periodechoice, 0, wx.ALIGN_CENTER_VERTICAL)
-        self.frais_accueil_button = wx.Button(self, -1, u"Exporter")
+        self.frais_accueil_button = wx.Button(self, -1, "Exporter")
         sizer1.Add(self.frais_accueil_button, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationFraisAccueil, self.frais_accueil_button)
         if IsTemplateFile("Devis accueil.odt"):
-            self.devis_button = wx.Button(self, -1, u"Générer un devis")
+            self.devis_button = wx.Button(self, -1, "Générer un devis")
             sizer1.Add(self.devis_button, 0, wx.LEFT, 5)
             self.Bind(wx.EVT_BUTTON, self.EvtGenerationDevis, self.devis_button)
         else:
             self.devis_button = None
-        self.contrat_button = wx.Button(self, -1, u"Générer le contrat")
+        self.contrat_button = wx.Button(self, -1, "Générer le contrat")
         sizer1.Add(self.contrat_button, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
         self.Bind(wx.EVT_BUTTON, self.EvtGenerationContrat, self.contrat_button)
         if IsTemplateFile("Avenant contrat accueil.odt"):
-            self.avenant_button = wx.Button(self, -1, u"Générer un avenant")
+            self.avenant_button = wx.Button(self, -1, "Générer un avenant")
             sizer1.Add(self.avenant_button, 0, wx.LEFT, 5)
             self.Bind(wx.EVT_BUTTON, self.EvtGenerationAvenant, self.avenant_button)
         else:
@@ -73,7 +75,7 @@ class FraisGardePanel(wx.Panel):
             context = self.current_cotisation[-1]
             if isinstance(context, CotisationException):
                 error = '<br>'.join(context.errors)
-                self.html = u"<html><body><b>Les frais de garde ne peuvent être calcul&eacute;s pour la (les) raison(s) suivante(s) :</b><br>" + error + "</body></html>"
+                self.html = "<html><body><b>Les frais de garde ne peuvent être calcul&eacute;s pour la (les) raison(s) suivante(s) :</b><br>" + error + "</body></html>"
                 self.EnableButtons(False)
             else:
                 self.html = generateFraisGardeHtml(context)
@@ -159,40 +161,68 @@ class IdentitePanel(InscriptionsTab):
         self.Bind(wx.EVT_TEXT, self.OnChangementPrenom, prenom_ctrl)
         nom_ctrl = AutoTextCtrl(self, None, 'nom')
         self.Bind(wx.EVT_TEXT, self.OnChangementNom, nom_ctrl)
-        grid_sizer.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.ALIGN_CENTER_VERTICAL), (prenom_ctrl, 0, wx.EXPAND)])
+        grid_sizer.AddMany([(wx.StaticText(self, -1, 'Prénom :'), 0, wx.ALIGN_CENTER_VERTICAL),
+                            (prenom_ctrl, 0, wx.EXPAND)])
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.famille_button = wx.ToggleButton(self, -1, u"Rattachement")
+        self.famille_button = wx.ToggleButton(self, -1, "Rattachement")
         self.Bind(wx.EVT_TOGGLEBUTTON, self.OnRattachementFamille, self.famille_button)           
-        sizer.AddMany([(nom_ctrl, 1, wx.EXPAND), (self.famille_button, 0, wx.EXPAND)])
-        grid_sizer.AddMany([(wx.StaticText(self, -1, u'Nom :'), 0, wx.ALIGN_CENTER_VERTICAL), (sizer, 0, wx.EXPAND)])
-        grid_sizer.AddMany([(wx.StaticText(self, -1, u'Sexe :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoChoiceCtrl(self, None, 'sexe', items=[(u"Garçon", 1), ("Fille", 2)]), 0, wx.EXPAND)])
+        sizer.AddMany([(nom_ctrl, 1, wx.EXPAND),
+                       (self.famille_button, 0, wx.EXPAND)])
+        grid_sizer.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.ALIGN_CENTER_VERTICAL),
+                            (sizer, 0, wx.EXPAND)])
+        grid_sizer.AddMany([(wx.StaticText(self, -1, 'Sexe :'), 0, wx.ALIGN_CENTER_VERTICAL),
+                            (AutoChoiceCtrl(self, None, 'sexe', items=[("Garçon", 1), ("Fille", 2)]), 0, wx.EXPAND)])
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.age_ctrl = wx.TextCtrl(self, -1)
         self.age_ctrl.Disable()
         self.date_naissance_ctrl = AutoDateCtrl(self, None, 'naissance')
         self.Bind(wx.EVT_TEXT, self.OnChangementDateNaissance, self.date_naissance_ctrl)
-        sizer.AddMany([(self.date_naissance_ctrl, 1, wx.EXPAND), (self.age_ctrl, 1, wx.EXPAND|wx.LEFT, 5)])
-        grid_sizer.AddMany([(wx.StaticText(self, -1, u'Date de naissance :'), 0, wx.ALIGN_CENTER_VERTICAL), (sizer, 0, wx.EXPAND)])
-        grid_sizer.AddMany([(wx.StaticText(self, -1, u'Adresse :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'famille.adresse'), 0, wx.EXPAND)])
+        sizer.AddMany([(self.date_naissance_ctrl, 1, wx.EXPAND),
+                       (self.age_ctrl, 1, wx.EXPAND | wx.LEFT, 5)])
+        grid_sizer.AddMany([(wx.StaticText(self, -1, 'Date de naissance :'), 0, wx.ALIGN_CENTER_VERTICAL),
+                            (sizer, 0, wx.EXPAND)])
+        grid_sizer.AddMany([(wx.StaticText(self, -1, 'Adresse :'), 0, wx.ALIGN_CENTER_VERTICAL),
+                            (AutoTextCtrl(self, None, 'famille.adresse'), 0, wx.EXPAND)])
         self.ville_ctrl = AutoTextCtrl(self, None, 'famille.ville')  # A laisser avant le code postal !
         self.code_postal_ctrl = AutoNumericCtrl(self, None, 'famille.code_postal', min=0, precision=0)
         self.Bind(wx.EVT_TEXT, self.OnChangementCodePostal, self.code_postal_ctrl)
-        grid_sizer.AddMany([(wx.StaticText(self, -1, u'Code Postal :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.code_postal_ctrl, 0, wx.EXPAND)])
-        grid_sizer.AddMany([(wx.StaticText(self, -1, u'Ville :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.ville_ctrl, 0, wx.EXPAND)])
+        grid_sizer.AddMany([(wx.StaticText(self, -1, 'Code Postal :'), 0, wx.ALIGN_CENTER_VERTICAL),
+                            (self.code_postal_ctrl, 0, wx.EXPAND)])
+        grid_sizer.AddMany([(wx.StaticText(self, -1, 'Ville :'), 0, wx.ALIGN_CENTER_VERTICAL),
+                            (self.ville_ctrl, 0, wx.EXPAND)])
         if config.codeclient == "custom":
-            grid_sizer.AddMany([(wx.StaticText(self, -1, u'Code client :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'famille.code_client'), 0, wx.EXPAND)])
-        grid_sizer.AddMany([(wx.StaticText(self, -1, u'Numéro de sécurité sociale :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'famille.numero_securite_sociale'), 0, wx.EXPAND)])
-        grid_sizer.AddMany([(wx.StaticText(self, -1, u"Numéro d'allocataire CAF :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'famille.numero_allocataire_caf'), 0, wx.EXPAND)])
+            grid_sizer.AddMany([(wx.StaticText(self, -1, 'Code client :'), 0, wx.ALIGN_CENTER_VERTICAL),
+                                (AutoTextCtrl(self, None, 'famille.code_client'), 0, wx.EXPAND)])
+        grid_sizer.AddMany([(wx.StaticText(self, -1, 'Numéro de sécurité sociale :'), 0, wx.ALIGN_CENTER_VERTICAL),
+                            (AutoTextCtrl(self, None, 'famille.numero_securite_sociale'), 0, wx.EXPAND)])
+        grid_sizer.AddMany([(wx.StaticText(self, -1, "Numéro d'allocataire CAF :"), 0, wx.ALIGN_CENTER_VERTICAL),
+                            (AutoTextCtrl(self, None, 'famille.numero_allocataire_caf'), 0, wx.EXPAND)])
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddMany([(AutoTextCtrl(self, None, 'famille.medecin_traitant'), 1, wx.EXPAND), (AutoPhoneCtrl(self, None, 'famille.telephone_medecin_traitant'), 1, wx.EXPAND|wx.LEFT, 5)])
-        grid_sizer.AddMany([(wx.StaticText(self, -1, u"Médecin traitant :"), 0, wx.ALIGN_CENTER_VERTICAL), (sizer, 0, wx.EXPAND)])
+        sizer.AddMany([(AutoTextCtrl(self, None, 'famille.medecin_traitant'), 1, wx.EXPAND),
+                       (AutoPhoneCtrl(self, None, 'famille.telephone_medecin_traitant'), 1, wx.EXPAND | wx.LEFT, 5)])
+        grid_sizer.AddMany([(wx.StaticText(self, -1, "Médecin traitant :"), 0, wx.ALIGN_CENTER_VERTICAL),
+                            (sizer, 0, wx.EXPAND)])
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddMany([(AutoTextCtrl(self, None, 'famille.assureur'), 1, wx.EXPAND), (AutoTextCtrl(self, None, 'famille.numero_police_assurance'), 1, wx.EXPAND|wx.LEFT, 5)])
-        grid_sizer.AddMany([(wx.StaticText(self, -1, u"Assurance :"), 0, wx.ALIGN_CENTER_VERTICAL), (sizer, 0, wx.EXPAND)])
+        sizer.AddMany([(AutoTextCtrl(self, None, 'famille.assureur'), 1, wx.EXPAND),
+                       (AutoTextCtrl(self, None, 'famille.numero_police_assurance'), 1, wx.EXPAND | wx.LEFT, 5)])
+        grid_sizer.AddMany([(wx.StaticText(self, -1, "Assurance :"), 0, wx.ALIGN_CENTER_VERTICAL),
+                            (sizer, 0, wx.EXPAND)])
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        if config.options & PRELEVEMENTS_AUTOMATIQUES:
+            sizer.AddMany([(wx.StaticText(self, -1, "IBAN"), 0, wx.ALIGN_CENTER_VERTICAL),
+                           (AutoTextCtrl(self, None, 'famille.iban'), 1, wx.EXPAND | wx.LEFT, 5),
+                           (wx.StaticText(self, -1, "BIC"), 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 5),
+                           (AutoTextCtrl(self, None, 'famille.bic'), 1, wx.EXPAND | wx.LEFT, 5),
+                           (wx.StaticText(self, -1, "X du mois"), 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 5),
+                           (AutoNumericCtrl(self, None, 'famille.jour_prelevement_automatique', min=1, precision=0), 1, wx.EXPAND | wx.LEFT, 5),
+                           (wx.StaticText(self, -1, "Date 1er prélèvement"), 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 5),
+                           (AutoDateCtrl(self, None, 'famille.date_premier_prelevement_automatique'), 1, wx.EXPAND | wx.LEFT, 5)])
+            grid_sizer.AddMany([(wx.StaticText(self, -1, "Prélèvements automatiques :"), 0, wx.ALIGN_CENTER_VERTICAL),
+                                (sizer, 0, wx.EXPAND)])
         if creche.type == TYPE_PARENTAL:
             self.permanences_dues_widget = wx.TextCtrl(self, -1)
             self.permanences_dues_widget.Disable()
-            grid_sizer.AddMany([(wx.StaticText(self, -1, u"Permanences :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.permanences_dues_widget, 0, wx.EXPAND)])
+            grid_sizer.AddMany([(wx.StaticText(self, -1, "Permanences :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.permanences_dues_widget, 0, wx.EXPAND)])
         self.allergies_checkboxes = []
         allergies = creche.GetAllergies()
         if allergies:
@@ -204,24 +234,24 @@ class IdentitePanel(InscriptionsTab):
                 self.allergies_checkboxes.append(checkbox)
                 self.Bind(wx.EVT_CHECKBOX, self.OnToggleAllergie, checkbox)
                 sizer.Add(checkbox)
-            grid_sizer.AddMany([(wx.StaticText(self, -1, u"Allergies :"), 0, wx.ALIGN_CENTER_VERTICAL), (sizer, 0, wx.EXPAND)])
-        grid_sizer.AddMany([(wx.StaticText(self, -1, u"Enfant handicapé :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoCheckBox(self, None, 'handicap'), 0, wx.EXPAND)])
+            grid_sizer.AddMany([(wx.StaticText(self, -1, "Allergies :"), 0, wx.ALIGN_CENTER_VERTICAL), (sizer, 0, wx.EXPAND)])
+        grid_sizer.AddMany([(wx.StaticText(self, -1, "Enfant handicapé :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoCheckBox(self, None, 'handicap'), 0, wx.EXPAND)])
         self.sizer.Add(grid_sizer, 0, wx.EXPAND | wx.ALL, 5)
         self.tarifs_sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.tarifs_sizer, 0, wx.EXPAND | wx.LEFT, 5)
 
         if config.options & CATEGORIES:
-            self.categorie_items = wx.StaticText(self, -1, u"Catégorie :"), AutoChoiceCtrl(self, None, 'categorie')
+            self.categorie_items = wx.StaticText(self, -1, "Catégorie :"), AutoChoiceCtrl(self, None, 'categorie')
             grid_sizer.AddMany([(self.categorie_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.categorie_items[1], 0, wx.EXPAND)])
             self.UpdateCategorieItems()
 
         # Le chapitre frères et soeurs
-        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Frères et sœurs'), wx.VERTICAL)
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Frères et sœurs'), wx.VERTICAL)
         self.inscrits_fratrie_sizer = wx.BoxSizer(wx.VERTICAL)
         box_sizer.Add(self.inscrits_fratrie_sizer, 0, wx.EXPAND | wx.RIGHT | wx.LEFT | wx.TOP, 10)
         self.fratrie_sizer = wx.BoxSizer(wx.VERTICAL)
         box_sizer.Add(self.fratrie_sizer, 0, wx.EXPAND | wx.RIGHT | wx.LEFT | wx.TOP, 10)
-        self.nouveau_frere = wx.Button(self, -1, u'Ajouter un frère ou une sœur')
+        self.nouveau_frere = wx.Button(self, -1, 'Ajouter un frère ou une sœur')
         self.nouveau_frere.Disable()
         box_sizer.Add(self.nouveau_frere, 0, wx.RIGHT | wx.LEFT | wx.BOTTOM, 10)
         self.Bind(wx.EVT_BUTTON, self.OnAjoutFrere, self.nouveau_frere)
@@ -278,10 +308,10 @@ class IdentitePanel(InscriptionsTab):
         naissance_ctrl.Disable()
         debut_ctrl.Disable()
         fin_ctrl.Disable()
-        sizer.AddMany([(wx.StaticText(self, -1, u"Prénom :"), 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), (prenom_ctrl, 1, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND, 5)])
-        sizer.AddMany([(wx.StaticText(self, -1, u"Naissance :"), 0, wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), (naissance_ctrl, 1, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND, 5)])
-        sizer.AddMany([(wx.StaticText(self, -1, u"En crèche du"), 0, wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), (debut_ctrl, 1, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND, 5)])
-        sizer.AddMany([(wx.StaticText(self, -1, u"au"), 0, wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), (fin_ctrl, 1, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND, 5)])
+        sizer.AddMany([(wx.StaticText(self, -1, "Prénom :"), 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), (prenom_ctrl, 1, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND, 5)])
+        sizer.AddMany([(wx.StaticText(self, -1, "Naissance :"), 0, wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), (naissance_ctrl, 1, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND, 5)])
+        sizer.AddMany([(wx.StaticText(self, -1, "En crèche du"), 0, wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), (debut_ctrl, 1, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND, 5)])
+        sizer.AddMany([(wx.StaticText(self, -1, "au"), 0, wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), (fin_ctrl, 1, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND, 5)])
         del_button = wx.BitmapButton(self, -1, self.delbmp)
         del_button.Disable()
         sizer.Add(del_button, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
@@ -289,10 +319,10 @@ class IdentitePanel(InscriptionsTab):
 
     def AjouteLigneFrere(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, self.inscrit, 'famille.freres_soeurs[%d].prenom' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Naissance :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoDateCtrl(self, self.inscrit, 'famille.freres_soeurs[%d].naissance' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'En crèche du'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoDateCtrl(self, self.inscrit, 'famille.freres_soeurs[%d].entree' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'au'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoDateCtrl(self, self.inscrit, 'famille.freres_soeurs[%d].sortie' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Prénom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, self.inscrit, 'famille.freres_soeurs[%d].prenom' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Naissance :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoDateCtrl(self, self.inscrit, 'famille.freres_soeurs[%d].naissance' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'En crèche du'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoDateCtrl(self, self.inscrit, 'famille.freres_soeurs[%d].entree' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'au'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoDateCtrl(self, self.inscrit, 'famille.freres_soeurs[%d].sortie' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
         delbutton = wx.BitmapButton(self, -1, self.delbmp)
         delbutton.index = index
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
@@ -317,7 +347,7 @@ class IdentitePanel(InscriptionsTab):
         if self.inscrit:
             for inscrit in creche.inscrits:
                 if inscrit is not self.inscrit and inscrit.nom == self.inscrit.nom:
-                    self.famille_button.SetLabel(u"Rattachement à la famille de %s" % GetPrenomNom(inscrit))
+                    self.famille_button.SetLabel("Rattachement à la famille de %s" % GetPrenomNom(inscrit))
                     self.famille_button.SetValue(inscrit.famille == self.inscrit.famille)
                     self.famille_button.Show()
                     self.sizer.Layout()
@@ -365,9 +395,9 @@ class IdentitePanel(InscriptionsTab):
             if creche.date_raz_permanences:
                 total, effectue = self.inscrit.GetDecomptePermanences()
                 solde = effectue - total
-                self.permanences_dues_widget.SetValue(u"Au %s : Total %s - Effectué %s - Solde %s" % (GetDateString(today), GetHeureString(total), GetHeureString(effectue), GetHeureString(solde)))
+                self.permanences_dues_widget.SetValue("Au %s : Total %s - Effectué %s - Solde %s" % (GetDateString(today), GetHeureString(total), GetHeureString(effectue), GetHeureString(solde)))
             else:
-                self.permanences_dues_widget.SetValue(u"Veuillez saisir une date de remise à zéro du décompte (outil Configuration / Structure)")
+                self.permanences_dues_widget.SetValue("Veuillez saisir une date de remise à zéro du décompte (outil Configuration / Structure)")
         else:
             self.permanences_dues_widget.SetValue("")
 
@@ -380,7 +410,7 @@ class IdentitePanel(InscriptionsTab):
             w = self.sizer2.GetColWidths()[0] + 10
             for tarif in creche.tarifs_speciaux:
                 sizer = wx.BoxSizer(wx.HORIZONTAL)
-                sizer.AddMany([(wx.StaticText(self, -1, u'%s :' % tarif.label, size=(w, -1)), 0, wx.ALIGN_CENTER_VERTICAL), (AutoCheckBox(self, self.inscrit, 'famille.tarifs', value=1 << tarif.idx), 0, wx.EXPAND)])
+                sizer.AddMany([(wx.StaticText(self, -1, '%s :' % tarif.label, size=(w, -1)), 0, wx.ALIGN_CENTER_VERTICAL), (AutoCheckBox(self, self.inscrit, 'famille.tarifs', value=1 << tarif.idx), 0, wx.EXPAND)])
                 self.tarifs_sizer.Add(sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
             self.tarifs_observer = counters['tarifs']
         self.UpdateLignesInscritsFratrie()
@@ -438,18 +468,18 @@ class ParentsPanel(InscriptionsTab):
             if readonly:
                 relation_item.Disable()
             self.Bind(wx.EVT_CHOICE, self.OnParentRelationChoice, relation_item)
-            sizer2.AddMany([(wx.StaticText(self, -1, u'Relation :'), 0, wx.ALIGN_CENTER_VERTICAL), (relation_item, 0, wx.EXPAND)])
-            self.parents_items[-1].extend([wx.StaticText(self, -1, u'Prénom :'), AutoTextCtrl(self, None, 'prenom')])           
+            sizer2.AddMany([(wx.StaticText(self, -1, 'Relation :'), 0, wx.ALIGN_CENTER_VERTICAL), (relation_item, 0, wx.EXPAND)])
+            self.parents_items[-1].extend([wx.StaticText(self, -1, 'Prénom :'), AutoTextCtrl(self, None, 'prenom')])           
             sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
-            self.parents_items[-1].extend([wx.StaticText(self, -1, u'Nom :'), AutoTextCtrl(self, None, 'nom')])
+            self.parents_items[-1].extend([wx.StaticText(self, -1, 'Nom :'), AutoTextCtrl(self, None, 'nom')])
             sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
-            self.parents_items[-1].extend([wx.StaticText(self, -1, u'Adresse :'), AutoTextCtrl(self, None, 'adresse')])
+            self.parents_items[-1].extend([wx.StaticText(self, -1, 'Adresse :'), AutoTextCtrl(self, None, 'adresse')])
             sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
-            self.parents_items[-1].extend([wx.StaticText(self, -1, u'Code postal :'), AutoNumericCtrl(self, None, 'code_postal', min=0, precision=0)])
+            self.parents_items[-1].extend([wx.StaticText(self, -1, 'Code postal :'), AutoNumericCtrl(self, None, 'code_postal', min=0, precision=0)])
             sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
-            self.parents_items[-1].extend([wx.StaticText(self, -1, u'Ville :'), AutoTextCtrl(self, None, 'ville')])
+            self.parents_items[-1].extend([wx.StaticText(self, -1, 'Ville :'), AutoTextCtrl(self, None, 'ville')])
             sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
-            for label, field in (u"Téléphone domicile", "telephone_domicile"), (u"Téléphone portable", "telephone_portable"), (u"Téléphone travail", "telephone_travail"):
+            for label, field in ("Téléphone domicile", "telephone_domicile"), ("Téléphone portable", "telephone_portable"), ("Téléphone travail", "telephone_travail"):
                 sizer3 = wx.BoxSizer(wx.HORIZONTAL)
                 self.parents_items[-1].extend([wx.StaticText(self, -1, label+' :'), AutoPhoneCtrl(self, None, field), AutoTextCtrl(self, None, field+'_notes')])
                 sizer3.AddMany([self.parents_items[-1][-2], (self.parents_items[-1][-1], 1, wx.LEFT|wx.EXPAND, 5)])
@@ -461,21 +491,21 @@ class ParentsPanel(InscriptionsTab):
                 panel = PeriodePanel(self, 'revenus')
                 self.parents_items[-1].append(panel)
                 if not creche.AreRevenusNeeded():
-                    titre = u"Régime d'appartenance"
+                    titre = "Régime d'appartenance"
                     defaultPeriode = today.year
                 elif creche.periode_revenus == REVENUS_CAFPRO:
-                    titre = u"Revenus CAFPRO et régime d'appartenance"
+                    titre = "Revenus CAFPRO et régime d'appartenance"
                     defaultPeriode = today.year
                 else:
-                    titre = u"Revenus et régime d'appartenance"
+                    titre = "Revenus et régime d'appartenance"
                     defaultPeriode = today.year-2
                 revenus_sizer = wx.StaticBoxSizer(wx.StaticBox(panel, -1, titre), wx.VERTICAL)
                 revenus_sizer.Add(PeriodeChoice(panel, Revenu, default=defaultPeriode), 0, wx.EXPAND|wx.ALL, 5)
                 revenus_gridsizer = wx.FlexGridSizer(0, 2, 5, 10)
                 revenus_gridsizer.AddGrowableCol(1, 1)
-                revenus_gridsizer.AddMany([(wx.StaticText(panel, -1, u'Revenus annuels bruts :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(panel, None, 'revenu', precision=2), 0, wx.EXPAND)])
-                revenus_gridsizer.AddMany([(0, 0), (AutoCheckBox(panel, None, 'chomage', u'Chômage'), 0, wx.EXPAND)])
-                revenus_gridsizer.AddMany([(0, 0), (AutoCheckBox(panel, None, 'conge_parental', u'Congé parental'), 0, wx.EXPAND)])
+                revenus_gridsizer.AddMany([(wx.StaticText(panel, -1, 'Revenus annuels bruts :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(panel, None, 'revenu', precision=2), 0, wx.EXPAND)])
+                revenus_gridsizer.AddMany([(0, 0), (AutoCheckBox(panel, None, 'chomage', 'Chômage'), 0, wx.EXPAND)])
+                revenus_gridsizer.AddMany([(0, 0), (AutoCheckBox(panel, None, 'conge_parental', 'Congé parental'), 0, wx.EXPAND)])
                 self.revenus_items.extend([revenus_gridsizer.GetItem(0), revenus_gridsizer.GetItem(1), revenus_gridsizer.GetItem(2)])
                 if not creche.AreRevenusNeeded():
                     for item in self.revenus_items:
@@ -484,23 +514,23 @@ class ParentsPanel(InscriptionsTab):
                 self.regimes_choices.append(choice)
                 for i, regime in enumerate(Regimes):
                     choice.Append(regime, i)
-                revenus_gridsizer.AddMany([wx.StaticText(panel, -1, u"Régime d'appartenance :"), (choice, 0, wx.EXPAND)])
+                revenus_gridsizer.AddMany([wx.StaticText(panel, -1, "Régime d'appartenance :"), (choice, 0, wx.EXPAND)])
                 revenus_sizer.Add(revenus_gridsizer, 0, wx.ALL|wx.EXPAND, 5)
                 panel.SetSizer(revenus_sizer)
                 sizer11.Add(panel, 0, wx.ALL|wx.EXPAND, 5)
             if index != 1:
                 sizer11.Add(wx.StaticLine(self, -1, style=wx.LI_HORIZONTAL), 0, wx.EXPAND|wx.ALL, 5)
 
-        sizer4 = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Référents'), wx.VERTICAL)
+        sizer4 = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Référents'), wx.VERTICAL)
         self.referents_sizer = wx.BoxSizer(wx.VERTICAL)
         sizer4.Add(self.referents_sizer, 0, wx.EXPAND+wx.RIGHT+wx.LEFT+wx.TOP, 10)
-        self.nouveau_referent = wx.Button(self, -1, u'Nouveau référent')
+        self.nouveau_referent = wx.Button(self, -1, 'Nouveau référent')
         self.nouveau_referent.Disable()
         sizer4.Add(self.nouveau_referent, 0, wx.RIGHT+wx.LEFT+wx.BOTTOM, 10)
         self.Bind(wx.EVT_BUTTON, self.OnAjoutReferent, self.nouveau_referent)
         self.sizer.Add(sizer4, 0, wx.EXPAND|wx.ALL, 5)
         
-        sizer5 = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Notes'), wx.VERTICAL)
+        sizer5 = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Notes'), wx.VERTICAL)
         self.notes_parents_ctrl = AutoTextCtrl(self, None, 'famille.notes', style=wx.TE_MULTILINE)
         sizer5.Add(self.notes_parents_ctrl, 0, wx.EXPAND+wx.RIGHT+wx.LEFT+wx.TOP, 10)
         self.sizer.Add(sizer5, 0, wx.EXPAND|wx.ALL, 5)
@@ -563,9 +593,9 @@ class ParentsPanel(InscriptionsTab):
 
     def AjoutLigneReferent(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddMany([(wx.StaticText(self, -1, u'Prénom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, self.inscrit, 'famille.referents[%d].prenom' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Nom :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, self.inscrit, 'famille.referents[%d].nom' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Téléphone :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoPhoneCtrl(self, self.inscrit, 'famille.referents[%d].telephone' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Prénom :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, self.inscrit, 'famille.referents[%d].prenom' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, self.inscrit, 'famille.referents[%d].nom' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Téléphone :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoPhoneCtrl(self, self.inscrit, 'famille.referents[%d].telephone' % index), 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
         delbutton = wx.BitmapButton(self, -1, self.delbmp)
         delbutton.index = index
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)
@@ -606,7 +636,7 @@ class ReferencePlanningPanel(PlanningWidget):
                 if not self.CheckDate(date, plages):
                     dates_depassement.append(date)
                     if len(dates_depassement) == creche.seuil_alerte_inscription:
-                        dlg = wx.MessageDialog(None, u"Dépassement de la capacité sur ce créneau horaire les:\n" + "\n".join([(" - " + GetDateString(date)) for date in dates_depassement]), "Attention", wx.OK|wx.ICON_WARNING)
+                        dlg = wx.MessageDialog(None, "Dépassement de la capacité sur ce créneau horaire les:\n" + "\n".join([(" - " + GetDateString(date)) for date in dates_depassement]), "Attention", wx.OK|wx.ICON_WARNING)
                         dlg.ShowModal()
                         dlg.Destroy()
                         self.state = None
@@ -654,41 +684,41 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         sizer = wx.BoxSizer(wx.VERTICAL)
         ligne_sizer = wx.BoxSizer(wx.HORIZONTAL)
         ligne_sizer.Add(PeriodeChoice(self, self.nouvelleInscription))
-        self.validation_button = wx.ToggleButton(self, -1, u"Invalider l'inscription")
+        self.validation_button = wx.ToggleButton(self, -1, "Invalider l'inscription")
         ligne_sizer.Add(self.validation_button, 0, wx.LEFT, 10)
         self.Bind(wx.EVT_TOGGLEBUTTON, self.OnValidationInscription, self.validation_button)    
         sizer.Add(ligne_sizer, 0, wx.TOP, 5)
         grid_sizer = wx.FlexGridSizer(0, 2, 5, 10)
         grid_sizer.AddGrowableCol(1, 1)
         
-        self.sites_items = wx.StaticText(self, -1, u"Site :"), AutoChoiceCtrl(self, None, 'site'), wx.StaticText(self, -1, u"Sites de préinscription :"), wx.CheckListBox(self, -1)
+        self.sites_items = wx.StaticText(self, -1, "Site :"), AutoChoiceCtrl(self, None, 'site'), wx.StaticText(self, -1, "Sites de préinscription :"), wx.CheckListBox(self, -1)
         self.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckPreinscriptionSite, self.sites_items[3])
         self.UpdateSiteItems()
         grid_sizer.AddMany([(self.sites_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.sites_items[1], 0, wx.EXPAND)])
         grid_sizer.AddMany([(self.sites_items[2], 0, wx.ALIGN_CENTER_VERTICAL), (self.sites_items[3], 0, wx.EXPAND)])
         
         if config.options & RESERVATAIRES:
-            self.reservataire_items = wx.StaticText(self, -1, u"Réservataire :"), AutoChoiceCtrl(self, None, 'reservataire')
+            self.reservataire_items = wx.StaticText(self, -1, "Réservataire :"), AutoChoiceCtrl(self, None, 'reservataire')
             self.UpdateReservataireItems()
             grid_sizer.AddMany([(self.reservataire_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.reservataire_items[1], 0, wx.EXPAND)])
             
-        self.groupe_items = wx.StaticText(self, -1, u"Groupe :"), AutoChoiceCtrl(self, None, 'groupe')
+        self.groupe_items = wx.StaticText(self, -1, "Groupe :"), AutoChoiceCtrl(self, None, 'groupe')
         self.UpdateGroupeItems()
         grid_sizer.AddMany([(self.groupe_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.groupe_items[1], 0, wx.EXPAND)])
         
-        self.professeur_items = wx.StaticText(self, -1, u"Professeur :"), AutoChoiceCtrl(self, None, 'professeur')
+        self.professeur_items = wx.StaticText(self, -1, "Professeur :"), AutoChoiceCtrl(self, None, 'professeur')
         self.UpdateProfesseurItems()
         grid_sizer.AddMany([(self.professeur_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.professeur_items[1], 0, wx.EXPAND)])
         
         self.mode_accueil_choice = AutoChoiceCtrl(self, None, 'mode', items=ModeAccueilItems)
         self.Bind(wx.EVT_CHOICE, self.OnModeAccueilChoice, self.mode_accueil_choice)
-        grid_sizer.AddMany([(wx.StaticText(self, -1, u"Mode d'accueil :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.mode_accueil_choice, 0, wx.EXPAND)])
-        self.forfait_heures_items = wx.StaticText(self, -1, u"Forfait en heures :"), AutoNumericCtrl(self, None, 'forfait_mensuel_heures', min=0, precision=2)
+        grid_sizer.AddMany([(wx.StaticText(self, -1, "Mode d'accueil :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.mode_accueil_choice, 0, wx.EXPAND)])
+        self.forfait_heures_items = wx.StaticText(self, -1, "Forfait en heures :"), AutoNumericCtrl(self, None, 'forfait_mensuel_heures', min=0, precision=2)
         grid_sizer.AddMany([(self.forfait_heures_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.forfait_heures_items[1], 0, wx.EXPAND)])
-        grid_sizer.AddMany([(wx.StaticText(self, -1, u"Frais d'inscription :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'frais_inscription', min=0, precision=2), 0, wx.EXPAND)])
+        grid_sizer.AddMany([(wx.StaticText(self, -1, "Frais d'inscription :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'frais_inscription', min=0, precision=2), 0, wx.EXPAND)])
         if creche.mode_facturation == FACTURATION_PAJE:
-            grid_sizer.AddMany([(wx.StaticText(self, -1, u"Allocation mensuelle CAF :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'allocation_mensuelle_caf', min=0, precision=2), 0, wx.EXPAND)])
-        label_conges = wx.StaticText(self, -1, u"Nombre de semaines d'absence prévu au contrat :")
+            grid_sizer.AddMany([(wx.StaticText(self, -1, "Allocation mensuelle CAF :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'allocation_mensuelle_caf', min=0, precision=2), 0, wx.EXPAND)])
+        label_conges = wx.StaticText(self, -1, "Nombre de semaines d'absence prévu au contrat :")
         semaines_conges = AutoNumericCtrl(self, None, 'semaines_conges', min=0, precision=0)
         self.jours_poses = wx.TextCtrl(self, -1)
         self.jours_poses.Disable()
@@ -700,28 +730,28 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         sizer3.AddMany([(semaines_conges, 0, wx.EXPAND), (self.jours_poses, 1, wx.EXPAND|wx.LEFT, 5)])
         grid_sizer.AddMany([(label_conges, 0, wx.ALIGN_CENTER_VERTICAL), (sizer3, 0, wx.EXPAND)])
         if creche.type == TYPE_PARENTAL:
-            grid_sizer.AddMany([(wx.StaticText(self, -1, u"Heures de permanences à effectuer :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'heures_permanences', min=0, precision=2), 0, wx.EXPAND)])
-        self.forfait_mensuel_items = wx.StaticText(self, -1, u"Forfait mensuel :"), AutoNumericCtrl(self, None, 'forfait_mensuel', min=0, precision=2)
+            grid_sizer.AddMany([(wx.StaticText(self, -1, "Heures de permanences à effectuer :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'heures_permanences', min=0, precision=2), 0, wx.EXPAND)])
+        self.forfait_mensuel_items = wx.StaticText(self, -1, "Forfait mensuel :"), AutoNumericCtrl(self, None, 'forfait_mensuel', min=0, precision=2)
         grid_sizer.AddMany([(self.forfait_mensuel_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.forfait_mensuel_items[1], 0, wx.EXPAND)])
-        grid_sizer.AddMany([(wx.StaticText(self, -1, u"Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_adaptation'), 0, wx.EXPAND)])
+        grid_sizer.AddMany([(wx.StaticText(self, -1, "Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_adaptation'), 0, wx.EXPAND)])
         if creche.gestion_depart_anticipe:
-            grid_sizer.AddMany([(wx.StaticText(self, -1, u"Date de départ anticipé :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'depart'), 0, wx.EXPAND)])
+            grid_sizer.AddMany([(wx.StaticText(self, -1, "Date de départ anticipé :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'depart'), 0, wx.EXPAND)])
         self.duree_reference_choice = wx.Choice(self)
         for item, data in [("1 semaine", 7)] + [("%d semaines" % (i + 2), 7 * (i + 2)) for i in range(MAX_SEMAINES_REFERENCE-1)]:
             self.duree_reference_choice.Append(item, data)
         self.Bind(wx.EVT_CHOICE, self.OnDureeReferenceChoice, self.duree_reference_choice)
-        grid_sizer.AddMany([(wx.StaticText(self, -1, u"Durée de la période de référence :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.duree_reference_choice, 0, wx.EXPAND)])
+        grid_sizer.AddMany([(wx.StaticText(self, -1, "Durée de la période de référence :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.duree_reference_choice, 0, wx.EXPAND)])
         sizer.Add(grid_sizer, 0, wx.ALL|wx.EXPAND, 5)
         sizer2 = wx.BoxSizer(wx.HORIZONTAL)
         sizer2.Add(self.heures_and_jours_reference, 1, wx.ALIGN_CENTER_VERTICAL)
-        self.button_5_5 = wx.Button(self, -1, u"Plein temps")
+        self.button_5_5 = wx.Button(self, -1, "Plein temps")
         self.Bind(wx.EVT_BUTTON, self.OnMode_5_5, self.button_5_5)
-        self.button_copy = wx.Button(self, -1, u"Recopier lundi sur toute la période")
+        self.button_copy = wx.Button(self, -1, "Recopier lundi sur toute la période")
         sizer2.AddMany([(self.button_5_5, 0, wx.ALIGN_CENTER_VERTICAL), (self.button_copy, 0, wx.ALIGN_CENTER_VERTICAL)])
         self.Bind(wx.EVT_BUTTON, self.OnMondayCopy, self.button_copy)
         self.activity_choice = ActivityComboBox(self)        
         sizer2.Add(self.activity_choice, 0, wx.ALIGN_RIGHT)
-        grid_sizer.AddMany([(wx.StaticText(self, -1, u"Temps de présence :"), 0, wx.ALIGN_CENTER_VERTICAL), (sizer2, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)])
+        grid_sizer.AddMany([(wx.StaticText(self, -1, "Temps de présence :"), 0, wx.ALIGN_CENTER_VERTICAL), (sizer2, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)])
         self.planning_panel = ReferencePlanningPanel(self, self.activity_choice)
         sizer.Add(self.planning_panel, 1, wx.EXPAND)
         self.SetSizer(sizer)
@@ -746,9 +776,9 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
             if obj.GetValue():
                 if len(inscription.sites_preinscription) != 1:
                     if not inscription.sites_preinscription:
-                        dlg = wx.MessageDialog(self, u"Avant de valider une inscription, il faut choisir un site de préinscription", 'Erreur', wx.OK|wx.ICON_WARNING)
+                        dlg = wx.MessageDialog(self, "Avant de valider une inscription, il faut choisir un site de préinscription", 'Erreur', wx.OK|wx.ICON_WARNING)
                     else:
-                        dlg = wx.MessageDialog(self, u"Avant de valider une inscription, il ne faut garder qu'un seul site de préinscription", 'Erreur', wx.OK|wx.ICON_WARNING)
+                        dlg = wx.MessageDialog(self, "Avant de valider une inscription, il ne faut garder qu'un seul site de préinscription", 'Erreur', wx.OK|wx.ICON_WARNING)
                     dlg.ShowModal()
                     dlg.Destroy()
                     self.UpdateContents()
@@ -851,8 +881,8 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         if inscription is None and self.inscrit and self.periode is not None and self.periode != -1 and self.periode < len(self.inscrit.inscriptions):
             inscription = self.inscrit.inscriptions[self.periode]
         if inscription:
-            self.jours_poses.SetValue(u"%d jours posés / %d jours" % (inscription.GetNombreJoursCongesPoses(), inscription.GetNombreJoursCongesPeriode()))
-            self.heures_and_jours_reference.SetValue(u"%s heures / %s jours" % (Number2String(inscription.GetNombreHeuresPresenceSemaine()), Number2String(inscription.GetNombreJoursPresenceSemaine())))
+            self.jours_poses.SetValue("%d jours posés / %d jours" % (inscription.GetNombreJoursCongesPoses(), inscription.GetNombreJoursCongesPeriode()))
+            self.heures_and_jours_reference.SetValue("%s heures / %s jours" % (Number2String(inscription.GetNombreHeuresPresenceSemaine()), Number2String(inscription.GetNombreJoursPresenceSemaine())))
         else:
             self.jours_poses.SetValue("")
             self.heures_and_jours_reference.SetValue("")
@@ -940,12 +970,12 @@ class CongesPanel(InscriptionsTab):
         self.conges_inscrit_sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.conges_inscrit_sizer, 0, wx.ALL, 5)
         
-        self.nouveau_conge_button = wx.Button(self, -1, u"Ajouter une période d'absence")
+        self.nouveau_conge_button = wx.Button(self, -1, "Ajouter une période d'absence")
         self.sizer.Add(self.nouveau_conge_button, 0, wx.EXPAND+wx.TOP, 5)
         self.Bind(wx.EVT_BUTTON, self.OnAjoutConge, self.nouveau_conge_button)
 
 #        sizer2 = wx.BoxSizer(wx.HORIZONTAL)
-#        sizer2.AddMany([(wx.StaticText(self, -1, u'Nombre de semaines de congés déduites :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'semaines_conges', min=0, precision=0), 0, wx.EXPAND)])
+#        sizer2.AddMany([(wx.StaticText(self, -1, 'Nombre de semaines de congés déduites :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoNumericCtrl(self, creche, 'semaines_conges', min=0, precision=0), 0, wx.EXPAND)])
 #        self.sizer.Add(sizer2, 0, wx.EXPAND+wx.TOP, 5)
 
         self.SetSizer(self.sizer)
@@ -983,7 +1013,7 @@ class CongesPanel(InscriptionsTab):
             sizer = wx.BoxSizer(wx.HORIZONTAL)
             sizer.AddMany([(wx.StaticText(self, -1, 'Debut :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, conge, 'debut', mois=True, fixed_instance=True)])
             sizer.AddMany([(wx.StaticText(self, -1, 'Fin :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, conge, 'fin', mois=True, fixed_instance=True)])
-            sizer.AddMany([(wx.StaticText(self, -1, u'Libellé :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, conge, 'label', fixed_instance=True)])
+            sizer.AddMany([(wx.StaticText(self, -1, 'Libellé :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, conge, 'label', fixed_instance=True)])
             for child in sizer.GetChildren():
                 child.GetWindow().Disable()
             self.conges_creche_sizer.Add(sizer)
@@ -993,7 +1023,7 @@ class CongesPanel(InscriptionsTab):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(wx.StaticText(self, -1, 'Debut :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, self.inscrit, 'conges[%d].debut' % index, mois=True)])
         sizer.AddMany([(wx.StaticText(self, -1, 'Fin :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, self.inscrit, 'conges[%d].fin' % index, mois=True)])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Libellé :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, self.inscrit, 'conges[%d].label' % index)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Libellé :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, self.inscrit, 'conges[%d].label' % index)])
         delbutton = wx.BitmapButton(self, -1, delbmp)
         delbutton.index = index
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10)
@@ -1038,12 +1068,12 @@ class InscriptionsNotebook(wx.Notebook):
         self.parent = parent
         self.inscrit = None
 
-        self.AddPage(IdentitePanel(self), u'Identité')
-        self.AddPage(ParentsPanel(self), u'Parents et référents')
+        self.AddPage(IdentitePanel(self), 'Identité')
+        self.AddPage(ParentsPanel(self), 'Parents et référents')
         self.AddPage(ModeAccueilPanel(self), "Mode d'accueil")
         if creche.conges_inscription:
             self.conges_panel = CongesPanel(self)
-            self.AddPage(self.conges_panel, u"Absences prévues au contrat")
+            self.AddPage(self.conges_panel, "Absences prévues au contrat")
         else:
             self.conges_panel = None
         self.AddPage(NotesPanel(self), "Notes")
@@ -1069,7 +1099,7 @@ class InscriptionsNotebook(wx.Notebook):
         if creche.conges_inscription and not self.conges_panel:
             self.conges_panel = CongesPanel(self)
             self.conges_panel.SetInscrit(self.inscrit)
-            self.InsertPage(3, self.conges_panel, u"Absences prévues au contrat")
+            self.InsertPage(3, self.conges_panel, "Absences prévues au contrat")
         elif self.conges_panel and not creche.conges_inscription:
             self.RemovePage(3)
             self.conges_panel.Destroy()
@@ -1116,11 +1146,11 @@ class InscriptionsPanel(GPanel):
         self.Bind(wx.EVT_CHOICE, self.OnInscritChoice, self.choice)
         plusbmp = wx.Bitmap(GetBitmapFile("plus.png"), wx.BITMAP_TYPE_PNG)
         self.addbutton = wx.BitmapButton(self, -1, plusbmp)
-        self.addbutton.SetToolTipString(u"Ajouter un enfant")
+        self.addbutton.SetToolTipString("Ajouter un enfant")
         self.Bind(wx.EVT_BUTTON, self.OnAjoutInscrit, self.addbutton)
         delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
         self.delbutton = wx.BitmapButton(self, -1, delbmp)
-        self.delbutton.SetToolTipString(u"Supprimer cet enfant")
+        self.delbutton.SetToolTipString("Supprimer cet enfant")
         self.Bind(wx.EVT_BUTTON, self.OnSuppressionInscrit, self.delbutton)
         sizer.AddMany([(self.choice, 1, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL),
                        (self.addbutton, 0, wx.LEFT | wx.ALIGN_CENTER_VERTICAL, 5),
@@ -1128,7 +1158,7 @@ class InscriptionsPanel(GPanel):
         if config.import_database:
             importbmp = wx.Bitmap(GetBitmapFile("import.png"), wx.BITMAP_TYPE_PNG)
             self.importbutton = wx.BitmapButton(self, -1, importbmp)
-            self.importbutton.SetToolTipString(u"Importer un enfant")
+            self.importbutton.SetToolTipString("Importer un enfant")
             self.Bind(wx.EVT_BUTTON, self.OnImportInscrit, self.importbutton)
             sizer.Add(self.importbutton, 0, wx.LEFT | wx.ALIGN_CENTER_VERTICAL, 5)
         self.sizer.Add(sizer, 0, wx.EXPAND|wx.LEFT, MACOS_MARGIN)
@@ -1205,7 +1235,7 @@ class InscriptionsPanel(GPanel):
         inscrit = self.choice.GetClientData(selected)
         if inscrit:
             dlg = wx.MessageDialog(self,
-                                   u'Cette inscription va être supprimée, êtes-vous sûr de vouloir continuer ?',
+                                   'Cette inscription va être supprimée, êtes-vous sûr de vouloir continuer ?',
                                    'Confirmation',
                                    wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION )
             if dlg.ShowModal() == wx.ID_YES:

@@ -490,8 +490,11 @@ def GenerateTextDocument(modifications, filename=None, gauge=None):
         gauge.SetValue(0)
     if not filename:
         filename = unicodedata.normalize("NFKD", modifications.default_output).encode('ascii', 'ignore')
-    template = GetTemplateFile(modifications.template)
-    text = file(template, 'r').read()
+    if modifications.template:
+        template = GetTemplateFile(modifications.template)
+        text = file(template, 'r').read()
+    else:
+        text = None
     if gauge:
         modifications.gauge = gauge
         gauge.SetValue(5)
@@ -633,7 +636,7 @@ def StartAcrobatReader(filename):
 
 
 def IsOODocument(filename):
-    return not (filename.endswith(".html") or filename.endswith(".txt"))
+    return filename and not (filename.endswith(".html") or filename.endswith(".txt") or filename.endswith(".xml"))
 
 
 def GenerateDocument(modifications, filename, gauge=None):

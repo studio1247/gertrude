@@ -19,11 +19,9 @@ from __future__ import unicode_literals
 
 import __builtin__
 import shutil
-import socket
 import thread
 import traceback
 import bcrypt
-from asyncore import dispatcher
 import wx.lib.newevent
 from config import LoadConfig, Load, Exit, CONFIG_FILENAME, DEFAULT_DATABASE, DEMO_DATABASE
 from functions import *
@@ -32,20 +30,8 @@ from mainwindow import GertrudeFrame
 __builtin__.server = None
 
 
-class Server(dispatcher):
-    def __init__(self):
-        dispatcher.__init__(self)
-        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.bind(('', 50000))
-        self.listen(1)
-        
-    def close(self):
-        dispatcher.close(self)
-
-
 class StartDialog(wx.Dialog):
     def __init__(self):
-        self.test_unicity = False
         self.loaded = False
         wx.Dialog.__init__(self, None, -1, "Gertrude")
         
@@ -155,15 +141,6 @@ class StartDialog(wx.Dialog):
                 thread.start_new_thread(self.Load, ())
                 return
 
-        if not self.test_unicity:
-            self.test_unicity = True
-            try:
-                __builtin__.server = Server()
-            except Exception, e:
-                # print e
-                self.info.AppendText("Gertrude est déjà lancée. Les données seront accessibles en lecture seule !\n")
-                __builtin__.readonly = True
-
         self.loaded = True        
         sql_connection.open()
         if len(creche.users) == 0:
@@ -222,7 +199,7 @@ class StartDialog(wx.Dialog):
         if sys.platform == "darwin":
             frame.Show()
 
-    def OnOk(self, evt):
+    def OnOk(self, _):
         if config.connection is None:
             self.sizer.Hide(self.creche_sizer)
             self.sizer.Hide(self.btnsizer)
@@ -254,7 +231,7 @@ class StartDialog(wx.Dialog):
             self.passwd_ctrl.Clear()
             self.login_ctrl.SetFocus()
 
-    def OnExit(self, evt):
+    def OnExit(self, _):
         self.info.AppendText("\nFermeture ...\n")
         if self.loaded:
             Exit(ProgressHandler(self.info.AppendText, self.gauge.SetValue, 5, 100))

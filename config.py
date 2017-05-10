@@ -98,6 +98,8 @@ def getOptions(parser):
             options |= COMPATIBILITY_MODE_CONGES_2016
         if "compatibility-adaptations-2016" in str:
             options |= COMPATIBILITY_MODE_ADAPTATIONS_2016
+        if "prelevements-automatiques" in str:
+            options |= PRELEVEMENTS_AUTOMATIQUES
     except:
         pass
     return options
@@ -370,7 +372,9 @@ def SaveConfig(progress_handler):
 
 
 def Load(progress_handler=default_progress_handler, autosave=False):
-    __builtin__.creche, __builtin__.readonly = config.connection.Load(progress_handler, autosave)
+    __builtin__.creche, _readonly = config.connection.Load(progress_handler, autosave)
+    if _readonly:
+        __builtin__.readonly = True
     return creche is not None
 
 

@@ -17,10 +17,13 @@
 #    along with Gertrude; if not, write to the Free Software
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+from __future__ import unicode_literals
+
 import codecs
 import os
 import sys
 import wx
+import __builtin__
 
 sys.stdout = codecs.getwriter('utf8')(sys.stdout)
 
@@ -45,6 +48,21 @@ class GertrudeApp(wx.App):
     def OnInit(self):
         self.SetAssertMode(wx.PYAPP_ASSERT_SUPPRESS)
         self.locale = wx.Locale(wx.LANGUAGE_DEFAULT)
+        __builtin__.readonly = False
+        self.instance = wx.SingleInstanceChecker("Gertrude")
+        if self.instance.IsAnotherRunning():
+            dlg = wx.MessageDialog(
+                None,
+                "Gertrude est déjà lancée. Les données seront accessibles en lecture seule !",
+                "Confirmation",
+                wx.OK | wx.ICON_WARNING | wx.CANCEL
+            )
+            response = dlg.ShowModal()
+            dlg.Destroy()
+            if response == wx.ID_OK:
+                __builtin__.readonly = True
+            else:
+                return False
         dialog = StartDialog()
         dialog.Show(True)
         return True

@@ -15,6 +15,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
 
 from facture import *
 from ooffice import *
@@ -23,6 +24,7 @@ from doc_facture_mensuelle import FactureModifications
 from doc_export_compta import ExportComptaCotisationsModifications, ExportComptaReglementsModifications
 from doc_attestation_paiement import AttestationModifications
 from doc_appel_cotisations import AppelCotisationsModifications
+from doc_export_sepa import ExportSepaModifications
 from sqlobjects import *
 
 
@@ -38,7 +40,7 @@ class CorrectionsTab(AutoTab):
         self.Bind(wx.EVT_CHOICE, self.OnMonthChoice, self.monthchoice)
         sizer.Add(self.monthchoice, 1, wx.EXPAND, 5)
         self.numfacture = AutoNumericCtrl(self, None, 'valeur', precision=0)
-        sizer.AddMany([(wx.StaticText(self, -1, u'Premier numéro de facture :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (self.numfacture, 0, wx.ALIGN_CENTER_VERTICAL)])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Premier numéro de facture :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), (self.numfacture, 0, wx.ALIGN_CENTER_VERTICAL)])
         self.sizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 5)
         self.corrections_sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.corrections_sizer, 0, wx.ALL, 5)
@@ -70,7 +72,7 @@ class CorrectionsTab(AutoTab):
                     inscrit.corrections[date] = Correction(inscrit, date)
                 sizer = wx.BoxSizer(wx.HORIZONTAL)
                 sizer.Add(wx.StaticText(self, -1, GetPrenomNom(inscrit), size=(200, -1)), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 15)
-                sizer.AddMany([(wx.StaticText(self, -1, u'Libellé :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, inscrit.corrections[date], 'libelle')])
+                sizer.AddMany([(wx.StaticText(self, -1, 'Libellé :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, inscrit.corrections[date], 'libelle')])
                 sizer.AddMany([(wx.StaticText(self, -1, 'Valeur :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoNumericCtrl(self, inscrit.corrections[date], 'valeur', precision=2)])
                 self.corrections_sizer.Add(sizer)
         
@@ -93,32 +95,36 @@ class FacturationTab(AutoTab):
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Edition des appels de cotisation'), wx.HORIZONTAL)
         self.appels_monthchoice = wx.Choice(self)
         AddMonthsToChoice(self.appels_monthchoice)
-        button = wx.Button(self, -1, u'Génération')
+        button = wx.Button(self, -1, 'Génération')
         self.Bind(wx.EVT_BUTTON, self.OnGenerationAppelCotisations, button)
         box_sizer.AddMany([(self.appels_monthchoice, 1, wx.ALL|wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         sizer.Add(box_sizer, 0, wx.EXPAND|wx.BOTTOM, 10)
 
         # Les factures
-        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Clôture et édition des factures'), wx.HORIZONTAL)
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Clôture et édition des factures'), wx.HORIZONTAL)
         self.inscrits_choice["factures"] = wx.Choice(self)
         self.factures_monthchoice = wx.Choice(self)
         self.Bind(wx.EVT_CHOICE, self.OnFacturesInscritChoice, self.inscrits_choice["factures"])
         self.Bind(wx.EVT_CHOICE, self.OnFacturesMonthChoice, self.factures_monthchoice)
-        self.cloture_button = wx.Button(self, -1, u'Clôture')
+        self.cloture_button = wx.Button(self, -1, 'Clôture')
         self.Bind(wx.EVT_BUTTON, self.OnClotureFacture, self.cloture_button)
-        button2 = wx.Button(self, -1, u'Génération')
-        self.Bind(wx.EVT_BUTTON, self.OnGenerationFacture, button2)
-        box_sizer.AddMany([(self.inscrits_choice["factures"], 1, wx.ALL|wx.EXPAND, 5), (self.factures_monthchoice, 1, wx.ALL|wx.EXPAND, 5), (self.cloture_button, 0, wx.ALL, 5), (button2, 0, wx.ALL, 5)])
+        generation_button = wx.Button(self, -1, 'Génération')
+        self.Bind(wx.EVT_BUTTON, self.OnGenerationFacture, generation_button)        
+        box_sizer.AddMany([(self.inscrits_choice["factures"], 1, wx.ALL|wx.EXPAND, 5), (self.factures_monthchoice, 1, wx.ALL|wx.EXPAND, 5), (self.cloture_button, 0, wx.ALL, 5), (generation_button, 0, wx.ALL, 5)])
+        if config.options & PRELEVEMENTS_AUTOMATIQUES:
+            sepa_button = wx.Button(self, -1, 'Virements SEPA')
+            self.Bind(wx.EVT_BUTTON, self.OnExportSepa, sepa_button)
+            box_sizer.Add(sepa_button, 0, wx.ALL, 5)
         if IsTemplateFile("Export compta cotisations.txt"):
-            exportButton = wx.Button(self, -1, u'Export compta cotisations')
+            exportButton = wx.Button(self, -1, 'Export compta cotisations')
             self.Bind(wx.EVT_BUTTON, self.OnExportComptaCotisations, exportButton)
             box_sizer.Add(exportButton, 0, wx.ALL, 5)
         if IsTemplateFile("Export compta reglements.txt"):
-            exportButton = wx.Button(self, -1, u'Export compta règlements')
+            exportButton = wx.Button(self, -1, 'Export compta règlements')
             self.Bind(wx.EVT_BUTTON, self.OnExportComptaReglements, exportButton)
             box_sizer.Add(exportButton, 0, wx.ALL, 5)
         if config.options & DECLOTURE:
-            self.decloture_button = wx.Button(self, -1, u'Dé-clôture')
+            self.decloture_button = wx.Button(self, -1, 'Dé-clôture')
             self.Bind(wx.EVT_BUTTON, self.OnDeclotureFacture, self.decloture_button)
             box_sizer.Add(self.decloture_button, 0, wx.ALL, 5)
         sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
@@ -131,7 +137,7 @@ class FacturationTab(AutoTab):
         self.attestations_endchoice.Disable()
         self.Bind(wx.EVT_CHOICE, self.OnAttestationsInscritChoice, self.inscrits_choice["attestations"])
         self.Bind(wx.EVT_CHOICE, self.OnAttestationsPeriodeChoice, self.attestations_periodechoice)
-        button = wx.Button(self, -1, u'Génération')
+        button = wx.Button(self, -1, 'Génération')
         self.Bind(wx.EVT_BUTTON, self.OnGenerationAttestation, button)
         box_sizer.AddMany([(self.inscrits_choice["attestations"], 1, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5),
                            (self.attestations_periodechoice, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)])
@@ -146,7 +152,7 @@ class FacturationTab(AutoTab):
             self.inscrits_choice["attestations-mensuelles"] = wx.Choice(self)
             self.attestations_mensuelles_periodechoice = wx.Choice(self)
             self.Bind(wx.EVT_CHOICE, self.OnAttestationsMensuellesInscritChoice, self.inscrits_choice["attestations-mensuelles"])
-            button = wx.Button(self, -1, u'Génération')
+            button = wx.Button(self, -1, 'Génération')
             self.Bind(wx.EVT_BUTTON, self.OnGenerationAttestationMensuelle, button)
             box_sizer.AddMany([(self.inscrits_choice["attestations-mensuelles"], 1, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5),
                                (self.attestations_mensuelles_periodechoice, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)])
@@ -280,7 +286,7 @@ class FacturationTab(AutoTab):
         self.OnAttestationsMensuellesInscritChoice(None)
 
         self.Layout()
-        
+
     def OnGenerationAppelCotisations(self, _):
         periode = self.appels_monthchoice.GetClientData(self.appels_monthchoice.GetSelection())
         DocumentDialog(self, AppelCotisationsModifications(periode, options=NO_NOM)).ShowModal()
@@ -309,7 +315,7 @@ class FacturationTab(AutoTab):
         inscrits, periode = self.__GetFactureSelection()
         errors = ClotureFactures(inscrits, periode)
         if errors:
-            message = u"Erreurs lors de la clôture :\n"
+            message = "Erreurs lors de la clôture :\n"
             for label in errors.keys():
                 message += '\n' + label + ' :\n  '
                 message += '\n  '.join(errors[label])
@@ -329,7 +335,7 @@ class FacturationTab(AutoTab):
                 errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
                 continue
         if errors:
-            message = u"Erreurs lors de la de-clôture :\n"
+            message = "Erreurs lors de la de-clôture :\n"
             for label in errors.keys():
                 message += '\n' + label + ' :\n  '
                 message += '\n  '.join(errors[label])
@@ -341,7 +347,7 @@ class FacturationTab(AutoTab):
         if len(inscrits) > 0:
             DocumentDialog(self, FactureModifications(inscrits, periode)).ShowModal()
         else:
-            wx.MessageDialog(self, u'Aucune facture pour cette période', 'Message', wx.OK | wx.ICON_WARNING).ShowModal()
+            wx.MessageDialog(self, 'Aucune facture pour cette période', 'Message', wx.OK | wx.ICON_WARNING).ShowModal()
 
     def OnGenerationAttestation(self, _):
         inscrits = self.inscrits_choice["attestations"].GetClientData(self.inscrits_choice["attestations"].GetSelection())
@@ -364,6 +370,11 @@ class FacturationTab(AutoTab):
         inscrits, periode = self.__GetFactureSelection()
         if len(inscrits) > 0:
             DocumentDialog(self, ExportComptaReglementsModifications(inscrits, periode)).ShowModal()
+
+    def OnExportSepa(self, _):
+        inscrits, periode = self.__GetFactureSelection()
+        if len(inscrits) > 0:
+            DocumentDialog(self, ExportSepaModifications(inscrits, periode)).ShowModal()
 
 
 class ReglementsTab(AutoTab):
@@ -394,7 +405,7 @@ class ReglementsTab(AutoTab):
         self.add_moyen_paiement = ChoiceCtrl(self, items=ModeEncaissementItems)  
         sizer.AddMany([(wx.StaticText(self, -1, 'Date :'), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), self.add_date])
         sizer.AddMany([(wx.StaticText(self, -1, 'Montant :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), self.add_montant])
-        sizer.AddMany([(wx.StaticText(self, -1, u'Moyen de paiement :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), self.add_moyen_paiement])
+        sizer.AddMany([(wx.StaticText(self, -1, 'Moyen de paiement :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), self.add_moyen_paiement])
         global addbmp
         addbmp = wx.Bitmap(GetBitmapFile("plus.png"), wx.BITMAP_TYPE_PNG)
         self.add_button = wx.BitmapButton(self, -1, addbmp)
@@ -430,12 +441,12 @@ class ReglementsTab(AutoTab):
             self.grid.SetRowLabelValue(index, "")
         if isinstance(valeur, float):
             self.total += valeur
-            self.grid.SetCellValue(index, 2, u"%.02f €" % valeur)
+            self.grid.SetCellValue(index, 2, "%.02f €" % valeur)
         else:
             self.grid.SetCellValue(index, 2, valeur)
         self.grid.SetCellValue(index, 0, date2str(ligne.date))
         self.grid.SetCellValue(index, 1, moyen)
-        self.grid.SetCellValue(index, 3, u"%.02f €" % self.total)
+        self.grid.SetCellValue(index, 3, "%.02f €" % self.total)
             
     def Disable(self):
         self.EffaceLignes()
@@ -485,7 +496,7 @@ class ReglementsTab(AutoTab):
             self.inscrit.famille.encaissements.append(Encaissement(self.inscrit.famille, self.add_date.GetValue(), self.add_montant.GetValue(), self.add_moyen_paiement.GetValue()))
             self.AfficheLignes()
         else:
-            dlg = wx.MessageDialog(None, u"Date erronée", 'Erreur', wx.OK | wx.ICON_WARNING)
+            dlg = wx.MessageDialog(None, "Date erronée", 'Erreur', wx.OK | wx.ICON_WARNING)
             dlg.ShowModal()
             dlg.Destroy()
 
@@ -499,9 +510,9 @@ class ReglementsTab(AutoTab):
 class FacturationNotebook(wx.Notebook):
     def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
-        self.AddPage(FacturationTab(self), u"Edition")
-        self.AddPage(CorrectionsTab(self), u"Corrections")
-        self.AddPage(ReglementsTab(self), u"Règlements")
+        self.AddPage(FacturationTab(self), "Edition")
+        self.AddPage(CorrectionsTab(self), "Corrections")
+        self.AddPage(ReglementsTab(self), "Règlements")
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
     def UpdateContents(self):
@@ -517,7 +528,7 @@ class FacturationPanel(GPanel):
     profil = PROFIL_FACTURATION
 
     def __init__(self, parent):
-        GPanel.__init__(self, parent, u'Facturation')
+        GPanel.__init__(self, parent, 'Facturation')
         self.notebook = FacturationNotebook(self)
         self.sizer.Add(self.notebook, 1, wx.EXPAND)
 
