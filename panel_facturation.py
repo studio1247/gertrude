@@ -273,7 +273,7 @@ class FacturationTab(AutoTab):
         for choice in self.inscrits_choice.values():
             choice.SetSelection(0)
         
-        self.cloture_button.Show(creche.cloture_factures)
+        self.cloture_button.Show(creche.cloture_facturation)
 
         self.OnFacturesInscritChoice(None)
         self.OnAttestationsInscritChoice(None)

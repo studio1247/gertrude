@@ -166,7 +166,7 @@ class FactureFinMois(object):
         if options & TRACES:
             print '\nFacture de', inscrit.prenom, inscrit.nom, 'pour', months[mois - 1], annee
                
-        if inscrit.HasFacture(self.debut_recap) and creche.cloture_factures and today > self.fin_recap:
+        if inscrit.HasFacture(self.debut_recap) and creche.cloture_facturation == CLOTURE_FACTURES_AVEC_CONTROLE and today > self.fin_recap:
             fin = self.debut_recap - datetime.timedelta(1)
             debut = GetMonthStart(fin)
             if inscrit.GetInscriptions(debut, fin) and debut not in inscrit.factures_cloturees and IsFacture(debut) and self.debut_recap >= config.first_date:
@@ -864,7 +864,7 @@ def GetHistoriqueSolde(famille, jalon, derniere_facture=True):
         for inscrit in inscrits:
             try:
                 facture = Facture(inscrit, date.year, date.month, NO_NUMERO)
-                if facture.total != 0 and (not creche.cloture_factures or facture.cloture):
+                if facture.total != 0 and (not creche.cloture_facturation or facture.cloture):
                     if derniere_facture:
                         # desactivé pour Moulon (la dernière facture de juillet clôturée le 10 juillet et non visible dans les règlements
                         # if facture.fin_recap <= fin:

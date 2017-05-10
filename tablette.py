@@ -172,7 +172,7 @@ def sync_tablette_lines(lines, tz=None):
         inscrit = creche.GetInscrit(key)
         if inscrit:
             for date in array_enfants[key]:
-                if not creche.cloture_factures or not inscrit.IsFactureCloturee(date):
+                if not creche.cloture_facturation or not inscrit.IsFactureCloturee(date):
                     AddPeriodes(inscrit, date, array_enfants[key][date])
         else:
             errors.append(u"Inscrit %d: Inconnu!" % key)

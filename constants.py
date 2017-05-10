@@ -325,3 +325,8 @@ paje3 = 3
 
 # Constantes tablette
 TABLETTE_MARGE_ARRIVEE = 10
+
+# Paramètres de clôture des factures
+CLOTURE_FACTURES_OFF = 0
+CLOTURE_FACTURES_SIMPLE = 1
+CLOTURE_FACTURES_AVEC_CONTROLE = 2

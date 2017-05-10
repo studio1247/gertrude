@@ -1275,7 +1275,7 @@ class Creche(object):
         self.gestion_alertes = False
         self.age_maximum = 3
         self.seuil_alerte_inscription = 3
-        self.cloture_factures = False
+        self.cloture_facturation = CLOTURE_FACTURES_OFF
         self.arrondi_heures = SANS_ARRONDI
         self.arrondi_facturation = SANS_ARRONDI
         self.arrondi_facturation_periode_adaptation = SANS_ARRONDI
@@ -1602,7 +1602,7 @@ class Creche(object):
                     'periode_revenus', 'mode_facturation', 'repartition', 'temps_facturation', 'conges_inscription',
                     'tarification_activites', 'traitement_maladie', 'facturation_jours_feries',
                     'facturation_periode_adaptation', 'gestion_alertes', 'age_maximum', 'seuil_alerte_inscription',
-                    'cloture_factures', 'arrondi_heures', 'arrondi_facturation',
+                    'cloture_facturation', 'arrondi_heures', 'arrondi_facturation',
                     'arrondi_facturation_periode_adaptation', 'arrondi_heures_salaries',
                     'arrondi_mensualisation_euros', 'arrondi_semaines', 'gestion_maladie_hospitalisation',
                     'gestion_absences_non_prevenues', 'gestion_maladie_sans_justificatif', 'gestion_preavis_conges',
