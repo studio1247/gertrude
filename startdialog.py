@@ -138,6 +138,7 @@ class StartDialog(wx.Dialog):
             dlg.Destroy()
             if result == wx.ID_YES:
                 __builtin__.force_token = True
+                __builtin__.readonly = False
                 thread.start_new_thread(self.Load, ())
                 return
 

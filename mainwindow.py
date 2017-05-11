@@ -308,11 +308,11 @@ class GertrudeFrame(wx.Frame):
             dlg.Destroy()
             if result == wx.ID_YES:
                 __builtin__.force_token = True
+                __builtin__.readonly = False
                 Load(ProgressHandler(frame.SetStatusText))
                 frame.listbook.UpdateContents()
-        
-                
-        frame.Show()        
+
+        frame.Show()
         self.Destroy()
     
     def OnRechercher(self, event):
