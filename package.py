@@ -20,6 +20,7 @@ import glob
 import os
 import shutil
 import sys
+import fnmatch
 
 from version import VERSION
 
@@ -31,6 +32,26 @@ def main():
         for directory in ("./dist", "./build"):
             if os.path.isdir(directory):
                 shutil.rmtree(directory)
+
+        os.chdir("WinPython-32bit-2.7.13.1Zero")
+        paths = ["notebooks", "scripts", "settings", "tools"] + glob.glob("*.exe") + glob.glob("python-2.7.13/Scripts/*.exe")
+        paths += [("python-2.7.13/" + path) for path in ("NEWS.txt", "README.txt", "w9xpopen.exe", "Doc", "include", "Logs", "tcl", "Lib\site-packages\prompt_toolkit", "Lib\site-packages\pygments", "Lib\site-packages\setuptools", "Lib\ensurepip", "Lib\site-packages\win32\Demos", "Lib\site-packages\pip", "Lib\site-packages\jedi", "Lib/unittest", "Lib/test", "Lib/lib2to3", "Lib/lib-tk", "Lib/idlelib", "Lib/distutils", "Lib/ctypes", "Lib/compiler", "Lib/site-packages/wx/tools/Editra", "Lib/site-packages/wx/tools/XRCed")]
+
+        for root, dirnames, filenames in os.walk('python-2.7.13'):
+            for filename in fnmatch.filter(filenames, '*.pyc') + fnmatch.filter(filenames, '*.chm'):
+                paths.append(os.path.join(root, filename))
+
+            # for filename in filenames:
+            #     if os.stat(os.path.join(root, filename)).st_size > 10000:
+            #         print os.path.join(root, filename), os.stat(os.path.join(root, filename)).st_size
+
+        for path in paths:
+            print "Remove %s" % path
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            elif os.path.exists(path):
+                os.remove(path)
+        os.chdir("..")
 
         issfile = "setup.iss"
         isscontents = file(issfile + ".template").read()
@@ -44,7 +65,7 @@ def main():
             if os.path.isfile(exe):
                 os.remove(exe)
             os.rename("./Output/setup.exe", exe)
-            print u"File %s generated!" % exe
+            print u"File %s generated (%d bytes)" % (exe, os.stat(exe).st_size)
 
     elif sys.platform == 'darwin':
         from setuptools import setup
