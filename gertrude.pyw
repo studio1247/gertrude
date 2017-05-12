@@ -25,7 +25,11 @@ import sys
 import wx
 import __builtin__
 
-sys.stdout = codecs.getwriter('utf8')(sys.stdout)
+if sys.executable.endswith("pythonw.exe"):
+    logfile = file("gertrude.log", "a")
+    sys.stdout = codecs.getwriter('utf8')(logfile)
+    sys.stderr = codecs.getwriter('utf8')(logfile)
+
 
 from startdialog import StartDialog
 
