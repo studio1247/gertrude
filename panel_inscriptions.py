@@ -992,6 +992,7 @@ class CongesPanel(InscriptionsTab):
             for i in range(len(self.conges_inscrit_sizer.GetChildren())):
                 self.SupprimeLigneConge()
         self.sizer.Layout()
+        self.sizer.FitInside(self)
         AutoTab.UpdateContents(self)
         
     def SetInscrit(self, inscrit):
