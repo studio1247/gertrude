@@ -119,6 +119,13 @@ ModeAccueilItems = [
     ("Accueil urgence", MODE_ACCUEIL_URGENCE)
 ]
 
+PeriodiciteFacturationItems = [
+    ("Mensuelle", 1),
+    ("Trimestrielle", 3),
+    ("Semestrielle", 6),
+    ("Annuelle", 12)
+]
+
 Regimes = [
     "Pas de sélection",
     "Régime général",
@@ -305,6 +312,7 @@ NO_BACKUPS = 1 << 8
 COMPATIBILITY_MODE_CONGES_2016 = 1 << 9
 COMPATIBILITY_MODE_ADAPTATIONS_2016 = 1 << 10
 PRELEVEMENTS_AUTOMATIQUES = 1 << 11
+NEWSLETTERS = 1 << 12
 
 # Atributs de plages horaires spéciales
 PLAGE_FERMETURE = 0

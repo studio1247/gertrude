@@ -100,6 +100,8 @@ def getOptions(parser):
             options |= COMPATIBILITY_MODE_ADAPTATIONS_2016
         if "prelevements-automatiques" in str:
             options |= PRELEVEMENTS_AUTOMATIQUES
+        if "newsletters" in str:
+            options |= NEWSLETTERS
     except:
         pass
     return options

@@ -686,6 +686,9 @@ class Reservataire(SQLObject):
         self.places = 0
         self.heures_jour = 0.0
         self.heures_semaine = 0.0
+        self.tarif = None
+        self.periode_facturation = 1
+        self.delai_paiement = 30
         self.options = 0
 
         if creation:
@@ -694,13 +697,13 @@ class Reservataire(SQLObject):
     def create(self):
         print 'nouveau reservataire'
         result = sql_connection.execute(
-            'INSERT INTO RESERVATAIRES (idx, debut, fin, nom, places, heures_jour, heures_semaine, options) VALUES (NULL,?,?,?,?,?,?,?)',
-            (self.debut, self.fin, self.nom, self.places, self.heures_jour, self.heures_semaine, self.options))
+            'INSERT INTO RESERVATAIRES (idx, debut, fin, nom, places, heures_jour, heures_semaine, tarif, periode_facturation, delai_paiement, options) VALUES (NULL,?,?,?,?,?,?,?,?,?,?)',
+            (self.debut, self.fin, self.nom, self.places, self.heures_jour, self.heures_semaine, self.tarif, self.periode_facturation, self.delai_paiement, self.options))
         self.idx = result.lastrowid
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['debut', 'fin', 'nom', 'places', 'heures_jour', 'heures_semaine', 'options'] and self.idx:
+        if name in ['debut', 'fin', 'nom', 'places', 'heures_jour', 'heures_semaine', 'tarif', 'periode_facturation', 'delai_paiement', 'options'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE RESERVATAIRES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
@@ -1856,6 +1859,7 @@ class Inscription(PeriodeReference):
         self.forfait_mensuel = 0.0
         self.frais_inscription = 0.0
         self.allocation_mensuelle_caf = 0.0
+        self.newsletters = 0
         self.heures_supplementaires = {}
 
         if creation:

@@ -28,7 +28,7 @@ from facture import FactureCloturee
 import wx
 import bcrypt
 
-VERSION = 104
+VERSION = 105
 
 
 def getdate(s):
@@ -193,7 +193,10 @@ class SQLConnection(object):
             places INTEGER,
             heures_jour FLOAT,
             heures_semaine FLOAT,
-            options INTEGER
+            options INTEGER,
+            periode_facturation INTEGER,
+            delai_paiement INTEGER,
+            tarif FLOAT
           );""")
 
         cur.execute("""
@@ -340,7 +343,8 @@ class SQLConnection(object):
             duree_reference INTEGER,
             forfait_mensuel_heures FLOAT,
             semaines_conges INTEGER,
-            heures_permanences FLOAT
+            heures_permanences FLOAT,
+            newsletters INTEGER
           );""")
 
         cur.execute("""
@@ -683,11 +687,11 @@ class SQLConnection(object):
             # print user.login, user.password
             creche.users.append(user)
 
-        cur.execute('SELECT debut, fin, nom, adresse, code_postal, ville, telephone, email, places, heures_jour, heures_semaine, options, idx FROM RESERVATAIRES')
+        cur.execute('SELECT debut, fin, nom, adresse, code_postal, ville, telephone, email, places, heures_jour, heures_semaine, options, periode_facturation, tarif, delai_paiement, idx FROM RESERVATAIRES')
         for reservataire_entry in cur.fetchall():
             reservataire = Reservataire(creation=False)
-            debut, fin, reservataire.nom, reservataire.adresse, reservataire.code_postal, reservataire.ville, reservataire.telephone, reservataire.email, reservataire.places, reservataire.heures_jour, reservataire.heures_semaine, reservataire.options, idx = reservataire_entry
-            reservataire.debut, reservataire.fin, reservataire.idx = debut, fin, idx
+            debut, fin, reservataire.nom, reservataire.adresse, reservataire.code_postal, reservataire.ville, reservataire.telephone, reservataire.email, reservataire.places, reservataire.heures_jour, reservataire.heures_semaine, reservataire.options, reservataire.periode_facturation, reservataire.tarif, reservataire.delai_paiement, idx = reservataire_entry
+            reservataire.debut, reservataire.fin, reservataire.idx = getdate(debut), getdate(fin), idx
             creche.reservataires.append(reservataire)
 
         cur.execute('SELECT label, type, unite, valeur, idx FROM TARIFSSPECIAUX')
@@ -851,8 +855,8 @@ class SQLConnection(object):
                     inscrit.famille = tmp
                     break
             inscrit.prenom, inscrit.nom, inscrit.sexe, inscrit.naissance, inscrit.handicap, inscrit.marche, inscrit.notes, inscrit.photo, inscrit.combinaison, inscrit.allergies, inscrit.idx = prenom, nom, sexe, getdate(naissance), handicap, getdate(marche), notes, photo, combinaison, allergies, idx
-            cur.execute('SELECT idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_mensuel_heures, semaines_conges, heures_permanences, preinscription, site, sites_preinscription, professeur FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
-            for idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_mensuel_heures, semaines_conges, heures_permanences, preinscription, site, sites_preinscription, professeur in cur.fetchall():
+            cur.execute('SELECT idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_mensuel_heures, semaines_conges, heures_permanences, preinscription, site, sites_preinscription, professeur, newsletters FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
+            for idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_mensuel_heures, semaines_conges, heures_permanences, preinscription, site, sites_preinscription, professeur, newsletters in cur.fetchall():
                 inscription = Inscription(inscrit, duree_reference, creation=False)
                 for tmp in creche.sites:
                     if site == tmp.idx:
@@ -872,7 +876,7 @@ class SQLConnection(object):
                 for tmp in creche.professeurs:
                     if professeur == tmp.idx:
                         inscription.professeur = tmp
-                inscription.debut, inscription.fin, inscription.depart, inscription.mode, inscription.preinscription, inscription.forfait_mensuel_heures, inscription.forfait_mensuel, inscription.frais_inscription, inscription.allocation_mensuelle_caf, inscription.fin_periode_adaptation, inscription.semaines_conges, inscription.heures_permanences, inscription.idx = getdate(debut), getdate(fin), getdate(depart), mode, preinscription, forfait_mensuel_heures, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, getdate(fin_periode_adaptation), semaines_conges, heures_permanences, idx
+                inscription.debut, inscription.fin, inscription.depart, inscription.mode, inscription.preinscription, inscription.forfait_mensuel_heures, inscription.forfait_mensuel, inscription.frais_inscription, inscription.allocation_mensuelle_caf, inscription.fin_periode_adaptation, inscription.semaines_conges, inscription.heures_permanences, inscription.newsletters, inscription.idx = getdate(debut), getdate(fin), getdate(depart), mode, preinscription, forfait_mensuel_heures, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, getdate(fin_periode_adaptation), semaines_conges, heures_permanences, newsletters, idx
                 inscrit.inscriptions.append(inscription)
                 inscrit.inscriptions.sort(key=lambda element: element.debut if element.debut else today)
             for inscription in inscrit.inscriptions:
@@ -1927,6 +1931,14 @@ class SQLConnection(object):
             cur.execute("ALTER TABLE FAMILLES ADD bic VARCHAR;")
             cur.execute("ALTER TABLE FAMILLES ADD jour_prelevement_automatique INTEGER;")
             cur.execute("ALTER TABLE FAMILLES ADD date_premier_prelevement_automatique DATE;")
+
+        if version < 105:
+            cur.execute("ALTER TABLE RESERVATAIRES ADD periode_facturation INTEGER;")
+            cur.execute("ALTER TABLE RESERVATAIRES ADD delai_paiement INTEGER;")
+            cur.execute("ALTER TABLE RESERVATAIRES ADD tarif FLOAT;")
+            cur.execute("ALTER TABLE INSCRIPTIONS ADD newsletters INTEGER;")
+            cur.execute("UPDATE RESERVATAIRES SET periode_facturation=1, delai_paiement=30;")
+            cur.execute("UPDATE INSCRIPTIONS SET newsletters=0;")
 
         if version < VERSION:
             try:
