@@ -2313,14 +2313,14 @@ class Inscrit(object):
         else:
             return None
 
-    def GetInscriptions(self, date_debut=None, date_fin=None):
+    def GetInscriptions(self, date_debut=None, date_fin=None, preinscriptions=False):
         result = []
         if not date_debut:
             date_debut = datetime.date.min
         if not date_fin:
             date_fin = datetime.date.max
         for inscription in self.inscriptions:
-            if (not creche.preinscriptions or not inscription.preinscription) and inscription.debut:
+            if (preinscriptions or not creche.preinscriptions or not inscription.preinscription) and inscription.debut:
                 try:
                     date_debut_periode = inscription.debut
                     if inscription.fin:
