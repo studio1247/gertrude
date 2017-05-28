@@ -92,16 +92,17 @@ class ReleveSalariesModifications(object):
 
         inc = 0
         for salarie in self.salaries:
-            semaines, fields = self.GetFields(salarie)
-            lignes = []
-            for l, line in enumerate(template):
-                if l == LINES-1 or l < LINES-1-(5-semaines)*2:
-                    clone = line.cloneNode(1)
-                    lignes.append(clone)
-                    if l == LINES - 1:
-                        ReplaceFormulas(clone, "SUM([.G8:.G16])", "SUM([.G%d:.G%d])" % (8+inc, 8+inc+2*(semaines-1)))
-                    else:
-                        IncrementFormulas(clone, row=+inc)
-                    table.insertBefore(clone, last_line)
-            ReplaceFields(lignes, fields)
-            inc += LINES - (5-semaines) * 2
+            if salarie.GetContrat(datetime.date.today()):
+                semaines, fields = self.GetFields(salarie)
+                lignes = []
+                for l, line in enumerate(template):
+                    if l == LINES-1 or l < LINES-1-(5-semaines)*2:
+                        clone = line.cloneNode(1)
+                        lignes.append(clone)
+                        if l == LINES - 1:
+                            ReplaceFormulas(clone, "SUM([.G8:.G16])", "SUM([.G%d:.G%d])" % (8+inc, 8+inc+2*(semaines-1)))
+                        else:
+                            IncrementFormulas(clone, row=+inc)
+                        table.insertBefore(clone, last_line)
+                ReplaceFields(lignes, fields)
+                inc += LINES - (5-semaines) * 2
