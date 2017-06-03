@@ -28,7 +28,7 @@ from version import VERSION
 from sqlobjects import *
 from globals import *
 from functions import *
-from alertes import CheckAlertes
+from alertes import *
 try:
     import winsound
 except:
@@ -224,10 +224,10 @@ class GertrudeFrame(wx.Frame):
             if changements:
                 wx.PostEvent(self, self.ChangementsGroupeEvent(changements=changements))
                          
-        if creche.gestion_alertes:
-            new_alertes, alertes_non_acquittees = CheckAlertes()
-            if new_alertes or alertes_non_acquittees:
-                wx.PostEvent(self, self.AlertEvent(new_alertes=new_alertes, alertes_non_acquittees=alertes_non_acquittees))
+        if creche.masque_alertes:
+            new_alertes = [(date, message) for date, message, ack in GetAlertes() if not ack]
+            if new_alertes:
+                wx.PostEvent(self, self.AlertEvent(new_alertes=new_alertes))
     
     def OnChangementsGroupeAvailable(self, event):
         messages = []
@@ -240,22 +240,15 @@ class GertrudeFrame(wx.Frame):
         dlg.Destroy()
             
     def OnAlertesAvailable(self, event):
-        if event.new_alertes:
-            for alerte in event.new_alertes:
-                alerte.create()
+        texte = "\n".join([message for date, message in event.new_alertes])
+        dlg = wx.MessageDialog(self, texte + "\n\nRevoir ces alertes la prochaine fois ?", "Alertes", wx.YES_NO | wx.YES_DEFAULT | wx.ICON_QUESTION)
+        result = dlg.ShowModal()
+        dlg.Destroy()
+        if result == wx.ID_NO:
+            for date, message in event.new_alertes:
+                alerte = Alerte(date, message, True)
+                creche.alertes[message] = alerte
             history.append(None)
-        if event.alertes_non_acquittees:
-            texte = ""
-            for alerte in event.alertes_non_acquittees:
-                texte += alerte.texte + "\n"
-            texte += "\n"
-            dlg = wx.MessageDialog(self, texte + "Ne plus revoir les alertes ci-dessus ?", "Alertes", wx.YES_NO|wx.YES_DEFAULT|wx.CANCEL|wx.ICON_QUESTION)
-            result = dlg.ShowModal()
-            dlg.Destroy()
-            if result == wx.ID_YES:
-                for alerte in event.alertes_non_acquittees:
-                    alerte.acquittement = True
-                history.append(None)
         
     def CheckForUpdates(self):
         try:

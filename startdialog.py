@@ -106,7 +106,7 @@ class StartDialog(wx.Dialog):
     def OnLoaded(self, event):
         if event.result is False:
             self.info.AppendText("Erreur lors du chargement !\n")
-            self.gauge.SetValue(100)
+            self.SetGauge(100)
             return
                 
         if event.result is None:
@@ -158,9 +158,11 @@ class StartDialog(wx.Dialog):
     
     def AppendMessage(self, message):
         wx.PostEvent(self, self.MessageEvent(message=message, gauge=None))
+        wx.Yield()
         
     def SetGauge(self, gauge):
         wx.PostEvent(self, self.MessageEvent(message=None, gauge=gauge))
+        wx.Yield()
 
     def OnMessage(self, event):
         if event.message is not None:
@@ -193,9 +195,9 @@ class StartDialog(wx.Dialog):
         wx.PostEvent(self, self.LoadedEvent(result=result))
 
     def StartFrame(self):
-        frame = GertrudeFrame(ProgressHandler(self.info.AppendText, self.gauge.SetValue, 50, 100))
+        frame = GertrudeFrame(ProgressHandler(self.info.AppendText, self.SetGauge, 50, 100))
         frame.Show()
-        self.gauge.SetValue(100)
+        self.SetGauge(100)
         self.Destroy()
         if sys.platform == "darwin":
             frame.Show()
@@ -235,5 +237,5 @@ class StartDialog(wx.Dialog):
     def OnExit(self, _):
         self.info.AppendText("\nFermeture ...\n")
         if self.loaded:
-            Exit(ProgressHandler(self.info.AppendText, self.gauge.SetValue, 5, 100))
+            Exit(ProgressHandler(self.info.AppendText, self.SetGauge, 5, 100))
         self.Destroy()

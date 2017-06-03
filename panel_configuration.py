@@ -897,8 +897,8 @@ class ParametersPanel(AutoTab):
                        (AutoChoiceCtrl(self, creche, "tri_inscriptions", [("Par prénom", TRI_PRENOM), ("Par nom", TRI_NOM), ("Par nom sans séparation des anciens", TRI_NOM | TRI_SANS_SEPARATION)]), 0, wx.EXPAND)])
         ordre_sizer = wx.BoxSizer(wx.HORIZONTAL)
         ordre_sizer.AddMany([(AutoChoiceCtrl(self, creche, "tri_planning", items=[("Par prénom", TRI_PRENOM), ("Par nom", TRI_NOM)], mask=255), 1, wx.EXPAND),
-                             (AutoCheckBox(self, creche, "tri_planning", value=TRI_GROUPE, label="Séparation par groupes"), 0, wx.EXPAND|wx.LEFT, 10),
-                             (AutoCheckBox(self, creche, "tri_planning", value=TRI_LIGNES_CAHIER, label="Lignes horizontales"), 0, wx.EXPAND|wx.LEFT, 10),
+                             (AutoCheckBox(self, creche, "tri_planning", value=TRI_GROUPE, label="Séparation par groupes"), 0, wx.EXPAND | wx.LEFT, 10),
+                             (AutoCheckBox(self, creche, "tri_planning", value=TRI_LIGNES_CAHIER, label="Lignes horizontales"), 0, wx.EXPAND | wx.LEFT, 10),
                              ])
         sizer.AddMany([CreateLabelTuple("Ordre d'affichage sur le planning :"), (ordre_sizer, 1, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple("Préinscriptions :"),
@@ -947,7 +947,12 @@ class ParametersPanel(AutoTab):
         sizer2.AddMany([(AutoChoiceCtrl(self, creche, "gestion_depart_anticipe", items=modes_gestion_standard), 1, wx.EXPAND), (wx.StaticText(self, -1, "Régularisation de la facturation en fin de contrat :"), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, creche, "regularisation_fin_contrat", [("Gérée", True), ("Non gérée", False)]), 1, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple("Traitement des départs anticipés :"), (sizer2, 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple("Changement de groupe :"), (AutoChoiceCtrl(self, creche, "changement_groupe_auto", [("Manuel", False), ("Automatique", True)]), 0, wx.EXPAND)])
-        sizer.AddMany([CreateLabelTuple("Gestion d'alertes :"), (AutoChoiceCtrl(self, creche, "gestion_alertes", [("Activée", True), ("Désactivée", False)]), 0, wx.EXPAND)])
+
+        alertes_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        for label, value in AlertesItems:
+            alertes_sizer.Add(AutoCheckBox(self, creche, "masque_alertes", value=value, label=label), 0, wx.EXPAND | wx.RIGHT, 10)
+        sizer.AddMany([CreateLabelTuple("Alertes :"), alertes_sizer])
+
         sizer.AddMany([CreateLabelTuple("Age maximum des enfants :"), (AutoNumericCtrl(self, creche, "age_maximum", min=0, max=5, precision=0), 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple("Alerte dépassement capacité dans les plannings :"), (AutoChoiceCtrl(self, creche, "alerte_depassement_planning", [("Activée", True), ("Désactivée", False)]), 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple("Seuil d'alerte dépassement capacité inscriptions (jours) :"), (AutoNumericCtrl(self, creche, "seuil_alerte_inscription", min=0, max=100, precision=0), 0, wx.EXPAND)])

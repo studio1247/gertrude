@@ -16,40 +16,33 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 import __builtin__
+from constants import *
 import datetime
-from parameters import today
 from functions import GetInscriptions, GetDateMinus
-from sqlobjects import Alerte
 
 
 def GetAlertes():
     alertes = []
+    def add_alerte(date, message):
+        alertes.append((date, message, message in creche.alertes))
+    today = datetime.date.today()
     for inscription in GetInscriptions(today, today):
         inscrit = inscription.inscrit
-        if inscrit.naissance:
+        if (creche.masque_alertes & ALERTE_3MOIS_AVANT_AGE_MAXIMUM) and inscrit.naissance:
             date = GetDateMinus(inscrit.naissance, years=-creche.age_maximum, months=3)
-            texte = "%s %s a %d ans le %02d/%02d/%04d" % (inscrit.prenom, inscrit.nom, creche.age_maximum, inscrit.naissance.day, inscrit.naissance.month, inscrit.naissance.year+creche.age_maximum)      
-            alertes.append((date, texte))
-        if inscription.debut and inscription.debut.year != today.year:
-            date = datetime.date(today.year, inscription.debut.month, inscription.debut.day)
-            texte = "L'inscription de %s %s passe un an au %02d/%02d/%04d" % (inscrit.prenom, inscrit.nom, date.day, date.month, date.year)
-            alertes.append((date, texte))
-        if inscription.fin:
-            # Demandé par Mon Petit Bijou
+            if today > date:
+                message = "%s %s aura %d ans dans 3 mois" % (inscrit.prenom, inscrit.nom, creche.age_maximum)
+                add_alerte(date, message)
+        if (creche.masque_alertes & ALERTE_1AN_APRES_INSCRIPTION) and inscription.debut:
+            date = datetime.date(inscription.debut.year+1, inscription.debut.month, inscription.debut.day)
+            if today > date:
+                message = "L'inscription de %s %s passe un an aujourd'hui" % (inscrit.prenom, inscrit.nom)
+                add_alerte(date, message)
+        if (creche.masque_alertes & ALERTE_2MOIS_AVANT_FIN_INSCRIPTION) and inscription.fin:
             date = GetDateMinus(inscription.fin, years=0, months=2)
-            texte = "L'inscription de %s %s se termine le %02d/%02d/%04d" % (inscrit.prenom, inscrit.nom, inscription.fin.day, inscription.fin.month, inscription.fin.year)      
-            alertes.append((date, texte))
+            if today > date:
+                message = "L'inscription de %s %s se terminera dans 2 mois" % (inscrit.prenom, inscrit.nom)
+                add_alerte(date, message)
+    alertes.sort(key=lambda (date, message, ack): date)
     return alertes
 
-
-def CheckAlertes():
-    nouvelles_alertes = []
-    for date, texte in GetAlertes():
-        if date <= today and not texte in creche.alertes:
-            alerte = Alerte(date, texte, creation=False)
-            nouvelles_alertes.append(alerte)
-            creche.alertes[texte] = alerte
-                
-    alertes_non_acquittees = [alerte for alerte in creche.alertes.values() if not alerte.acquittement]
-    alertes_non_acquittees.sort(key=lambda alerte: alerte.date)    
-    return nouvelles_alertes, alertes_non_acquittees

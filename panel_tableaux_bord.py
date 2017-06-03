@@ -15,6 +15,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
 import wx
 import wx.grid
 import wx.html
@@ -42,6 +43,7 @@ from doc_export_facturation import ExportFacturationModifications
 from facture import Facture
 from ooffice import *
 from planning import *
+from alertes import *
 
 
 class SitesPlanningPanel(PlanningWidget):
@@ -254,11 +256,11 @@ class EtatsPresenceTab(AutoTab):
         self.debut_control = DateCtrl(self)
         self.debut_control.SetValue(today)
         wx.EVT_TEXT(self.debut_control, -1, self.OnPeriodeChange)
-        self.search_sizer.AddMany([(wx.StaticText(self, -1, u'Début :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.debut_control, 0, wx.ALIGN_CENTER_VERTICAL)])
+        self.search_sizer.AddMany([(wx.StaticText(self, -1, 'Début :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.debut_control, 0, wx.ALIGN_CENTER_VERTICAL)])
         self.fin_control = DateCtrl(self)
         self.fin_control.SetValue(today)
         wx.EVT_TEXT(self.fin_control, -1, self.OnPeriodeChange)
-        self.search_sizer.AddMany([(wx.StaticText(self, -1, u'Fin :'), 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5), (self.fin_control, 0, wx.ALIGN_CENTER_VERTICAL)])
+        self.search_sizer.AddMany([(wx.StaticText(self, -1, 'Fin :'), 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5), (self.fin_control, 0, wx.ALIGN_CENTER_VERTICAL)])
         self.ordered_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.unordered_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.sites_choice = wx.Choice(self)
@@ -558,10 +560,10 @@ class StatistiquesFrequentationTab(AutoTab):
             self.periodechoice.Append(month, [index])
         self.periodechoice.Append("----")  # TODO changer ça
         for index, trimestre in enumerate(trimestres):
-            self.periodechoice.Append(u"%s trimestre" % trimestre, [3*index, 3*index+1, 3*index+2])
+            self.periodechoice.Append("%s trimestre" % trimestre, [3*index, 3*index+1, 3*index+2])
         self.periodechoice.SetStringSelection(months[today.month-1])
         self.periodechoice.Append("----")  # TODO changer ça
-        self.periodechoice.Append(u"Année complète", range(0, 12))
+        self.periodechoice.Append("Année complète", range(0, 12))
         for choice in (self.sitechoice, self.anneechoice, self.periodechoice):
             self.Bind(wx.EVT_CHOICE, self.OnChangementPeriode, choice)
         sizer.AddMany([(self.sitechoice, 0, 0, 0), (self.anneechoice, 0, wx.LEFT, 5), (self.periodechoice, 0, wx.LEFT, 5)])
@@ -574,7 +576,7 @@ class StatistiquesFrequentationTab(AutoTab):
         self.sizer.Add(self.message, 0, wx.EXPAND | wx.ALL, 10)
         
         self.result_sizer = wx.FlexGridSizer(0, 5, 6, 10)
-        self.result_sizer.AddMany([(wx.StaticText(self, -1, ''), 0, 0), (wx.StaticText(self, -1, u'Heures'), 0, 0), (wx.StaticText(self, -1, u'Jours'), 0, 0), (wx.StaticText(self, -1, u'Euros'), 0, 0), (wx.StaticText(self, -1, u'%'), 0, 0)])
+        self.result_sizer.AddMany([(wx.StaticText(self, -1, ''), 0, 0), (wx.StaticText(self, -1, 'Heures'), 0, 0), (wx.StaticText(self, -1, 'Jours'), 0, 0), (wx.StaticText(self, -1, 'Euros'), 0, 0), (wx.StaticText(self, -1, '%'), 0, 0)])
         
         self.presences_contrat_heures = wx.TextCtrl(self)
         self.presences_contrat_heures.Disable()
@@ -584,7 +586,7 @@ class StatistiquesFrequentationTab(AutoTab):
         self.presences_contrat_euros.Disable()
         self.presences_contrat_percent = wx.TextCtrl(self)
         self.presences_contrat_percent.Disable()
-        self.result_sizer.AddMany([(wx.StaticText(self, -1, u'Présences contractualisées :'), 0, 0), (self.presences_contrat_heures, 0, wx.EXPAND), (self.presences_contrat_jours, 0, wx.EXPAND), (self.presences_contrat_euros, 0, wx.EXPAND), (self.presences_contrat_percent, 0, wx.EXPAND)])
+        self.result_sizer.AddMany([(wx.StaticText(self, -1, 'Présences contractualisées :'), 0, 0), (self.presences_contrat_heures, 0, wx.EXPAND), (self.presences_contrat_jours, 0, wx.EXPAND), (self.presences_contrat_euros, 0, wx.EXPAND), (self.presences_contrat_percent, 0, wx.EXPAND)])
         
         self.presences_realisees_heures = wx.TextCtrl(self)
         self.presences_realisees_heures.Disable()
@@ -594,7 +596,7 @@ class StatistiquesFrequentationTab(AutoTab):
         self.presences_realisees_euros.Disable()
         self.presences_realisees_percent = wx.TextCtrl(self)
         self.presences_realisees_percent.Disable()
-        self.result_sizer.AddMany([(wx.StaticText(self, -1, u'Présences réalisées :'), 0, 0), (self.presences_realisees_heures, 0, wx.EXPAND), (self.presences_realisees_jours, 0, wx.EXPAND), (self.presences_realisees_euros, 0, wx.EXPAND), (self.presences_realisees_percent, 0, wx.EXPAND)])
+        self.result_sizer.AddMany([(wx.StaticText(self, -1, 'Présences réalisées :'), 0, 0), (self.presences_realisees_heures, 0, wx.EXPAND), (self.presences_realisees_jours, 0, wx.EXPAND), (self.presences_realisees_euros, 0, wx.EXPAND), (self.presences_realisees_percent, 0, wx.EXPAND)])
         
         self.presences_facturees_heures = wx.TextCtrl(self)
         self.presences_facturees_heures.Disable()
@@ -604,7 +606,7 @@ class StatistiquesFrequentationTab(AutoTab):
         self.presences_facturees_euros.Disable()
         self.presences_facturees_percent = wx.TextCtrl(self)
         self.presences_facturees_percent.Disable()
-        self.result_sizer.AddMany([(wx.StaticText(self, -1, u'Présences facturées :'), 0, 0), (self.presences_facturees_heures, 0, wx.EXPAND), (self.presences_facturees_jours, 0, wx.EXPAND), (self.presences_facturees_euros, 0, wx.EXPAND), (self.presences_facturees_percent, 0, wx.EXPAND)])              
+        self.result_sizer.AddMany([(wx.StaticText(self, -1, 'Présences facturées :'), 0, 0), (self.presences_facturees_heures, 0, wx.EXPAND), (self.presences_facturees_jours, 0, wx.EXPAND), (self.presences_facturees_euros, 0, wx.EXPAND), (self.presences_facturees_percent, 0, wx.EXPAND)])
         
         self.sizer.Add(self.result_sizer, 0, wx.EXPAND | wx.ALL, 10)
         self.SetSizer(self.sizer)
@@ -674,20 +676,20 @@ class StatistiquesFrequentationTab(AutoTab):
                         cotisations_facturees += facture.total_facture
                         total += facture.total
                         print inscrit.prenom, inscrit.nom, facture.date
-                        print ' ', u"heures contractualisées :", facture.heures_contractualisees, ", heures contrat :", facture.heures_contrat
-                        print ' ', u"heures réalisées :", facture.heures_realisees
-                        print ' ', u"heures facturées :", facture.heures_facturees, ", heures facture :", facture.heures_facture
-                        print ' ', u"jours contractualisés :", facture.jours_contractualises
-                        print ' ', u"jours réalisés :", facture.jours_realises
-                        print ' ', u"jours facturés :", facture.jours_factures
-                        print ' ', u"total contractualisé", facture.total_contractualise
-                        print ' ', u"total réalisé :", facture.total_realise
-                        print ' ', u"total facturé :", facture.total_facture
+                        print ' ', "heures contractualisées :", facture.heures_contractualisees, ", heures contrat :", facture.heures_contrat
+                        print ' ', "heures réalisées :", facture.heures_realisees
+                        print ' ', "heures facturées :", facture.heures_facturees, ", heures facture :", facture.heures_facture
+                        print ' ', "jours contractualisés :", facture.jours_contractualises
+                        print ' ', "jours réalisés :", facture.jours_realises
+                        print ' ', "jours facturés :", facture.jours_factures
+                        print ' ', "total contractualisé", facture.total_contractualise
+                        print ' ', "total réalisé :", facture.total_realise
+                        print ' ', "total facturé :", facture.total_facture
                 except Exception, e:
                     erreurs.append((inscrit, e))
                               
         if erreurs:
-            msg = u"\n\n".join([u"%s %s:\n%s" % (inscrit.prenom, inscrit.nom, unicode(erreur)) for inscrit, erreur in erreurs])
+            msg = "\n\n".join(["%s %s:\n%s" % (inscrit.prenom, inscrit.nom, unicode(erreur)) for inscrit, erreur in erreurs])
             self.message.SetValue(msg)
             self.message.Show(True)
             for ctrl in (self.presences_contrat_heures, self.presences_realisees_heures, self.presences_facturees_heures,
@@ -704,23 +706,23 @@ class StatistiquesFrequentationTab(AutoTab):
                 presences_contrat_heures = heures_contractualisees
                 presences_facturees_heures = heures_facturees
                                 
-            self.presences_contrat_heures.SetValue(u"%.2f heures" % presences_contrat_heures)
-            self.presences_realisees_heures.SetValue(u"%.2f heures" % heures_realisees)
-            self.presences_facturees_heures.SetValue(u"%.2f heures" % presences_facturees_heures)
-            self.presences_contrat_jours.SetValue(u"%d jours" % jours_contractualises)
-            self.presences_realisees_jours.SetValue(u"%d jours" % jours_realises)
-            self.presences_facturees_jours.SetValue(u"%d jours" % jours_factures)
-            self.presences_contrat_euros.SetValue(u"%.2f €" % cotisations_contractualisees)
-            self.presences_realisees_euros.SetValue(u"%.2f €" % cotisations_realisees)
-            self.presences_facturees_euros.SetValue(u"%.2f €" % cotisations_facturees)
+            self.presences_contrat_heures.SetValue("%.2f heures" % presences_contrat_heures)
+            self.presences_realisees_heures.SetValue("%.2f heures" % heures_realisees)
+            self.presences_facturees_heures.SetValue("%.2f heures" % presences_facturees_heures)
+            self.presences_contrat_jours.SetValue("%d jours" % jours_contractualises)
+            self.presences_realisees_jours.SetValue("%d jours" % jours_realises)
+            self.presences_facturees_jours.SetValue("%d jours" % jours_factures)
+            self.presences_contrat_euros.SetValue("%.2f €" % cotisations_contractualisees)
+            self.presences_realisees_euros.SetValue("%.2f €" % cotisations_realisees)
+            self.presences_facturees_euros.SetValue("%.2f €" % cotisations_facturees)
             coeff_contrat = coeff_realise = coeff_facture = 0.0
             if heures_accueil:
                 coeff_contrat = (100.0 * presences_contrat_heures) / heures_accueil
                 coeff_realise = (100.0 * heures_realisees) / heures_accueil
                 coeff_facture = (100.0 * presences_facturees_heures) / heures_accueil
-            self.presences_contrat_percent.SetValue(u"%.1f %%" % coeff_contrat)
-            self.presences_realisees_percent.SetValue(u"%.1f %%" % coeff_realise)
-            self.presences_facturees_percent.SetValue(u"%.1f %%" % coeff_facture)
+            self.presences_contrat_percent.SetValue("%.1f %%" % coeff_contrat)
+            self.presences_realisees_percent.SetValue("%.1f %%" % coeff_realise)
+            self.presences_facturees_percent.SetValue("%.1f %%" % coeff_facture)
 
         self.sizer.FitInside(self)
         self.Layout()
@@ -735,169 +737,169 @@ class RelevesTab(AutoTab):
         self.sizer.Add(self.site_choice, 0, wx.TOP|wx.BOTTOM, 5)
         
         # Les coordonnees des parents
-        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Coordonnées des parents'), wx.HORIZONTAL)
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Coordonnées des parents'), wx.HORIZONTAL)
         self.coords_date = wx.TextCtrl(self)
         self.coords_date.SetValue("Aujourd'hui")
-        button = wx.Button(self, -1, u'Génération')
+        button = wx.Button(self, -1, 'Génération')
         self.Bind(wx.EVT_BUTTON, self.OnGenerationCoordonnees, button)
         box_sizer.AddMany([(self.coords_date, 1, wx.EXPAND | wx.ALL, 5), (button, 0, wx.ALL, 5)])
         self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
         
         # Les contrats en cours
-        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Inscriptions en cours'), wx.HORIZONTAL)
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Inscriptions en cours'), wx.HORIZONTAL)
         self.inscriptions_date = wx.TextCtrl(self)
         self.inscriptions_date.SetValue("Aujourd'hui")
-        button = wx.Button(self, -1, u'Génération')
+        button = wx.Button(self, -1, 'Génération')
         self.Bind(wx.EVT_BUTTON, self.OnGenerationEtatsInscriptions, button)
         box_sizer.AddMany([(self.inscriptions_date, 1, wx.EXPAND | wx.ALL, 5), (button, 0, wx.ALL, 5)])
         self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
 
         # Les releves trimestriels
         if IsTemplateFile("Releve SIEJ.odt"):
-            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés trimestriels (SIEJ)'), wx.HORIZONTAL)
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Relevés trimestriels (SIEJ)'), wx.HORIZONTAL)
             self.releves_choice = wx.Choice(self)
             AddYearsToChoice(self.releves_choice)
-            button = wx.Button(self, -1, u'Génération')
+            button = wx.Button(self, -1, 'Génération')
             self.Bind(wx.EVT_BUTTON, self.OnGenerationReleveSIEJ, button)
             box_sizer.AddMany([(self.releves_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
         else:
-            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés trimestriels'), wx.HORIZONTAL)
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Relevés trimestriels'), wx.HORIZONTAL)
             self.releves_choice = wx.Choice(self)
             AddYearsToChoice(self.releves_choice)
-            button = wx.Button(self, -1, u'Génération')
+            button = wx.Button(self, -1, 'Génération')
             self.Bind(wx.EVT_BUTTON, self.OnGenerationEtatsTrimestriels, button)
             box_sizer.AddMany([(self.releves_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
                 
         # Les relevés détaillés
-        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés annuels détaillés'), wx.HORIZONTAL)
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Relevés annuels détaillés'), wx.HORIZONTAL)
         self.releves_detailles_choice = wx.Choice(self)
         AddYearsToChoice(self.releves_detailles_choice)
-        button = wx.Button(self, -1, u'Génération')
+        button = wx.Button(self, -1, 'Génération')
         self.Bind(wx.EVT_BUTTON, self.OnGenerationRelevesDetailles, button)
         box_sizer.AddMany([(self.releves_detailles_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
         
         # Les etats des places
         if IsTemplateFile("Etats places.ods"):
-            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Etats des places'), wx.HORIZONTAL)
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Etats des places'), wx.HORIZONTAL)
             self.places_choice = wx.Choice(self)
             AddYearsToChoice(self.places_choice)
-            button = wx.Button(self, -1, u'Génération')
+            button = wx.Button(self, -1, 'Génération')
             self.Bind(wx.EVT_BUTTON, self.OnGenerationEtatsPlaces, button)
             box_sizer.AddMany([(self.places_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
         
         # Les rapports de fréquentation
-        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Rapports de fréquentation'), wx.HORIZONTAL)
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Rapports de fréquentation'), wx.HORIZONTAL)
         self.rapports_choice = wx.Choice(self)
         AddYearsToChoice(self.rapports_choice)
-        button = wx.Button(self, -1, u'Génération')
+        button = wx.Button(self, -1, 'Génération')
         self.Bind(wx.EVT_BUTTON, self.OnGenerationRapportFrequentation, button)
         box_sizer.AddMany([(self.rapports_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
         self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
         
         if IsTemplateFile("Etat presence mensuel.ods"):
-            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Etat de présence mensuel'), wx.HORIZONTAL)
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Etat de présence mensuel'), wx.HORIZONTAL)
             self.etat_presence_mensuesl_choice = wx.Choice(self)
             AddMonthsToChoice(self.etat_presence_mensuesl_choice)
-            button = wx.Button(self, -1, u'Génération')
+            button = wx.Button(self, -1, 'Génération')
             self.Bind(wx.EVT_BUTTON, self.OnGenerationEtatPresenceMensuel, button)
             box_sizer.AddMany([(self.etat_presence_mensuesl_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
 
         # Les exports facturation (Moulon ALSH)
         if IsTemplateFile("Export facturation.ods"):
-            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Export facturation'), wx.HORIZONTAL)
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Export facturation'), wx.HORIZONTAL)
             self.export_facturation_choice = wx.Choice(self)
             AddYearsToChoice(self.export_facturation_choice)
-            button = wx.Button(self, -1, u'Génération')
+            button = wx.Button(self, -1, 'Génération')
             self.Bind(wx.EVT_BUTTON, self.OnGenerationExportFacturation, button)
             box_sizer.AddMany([(self.export_facturation_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
 
         # Les synthèses financières
         if IsTemplateFile("Synthese financiere.ods"):
-            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Synthèse financière'), wx.HORIZONTAL)
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Synthèse financière'), wx.HORIZONTAL)
             self.syntheses_choice = wx.Choice(self)
             AddYearsToChoice(self.syntheses_choice)
-            button = wx.Button(self, -1, u'Génération')
+            button = wx.Button(self, -1, 'Génération')
             self.Bind(wx.EVT_BUTTON, self.OnGenerationSyntheseFinanciere, button)
             box_sizer.AddMany([(self.syntheses_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
 
         # Les comptes d'exploitation
         if IsTemplateFile("Compte exploitation.ods"):
-            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u"Compte d'exploitation"), wx.HORIZONTAL)
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, "Compte d'exploitation"), wx.HORIZONTAL)
             self.comptes_exploitation_choice = wx.Choice(self)
             AddYearsToChoice(self.comptes_exploitation_choice)
-            button = wx.Button(self, -1, u'Génération')
+            button = wx.Button(self, -1, 'Génération')
             self.Bind(wx.EVT_BUTTON, self.OnGenerationCompteExploitation, button)
             box_sizer.AddMany([(self.comptes_exploitation_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
 
         # Les commandes de repas
         if IsTemplateFile("Commande repas.odt"):
-            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u"Commande de repas"), wx.HORIZONTAL)
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, "Commande de repas"), wx.HORIZONTAL)
             self.commande_repas_choice = wx.Choice(self)
             AddWeeksToChoice(self.commande_repas_choice)
-            button = wx.Button(self, -1, u"Génération")
+            button = wx.Button(self, -1, "Génération")
             self.Bind(wx.EVT_BUTTON, self.OnGenerationCommandeRepas, button)
             box_sizer.AddMany([(self.commande_repas_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
         
         # Les plannings hebdomadaires
         if IsTemplateFile('Planning.ods'):
-            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u"Planning des présences"), wx.HORIZONTAL)
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, "Planning des présences"), wx.HORIZONTAL)
             self.planning_choice = wx.Choice(self)
             AddWeeksToChoice(self.planning_choice)
-            button = wx.Button(self, -1, u"Génération")
+            button = wx.Button(self, -1, "Génération")
             self.Bind(wx.EVT_BUTTON, self.OnGenerationPlanning, button)
             box_sizer.AddMany([(self.planning_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
 
         # Les plannings hebdomadaires avec horaires
         if IsTemplateFile('Planning horaire.ods'):
-            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u"Planning des présences avec horaires"), wx.HORIZONTAL)
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, "Planning des présences avec horaires"), wx.HORIZONTAL)
             self.planning_horaire_choice = wx.Choice(self)
             AddWeeksToChoice(self.planning_horaire_choice)
-            button = wx.Button(self, -1, u"Génération")
+            button = wx.Button(self, -1, "Génération")
             self.Bind(wx.EVT_BUTTON, self.OnGenerationPlanningHoraire, button)
             box_sizer.AddMany([(self.planning_horaire_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
 
         # Les plannings détaillés
-        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u"Planning détaillé"), wx.HORIZONTAL)
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, "Planning détaillé"), wx.HORIZONTAL)
         self.detail_start_date = DateCtrl(self)
         self.detail_end_date = DateCtrl(self)
         day = today
         while day in creche.jours_fermeture:
             day += datetime.timedelta(1)
         self.detail_start_date.SetValue(day)
-        button = wx.Button(self, -1, u"Génération")
+        button = wx.Button(self, -1, "Génération")
         self.Bind(wx.EVT_BUTTON, self.OnGenerationPlanningDetaille, button)
         box_sizer.AddMany([(self.detail_start_date, 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5), (wx.StaticText(self, -1, "-"), 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5), (self.detail_end_date, 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5), (button, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5)])
         self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
 
         # Les etats mensuels des salariés
         self.salaries_choice = {}
-        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Relevés mensuels salariés'), wx.HORIZONTAL)
+        box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Relevés mensuels salariés'), wx.HORIZONTAL)
         self.salaries_choice["releves"] = wx.Choice(self)
         self.releve_salaries_monthchoice = wx.Choice(self)
         self.Bind(wx.EVT_CHOICE, self.EvtReleveSalariesSalarieChoice, self.salaries_choice["releves"])
         self.Bind(wx.EVT_CHOICE, self.EvtReleveSalariesMonthChoice, self.releve_salaries_monthchoice)
-        self.releve_salaries_button = wx.Button(self, -1, u'Génération')
+        self.releve_salaries_button = wx.Button(self, -1, 'Génération')
         self.Bind(wx.EVT_BUTTON, self.OnGenerationReleveSalaries, self.releve_salaries_button)
         box_sizer.AddMany([(self.salaries_choice["releves"], 1, wx.ALL | wx.EXPAND, 5), (self.releve_salaries_monthchoice, 1, wx.ALL | wx.EXPAND, 5), (self.releve_salaries_button, 0, wx.ALL, 5)])
         self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
 
         # Les exports tablette
         if (config.options & TABLETTE) and IsTemplateFile('Export tablette.ods'):
-            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Export tablette'), wx.HORIZONTAL)
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Export tablette'), wx.HORIZONTAL)
             self.export_tablette_choice = wx.Choice(self)
             AddMonthsToChoice(self.export_tablette_choice)
-            button = wx.Button(self, -1, u'Génération')
+            button = wx.Button(self, -1, 'Génération')
             self.Bind(wx.EVT_BUTTON, self.OnGenerationExportTablette, button)
             box_sizer.AddMany([(self.export_tablette_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
@@ -925,7 +927,7 @@ class RelevesTab(AutoTab):
     def UpdateContentsReleveSalaries(self):
         for choice in self.salaries_choice.values():
             choice.Clear()
-            choice.Append(u'Tous les salariés', creche.salaries)
+            choice.Append('Tous les salariés', creche.salaries)
 
         salaries = {}
         autres = {}
@@ -1079,13 +1081,14 @@ class AlertesTab(AutoTab):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.grid = wx.grid.Grid(self)
         self.grid.CreateGrid(0, 3)
+        self.grid.EnableEditing(False)
         self.grid.SetRowLabelSize(1)
         self.grid.SetColLabelValue(0, "ID")
         self.grid.SetColLabelValue(1, "Date")
-        self.grid.SetColLabelValue(2, u"Libellé")
+        self.grid.SetColLabelValue(2, "Libellé")
         self.grid.SetColSize(0, 30)
         self.grid.SetColSize(1, 100)
-        self.grid.SetColSize(2, 500)
+        self.grid.SetColSize(2, 700)
         self.UpdateContents()
         self.sizer.Add(self.grid, -1, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(self.sizer)
@@ -1093,14 +1096,13 @@ class AlertesTab(AutoTab):
     def UpdateContents(self):
         if self.grid.GetNumberRows() > 0:
             self.grid.DeleteRows(0, self.grid.GetNumberRows())
-        alertes = creche.alertes.values()
-        alertes.sort(key=lambda alerte: alerte.date)
-        for row, alerte in enumerate(alertes):    
+        for row, (date, message, ack) in enumerate(GetAlertes()):
             self.grid.AppendRows(1)
             self.grid.SetCellValue(row, 0, str(row+1))
-            self.grid.SetCellValue(row, 1, date2str(alerte.date))
-            self.grid.SetCellValue(row, 2, alerte.texte)
-
+            self.grid.SetCellValue(row, 1, date2str(date))
+            self.grid.SetCellValue(row, 2, message)
+            if not ack:
+                self.grid.SetCellTextColour(row, 2, wx.RED)
         self.grid.ForceRefresh()
 
 
@@ -1119,11 +1121,11 @@ class SalariesTab(AutoTab):
         self.grid.CreateGrid(0, 5)
         self.grid.EnableEditing(False)
         self.grid.SetRowLabelSize(200)
-        self.grid.SetColLabelValue(0, u"Heures contrat")
-        self.grid.SetColLabelValue(1, u"Heures réalisées")
-        self.grid.SetColLabelValue(2, u"Delta contrat / réalisé")
-        self.grid.SetColLabelValue(3, u"Congés payés")
-        self.grid.SetColLabelValue(4, u"Congés supplémentaires")
+        self.grid.SetColLabelValue(0, "Heures contrat")
+        self.grid.SetColLabelValue(1, "Heures réalisées")
+        self.grid.SetColLabelValue(2, "Delta contrat / réalisé")
+        self.grid.SetColLabelValue(3, "Congés payés")
+        self.grid.SetColLabelValue(4, "Congés supplémentaires")
         for i in range(6):
             self.grid.SetColSize(i, 200)
         self.sizer.Add(self.grid, -1, wx.EXPAND | wx.ALL, 5)
@@ -1189,20 +1191,20 @@ class TableauxDeBordNotebook(wx.Notebook):
     def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
         if len(creche.groupes) > 0:
-            self.AddPage(PlacesInformationTab(self, PlacesUtiliseesPlanningPanel), u"Places utilisées")
+            self.AddPage(PlacesInformationTab(self, PlacesUtiliseesPlanningPanel), "Places utilisées")
         if creche.mode_saisie_planning == SAISIE_HORAIRE:
             if (config.options & RESERVATAIRES) and len(creche.reservataires) > 0:
                 planning_class = ReservatairesPlanningPanel
             else:
                 planning_class = SitesPlanningPanel
-            self.AddPage(PlacesInformationTab(self, planning_class), u"Places disponibles")
-        self.AddPage(EtatsPresenceTab(self), u"Etats de présence")
-        self.AddPage(StatistiquesFrequentationTab(self), u'Statistiques de fréquentation')
-        self.AddPage(RelevesTab(self), u'Edition de relevés')
+            self.AddPage(PlacesInformationTab(self, planning_class), "Places disponibles")
+        self.AddPage(EtatsPresenceTab(self), "Etats de présence")
+        self.AddPage(StatistiquesFrequentationTab(self), 'Statistiques de fréquentation')
+        self.AddPage(RelevesTab(self), 'Edition de relevés')
         if creche.mode_saisie_planning == SAISIE_HORAIRE:
-            self.AddPage(SalariesTab(self), u'Salariés')
-        if creche.gestion_alertes:
-            self.AddPage(AlertesTab(self), u'Alertes')
+            self.AddPage(SalariesTab(self), 'Salariés')
+        if creche.masque_alertes:
+            self.AddPage(AlertesTab(self), 'Alertes')
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 
     def UpdateContents(self):
@@ -1220,7 +1222,7 @@ class TableauxDeBordPanel(GPanel):
     profil = PROFIL_TABLEAUX_DE_BORD
 
     def __init__(self, parent):
-        GPanel.__init__(self, parent, u'Tableaux de bord')
+        GPanel.__init__(self, parent, 'Tableaux de bord')
         self.notebook = TableauxDeBordNotebook(self)
         self.sizer.Add(self.notebook, 1, wx.EXPAND)
 
