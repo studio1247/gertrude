@@ -1265,7 +1265,7 @@ class Creche(object):
         self.email = ''
         self.smtp_server = ''
         self.caf_email = ''
-        self.mode_accueil_defaut = 0;
+        self.mode_accueil_defaut = 0
         self.type = TYPE_PARENTAL
         self.mode_saisie_planning = SAISIE_HORAIRE
         self.tranches_capacite = [JourneeCapacite(i) for i in range(7)]

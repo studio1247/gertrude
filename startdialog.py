@@ -144,7 +144,7 @@ class StartDialog(wx.Dialog):
 
         self.loaded = True        
         sql_connection.open()
-        if len(creche.users) == 0:
+        if 1:  # len(creche.users) == 0:
             __builtin__.profil = PROFIL_ALL | PROFIL_ADMIN
             self.StartFrame()
         else:
@@ -221,12 +221,11 @@ class StartDialog(wx.Dialog):
         for user in creche.users:
             hashed = user.password.encode("utf-8")
             if login == user.login and bcrypt.hashpw(password, hashed) == hashed:
+                __builtin__.profil = user.profile
                 if user.profile & PROFIL_LECTURE_SEULE:
                     if __builtin__.server:
                         __builtin__.server.close()
                     __builtin__.readonly = True
-                else:
-                    __builtin__.profil = user.profile
                 self.StartFrame()
                 return
         else:
