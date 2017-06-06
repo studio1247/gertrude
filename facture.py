@@ -563,15 +563,16 @@ class FactureFinMois(object):
 
                     if depart_anticipe and cotisation.Include(inscription.depart):
                         date_fin_cotisation = inscription.depart
-                        date = cotisation.debut
-                        while date <= inscription.depart:
-                            cotisation_regularisee = Cotisation(inscrit, date, options=NO_ADDRESS | DEPART_ANTICIPE | self.options)
-                            regularisation_cotisation = cotisation_regularisee.cotisation_mensuelle - cotisation.cotisation_mensuelle
-                            if options & TRACES:
-                                print " régularisation cotisation : %f - %f = %f par mois" % (cotisation_regularisee.cotisation_mensuelle, cotisation.cotisation_mensuelle, regularisation_cotisation)
-                            self.regularisation += regularisation_cotisation * cotisation_regularisee.nombre_factures
-                            self.raison_regularisation.add("régularisation cotisation")
-                            date = cotisation.fin + datetime.timedelta(1)
+                        if creche.repartition != REPARTITION_SANS_MENSUALISATION:
+                            date = cotisation.debut
+                            while date <= inscription.depart:
+                                cotisation_regularisee = Cotisation(inscrit, date, options=NO_ADDRESS | DEPART_ANTICIPE | self.options)
+                                regularisation_cotisation = cotisation_regularisee.cotisation_mensuelle - cotisation.cotisation_mensuelle
+                                if options & TRACES:
+                                    print " régularisation cotisation : %f - %f = %f par mois" % (cotisation_regularisee.cotisation_mensuelle, cotisation.cotisation_mensuelle, regularisation_cotisation)
+                                self.regularisation += regularisation_cotisation * cotisation_regularisee.nombre_factures
+                                self.raison_regularisation.add("régularisation cotisation")
+                                date = cotisation.fin + datetime.timedelta(1)
                     else:
                         date_fin_cotisation = inscription.fin
 
