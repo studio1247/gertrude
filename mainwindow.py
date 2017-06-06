@@ -124,6 +124,7 @@ class GertrudeListbook(Listbook):
                     progress_handler.display("Chargement de l'outil %s ..." % panel.name)
                 self.AddPage(panel(self), panel.bitmap)
         self.Draw()
+        self.UpdateContents()
  
     def OnPageChanged(self, event):
         Listbook.OnPageChanged(self, event)
