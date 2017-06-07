@@ -1887,26 +1887,22 @@ class Inscription(PeriodeReference):
         date = debut
         # print "GetNombreJoursCongesPris(%s - %s)" % (debut, fin)
         while date <= fin:
-            state = self.inscrit.GetStateSimple(date)
-            if creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_SEMAINES:
-                if date in creche.periodes_fermeture:
-                    # print date
-                    jours += 1
-                elif state in (VACANCES, ABSENT):
-                    reference = self.GetJourneeReference(date)
-                    if reference.GetNombreHeures() > 0:
-                        # print date
-                        jours += 1
-            elif creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS:
-                if state == VACANCES:
+            if self.mode in (MODE_FORFAIT_HEBDOMADAIRE, MODE_FORFAIT_MENSUEL):
+                if date in creche.periodes_fermeture or date in self.inscrit.jours_conges:
                     # print date
                     jours += 1
             else:
-                if state in (ABSENT, VACANCES):
-                    reference = self.GetJourneeReference(date)
-                    if reference.GetNombreHeures() > 0:
+                state = self.inscrit.GetStateSimple(date)
+                if creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS:
+                    if state == VACANCES:
                         # print date
                         jours += 1
+                else:
+                    if state in (ABSENT, VACANCES):
+                        reference = self.GetJourneeReference(date)
+                        if reference.GetNombreHeures() > 0:
+                            # print date
+                            jours += 1
             date += datetime.timedelta(1)
         return jours
 

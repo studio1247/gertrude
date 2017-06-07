@@ -933,6 +933,8 @@ class OPagaioTests(GertrudeTestCase):
         creche.temps_facturation = FACTURATION_FIN_MOIS
         creche.repartition = REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS
         creche.facturation_periode_adaptation = PERIODE_ADAPTATION_GRATUITE
+        self.AddConge("26/12/2016", "31/12/2016")
+        self.AddConge("24/04/2017", "29/04/2017")
 
     def test_adaptation_a_cheval_sur_2_mois(self):
         inscrit = self.AddInscrit()
@@ -977,6 +979,32 @@ class OPagaioTests(GertrudeTestCase):
         self.assertPrec2Equals(cotisation.cotisation_mensuelle, 213.75)
         facture = Facture(inscrit, 2017, 2)
         self.assertPrec2Equals(facture.cotisation_mensuelle, 525.52)
+
+    def test_regularisation_conges_non_pris_mode_forfait_hebdomadaire(self):
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit, creation=False)
+        inscription.mode = MODE_FORFAIT_HEBDOMADAIRE
+        inscription.forfait_mensuel_heures = 32.0
+        inscription.semaines_conges = 5
+        inscription.debut = datetime.date(2016, 9, 12)
+        inscription.fin = datetime.date(2017, 8, 31)
+        inscription.depart = datetime.date(2017, 4, 30)
+        inscrit.inscriptions.append(inscription)
+        facture = Facture(inscrit, 2017, 4)
+        self.assertPrec2Equals(facture.regularisation, 188.19)
+
+    def test_regularisation_conges_non_pris_mode_temps_partiel(self):
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit, creation=False)
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.semaines_conges = 7
+        inscription.debut = datetime.date(2017, 3, 1)
+        inscription.fin = datetime.date(2017, 8, 31)
+        inscription.depart = datetime.date(2017, 5, 31)
+        inscription.reference[0].AddActivity(114, 210, 0, -1)  # 9.5h
+        inscrit.inscriptions.append(inscription)
+        facture = Facture(inscrit, 2017, 5)
+        self.assertPrec2Equals(facture.regularisation, 152.00)
 
 
 if __name__ == '__main__':
