@@ -568,9 +568,10 @@ class FactureFinMois(object):
                             while date <= inscription.depart:
                                 cotisation_regularisee = Cotisation(inscrit, date, options=NO_ADDRESS | DEPART_ANTICIPE | self.options)
                                 regularisation_cotisation = cotisation_regularisee.cotisation_mensuelle - cotisation.cotisation_mensuelle
+                                regularisation_periode = regularisation_cotisation * cotisation_regularisee.nombre_factures
                                 if options & TRACES:
-                                    print " régularisation cotisation : %f - %f = %f par mois" % (cotisation_regularisee.cotisation_mensuelle, cotisation.cotisation_mensuelle, regularisation_cotisation)
-                                self.regularisation += regularisation_cotisation * cotisation_regularisee.nombre_factures
+                                    print " régularisation cotisation : %f - %f = %f par mois => %f" % (cotisation_regularisee.cotisation_mensuelle, cotisation.cotisation_mensuelle, regularisation_cotisation, regularisation_periode)
+                                self.regularisation += regularisation_periode
                                 self.raison_regularisation.add("régularisation cotisation")
                                 date = cotisation.fin + datetime.timedelta(1)
                     else:
