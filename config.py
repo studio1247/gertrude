@@ -134,35 +134,18 @@ def getPictos(parser):
         return None, None
 
 
-def getHide(parser):
+def getStringParameter(parser, label, default=""):
     try:
-        return parser.get(DEFAULT_SECTION, "hide")
+        return parser.get(DEFAULT_SECTION, label)
     except:
-        return ""
+        return default
 
 
-def getColumnWidth(parser):
+def getIntegerParameter(parser, label, default=0):
     try:
-        result = int(parser.get(DEFAULT_SECTION, "column-width"))
+        return int(parser.get(DEFAULT_SECTION, label))
     except:
-        result = 4  # px
-    return result
-
-
-def getDebugMode(parser):
-    try:
-        result = int(parser.get(DEFAULT_SECTION, "debug"))
-    except:
-        result = 0
-    return result
-
-
-def getSAASPort(parser):
-    try:
-        result = int(parser.get(DEFAULT_SECTION, "port"))
-    except:
-        result = None
-    return result
+        return default
 
 
 def getDefaultDocumentsDirectory():
@@ -188,13 +171,6 @@ def getDocumentsDirectory(parser):
         return getDefaultDocumentsDirectory()
 
 
-def getImportDatabase(parser):
-    try:
-        return parser.get(DEFAULT_SECTION, "import-database")
-    except:
-        return None
-
-
 def getTemplatesDirectory(parser):
     try:
         directory = parser.get(DEFAULT_SECTION, "templates")
@@ -211,13 +187,6 @@ def getBackupsDirectory(parser):
         return directory
     except:
         return ""
-
-
-def getDefaultSection(parser):
-    try:
-        return parser.get(DEFAULT_SECTION, "default-database")
-    except:
-        return None
 
 
 def getField(parser, section, field):
@@ -307,17 +276,19 @@ def LoadConfig(path=None, progress_handler=default_progress_handler):
 
     config.original_window_size = getWindowSize(parser)
     config.window_size = config.original_window_size
-    config.column_width = getColumnWidth(parser)
+    config.column_width = getIntegerParameter(parser, "column-width", 4)
 
-    config.debug = getDebugMode(parser)
-    config.saas_port = getSAASPort(parser)
+    config.debug = getIntegerParameter(parser, "debug")
+    config.saas_port = getIntegerParameter(parser, "port", None)
+
+    config.preinscription_redirect = getStringParameter("preinscription-redirect", "")
 
     years_before, years_after = getYearsDisplayed(parser)
     config.first_date = datetime.date(today.year - years_before, 1, 1)
     config.last_date = datetime.date(today.year + years_after, 12, 31)
 
     config.pictos = getPictos(parser)
-    config.hide = getHide(parser)
+    config.hide = getStringParameter(parser, "hide")
 
     config.options = getOptions(parser)
     config.templates = getTemplatesDirectory(parser)
@@ -328,10 +299,10 @@ def LoadConfig(path=None, progress_handler=default_progress_handler):
     config.original_backups_directory = getBackupsDirectory(parser)
     config.backups_directory = config.original_backups_directory
     
-    config.original_default_section = getDefaultSection(parser)
+    config.original_default_section = getStringParameter(parser, "default-database", None)
     config.default_section = config.original_default_section
 
-    config.original_import_database = getImportDatabase(parser)
+    config.original_import_database = getStringParameter(parser, "import-database", None)
     config.import_database = config.original_import_database
 
     if parser:
