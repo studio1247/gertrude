@@ -52,7 +52,7 @@ class EtatPresenceModifications(object):
         template = lignes.item(3)
 
         date = self.date_debut
-        while date < self.date_fin:
+        while date <= self.date_fin:
             ligne = template.cloneNode(1)
             table.insertBefore(ligne, template)
             fields = [("semaine", "Semaine %d" % date.isocalendar()[1])]
