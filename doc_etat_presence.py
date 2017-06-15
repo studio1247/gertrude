@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 from constants import *
 from functions import *
 from facture import *
@@ -22,12 +24,14 @@ from ooffice import *
 
 
 class EtatPresenceModifications(object):
+    template = "Etat presence.ods"
+    title = "Etat de présence hebdomadaire"
+
     def __init__(self, site, date_debut, date_fin):
         self.multi = False
-        self.template = 'Etat presence.ods'
         self.site = site
         self.date_debut, self.date_fin = date_debut, date_fin
-        self.default_output = u"Etat presence semaines %s.ods" % GetDateString(date_debut)
+        self.default_output = "Etat presence semaines %s.ods" % GetDateString(date_debut)
         self.gauge = None
         self.email = None
         self.site = None
