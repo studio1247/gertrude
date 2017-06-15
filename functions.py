@@ -1185,6 +1185,10 @@ def AddWeeksToChoice(choice):
     choice.SetSelection(semaine)
 
 
+def GetDateFromWeek(year, week, weekday=0):
+    return datetime.datetime.strptime("%d-W%d-%d" % (year, week, weekday), "%Y-W%W-%w")
+
+
 class PeriodePresence(object):
     def __init__(self, date, arrivee=None, depart=None, absent=False, malade=False):
         self.date = date
