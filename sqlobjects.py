@@ -26,9 +26,10 @@ from cotisation import GetDateRevenus
 
 class SQLObject(object):
     def delete(self):
-        print 'suppression %s (table=%s, idx=%d)' % (self.__class__.__name__, self.table, self.idx)
-        sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.table, (self.idx,))
-        self.idx = None
+        if self.idx is not None:
+            print 'suppression %s (table=%s, idx=%d)' % (self.__class__.__name__, self.table, self.idx)
+            sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.table, (self.idx,))
+            self.idx = None
 
 
 class Day(object):
