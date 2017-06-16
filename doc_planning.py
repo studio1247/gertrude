@@ -67,6 +67,7 @@ class PlanningModifications(object):
 
         if self.metas["Format"] == 1:
             # Le format utilisé par Les petits potes (séparation adaptation / halte-garderie / mi-temps / plein-temps
+            # Changé en format utilisé par les petits lutins (sans la séparation)
             table.setAttribute('table:name', '%d %s %d - %d %s %d' % (self.debut.day, months[self.debut.month - 1], date_fin.year, date_fin.day, months[date_fin.month - 1], date_fin.year))
 
             # Les jours
@@ -78,28 +79,10 @@ class PlanningModifications(object):
                     cellule = cellules.item(1 + semaine * 6 + jour)
                     ReplaceFields([cellule], [('date', date)])
     
-            ligne_total = lignes.item(15)
-    
-            # # Les enfants en adaptation
-            # indexes = []  # TODO getAdaptationIndexes(self.debut, date_fin)
-            # indexes = GetTriParPrenomIndexes(indexes)
-            # self.printPresences(template, indexes, 15)
-            # nb_ad = max(2, len(indexes))
-    
-            # Les halte-garderie
-            indexes = GetInscritsByMode(self.debut, date_fin, MODE_HALTE_GARDERIE, self.site)
-            indexes = GetTriParPrenomIndexes(indexes)
-            self.printPresences(table, indexes, 11)
-            nb_hg = 1 + max(2, len(indexes)) if len(indexes) > 0 else 0
-    
-            # Les mi-temps
-            indexes = GetInscritsByMode(self.debut, date_fin, MODE_4_5 | MODE_3_5, self.site)
-            indexes = GetTriParPrenomIndexes(indexes)
-            self.printPresences(table, indexes, 7)
-            nb_45 = 1 + max(2, len(indexes)) if len(indexes) > 0 else 0
-    
-            # Les plein-temps
-            indexes = GetInscritsByMode(self.debut, date_fin, MODE_5_5, self.site)
+            ligne_total = lignes.item(7)
+
+            # Les lignes
+            indexes = GetPresentsIndexes(range(len(creche.inscrits)), (self.debut, date_fin))
             indexes = GetTriParPrenomIndexes(indexes)
             self.printPresences(table, indexes, 3)
             nb_55 = 1 + max(2, len(indexes)) if len(indexes) > 0 else 0
@@ -109,7 +92,7 @@ class PlanningModifications(object):
                 cellule = cellules.item(i)
                 if cellule.hasAttribute('table:formula'):
                     formule = cellule.getAttribute('table:formula')
-                    formule = formule.replace('14', '%d' % (3 + nb_55 + nb_45 + nb_hg))
+                    formule = formule.replace('6', '%d' % (3 + nb_55))
                     cellule.setAttribute('table:formula', formule)
         elif self.metas["Format"] == 2:
             # Le format utilisé par une garderie périscolaire (tri par professeur)
@@ -315,20 +298,17 @@ class PlanningModifications(object):
             cellules = ligne.getElementsByTagName("table:table-cell")
             for semaine in range(2):
                 # Les infos
-                cellule = cellules.item(semaine * 17)
+                cellule = cellules.item(semaine * 12)
                 ReplaceFields([cellule], GetInscritFields(inscrit))
                 # Les présences
                 for jour in range(5):
                     date = self.debut + datetime.timedelta(semaine * 7 + jour)
                     if inscrit:
-                        if date in inscrit.journees:
-                            journee = inscrit.journees[date]
-                        else:
-                            journee = inscrit.GetJourneeReferenceCopy(date)
-                    for t in range(3):
-                        cellule = cellules.item(1 + semaine * 17 + jour * 3 + t)
+                        journee = inscrit.GetJournee(date)
+                    for t in range(2):
+                        cellule = cellules.item(1 + semaine * 12 + jour * 2 + t)
                         if inscrit and journee:
-                            tranches = [(creche.ouverture, 12), (12, 14), (14, creche.fermeture)]
+                            tranches = [(creche.ouverture, 12.30), (13.30, creche.fermeture)]
                             ReplaceFields([cellule], [('p', int(IsPresentDuringTranche(journee, tranches[t][0] * 12, tranches[t][1] * 12)))])
                         else:
                             ReplaceFields([cellule], [('p', '')])
