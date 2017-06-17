@@ -40,10 +40,10 @@ from doc_releve_salaries import ReleveSalariesModifications
 from doc_releve_siej import ReleveSIEJModifications
 from doc_synthese_financiere import SyntheseFinanciereModifications
 from doc_export_facturation import ExportFacturationModifications
-from facture import Facture
 from ooffice import *
 from planning import *
 from alertes import *
+from statistiques import GetStatistiques
 
 
 class SitesPlanningPanel(PlanningWidget):
@@ -638,58 +638,13 @@ class StatistiquesFrequentationTab(AutoTab):
         periode = self.periodechoice.GetClientData(self.periodechoice.GetSelection())
         if periode is None:
             return
-        
-        heures_contrat = 0.0
-        heures_facture = 0.0
-        heures_contractualisees = 0.0
-        heures_realisees = 0.0
-        heures_facturees = 0.0
-        jours_contractualises = 0
-        jours_realises = 0
-        jours_factures = 0
-        cotisations_contractualisees = 0.0
-        cotisations_realisees = 0.0
-        cotisations_facturees = 0.0
-        heures_accueil = 0.0
-        total = 0.0
-        erreurs = []
-        for mois in periode:
-            debut = datetime.date(annee, mois + 1, 1)
-            fin = GetMonthEnd(debut)
-            heures_accueil += GetHeuresAccueil(annee, mois + 1, site)
-            print "[Statistiques %s %d]" % (months[mois], annee)
-            for inscrit in creche.inscrits:
-                try:
-                    inscriptions = inscrit.GetInscriptions(debut, fin)
-                    if inscriptions and (site is None or inscriptions[0].site == site):
-                        facture = Facture(inscrit, annee, mois + 1, NO_NUMERO)
-                        heures_contrat += facture.heures_contrat
-                        heures_facture += facture.heures_facture
-                        heures_contractualisees += facture.heures_contractualisees
-                        heures_realisees += facture.heures_realisees
-                        heures_facturees += facture.heures_facturees
-                        jours_contractualises += facture.jours_contractualises
-                        jours_realises += facture.jours_realises
-                        jours_factures += facture.jours_factures
-                        cotisations_contractualisees += facture.total_contractualise
-                        cotisations_realisees += facture.total_realise
-                        cotisations_facturees += facture.total_facture
-                        total += facture.total
-                        print inscrit.prenom, inscrit.nom, facture.date
-                        print ' ', "heures contractualisées :", facture.heures_contractualisees, ", heures contrat :", facture.heures_contrat
-                        print ' ', "heures réalisées :", facture.heures_realisees
-                        print ' ', "heures facturées :", facture.heures_facturees, ", heures facture :", facture.heures_facture
-                        print ' ', "jours contractualisés :", facture.jours_contractualises
-                        print ' ', "jours réalisés :", facture.jours_realises
-                        print ' ', "jours facturés :", facture.jours_factures
-                        print ' ', "total contractualisé", facture.total_contractualise
-                        print ' ', "total réalisé :", facture.total_realise
-                        print ' ', "total facturé :", facture.total_facture
-                except Exception, e:
-                    erreurs.append((inscrit, e))
+
+        debut = datetime.date(annee, periode[0]+1, 1)
+        fin = GetMonthEnd(datetime.date(annee, periode[-1]+1, 1))
+        statistiques = GetStatistiques(debut, fin, site)
                               
-        if erreurs:
-            msg = "\n\n".join(["%s %s:\n%s" % (inscrit.prenom, inscrit.nom, unicode(erreur)) for inscrit, erreur in erreurs])
+        if statistiques.erreurs:
+            msg = "\n\n".join(["%s:\n%s" % (inscrit, "\n".join(erreurs)) for inscrit, erreurs in statistiques.erreurs.iteritems()])
             self.message.SetValue(msg)
             self.message.Show(True)
             for ctrl in (self.presences_contrat_heures, self.presences_realisees_heures, self.presences_facturees_heures,
@@ -699,31 +654,18 @@ class StatistiquesFrequentationTab(AutoTab):
                 ctrl.SetValue("-")
         else:
             self.message.Show(False)
-            if config.options & HEURES_CONTRAT:
-                presences_contrat_heures = heures_contrat
-                presences_facturees_heures = heures_facture
-            else:
-                presences_contrat_heures = heures_contractualisees
-                presences_facturees_heures = heures_facturees
-                                
-            self.presences_contrat_heures.SetValue("%.2f heures" % presences_contrat_heures)
-            self.presences_realisees_heures.SetValue("%.2f heures" % heures_realisees)
-            self.presences_facturees_heures.SetValue("%.2f heures" % presences_facturees_heures)
-            self.presences_contrat_jours.SetValue("%d jours" % jours_contractualises)
-            self.presences_realisees_jours.SetValue("%d jours" % jours_realises)
-            self.presences_facturees_jours.SetValue("%d jours" % jours_factures)
-            self.presences_contrat_euros.SetValue("%.2f €" % cotisations_contractualisees)
-            self.presences_realisees_euros.SetValue("%.2f €" % cotisations_realisees)
-            self.presences_facturees_euros.SetValue("%.2f €" % cotisations_facturees)
-            coeff_contrat = coeff_realise = coeff_facture = 0.0
-            if heures_accueil:
-                coeff_contrat = (100.0 * presences_contrat_heures) / heures_accueil
-                coeff_realise = (100.0 * heures_realisees) / heures_accueil
-                coeff_facture = (100.0 * presences_facturees_heures) / heures_accueil
-            self.presences_contrat_percent.SetValue("%.1f %%" % coeff_contrat)
-            self.presences_realisees_percent.SetValue("%.1f %%" % coeff_realise)
-            self.presences_facturees_percent.SetValue("%.1f %%" % coeff_facture)
-
+            self.presences_contrat_heures.SetValue("%.2f heures" % statistiques.heures_contrat)
+            self.presences_realisees_heures.SetValue("%.2f heures" % statistiques.heures_reel)
+            self.presences_facturees_heures.SetValue("%.2f heures" % statistiques.heures_facture)
+            self.presences_contrat_jours.SetValue("%d jours" % statistiques.jours_contrat)
+            self.presences_realisees_jours.SetValue("%d jours" % statistiques.jours_reel)
+            self.presences_facturees_jours.SetValue("%d jours" % statistiques.jours_facture)
+            self.presences_contrat_euros.SetValue("%.2f €" % statistiques.cotisations_contrat)
+            self.presences_realisees_euros.SetValue("%.2f €" % statistiques.cotisations_reel)
+            self.presences_facturees_euros.SetValue("%.2f €" % statistiques.cotisations_facture)
+            self.presences_contrat_percent.SetValue("%.1f %%" % statistiques.percent_contrat)
+            self.presences_realisees_percent.SetValue("%.1f %%" % statistiques.percent_reel)
+            self.presences_facturees_percent.SetValue("%.1f %%" % statistiques.percent_facture)
         self.sizer.FitInside(self)
         self.Layout()
 
