@@ -52,9 +52,10 @@ def GetStatistiques(start, end, site=None, bargraph=False):
         fin = end
     date = debut
     while date <= fin:
-        fin_mois = GetMonthEnd(date)
-        result.heures_accueil += GetHeuresAccueil(date.year, date.month, site)
         print "[Statistiques %s %d]" % (months[date.month-1], date.year)
+        fin_mois = GetMonthEnd(date)
+        if start <= date <= end:
+            result.heures_accueil += GetHeuresAccueil(date.year, date.month, site)
         for inscrit in creche.inscrits:
             try:
                 inscriptions = inscrit.GetInscriptions(date, fin_mois)
