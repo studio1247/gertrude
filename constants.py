@@ -21,7 +21,7 @@ from __future__ import unicode_literals
 days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
 months = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
 months_abbrev = ["Janv", "Fév", "Mars", "Avril", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"]
-trimestres = ["1er", "2ème", "3ème", "4ème"]
+ordinaux = ["1er", "2ème", "3ème", "4ème"]
 
 # Profils des utilisateurs
 PROFIL_INSCRIPTIONS = 1

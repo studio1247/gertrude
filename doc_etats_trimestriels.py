@@ -72,7 +72,7 @@ class EtatsTrimestrielsModifications(object):
     
                 table = template.cloneNode(1)
                 spreadsheet.appendChild(table)
-                table.setAttribute("table:name", "%s tr %d" % (trimestres[trimestre], self.annee))
+                table.setAttribute("table:name", "%s tr %d" % (ordinaux[trimestre], self.annee))
                 lines = table.getElementsByTagName("table:table-row")
                 page_template = lines[:template_total_lines_count]
                 last_line = lines[template_total_lines_count]
@@ -91,7 +91,7 @@ class EtatsTrimestrielsModifications(object):
                     
                     # Le titre de la page
                     ReplaceFields(lines[0], [('annee', self.annee),
-                                             ('trimestre', trimestres[trimestre].upper())])
+                                             ('trimestre', ordinaux[trimestre].upper())])
                     # Les mois
                     ReplaceFields(lines[2], [('mois(1)', months[trimestre * 3].upper()),
                                              ('mois(2)', months[(trimestre * 3) + 1].upper()),

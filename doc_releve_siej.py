@@ -111,7 +111,7 @@ class ReleveSIEJModifications(object):
             
             trimestre = (today.month-1) / 3
             if trimestre > 0:
-                fields.append(('trimestre', "%s trimestre" % trimestres[trimestre-1]))
+                fields.append(('trimestre', "%s trimestre" % ordinaux[trimestre-1]))
             
             ReplaceTextFields(doc, fields)
             
