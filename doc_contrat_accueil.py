@@ -185,9 +185,8 @@ class OdtDocumentAccueilModifications(DocumentAccueilModifications):
             ReplaceTextFields(dom, fields)
             return None
         
-        # print dom.toprettyxml()
         doc = dom.getElementsByTagName("office:text")[0]
-        # print doc.toprettyxml()
+        print doc.toprettyxml()
         
         for table in doc.getElementsByTagName("table:table"):
             if table.getAttribute("table:name") == "Tableau3":
