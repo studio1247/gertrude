@@ -593,6 +593,7 @@ class SQLConnection(object):
         cur = self.cursor()
         # cur.execute('DELETE FROM FACTURES where inscrit=? AND date=?', (93, datetime.date(2014, 7, 1)))
         # cur.execute('DELETE FROM FACTURES where date=?', (datetime.date(2016, 12, 1), ))
+        # cur.execute('UPDATE INSCRIPTIONS SET debut=?, fin=?', (datetime.date(2017, 1, 1), datetime.date(2017, 12, 31)))
         self.commit()
         print "Facture déclôturée"
 
