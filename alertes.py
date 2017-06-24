@@ -25,10 +25,9 @@ def GetAlertes(fresh_only=False):
     alertes = []
 
     def add_alerte(date, message):
-        fresh = message not in creche.alertes
-        print date, message, fresh
-        if not fresh_only or fresh:
-            alertes.append((date, message, fresh))
+        ack = message in creche.alertes
+        if not fresh_only or not ack:
+            alertes.append((date, message, ack))
 
     today = datetime.date.today()
     for inscription in GetInscriptions(today, today):
