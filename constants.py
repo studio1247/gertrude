@@ -350,3 +350,8 @@ AlertesItems = [
     ("1 an après l'arrivée", ALERTE_1AN_APRES_INSCRIPTION),
     ("2 mois avant le départ", ALERTE_2MOIS_AVANT_FIN_INSCRIPTION)
 ]
+
+OrdreAffichageItems = [
+    ("Par prénom", TRI_PRENOM),
+    ("Par nom", TRI_NOM)
+]

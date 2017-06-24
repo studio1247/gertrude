@@ -381,3 +381,8 @@ def Liste(progress_handler=default_progress_handler):
             for entry in database.connection.Liste(progress_handler):
                 result[entry] = value
     return result
+
+
+def RemoveIncompatibleSAASOptions():
+    creche.tri_planning &= ~TRI_GROUPE
+
