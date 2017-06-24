@@ -21,10 +21,15 @@ import datetime
 from functions import GetInscriptions, GetDateIntersection, GetDateMinus
 
 
-def GetAlertes():
+def GetAlertes(fresh_only=False):
     alertes = []
+
     def add_alerte(date, message):
-        alertes.append((date, message, message in creche.alertes))
+        fresh = message not in creche.alertes
+        print date, message, fresh
+        if not fresh_only or fresh:
+            alertes.append((date, message, fresh))
+
     today = datetime.date.today()
     for inscription in GetInscriptions(today, today):
         inscrit = inscription.inscrit
@@ -43,6 +48,7 @@ def GetAlertes():
             if today > date:
                 message = "L'inscription de %s %s se terminera dans 2 mois" % (inscrit.prenom, inscrit.nom)
                 add_alerte(date, message)
+
     for inscrit in creche.inscrits:
         for inscription in inscrit.inscriptions:
             if inscription.debut and inscription.fin and inscription.fin < inscription.debut:
@@ -51,6 +57,7 @@ def GetAlertes():
         date = GetDateIntersection(inscrit.inscriptions)
         if date:
             add_alerte(date, "Les inscriptions de %s %s se chevauchent" % (inscrit.prenom, inscrit.nom))
+
     for salarie in creche.salaries:
         for contrat in salarie.contrats:
             if contrat.debut and contrat.fin and contrat.fin < contrat.debut:
@@ -59,6 +66,7 @@ def GetAlertes():
         date = GetDateIntersection(salarie.contrats)
         if date:
             add_alerte(date, "Les contrats de %s %s se chevauchent" % (salarie.prenom, salarie.nom))
+
     alertes.sort(key=lambda (date, message, ack): date)
     return alertes
 
