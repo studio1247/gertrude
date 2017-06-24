@@ -18,7 +18,7 @@
 import __builtin__
 from constants import *
 import datetime
-from functions import GetInscriptions, GetDateMinus
+from functions import GetInscriptions, GetDateIntersection, GetDateMinus
 
 
 def GetAlertes():
@@ -43,6 +43,22 @@ def GetAlertes():
             if today > date:
                 message = "L'inscription de %s %s se terminera dans 2 mois" % (inscrit.prenom, inscrit.nom)
                 add_alerte(date, message)
+    for inscrit in creche.inscrits:
+        for inscription in inscrit.inscriptions:
+            if inscription.debut and inscription.fin and inscription.fin < inscription.debut:
+                message = "Période incorrecte pour %s %s" % (inscrit.prenom, inscrit.nom)
+                add_alerte(inscription.debut, message)
+        date = GetDateIntersection(inscrit.inscriptions)
+        if date:
+            add_alerte(date, "Les inscriptions de %s %s se chevauchent" % (inscrit.prenom, inscrit.nom))
+    for salarie in creche.salaries:
+        for contrat in salarie.contrats:
+            if contrat.debut and contrat.fin and contrat.fin < contrat.debut:
+                message = "Période incorrecte pour %s %s" % (salarie.prenom, salarie.nom)
+                add_alerte(contrat.debut, message)
+        date = GetDateIntersection(salarie.contrats)
+        if date:
+            add_alerte(date, "Les contrats de %s %s se chevauchent" % (salarie.prenom, salarie.nom))
     alertes.sort(key=lambda (date, message, ack): date)
     return alertes
 

@@ -1305,3 +1305,17 @@ class LigneConge(object):
 
     def GetStateIcon(self):
         return self.state
+
+
+def GetDateIntersection(periodes):
+    for one in range(0, len(periodes)-1):
+        i1 = periodes[one]
+        if i1.debut:
+            for two in range(one+1, len(periodes)):
+                i2 = periodes[two]
+                if i2.debut:
+                    latest_start = max(i1.debut, i2.debut)
+                    earliest_end = min(i1.GetFin(), i2.GetFin())
+                    if (earliest_end - latest_start).days > 0:
+                        return latest_start
+    return None

@@ -881,6 +881,9 @@ class PeriodeReference(SQLObject):
                 heures += self.reference[i].GetNombreHeures()
         return jours, heures
 
+    def GetFin(self):
+        return self.fin if self.fin else datetime.date.max
+
 
 class Contrat(PeriodeReference):
     def __init__(self, salarie, duree_reference=7, creation=True):
@@ -1912,6 +1915,9 @@ class Inscription(PeriodeReference):
             return self.fin_periode_adaptation + datetime.timedelta(1)
         else:
             return self.debut
+
+    def GetFin(self):
+        return self.depart if (creche.gestion_depart_anticipe and self.depart) else (self.fin if self.fin else datetime.date.max)
 
     def GetFinDecompteJoursConges(self):
         if creche.gestion_depart_anticipe and self.depart:
