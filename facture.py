@@ -844,9 +844,9 @@ def Facture(inscrit, annee, mois, options=0):
         return CreateFacture(inscrit, annee, mois, options)
 
 
-def GetHistoriqueSolde(famille, jalon, derniere_facture=True):
+def GetHistoriqueSolde(famille, jalon, derniere_facture=True, use_jalon_for_encaissements=True):
     inscrits = GetInscritsFamille(famille)
-    lignes = [encaissement for encaissement in famille.encaissements if not encaissement.date or encaissement.date <= jalon]
+    lignes = [encaissement for encaissement in famille.encaissements if not use_jalon_for_encaissements or not encaissement.date or encaissement.date <= jalon]
     debut, fin = None, None
     for inscrit in inscrits:
         debut_inscrit, fin_inscrit = inscrit.GetPeriodeInscriptions()
@@ -882,9 +882,9 @@ def GetHistoriqueSolde(famille, jalon, derniere_facture=True):
     return lignes
 
 
-def CalculeSolde(famille, date):
+def CalculeSolde(famille, date, derniere_facture=False, use_jalon_for_encaissements=True):
     solde = 0.0
-    historique = GetHistoriqueSolde(famille, date, False)
+    historique = GetHistoriqueSolde(famille, date, derniere_facture, use_jalon_for_encaissements)
     for ligne in historique:
         try:
             if isinstance(ligne, Encaissement):

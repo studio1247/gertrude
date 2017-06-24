@@ -102,6 +102,8 @@ def getOptions(parser):
             options |= PRELEVEMENTS_AUTOMATIQUES
         if "newsletters" in str:
             options |= NEWSLETTERS
+        if "reglements" in str:
+            options |= REGLEMENTS
     except:
         pass
     return options

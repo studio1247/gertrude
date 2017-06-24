@@ -225,10 +225,9 @@ class GertrudeFrame(wx.Frame):
             if changements:
                 wx.PostEvent(self, self.ChangementsGroupeEvent(changements=changements))
                          
-        if creche.masque_alertes:
-            new_alertes = [(date, message) for date, message, ack in GetAlertes() if not ack]
-            if new_alertes:
-                wx.PostEvent(self, self.AlertEvent(new_alertes=new_alertes))
+        new_alertes = [(date, message) for date, message, ack in GetAlertes() if not ack]
+        if new_alertes:
+            wx.PostEvent(self, self.AlertEvent(new_alertes=new_alertes))
     
     def OnChangementsGroupeAvailable(self, event):
         messages = []

@@ -15,10 +15,13 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 import __builtin__
 from constants import *
 import datetime
 from functions import GetInscriptions, GetDateIntersection, GetDateMinus
+from facture import CalculeSolde
 
 
 def GetAlertes(fresh_only=False):
@@ -65,6 +68,12 @@ def GetAlertes(fresh_only=False):
         date = GetDateIntersection(salarie.contrats)
         if date:
             add_alerte(date, "Les contrats de %s %s se chevauchent" % (salarie.prenom, salarie.nom))
+
+    if config.options & REGLEMENTS:
+        jalon = today - datetime.timedelta(30)
+        for inscrit in creche.inscrits:
+            if CalculeSolde(inscrit.famille, jalon, use_jalon_for_encaissements=False):
+                add_alerte(jalon, "Le solde de %s %s est négatif depuis plus de 30 jours" % (inscrit.prenom, inscrit.nom))
 
     alertes.sort(key=lambda (date, message, ack): date)
     return alertes
