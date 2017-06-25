@@ -327,6 +327,7 @@ NO_PARENTS = 1 << 3
 NO_NUMERO = 1 << 4
 TRACES = 1 << 5
 DEPART_ANTICIPE = 1 << 6
+NO_RESTORE_CLOTURE = 1 << 7
 
 # Tranches PAJE
 paje1 = 1

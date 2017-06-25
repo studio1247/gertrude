@@ -653,7 +653,7 @@ class FactureFinMois(object):
                     self.majoration_mensuelle += tarif.valeur
                 else:
                     self.cotisation_mensuelle = tarif.valeur
-                
+
         self.frais_inscription = 0.0
         self.frais_inscription_reservataire = 0.0    
         for inscription in self.inscrit.inscriptions:
@@ -811,7 +811,7 @@ class FactureCloturee:
         self.deduction = deduction
         self.facture = None
         self.cloture = True
-        
+
     def Restore(self, options=0):
         if not self.facture:
             self.facture = CreateFacture(self.inscrit, self.date.year, self.date.month, options=options)
@@ -839,14 +839,18 @@ class FactureCloturee:
 def Facture(inscrit, annee, mois, options=0):
     date = datetime.date(annee, mois, 1)
     if date in inscrit.factures_cloturees:
-        return inscrit.factures_cloturees[date].Restore(options)
+        facture = inscrit.factures_cloturees[date]
+        if options & NO_RESTORE_CLOTURE:
+            return facture
+        else:
+            return facture.Restore(options)
     else:
         return CreateFacture(inscrit, annee, mois, options)
 
 
-def GetHistoriqueSolde(famille, jalon, derniere_facture=True, use_jalon_for_encaissements=True):
+def GetHistoriqueSolde(famille, jalon, derniere_facture=True):
     inscrits = GetInscritsFamille(famille)
-    lignes = [encaissement for encaissement in famille.encaissements if not use_jalon_for_encaissements or not encaissement.date or encaissement.date <= jalon]
+    lignes = [encaissement for encaissement in famille.encaissements if not encaissement.date or encaissement.date <= jalon]
     debut, fin = None, None
     for inscrit in inscrits:
         debut_inscrit, fin_inscrit = inscrit.GetPeriodeInscriptions()
@@ -865,8 +869,8 @@ def GetHistoriqueSolde(famille, jalon, derniere_facture=True, use_jalon_for_enca
     while date <= fin:
         for inscrit in inscrits:
             try:
-                facture = Facture(inscrit, date.year, date.month, NO_NUMERO)
-                if facture.total != 0 and (not creche.cloture_facturation or facture.cloture):
+                facture = Facture(inscrit, date.year, date.month, NO_NUMERO | NO_RESTORE_CLOTURE)
+                if facture.total_facture != 0 and (not creche.cloture_facturation or facture.cloture):
                     if derniere_facture:
                         # desactivé pour Moulon (la dernière facture de juillet clôturée le 10 juillet et non visible dans les règlements
                         # if facture.fin_recap <= fin:
@@ -882,9 +886,9 @@ def GetHistoriqueSolde(famille, jalon, derniere_facture=True, use_jalon_for_enca
     return lignes
 
 
-def CalculeSolde(famille, date, derniere_facture=False, use_jalon_for_encaissements=True):
+def CalculeSolde(famille, date):
     solde = 0.0
-    historique = GetHistoriqueSolde(famille, date, derniere_facture, use_jalon_for_encaissements)
+    historique = GetHistoriqueSolde(famille, date, False)
     for ligne in historique:
         try:
             if isinstance(ligne, Encaissement):
@@ -894,6 +898,19 @@ def CalculeSolde(famille, date, derniere_facture=False, use_jalon_for_encaisseme
         except:
             pass
     return solde
+
+
+def GetRetardDePaiement(famille):
+    solde = 0.0
+    jalon = datetime.date.today() - datetime.timedelta(30)
+    inscrits = GetInscritsFamille(famille)
+    for inscrit in inscrits:
+        for date in inscrit.factures_cloturees:
+            if date < jalon:
+                solde -= inscrit.factures_cloturees[date].total_facture
+    for encaissement in famille.encaissements:
+        solde += encaissement.valeur
+    return solde < 0
 
 
 def GetFacturesList(inscrit):
