@@ -57,7 +57,7 @@ def GetAlertes(fresh_only=False):
                 add_alerte(inscription.debut, "Période incorrecte pour %s %s" % (inscrit.prenom, inscrit.nom))
         date = GetDateIntersection(inscrit.inscriptions)
         if date:
-            add_alerte(date, "%s %s a 2 contrats actifs aux mêmes dates" % (inscrit.prenom, inscrit.nom))
+            add_alerte(date, "%s %s a 2 contrats actifs à la même date" % (inscrit.prenom, inscrit.nom))
 
     for salarie in creche.salaries:
         for contrat in salarie.contrats:
@@ -65,7 +65,7 @@ def GetAlertes(fresh_only=False):
                 add_alerte(contrat.debut, "Période incorrecte pour %s %s" % (salarie.prenom, salarie.nom))
         date = GetDateIntersection(salarie.contrats)
         if date:
-            add_alerte(date, "%s %s a 2 contrats actifs aux mêmes dates" % (salarie.prenom, salarie.nom))
+            add_alerte(date, "%s %s a 2 contrats actifs à la même date" % (salarie.prenom, salarie.nom))
 
     if (config.options & REGLEMENTS) and creche.cloture_facturation:
         jalon = today - datetime.timedelta(30)
