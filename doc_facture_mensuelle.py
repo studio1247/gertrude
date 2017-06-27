@@ -212,12 +212,21 @@ class FactureModifications(object):
             couleurs = eval(self.metas["Couleurs"])
             print "METAS COULEURS", couleurs
         else:
-            styleC3, styleD3 = False, False
+            styleB3, styleC3, styleD3 = False, False, True
             for style in doc.getElementsByTagName('style:style'):
+                if style.name == 'Presences.B3':
+                    styleB3 = True
+                if style.name == 'Presences.C3':
+                    styleC3 = True
                 if style.name == 'Presences.D3':
                     styleD3 = True
+            if not styleB3:
+                couleurs[ABSENCE_NON_PREVENUE] = couleurs[ABSENT]
+                couleurs[ABSENCE_CONGE_SANS_PREAVIS] = couleurs[ABSENT]
+            if not styleC3:
+                couleurs[CONGES] = couleurs[ABSENT]
             if not styleD3:
-                couleurs[CONGES_DEPASSEMENT] = 'B3'
+                couleurs[CONGES_DEPASSEMENT] = couleurs[CONGES]
 
         done = []
 
