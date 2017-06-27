@@ -2316,14 +2316,14 @@ class Inscrit(object):
         else:
             return None
 
-    def GetInscriptions(self, date_debut=None, date_fin=None, preinscriptions=False):
+    def GetInscriptions(self, date_debut=None, date_fin=None, site=None, preinscriptions=False):
         result = []
         if not date_debut:
             date_debut = datetime.date.min
         if not date_fin:
             date_fin = datetime.date.max
         for inscription in self.inscriptions:
-            if (preinscriptions or not creche.preinscriptions or not inscription.preinscription) and inscription.debut:
+            if (site is None or site == inscription.site) and (preinscriptions or not creche.preinscriptions or not inscription.preinscription) and inscription.debut:
                 try:
                     date_debut_periode = inscription.debut
                     if inscription.fin:
@@ -2342,7 +2342,7 @@ class Inscrit(object):
         result.sort(key=lambda i: i.debut)
         return result
 
-    def HasFacture(self, date):
+    def HasFacture(self, date, site=None):
         if not date or date.month in creche.mois_sans_facture:
             return False
         month_start = GetMonthStart(date)
@@ -2354,11 +2354,11 @@ class Inscrit(object):
                     return True
                 day += datetime.timedelta(1)
         else:
-            if self.GetInscriptions(month_start, GetMonthEnd(date)):
+            if self.GetInscriptions(month_start, GetMonthEnd(date), site):
                 return True
         if creche.temps_facturation != FACTURATION_FIN_MOIS:
             previous_month_end = month_start - datetime.timedelta(1)
-            if self.GetInscriptions(GetMonthStart(previous_month_end), previous_month_end):
+            if self.GetInscriptions(GetMonthStart(previous_month_end), previous_month_end, site):
                 return True
         return False
 
