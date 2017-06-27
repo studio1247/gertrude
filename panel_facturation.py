@@ -310,36 +310,26 @@ class FacturationTab(AutoTab):
         else:
             inscrits = [data]
         return inscrits, periode
-    
+
+    def show_cloture_errors(self, message, errors):
+        message += " :\n"
+        for label in errors.keys():
+            message += '\n' + label + ' :\n  '
+            message += '\n  '.join(errors[label])
+        wx.MessageDialog(self, message, 'Message', wx.OK | wx.ICON_WARNING).ShowModal()
+
     def OnClotureFacture(self, _):
         inscrits, periode = self.__GetFactureSelection()
-        errors = ClotureFactures(inscrits, periode)
+        errors = ClotureFactures(inscrits, periode, True)
         if errors:
-            message = "Erreurs lors de la clôture :\n"
-            for label in errors.keys():
-                message += '\n' + label + ' :\n  '
-                message += '\n  '.join(errors[label])
-            wx.MessageDialog(self, message, 'Message', wx.OK|wx.ICON_WARNING).ShowModal()
+            self.show_cloture_errors("Erreurs lors de la clôture", errors)
         self.OnFacturesMonthChoice()
 
     def OnDeclotureFacture(self, _):
         inscrits, periode = self.__GetFactureSelection()
-        errors = {}
-        for inscrit in inscrits:
-            try:
-                date = datetime.date(periode.year, periode.month, 1)
-                if date in inscrit.factures_cloturees:
-                    facture = inscrit.factures_cloturees[date]
-                    facture.Decloture()
-            except CotisationException, e:
-                errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
-                continue
+        errors = ClotureFactures(inscrits, periode, False)
         if errors:
-            message = "Erreurs lors de la de-clôture :\n"
-            for label in errors.keys():
-                message += '\n' + label + ' :\n  '
-                message += '\n  '.join(errors[label])
-            wx.MessageDialog(self, message, 'Message', wx.OK | wx.ICON_WARNING).ShowModal()
+            self.show_cloture_errors("Erreurs lors de la dé-clôture", errors)
         self.OnFacturesMonthChoice()
 
     def OnGenerationFacture(self, _):

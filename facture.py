@@ -24,7 +24,29 @@ from globals import history
 from sqlobjects import Encaissement, Inscrit
 
 
-class FactureFinMois(object):
+class FactureBase(object):
+    def __init__(self, inscrit, annee, mois, options=0):
+        creche = __builtin__.creche
+        self.inscrit = inscrit
+        self.site = None
+        self.annee = annee
+        self.mois = mois
+        self.debut_recap = datetime.date(annee, mois, 1)
+        self.fin_recap = GetMonthEnd(self.debut_recap)
+        self.date = self.fin_recap
+        self.options = options
+
+    def Decloture(self):
+        self.cloture = True
+        del self.inscrit.factures_cloturees[self.date]
+        if sql_connection:
+            print u'Suppression clôture', self.inscrit.idx, self.date
+            sql_connection.execute('DELETE FROM FACTURES where inscrit=? AND date=?', (self.inscrit.idx, self.date))
+            # print "sql_connection.execute('DELETE FROM FACTURES where inscrit=%d AND date=%r)'" % (self.inscrit.idx, self.date)
+            history.append(None)
+
+
+class FactureFinMois(FactureBase):
     def CalculeDeduction(self, cotisation, heures):
         deduction = cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees) - cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees-heures)
         cotisation.heures_mois_ajustees -= heures
@@ -85,15 +107,7 @@ class FactureFinMois(object):
             return ""
 
     def __init__(self, inscrit, annee, mois, options=0):
-        creche = __builtin__.creche
-        self.inscrit = inscrit
-        self.site = None
-        self.annee = annee
-        self.mois = mois
-        self.debut_recap = datetime.date(annee, mois, 1)
-        self.fin_recap = GetMonthEnd(self.debut_recap)
-        self.date = self.fin_recap
-        self.options = options
+        FactureBase.__init__(self, inscrit, annee, mois, options)
         self.cotisation_mensuelle = 0.0
         self.report_cotisation_mensuelle = 0.0
         self.heures_facture_par_mode = [0.0] * (MODE_MAX + 1)
@@ -705,6 +719,7 @@ class FactureFinMois(object):
             self.cloture = True
             self.inscrit.factures_cloturees[date] = self
             if sql_connection:
+                print "Clôture facture", self.inscrit.idx, date
                 sql_connection.execute('INSERT INTO FACTURES (idx, inscrit, date, cotisation_mensuelle, total_contractualise, total_realise, total_facture, supplement_activites, supplement, deduction) VALUES (NULL,?,?,?,?,?,?,?,?,?)', (self.inscrit.idx, date, self.cotisation_mensuelle, self.total_contractualise, self.total_realise, self.total_facture, self.supplement_activites, self.supplement, self.deduction))
                 history.append(None)
 
@@ -798,7 +813,7 @@ def CreateFacture(inscrit, annee, mois, options=0):
         return FactureDebutMoisPrevisionnel(inscrit, annee, mois, options)
 
 
-class FactureCloturee:
+class FactureCloturee(FactureBase):
     def __init__(self, inscrit, date, cotisation_mensuelle, total_contractualise, total_realise, total_facture, supplement_activites, supplement, deduction):
         self.inscrit = inscrit
         self.date = date
@@ -825,15 +840,6 @@ class FactureCloturee:
             self.facture.total = self.cotisation_mensuelle + self.facture.frais_inscription + self.supplement + self.supplement_activites - self.deduction + self.facture.correction
             self.facture.cloture = True
         return self.facture
-    
-    def Decloture(self):
-        self.cloture = True
-        del self.inscrit.factures_cloturees[self.date]
-        if sql_connection:
-            print u'Suppression clôture', self.inscrit.idx, self.date
-            sql_connection.execute('DELETE FROM FACTURES where inscrit=? AND date=?', (self.inscrit.idx, self.date))
-            # print "sql_connection.execute('DELETE FROM FACTURES where inscrit=%d AND date=%r)'" % (self.inscrit.idx, self.date)
-            history.append(None)
 
     
 def Facture(inscrit, annee, mois, options=0):
@@ -923,12 +929,15 @@ def GetFacturesList(inscrit):
     return result
 
 
-def ClotureFactures(inscrits, date):
+def ClotureFactures(inscrits, date, cloture=True):
     errors = {}
     for inscrit in inscrits:
         try:
             facture = Facture(inscrit, date.year, date.month, NO_NUMERO)
-            facture.Cloture()
+            if cloture:
+                facture.Cloture()
+            elif facture.cloture:
+                facture.Decloture()
         except CotisationException, e:
             errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
             continue
