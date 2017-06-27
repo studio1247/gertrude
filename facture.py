@@ -38,10 +38,11 @@ class FactureBase(object):
 
     def Decloture(self):
         self.cloture = True
-        del self.inscrit.factures_cloturees[self.date]
+        date = GetMonthStart(self.date)
+        del self.inscrit.factures_cloturees[date]
         if sql_connection:
-            print u'Suppression clôture', self.inscrit.idx, self.date
-            sql_connection.execute('DELETE FROM FACTURES where inscrit=? AND date=?', (self.inscrit.idx, self.date))
+            print u'Suppression clôture', self.inscrit.idx, date
+            sql_connection.execute('DELETE FROM FACTURES where inscrit=? AND date=?', (self.inscrit.idx, date))
             # print "sql_connection.execute('DELETE FROM FACTURES where inscrit=%d AND date=%r)'" % (self.inscrit.idx, self.date)
             history.append(None)
 
