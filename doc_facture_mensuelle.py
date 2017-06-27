@@ -212,7 +212,7 @@ class FactureModifications(object):
             couleurs = eval(self.metas["Couleurs"])
             print "METAS COULEURS", couleurs
         else:
-            styleB3, styleC3, styleD3 = False, False, True
+            styleB3, styleC3, styleD3 = False, False, False
             for style in doc.getElementsByTagName('style:style'):
                 if style.name == 'Presences.B3':
                     styleB3 = True
