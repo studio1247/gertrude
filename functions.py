@@ -1105,12 +1105,9 @@ def GetFactureFields(facture):
                   ('frais-inscription', facture.frais_inscription, FIELD_EUROS | FIELD_SIGN),
                   ('total-sans-activites', facture.total - facture.supplement_activites, FIELD_EUROS),
                   ('site', GetNom(facture.site)),
-                  ('total', facture.total, FIELD_EUROS)
+                  ('total', facture.total, FIELD_EUROS),
+                  ('numfact', facture.GetFactureId())
                   ]
-        if config.numfact:
-            result.append(('numfact', config.numfact % {"inscritid": facture.inscrit.idx, "numero": facture.numero, "annee": facture.annee, "mois": facture.mois}))
-        else:
-            result.append(('numfact', '%03d%04d%02d' % (facture.inscrit.idx, facture.annee, facture.mois)))
         if config.codeclient == "custom":
             result.append(('codeclient', facture.inscrit.famille.code_client))
         elif isinstance(config.codeclient, basestring):

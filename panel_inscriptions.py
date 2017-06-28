@@ -213,6 +213,8 @@ class IdentitePanel(InscriptionsTab):
                            (AutoTextCtrl(self, None, 'famille.iban'), 1, wx.EXPAND | wx.LEFT, 5),
                            (wx.StaticText(self, -1, "BIC"), 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 5),
                            (AutoTextCtrl(self, None, 'famille.bic'), 1, wx.EXPAND | wx.LEFT, 5),
+                           (wx.StaticText(self, -1, "ID Mandat"), 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 5),
+                           (AutoTextCtrl(self, None, 'famille.mandate_id'), 1, wx.EXPAND | wx.LEFT, 5),
                            (wx.StaticText(self, -1, "X du mois"), 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 5),
                            (AutoNumericCtrl(self, None, 'famille.jour_prelevement_automatique', min=1, precision=0), 1, wx.EXPAND | wx.LEFT, 5),
                            (wx.StaticText(self, -1, "Date 1er prélèvement"), 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 5),

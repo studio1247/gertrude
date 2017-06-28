@@ -53,7 +53,7 @@ class ExportSepaModifications(object):
                   "IBAN": creche.iban,
                   "BIC": creche.bic,
                   "batch": True,
-                  "creditor_id": "000000",
+                  "creditor_id": creche.creditor_id,
                   "currency": "EUR"
                   }
         sepa = PySepaDD(config)
@@ -64,19 +64,21 @@ class ExportSepaModifications(object):
                 date = facture.date + datetime.timedelta(1)
             else:
                 date = facture.date
-            date = date.replace(day=famille.jour_prelevement_automatique)
-            rcur = (
-            date.month != famille.date_premier_prelevement_automatique.month and date.year != famille.date_premier_prelevement_automatique.year)
+            day = famille.jour_prelevement_automatique if type(famille.jour_prelevement_automatique) == int else 1
+            date = date.replace(day=day)
+            date_premier_prelevement_automatique = famille.date_premier_prelevement_automatique if famille.date_premier_prelevement_automatique else facture.inscrit.inscriptions[0].debut
+            rcur = (date.month != date_premier_prelevement_automatique.month and date.year != date_premier_prelevement_automatique.year)
             payment = {"name": facture.inscrit.nom,
                        "IBAN": famille.iban,
                        "BIC": famille.bic,
                        "amount": int(facture.total * 100),
                        "type": "RCUR" if rcur else "FRST",
-                       "collection_date": date if rcur else famille.date_premier_prelevement_automatique,
-                       "mandate_id": facture.numero,
+                       "collection_date": date if rcur else date_premier_prelevement_automatique,
+                       "mandate_id": famille.mandate_id,
                        "mandate_date": facture.date,
                        "description": "Facture %s %d" % (months[facture.mois - 1], facture.annee)
                        }
+            # print payment
             sepa.add_payment(payment)
 
         contents = sepa.export()

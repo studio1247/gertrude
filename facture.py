@@ -36,6 +36,12 @@ class FactureBase(object):
         self.date = self.fin_recap
         self.options = options
 
+    def GetFactureId(self):
+        if config.numfact:
+            return config.numfact % {"inscritid": self.inscrit.idx, "numero": self.numero, "annee": self.annee, "mois": self.mois}
+        else:
+            return '%03d%04d%02d' % (self.inscrit.idx, self.annee, self.mois)
+
     def Decloture(self):
         self.cloture = True
         date = GetMonthStart(self.date)

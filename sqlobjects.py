@@ -1309,6 +1309,7 @@ class Creche(object):
         self.cout_journalier = 0.0
         self.iban = ""
         self.bic = ""
+        self.creditor_id = ""
         self.alertes = {}
         self.CalculeJoursConges()
 
@@ -1619,7 +1620,7 @@ class Creche(object):
                     'tri_factures', 'smtp_server', 'caf_email', 'mode_accueil_defaut', 'mode_saisie_planning',
                     'last_tablette_synchro', 'changement_groupe_auto', 'allergies',
                     'regularisation_fin_contrat', 'date_raz_permanences',
-                    'conges_payes_salaries', 'conges_supplementaires_salaries', 'cout_journalier', 'iban', 'bic'] and self.idx:
+                    'conges_payes_salaries', 'conges_supplementaires_salaries', 'cout_journalier', 'iban', 'bic', 'creditor_id'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
@@ -2114,6 +2115,7 @@ class Famille(object):
         self.notes = ""
         self.iban = ""
         self.bic = ""
+        self.mandate_id = ""
         self.jour_prelevement_automatique = 1
         self.date_premier_prelevement_automatique = None
         self.freres_soeurs = []
@@ -2133,10 +2135,10 @@ class Famille(object):
     def create(self):
         print 'nouvelle famille'
         result = sql_connection.execute(
-            'INSERT INTO FAMILLES (idx, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, tarifs, notes, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, code_client, iban, bic, jour_prelevement_automatique, date_premier_prelevement_automatique) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+            'INSERT INTO FAMILLES (idx, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, tarifs, notes, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, code_client, iban, bic, mandate_id, jour_prelevement_automatique, date_premier_prelevement_automatique) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
             (self.adresse, self.code_postal, self.ville, self.numero_securite_sociale, self.numero_allocataire_caf,
              self.tarifs, self.notes, self.medecin_traitant, self.telephone_medecin_traitant, self.assureur,
-             self.numero_police_assurance, self.code_client, self.iban, self.bic, self.jour_prelevement_automatique, self.date_premier_prelevement_automatique))
+             self.numero_police_assurance, self.code_client, self.iban, self.bic, self.mandate_id, self.jour_prelevement_automatique, self.date_premier_prelevement_automatique))
         self.idx = result.lastrowid
         for obj in self.parents + self.freres_soeurs + self.referents:
             if obj:
@@ -2157,7 +2159,7 @@ class Famille(object):
         self.__dict__[name] = value
         if name in ['adresse', 'code_postal', 'ville', 'numero_securite_sociale', 'numero_allocataire_caf', 'tarifs',
                     'notes', 'medecin_traitant', 'telephone_medecin_traitant', 'assureur', 'numero_police_assurance',
-                    'code_client', 'iban', 'bic', 'jour_prelevement_automatique', 'date_premier_prelevement_automatique'] and self.idx:
+                    'code_client', 'iban', 'bic', 'mandate_id', 'jour_prelevement_automatique', 'date_premier_prelevement_automatique'] and self.idx:
             print 'update', name, (old_value, value)
             sql_connection.execute('UPDATE FAMILLES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
