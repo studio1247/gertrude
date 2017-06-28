@@ -42,6 +42,13 @@ class FactureBase(object):
         else:
             return '%03d%04d%02d' % (self.inscrit.idx, self.annee, self.mois)
 
+    def GetDatePrelevementAutomatique(self):
+        date = self.date
+        if creche.temps_facturation == FACTURATION_FIN_MOIS:
+            date += datetime.timedelta(1)
+        day = self.inscrit.famille.jour_prelevement_automatique
+        return date.replace(day=(day if type(day) == int else 1))
+
     def Decloture(self):
         self.cloture = True
         date = GetMonthStart(self.date)

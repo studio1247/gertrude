@@ -60,12 +60,7 @@ class ExportSepaModifications(object):
 
         for facture in factures:
             famille = facture.inscrit.famille
-            if creche.temps_facturation == FACTURATION_FIN_MOIS:
-                date = facture.date + datetime.timedelta(1)
-            else:
-                date = facture.date
-            day = famille.jour_prelevement_automatique if type(famille.jour_prelevement_automatique) == int else 1
-            date = date.replace(day=day)
+            date = facture.GetDatePrelevementAutomatique()
             date_premier_prelevement_automatique = famille.date_premier_prelevement_automatique if famille.date_premier_prelevement_automatique else facture.inscrit.inscriptions[0].debut
             rcur = (date.month != date_premier_prelevement_automatique.month and date.year != date_premier_prelevement_automatique.year)
             payment = {"name": facture.inscrit.nom,
@@ -75,7 +70,7 @@ class ExportSepaModifications(object):
                        "type": "RCUR" if rcur else "FRST",
                        "collection_date": date if rcur else date_premier_prelevement_automatique,
                        "mandate_id": famille.mandate_id,
-                       "mandate_date": facture.date,
+                       "mandate_date": facture.inscrit.inscriptions[0].debut,
                        "description": "Facture %s %d" % (months[facture.mois - 1], facture.annee)
                        }
             # print payment

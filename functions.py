@@ -866,6 +866,7 @@ def GetCrecheFields(creche):
             ('capacite', creche.GetCapacite()),
             ('capacite-creche', creche.GetCapacite()),
             ('amplitude-horaire', creche.GetAmplitudeHoraire()),
+            ('sepa-creditor-id', creche.creditor_id),
             ]
 
 
@@ -946,6 +947,7 @@ def GetFamilleFields(famille):
               ('parents', GetParentsString(famille) if famille else ""),
               ('telephone', GetTelephone(famille) if famille else ""),
               ('email', GetEmail(famille) if famille else ""),
+              ('sepa-mandate-id', famille.mandate_id),
               ]
     result += GetTarifsFamilleFields(famille)
     if famille:
@@ -1106,7 +1108,8 @@ def GetFactureFields(facture):
                   ('total-sans-activites', facture.total - facture.supplement_activites, FIELD_EUROS),
                   ('site', GetNom(facture.site)),
                   ('total', facture.total, FIELD_EUROS),
-                  ('numfact', facture.GetFactureId())
+                  ('numfact', facture.GetFactureId()),
+                  ('sepa-date-prelevement', facture.GetDatePrelevementAutomatique()),
                   ]
         if config.codeclient == "custom":
             result.append(('codeclient', facture.inscrit.famille.code_client))
