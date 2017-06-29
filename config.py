@@ -98,6 +98,8 @@ def getOptions(parser):
             options |= COMPATIBILITY_MODE_CONGES_2016
         if "compatibility-adaptations-2016" in str:
             options |= COMPATIBILITY_MODE_ADAPTATIONS_2016
+        if "compatibility-decompte-semaines-2017" in str:
+            options |= COMPATIBILITY_MODE_DECOMPTE_SEMAINES_2017
         if "prelevements-automatiques" in str:
             options |= PRELEVEMENTS_AUTOMATIQUES
         if "newsletters" in str:

@@ -781,6 +781,8 @@ def GetUnionHeures(journee, reference):
 
 def GetNombreSemainesPeriode(debut, fin):
     jours = (fin - debut).days
+    if not (config.options & COMPATIBILITY_MODE_DECOMPTE_SEMAINES_2017):
+        jours += 1
     if creche.arrondi_semaines == ARRONDI_SEMAINE_SUPERIEURE:
         return (jours + 6) / 7
     elif creche.arrondi_semaines == ARRONDI_SEMAINE_PLUS_PROCHE:
