@@ -1004,7 +1004,7 @@ class OPagaioTests(GertrudeTestCase):
         inscription.reference[0].AddActivity(114, 210, 0, -1)  # 9.5h
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2017, 5)
-        self.assertPrec2Equals(facture.regularisation, 152.00)
+        self.assertPrec2Equals(facture.regularisation, 228.00)
 
 
 if __name__ == '__main__':
