@@ -144,11 +144,12 @@ def sync_tablette_lines(lines, tz=None):
                     array[idx][date][-1].arrivee = array[idx][date][-1].depart
                     array[idx][date][-1].depart = None
             elif label == "depart":
-                depart = (heure + creche.granularite - TABLETTE_MARGE_ARRIVEE) / creche.granularite * (
-                creche.granularite / BASE_GRANULARITY)
+                depart = (heure + creche.granularite - TABLETTE_MARGE_ARRIVEE) / creche.granularite * (creche.granularite / BASE_GRANULARITY)
                 if len(array[idx][date]) > 0:
                     last = array[idx][date][-1]
                     if not last.arrivee or not last.depart:
+                        last.depart = depart
+                    elif last.arrivee and last.depart and depart - last.depart < (creche.granularite / BASE_GRANULARITY):
                         last.depart = depart
                     else:
                         array[idx][date].append(PeriodePresence(date, None, depart))
@@ -222,6 +223,6 @@ if __name__ == "__main__":
 
     # write_apache_logs_to_journal("D:/logs")
 
-    # lines = file(sys.argv[2]).readlines()
-    # sync_tablette_lines(lines)
-    # sql_connection.close()
+    lines = file(sys.argv[2]).readlines()
+    sync_tablette_lines(lines)
+    sql_connection.close()
