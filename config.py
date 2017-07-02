@@ -152,6 +152,16 @@ def getIntegerParameter(parser, label, default=0):
         return default
 
 
+def getTimeParameter(parser, label, default=None):
+    value = getStringParameter(parser, label, default)
+    if value:
+        splitted = value.split(":")
+        value = 3600 * int(splitted[0])
+        if len(splitted) == 2:
+            value += 60 * int(splitted[1])
+    return value
+
+
 def getDefaultDocumentsDirectory():
     if sys.platform == 'win32':
         try:
@@ -284,8 +294,8 @@ def LoadConfig(path=None, progress_handler=default_progress_handler):
 
     config.debug = getIntegerParameter(parser, "debug")
     config.saas_port = getIntegerParameter(parser, "port", None)
-
-    config.preinscription_redirect = getStringParameter("preinscription-redirect", "")
+    config.heure_synchro_tablette = getTimeParameter(parser, "heure-synchro-tablette", None)
+    config.preinscription_redirect = getStringParameter(parser, "preinscription-redirect", "")
 
     years_before, years_after = getYearsDisplayed(parser)
     config.first_date = datetime.date(today.year - years_before, 1, 1)
@@ -365,6 +375,7 @@ def Restore(progress_handler=default_progress_handler):
 
 def Update():
     return config.connection.Update()
+
 
 def Exit(progress_handler=default_progress_handler):
     SaveConfig(progress_handler)
