@@ -764,7 +764,7 @@ class SQLConnection(object):
                         reference_day.AddActivity(debut, fin, value, idx)
                         # print inscrit.prenom, inscrit.prenom, day, debut, fin, value
 
-            cur.execute('SELECT date, value, debut, fin, idx FROM ACTIVITES_SALARIES WHERE salarie=?', (salarie.idx,))
+            cur.execute('SELECT date, value, debut, fin, idx FROM ACTIVITES_SALARIES WHERE salarie=? AND date>=?', (salarie.idx, config.first_date))
             for date, value, debut, fin, idx in cur.fetchall():
                 key = getdate(date)
                 if key in salarie.journees:
@@ -900,7 +900,7 @@ class SQLConnection(object):
                 inscrit.conges.append(conge)
             inscrit.CalculeJoursConges(creche)
 
-            cur.execute('SELECT date, value, debut, fin, idx FROM ACTIVITES WHERE inscrit=?', (inscrit.idx,))
+            cur.execute('SELECT date, value, debut, fin, idx FROM ACTIVITES WHERE inscrit=? AND date>=?', (inscrit.idx, config.first_date))
             for date, value, debut, fin, idx in cur.fetchall():
                 key = getdate(date)
                 if key in inscrit.journees:
@@ -959,6 +959,19 @@ class SQLConnection(object):
             alerte = Alerte(getdate(date), texte, acquittement, creation=False)
             alerte.idx = idx
             creche.alertes[texte] = alerte
+
+        # filtrage des inscrits trop anciens (< config.first_date)
+        inscrits = []
+        for inscrit in creche.inscrits:
+            if len(inscrit.inscriptions) > 0:
+                for inscription in inscrit.inscriptions:
+                    if not inscription.debut or not inscription.fin or inscription.fin >= config.first_date:
+                        inscrits.append(inscrit)
+                        break
+            else:
+                inscrits.append(inscrit)
+        print "%d inscrits filtrés" % (len(creche.inscrits) - len(inscrits))
+        creche.inscrits = inscrits
 
         return creche
 
