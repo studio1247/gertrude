@@ -147,12 +147,7 @@ def sync_tablette_lines(lines, tz=None):
                 depart = (heure + creche.granularite - TABLETTE_MARGE_ARRIVEE) / creche.granularite * (creche.granularite / BASE_GRANULARITY)
                 if len(array[idx][date]) > 0:
                     last = array[idx][date][-1]
-                    if not last.arrivee or not last.depart:
-                        last.depart = depart
-                    elif last.arrivee and last.depart and depart - last.depart < 2 * (creche.granularite / BASE_GRANULARITY):
-                        last.depart = depart
-                    else:
-                        array[idx][date].append(PeriodePresence(date, None, depart))
+                    last.depart = depart
                 else:
                     array[idx][date].append(PeriodePresence(date, None, depart))
             elif label == "absent":
