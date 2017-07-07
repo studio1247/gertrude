@@ -358,8 +358,30 @@ def SaveConfig(progress_handler):
             progress_handler.display("Impossible d'enregistrer les paramètres de configuration !")
 
 
+def Filter():
+    # filtrage des inscrits trop anciens (< config.first_date)
+    inscrits = []
+    for inscrit in creche.inscrits:
+        if len(inscrit.inscriptions) > 0:
+            inscrits_famille = GetInscritsFamille(inscrit.famille)
+            for enfant in inscrits_famille:
+                stop = False
+                for inscription in enfant.inscriptions:
+                    if not inscription.debut or not inscription.fin or inscription.fin >= config.first_date:
+                        inscrits.append(inscrit)
+                        stop = True
+                        break
+                if stop:
+                    break
+        else:
+            inscrits.append(inscrit)
+    print "%d inscrits filtrés" % (len(creche.inscrits) - len(inscrits))
+    creche.inscrits = inscrits
+
+
 def Load(progress_handler=default_progress_handler, autosave=False):
     __builtin__.creche, _readonly = config.connection.Load(progress_handler, autosave)
+    Filter()
     if _readonly:
         __builtin__.readonly = True
     return creche is not None

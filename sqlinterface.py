@@ -960,19 +960,6 @@ class SQLConnection(object):
             alerte.idx = idx
             creche.alertes[texte] = alerte
 
-        # filtrage des inscrits trop anciens (< config.first_date)
-        inscrits = []
-        for inscrit in creche.inscrits:
-            if len(inscrit.inscriptions) > 0:
-                for inscription in inscrit.inscriptions:
-                    if not inscription.debut or not inscription.fin or inscription.fin >= config.first_date:
-                        inscrits.append(inscrit)
-                        break
-            else:
-                inscrits.append(inscrit)
-        print "%d inscrits filtrés" % (len(creche.inscrits) - len(inscrits))
-        creche.inscrits = inscrits
-
         return creche
 
     def translate(self, progress_handler=default_progress_handler):
