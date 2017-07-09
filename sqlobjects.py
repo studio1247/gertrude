@@ -2200,6 +2200,25 @@ class Inscrit(object):
     def GetAllergies(self):
         return [allergie.strip() for allergie in self.allergies.split(",")]
 
+    def GetRattachement(self):
+        result = None
+        for inscrit in creche.inscrits:
+            if inscrit is not self:
+                if inscrit.famille is self.famille:
+                    return True
+                if inscrit.nom == self.nom:
+                    result = False
+        return result
+
+    def ChangeRattachement(self, state):
+        if state:
+            for inscrit in creche.inscrits:
+                if inscrit is not self and inscrit.nom == self.nom:
+                    self.famille = inscrit.famille
+                    break
+        else:
+            self.famille = Famille()
+
     def create(self):
         print 'nouvel inscrit'
         result = sql_connection.execute(

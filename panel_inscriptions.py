@@ -356,13 +356,7 @@ class IdentitePanel(InscriptionsTab):
                     break
                     
     def OnRattachementFamille(self, _):
-        if not self.famille_button.GetValue():
-            self.inscrit.famille = Famille()
-        else:
-            for inscrit in creche.inscrits:
-                if inscrit is not self.inscrit and inscrit.nom == self.inscrit.nom:
-                    self.inscrit.famille = inscrit.famille
-                    break
+        self.inscrit.ChangeRattachement(self.famille_button.GetValue())
         self.UpdateContents()
                         
     def OnChangementDateNaissance(self, _):
