@@ -220,7 +220,7 @@ class StartDialog(wx.Dialog):
 
         for user in creche.users:
             hashed = user.password.encode("utf-8")
-            if login == user.login and bcrypt.hashpw(password, hashed) == hashed:
+            if login == user.login and bcrypt.checkpw(password, hashed):
                 __builtin__.profil = user.profile
                 if user.profile & PROFIL_LECTURE_SEULE:
                     if __builtin__.server:
