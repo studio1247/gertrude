@@ -169,13 +169,13 @@ class Day(object):
                 self.InsertActivity(None, None, value)
         self.Save()
 
-    def Save(self):
+    def Save(self, force=False):
         self.last_heures = None
         for start, end, value in self.activites.keys():
-            if self.activites[(start, end, value)] == None:
+            if force or self.activites[(start, end, value)] == None:
                 self.InsertActivity(start, end, value)
         for value in self.activites_sans_horaires.keys():
-            if self.activites_sans_horaires[value] == None:
+            if force or self.activites_sans_horaires[value] == None:
                 self.InsertActivity(None, None, value)
 
     def CloturePrevisionnel(self):

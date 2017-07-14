@@ -1212,13 +1212,30 @@ class InscriptionsPanel(GPanel):
             history.Append(Delete(creche.inscrits, -1))
             inscrit = dlg.GetInscritSelected()
             inscrit.idx = None
-            inscrit.inscriptions[:] = [Inscription(inscrit)]
-            inscrit.journees = {}
-            inscrit.semaines = {}
-            inscrit.factures_cloturees = {}
-            inscrit.corrections = {}
-            inscrit.famille.create()
-            inscrit.create()
+            if 0:
+                inscrit.famille.create()
+                inscrit.create()
+                for inscription in inscrit.inscriptions:
+                    if inscription.site:
+                        inscription.site = creche.GetSite(inscription.site.idx)
+                    for reference in inscription.reference:
+                        reference.Save(force=True)
+                for date in inscrit.journees:
+                    inscrit.journees[date].Save(force=True)
+                if inscrit.jours_conges:
+                    print "Not imported: jours_conges" % inscrit.jours_conges
+                if inscrit.factures_cloturees:
+                    print "Not imported: factures_cloturees" % inscrit.factures_cloturees
+                if inscrit.corrections:
+                    print "Not imported: factures_cloturees" % inscrit.corrections
+            else:
+                inscrit.inscriptions[:] = [Inscription(inscrit)]
+                inscrit.journees = {}
+                inscrit.semaines = {}
+                inscrit.factures_cloturees = {}
+                inscrit.corrections = {}
+                inscrit.famille.create()
+                inscrit.create()
             self.AjouteInscrit(inscrit)
         dlg.Destroy()
 

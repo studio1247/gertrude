@@ -45,7 +45,7 @@ class SQLConnection(object):
         self.con = None
 
     def open(self, autosave=False):
-        print "Open database %s" % self.filename
+        print "Open database %r" % self.filename
         if autosave:
             self.con = sqlite3.connect(self.filename, isolation_level=None)
         else:
