@@ -186,10 +186,11 @@ class OdtDocumentAccueilModifications(DocumentAccueilModifications):
             return None
         
         doc = dom.getElementsByTagName("office:text")[0]
-        print doc.toprettyxml()
+        # print doc.toprettyxml()
         
         for table in doc.getElementsByTagName("table:table"):
-            if table.getAttribute("table:name") == "Tableau3":
+            table_name = table.getAttribute("table:name")
+            if table_name in ("Tableau3", "Horaires"):
                 rows = table.getElementsByTagName("table:table-row")
                 for semaine in range(1, len(self.inscription.reference) / 7):
                     for row in rows[1:-1]:
@@ -202,7 +203,19 @@ class OdtDocumentAccueilModifications(DocumentAccueilModifications):
                                 child.replaceWholeText(text)
                         table.insertBefore(clone, rows[-1])
                 # print table.toprettyxml()
-                break
+            elif table_name == "Echeancier":
+                rows = table.getElementsByTagName("table:table-row")
+                template = rows[1]
+                # print template.toprettyxml()
+                for date, valeur in self.cotisation.get_echeances():
+                    clone = template.cloneNode(1)
+                    table.insertBefore(clone, template)
+                    fields_echeance = [
+                        ("date-echeance", date),
+                        ("valeur-echeance", valeur, FIELD_EUROS)
+                    ]
+                    ReplaceTextFields(clone, fields_echeance)
+                table.removeChild(template)
         
         # print doc.toprettyxml()
         ReplaceTextFields(doc, fields)

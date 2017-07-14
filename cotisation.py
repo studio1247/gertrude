@@ -608,6 +608,33 @@ class Cotisation(object):
     def Include(self, date):
         return self.debut <= date <= self.fin
 
+    def get_echeances(self):
+        echeances = []
+        if self.debut:
+            fin = self.fin
+            if not fin:
+                fin = self.debut.replace(year=self.debut.year+1)
+            debut = GetMonthEnd(self.debut)
+            fin = GetMonthEnd(fin)
+            date = debut
+            while date <= fin:
+                valeur = self.cotisation_mensuelle
+                if creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
+                    if (date == debut and date != self.debut) or (self.fin and date == fin and date != self.fin):
+                        num, den = 0, 0
+                        d = GetMonthStart(date)
+                        while d.month == date.month:
+                            if d not in creche.jours_fermeture and (creche.conges_inscription != GESTION_CONGES_INSCRIPTION_SIMPLE or d not in self.inscrit.jours_conges):
+                                den += 1
+                                if self.debut <= d and (not self.fin or d <= self.fin):
+                                    num += 1
+                            d += datetime.timedelta(1)
+                        if den:
+                            valeur = valeur * num / den
+                echeances.append((date, valeur))
+                date = GetMonthEnd(date + datetime.timedelta(1))
+            return echeances
+
 
 def GetCotisations(inscrit, options=TRACES):
     result = []
