@@ -511,10 +511,10 @@ def GetInscriptions(start, end):
     return result
 
 
-def GetSalaries(date, site=None):
+def GetSalaries(start, end, site=None):
     result = []
     for salarie in creche.salaries:
-        for contrat in salarie.GetContrats(date, date):
+        for contrat in salarie.GetContrats(start, end):
             if site is None or contrat.site == site:
                 result.append(salarie)
                 break
@@ -658,12 +658,10 @@ def GetPresentsIndexes(indexes, (debut, fin), site=None):
     return result
 
 
-def GetInscrits(debut, fin=None, site=None, handicap=None):
-    if fin is None:
-        fin = debut
+def GetInscrits(start, end, site=None, handicap=None):
     result = []
     for inscrit in creche.inscrits:
-        if inscrit.IsPresent(debut, fin, site, handicap):
+        if inscrit.IsPresent(start, end, site, handicap):
             result.append(inscrit)
     return result
 
