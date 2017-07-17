@@ -15,7 +15,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-from ooffice import *
+from documents import documents
 
 
 class PlanningHebdomadaireSalariesModifications(object):
@@ -115,12 +115,17 @@ class PlanningHebdomadaireSalariesModifications(object):
         # print dom.toprettyxml()
         return
 
+
+documents["planning"].append(PlanningHebdomadaireSalariesModifications)
+
+
 if __name__ == '__main__':
     import __builtin__
     import random
     from config import *
     from data import *
     from functions import *
+    from ooffice import *
     __builtin__.creche, result = FileConnection("databases/gertrude.db").Load()
     modifications = PlanningHebdomadaireSalariesModifications(datetime.date(2017, 7, 17))
     filename = "./test-%f.odt" % random.random()
