@@ -1900,7 +1900,7 @@ class Inscription(PeriodeReference):
                 state = self.inscrit.GetStateSimple(date)
                 if creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS:
                     if state == VACANCES:
-                        # print date
+                        # print "VACANCES", date
                         jours += 1
                 else:
                     if state in (ABSENT, VACANCES):
@@ -2441,7 +2441,7 @@ class Inscrit(object):
             if state in (MALADE, HOPITAL, ABSENCE_NON_PREVENUE):
                 return state
             elif state in (ABSENT, VACANCES):
-                if inscription.mode == MODE_5_5 or ref_state:
+                if ref_state:
                     return VACANCES
                 else:
                     return ABSENT
