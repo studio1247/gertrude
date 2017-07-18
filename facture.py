@@ -334,7 +334,7 @@ class FactureFinMois(FactureBase):
                         elif state == VACANCES:
                             if heures_reference > 0:
                                 self.jours_vacances.append(date)
-                            if creche.repartition == REPARTITION_SANS_MENSUALISATION and not inscription.IsNombreSemainesCongesAtteint(date):
+                            if creche.repartition == REPARTITION_SANS_MENSUALISATION and not inscription.IsNombreSemainesCongesDepasse(date):
                                 self.jours_conges_non_factures.append(date)
                                 self.heures_facturees_par_mode[cotisation.mode_garde] -= heures_reference
                                 self.CalculeDeduction(cotisation, heures_reference)

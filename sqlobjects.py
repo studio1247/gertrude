@@ -224,7 +224,7 @@ class Day(object):
                 state |= PRESENT
         elif state == VACANCES:
             try:
-                if self.inscription.IsNombreSemainesCongesAtteint(self.key):
+                if self.inscription.IsNombreSemainesCongesDepasse(self.key):
                     state = CONGES_DEPASSEMENT
             except:
                 pass
@@ -1932,7 +1932,7 @@ class Inscription(PeriodeReference):
         else:
             return 0
 
-    def IsNombreSemainesCongesAtteint(self, jalon):
+    def IsNombreSemainesCongesDepasse(self, jalon):
         if creche.facturation_jours_feries == ABSENCES_DEDUITES_SANS_LIMITE:
             return False
         if self.debut:
@@ -1941,7 +1941,7 @@ class Inscription(PeriodeReference):
             debut = self.GetDebutDecompteJoursConges()
             pris = self.GetNombreJoursCongesPris(debut, jalon)
             total = self.GetNombreJoursCongesPeriode()
-            return pris >= total
+            return pris > total
         else:
             return False
 
