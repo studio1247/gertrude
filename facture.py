@@ -511,7 +511,9 @@ class FactureFinMois(FactureBase):
                     self.heures_facture_par_mode[cotisation.mode_garde] += cotisation.heures_mois + cotisation.heures_supplementaires
                     self.CalculeSupplement(cotisation, cotisation.heures_supplementaires)
                 elif inscription.mode == MODE_FORFAIT_MENSUEL:
-                    if cotisation.prorata:
+                    if not cotisation.cotisation_mensuelle:
+                        prorata = 0.0
+                    elif cotisation.prorata:
                         prorata = cotisation.cotisation_mensuelle * cotisation.jours_ouvres / self.jours_ouvres
                     else:
                         prorata = cotisation.cotisation_mensuelle
