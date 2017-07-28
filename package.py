@@ -76,7 +76,7 @@ def main():
                    'arch': 'i386',
                    'iconfile': 'bitmaps_dist/gertrude.icns',
                    'argv_emulation': True,
-                   'includes': ['bcrypt', "_cffi_backend"]
+                   'includes': ['bcrypt', "_cffi_backend", "requests"]
                    }
         setup(
             name="Gertrude",
