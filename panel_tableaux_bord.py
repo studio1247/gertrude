@@ -561,7 +561,7 @@ class StatistiquesFrequentationTab(AutoTab):
             self.periodechoice.Append(month, [index])
         self.periodechoice.Append("----")  # TODO changer ça
         for trimestre in range(4):
-            self.periodechoice.Append("%s trimestre" % ordinaux[trimestre], [3*index, 3*index+1, 3*index+2])
+            self.periodechoice.Append("%s trimestre" % ordinaux[trimestre], [3*trimestre, 3*trimestre+1, 3*trimestre+2])
         self.periodechoice.SetStringSelection(months[today.month-1])
         self.periodechoice.Append("----")  # TODO changer ça
         self.periodechoice.Append("Année complète", range(0, 12))
