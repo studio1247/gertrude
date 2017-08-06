@@ -301,6 +301,8 @@ def LoadConfig(path=None, progress_handler=default_progress_handler):
     config.first_date = datetime.date(today.year - years_before, 1, 1)
     config.last_date = datetime.date(today.year + years_after, 12, 31)
 
+    config.inscriptions_semaines_conges = getIntegerParameter(parser, "inscriptions.semaines_conges", None)
+
     config.pictos = getPictos(parser)
     config.hide = getStringParameter(parser, "hide")
 
