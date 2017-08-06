@@ -247,13 +247,6 @@ def GetDateAnniversaire(date, count=1):
     return datetime.date(date.year + count, date.month, date.day)
 
 
-def GetDatePlusMois(date, count):
-    try:
-        return date.replace(month=date.month + count)
-    except:
-        return date.replace(day=date.day - 1, month=date.month + count)
-
-
 def GetInscritsFamille(famille):
     result = []
     for inscrit in creche.inscrits:
