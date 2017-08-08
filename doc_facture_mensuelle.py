@@ -97,6 +97,7 @@ class FactureModifications(object):
         return [(self.GetSimpleFilename(filename, inscrit), FactureModifications([inscrit], self.periode)) for inscrit in self.inscrits]
 
     def FillRecapSection(self, section, facture):
+        column_heures = 1 if "heures-facturees" in self.metas else 0
         empty_cells = facture.debut_recap.weekday()
         if "Week-end" in creche.feries and empty_cells > 4:
             empty_cells -= 7
@@ -131,11 +132,10 @@ class FactureModifications(object):
                             details = " (%s)" % GetHeureString(facture.jours_absence_non_prevenue[date])
                         elif date in facture.jours_presence_selon_contrat:
                             state = PRESENT
-                            column = 1 if "heures-facturees" in self.metas else 0
-                            details = " (%s)" % GetHeureString(facture.jours_presence_selon_contrat[date][column])
+                            details = " (%s)" % GetHeureString(facture.jours_presence_selon_contrat[date][column_heures])
                         elif date in facture.jours_supplementaires:
                             state = SUPPLEMENT
-                            details = " (%s)" % GetHeureString(facture.jours_supplementaires[date])
+                            details = " (%s)" % GetHeureString(facture.jours_supplementaires[date][column_heures])
                         elif date in facture.jours_maladie_non_deduits:
                             state = MALADE
                             details = " (%s)" % GetHeureString(facture.jours_maladie_non_deduits[date])

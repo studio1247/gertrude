@@ -363,7 +363,7 @@ class FactureFinMois(FactureBase):
                                         self.CalculeSupplement(cotisation, heures_supplementaires_facturees)
 
                             if affectation_jours_supplementaires:
-                                self.jours_supplementaires[date] = heures_realisees
+                                self.jours_supplementaires[date] = (heures_realisees, heures_facturees)
                             else:
                                 self.jours_presence_selon_contrat[date] = (heures_realisees, heures_facturees)
 
@@ -397,7 +397,7 @@ class FactureFinMois(FactureBase):
                                 if heures > 0:
                                     heures_semaine += heures
                                     if heures_semaine > inscription.forfait_mensuel_heures:
-                                        self.jours_supplementaires[it] = heures_realisees
+                                        self.jours_supplementaires[it] = (heures_realisees, heures_facturees)
                                         if it in self.jours_presence_selon_contrat:
                                             del self.jours_presence_selon_contrat[it]
                                 it += datetime.timedelta(1)
