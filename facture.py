@@ -365,7 +365,7 @@ class FactureFinMois(FactureBase):
                             if affectation_jours_supplementaires:
                                 self.jours_supplementaires[date] = heures_realisees
                             else:
-                                self.jours_presence_selon_contrat[date] = heures_realisees
+                                self.jours_presence_selon_contrat[date] = (heures_realisees, heures_facturees)
 
                             if cotisation.majoration_journaliere:
                                 self.supplement += cotisation.majoration_journaliere

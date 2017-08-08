@@ -131,7 +131,8 @@ class FactureModifications(object):
                             details = " (%s)" % GetHeureString(facture.jours_absence_non_prevenue[date])
                         elif date in facture.jours_presence_selon_contrat:
                             state = PRESENT
-                            details = " (%s)" % GetHeureString(facture.jours_presence_selon_contrat[date])
+                            column = 1 if "heures-facturees" in self.metas else 0
+                            details = " (%s)" % GetHeureString(facture.jours_presence_selon_contrat[date][column])
                         elif date in facture.jours_supplementaires:
                             state = SUPPLEMENT
                             details = " (%s)" % GetHeureString(facture.jours_supplementaires[date])
@@ -187,7 +188,6 @@ class FactureModifications(object):
             if field[0] in row.toprettyxml() and not field[1]:
                 return True
         return False
-
 
     def execute(self, filename, dom):
         global couleurs
