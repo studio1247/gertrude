@@ -292,7 +292,7 @@ class Cotisation(object):
             else:
                 fin_decompte_conges_et_factures = self.fin_inscription
 
-            if creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS:
+            if creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS and self.inscription.mode not in (MODE_FORFAIT_HEBDOMADAIRE, MODE_FORFAIT_MENSUEL):
                 if self.fin_inscription is None:
                     errors.append(" - La période d'inscription n'a pas de fin.")
                     raise CotisationException(errors)
