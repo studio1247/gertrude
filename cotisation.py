@@ -299,8 +299,10 @@ class Cotisation(object):
 
                 if creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
                     date = GetMonthStart(self.debut_inscription)
+                    fin_decompte_conges_et_factures = GetMonthEnd(self.fin_inscription)
                     if options & TRACES:
                         print u' début théorique en date du', date
+                        print u' fin théorique en date du', fin_decompte_conges_et_factures
                 else:
                     self.prorata = (self.fin_inscription != self.fin or self.debut_inscription != self.debut)
                     date = self.debut
