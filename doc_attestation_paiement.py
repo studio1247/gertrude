@@ -24,16 +24,14 @@ from ooffice import *
 
 class AttestationModifications(object):
     title = "Attestation mensuelle"
-    template = "Attestation mensuelle.odt"
+    template = "Attestation paiement.odt"
 
     def __init__(self, who, debut, fin, attestation_mensuelle=False):
         self.debut, self.fin = debut, fin
+        self.attestation_mensuelle = False
         if attestation_mensuelle and IsTemplateFile("Attestation mensuelle.odt"):
             self.template = 'Attestation mensuelle.odt'
             self.attestation_mensuelle = True
-        else:
-            self.template = 'Attestation paiement.odt'
-            self.attestation_mensuelle = False
         if isinstance(who, list):
             self.inscrits = [inscrit for inscrit in who if inscrit.GetInscriptions(debut, fin)]
             self.SetDefaultMultiParam()
