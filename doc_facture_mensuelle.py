@@ -130,6 +130,16 @@ class FactureModifications(object):
                         elif date in facture.jours_absence_non_prevenue:
                             state = ABSENCE_NON_PREVENUE
                             details = " (%s)" % GetHeureString(facture.jours_absence_non_prevenue[date])
+                        elif date in facture.jours_maladie:
+                            state = HOPITAL
+                        elif facture.inscrit.IsDateConge(date):
+                            state = CONGES
+                        elif date in facture.jours_conges_non_factures:
+                            state = VACANCES
+                        elif date in facture.jours_vacances:
+                            state = CONGES_DEPASSEMENT
+                            details = " (%s)" % GetHeureString(
+                                facture.jours_presence_selon_contrat[date][column_heures])
                         elif date in facture.jours_presence_selon_contrat:
                             state = PRESENT
                             details = " (%s)" % GetHeureString(facture.jours_presence_selon_contrat[date][column_heures])
@@ -139,14 +149,6 @@ class FactureModifications(object):
                         elif date in facture.jours_maladie_non_deduits:
                             state = MALADE
                             details = " (%s)" % GetHeureString(facture.jours_maladie_non_deduits[date])
-                        elif date in facture.jours_maladie:
-                            state = HOPITAL
-                        elif facture.inscrit.IsDateConge(date):
-                            state = CONGES
-                        elif date in facture.jours_conges_non_factures:
-                            state = VACANCES
-                        elif date in facture.jours_vacances:
-                            state = CONGES_DEPASSEMENT
                         else:
                             state = ABSENT
                         if text_node and text_node.firstChild:

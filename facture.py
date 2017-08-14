@@ -334,11 +334,14 @@ class FactureFinMois(FactureBase):
                         elif state == VACANCES:
                             if heures_reference > 0:
                                 self.jours_vacances.append(date)
-                            if creche.repartition == REPARTITION_SANS_MENSUALISATION and not inscription.IsNombreSemainesCongesDepasse(date):
-                                self.jours_conges_non_factures.append(date)
+                            if not inscription.IsNombreSemainesCongesDepasse(date):
                                 self.heures_facturees_par_mode[cotisation.mode_garde] -= heures_reference
-                                self.CalculeDeduction(cotisation, heures_reference)
-                                self.raison_deduction.add("absence prévenue")
+                                self.jours_conges_non_factures.append(date)
+                                if creche.repartition == REPARTITION_SANS_MENSUALISATION:
+                                    self.CalculeDeduction(cotisation, heures_reference)
+                                    self.raison_deduction.add("absence prévenue")
+                            else:
+                                self.jours_presence_selon_contrat[date] = (0.0, heures_facturees)
                         elif state == ABSENCE_NON_PREVENUE or state == ABSENCE_CONGE_SANS_PREAVIS:
                             heures_facturees_non_realisees = heures_reference
                             self.jours_absence_non_prevenue[date] = heures_reference
@@ -424,6 +427,7 @@ class FactureFinMois(FactureBase):
                                 self.total_contractualise += cotisation.CalculeFraisGarde(heures_reference)
                             elif creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date):
                                 heures_adaptation = heures_realisees - heures_realisees_non_facturees + heures_facturees_non_realisees
+                                self.jours_presence_selon_contrat[date] = (heures_adaptation, heures_adaptation)
                                 self.heures_periode_adaptation += heures_adaptation
                                 self.heures_facturees_par_mode[cotisation.mode_garde] += heures_adaptation
                                 montant_adaptation = cotisation.CalculeFraisGarde(heures_adaptation)
