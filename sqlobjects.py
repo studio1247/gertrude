@@ -1856,7 +1856,7 @@ class Inscription(PeriodeReference):
         self.depart = None
         self.mode = 0
         self.forfait_mensuel_heures = 0.0
-        self.semaines_conges = 0
+        self.semaines_conges = config.inscriptions_semaines_conges if config.inscriptions_semaines_conges else 0
         self.heures_permanences = 0.0
         PeriodeReference.__init__(self, JourneeReferenceInscription, duree_reference)
         self.fin_periode_adaptation = None
