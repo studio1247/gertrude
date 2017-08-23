@@ -649,6 +649,10 @@ def GetCotisations(inscrit, options=TRACES):
                     cotisation = Cotisation(inscrit, date, options)
                     result.append((cotisation.debut, cotisation.fin, cotisation))
                     date = cotisation.fin + datetime.timedelta(1)
+                    if inscription.fin and date > inscription.fin:
+                        break
+                    if creche.gestion_depart_anticipe and inscription.depart and date > inscription.depart:
+                        break
                 except CotisationException, e:
                     if inscription.fin:
                         fin = inscription.fin
