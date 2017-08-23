@@ -427,7 +427,7 @@ class ReglementsTab(AutoTab):
             self.grid.SetRowLabelValue(index, str(self.index))
         else:
             moyen = "Facture %s" % ligne.inscrit.prenom
-            valeur = -ligne.total
+            valeur = -ligne.total_facture
             self.grid.SetRowLabelValue(index, "")
         if isinstance(valeur, float):
             self.total += valeur
