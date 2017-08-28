@@ -4,4 +4,4 @@ install:
   - sudo pip install bcrypt
 
 script:
-  - cd tests && python ./nonreg.py -v
+  - cd tests && python --version && python ./nonreg.py -v
