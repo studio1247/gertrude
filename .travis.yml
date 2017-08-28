@@ -3,7 +3,7 @@ language: python
 addons:
   apt:
     packages:
-    - python-wxversio
+    - python-wxversion
     - python-wxgtk2.8
     - python-bcrypt
     - python-requests
