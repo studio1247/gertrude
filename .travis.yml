@@ -1,3 +1,5 @@
+language: generic
+
 install:
   - sudo apt-get update
   - sudo apt-get install -y python-wxversion python-wxgtk2.8 python-bcrypt python-requests
