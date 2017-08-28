@@ -61,6 +61,7 @@ class Config(object):
         self.templates = "templates"
         self.first_date = datetime.date(today.year - 2, 1, 1)
         self.last_date = datetime.date(today.year + 1, 12, 31)
+        self.inscriptions_semaines_conges = None
         
     def setSection(self, section):
         self.default_section = section
