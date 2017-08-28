@@ -51,7 +51,7 @@ class PlanningDetailleModifications(object):
             else:
                 self.default_output = "Planning presences %s-%s.odg" % (GetDateString(self.start, weekday=False), GetDateString(self.end, weekday=False))
         self.errors = {}
-        self.metas = {"Format": 0 }
+        self.metas = {"Format": 0}
         self.email = None
 
     def execute(self, filename, dom):
@@ -106,13 +106,15 @@ class PlanningDetailleModifications(object):
                 ReplaceTextFields(node, [('category', text)])
                 page.appendChild(node)
 
+        lignes_vides = self.metas["lignes-vides"] if "lignes-vides" in self.metas else False
+
         day = self.start
         while day <= self.end:
             if day in creche.jours_fermeture:
                 day += datetime.timedelta(1)
                 continue
 
-            lines_enfants = GetLines(day, creche.inscrits, presence=True, site=self.site, groupe=self.groupe, summary=SUMMARY_ENFANT)
+            lines_enfants = GetLines(day, creche.inscrits, presence=not lignes_vides, site=self.site, groupe=self.groupe, summary=SUMMARY_ENFANT)
             lines_enfants = GetEnfantsTriesSelonParametreTriPlanning(lines_enfants)
             lines_salaries = GetLines(day, creche.salaries, site=self.site, summary=SUMMARY_SALARIE)
 

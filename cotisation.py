@@ -683,7 +683,6 @@ def ParseHtml(filename, context):
                 replacement = text[text.index('>') + 1:-5]
             else:
                 replacement = ''
-
         except:
             print 'TODO', text
             replacement = ''  # TODO la période de référence du contrat est cassée
