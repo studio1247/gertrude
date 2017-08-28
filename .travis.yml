@@ -1,5 +1,3 @@
-sudo: false
-dist: trusty
 language: python
 
 addons:
@@ -11,4 +9,4 @@ addons:
     - python-requests
 
 script:
-  - cd tests && python ./nonreg.py -v
+  - cd tests && sudo python ./nonreg.py -v
