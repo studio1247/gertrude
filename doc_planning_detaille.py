@@ -263,7 +263,7 @@ class PlanningDetailleModifications(object):
                                 v, w = nv, nw
                             x += creche.granularite / BASE_GRANULARITY
     
-                fields = [('nom-creche', creche.nom)]
+                fields = GetCrecheFields(creche) + GetSiteFields(self.site)
                 if pages_count > 1:
                     fields.append(('date', GetDateString(day) + " (%d/%d)" % (page_index + 1, pages_count)))
                 else:
