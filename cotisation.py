@@ -622,7 +622,7 @@ class Cotisation(object):
             while date <= fin:
                 valeur = self.cotisation_mensuelle
                 if creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
-                    if (date == debut and date != self.debut) or (self.fin and date == fin and date != self.fin):
+                    if date == debut or (self.fin and date == fin):
                         num, den = 0, 0
                         d = GetMonthStart(date)
                         while d.month == date.month:
