@@ -47,7 +47,7 @@ class DocumentAccueilModifications(object):
     def GetCustomFields(self, inscrit, famille, inscription, cotisation):
         fields = []
         for key in self.metas:
-            if key.startswith("formule "):
+            if key.lower().startswith("formule "):
                 label = key[8:]
                 try:
                     value = eval(self.metas[key])
