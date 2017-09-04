@@ -115,7 +115,7 @@ class Cotisation(object):
             else:
                 multiplier = heures / heures_mois
             while heure < heures_mois:
-                montant_heure_garde = creche.EvalTauxHoraire(self.mode_garde, self.inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, self.inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, heure, self.tranche_paje, self.inscrit.famille.tarifs)
+                montant_heure_garde = creche.EvalTauxHoraire(self.debut, self.mode_garde, self.inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, self.inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, heure, self.tranche_paje, self.inscrit.famille.tarifs)
                 result += multiplier * montant_heure_garde * min(1.0, heures_mois - heure)
                 tarifs.add(montant_heure_garde)
                 heure += 1.0
@@ -430,9 +430,10 @@ class Cotisation(object):
         elif creche.mode_facturation == FACTURATION_HORAIRES_REELS or self.inscription.mode == MODE_FORFAIT_MENSUEL:
             if self.inscription.mode == MODE_FORFAIT_MENSUEL:
                 self.forfait_mensuel_heures = self.inscription.forfait_mensuel_heures
+                # print "heures : ", self.heures_semaine, self.heures_mois
             try:
                 self.tranche_paje = 1 + GetTranche(self.assiette_annuelle, GetTranchesPaje(date, inscrit.naissance, self.enfants_a_charge))
-                self.montant_heure_garde = creche.EvalTauxHoraire(self.mode_garde, inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, 0, self.tranche_paje, inscrit.famille.tarifs)
+                self.montant_heure_garde = creche.EvalTauxHoraire(self.debut, self.mode_garde, inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, 0, self.tranche_paje, inscrit.famille.tarifs)
                 if options & TRACES:
                     print " montant heure de garde (Forfait horaire) :", self.montant_heure_garde
             except Exception, e:
@@ -440,7 +441,7 @@ class Cotisation(object):
                 errors.append(" - La formule de calcul du tarif horaire n'est pas correcte.")
                 raise CotisationException(errors)
             self.cotisation_periode = None
-            self.cotisation_mensuelle, self.montants_heure_garde = self.CalculeFraisGardeComplete(self.forfait_mensuel_heures, self.heures_mois)                    
+            self.cotisation_mensuelle, self.montants_heure_garde = self.CalculeFraisGardeComplete(self.forfait_mensuel_heures, self.heures_mois)
         elif creche.mode_facturation == FACTURATION_PAJE:
             self.tranche_paje = 1 + GetTranche(self.assiette_annuelle, GetTranchesPaje(date, inscrit.naissance, self.enfants_a_charge))
             if date < datetime.date(2016, 1, 1):
@@ -448,7 +449,7 @@ class Cotisation(object):
             else:
                 self.AjustePeriode((datetime.date(2016, 1, 1), fin))
             try:
-                self.montant_heure_garde = creche.EvalTauxHoraire(self.mode_garde, inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, None, self.tranche_paje, inscrit.famille.tarifs)
+                self.montant_heure_garde = creche.EvalTauxHoraire(self.debut, self.mode_garde, inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, None, self.tranche_paje, inscrit.famille.tarifs)
                 if options & TRACES:
                     print " montant heure de garde (PAJE) :", self.montant_heure_garde
             except:

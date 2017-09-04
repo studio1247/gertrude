@@ -52,7 +52,7 @@ class SyntheseFinanciereModifications(object):
             lines = table.getElementsByTagName("table:table-row")
             # line_heures_ouvrees = lines[2]
     
-            fields = GetCrecheFields(creche) + GetTarifsHorairesFields(creche)
+            fields = GetCrecheFields(creche) + GetTarifsHorairesFields(creche, datetime.date(self.annee, 1, 1))
             fields.append(("annee", self.annee))
             for mois in range(1, 13):
                 heures_accueil = GetHeuresAccueil(self.annee, mois, self.site)

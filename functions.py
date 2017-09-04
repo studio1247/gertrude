@@ -414,7 +414,7 @@ def GetNombreJoursSemaineTravailles():
 
 def Select(obj, date):
     for o in obj:
-        if o.debut and date >= o.debut and (not o.fin or date <= o.fin):
+        if (not o.debut or date >= o.debut) and (not o.fin or date <= o.fin):
             return o
     return None
 
@@ -870,9 +870,10 @@ def GetCrecheFields(creche):
             ]
 
 
-def GetTarifsHorairesFields(creche):
-    if creche.formule_taux_horaire:
-        return [('tarif(%s)' % cas[0], cas[1]) for cas in creche.formule_taux_horaire]
+def GetTarifsHorairesFields(creche, date):
+    tarifs = Select(creche.tarifs_horaires, date)
+    if tarifs:
+        return [('tarif(%s)' % cas[0], cas[1]) for cas in tarifs]
     else:
         return []
 

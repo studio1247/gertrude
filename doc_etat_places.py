@@ -51,7 +51,7 @@ class EtatPlacesModifications(object):
             lines = table.getElementsByTagName("table:table-row")
             # line_heures_ouvrees = lines[2]
     
-            fields = GetCrecheFields(creche) + GetTarifsHorairesFields(creche)
+            fields = GetCrecheFields(creche) + GetTarifsHorairesFields(creche, datetime.date(self.annee, 1, 1))
             fields.append(("annee", self.annee))
             ReplaceFields(lines, fields)
             

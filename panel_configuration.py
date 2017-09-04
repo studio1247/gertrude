@@ -1147,23 +1147,42 @@ class ParametersPanel(AutoTab):
         obj.AutoChange(value)
 
 
-class TarifHorairePanel(AutoTab):
+class TarifHorairePanel(AutoTab, PeriodeMixin):
     def __init__(self, parent):
         AutoTab.__init__(self, parent)
+        PeriodeMixin.__init__(self, "tarifs_horaires")
         self.delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
-        addbutton = wx.Button(self, -1, "Ajouter un cas")
-        if readonly:
-            addbutton.Disable()
-        addbutton.index = 0
-        self.Bind(wx.EVT_BUTTON, self.OnAdd, addbutton)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.Add(addbutton, 0, wx.ALIGN_CENTER_VERTICAL|wx.TOP, 5)
+        self.sizer.Add(PeriodeChoice(self, TarifHoraire), 0, wx.TOP | wx.BOTTOM, 5)
+        self.addbutton = wx.Button(self, -1, "Ajouter un cas")
+        if readonly:
+            self.addbutton.Disable()
+        self.addbutton.index = 0
+        self.Bind(wx.EVT_BUTTON, self.OnAdd, self.addbutton)
+        self.sizer.Add(self.addbutton, 0, wx.ALIGN_CENTER_VERTICAL | wx.TOP | wx.LEFT, 5)
         self.controls = []
-        if creche.formule_taux_horaire:
-            for i, cas in enumerate(creche.formule_taux_horaire):
-                self.AjouteLigneTarifHoraire(i, cas[0], cas[1])
+        self.tarifs_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer.Add(self.tarifs_sizer, 1, wx.ALIGN_CENTER_VERTICAL | wx.TOP | wx.LEFT | wx.EXPAND, 5)
         self.SetSizer(self.sizer)
         self.Layout()
+
+    def InternalUpdate(self):
+        self.tarifs_sizer.DeleteWindows()
+        del self.controls[:]
+        if self.periode is not None and self.periode >= 0:
+            self.addbutton.Enable()
+            for i, cas in enumerate(creche.tarifs_horaires[self.periode].formule):
+                self.AjouteLigneTarifHoraire(i, cas[0], cas[1])
+        else:
+            self.addbutton.Disable()
+
+    def UpdateContents(self):
+        self.SetInstance(creche)
+        self.InternalUpdate()
+
+    def SetPeriode(self, periode):
+        PeriodeMixin.SetPeriode(self, periode)
+        self.InternalUpdate()
         
     def AjouteLigneTarifHoraire(self, index, condition="", taux=0.0):
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -1174,8 +1193,8 @@ class TarifHorairePanel(AutoTab):
         sizer1.Add(cas, 0, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 10)
         condition_ctrl = wx.TextCtrl(self, -1, condition)
         condition_ctrl.index = index
-        sizer1.AddMany([(wx.StaticText(self, -1, "Condition :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (condition_ctrl, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5)])
-        taux_ctrl = wx.TextCtrl(self, -1, str(taux))
+        sizer1.AddMany([(wx.StaticText(self, -1, "Condition :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (condition_ctrl, 1, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND, 5)])
+        taux_ctrl = wx.TextCtrl(self, -1, str(taux), size=(200, -1))
         taux_ctrl.index = index
         sizer1.AddMany([(wx.StaticText(self, -1, "Tarif horaire :"), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (taux_ctrl, 0, wx.ALIGN_CENTER_VERTICAL, 5)])
         if not readonly:
@@ -1195,16 +1214,14 @@ class TarifHorairePanel(AutoTab):
         else:
             condition_ctrl.Disable()
             taux_ctrl.Disable()
-        self.sizer.Insert(index+1, sizer, 0, wx.EXPAND|wx.BOTTOM, 5)            
+        self.tarifs_sizer.Insert(index, sizer, 0, wx.EXPAND | wx.BOTTOM, 5)
+        self.Layout()
 
     def OnAdd(self, event):
         object = event.GetEventObject()
+        creche.tarifs_horaires[self.periode].formule.insert(object.index, ["", 0.0])
+        creche.tarifs_horaires[self.periode].UpdateFormule(changed=False)
         self.AjouteLigneTarifHoraire(object.index)
-        if creche.formule_taux_horaire is None:
-            creche.formule_taux_horaire = [["", 0.0]]
-        else:
-            creche.formule_taux_horaire.insert(object.index, ["", 0.0])
-        creche.UpdateFormuleTauxHoraire()
         for i in range(object.index+1, len(self.controls)):
             self.controls[i][0].SetLabel("[Cas %d]" % (i+1))
             for control in self.controls[i][1:]:
@@ -1214,15 +1231,12 @@ class TarifHorairePanel(AutoTab):
     
     def OnRemove(self, event):
         index = event.GetEventObject().index
-        sizer = self.sizer.GetItem(index+1)
+        sizer = self.tarifs_sizer.GetItem(index)
         sizer.DeleteWindows()
-        self.sizer.Detach(index+1)
+        self.tarifs_sizer.Detach(index)
         del self.controls[index]
-        if len(creche.formule_taux_horaire) == 1:
-            creche.formule_taux_horaire = None
-        else:
-            del creche.formule_taux_horaire[index]
-        creche.UpdateFormuleTauxHoraire()
+        del creche.tarifs_horaires[self.periode].formule[index]
+        creche.tarifs_horaires[self.periode].UpdateFormule()
         for i in range(index, len(self.controls)):
             self.controls[i][0].SetLabel("[Cas %d]" % (i+1))
             for control in self.controls[i][1:]:
@@ -1232,9 +1246,9 @@ class TarifHorairePanel(AutoTab):
     
     def OnConditionChange(self, event):
         object = event.GetEventObject()
-        creche.formule_taux_horaire[object.index][0] = object.GetValue()
-        creche.UpdateFormuleTauxHoraire()
-        if creche.CheckFormuleTauxHoraire(object.index):
+        creche.tarifs_horaires[self.periode].formule[object.index][0] = object.GetValue()
+        creche.tarifs_horaires[self.periode].UpdateFormule()
+        if creche.tarifs_horaires[self.periode].CheckFormule(object.index):
             object.SetBackgroundColour(wx.WHITE)
         else:
             object.SetBackgroundColour(wx.RED)
@@ -1243,8 +1257,8 @@ class TarifHorairePanel(AutoTab):
         
     def OnTauxChange(self, event):
         object = event.GetEventObject()
-        creche.formule_taux_horaire[object.index][1] = float(object.GetValue())
-        creche.UpdateFormuleTauxHoraire()
+        creche.tarifs_horaires[self.periode].formule[object.index][1] = float(object.GetValue())
+        creche.tarifs_horaires[self.periode].UpdateFormule()
         history.Append(None)
 
 

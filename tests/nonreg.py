@@ -152,8 +152,8 @@ class DocumentsTests(GertrudeTestCase):
         self.pwd = os.getcwd()
         os.chdir("..")
         creche.mode_facturation = FACTURATION_PAJE
-        creche.formule_taux_horaire = [["", 6.70]]
-        creche.UpdateFormuleTauxHoraire(changed=False)
+        creche.tarifs_horaires.append(TarifHoraire([["", 6.70]], creation=False))
+        creche.tarifs_horaires[0].UpdateFormule(changed=False)
         bureau = Bureau(creation=False)
         bureau.debut = datetime.date(2010, 1, 1)
         creche.bureaux.append(bureau)
@@ -234,15 +234,15 @@ class PAJETests(GertrudeTestCase):
         inscription.debut = datetime.date(2010, 1, 1)
         inscrit.inscriptions.append(inscription)
         self.assertRaises(CotisationException, Cotisation, inscrit, datetime.date(2010, 1, 1), NO_ADDRESS|NO_PARENTS)
-        creche.formule_taux_horaire = [["", 0.0]]
-        creche.UpdateFormuleTauxHoraire(changed=False)
+        creche.tarifs_horaires.append(TarifHoraire([["", 0.0]], creation=False))
+        creche.tarifs_horaires[0].UpdateFormule(changed=False)
         cotisation = Cotisation(inscrit, datetime.date(2010, 1, 1), NO_ADDRESS|NO_PARENTS)
         
     def test_nospetitspouces(self):
         creche.mode_facturation = FACTURATION_PAJE
         creche.repartition = REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS
-        creche.formule_taux_horaire = [["", 6.70]]
-        creche.UpdateFormuleTauxHoraire(changed=False)
+        creche.tarifs_horaires.append(TarifHoraire([["", 6.70]], creation=False))
+        creche.tarifs_horaires[0].UpdateFormule(changed=False)
         bureau = Bureau(creation=False)
         bureau.debut = datetime.date(2010, 1, 1)
         creche.bureaux.append(bureau)
@@ -263,8 +263,8 @@ class PAJETests(GertrudeTestCase):
     def test_microcosmos(self):
         creche.mode_facturation = FACTURATION_PAJE
         creche.repartition = REPARTITION_MENSUALISATION_12MOIS
-        creche.formule_taux_horaire = [["", 10]]
-        creche.UpdateFormuleTauxHoraire(changed=False)
+        creche.tarifs_horaires.append(TarifHoraire([["", 10]], creation=False))
+        creche.tarifs_horaires[0].UpdateFormule(changed=False)
         bureau = Bureau(creation=False)
         bureau.debut = datetime.date(2010, 1, 1)
         creche.bureaux.append(bureau)
@@ -288,8 +288,8 @@ class PAJETests(GertrudeTestCase):
         creche.mode_facturation = FACTURATION_PAJE
         creche.repartition = REPARTITION_MENSUALISATION_12MOIS
         creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
-        creche.formule_taux_horaire = [["", 6.25]]
-        creche.UpdateFormuleTauxHoraire(changed=False)
+        creche.tarifs_horaires.append(TarifHoraire([["", 6.25]], creation=False))
+        creche.tarifs_horaires[0].UpdateFormule(changed=False)
         bureau = Bureau(creation=False)
         bureau.debut = datetime.date(2010, 1, 1)
         creche.bureaux.append(bureau)
@@ -549,8 +549,8 @@ class FacturationDebutMoisContratTests(GertrudeTestCase):
         creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
         creche.temps_facturation = FACTURATION_DEBUT_MOIS_CONTRAT
         creche.type = TYPE_MICRO_CRECHE
-        creche.formule_taux_horaire = [["mode=hg", 9.50], ["", 7.0]]
-        creche.UpdateFormuleTauxHoraire(changed=False)
+        creche.tarifs_horaires.append(TarifHoraire([["mode=hg", 9.5], ["", 7.0]], creation=False))
+        creche.tarifs_horaires[0].UpdateFormule(changed=False)
         
     def test_forfait_mensuel(self):
         inscrit = self.AddInscrit()
@@ -624,8 +624,8 @@ class MonPetitBijouTests(GertrudeTestCase):
         creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
         creche.temps_facturation = FACTURATION_DEBUT_MOIS_PREVISIONNEL
         creche.type = TYPE_MICRO_CRECHE
-        creche.formule_taux_horaire = [["mode=hg", 9.50], ["", 7.0]]
-        creche.UpdateFormuleTauxHoraire(changed=False)
+        creche.tarifs_horaires.append(TarifHoraire([["mode=hg", 9.50], ["", 7.0]], creation=False))
+        creche.tarifs_horaires[0].UpdateFormule(changed=False)
         __builtin__.sql_connection = None
         
     def test_forfait_mensuel(self):
@@ -870,8 +870,8 @@ class LaCabaneAuxFamillesTests(GertrudeTestCase):
         creche.regularisation_fin_contrat = True
 
     def test_arrivee_et_depart_en_cours_de_mois(self):
-        creche.formule_taux_horaire = [["", 7.5]]
-        creche.UpdateFormuleTauxHoraire(changed=False)
+        creche.tarifs_horaires.append(TarifHoraire([["", 7.5]], creation=False))
+        creche.tarifs_horaires[0].UpdateFormule(changed=False)
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
         inscription.mode = MODE_TEMPS_PARTIEL
@@ -895,8 +895,8 @@ class LaCabaneAuxFamillesTests(GertrudeTestCase):
         self.assertPrec2Equals(facture.total, 663.31)
 
     def test_regularisation_conges_non_pris(self):
-        creche.formule_taux_horaire = [["revenus>0", 10.0]]
-        creche.UpdateFormuleTauxHoraire(changed=False)
+        creche.tarifs_horaires.append(TarifHoraire([["revenus>0", 10.0]], creation=False))
+        creche.tarifs_horaires[0].UpdateFormule(changed=False)
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit, creation=False)
         inscription.mode = MODE_TEMPS_PARTIEL
@@ -928,8 +928,8 @@ class OPagaioTests(GertrudeTestCase):
         creche.type = TYPE_MICRO_CRECHE
         creche.mode_facturation = FACTURATION_PAJE
         creche.gestion_depart_anticipe = True
-        creche.formule_taux_horaire = [["", 9.5]]
-        creche.UpdateFormuleTauxHoraire(changed=False)
+        creche.tarifs_horaires.append(TarifHoraire([["", 9.5]], creation=False))
+        creche.tarifs_horaires[0].UpdateFormule(changed=False)
         creche.temps_facturation = FACTURATION_FIN_MOIS
         creche.repartition = REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS
         creche.facturation_periode_adaptation = PERIODE_ADAPTATION_GRATUITE

@@ -122,6 +122,7 @@ ModeAccueilItems = [
 PeriodiciteFacturationItems = [
     ("Mensuelle", 1),
     ("Trimestrielle", 3),
+    ("Quadrimestrielle", 4),
     ("Semestrielle", 6),
     ("Annuelle", 12)
 ]

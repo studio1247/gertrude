@@ -624,9 +624,10 @@ class FactureFinMois(FactureBase):
                             semaines_conges_non_pris = semaines_conges_a_prendre - float(inscription.GetNombreJoursCongesPoses()) / jours_presence
                             if semaines_conges_non_pris > 0:
                                 heures = cotisation.heures_semaine * semaines_conges_non_pris
+                                print "heures_semaine, semaines_non_pris", cotisation.heures_semaine, semaines_conges_non_pris
                                 regularisation_conges_non_pris = heures * cotisation.montant_heure_garde
                                 if options & TRACES:
-                                    print " régularisation congés non pris (%f semaines, %d jours pris) : %dh * %f = %f" % (semaines_conges_a_prendre, inscription.GetNombreJoursCongesPoses(), heures, cotisation.montant_heure_garde, regularisation_conges_non_pris)
+                                    print " régularisation congés non pris (%0.1f semaines, %d jours pris) : %0.1fh * %0.2f = %0.2f" % (semaines_conges_a_prendre, inscription.GetNombreJoursCongesPoses(), heures, cotisation.montant_heure_garde, regularisation_conges_non_pris)
                                 self.regularisation += regularisation_conges_non_pris
                                 self.raison_regularisation.add("congés non pris")
 

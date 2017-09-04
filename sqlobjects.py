@@ -622,6 +622,44 @@ class BaremeCAF(object):
             sql_connection.execute('UPDATE BAREMESCAF SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
+class TarifHoraire(object):
+    def __init__(self, formule=[["", 0.0]], creation=True):
+        self.idx = None
+        self.debut = None
+        self.fin = None
+        self.formule = formule
+        self.conversion_formule = None
+
+        if creation:
+            self.create()
+
+    def UpdateFormule(self, changed=True):
+        if changed:
+            print 'update formule_taux_horaire', self.formule
+            sql_connection.execute('UPDATE TARIFS_HORAIRES SET formule=?', (str(self.formule),))
+        self.conversion_formule = GetFormuleConversion(self.formule)
+
+    def CheckFormule(self, index):
+        return creche.CheckFormule(self.conversion_formule, index)
+
+    def create(self):
+        print 'nouveau tarif horaire'
+        result = sql_connection.execute(
+            'INSERT INTO TARIFS_HORAIRES (idx, debut, fin, formule) VALUES (NULL,?,?,?)',
+            (self.debut, self.fin, str(self.formule)))
+        self.idx = result.lastrowid
+
+    def delete(self):
+        print 'suppression tarif horaire'
+        sql_connection.execute('DELETE FROM TARIFS_HORAIRES WHERE idx=?', (self.idx,))
+
+    def __setattr__(self, name, value):
+        self.__dict__[name] = value
+        if name in ['debut', 'fin', 'formule'] and self.idx:
+            print 'update', name
+            sql_connection.execute('UPDATE TARIFS_HORAIRES SET %s=? WHERE idx=?' % name, (value, self.idx))
+
+
 class Charges(object):
     def __init__(self, date=None, creation=True):
         self.idx = None
@@ -1245,6 +1283,7 @@ class Creche(object):
         self.conges = []
         self.bureaux = []
         self.baremes_caf = []
+        self.tarifs_horaires = []
         self.charges = {}
         self.numeros_facture = {}
         self.familles = []
@@ -1275,8 +1314,6 @@ class Creche(object):
         self.tranches_capacite = [JourneeCapacite(i) for i in range(7)]
         self.facturation_periode_adaptation = PERIODE_ADAPTATION_FACTUREE_NORMALEMENT
         self.facturation_jours_feries = ABSENCES_DEDUITES_EN_SEMAINES
-        self.formule_taux_horaire = None
-        self.conversion_formule_taux_horaire = None
         self.formule_taux_effort = None
         self.conversion_formule_taux_effort = None
         self.masque_alertes = 0
@@ -1419,35 +1456,23 @@ class Creche(object):
         if calcule:
             self.CalculeJoursConges()
 
-    def UpdateFormuleTauxHoraire(self, changed=True):
-        if changed:
-            print 'update formule_taux_horaire', self.formule_taux_horaire
-            sql_connection.execute('UPDATE CRECHE SET formule_taux_horaire=?', (str(self.formule_taux_horaire),))
-        self.conversion_formule_taux_horaire = GetFormuleConversion(self.formule_taux_horaire)
-
-    def EvalTauxHoraire(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage,
-                        conge_parental, heures_mois, heure_mois, paje, tarifs):
-        return self.EvalFormule(self.conversion_formule_taux_horaire, mode, handicap, revenus, enfants, jours, heures,
-                                reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs)
+    def EvalTauxHoraire(self, date, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs):
+        conversion_formule = Select(self.tarifs_horaires, date).conversion_formule
+        return self.EvalFormule(conversion_formule, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs)
 
     def AreRevenusNeeded(self):
         if self.mode_facturation in (FACTURATION_FORFAIT_10H, FACTURATION_PSU, FACTURATION_PSU_TAUX_PERSONNALISES):
             return True
         elif self.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
             return False
-        if self.formule_taux_horaire is None:
-            return False
-        for cas in self.formule_taux_horaire:
-            if "revenus" in cas[0] or "paje" in cas[0]:
-                return True
-        else:
-            return False
+        for tarif in self.tarifs_horaires:
+            if tarif.formule:
+                for cas in tarif.formule:
+                    if "revenus" in cas[0] or "paje" in cas[0]:
+                        return True
+        return False
 
-    def CheckFormuleTauxHoraire(self, index):
-        return self.CheckFormule(self.conversion_formule_taux_horaire, index)
-
-    def EvalFormule(self, formule, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage,
-                    conge_parental, heures_mois, heure_mois, paje, tarifs):
+    def EvalFormule(self, formule, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs):
         # print 'EvalFormule', 'mode=%d' % mode, handicap, 'revenus=%f' % revenus, 'enfants=%d' % enfants, 'jours=%d' % jours, 'heures=%f' % heures, reservataire, nom, 'parents=%d' % parents, chomage, conge_parental, 'heures_mois=%f' % heures_mois, heure_mois
         hg = MODE_HALTE_GARDERIE
         creche = MODE_CRECHE
@@ -1507,13 +1532,11 @@ class Creche(object):
             sql_connection.execute('UPDATE CRECHE SET formule_taux_effort=?', (str(self.formule_taux_effort),))
         self.conversion_formule_taux_effort = GetFormuleConversion(self.formule_taux_effort)
 
-    def EvalTauxEffort(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage,
-                       conge_parental, heures_mois, heure_mois, paje, tarifs):
-        return self.EvalFormule(self.conversion_formule_taux_effort, mode, handicap, revenus, enfants, jours, heures,
-                                reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs)
+    def EvalTauxEffort(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs):
+        return self.EvalFormule(self.conversion_formule_taux_effort, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs)
 
     def CheckFormuleTauxEffort(self, index):
-        return self.CheckFormule(self.conversion_formule_taux_effort, index)
+        return creche.CheckFormule(self.conversion_formule_taux_effort, index)
 
     def GetActivitesAvecHoraires(self):
         result = []
@@ -1883,7 +1906,10 @@ class Inscription(PeriodeReference):
 
     def GetNombreJoursCongesPeriode(self):
         if self.semaines_conges:
-            return self.semaines_conges * self.GetNombreJoursPresenceSemaine()
+            if self.mode == MODE_FORFAIT_HEBDOMADAIRE:
+                return self.semaines_conges * 7
+            else:
+                return self.semaines_conges * self.GetNombreJoursPresenceSemaine()
         else:
             return 0
 
