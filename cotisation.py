@@ -711,7 +711,11 @@ def ParseHtml(filename, context):
 
 
 def generateFraisGardeHtml(cotisation):
-    if creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
+    if cotisation.inscription.mode == MODE_FORFAIT_HEBDOMADAIRE and IsTemplateFile("Frais garde forfait hebdomadaire.html"):
+        filename = "Frais garde forfait hebdomadaire.html"
+    elif cotisation.inscription.mode == MODE_FORFAIT_MENSUEL and IsTemplateFile("Frais garde forfait mensuel.html"):
+        filename = "Frais garde forfait mensuel.html"
+    elif creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
         filename = "Frais garde forfait.html"
     elif creche.mode_facturation == FACTURATION_HORAIRES_REELS:
         filename = "Frais garde reel.html"
