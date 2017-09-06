@@ -655,7 +655,7 @@ class TarifHoraire(object):
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['debut', 'fin', 'formule'] and self.idx:
+        if name in ['debut', 'fin'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE TARIFS_HORAIRES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
