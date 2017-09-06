@@ -1167,6 +1167,8 @@ class TarifHorairePanel(AutoTab, PeriodeMixin):
         self.Layout()
 
     def InternalUpdate(self):
+        if sys.platform == 'win32':
+            self.Hide()
         self.tarifs_sizer.DeleteWindows()
         del self.controls[:]
         if self.periode is not None and self.periode >= 0:
@@ -1175,6 +1177,8 @@ class TarifHorairePanel(AutoTab, PeriodeMixin):
                 self.AjouteLigneTarifHoraire(i, cas[0], cas[1])
         else:
             self.addbutton.Disable()
+        if sys.platform == 'win32':
+            self.Show()
 
     def UpdateContents(self):
         self.SetInstance(creche)
@@ -1215,7 +1219,7 @@ class TarifHorairePanel(AutoTab, PeriodeMixin):
             condition_ctrl.Disable()
             taux_ctrl.Disable()
         self.tarifs_sizer.Insert(index, sizer, 0, wx.EXPAND | wx.BOTTOM, 5)
-        self.Layout()
+        self.sizer.FitInside(self)
 
     def OnAdd(self, event):
         object = event.GetEventObject()
