@@ -22,6 +22,7 @@ from functions import *
 from facture import *
 from cotisation import CotisationException
 from ooffice import *
+from sqlobjects import Reservataire
 
 PRESENCE_NON_FACTUREE = 256
 CONGES = 257
@@ -55,33 +56,43 @@ class FactureModifications(object):
     def __init__(self, inscrits, periode):
         self.metas = {}
         self.multi = False
-        self.inscrits = GetEnfantsTriesSelonParametreTriFacture(inscrits)
         self.periode = periode
         self.periode_facturation = periode
         if creche.temps_facturation != FACTURATION_FIN_MOIS:
             self.periode_facturation = GetMonthStart(periode - datetime.timedelta(1))
-
         self.email = True
-        if len(self.inscrits) > 1:
+        self.reservataire = False
+        if len(inscrits) > 0 and isinstance(inscrits[0], Reservataire):
+            self.inscrits = inscrits
+            self.reservataire = inscrits[0]
+            self.site = None
+            self.email_subject = "Facture %s %s %d" % (self.reservataire.nom, months[periode.month - 1], periode.year)
+            self.email_to = self.reservataire.email
+            self.default_output = self.email_subject + ".odt"
+        elif len(inscrits) > 1:
+            self.multi = True
+            self.inscrits = GetEnfantsTriesSelonParametreTriFacture(inscrits)
             self.site = self.inscrits[0].GetInscriptions(self.periode_facturation, None)[0].site
             self.email_subject = "Factures %s %d" % (months[periode.month - 1], periode.year)
             self.default_output = "Factures %s %d.odt" % (months[periode.month - 1], periode.year)
             self.email_to = None
         else:
+            self.inscrits = inscrits
             who = self.inscrits[0]
             self.site = who.GetInscriptions(self.periode_facturation, None)[0].site
             self.email_subject = "Facture %s %s %d" % (self.GetPrenomNom(who), months[periode.month - 1], periode.year)
             self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
             self.default_output = self.email_subject + ".odt"
 
-        if self.site and IsTemplateFile("Facture mensuelle %s.odt" % self.site.nom):
+        if self.reservataire:
+            self.template = "Facture reservataire.odt"
+        elif self.site and IsTemplateFile("Facture mensuelle %s.odt" % self.site.nom):
             self.template = "Facture mensuelle %s.odt" % self.site.nom
         elif IsTemplateFile("Facture mensuelle %s.odt" % creche.nom):
             self.template = "Facture mensuelle %s.odt" % creche.nom
         else:
             self.template = 'Facture mensuelle.odt'
 
-        self.multi = True
         self.email_text = "Accompagnement facture.txt"
 
     def GetSimpleFilename(self, filename, inscrit):
@@ -232,104 +243,126 @@ class FactureModifications(object):
 
         done = []
 
-        for index, inscrit in enumerate(self.inscrits):
-            if config.options & FACTURES_FAMILLES:
-                skip = False
-                enfants = [enfant for enfant in GetInscritsFamille(inscrit.famille) if enfant.HasFacture(self.periode)]
-                for enfant in enfants:
-                    if enfant in done:
-                        skip = True
-                        break
+        if self.reservataire:
+            for index, reservataire in enumerate(self.inscrits):
+                for template in templates:
+                    clone = template.cloneNode(1)
+                    fields = GetCrecheFields(creche) + GetReservataireFields(reservataire) + [
+                        ("date", self.periode_facturation),
+                        ("mois", '%s %d' % (months[self.periode_facturation.month - 1], self.periode_facturation.year)),
+                        ("numfact", "%03d%04d%02d" % (900+reservataire.idx, self.periode_facturation.year, self.periode_facturation.month)),
+                    ]
+                    ReplaceTextFields(clone, fields)
+
+                    if clone.nodeName in ("draw:frame", "draw:custom-shape"):
+                        doc.insertBefore(clone, template)
                     else:
-                        done.append(enfant)
-                if skip:
-                    continue
-            else:
-                enfants = [inscrit]
-
-            prenoms = []
-            factures = []
-            total_facture = 0.0
-            has_errors = False
-            for enfant in enfants:
-                try:
-                    prenoms.append(enfant.prenom)
-                    facture = Facture(enfant, self.periode.year, self.periode.month, options=0 if config.saas_port else TRACES)
-                    total_facture += facture.total
-                except CotisationException, e:
-                    errors[GetPrenomNom(enfant)] = e.errors
-                    has_errors = True
-                    continue
-
-                last_inscription = None
-                for tmp in enfant.inscriptions:
-                    if not last_inscription or not last_inscription.fin or (tmp.fin and tmp.fin > last_inscription.fin):
-                        last_inscription = tmp
-                facture.fields = fields + GetInscritFields(enfant) + GetInscriptionFields(last_inscription) + GetFactureFields(facture) + GetCotisationFields(facture.last_cotisation)
-                factures.append(facture)
-
-            if has_errors:
-                continue
-
-            solde = CalculeSolde(inscrit.famille, GetMonthEnd(self.periode))
-
-            for template in templates:
-                clone = template.cloneNode(1)
-                if clone.nodeName in ("draw:frame", "draw:custom-shape"):
-                    doc.insertBefore(clone, template)
+                        doc.appendChild(clone)
+                    if clone.hasAttribute("text:anchor-page-number"):
+                        clone.setAttribute("text:anchor-page-number", str(index + 1))
+        else:
+            for index, inscrit in enumerate(self.inscrits):
+                if config.options & FACTURES_FAMILLES:
+                    skip = False
+                    enfants = [enfant for enfant in GetInscritsFamille(inscrit.famille) if enfant.HasFacture(self.periode)]
+                    for enfant in enfants:
+                        if enfant in done:
+                            skip = True
+                            break
+                        else:
+                            done.append(enfant)
+                    if skip:
+                        continue
                 else:
-                    doc.appendChild(clone)
-                if clone.hasAttribute("text:anchor-page-number"):
-                    clone.setAttribute("text:anchor-page-number", str(index + 1))
+                    enfants = [inscrit]
 
-                if clone.tagName == "table:table":
-                    tables = [clone]
-                else:
-                    tables = clone.getElementsByTagName('table:table')
-                for table in tables:
-                    table_name = table.getAttribute('table:name')
-                    # Le(s) tableau(x) des montants détaillés
-                    if table_name == "Montants":
-                        for i, facture in enumerate(factures):
-                            if i < len(factures) - 1:
-                                montants_table = table.cloneNode(1)
-                                clone.insertBefore(montants_table, table)
-                            else:
-                                montants_table = table
-                            montants_table.setAttribute('table:name', "Montants%d" % (i + 1))
-                            rows = montants_table.getElementsByTagName('table:table-row')
-                            for row in rows:
-                                if self.IsRowRemovable(row, facture):
-                                    montants_table.removeChild(row)
-                            ReplaceTextFields(montants_table, facture.fields)
+                prenoms = []
+                factures = []
+                total_facture = 0.0
+                has_errors = False
+                for enfant in enfants:
+                    try:
+                        prenoms.append(enfant.prenom)
+                        facture = Facture(enfant, self.periode.year, self.periode.month, options=0 if config.saas_port else TRACES)
+                        total_facture += facture.total
+                    except CotisationException, e:
+                        errors[GetPrenomNom(enfant)] = e.errors
+                        has_errors = True
+                        continue
 
-                sections = clone.getElementsByTagName('text:section')
-                recap_section_found = False
-                for section in sections:
-                    section_name = section.getAttribute('text:name')
-                    # Le(s) sections(x) des presences du mois
-                    if section_name == "SectionRecap":
-                        recap_section_found = True
-                        for i, facture in enumerate(factures):
-                            if i < len(factures) - 1:
-                                section_clone = section.cloneNode(1)
-                                clone.insertBefore(section_clone, section)
-                            else:
-                                section_clone = section
-                            self.FillRecapSection(section_clone, facture)
+                    last_inscription = None
+                    for tmp in enfant.inscriptions:
+                        if not last_inscription or not last_inscription.fin or (tmp.fin and tmp.fin > last_inscription.fin):
+                            last_inscription = tmp
+                    facture.fields = fields + GetInscritFields(enfant) + GetInscriptionFields(last_inscription) + GetFactureFields(facture) + GetCotisationFields(facture.last_cotisation)
+                    factures.append(facture)
 
-                # Les autres champs de la facture
-                facture_fields = fields + GetFamilleFields(inscrit.famille) + \
-                    [('total', total_facture, FIELD_EUROS), ('solde', solde, FIELD_EUROS),
-                     ('prenoms', ", ".join(prenoms)),
-                     ('montant-a-regler', total_facture + solde, FIELD_EUROS),
-                     ('url-tipi', GetUrlTipi(inscrit.famille))] + \
-                    GetFactureFields(factures[0]) + \
-                    self.GetFactureCustomFields(facture)
-                ReplaceTextFields(clone, facture_fields)
+                if has_errors:
+                    continue
 
-                if not recap_section_found:
-                    self.FillRecapSection(clone, facture)
+                solde = CalculeSolde(inscrit.famille, GetMonthEnd(self.periode))
+
+                for template in templates:
+                    clone = template.cloneNode(1)
+
+                    fields = GetSiteFields(facture.last_cotisation.inscription.site)
+                    ReplaceTextFields(clone, fields)
+
+                    if clone.nodeName in ("draw:frame", "draw:custom-shape"):
+                        doc.insertBefore(clone, template)
+                    else:
+                        doc.appendChild(clone)
+                    if clone.hasAttribute("text:anchor-page-number"):
+                        clone.setAttribute("text:anchor-page-number", str(index + 1))
+
+                    if clone.tagName == "table:table":
+                        tables = [clone]
+                    else:
+                        tables = clone.getElementsByTagName('table:table')
+                    for table in tables:
+                        table_name = table.getAttribute('table:name')
+                        # Le(s) tableau(x) des montants détaillés
+                        if table_name == "Montants":
+                            for i, facture in enumerate(factures):
+                                if i < len(factures) - 1:
+                                    montants_table = table.cloneNode(1)
+                                    clone.insertBefore(montants_table, table)
+                                else:
+                                    montants_table = table
+                                montants_table.setAttribute('table:name', "Montants%d" % (i + 1))
+                                rows = montants_table.getElementsByTagName('table:table-row')
+                                for row in rows:
+                                    if self.IsRowRemovable(row, facture):
+                                        montants_table.removeChild(row)
+                                ReplaceTextFields(montants_table, facture.fields)
+
+                    sections = clone.getElementsByTagName('text:section')
+                    recap_section_found = False
+                    for section in sections:
+                        section_name = section.getAttribute('text:name')
+                        # Le(s) sections(x) des presences du mois
+                        if section_name == "SectionRecap":
+                            recap_section_found = True
+                            for i, facture in enumerate(factures):
+                                if i < len(factures) - 1:
+                                    section_clone = section.cloneNode(1)
+                                    clone.insertBefore(section_clone, section)
+                                else:
+                                    section_clone = section
+                                self.FillRecapSection(section_clone, facture)
+
+                    # Les autres champs de la facture
+                    facture_fields = fields + GetFamilleFields(inscrit.famille) + \
+                        [('total', total_facture, FIELD_EUROS), ('solde', solde, FIELD_EUROS),
+                         ('prenoms', ", ".join(prenoms)),
+                         ('montant-a-regler', total_facture + solde, FIELD_EUROS),
+                         ('url-tipi', GetUrlTipi(inscrit.famille))] + \
+                        GetFactureFields(factures[0]) + \
+                        self.GetFactureCustomFields(facture)
+                    ReplaceTextFields(clone, facture_fields)
+
+                    if not recap_section_found:
+                        self.FillRecapSection(clone, facture)
 
         for template in templates:
             doc.removeChild(template)

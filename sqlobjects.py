@@ -733,16 +733,29 @@ class Reservataire(SQLObject):
         if creation:
             self.create()
 
+    def GetFacturesList(self):
+        result = []
+        date = GetMonthStart(self.debut)
+        while date <= datetime.date.today():
+            result.append(date)
+            for i in range(self.periode_facturation):
+                date = GetNextMonthStart(date)
+        return result
+
+    def HasFacture(self, date, site):
+        # TODO
+        return True
+
     def create(self):
         print 'nouveau reservataire'
         result = sql_connection.execute(
-            'INSERT INTO RESERVATAIRES (idx, debut, fin, nom, places, heures_jour, heures_semaine, tarif, periode_facturation, delai_paiement, options) VALUES (NULL,?,?,?,?,?,?,?,?,?,?)',
-            (self.debut, self.fin, self.nom, self.places, self.heures_jour, self.heures_semaine, self.tarif, self.periode_facturation, self.delai_paiement, self.options))
+            'INSERT INTO RESERVATAIRES (idx, debut, fin, nom, adresse, code_postal, ville, telephone, places, heures_jour, heures_semaine, tarif, periode_facturation, delai_paiement, options) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+            (self.debut, self.fin, self.nom, self.adresse, self.code_postal, self.ville, self.telephone, self.places, self.heures_jour, self.heures_semaine, self.tarif, self.periode_facturation, self.delai_paiement, self.options))
         self.idx = result.lastrowid
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['debut', 'fin', 'nom', 'places', 'heures_jour', 'heures_semaine', 'tarif', 'periode_facturation', 'delai_paiement', 'options'] and self.idx:
+        if name in ['debut', 'fin', 'nom', 'adresse', 'code_postal', 'ville', 'telephone', 'places', 'heures_jour', 'heures_semaine', 'tarif', 'periode_facturation', 'delai_paiement', 'options'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE RESERVATAIRES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
@@ -1623,6 +1636,9 @@ class Creche(object):
 
     def GetInscrit(self, idx):
         return self.GetObject(self.inscrits, idx)
+
+    def GetReservataire(self, idx):
+        return self.GetObject(self.reservataires, idx)
 
     def GetSalarie(self, idx):
         return self.GetObject(self.salaries, idx)

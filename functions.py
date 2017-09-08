@@ -870,6 +870,18 @@ def GetCrecheFields(creche):
             ]
 
 
+def GetReservataireFields(reservataire):
+    return [('nom-reservataire', reservataire.nom),
+            ('tarif-reservataire', reservataire.tarif),
+            ('tarif-periode-reservataire', reservataire.tarif * reservataire.periode_facturation),
+            ('periodicite-reservataire', reservataire.periode_facturation),
+            ('adresse-reservataire', reservataire.adresse),
+            ('code-postal-reservataire', GetCodePostal(reservataire)),
+            ('ville-reservataire', reservataire.ville),
+            ('telephone-reservataire', reservataire.telephone),
+            ]
+
+
 def GetTarifsHorairesFields(creche, date):
     tarifs = Select(creche.tarifs_horaires, date)
     if tarifs:
