@@ -20,7 +20,7 @@ from __future__ import unicode_literals
 import __builtin__
 from constants import *
 import datetime
-from functions import GetInscriptions, GetDateIntersection, GetDateMinus
+from functions import GetInscriptions, GetDateIntersection, GetDateMinus, GetPrenomNom
 from facture import GetRetardDePaiement
 
 
@@ -50,6 +50,9 @@ def GetAlertes(fresh_only=False):
             if today > date:
                 message = "L'inscription de %s %s se terminera dans 2 mois" % (inscrit.prenom, inscrit.nom)
                 add_alerte(date, message)
+        if config.options & REGLEMENTS:
+            if GetRetardDePaiement(inscrit.famille):
+                add_alerte(today, "Le solde de %s est négatif depuis plus de 30 jours" % GetPrenomNom(inscrit))
 
     for inscrit in creche.inscrits:
         for inscription in inscrit.inscriptions:
@@ -67,11 +70,9 @@ def GetAlertes(fresh_only=False):
         if date:
             add_alerte(date, "%s %s a 2 contrats actifs à la même date" % (salarie.prenom, salarie.nom))
 
-    if (config.options & REGLEMENTS) and creche.cloture_facturation:
-        jalon = today - datetime.timedelta(30)
-        for inscrit in creche.inscrits:
-            if GetRetardDePaiement(inscrit.famille):
-                add_alerte(jalon, "Le solde de %s %s est négatif depuis plus de 30 jours" % (inscrit.prenom, inscrit.nom))
+    for reservataire in creche.reservataires:
+        if GetRetardDePaiement(reservataire):
+            add_alerte(today, "Le solde de %s est négatif depuis plus de %d jours" % (reservataire.nom, reservataire.delai_paiement if reservataire.delai_paiement else 0))
 
     alertes.sort(key=lambda (date, message, ack): date)
     return alertes

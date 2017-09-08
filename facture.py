@@ -877,8 +877,10 @@ def Facture(inscrit, annee, mois, options=0):
 
 class FactureReservataire(object):
     def __init__(self, reservataire, date):
-        self.total_facture = reservataire.tarif
+        self.reservataire = reservataire
         self.date = date
+        self.total = reservataire.tarif * reservataire.periode_facturation
+        self.total_facture = self.total
 
 
 def GetHistoriqueSolde(who, jalon, derniere_facture=True):
@@ -925,9 +927,9 @@ def GetHistoriqueSolde(who, jalon, derniere_facture=True):
     return lignes
 
 
-def CalculeSolde(famille, date):
+def CalculeSolde(who, date):
     solde = 0.0
-    historique = GetHistoriqueSolde(famille, date, False)
+    historique = GetHistoriqueSolde(who, date, False)
     for ligne in historique:
         try:
             if isinstance(ligne, Encaissement):
@@ -939,17 +941,9 @@ def CalculeSolde(famille, date):
     return solde
 
 
-def GetRetardDePaiement(famille):
-    solde = 0.0
-    jalon = datetime.date.today() - datetime.timedelta(30)
-    inscrits = GetInscritsFamille(famille)
-    for inscrit in inscrits:
-        for date in inscrit.factures_cloturees:
-            if date < jalon:
-                solde -= inscrit.factures_cloturees[date].total_facture
-    for encaissement in famille.encaissements:
-        solde += encaissement.valeur
-    return solde < 0
+def GetRetardDePaiement(who):
+    delai = who.delai_paiement if who.delai_paiement else 0
+    return CalculeSolde(who, datetime.date.today() - datetime.timedelta(delai)) > 0
 
 
 def GetFacturesList(inscrit):

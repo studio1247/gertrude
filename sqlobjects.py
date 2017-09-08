@@ -2169,6 +2169,7 @@ class Famille(object):
             self.parents = []
         self.referents = []
         self.encaissements = []
+        self.delai_paiement = 30
 
         if creation:
             self.create()
