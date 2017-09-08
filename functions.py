@@ -1015,6 +1015,8 @@ def GetCotisationFields(cotisation):
               ('factures-periode', cotisation.nombre_factures),
               ('frais-inscription', cotisation.frais_inscription, FIELD_EUROS | FIELD_SIGN),
               ('cotisation-mensuelle', "%.02f" % cotisation.cotisation_mensuelle),
+              ('montant-mensuel-activites', "%.02f" % cotisation.montant_mensuel_activites),
+              ('cotisation-mensuelle-avec-activites', "%.02f" % cotisation.cotisation_mensuelle_avec_activites),
               ('enfants-a-charge', cotisation.enfants_a_charge),
               ('annee-debut', cotisation.debut.year),
               ('annee-fin', cotisation.debut.year+1),

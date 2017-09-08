@@ -413,7 +413,7 @@ class Cotisation(object):
             self.str_mode_garde = u'plein temps'
         else:
             self.str_mode_garde = u'%d/5èmes' % self.jours_semaine
-        
+
         self.tranche_paje = 0
         self.taux_effort = None
         self.forfait_mensuel_heures = 0.0
@@ -591,11 +591,19 @@ class Cotisation(object):
         if creche.arrondi_mensualisation_euros == ARRONDI_EURO_PLUS_PROCHE:
             self.cotisation_mensuelle = round(self.cotisation_mensuelle)
 
+        self.montant_journalier_activites = 0.0
+        for key in creche.activites:
+            activite = creche.activites[key]
+            if activite.mode == MODE_SYSTEMATIQUE_SANS_HORAIRES:
+                self.montant_journalier_activites += activite.EvalTarif(inscrit, self.debut)
+        if options & TRACES:
+            print " montant journalier activites :", self.montant_journalier_activites
+        self.montant_mensuel_activites = self.montant_journalier_activites * self.jours_semaine * (self.semaines_periode - self.semaines_conges) / self.nombre_factures
+        self.cotisation_mensuelle_avec_activites = self.cotisation_mensuelle + self.montant_mensuel_activites
+
         if options & TRACES: 
             print " cotisation mensuelle :", self.cotisation_mensuelle
             print " montant heure garde :", self.montant_heure_garde
-
-        if options & TRACES:
             print
     
     def AjustePeriode(self, param):
