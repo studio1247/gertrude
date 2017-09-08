@@ -1696,6 +1696,7 @@ class Parent(object):
         self.telephone_portable_notes = ""
         self.telephone_travail = ""
         self.telephone_travail_notes = ""
+        self.profession = ""
         self.email = ""
         self.revenus = []
         # self.justificatif_revenu = 0
@@ -1712,10 +1713,10 @@ class Parent(object):
     def create(self):
         print 'nouveau parent'
         result = sql_connection.execute(
-            'INSERT INTO PARENTS (idx, famille, relation, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?)',
+            'INSERT INTO PARENTS (idx, famille, relation, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, profession, email) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?)',
             (self.famille.idx, self.relation, self.prenom, self.nom, self.telephone_domicile,
              self.telephone_domicile_notes, self.telephone_portable, self.telephone_portable_notes,
-             self.telephone_travail, self.telephone_travail_notes, self.email))
+             self.telephone_travail, self.telephone_travail_notes, self.profession, self.email))
         self.idx = result.lastrowid
         for revenu in self.revenus:
             revenu.create()
@@ -1733,7 +1734,7 @@ class Parent(object):
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['relation', 'prenom', 'nom', 'adresse', 'code_postal', 'ville', 'telephone_domicile', 'telephone_domicile_notes', 'telephone_portable',
-                    'telephone_portable_notes', 'telephone_travail', 'telephone_travail_notes', 'email'] and self.idx:
+                    'telephone_portable_notes', 'telephone_travail', 'telephone_travail_notes', 'profession', 'email'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE PARENTS SET %s=? WHERE idx=?' % name, (value, self.idx))
 

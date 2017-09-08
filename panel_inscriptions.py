@@ -480,6 +480,8 @@ class ParentsPanel(InscriptionsTab):
                 self.parents_items[-1].extend([wx.StaticText(self, -1, label+' :'), AutoPhoneCtrl(self, None, field), AutoTextCtrl(self, None, field+'_notes')])
                 sizer3.AddMany([self.parents_items[-1][-2], (self.parents_items[-1][-1], 1, wx.LEFT|wx.EXPAND, 5)])
                 sizer2.AddMany([(self.parents_items[-1][-3], 0, wx.ALIGN_CENTER_VERTICAL), (sizer3, 0, wx.EXPAND)])
+            self.parents_items[-1].extend([wx.StaticText(self, -1, 'Profession :'), AutoTextCtrl(self, None, 'profession')])
+            sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
             self.parents_items[-1].extend([wx.StaticText(self, -1, 'E-mail :'), AutoTextCtrl(self, None, 'email')])
             sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
             sizer11.Add(sizer2, 0, wx.EXPAND|wx.ALL, 5)

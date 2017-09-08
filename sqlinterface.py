@@ -28,7 +28,7 @@ from facture import FactureCloturee
 import wx
 import bcrypt
 
-VERSION = 108
+VERSION = 109
 
 
 def getdate(s):
@@ -309,6 +309,7 @@ class SQLConnection(object):
             telephone_portable_notes VARCHAR,
             telephone_travail VARCHAR,
             telephone_travail_notes VARCHAR,
+            profession VARCHAR
             email VARCHAR
           );""")
 
@@ -820,10 +821,10 @@ class SQLConnection(object):
             famille = Famille(creation=False)
             famille.adresse, famille.code_postal, famille.ville, famille.numero_securite_sociale, famille.numero_allocataire_caf, famille.code_client, famille.medecin_traitant, famille.telephone_medecin_traitant, famille.assureur, famille.numero_police_assurance, famille.code_client, famille.tarifs, famille.notes, famille.iban, famille.bic, famille.mandate_id, famille.jour_prelevement_automatique, famille.date_premier_prelevement_automatique, famille.idx = adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, code_client, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, code_client, tarifs, notes, iban, bic, mandate_id, jour_prelevement_automatique, getdate(date_premier_prelevement_automatique), idx
             creche.familles.append(famille)
-            cur.execute('SELECT relation, prenom, nom, adresse, code_postal, ville, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, email, idx FROM PARENTS WHERE famille=?', (famille.idx,))
+            cur.execute('SELECT relation, prenom, nom, adresse, code_postal, ville, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, profession, email, idx FROM PARENTS WHERE famille=?', (famille.idx,))
             for i, parent_entry in enumerate(cur.fetchall()):
                 parent = Parent(famille, creation=False)
-                parent.relation, parent.prenom, parent.nom, parent.adresse, parent.code_postal, parent.ville, parent.telephone_domicile, parent.telephone_domicile_notes, parent.telephone_portable, parent.telephone_portable_notes, parent.telephone_travail, parent.telephone_travail_notes, parent.email, parent.idx = parent_entry
+                parent.relation, parent.prenom, parent.nom, parent.adresse, parent.code_postal, parent.ville, parent.telephone_domicile, parent.telephone_domicile_notes, parent.telephone_portable, parent.telephone_portable_notes, parent.telephone_travail, parent.telephone_travail_notes, parent.profession, parent.email, parent.idx = parent_entry
                 if i < 2:
                     famille.parents[i] = parent
                 else:
@@ -1979,6 +1980,10 @@ class SQLConnection(object):
                 formule VARCHAR
               )""")
             cur.execute("INSERT INTO TARIFS_HORAIRES (idx, debut, fin, formule) VALUES (NULL, ?, ?, ?)", (None, None, formule_taux_horaire))
+
+        if version < 109:
+            cur.execute("ALTER TABLE PARENTS ADD profession VARCHAR;")
+            cur.execute('UPDATE PARENTS SET profession=""')
 
         if version < VERSION:
             try:
