@@ -28,7 +28,7 @@ from facture import FactureCloturee
 import wx
 import bcrypt
 
-VERSION = 109
+VERSION = 110
 
 
 def getdate(s):
@@ -523,6 +523,15 @@ class SQLConnection(object):
           );""")
 
         cur.execute("""
+          CREATE TABLE ENCAISSEMENTS_RESERVATAIRES (
+            idx INTEGER PRIMARY KEY,
+            reservataire INTEGER REFERENCES RESERVATAIRE(idx),
+            date DATE,
+            valeur FLOAT,
+            moyen_paiement INTEGER
+          );""")
+
+        cur.execute("""
           CREATE TABLE NUMEROS_FACTURE (
             idx INTEGER PRIMARY KEY,
             date DATE,
@@ -704,6 +713,11 @@ class SQLConnection(object):
             debut, fin, reservataire.nom, reservataire.adresse, reservataire.code_postal, reservataire.ville, reservataire.telephone, reservataire.email, reservataire.places, reservataire.heures_jour, reservataire.heures_semaine, reservataire.options, reservataire.periode_facturation, reservataire.tarif, reservataire.delai_paiement, idx = reservataire_entry
             reservataire.debut, reservataire.fin, reservataire.idx = getdate(debut), getdate(fin), idx
             creche.reservataires.append(reservataire)
+            cur.execute('SELECT idx, date, valeur, moyen_paiement FROM ENCAISSEMENTS_RESERVATAIRES where reservataire=?', (reservataire.idx,))
+            for idx, date, valeur, moyen_paiement in cur.fetchall():
+                date = getdate(date)
+                reservataire.encaissements.append(EncaissementReservataire(reservataire, date, valeur, moyen_paiement, idx))
+
 
         cur.execute('SELECT label, type, unite, valeur, idx FROM TARIFSSPECIAUX')
         for tarifs_entry in cur.fetchall():
@@ -1984,6 +1998,16 @@ class SQLConnection(object):
         if version < 109:
             cur.execute("ALTER TABLE PARENTS ADD profession VARCHAR;")
             cur.execute('UPDATE PARENTS SET profession=""')
+
+        if version < 110:
+            cur.execute("""
+              CREATE TABLE ENCAISSEMENTS_RESERVATAIRES (
+                idx INTEGER PRIMARY KEY,
+                reservataire INTEGER REFERENCES RESERVATAIRE(idx),
+                date DATE,
+                valeur FLOAT,
+                moyen_paiement INTEGER
+              );""")
 
         if version < VERSION:
             try:

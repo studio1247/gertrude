@@ -21,7 +21,7 @@ import locale
 import __builtin__
 from cotisation import *
 from globals import history
-from sqlobjects import Encaissement, Inscrit
+from sqlobjects import Encaissement, Inscrit, Reservataire
 
 
 class FactureBase(object):
@@ -875,41 +875,53 @@ def Facture(inscrit, annee, mois, options=0):
         return CreateFacture(inscrit, annee, mois, options)
 
 
-def GetHistoriqueSolde(famille, jalon, derniere_facture=True):
-    inscrits = GetInscritsFamille(famille)
-    lignes = [encaissement for encaissement in famille.encaissements if not encaissement.date or encaissement.date <= jalon]
-    debut, fin = None, None
-    for inscrit in inscrits:
-        debut_inscrit, fin_inscrit = inscrit.GetPeriodeInscriptions()
-        if debut_inscrit is None:
-            print "Erreur sur la période d'accueil de %s" % GetPrenomNom(inscrit)
-        elif debut is None or debut_inscrit < debut:
-            debut = debut_inscrit
-        if fin is None or fin_inscrit is None or fin_inscrit > fin:
-            fin = fin_inscrit
-    if debut is None:
-        return lignes
-    if fin is None or fin > jalon:
-        fin = jalon
-    date = GetMonthStart(debut)
-    fin = min(today, GetMonthEnd(fin))
-    while date <= fin:
-        for inscrit in inscrits:
-            try:
-                facture = Facture(inscrit, date.year, date.month, NO_NUMERO | NO_RESTORE_CLOTURE)
-                if facture.total_facture != 0 and (not creche.cloture_facturation or facture.cloture):
-                    if derniere_facture:
-                        # desactivé pour Moulon (la dernière facture de juillet clôturée le 10 juillet et non visible dans les règlements
-                        # if facture.fin_recap <= fin:
-                        lignes.append(facture)
-                    else:
-                        if facture.fin_recap < GetMonthStart(jalon):
-                            lignes.append(facture)
-            except Exception, e:
-                pass
-                # print "Exception %r" % e
+class FactureReservataire(object):
+    def __init__(self, reservataire, date):
+        self.total_facture = reservataire.tarif
+        self.date = date
 
-        date = GetNextMonthStart(date)
+
+def GetHistoriqueSolde(who, jalon, derniere_facture=True):
+    if isinstance(who, Reservataire):
+        lignes = [encaissement for encaissement in who.encaissements if not encaissement.date or encaissement.date <= jalon]
+        for date in who.GetFacturesList():
+            if date <= jalon:
+                lignes.append(FactureReservataire(who, date))
+    else:
+        inscrits = GetInscritsFamille(who)
+        lignes = [encaissement for encaissement in who.encaissements if not encaissement.date or encaissement.date <= jalon]
+        debut, fin = None, None
+        for inscrit in inscrits:
+            debut_inscrit, fin_inscrit = inscrit.GetPeriodeInscriptions()
+            if debut_inscrit is None:
+                print "Erreur sur la période d'accueil de %s" % GetPrenomNom(inscrit)
+            elif debut is None or debut_inscrit < debut:
+                debut = debut_inscrit
+            if fin is None or fin_inscrit is None or fin_inscrit > fin:
+                fin = fin_inscrit
+        if debut is None:
+            return lignes
+        if fin is None or fin > jalon:
+            fin = jalon
+        date = GetMonthStart(debut)
+        fin = min(today, GetMonthEnd(fin))
+        while date <= fin:
+            for inscrit in inscrits:
+                try:
+                    facture = Facture(inscrit, date.year, date.month, NO_NUMERO | NO_RESTORE_CLOTURE)
+                    if facture.total_facture != 0 and (not creche.cloture_facturation or facture.cloture):
+                        if derniere_facture:
+                            # desactivé pour Moulon (la dernière facture de juillet clôturée le 10 juillet et non visible dans les règlements
+                            # if facture.fin_recap <= fin:
+                            lignes.append(facture)
+                        else:
+                            if facture.fin_recap < GetMonthStart(jalon):
+                                lignes.append(facture)
+                except Exception, e:
+                    pass
+                    # print "Exception %r" % e
+
+            date = GetNextMonthStart(date)
     return lignes
 
 

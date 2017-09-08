@@ -729,6 +729,7 @@ class Reservataire(SQLObject):
         self.periode_facturation = 1
         self.delai_paiement = 30
         self.options = 0
+        self.encaissements = []
 
         if creation:
             self.create()
@@ -2624,19 +2625,37 @@ class Alerte(object):
             sql_connection.execute('UPDATE ALERTES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
-class Encaissement(SQLObject):
-    table = "ENCAISSEMENTS"
-
-    def __init__(self, famille, date=today, valeur=0, moyen_paiement=0, idx=None):
+class EncaissementBase(SQLObject):
+    def __init__(self, date=today, valeur=0, moyen_paiement=0, idx=None):
         self.ready = False
         self.idx = idx
-        self.famille = famille
         self.date = date
         self.valeur = valeur
         self.moyen_paiement = moyen_paiement
         self.ready = True
+        self.fields = ['date', 'valeur', 'moyen_paiement']
         if idx is None:
             self.create()
+
+    def delete(self):
+        print 'suppression encaissement'
+        sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.table, (self.idx,))
+        self.idx = None
+
+    def __setattr__(self, name, value):
+        self.__dict__[name] = value
+        if self.ready and name in ['date', 'valeur', 'moyen_paiement']:
+            print 'update', name
+            sql_connection.execute('UPDATE ENCAISSEMENTS SET %s=? WHERE idx=?' % (self.table, name), (value, self.idx))
+
+
+class Encaissement(EncaissementBase):
+    table = "ENCAISSEMENTS"
+
+    def __init__(self, famille, date=today, valeur=0, moyen_paiement=0, idx=None):
+        self.ready = False
+        self.famille = famille
+        EncaissementBase.__init__(self, date, valeur, moyen_paiement, idx)
 
     def create(self):
         print 'nouvel encaissement'
@@ -2645,14 +2664,20 @@ class Encaissement(SQLObject):
             (self.famille.idx, self.date, self.valeur, self.moyen_paiement))
         self.idx = result.lastrowid
 
-    def delete(self):
-        print 'suppression encaissement'
-        sql_connection.execute('DELETE FROM ENCAISSEMENTS WHERE idx=?', (self.idx,))
-        self.idx = None
 
-    def __setattr__(self, name, value):
-        self.__dict__[name] = value
+class EncaissementReservataire(EncaissementBase):
+    table = "ENCAISSEMENTS_RESERVATAIRES"
 
-        if self.ready and name in ['date', 'valeur', 'moyen_paiement']:
-            print 'update', name
-            sql_connection.execute('UPDATE ENCAISSEMENTS SET %s=? WHERE idx=?' % name, (value, self.idx))
+    def __init__(self, reservataire, date=today, valeur=0, moyen_paiement=0, idx=None):
+        self.ready = False
+        self.reservataire = reservataire
+        EncaissementBase.__init__(self, date, valeur, moyen_paiement, idx)
+
+    def create(self):
+        print 'nouvel encaissement reservataire'
+        result = sql_connection.execute(
+            'INSERT INTO ENCAISSEMENTS_RESERVATAIRES (idx, reservataire, date, valeur, moyen_paiement) VALUES (NULL,?,?,?,?)',
+            (self.reservataire.idx, self.date, self.valeur, self.moyen_paiement))
+        self.idx = result.lastrowid
+
+
