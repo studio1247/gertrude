@@ -162,6 +162,7 @@ class Cotisation(object):
             print "\nCotisation de %s au %s ..." % (GetPrenomNom(inscrit), date)
 
         self.revenus_parents = []
+        self.semaines_conges = 0
         self.liste_conges = []
         self.conges_inscription = []
         self.chomage = 0
@@ -394,8 +395,6 @@ class Cotisation(object):
                     self.nombre_factures = 12 - GetNombreMoisSansFactureContrat(self.date.year)
                 if self.inscription.semaines_conges:
                     self.semaines_conges = self.inscription.semaines_conges
-                else:
-                    self.semaines_conges = 0
                 self.heures_periode = (self.semaines_periode - self.semaines_conges) * self.heures_semaine
 
                 if creche.mode_facturation != FACTURATION_FORFAIT_MENSUEL and self.inscription.mode != MODE_FORFAIT_MENSUEL:
@@ -457,8 +456,6 @@ class Cotisation(object):
                 raise CotisationException(errors)
             if type(self.inscription.semaines_conges) == int:
                 self.semaines_conges = self.inscription.semaines_conges
-            else:                
-                self.semaines_conges = 0
             self.cotisation_periode, self.montants_heure_garde = self.CalculeFraisGardeComplete(self.heures_periode, self.heures_mois)
             if options & TRACES:
                 print " cotisation periode :", self.cotisation_periode
