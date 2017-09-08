@@ -662,21 +662,19 @@ def SendDocument(filename, text, subject, to, saas=False):
     msg['CC'] = creche.email
 
     try:
-        fp = open(text)
-        doc = MIMEText(fp.read(), _charset='UTF-8')
-        fp.close()
-        msg.attach(doc)
+        with open(text) as fp:
+            doc = MIMEText(fp.read(), _charset='UTF-8')
+            msg.attach(doc)
     except:
         print "ERREUR"
         pass
 
-    fp = open(filename, 'rb')
-    doc = MIMEBase('application', 'octet-stream')
-    doc.set_payload(fp.read())
-    encoders.encode_base64(doc)
-    doc.add_header('Content-Disposition', 'attachment', filename=unicode(os.path.split(filename)[1]).encode("latin-1"))
-    fp.close()
-    msg.attach(doc)
+    with open(filename, 'rb') as fp:
+        doc = MIMEBase('application', 'octet-stream')
+        doc.set_payload(fp.read())
+        encoders.encode_base64(doc)
+        doc.add_header('Content-Disposition', 'attachment', filename=unicode(os.path.split(filename)[1]).encode("latin-1"))
+        msg.attach(doc)
 
     if saas:
         smtp_server = "localhost"
