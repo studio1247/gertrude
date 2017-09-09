@@ -595,7 +595,10 @@ class Cotisation(object):
                 self.montant_journalier_activites += activite.EvalTarif(inscrit, self.debut)
         if options & TRACES:
             print " montant journalier activites :", self.montant_journalier_activites
-        self.montant_mensuel_activites = self.montant_journalier_activites * self.jours_semaine * (self.semaines_periode - self.semaines_conges) / self.nombre_factures
+        if self.nombre_factures > 0:
+            self.montant_mensuel_activites = self.montant_journalier_activites * self.jours_semaine * (self.semaines_periode - self.semaines_conges) / self.nombre_factures
+        else:
+            self.montant_mensuel_activites = 0.0
         self.cotisation_mensuelle_avec_activites = self.cotisation_mensuelle + self.montant_mensuel_activites
 
         if options & TRACES: 
