@@ -98,6 +98,15 @@ def GetTranchesPaje(date, naissance, enfants_a_charge):
 class Cotisation(object):
     def CalculeFraisGarde(self, heures):
         return self.CalculeFraisGardeComplete(heures, heures)[0]
+
+    def GetNombreContratsFactures(self):
+        return max(1, self.nombre_factures)
+
+    def IsContratFacture(self, date):
+        if self.nombre_factures == 0:
+            return True
+        else:
+            return IsFacture(date)
     
     def CalculeFraisGardeComplete(self, heures, heures_mois):
         if self.montant_heure_garde is not None:
@@ -350,20 +359,19 @@ class Cotisation(object):
                     self.nombre_factures = GetNombreFacturesContrat(self.debut_inscription, fin_decompte_conges_et_factures)
                 else:
                     self.nombre_factures = GetNombreFacturesContrat(self.debut, fin_decompte_conges_et_factures)
-                if self.nombre_factures == 0:
-                    self.nombre_factures = 1
+
                 if options & TRACES:
                     print u' nombres de factures :', self.nombre_factures
 
                 if creche.mode_facturation != FACTURATION_FORFAIT_MENSUEL and self.inscription.mode != MODE_FORFAIT_MENSUEL:
                     if creche.arrondi_mensualisation == SANS_ARRONDI:
-                        self.heures_mois = (self.heures_periode / self.nombre_factures)
+                        self.heures_mois = (self.heures_periode / self.GetNombreFactures())
                         if options & TRACES:
                             print u' heures mensuelles : %f' % self.heures_mois
                     else:
-                        self.heures_mois = math.ceil(self.heures_periode / self.nombre_factures)
+                        self.heures_mois = math.ceil(self.heures_periode / self.GetNombreContratsFactures())
                         if options & TRACES:
-                            print u' heures mensuelles : %f (%f)' % (self.heures_mois, self.heures_periode / self.nombre_factures)
+                            print u' heures mensuelles : %f (%f)' % (self.heures_mois, self.heures_periode / self.GetNombreContratsFactures())
             else:
                 if creche.repartition == REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS:
                     if self.fin_inscription is None:
@@ -398,10 +406,7 @@ class Cotisation(object):
                 self.heures_periode = (self.semaines_periode - self.semaines_conges) * self.heures_semaine
 
                 if creche.mode_facturation != FACTURATION_FORFAIT_MENSUEL and self.inscription.mode != MODE_FORFAIT_MENSUEL:
-                    if self.nombre_factures == 0:
-                        self.heures_mois = 0
-                    else:
-                        self.heures_mois = self.heures_periode / self.nombre_factures
+                    self.heures_mois = self.heures_periode / self.GetNombreContratsFactures()
 
                 if options & TRACES:
                     print ' heures / periode : (%d-%f) * %f = %f' % (self.semaines_periode, self.semaines_conges, self.heures_semaine, self.heures_periode)
@@ -460,10 +465,7 @@ class Cotisation(object):
             if options & TRACES:
                 print " cotisation periode :", self.cotisation_periode
                 print " montant heure garde supplementaire :", self.montant_heure_garde
-            if self.nombre_factures == 0:
-                self.cotisation_mensuelle = 0.0
-            else:
-                self.cotisation_mensuelle = self.cotisation_periode / self.nombre_factures
+            self.cotisation_mensuelle = self.cotisation_periode / self.GetNombreContratsFactures()
         elif creche.nom == "LA VOLIERE":
             if self.enfants_a_charge == 1:
                 tranche = GetTranche(self.assiette_annuelle, [20281.0, 45068.0])
@@ -595,10 +597,7 @@ class Cotisation(object):
                 self.montant_journalier_activites += activite.EvalTarif(inscrit, self.debut, reservataire=self.inscription.reservataire)
         if options & TRACES:
             print " montant journalier activites :", self.montant_journalier_activites
-        if self.nombre_factures > 0:
-            self.montant_mensuel_activites = self.montant_journalier_activites * self.jours_semaine * (self.semaines_periode - self.semaines_conges) / self.nombre_factures
-        else:
-            self.montant_mensuel_activites = 0.0
+        self.montant_mensuel_activites = self.montant_journalier_activites * self.jours_semaine * (self.semaines_periode - self.semaines_conges) / self.GetNombreContratsFactures()
         self.cotisation_mensuelle_avec_activites = self.cotisation_mensuelle + self.montant_mensuel_activites
 
         if options & TRACES: 
@@ -615,6 +614,21 @@ class Cotisation(object):
             self.debut = debut
         if fin and fin > self.debut and (not self.fin or fin < self.fin):
             self.fin = fin
+
+    def IsFacture(self, date):
+        if self.nombre_factures == 0:
+            return True
+        else:
+            return IsFacture(date)
+
+    def GetNombreFactures(self, debut, fin):
+        nombre_factures = 0
+        date = debut
+        while date <= fin:
+            if IsFacture(date):
+                nombre_factures += 1
+            date = GetNextMonthStart(date)
+        return nombre_factures
             
     def Include(self, date):
         return self.debut <= date <= self.fin

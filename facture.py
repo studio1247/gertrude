@@ -548,15 +548,15 @@ class FactureFinMois(FactureBase):
                         # print '(', cotisation.heures_realisees, '-', cotisation.heures_realisees_non_facturees, '+', cotisation.heures_facturees_non_realisees, '-', cotisation.heures_supplementaires, ') *', cotisation.montant_heure_garde, '=', self.cotisation_mensuelle  
                 elif creche.mode_facturation == FACTURATION_PSU and self.heures_contractualisees:
                     prorata_heures = cotisation.heures_mois * cotisation.jours_ouvres / self.jours_ouvres
-                    if cotisation.prorata:
+                    if cotisation.prorata and cotisation.nombre_factures > 0:
                         prorata = cotisation.cotisation_mensuelle * cotisation.jours_ouvres / self.jours_ouvres
                     else:
                         prorata = cotisation.cotisation_mensuelle
                     if cotisation.total_realise_non_facture:
                         self.deduction += cotisation.total_realise_non_facture
                         self.raison_deduction.add("heures non facturées")
-                    # TODOTODO if IsContratFacture(cotisation.debut):
-                    self.cotisation_mensuelle += prorata
+                    if cotisation.IsContratFacture(cotisation.debut):
+                        self.cotisation_mensuelle += prorata
                     self.total_contractualise += prorata
                     self.heures_contrat += prorata_heures
                     self.heures_facture_par_mode[cotisation.mode_garde] += prorata_heures
@@ -587,8 +587,8 @@ class FactureFinMois(FactureBase):
                             print " prorata : %f * %f / %f = %f" % (prorata, cotisation.jours_ouvres, self.jours_ouvres, new_prorata)
                         prorata = new_prorata
 
-                    # TODOTODO if IsContratFacture(cotisation.debut):
-                    self.cotisation_mensuelle += prorata
+                    if cotisation.IsContratFacture(cotisation.debut):
+                        self.cotisation_mensuelle += prorata
 
                     self.total_contractualise += prorata
                     self.heures_contrat += prorata_heures
@@ -668,11 +668,7 @@ class FactureFinMois(FactureBase):
             self.report_cotisation_mensuelle = 0.0
 
         # arrondi de tous les champs en euros
-        if IsContratFacture(self.debut_recap):
-            # TODOTODO retirer l'autre cas
-            self.cotisation_mensuelle = round(self.cotisation_mensuelle, 2)
-        else:
-            self.cotisation_mensuelle = 0.0
+        self.cotisation_mensuelle = round(self.cotisation_mensuelle, 2)
 
         if not self.montant_heure_garde:
             self.heures_cotisation_mensuelle = 0
@@ -718,8 +714,10 @@ class FactureFinMois(FactureBase):
         self.total_facture = self.total + self.report_cotisation_mensuelle
 
         if options & TRACES:
+            print "Récapitulatif :"
             for var in ["heures_contractualisees", "heures_facturees", "heures_supplementaires", "heures_contractualisees_realisees", "heures_realisees_non_facturees", "cotisation_mensuelle", "supplement", "deduction", "total"]:
-                print "", var, ':', eval("self.%s" % var)  
+                print "", var, ':', eval("self.%s" % var)
+            print
         
     def formule_supplement_activites(self, activites):
         result = 0.0

@@ -98,7 +98,7 @@ class GertrudeTestCase(unittest.TestCase):
     def AddJourneePresence(self, inscrit, date, debut, fin):
         self.AddActivite(inscrit, date, debut, fin, 0)
         
-    def AddFrere(self, inscrit, naissance):
+    def AddFrere(self, inscrit, naissance=datetime.date(2000, 1, 1)):
         result = Frere_Soeur(inscrit, creation=False)
         result.prenom = "Frere ou Soeur"
         result.nom = "GPL"
@@ -806,8 +806,8 @@ class BebebulTests(GertrudeTestCase):
         inscription.mode = MODE_HALTE_GARDERIE
         inscription.debut = datetime.date(2012, 10, 1)
         inscrit.inscriptions.append(inscription)
-        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 25), 105, 147) # 3h00
-        self.AddActivite(inscrit, datetime.date(2012, 10, 25), 105, 147, 1)    # 3h00 adaptation
+        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 25), 105, 147)  # 3h00
+        self.AddActivite(inscrit, datetime.date(2012, 10, 25), 105, 147, 1)      # 3h00 adaptation
         facture = Facture(inscrit, 2012, 10)
         self.assertPrec2Equals(facture.total, 0.00)
 
@@ -920,6 +920,45 @@ class LaCabaneAuxFamillesTests(GertrudeTestCase):
         self.assertPrec2Equals(cotisation.cotisation_mensuelle, 685.42)
         facture = Facture(inscrit, 2017, 4)
         self.assertPrec2Equals(facture.total, 685.42 + 179.79)
+
+
+class PiousPiousTests(GertrudeTestCase):
+    def setUp(self):
+        GertrudeTestCase.setUp(self)
+        creche.type = TYPE_PARENTAL
+        creche.mode_facturation = FACTURATION_PSU
+        creche.gestion_depart_anticipe = True
+        creche.temps_facturation = FACTURATION_FIN_MOIS
+        creche.repartition = REPARTITION_MENSUALISATION_CONTRAT
+        creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
+        self.AddConge("Août", options=MOIS_SANS_FACTURE)
+        self.AddConge("31/07/2017", "21/08/2017")
+
+    def test_adaptation_a_cheval_sur_2_mois_dont_mois_sans_facture(self):
+        inscrit = self.AddInscrit()
+        self.AddFrere(inscrit)
+        inscription = Inscription(inscrit, creation=False)
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.semaines_conges = 0
+        inscription.debut = datetime.date(2017, 7, 12)
+        inscription.fin_periode_adaptation = datetime.date(2017, 8, 25)
+        inscription.fin = datetime.date(2017, 8, 31)
+        inscription.reference[0].AddActivity(102, 225, 0, -1)
+        inscription.reference[1].AddActivity(102, 225, 0, -1)
+        inscription.reference[2].AddActivity(102, 225, 0, -1)
+        inscription.reference[3].AddActivity(102, 168, 0, -1)
+        inscription.reference[4].AddActivity(102, 219, 0, -1)
+        inscrit.inscriptions.append(inscription)
+        cotisation = Cotisation(inscrit, datetime.date(2017, 7, 12), NO_ADDRESS | NO_PARENTS)
+        self.assertEquals(cotisation.cotisation_mensuelle, 0.0)
+        cotisation = Cotisation(inscrit, datetime.date(2017, 8, 26), NO_ADDRESS | NO_PARENTS)
+        self.assertPrec2Equals(cotisation.cotisation_mensuelle, 92.00)
+        self.AddJourneePresence(inscrit, datetime.date(2017, 8, 22), 120, 168)  # 4h00
+        self.AddJourneePresence(inscrit, datetime.date(2017, 8, 23), 120, 174)  # 4h30
+        self.AddJourneePresence(inscrit, datetime.date(2017, 8, 24), 114, 177)  # 5h15
+        self.AddJourneePresence(inscrit, datetime.date(2017, 8, 25), 105, 216)  # 9h15
+        facture = Facture(inscrit, 2017, 8)
+        self.assertPrec2Equals(facture.total, 138.00)
 
 
 class OPagaioTests(GertrudeTestCase):
