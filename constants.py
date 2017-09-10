@@ -77,6 +77,7 @@ MODE_SANS_HORAIRES = 2
 MODE_PRESENCE_NON_FACTUREE = 4
 MODE_SYSTEMATIQUE_SANS_HORAIRES = 5
 MODE_PERMANENCE = 6
+MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE = 7
 
 ActivityModes = [
     ("Normal", 0),
@@ -84,7 +85,8 @@ ActivityModes = [
     ("Sans horaires", MODE_SANS_HORAIRES),
     ("Présence non facturée", MODE_PRESENCE_NON_FACTUREE),
     ("Sans horaire, systématique", MODE_SYSTEMATIQUE_SANS_HORAIRES),
-    ("Permanence", MODE_PERMANENCE)
+    ("Sans horaire, systématique et mensualisé", MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE),
+    ("Permanence", MODE_PERMANENCE),
 ]
 
 # Propriétaires des activités

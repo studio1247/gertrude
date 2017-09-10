@@ -591,8 +591,8 @@ class Cotisation(object):
         self.montant_journalier_activites = 0.0
         for key in creche.activites:
             activite = creche.activites[key]
-            if activite.mode == MODE_SYSTEMATIQUE_SANS_HORAIRES:
-                self.montant_journalier_activites += activite.EvalTarif(inscrit, self.debut)
+            if activite.mode == MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE:
+                self.montant_journalier_activites += activite.EvalTarif(inscrit, self.debut, reservataire=self.inscription.reservataire)
         if options & TRACES:
             print " montant journalier activites :", self.montant_journalier_activites
         if self.nombre_factures > 0:

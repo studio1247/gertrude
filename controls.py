@@ -1092,7 +1092,7 @@ class ActivityComboBox(HashComboBox):
         if creche.HasActivitesAvecHoraires():
             self.Show(True)
             for i, activity in enumerate(creche.activites.values()):
-                if activity.mode not in (MODE_SANS_HORAIRES, MODE_SYSTEMATIQUE_SANS_HORAIRES):
+                if activity.mode not in (MODE_SANS_HORAIRES, MODE_SYSTEMATIQUE_SANS_HORAIRES, MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE):
                     self.Append(activity.label, activity)
                     try:
                         if self.activity_choice.activity.value == activity.value:

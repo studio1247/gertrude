@@ -833,17 +833,18 @@ class Activite(object):
         if creation:
             self.create()
 
-    def EvalTarif(self, inscrit, date, montant_heure_garde=0.0):
+    def EvalTarif(self, inscrit, date, montant_heure_garde=0.0, reservataire=False):
         if self.formule_tarif.strip():
             enfants, enfants_inscrits = GetEnfantsCount(inscrit, date)[0:2]
             for tarif in creche.tarifs_speciaux:
                 try:
                     exec("%s = %r" % (tarif.label.lower().replace(" ", "_"), inscrit.famille.tarifs & (1 << tarif.idx)))
-                except:
-                    pass
+                except Exception, e:
+                    print "Exception tarif special", e
             try:
                 return eval(self.formule_tarif)
-            except:
+            except Exception, e:
+                print "Exception tarif activite", e
                 return 0.0
         else:
             return 0.0
@@ -1556,7 +1557,7 @@ class Creche(object):
     def GetActivitesAvecHoraires(self):
         result = []
         for activite in self.activites.values():
-            if activite.mode not in (MODE_SANS_HORAIRES, MODE_SYSTEMATIQUE_SANS_HORAIRES):
+            if activite.mode not in (MODE_SANS_HORAIRES, MODE_SYSTEMATIQUE_SANS_HORAIRES, MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE):
                 result.append(activite)
         return result
 

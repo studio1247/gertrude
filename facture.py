@@ -162,8 +162,8 @@ class FactureFinMois(FactureBase):
         self.raison_supplement = set()
         self.supplement_activites = 0.0
         self.heures_supplement_activites = {}
-        self.detail_supplement_activites = {}
-        self.tarif_supplement_activites = {}
+        self.detail_supplement_activites = {"Activites mensualisees": 0.0}
+        self.tarif_supplement_activites = {"Activites mensualisees": 0.0}
         for value in creche.activites:
             self.heures_supplement_activites[creche.activites[value].label] = 0.0
             self.detail_supplement_activites[creche.activites[value].label] = 0.0
@@ -379,7 +379,7 @@ class FactureFinMois(FactureBase):
                             for value in activites:
                                 if value in creche.activites:
                                     activite = creche.activites[value]
-                                    tarif = activite.EvalTarif(self.inscrit, date)
+                                    tarif = activite.EvalTarif(self.inscrit, date, reservataire=cotisation.inscription.reservataire)
                                     self.supplement_activites += tarif
                                     self.heures_supplement_activites[activite.label] += 1
                                     self.detail_supplement_activites[activite.label] += tarif
@@ -463,7 +463,7 @@ class FactureFinMois(FactureBase):
                                     self.heures_facturees_par_mode[cotisation.mode_garde] += compteur.value
                                 self.cotisation_mensuelle += compteur.value * cotisation.montant_heure_garde
                             else:
-                                tarif = activite.EvalTarif(inscrit, monday, cotisation.montant_heure_garde)
+                                tarif = activite.EvalTarif(inscrit, monday, cotisation.montant_heure_garde, reservataire=cotisation.inscription.reservataire)
                                 total = compteur.value * tarif
                                 self.supplement_activites += total
                                 self.heures_supplement_activites[activite.label] += compteur.value
@@ -555,6 +555,7 @@ class FactureFinMois(FactureBase):
                     if cotisation.total_realise_non_facture:
                         self.deduction += cotisation.total_realise_non_facture
                         self.raison_deduction.add("heures non facturées")
+                    # TODOTODO if IsContratFacture(cotisation.debut):
                     self.cotisation_mensuelle += prorata
                     self.total_contractualise += prorata
                     self.heures_contrat += prorata_heures
@@ -586,10 +587,20 @@ class FactureFinMois(FactureBase):
                             print " prorata : %f * %f / %f = %f" % (prorata, cotisation.jours_ouvres, self.jours_ouvres, new_prorata)
                         prorata = new_prorata
 
+                    # TODOTODO if IsContratFacture(cotisation.debut):
                     self.cotisation_mensuelle += prorata
+
                     self.total_contractualise += prorata
                     self.heures_contrat += prorata_heures
                     self.heures_facture_par_mode[cotisation.mode_garde] += prorata_heures
+
+                if cotisation.montant_mensuel_activites:
+                    montant_activites_mensualisees = cotisation.montant_mensuel_activites * cotisation.jours_ouvres / self.jours_ouvres
+                    self.supplement_activites += montant_activites_mensualisees
+                    self.detail_supplement_activites["Activites mensualisees"] += montant_activites_mensualisees
+                    self.tarif_supplement_activites["Activites mensualisees"] = montant_activites_mensualisees
+                    if options & TRACES:
+                        print " activites mensualisees : %0.2f * %d / %d = %0.2f" % (cotisation.montant_mensuel_activites, cotisation.jours_ouvres, self.jours_ouvres, montant_activites_mensualisees)
 
                 if creche.regularisation_fin_contrat:
                     depart_anticipe = creche.gestion_depart_anticipe and inscription.depart and self.debut_recap <= inscription.depart <= self.fin_recap
@@ -658,9 +669,11 @@ class FactureFinMois(FactureBase):
 
         # arrondi de tous les champs en euros
         if IsContratFacture(self.debut_recap):
+            # TODOTODO retirer l'autre cas
             self.cotisation_mensuelle = round(self.cotisation_mensuelle, 2)
         else:
             self.cotisation_mensuelle = 0.0
+
         if not self.montant_heure_garde:
             self.heures_cotisation_mensuelle = 0
         else:

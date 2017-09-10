@@ -817,7 +817,7 @@ def GetActivitiesSummary(creche, lines, options=0):
         activite = creche.activites[key]
         if activite.mode == MODE_SANS_HORAIRES:
             activites_sans_horaires[key] = 0
-        elif activite.mode != MODE_SYSTEMATIQUE_SANS_HORAIRES:
+        elif activite.mode not in (MODE_SYSTEMATIQUE_SANS_HORAIRES, MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE):
             activites[key] = Summary(activite.label)
     if not (options & NO_SALARIES) and len(creche.salaries) > 0:
         activite_salaries = activites[PRESENCE_SALARIE] = Summary("Présences salariés")
