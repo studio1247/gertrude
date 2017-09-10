@@ -736,11 +736,12 @@ class Reservataire(SQLObject):
 
     def GetFacturesList(self):
         result = []
-        date = GetMonthStart(self.debut)
-        while date <= datetime.date.today():
-            result.append(date)
-            for i in range(self.periode_facturation):
-                date = GetNextMonthStart(date)
+        if self.debut:
+            date = GetMonthStart(self.debut)
+            while date <= datetime.date.today():
+                result.append(date)
+                for i in range(self.periode_facturation):
+                    date = GetNextMonthStart(date)
         return result
 
     def HasFacture(self, date, site):
@@ -2409,10 +2410,10 @@ class Inscrit(object):
         return result
 
     def HasFacture(self, date, site=None):
-        if not date or date.month in creche.mois_sans_facture:
-            return False
+        # if not date or date.month in creche.mois_sans_facture:
+        #    return False
         month_start = GetMonthStart(date)
-        if config.options & FACTURES_FAMILLES and creche.mode_saisie_planning == SAISIE_HORAIRE:
+        if (config.options & FACTURES_FAMILLES) and creche.mode_saisie_planning == SAISIE_HORAIRE:
             day = month_start
             while day.month == date.month:
                 journee = self.GetJournee(day)
