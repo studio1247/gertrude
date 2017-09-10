@@ -1035,10 +1035,11 @@ class ParametersPanel(AutoTab):
     
     def AjouteLigneTarif(self, index):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddMany([(wx.StaticText(self, -1, "Libellé :"), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, "tarifs_speciaux[%d].label" % index, observers=['tarifs']), 1, wx.RIGHT|wx.EXPAND, 5)])
-        sizer.AddMany([(AutoChoiceCtrl(self, creche, "tarifs_speciaux[%d].type" % index, items=[("Majoration", TARIF_SPECIAL_MAJORATION), ("Réduction", TARIF_SPECIAL_REDUCTION), ("Tarif de remplacement", TARIF_SPECIAL_REMPLACEMENT)]), 1, wx.EXPAND)])
-        sizer.AddMany([(wx.StaticText(self, -1, "Valeur :"), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoNumericCtrl(self, creche, "tarifs_speciaux[%d].valeur" % index, precision=2), 1, wx.RIGHT|wx.EXPAND, 5)])
-        sizer.AddMany([(AutoChoiceCtrl(self, creche, "tarifs_speciaux[%d].unite" % index, items=[("€", TARIF_SPECIAL_UNITE_EUROS), ("%", TARIF_SPECIAL_UNITE_POURCENTAGE), ("€/heure", TARIF_SPECIAL_UNITE_EUROS_PAR_HEURE), ("€/jour de présence", TARIF_SPECIAL_UNITE_EUROS_PAR_JOUR)]), 1, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, "Libellé :"), 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, creche, "tarifs_speciaux[%d].label" % index, observers=['tarifs']), 1, wx.RIGHT | wx.EXPAND, 5)])
+        sizer.AddMany([(AutoChoiceCtrl(self, creche, "tarifs_speciaux[%d].type" % index, items=TypeTarifsSpeciauxItems), 1, wx.EXPAND)])
+        sizer.AddMany([(wx.StaticText(self, -1, "Valeur :"), 0, wx.LEFT | wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (AutoNumericCtrl(self, creche, "tarifs_speciaux[%d].valeur" % index, precision=2), 1, wx.RIGHT | wx.EXPAND, 5)])
+        sizer.AddMany([(AutoChoiceCtrl(self, creche, "tarifs_speciaux[%d].unite" % index, items=UniteTarifsSpeciauxItems), 1, wx.RIGHT | wx.EXPAND, 5)])
+        sizer.AddMany([(AutoChoiceCtrl(self, creche, "tarifs_speciaux[%d].portee" % index, items=PorteeTarifsSpeciauxItems), 1, wx.EXPAND)])
         delbutton = wx.BitmapButton(self, -1, delbmp)
         delbutton.index = index
         sizer.Add(delbutton, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 5)

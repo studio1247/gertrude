@@ -196,11 +196,33 @@ TARIF_SPECIAL_MAJORATION = 0
 TARIF_SPECIAL_REDUCTION = 1
 TARIF_SPECIAL_REMPLACEMENT = 2
 
+TypeTarifsSpeciauxItems = [
+    ("Majoration", TARIF_SPECIAL_MAJORATION),
+    ("Réduction", TARIF_SPECIAL_REDUCTION),
+    ("Tarif de remplacement", TARIF_SPECIAL_REMPLACEMENT)
+]
+
+# Portée des tarifs spéciaux
+PORTEE_INSCRIPTION = 0
+PORTEE_CONTRAT = 1
+
+PorteeTarifsSpeciauxItems = [
+    ("Inscription (tous les contrats)", PORTEE_INSCRIPTION),
+    ("Contrat", PORTEE_CONTRAT)
+]
+
 # Unites des tarif spéciaux
 TARIF_SPECIAL_UNITE_EUROS = 0
 TARIF_SPECIAL_UNITE_POURCENTAGE = 1
 TARIF_SPECIAL_UNITE_EUROS_PAR_HEURE = 2
 TARIF_SPECIAL_UNITE_EUROS_PAR_JOUR = 3
+
+UniteTarifsSpeciauxItems = [
+    ("€", TARIF_SPECIAL_UNITE_EUROS),
+    ("%", TARIF_SPECIAL_UNITE_POURCENTAGE),
+    ("€/heure", TARIF_SPECIAL_UNITE_EUROS_PAR_HEURE),
+    ("€/jour de présence", TARIF_SPECIAL_UNITE_EUROS_PAR_JOUR)
+]
 
 # Mode de traitement des absences pour maladie
 DEDUCTION_MALADIE_SANS_CARENCE = 0

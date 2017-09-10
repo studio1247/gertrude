@@ -405,9 +405,10 @@ class IdentitePanel(InscriptionsTab):
                 self.tarifs_sizer.Detach(0)
             w = self.sizer2.GetColWidths()[0] + 10
             for tarif in creche.tarifs_speciaux:
-                sizer = wx.BoxSizer(wx.HORIZONTAL)
-                sizer.AddMany([(wx.StaticText(self, -1, '%s :' % tarif.label, size=(w, -1)), 0, wx.ALIGN_CENTER_VERTICAL), (AutoCheckBox(self, self.inscrit, 'famille.tarifs', value=1 << tarif.idx), 0, wx.EXPAND)])
-                self.tarifs_sizer.Add(sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
+                if tarif.portee == PORTEE_INSCRIPTION:
+                    sizer = wx.BoxSizer(wx.HORIZONTAL)
+                    sizer.AddMany([(wx.StaticText(self, -1, '%s :' % tarif.label, size=(w, -1)), 0, wx.ALIGN_CENTER_VERTICAL), (AutoCheckBox(self, self.inscrit, 'famille.tarifs', value=1 << tarif.idx), 0, wx.EXPAND)])
+                    self.tarifs_sizer.Add(sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
             self.tarifs_observer = counters['tarifs']
         self.UpdateLignesInscritsFratrie()
         if self.inscrit:
@@ -716,6 +717,9 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         grid_sizer.AddMany([(wx.StaticText(self, -1, "Frais d'inscription :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'frais_inscription', min=0, precision=2), 0, wx.EXPAND)])
         if creche.mode_facturation == FACTURATION_PAJE:
             grid_sizer.AddMany([(wx.StaticText(self, -1, "Allocation mensuelle CAF :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'allocation_mensuelle_caf', min=0, precision=2), 0, wx.EXPAND)])
+        self.tarifs_sizer = wx.BoxSizer(wx.VERTICAL)
+        grid_sizer.AddMany([(wx.StaticText(self, -1, "Tarifs spéciaux :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.tarifs_sizer, 0, wx.EXPAND | wx.LEFT, 5)])
+        self.UpdateTarifsSpeciaux()
         label_conges = wx.StaticText(self, -1, "Nombre de semaines d'absence prévu au contrat :")
         semaines_conges = AutoNumericCtrl(self, None, 'semaines_conges', min=0, precision=0)
         self.jours_poses = wx.TextCtrl(self, -1)
@@ -884,7 +888,20 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         else:
             self.jours_poses.SetValue("")
             self.heures_and_jours_reference.SetValue("")
-        
+
+    def UpdateTarifsSpeciaux(self):
+        while len(self.tarifs_sizer.GetChildren()):
+            sizer = self.tarifs_sizer.GetItem(0)
+            sizer.DeleteWindows()
+            self.tarifs_sizer.Detach(0)
+        w = 200  # self.sizer2.GetColWidths()[0] + 10
+        for tarif in creche.tarifs_speciaux:
+            if tarif.portee == PORTEE_CONTRAT:
+                sizer = wx.BoxSizer(wx.HORIZONTAL)
+                sizer.AddMany([(wx.StaticText(self, -1, '%s :' % tarif.label, size=(w, -1)), 0, wx.ALIGN_CENTER_VERTICAL), (AutoCheckBox(self, None, 'tarifs', value=1 << tarif.idx), 0, wx.EXPAND)])
+                self.tarifs_sizer.Add(sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
+        self.tarifs_observer = counters['tarifs']
+
     def UpdateContents(self):
         if counters['sites'] > self.sites_observer:
             self.UpdateSiteItems()
@@ -894,6 +911,8 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
             self.UpdateReservataireItems()
         if counters['professeurs'] > self.professeurs_observer:
             self.UpdateProfesseurItems()
+        if counters['tarifs'] > self.tarifs_observer:
+            self.UpdateTarifsSpeciaux()
 
         InscriptionsTab.UpdateContents(self)
         self.mode_accueil_choice.Enable(creche.modes_inscription != MODE_5_5)

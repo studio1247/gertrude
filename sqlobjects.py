@@ -1793,19 +1793,20 @@ class TarifSpecial(SQLObject):
         self.type = TARIF_SPECIAL_MAJORATION
         self.unite = TARIF_SPECIAL_UNITE_EUROS
         self.valeur = 0.0
+        self.portee = PORTEE_INSCRIPTION
         if creation:
             self.create()
 
     def create(self):
         print 'nouveau tarif special'
         result = sql_connection.execute(
-            'INSERT INTO TARIFSSPECIAUX (idx, label, type, unite, valeur) VALUES(NULL,?,?,?,?)',
-            (self.label, self.type, self.unite, self.valeur))
+            'INSERT INTO TARIFSSPECIAUX (idx, label, type, unite, valeur, portee) VALUES(NULL,?,?,?,?,?)',
+            (self.label, self.type, self.unite, self.valeur, self.portee))
         self.idx = result.lastrowid
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['label', 'type', 'unite', 'valeur'] and self.idx:
+        if name in ['label', 'type', 'unite', 'valeur', 'portee'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE TARIFSSPECIAUX SET %s=? WHERE idx=?' % name, (value, self.idx))
 
@@ -1908,6 +1909,7 @@ class Inscription(PeriodeReference):
         self.frais_inscription = 0.0
         self.allocation_mensuelle_caf = 0.0
         self.newsletters = 0
+        self.tarifs = 0
         self.heures_supplementaires = {}
 
         if creation:
@@ -2024,8 +2026,8 @@ class Inscription(PeriodeReference):
     def create(self):
         print 'nouvelle inscription'
         result = sql_connection.execute(
-            'INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, depart, mode, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_mensuel_heures, semaines_conges, heures_permanences) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-            (self.inscrit.idx, self.debut, self.fin, self.depart, self.mode, self.forfait_mensuel, self.frais_inscription, self.allocation_mensuelle_caf, self.fin_periode_adaptation, self.duree_reference, self.forfait_mensuel_heures, self.semaines_conges, self.heures_permanences))
+            'INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, depart, mode, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_mensuel_heures, semaines_conges, heures_permanences, tarifs) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+            (self.inscrit.idx, self.debut, self.fin, self.depart, self.mode, self.forfait_mensuel, self.frais_inscription, self.allocation_mensuelle_caf, self.fin_periode_adaptation, self.duree_reference, self.forfait_mensuel_heures, self.semaines_conges, self.heures_permanences, self.tarifs))
         self.idx = result.lastrowid
 
     def delete(self):
@@ -2042,7 +2044,7 @@ class Inscription(PeriodeReference):
         if name in ['debut', 'fin', 'depart', 'mode', 'forfait_mensuel', 'frais_inscription',
                     'allocation_mensuelle_caf', 'fin_periode_adaptation', 'duree_reference', 'forfait_mensuel_heures',
                     'semaines_conges', 'heures_permanences', 'preinscription', 'site', 'sites_preinscription',
-                    'professeur', 'reservataire', 'groupe'] and self.idx:
+                    'professeur', 'reservataire', 'groupe', 'tarifs'] and self.idx:
             print 'update', name, value
             sql_connection.execute('UPDATE INSCRIPTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
