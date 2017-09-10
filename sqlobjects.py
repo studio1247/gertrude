@@ -751,13 +751,13 @@ class Reservataire(SQLObject):
     def create(self):
         print 'nouveau reservataire'
         result = sql_connection.execute(
-            'INSERT INTO RESERVATAIRES (idx, debut, fin, nom, adresse, code_postal, ville, telephone, places, heures_jour, heures_semaine, tarif, periode_facturation, delai_paiement, options) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-            (self.debut, self.fin, self.nom, self.adresse, self.code_postal, self.ville, self.telephone, self.places, self.heures_jour, self.heures_semaine, self.tarif, self.periode_facturation, self.delai_paiement, self.options))
+            'INSERT INTO RESERVATAIRES (idx, debut, fin, nom, adresse, code_postal, ville, telephone, email, places, heures_jour, heures_semaine, tarif, periode_facturation, delai_paiement, options) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+            (self.debut, self.fin, self.nom, self.adresse, self.code_postal, self.ville, self.telephone, self.email, self.places, self.heures_jour, self.heures_semaine, self.tarif, self.periode_facturation, self.delai_paiement, self.options))
         self.idx = result.lastrowid
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        if name in ['debut', 'fin', 'nom', 'adresse', 'code_postal', 'ville', 'telephone', 'places', 'heures_jour', 'heures_semaine', 'tarif', 'periode_facturation', 'delai_paiement', 'options'] and self.idx:
+        if name in ['debut', 'fin', 'nom', 'adresse', 'code_postal', 'ville', 'telephone', 'email', 'places', 'heures_jour', 'heures_semaine', 'tarif', 'periode_facturation', 'delai_paiement', 'options'] and self.idx:
             print 'update', name
             sql_connection.execute('UPDATE RESERVATAIRES SET %s=? WHERE idx=?' % name, (value, self.idx))
 

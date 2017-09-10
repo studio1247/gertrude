@@ -67,7 +67,7 @@ class FactureModifications(object):
             self.reservataire = inscrits[0]
             self.site = None
             self.email_subject = "Facture %s %s %d" % (self.reservataire.nom, months[periode.month - 1], periode.year)
-            self.email_to = self.reservataire.email
+            self.email_to = [self.reservataire.email]
             self.default_output = self.email_subject + ".odt"
         elif len(inscrits) > 1:
             self.multi = True

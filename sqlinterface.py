@@ -718,7 +718,6 @@ class SQLConnection(object):
                 date = getdate(date)
                 reservataire.encaissements.append(EncaissementReservataire(reservataire, date, valeur, moyen_paiement, idx))
 
-
         cur.execute('SELECT label, type, unite, valeur, idx FROM TARIFSSPECIAUX')
         for tarifs_entry in cur.fetchall():
             tarif = TarifSpecial(creation=False)

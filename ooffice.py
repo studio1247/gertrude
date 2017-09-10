@@ -690,7 +690,11 @@ def SendDocument(filename, text, subject, to, saas=False):
             port = int(port)
     except:
         pass
-    if 1:
+
+    if config.debug:
+        print u"From: %s, To:" % creche.email, to + [creche.email]
+        print msg.as_string()[:1200], '...'
+    else:
         s = smtplib.SMTP(smtp_server, port)
         if "gmail" in smtp_server:
             s.starttls()
@@ -698,9 +702,6 @@ def SendDocument(filename, text, subject, to, saas=False):
             s.login(login, password)
         s.sendmail(msg_from, to + [creche.email], msg.as_string())
         s.quit()
-    else:
-        print u"From: %s, To:" % creche.email, to + [creche.email]
-        print msg.as_string()[:1200], '...'
 
 
 class DocumentDialog(wx.Dialog):
