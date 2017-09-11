@@ -120,6 +120,7 @@ class CrecheTab(AutoTab):
             grid_sizer.AddMany([wx.StaticText(self, -1, "IBAN :"), (AutoTextCtrl(self, creche, "iban"), 0, wx.EXPAND)])
             grid_sizer.AddMany([wx.StaticText(self, -1, "BIC :"), (AutoTextCtrl(self, creche, "bic"), 0, wx.EXPAND)])
             grid_sizer.AddMany([wx.StaticText(self, -1, "Creditor ID :"), (AutoTextCtrl(self, creche, "creditor_id"), 0, wx.EXPAND)])
+        grid_sizer.AddMany([wx.StaticText(self, -1, "SIRET :"), (AutoTextCtrl(self, creche, "siret"), 0, wx.EXPAND)])
         self.creche_parentale_widgets = (raz_permanences_label, raz_permanences_ctrl)
         grid_sizer.AddMany([raz_permanences_label, (raz_permanences_ctrl, 0, wx.EXPAND)])
         planning = PlanningWidget(self, None, NO_BOTTOM_LINE | NO_ICONS | DRAW_VALUES | NO_SCROLL)

@@ -867,6 +867,7 @@ def GetCrecheFields(creche):
             ('capacite-creche', creche.GetCapacite()),
             ('amplitude-horaire', creche.GetAmplitudeHoraire()),
             ('sepa-creditor-id', creche.creditor_id),
+            ('siret-creche', creche.siret),
             ]
 
 
