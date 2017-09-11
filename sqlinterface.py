@@ -309,7 +309,7 @@ class SQLConnection(object):
             telephone_portable_notes VARCHAR,
             telephone_travail VARCHAR,
             telephone_travail_notes VARCHAR,
-            profession VARCHAR
+            profession VARCHAR,
             email VARCHAR
           );""")
 
