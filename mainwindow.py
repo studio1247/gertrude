@@ -20,7 +20,7 @@
 from __future__ import unicode_literals
 
 import __builtin__
-import os, sys, codecs, imp, time, locale, shutil, glob, thread, urllib2
+import os, sys, codecs, imp, time, locale, shutil, glob, thread, urllib2, zipfile
 import wx, wx.lib.wordwrap
 from wx.lib import masked
 from config import Liste, Load, Update, Save, Restore, Exit, ProgressHandler
