@@ -459,7 +459,7 @@ class ParentsPanel(InscriptionsTab):
             self.parents_items.append([])
             sizer2 = wx.FlexGridSizer(0, 2, 5, 5)
             sizer2.AddGrowableCol(1, 1)
-            relation_item = wx.Choice(self, -1)
+            relation_item = ChoiceWithoutScroll(self, -1)
             self.relations_items.append(relation_item)
             for item, value in (('Papa', 'papa'), ('Maman', 'maman'), ('Parent manquant', None)):
                 relation_item.Append(item, value)
@@ -740,7 +740,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         grid_sizer.AddMany([(wx.StaticText(self, -1, "Date de fin de la période d'adaptation :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'fin_periode_adaptation'), 0, wx.EXPAND)])
         if creche.gestion_depart_anticipe:
             grid_sizer.AddMany([(wx.StaticText(self, -1, "Date de départ anticipé :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoDateCtrl(self, None, 'depart'), 0, wx.EXPAND)])
-        self.duree_reference_choice = wx.Choice(self)
+        self.duree_reference_choice = ChoiceWithoutScroll(self)
         for item, data in [("1 semaine", 7)] + [("%d semaines" % (i + 2), 7 * (i + 2)) for i in range(MAX_SEMAINES_REFERENCE-1)]:
             self.duree_reference_choice.Append(item, data)
         self.Bind(wx.EVT_CHOICE, self.OnDureeReferenceChoice, self.duree_reference_choice)

@@ -615,14 +615,26 @@ class AutoPhoneCtrl(PhoneCtrl, AutoMixin):
         AutoMixin.__del__(self)
 
 
-class ChoiceCtrl(wx.Choice):
+if sys.platform == "win32":
+    class ChoiceWithoutScroll(wx.Choice):
+        def onMouseWheel(self, event):
+            pass
+
+        def __init__(self, *args, **kwargs):
+            wx.Choice.__init__(self, *args, **kwargs)
+            self.Bind(wx.EVT_MOUSEWHEEL, self.onMouseWheel)
+else:
+    ChoiceWithoutScroll = wx.Choice
+
+
+class ChoiceCtrl(ChoiceWithoutScroll):
     def __init__(self, parent, items=None):
-        wx.Choice.__init__(self, parent, -1)
+        ChoiceWithoutScroll.__init__(self, parent, -1)
         if items:
             self.SetItems(items)
 
     def SetItems(self, items):
-        wx.Choice.Clear(self)
+        ChoiceWithoutScroll.Clear(self)
         for item in items:
             if isinstance(item, tuple):
                 self.Append(item[0], item[1])
@@ -634,9 +646,9 @@ class ChoiceCtrl(wx.Choice):
         return self.GetClientData(selected)
 
 
-class AutoChoiceCtrl(wx.Choice, AutoMixin):
+class AutoChoiceCtrl(ChoiceWithoutScroll, AutoMixin):
     def __init__(self, parent, instance, member, items=None, fixed_instance=False, observers=[], mask=None, *args, **kwargs):
-        wx.Choice.__init__(self, parent, -1, *args, **kwargs)
+        ChoiceWithoutScroll.__init__(self, parent, -1, *args, **kwargs)
         self.values = {}
         if items:
             self.SetItems(items)
@@ -647,7 +659,7 @@ class AutoChoiceCtrl(wx.Choice, AutoMixin):
         AutoMixin.__del__(self)
 
     def Append(self, item, clientData):
-        index = wx.Choice.Append(self, item, clientData)
+        index = ChoiceWithoutScroll.Append(self, item, clientData)
         self.values[clientData] = index
 
     def onChoice(self, event):
@@ -671,7 +683,7 @@ class AutoChoiceCtrl(wx.Choice, AutoMixin):
             self.Enable(not readonly)
 
     def SetItems(self, items):
-        wx.Choice.Clear(self)
+        ChoiceWithoutScroll.Clear(self)
         self.values.clear()
         for item in items:
             if isinstance(item, tuple):
@@ -706,9 +718,9 @@ class AutoCheckBox(wx.CheckBox, AutoMixin):
         wx.CheckBox.SetValue(self, value & self.value)
 
 
-class AutoBinaryChoiceCtrl(wx.Choice, AutoMixin):
+class AutoBinaryChoiceCtrl(ChoiceWithoutScroll, AutoMixin):
     def __init__(self, parent, instance, member, items=None, fixed_instance=False, observers=[], *args, **kwargs):
-        wx.Choice.__init__(self, parent, -1, *args, **kwargs)
+        ChoiceWithoutScroll.__init__(self, parent, -1, *args, **kwargs)
         self.values = {}
         if items:
             self.SetItems(items)
@@ -719,7 +731,7 @@ class AutoBinaryChoiceCtrl(wx.Choice, AutoMixin):
         AutoMixin.__del__(self)
 
     def Append(self, item, clientData):
-        index = wx.Choice.Append(self, item, clientData)
+        index = ChoiceWithoutScroll.Append(self, item, clientData)
         self.values[clientData] = index
 
     def onChoice(self, event):
@@ -746,7 +758,7 @@ class AutoBinaryChoiceCtrl(wx.Choice, AutoMixin):
             self.Enable(not readonly)
 
     def SetItems(self, items):
-        wx.Choice.Clear(self)
+        ChoiceWithoutScroll.Clear(self)
         self.values.clear()
         for item, clientData in items:
             self.Append(item, clientData)

@@ -242,7 +242,7 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
                         
         sizer1.AddMany([(wx.StaticText(self, -1, u"Fonction :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, 'fonction'), 0, wx.EXPAND)])
         
-        self.duree_reference_choice = wx.Choice(self)
+        self.duree_reference_choice = ChoiceWithoutScroll(self)
         for item, data in [("1 semaine", 7)] + [("%d semaines" % (i+2), 7*(i+2)) for i in range(MAX_SEMAINES_REFERENCE-1)]:
             self.duree_reference_choice.Append(item, data)
         self.Bind(wx.EVT_CHOICE, self.onDureeReferenceChoice, self.duree_reference_choice)
