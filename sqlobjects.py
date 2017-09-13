@@ -636,7 +636,7 @@ class TarifHoraire(object):
     def UpdateFormule(self, changed=True):
         if changed:
             print 'update formule_taux_horaire', self.formule
-            sql_connection.execute('UPDATE TARIFS_HORAIRES SET formule=?', (str(self.formule),))
+            sql_connection.execute('UPDATE TARIFS_HORAIRES SET formule=? WHERE idx=?', (str(self.formule), self.idx))
         self.conversion_formule = GetFormuleConversion(self.formule)
 
     def CheckFormule(self, index):
