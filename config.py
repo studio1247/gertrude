@@ -81,6 +81,8 @@ def getOptions(parser):
             options |= READONLY
         if "reservataires" in str:
             options |= RESERVATAIRES
+        if "frais-inscription-reservataires" in str:
+            options |= FRAIS_INSCRIPTION_RESERVATAIRES
         if "categories" in str:
             options |= CATEGORIES
         if "heures-contrat" in str:
