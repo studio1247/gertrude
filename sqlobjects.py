@@ -1657,7 +1657,7 @@ class Creche(object):
                     'facturation_periode_adaptation', 'masque_alertes', 'age_maximum', 'seuil_alerte_inscription',
                     'cloture_facturation', 'arrondi_heures', 'arrondi_facturation',
                     'arrondi_facturation_periode_adaptation', 'arrondi_heures_salaries',
-                    'arrondi_mensualisation_euros', 'arrondi_semaines', 'gestion_maladie_hospitalisation',
+                    'arrondi_mensualisation', 'arrondi_mensualisation_euros', 'arrondi_semaines', 'gestion_maladie_hospitalisation',
                     'gestion_absences_non_prevenues', 'gestion_maladie_sans_justificatif', 'gestion_preavis_conges',
                     'gestion_depart_anticipe', 'alerte_depassement_planning', 'tri_planning', 'tri_inscriptions',
                     'tri_factures', 'smtp_server', 'caf_email', 'mode_accueil_defaut', 'mode_saisie_planning',
