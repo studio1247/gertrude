@@ -183,10 +183,11 @@ class IdentitePanel(InscriptionsTab):
                             (sizer, 0, wx.EXPAND)])
         grid_sizer.AddMany([(wx.StaticText(self, -1, 'Adresse :'), 0, wx.ALIGN_CENTER_VERTICAL),
                             (AutoTextCtrl(self, None, 'famille.adresse'), 0, wx.EXPAND)])
-        self.ville_ctrl = AutoTextCtrl(self, None, 'famille.ville')  # A laisser avant le code postal !
+        self.ville_ctrl = None  # Pour éviter une exception sur changement de code postal
         self.code_postal_ctrl = AutoNumericCtrl(self, None, 'famille.code_postal', min=0, precision=0)
         self.Bind(wx.EVT_TEXT, self.OnChangementCodePostal, self.code_postal_ctrl)
-        grid_sizer.AddMany([(wx.StaticText(self, -1, 'Code Postal :'), 0, wx.ALIGN_CENTER_VERTICAL),
+        self.ville_ctrl = AutoTextCtrl(self, None, 'famille.ville')
+        grid_sizer.AddMany([(wx.StaticText(self, -1, 'Code postal :'), 0, wx.ALIGN_CENTER_VERTICAL),
                             (self.code_postal_ctrl, 0, wx.EXPAND)])
         grid_sizer.AddMany([(wx.StaticText(self, -1, 'Ville :'), 0, wx.ALIGN_CENTER_VERTICAL),
                             (self.ville_ctrl, 0, wx.EXPAND)])
@@ -364,12 +365,13 @@ class IdentitePanel(InscriptionsTab):
         self.age_ctrl.SetValue(GetAgeString(date_naissance))
 
     def OnChangementCodePostal(self, _):
-        code_postal = self.code_postal_ctrl.GetValue()
-        if code_postal and not self.ville_ctrl.GetValue():
-            for famille in creche.familles:
-                if famille.code_postal == code_postal and famille.ville:
-                    self.ville_ctrl.SetValue(famille.ville)
-                    break
+        if self.ville_ctrl and self.ville_ctrl.instance:
+            code_postal = self.code_postal_ctrl.GetValue()
+            if code_postal and not self.ville_ctrl.GetValue():
+                for famille in creche.familles:
+                    if famille.code_postal == code_postal and famille.ville:
+                        self.ville_ctrl.SetValue(famille.ville)
+                        break
 
     def OnAjoutFrere(self, _):
         history.Append(Delete(self.inscrit.famille.freres_soeurs, -1))
