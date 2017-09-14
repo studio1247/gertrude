@@ -60,6 +60,7 @@ class AttestationModifications(object):
         self.email = True
         self.site = None
         self.email_text = "Accompagnement attestation paiement.txt"
+        self.reservataire = None
 
     def SetDefaultMultiParam(self):
         if self.debut.year == self.fin.year and self.debut.month == self.fin.month:

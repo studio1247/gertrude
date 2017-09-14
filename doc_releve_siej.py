@@ -21,12 +21,14 @@ from facture import *
 from cotisation import CotisationException
 from ooffice import *
 
+
 class Regime(object):
     def __init__(self):
         self.reel_facture = 0
         self.reel_realise = 0
         self.previsionnel_facture = 0
         self.previsionnel_realise = 0
+
 
 class ReleveSIEJModifications(object):
     def __init__(self, site, annee):
