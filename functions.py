@@ -935,7 +935,7 @@ def GetParentFields(parent, index=None):
            ('nom-%s' % ref, parent.nom),
            ('relation-%s' % ref, parent.relation),
            ('adresse-%s' % ref, parent.adresse if parent.adresse else parent.famille.adresse),
-           ('code-postal-%s' % ref, GetCodePostal(parent.code_postal) if parent.code_postal else GetCodePostal(parent.famille.code_postal)),
+           ('code-postal-%s' % ref, GetCodePostal(parent) if parent.code_postal else GetCodePostal(parent.famille)),
            ('ville-%s' % ref, parent.ville if parent.ville else parent.famille.ville),
            ('email-%s' % ref, parent.email),
            ('telephone-domicile-%s' % ref, parent.telephone_domicile),
