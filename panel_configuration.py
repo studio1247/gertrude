@@ -45,11 +45,6 @@ modes_facturation_absences = [("En semaines (nombre de semaines entré à l'insc
                               ("Sans limite (pour les contrats sans mensualisation)", ABSENCES_DEDUITES_SANS_LIMITE),
                               ]
 
-modes_facturation_adaptation = [("Facturation normale", PERIODE_ADAPTATION_FACTUREE_NORMALEMENT),
-                                ("Facturation aux horaires réels", PERIODE_ADAPTATION_HORAIRES_REELS),
-                                ("Période d'adaptation gratuite", PERIODE_ADAPTATION_GRATUITE)
-                                ]
-
 modes_arrondi_mensualisation = [("Pas d'arrondi", SANS_ARRONDI),
                                 ("Arrondi à l'heure la plus proche", ARRONDI_HEURE_PLUS_PROCHE),
                                 ]
@@ -930,7 +925,7 @@ class ParametersPanel(AutoTab):
                        (AutoChoiceCtrl(self, creche, "tri_factures", [("Par prénom de l'enfant", TRI_PRENOM), ("Par nom de l'enfant", TRI_NOM), ("Par nom des parents", TRI_NOM_PARENTS)]), 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple("Clôture des factures :"),
                        (AutoChoiceCtrl(self, creche, "cloture_facturation", [("Désactivée", CLOTURE_FACTURES_OFF), ("Activée", CLOTURE_FACTURES_SIMPLE), ("Activée avec contrôle des factures précédentes", CLOTURE_FACTURES_AVEC_CONTROLE)]), 0, wx.EXPAND)])
-        sizer.AddMany([CreateLabelTuple("Mode de facturation des périodes d'adaptation :"), (AutoChoiceCtrl(self, creche, "facturation_periode_adaptation", modes_facturation_adaptation), 1, wx.EXPAND)])
+        sizer.AddMany([CreateLabelTuple("Mode de facturation des périodes d'adaptation :"), (AutoChoiceCtrl(self, creche, "facturation_periode_adaptation", TypeModesFacturationItems), 1, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple("Mode d'arrondi des horaires des enfants :"), (AutoChoiceCtrl(self, creche, "arrondi_heures", modes_arrondi_horaires_enfants), 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple("Mode d'arrondi de la facturation des enfants :"), (AutoChoiceCtrl(self, creche, "arrondi_facturation", modes_arrondi_factures_enfants), 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple("Mode d'arrondi de la facturation des enfants pendant les périodes d'adaptation :"), (AutoChoiceCtrl(self, creche, "arrondi_facturation_periode_adaptation", modes_arrondi_factures_enfants), 0, wx.EXPAND)])

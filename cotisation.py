@@ -161,7 +161,7 @@ class Cotisation(object):
             if options & DEPART_ANTICIPE:
                 self.fin_inscription = self.inscription.depart
 
-        if creche.facturation_periode_adaptation != PERIODE_ADAPTATION_FACTUREE_NORMALEMENT and self.inscription.fin_periode_adaptation:
+        if creche.facturation_periode_adaptation not in (PERIODE_ADAPTATION_FACTUREE_NORMALEMENT, PERIODE_ADAPTATION_FACTUREE_NORMALEMENT_SANS_HEURES_SUPPLEMENTAIRES) and self.inscription.fin_periode_adaptation:
             if self.inscription.IsInPeriodeAdaptation(self.date):
                 self.fin = self.inscription.fin_periode_adaptation
             else:
@@ -544,7 +544,7 @@ class Cotisation(object):
             else:
                 self.cotisation_mensuelle = self.assiette_mensuelle * self.taux_effort * self.heures_mois / 100
         
-        if creche.facturation_periode_adaptation != PERIODE_ADAPTATION_FACTUREE_NORMALEMENT and self.inscription.IsInPeriodeAdaptation(self.date):
+        if creche.facturation_periode_adaptation not in (PERIODE_ADAPTATION_FACTUREE_NORMALEMENT, PERIODE_ADAPTATION_FACTUREE_NORMALEMENT_SANS_HEURES_SUPPLEMENTAIRES) and self.inscription.IsInPeriodeAdaptation(self.date):
             self.cotisation_periode = 0.0
             self.cotisation_mensuelle = 0.0
         

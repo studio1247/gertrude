@@ -2414,8 +2414,8 @@ class Inscrit(object):
         return result
 
     def HasFacture(self, date, site=None):
-        # if not date or date.month in creche.mois_sans_facture:
-        #    return False
+        if not date:  # or date.month in creche.mois_sans_facture:
+            return False
         month_start = GetMonthStart(date)
         if (config.options & FACTURES_FAMILLES) and creche.mode_saisie_planning == SAISIE_HORAIRE:
             day = month_start

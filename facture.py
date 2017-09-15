@@ -357,7 +357,7 @@ class FactureFinMois(FactureBase):
                                 elif creche.mode_facturation == FACTURATION_FORFAIT_10H:
                                     affectation_jours_supplementaires = True
                                     self.CalculeSupplement(cotisation, 10)
-                                elif cotisation.inscription.mode not in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE):
+                                elif (creche.presences_supplementaires or heures_reference == 0) and (cotisation.inscription.mode not in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE)):
                                     cotisation.heures_supplementaires += heures_supplementaires_facturees
                                     self.heures_supplementaires += heures_supplementaires_facturees
                                     self.heures_facture_par_mode[cotisation.mode_garde] += heures_supplementaires_facturees
