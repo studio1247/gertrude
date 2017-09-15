@@ -1080,6 +1080,7 @@ def GetFactureFields(facture):
                   ('mois+1', '%s %d' % ((months[facture.mois], facture.annee) if facture.mois < 12 else (months[0], facture.annee + 1))),
                   ('de-mois', '%s %d' % (GetDeMoisStr(facture.mois - 1), facture.annee)),
                   ('de-mois-recap', '%s %d' % (GetDeMoisStr(facture.debut_recap.month - 1), facture.debut_recap.year)),
+                  ('today', date2str(datetime.date.today())),
                   ('date', date2str(facture.date)),
                   ('montant-heure-garde', facture.montant_heure_garde, FIELD_EUROS),
                   ('montant-jour-garde', facture.montant_jour_garde, FIELD_EUROS),
