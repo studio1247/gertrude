@@ -299,6 +299,7 @@ def LoadConfig(path=None, progress_handler=default_progress_handler):
     config.saas_port = getIntegerParameter(parser, "port", None)
     config.heure_synchro_tablette = getTimeParameter(parser, "heure-synchro-tablette", None)
     config.preinscription_redirect = getStringParameter(parser, "preinscription-redirect", "")
+    config.preinscription_template = getStringParameter(parser, "preinscription-form", "")
 
     years_before, years_after = getYearsDisplayed(parser)
     config.first_date = datetime.date(today.year - years_before, 1, 1)
