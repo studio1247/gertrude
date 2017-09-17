@@ -295,7 +295,7 @@ class Cotisation(object):
             elif self.inscription.mode == MODE_FORFAIT_HEBDOMADAIRE:
                 self.heures_semaine = self.inscription.forfait_mensuel_heures  # TODO rename to forfait
             elif creche.mode_facturation == FACTURATION_PAJE_10H:
-                self.heures_semaine = 10
+                self.heures_semaine = 10.0
             else:
                 self.heures_semaine = self.heures_reelles_semaine
 
