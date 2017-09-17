@@ -717,7 +717,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.forfait_heures_items = wx.StaticText(self, -1, "Forfait en heures :"), AutoNumericCtrl(self, None, 'forfait_mensuel_heures', min=0, precision=2)
         grid_sizer.AddMany([(self.forfait_heures_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.forfait_heures_items[1], 0, wx.EXPAND)])
         grid_sizer.AddMany([(wx.StaticText(self, -1, "Frais d'inscription :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'frais_inscription', min=0, precision=2), 0, wx.EXPAND)])
-        if creche.mode_facturation == FACTURATION_PAJE:
+        if creche.mode_facturation in (FACTURATION_PAJE, FACTURATION_PAJE_10H):
             grid_sizer.AddMany([(wx.StaticText(self, -1, "Allocation mensuelle CAF :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(self, None, 'allocation_mensuelle_caf', min=0, precision=2), 0, wx.EXPAND)])
         self.tarifs_sizer = wx.BoxSizer(wx.VERTICAL)
         grid_sizer.AddMany([(wx.StaticText(self, -1, "Tarifs spéciaux :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.tarifs_sizer, 0, wx.EXPAND | wx.LEFT, 5)])
@@ -924,7 +924,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.activity_choice.Update()
 
         for item in self.semaines_conges_items:
-            item.Show(creche.facturation_jours_feries != ABSENCES_DEDUITES_SANS_LIMITE and creche.mode_facturation in (FACTURATION_PAJE, FACTURATION_PSU, FACTURATION_FORFAIT_10H))
+            item.Show(creche.facturation_jours_feries != ABSENCES_DEDUITES_SANS_LIMITE and creche.mode_facturation in (FACTURATION_PAJE, FACTURATION_PAJE_10H, FACTURATION_PSU, FACTURATION_FORFAIT_10H))
             
         for item in self.forfait_mensuel_items:
             item.Show(creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL)

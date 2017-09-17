@@ -294,6 +294,8 @@ class Cotisation(object):
                 self.heures_semaine = self.heures_mois / (52.0 / 12)  # attention Le Nid Des Trésors
             elif self.inscription.mode == MODE_FORFAIT_HEBDOMADAIRE:
                 self.heures_semaine = self.inscription.forfait_mensuel_heures  # TODO rename to forfait
+            elif creche.mode_facturation == FACTURATION_PAJE_10H:
+                self.heures_semaine = 10
             else:
                 self.heures_semaine = self.heures_reelles_semaine
 
@@ -446,7 +448,7 @@ class Cotisation(object):
                 raise CotisationException(errors)
             self.cotisation_periode = None
             self.cotisation_mensuelle, self.montants_heure_garde = self.CalculeFraisGardeComplete(self.forfait_mensuel_heures, self.heures_mois)
-        elif creche.mode_facturation == FACTURATION_PAJE:
+        elif creche.mode_facturation in (FACTURATION_PAJE, FACTURATION_PAJE_10H):
             self.tranche_paje = 1 + GetTranche(self.assiette_annuelle, GetTranchesPaje(date, inscrit.naissance, self.enfants_a_charge))
             if date < datetime.date(2016, 1, 1):
                 self.AjustePeriode((debut, datetime.date(2015, 12, 31)))
@@ -742,7 +744,7 @@ def generateFraisGardeHtml(cotisation):
         filename = "Frais garde forfait.html"
     elif creche.mode_facturation == FACTURATION_HORAIRES_REELS:
         filename = "Frais garde reel.html"
-    elif creche.mode_facturation == FACTURATION_PAJE:
+    elif creche.mode_facturation in (FACTURATION_PAJE, FACTURATION_PAJE_10H):
         filename = "Frais garde paje.html"
     else:
         filename = "Frais garde defaut.html"

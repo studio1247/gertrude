@@ -30,8 +30,9 @@ modes_facturation = [("Forfait 10h / jour", FACTURATION_FORFAIT_10H),
                      ("PSU", FACTURATION_PSU),
                      ("PSU avec taux d'effort personnalisés", FACTURATION_PSU_TAUX_PERSONNALISES),
                      ("PAJE (taux horaire spécifique)", FACTURATION_PAJE),
+                     ("PAJE (taux horaire spécifique) avec forfait 10h / jour", FACTURATION_PAJE_10H),
                      ("Horaires réels", FACTURATION_HORAIRES_REELS),
-                     ("Facturation personnalisée (forfait mensuel)", FACTURATION_FORFAIT_MENSUEL)
+                     ("Facturation personnalisée (forfait mensuel)", FACTURATION_FORFAIT_MENSUEL),
                      ]
 
 modes_mensualisation = [("Avec mensualisation (sur 12 mois). Uniquement disponible si jours fériés non déduits", REPARTITION_MENSUALISATION_12MOIS),
@@ -1070,7 +1071,7 @@ class ParametersPanel(AutoTab):
     def onModeFacturationChoice(self, event):
         object = event.GetEventObject()
         value = object.GetClientData(object.GetSelection())
-        self.GetParent().DisplayTarifHorairePanel(value in (FACTURATION_PAJE, FACTURATION_HORAIRES_REELS))
+        self.GetParent().DisplayTarifHorairePanel(value in (FACTURATION_PAJE, FACTURATION_PAJE_10H, FACTURATION_HORAIRES_REELS))
         self.GetParent().DisplayTauxEffortPanel(value == FACTURATION_PSU_TAUX_PERSONNALISES)
         event.Skip()
             
@@ -1475,7 +1476,7 @@ class ParametresNotebook(wx.Notebook):
         self.AddPage(ActivitesTab(self), "Couleurs / Activités")
         self.AddPage(ParametersPanel(self), "Paramètres")
         self.tarif_horaire_panel = TarifHorairePanel(self)
-        if creche.mode_facturation in (FACTURATION_PAJE, FACTURATION_HORAIRES_REELS):
+        if creche.mode_facturation in (FACTURATION_PAJE, FACTURATION_PAJE_10H, FACTURATION_HORAIRES_REELS):
             self.AddPage(self.tarif_horaire_panel, "Tarif horaire")
             self.tarif_horaire_panel_displayed = 1
         else:
