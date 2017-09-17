@@ -884,7 +884,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
     def UpdateDecompteConges(self, event=None, inscription=None):
         if inscription is None and self.inscrit and self.periode is not None and self.periode != -1 and self.periode < len(self.inscrit.inscriptions):
             inscription = self.inscrit.inscriptions[self.periode]
-        if inscription:
+        if inscription and not inscription.preinscription:
             self.jours_poses.SetValue("%d jours posés / %d jours" % (inscription.GetNombreJoursCongesPoses(), inscription.GetNombreJoursCongesPeriode()))
             self.heures_and_jours_reference.SetValue("%s heures / %s jours" % (Number2String(inscription.GetNombreHeuresPresenceSemaine()), Number2String(inscription.GetNombreJoursPresenceSemaine())))
         else:
