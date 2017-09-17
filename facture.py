@@ -379,11 +379,12 @@ class FactureFinMois(FactureBase):
                             for value in activites:
                                 if value in creche.activites:
                                     activite = creche.activites[value]
-                                    tarif = activite.EvalTarif(self.inscrit, date, reservataire=cotisation.inscription.reservataire)
-                                    self.supplement_activites += tarif
-                                    self.heures_supplement_activites[activite.label] += 1
-                                    self.detail_supplement_activites[activite.label] += tarif
-                                    self.tarif_supplement_activites[activite.label] = tarif
+                                    if activite.mode != MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE:
+                                        tarif = activite.EvalTarif(self.inscrit, date, reservataire=cotisation.inscription.reservataire)
+                                        self.supplement_activites += tarif
+                                        self.heures_supplement_activites[activite.label] += 1
+                                        self.detail_supplement_activites[activite.label] += tarif
+                                        self.tarif_supplement_activites[activite.label] = tarif
                         if 0 < heures_realisees_non_facturees == heures_realisees:
                             self.jours_presence_non_facturee[date] = heures_realisees_non_facturees
 
@@ -710,6 +711,7 @@ class FactureFinMois(FactureBase):
         if creche.arrondi_mensualisation_euros == ARRONDI_EURO_PLUS_PROCHE:
             self.cotisation_mensuelle = round(self.cotisation_mensuelle)
 
+        print(self.cotisation_mensuelle, self.frais_inscription, self.supplement, self.supplement_activites, self.deduction, self.correction)
         self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction + self.correction
         self.total_facture = self.total + self.report_cotisation_mensuelle
 
