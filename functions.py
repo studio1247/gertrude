@@ -16,8 +16,11 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
+from __future__ import print_function
 
-import sys, time, os.path
+import sys
+import time
+import os.path
 from constants import *
 from parameters import *
 
@@ -1153,7 +1156,7 @@ class ProgressHandler:
             self.gauge_fn(self.min + (self.max-self.min)*value/100)
 
     def display(self, s):
-        print s
+        print(s)
         if self.display_fn:
             self.display_fn(s+"\n")
 
