@@ -16,6 +16,7 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
+from __future__ import print_function
 
 from constants import *
 from functions import *
@@ -53,7 +54,7 @@ def GetStatistiques(start, end, site=None, bargraph=False):
         fin = end
     date = debut
     while date <= fin:
-        print "[Statistiques %s %d]" % (months[date.month-1], date.year)
+        print("[Statistiques %s %d]" % (months[date.month-1], date.year))
         fin_mois = GetMonthEnd(date)
         if start <= date <= end:
             result.heures_accueil += GetHeuresAccueil(date.year, date.month, site)
@@ -78,16 +79,16 @@ def GetStatistiques(start, end, site=None, bargraph=False):
                         result.cotisations_contrat += facture.total_contractualise
                         result.cotisations_reel += facture.total_realise
                         result.cotisations_facture += facture.total_facture
-                        print inscrit.prenom, inscrit.nom, facture.date
-                        print ' ', "heures contractualisées :", facture.heures_contractualisees, ", heures contrat :", facture.heures_contrat
-                        print ' ', "heures réalisées :", facture.heures_realisees
-                        print ' ', "heures facturées :", facture.heures_facturees, ", heures facture :", facture.heures_facture
-                        print ' ', "jours contractualisés :", facture.jours_contractualises
-                        print ' ', "jours réalisés :", facture.jours_realises
-                        print ' ', "jours facturés :", facture.jours_factures
-                        print ' ', "total contractualisé", facture.total_contractualise
-                        print ' ', "total réalisé :", facture.total_realise
-                        print ' ', "total facturé :", facture.total_facture
+                        print(inscrit.prenom, inscrit.nom, facture.date)
+                        print(' ', "heures contractualisées :", facture.heures_contractualisees, ", heures contrat :", facture.heures_contrat)
+                        print(' ', "heures réalisées :", facture.heures_realisees)
+                        print(' ', "heures facturées :", facture.heures_facturees, ", heures facture :", facture.heures_facture)
+                        print(' ', "jours contractualisés :", facture.jours_contractualises)
+                        print(' ', "jours réalisés :", facture.jours_realises)
+                        print(' ', "jours facturés :", facture.jours_factures)
+                        print(' ', "total contractualisé", facture.total_contractualise)
+                        print(' ', "total réalisé :", facture.total_realise)
+                        print(' ', "total facturé :", facture.total_facture)
                     result.bargraph[0][date.month-1] += heures_contrat
                     result.bargraph[1][date.month-1] += facture.heures_realisees
                     result.bargraph[2][date.month-1] += heures_facture

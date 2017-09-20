@@ -15,6 +15,9 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+from __future__ import print_function
+
 import datetime, time, locale, numbers
 import sys, os, shutil, types, zipfile
 import xml.dom.minidom
@@ -207,15 +210,15 @@ def ReplaceTextFields(dom, _fields):
                             start_tag, end_tag = '<%s(' % field, ')>'
                             if start_tag in nodeText and end_tag in nodeText:
                                 if isinstance(text, list):
-                                    print child.toprettyxml()
+                                    print(child.toprettyxml())
                                 else:
                                     tag = nodeText[nodeText.find(start_tag):nodeText.find(end_tag) + 2]
                                     parameters = tag[len(field) + 2:-2]
                                     try:
                                         replace = True
                                         nodeText = nodeText.replace(tag, eval("value(%s)" % parameters))
-                                    except Exception, e:
-                                        print 'erreur :', tag, parameters, e
+                                    except Exception as e:
+                                        print('erreur :', tag, parameters, e)
                         else:
                             tag = '<%s>' % field
                             if tag in nodeText:
@@ -236,8 +239,8 @@ def ReplaceTextFields(dom, _fields):
                         
                     if replace:
                         child.replaceWholeText(nodeText)
-                except Exception, e:
-                    print e
+                except Exception as e:
+                    print(e)
 
 
 def ReplaceFields(cellules, _fields):
@@ -280,7 +283,7 @@ def ReplaceFields(cellules, _fields):
                                 start_tag, end_tag = '<%s(' % field, ')>'
                                 if start_tag in nodeText and end_tag in nodeText:
                                     if isinstance(text, list):
-                                        print child.toprettyxml()
+                                        print(child.toprettyxml())
                                     else:
                                         tag = nodeText[nodeText.find(start_tag):nodeText.find(end_tag) + 2]
                                         parameters = tag[len(field) + 2:-2]
@@ -289,8 +292,8 @@ def ReplaceFields(cellules, _fields):
                                             val = eval("value(%s)" % parameters)
                                             cellule.setAttribute("office:value", val)
                                             nodeText = nodeText.replace(tag, val)
-                                        except Exception, e:
-                                            print 'erreur :', tag, parameters, e
+                                        except Exception as e:
+                                            print('erreur :', tag, parameters, e)
                             else:
                                 tag = '<%s>' % field
                                 if tag in nodeText:
@@ -537,8 +540,8 @@ def StartLibreOffice(filename):
                          MakePropertyValues(objServiceManager,
                            [["ReadOnly", False],
                            ["Hidden", False]]))
-        except Exception, e:
-            dlg = wx.MessageDialog(None, u"Impossible d'ouvrir le document\n%r" % e, 'Erreur', wx.OK|wx.ICON_WARNING)
+        except Exception as e:
+            dlg = wx.MessageDialog(None, "Impossible d'ouvrir le document\n%r" % e, 'Erreur', wx.OK|wx.ICON_WARNING)
             dlg.ShowModal()
             dlg.Destroy()
     else:
@@ -551,11 +554,11 @@ def StartLibreOffice(filename):
             paths.append("ooffice")
         for path in paths:
             try:
-                print path, filename
+                print(path, filename)
                 subprocess.Popen([path, filename])
                 return
-            except Exception, e:
-                print e
+            except Exception as e:
+                print(e)
                 pass
         dlg = wx.MessageDialog(None, "Impossible de lancer OpenOffice / LibreOffice", 'Erreur', wx.OK|wx.ICON_WARNING)
         dlg.ShowModal()
@@ -626,9 +629,9 @@ def StartAcrobatReader(filename):
                 c.ConnectTo(acrobat, 'control')
                 c.Exec('[DocOpen("%s")]' % (filename,))
                 return
-            except Exception, e:
+            except Exception as e:
                 pass
-        print "Impossible de lancer acrobat reader ; prochain essai dans 1s ...", e
+        print("Impossible de lancer acrobat reader ; prochain essai dans 1s ...", e)
 
     dlg = wx.MessageDialog(None, "Impossible d'ouvrir le document", 'Erreur', wx.OK | wx.ICON_WARNING)
     dlg.ShowModal()
@@ -666,7 +669,7 @@ def SendDocument(filename, text, subject, to, saas=False):
             doc = MIMEText(fp.read(), _charset='UTF-8')
             msg.attach(doc)
     except:
-        print "ERREUR"
+        print("ERREUR")
         pass
 
     with open(filename, 'rb') as fp:
@@ -692,8 +695,8 @@ def SendDocument(filename, text, subject, to, saas=False):
         pass
 
     if config.debug:
-        print u"From: %s, To:" % creche.email, to + [creche.email]
-        print msg.as_string()[:1200], '...'
+        print("From: %s, To:" % creche.email, to + [creche.email])
+        print(msg.as_string()[:1200], '...')
     else:
         s = smtplib.SMTP(smtp_server, port)
         if "gmail" in smtp_server:
@@ -715,7 +718,7 @@ class DocumentDialog(wx.Dialog):
         # method.
         pre = wx.PreDialog()
         pre.SetExtraStyle(wx.DIALOG_EX_CONTEXTHELP)
-        pre.Create(parent, -1, u"Génération de document")
+        pre.Create(parent, -1, "Génération de document")
 
         # This next step is the most important, it turns this Python
         # object into the real wrapper of the dialog (instead of pre)
@@ -758,29 +761,29 @@ class DocumentDialog(wx.Dialog):
         
         sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.sauver_ouvrir = wx.Button(self, -1, u"Sauver et ouvrir")
+        self.sauver_ouvrir = wx.Button(self, -1, "Sauver et ouvrir")
         self.sauver_ouvrir.SetDefault()
         self.Bind(wx.EVT_BUTTON, self.OnSauverOuvrir, self.sauver_ouvrir)
         sizer.Add(self.sauver_ouvrir, 0, wx.LEFT | wx.RIGHT, 5)
 
-        self.sauver = wx.Button(self, -1, u"Sauver")
+        self.sauver = wx.Button(self, -1, "Sauver")
         self.Bind(wx.EVT_BUTTON, self.OnSauver, self.sauver)
         sizer.Add(self.sauver, 0, wx.RIGHT, 5)
 
         if modifications.multi:
-            button = wx.Button(self, -1, u"Sauver individuellement")
+            button = wx.Button(self, -1, "Sauver individuellement")
             self.Bind(wx.EVT_BUTTON, self.OnSauverUnitaire, button)
             sizer.Add(button, 0, wx.RIGHT, 5)
 
         if modifications.email:
-            self.sauver_envoyer = wx.Button(self, -1, u"Sauver et envoyer par email")
+            self.sauver_envoyer = wx.Button(self, -1, "Sauver et envoyer par email")
             self.Bind(wx.EVT_BUTTON, self.OnSauverEnvoyer, self.sauver_envoyer)
             sizer.Add(self.sauver_envoyer, 0, wx.RIGHT, 5)
             if modifications.multi is False and not modifications.email_to:
                 self.sauver_envoyer.Disable()
                 
             if creche.caf_email:
-                self.sauver_envoyer = wx.Button(self, -1, u"Sauver et envoyer par email à la CAF")
+                self.sauver_envoyer = wx.Button(self, -1, "Sauver et envoyer par email à la CAF")
                 self.Bind(wx.EVT_BUTTON, self.OnSauverEnvoyerCAF, self.sauver_envoyer)
                 sizer.Add(self.sauver_envoyer, 0, wx.LEFT | wx.RIGHT, 5)
 
@@ -836,18 +839,18 @@ class DocumentDialog(wx.Dialog):
                     os.remove(self.oo_filename)
             self.document_generated = True
             if errors:
-                message = u"Document %s généré avec des erreurs :\n" % self.filename
+                message = "Document %s généré avec des erreurs :\n" % self.filename
                 for label in errors.keys():
                     message += '\n' + label + ' :\n  '
                     message += '\n  '.join(errors[label])
                 dlg = wx.MessageDialog(self, message, 'Message', wx.OK | wx.ICON_WARNING)
         except IOError:
-            print sys.exc_info()
-            dlg = wx.MessageDialog(self, u"Impossible de sauver le document. Peut-être est-il déjà ouvert ?", 'Erreur', wx.OK | wx.ICON_WARNING)
+            print(sys.exc_info())
+            dlg = wx.MessageDialog(self, "Impossible de sauver le document. Peut-être est-il déjà ouvert ?", 'Erreur', wx.OK | wx.ICON_WARNING)
             dlg.ShowModal()
             dlg.Destroy()
             return
-        except Exception, e:
+        except Exception as e:
             info = sys.exc_info()
             message = ' [type: %s value: %s traceback: %s]' % (info[0], info[1], traceback.extract_tb(info[2]))
             dlg = wx.MessageDialog(self, message, 'Erreur', wx.OK | wx.ICON_WARNING)
@@ -879,7 +882,7 @@ class DocumentDialog(wx.Dialog):
                 emails = '\n'.join([" - %s (%s)" % (modifs.email_subject, ", ".join(modifs.email_to)) for filename, modifs in simple_modifications])
                 if len(emails) > 1000:
                     emails = emails[:1000] + "\n..."
-                dlg = wx.MessageDialog(self, u"Ces emails seront envoyés :\n" + emails, 'Confirmation', wx.OK | wx.CANCEL | wx.ICON_WARNING)
+                dlg = wx.MessageDialog(self, "Ces emails seront envoyés :\n" + emails, 'Confirmation', wx.OK | wx.CANCEL | wx.ICON_WARNING)
                 response = dlg.ShowModal()
                 dlg.Destroy()
                 if response != wx.ID_OK:
@@ -892,15 +895,15 @@ class DocumentDialog(wx.Dialog):
                         filename += ".pdf"
                     try:
                         SendDocument(filename, GetTemplateFile(modifs.email_text), modifs.email_subject, modifs.email_to)
-                    except Exception, e:
-                        dlg = wx.MessageDialog(self, u"Impossible d'envoyer le document %s\n%r" % (filename, e), 'Erreur', wx.OK | wx.ICON_WARNING)
+                    except Exception as e:
+                        dlg = wx.MessageDialog(self, "Impossible d'envoyer le document %s\n%r" % (filename, e), 'Erreur', wx.OK | wx.ICON_WARNING)
                         dlg.ShowModal()
                         dlg.Destroy()
             else:
                 try:
                     SendDocument(self.filename, GetTemplateFile(self.modifications.email_text), self.modifications.email_subject, self.modifications.email_to)
-                except Exception, e:
-                    dlg = wx.MessageDialog(self, u"Impossible d'envoyer le document %s\n%r" % (self.filename, e), 'Erreur', wx.OK | wx.ICON_WARNING)
+                except Exception as e:
+                    dlg = wx.MessageDialog(self, "Impossible d'envoyer le document %s\n%r" % (self.filename, e), 'Erreur', wx.OK | wx.ICON_WARNING)
                     dlg.ShowModal()
                     dlg.Destroy()
 
@@ -909,7 +912,7 @@ class DocumentDialog(wx.Dialog):
         if self.document_generated:
             try:
                 SendDocument(self.filename, GetTemplateFile(self.modifications.email_text[:-4] + " CAF" + self.modifications.email_text[-4:]), self.modifications.email_subject, [creche.caf_email])
-            except Exception, e:
-                dlg = wx.MessageDialog(self, u"Impossible d'envoyer le document %s\n%r" % (self.filename, e), 'Erreur', wx.OK | wx.ICON_WARNING)
+            except Exception as e:
+                dlg = wx.MessageDialog(self, "Impossible d'envoyer le document %s\n%r" % (self.filename, e), 'Erreur', wx.OK | wx.ICON_WARNING)
                 dlg.ShowModal()
                 dlg.Destroy()

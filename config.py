@@ -16,6 +16,7 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
+from __future__ import print_function
 
 import __builtin__
 import sys, os.path, shutil, time
@@ -173,7 +174,7 @@ def getDefaultDocumentsDirectory():
             pidl = df.ParseDisplayName(0, None, "::{450d8fba-ad25-11d0-98a8-0800361b1103}")[1]
             return shell.SHGetPathFromIDList(pidl)
         except:
-            print "L'extension win32com pour python est recommandée (plateforme windows) !"
+            print("L'extension win32com pour python est recommandée (plateforme windows) !")
             return os.getcwd()
     else:
         return os.getcwd()
@@ -360,7 +361,7 @@ def SaveConfig(progress_handler):
                 parser.set(DEFAULT_SECTION, key, parameters[key])
             parser.write(file(config.filename, "w"))
         except Exception, e:
-            print e
+            print(e)
             progress_handler.display("Impossible d'enregistrer les paramètres de configuration !")
 
 
@@ -381,7 +382,7 @@ def Filter():
                     break
         else:
             inscrits.append(inscrit)
-    print "%d inscrits filtrés" % (len(creche.inscrits) - len(inscrits))
+    print("%d inscrits filtrés" % (len(creche.inscrits) - len(inscrits)))
     creche.inscrits = inscrits
 
 

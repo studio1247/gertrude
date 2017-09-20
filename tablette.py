@@ -16,6 +16,8 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
+from __future__ import print_function
+
 # TODO pb in GetActivitiesSummary from __future__ import division
 
 import datetime
@@ -30,7 +32,7 @@ def write_apache_logs_to_journal(filename):
     lines = file(filename).readlines()
     result = []
     for line in lines:
-        print line
+        print(line)
         splitted = line.split()
         url = splitted[6]
         action = None
@@ -65,18 +67,18 @@ def write_apache_logs_to_journal(filename):
 
         if who is None:
             if combinaison.strip():
-                print "-----ERREUR-----", action, combinaison, ts
+                print("-----ERREUR-----", action, combinaison, ts)
         else:
             date = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d@%H:%M')
             if (action, who.idx, date) in result:
-                print "-----ENTREE EN DOUBLE-----", url
+                print("-----ENTREE EN DOUBLE-----", url)
             else:
                 result.append((action, who.idx, date))
 
     result.sort(key=lambda tup: tup[-1])  # sorts in place
     f = file("journal.txt", "w")
     for action, idx, date in result:
-        print action, idx, date
+        print(action, idx, date)
         f.write("%s %d %s\n" % (action, idx, date))
     f.close()
 
@@ -155,11 +157,10 @@ def sync_tablette_lines(lines, tz=None):
             elif label == "malade":
                 array[idx][date].append(PeriodePresence(date, malade=True))
             else:
-                print "Ligne %s inconnue" % label
+                print("Ligne %s inconnue" % label)
             creche.last_tablette_synchro = line
-        except Exception, e:
-            print e
-            pass
+        except Exception as e:
+            print(e)
 
     # print array_salaries
 
@@ -185,7 +186,7 @@ def sync_tablette_lines(lines, tz=None):
 
 
 def sync_tablette():
-    print "Synchro tablette ..."
+    print("Synchro tablette ...")
 
     journal = config.connection.LoadJournal()
     if not journal:
