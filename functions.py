@@ -641,7 +641,8 @@ def GetEnfantsTriesSelonParametreTriFacture(enfants):
         return enfants
 
 
-def GetPresentsIndexes(indexes, (debut, fin), site=None):
+def GetPresentsIndexes(indexes, periode, site=None):
+    debut, fin = periode
     if indexes is None:
         indexes = range(len(creche.inscrits))
     result = []

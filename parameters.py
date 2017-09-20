@@ -19,7 +19,6 @@ from __future__ import unicode_literals
 
 import datetime
 from paques import getPaquesDate
-import __builtin__
 
 
 def getWeekDays(year, weekday):

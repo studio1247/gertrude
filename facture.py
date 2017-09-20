@@ -19,7 +19,6 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 import locale
-import __builtin__
 from cotisation import *
 from globals import history
 from sqlobjects import Encaissement, Inscrit, Reservataire
@@ -27,7 +26,6 @@ from sqlobjects import Encaissement, Inscrit, Reservataire
 
 class FactureBase(object):
     def __init__(self, inscrit, annee, mois, options=0):
-        creche = __builtin__.creche
         self.inscrit = inscrit
         self.site = None
         self.annee = annee
