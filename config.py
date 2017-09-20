@@ -20,7 +20,6 @@ from __future__ import print_function
 
 import __builtin__
 import sys, os.path, shutil, time
-import urllib2
 import ConfigParser
 from functions import *
 from data import FileConnection, SharedFileConnection, HttpConnection
@@ -301,6 +300,7 @@ def LoadConfig(path=None, progress_handler=default_progress_handler):
     config.heure_synchro_tablette = getTimeParameter(parser, "heure-synchro-tablette", None)
     config.preinscription_redirect = getStringParameter(parser, "preinscription-redirect", "")
     config.preinscription_template = getStringParameter(parser, "preinscription-template", "")
+    config.preinscription_required = getStringParameter(parser, "preinscription-required", "")
 
     years_before, years_after = getYearsDisplayed(parser)
     config.first_date = datetime.date(today.year - years_before, 1, 1)
