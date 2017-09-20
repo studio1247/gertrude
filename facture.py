@@ -931,7 +931,7 @@ def GetHistoriqueSolde(who, jalon, derniere_facture=True):
                         else:
                             if facture.fin_recap < GetMonthStart(jalon):
                                 lignes.append(facture)
-                except Exception, e:
+                except Exception as e:
                     pass
                     # print "Exception %r" % e
 
@@ -977,7 +977,7 @@ def ClotureFactures(inscrits, date, cloture=True):
                 facture.Cloture()
             elif facture.cloture:
                 facture.Decloture()
-        except CotisationException, e:
+        except CotisationException as e:
             errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
             continue
     return errors
