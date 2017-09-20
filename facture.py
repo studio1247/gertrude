@@ -555,7 +555,8 @@ class FactureFinMois(FactureBase):
                     if cotisation.total_realise_non_facture:
                         self.deduction += cotisation.total_realise_non_facture
                         self.raison_deduction.add("heures non facturées")
-                    self.cotisation_mensuelle += prorata
+                    if cotisation.IsContratFacture(self.debut_recap):
+                        self.cotisation_mensuelle += prorata
                     self.total_contractualise += prorata
                     self.heures_contrat += prorata_heures
                     self.heures_facture_par_mode[cotisation.mode_garde] += prorata_heures

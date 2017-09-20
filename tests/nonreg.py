@@ -1046,5 +1046,53 @@ class OPagaioTests(GertrudeTestCase):
         self.assertPrec2Equals(facture.regularisation, 228.00)
 
 
+class PitchounsTests(GertrudeTestCase):
+    def setUp(self):
+        GertrudeTestCase.setUp(self)
+        creche.type = TYPE_ASSOCIATIF
+        creche.mode_facturation = FACTURATION_PSU
+        creche.gestion_depart_anticipe = True
+        creche.temps_facturation = FACTURATION_DEBUT_MOIS_CONTRAT
+        creche.repartition = REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS
+        creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
+        creche.arrondi_semaines = ARRONDI_SEMAINE_SUPERIEURE
+        self.AddConge("Août", options=MOIS_SANS_FACTURE)
+        self.AddConge("25/05/2017", "28/05/2017")
+        self.AddConge("07/08/2017", "28/08/2017")
+        self.AddConge("23/12/2017", "31/12/2017")
+
+    def test_2_inscriptions_sur_mois_sans_facture(self):
+        inscrit = self.AddInscrit()
+        self.AddFrere(inscrit)
+        self.AddFrere(inscrit)
+        inscription = Inscription(inscrit, creation=False)
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.debut = datetime.date(2017, 4, 1)
+        inscription.fin = datetime.date(2017, 8, 5)
+        inscription.reference[0].AddActivity(102, 156, 0, -1)
+        inscription.reference[2].AddActivity(102, 132, 0, -1)
+        inscription.reference[3].AddActivity(102, 132, 0, -1)
+        inscription.reference[4].AddActivity(102, 156, 0, -1)
+        inscrit.inscriptions.append(inscription)
+        cotisation = Cotisation(inscrit, datetime.date(2017, 4, 1), NO_ADDRESS | NO_PARENTS)
+        self.assertEquals(cotisation.cotisation_mensuelle, 133.0)
+        inscription = Inscription(inscrit, creation=False)
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.semaines_conges = 1
+        inscription.debut = datetime.date(2017, 8, 29)
+        inscription.fin = datetime.date(2017, 12, 23)
+        inscription.reference[0].AddActivity(102, 195, 0, -1)
+        inscription.reference[1].AddActivity(102, 195, 0, -1)
+        inscription.reference[3].AddActivity(102, 195, 0, -1)
+        inscription.reference[4].AddActivity(102, 195, 0, -1)
+        inscrit.inscriptions.append(inscription)
+        cotisation = Cotisation(inscrit, datetime.date(2017, 8, 29), NO_ADDRESS | NO_PARENTS)
+        self.assertEquals(cotisation.cotisation_mensuelle, 248.0)
+        facture = Facture(inscrit, 2017, 8)
+        self.assertPrec2Equals(facture.total, 0.0)
+        facture = Facture(inscrit, 2017, 9)
+        self.assertPrec2Equals(facture.total, 248.00)
+
+
 if __name__ == '__main__':
     unittest.main()
