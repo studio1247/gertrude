@@ -634,7 +634,6 @@ class FactureFinMois(FactureBase):
                             semaines_conges_non_pris = semaines_conges_a_prendre - float(inscription.GetNombreJoursCongesPoses()) / jours_presence
                             if semaines_conges_non_pris > 0:
                                 heures = cotisation.heures_semaine * semaines_conges_non_pris
-                                print("heures_semaine, semaines_non_pris", cotisation.heures_semaine, semaines_conges_non_pris)
                                 regularisation_conges_non_pris = heures * cotisation.montant_heure_garde
                                 if options & TRACES:
                                     print(" régularisation congés non pris (%0.1f semaines, %d jours pris) : %0.1fh * %0.2f = %0.2f" % (semaines_conges_a_prendre, inscription.GetNombreJoursCongesPoses(), heures, cotisation.montant_heure_garde, regularisation_conges_non_pris))
@@ -762,7 +761,8 @@ class FactureDebutMois(FactureFinMois):
     def __init__(self, inscrit, annee, mois, options=0):
         FactureFinMois.__init__(self, inscrit, annee, mois, options)
         self.heures_previsionnelles = self.heures_realisees
-        print("Calcul de la facture du mois précédent pour le report...")
+        if options & TRACES:
+            print("Calcul de la facture du mois précédent pour le report...")
         if mois == 1:
             self.facture_precedente = FactureFinMois(inscrit, annee-1, 12, options)
         else:

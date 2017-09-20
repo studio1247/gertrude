@@ -16,6 +16,7 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
+from __future__ import print_function
 
 import datetime, __builtin__
 try:
@@ -45,7 +46,7 @@ class SQLConnection(object):
         self.con = None
 
     def open(self, autosave=False):
-        print("Open database %r" % self.filename)
+        print("Open database", self.filename)
         if autosave:
             self.con = sqlite3.connect(self.filename, isolation_level=None)
         else:
