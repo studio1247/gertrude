@@ -1011,7 +1011,7 @@ def GetInscriptionFields(inscription):
             ('debut-inscription', inscription.debut),
             ('fin-inscription', inscription.fin),
             ('fin-adaptation', inscription.fin_periode_adaptation),
-            ('duree-inscription-mois', (1 + inscription.fin.month - inscription.debut.month) if (inscription.fin and inscription.debut) else "N/A"),
+            ('duree-inscription-mois', (1 + inscription.fin.month - inscription.debut.month + 12 * (inscription.fin.year - inscription.debut.year)) if (inscription.fin and inscription.debut) else "N/A"),
             ('nombre-semaines-conges', inscription.semaines_conges),
             ('groupe', inscription.groupe.nom if inscription.groupe else ""),
             ('professeur-prenom', GetPrenom(inscription.professeur)),
