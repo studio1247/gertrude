@@ -23,8 +23,10 @@ from ooffice import *
 
 
 class ExportComptaCotisationsModifications(object):
+    title = "Export compta"
+    template = "Export compta cotisations.txt"
+
     def __init__(self, inscrits, periode):
-        self.template = 'Export compta cotisations.txt'
         self.inscrits = inscrits
         self.periode = periode
         self.default_output = u"Export compta cotisations %s %d.txt" % (months[periode.month - 1], periode.year)
