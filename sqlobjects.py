@@ -16,10 +16,10 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
+from __future__ import print_function
 
 import binascii
 import bcrypt
-import wx
 from functions import *
 from cotisation import GetDateRevenus
 
@@ -376,7 +376,7 @@ class JourneeCapacite(Day):
         self.salarie = None
 
     def InsertActivity(self, start, end, value):
-        print('nouvelle tranche horaire %s de capacité (%r, %r %d)' % (self.label, start, end, value), end=' ')
+        print('nouvelle tranche horaire %s de capacité (%r, %r %d)' % (self.label, start, end, value),)
         result = sql_connection.execute('INSERT INTO CAPACITE (idx, value, debut, fin, jour) VALUES (NULL,?,?,?,?)',
                                         (value, start, end, self.jour))
         idx = result.lastrowid
@@ -395,7 +395,7 @@ class JourneeReferenceInscription(Day):
         self.mode_arrondi = 'arrondi_heures'
 
     def InsertActivity(self, start, end, value):
-        print('nouvelle activite de reference (%r, %r %d)' % (start, end, value), end=' ')
+        print('nouvelle activite de reference (%r, %r %d)' % (start, end, value),)
         result = sql_connection.execute(
             'INSERT INTO REF_ACTIVITIES (idx, reference, day, value, debut, fin) VALUES (NULL,?,?,?,?,?)',
             (self.inscription.idx, self.day, value, start, end))
@@ -418,7 +418,7 @@ class JourneeReferenceSalarie(Day):
         self.mode_arrondi = 'arrondi_heures_salaries'
 
     def InsertActivity(self, start, end, value):
-        print('salarie : nouvelle activite de reference (%r, %r %d)' % (start, end, value), end=' ')
+        print('salarie : nouvelle activite de reference (%r, %r %d)' % (start, end, value),)
         result = sql_connection.execute(
             'INSERT INTO REF_JOURNEES_SALARIES (idx, reference, day, value, debut, fin) VALUES (NULL,?,?,?,?,?)',
             (self.contrat.idx, self.day, value, start, end))
@@ -498,7 +498,7 @@ class Journee(Day):
 
     def InsertActivity(self, start, end, value):
         if sql_connection:
-            print('nouvelle activite %d (%r, %r, %d)' % (self.inscrit_idx, start, end, value), end=' ')
+            print('nouvelle activite %d (%r, %r, %d)' % (self.inscrit_idx, start, end, value),)
             result = sql_connection.execute(
                 'INSERT INTO ACTIVITES (idx, inscrit, date, value, debut, fin) VALUES (NULL,?,?,?,?,?)',
                 (self.inscrit_idx, self.date, value, start, end))
@@ -542,7 +542,7 @@ class JourneeSalarie(Day):
 
     def InsertActivity(self, start, end, value):
         if sql_connection:
-            print('nouvelle activite (%r, %r, %d)' % (start, end, value), end=' ')
+            print('nouvelle activite (%r, %r, %d)' % (start, end, value),)
             result = sql_connection.execute(
                 'INSERT INTO ACTIVITES_SALARIES (idx, salarie, date, value, debut, fin) VALUES (NULL,?,?,?,?,?)',
                 (self.salarie_idx, self.date, value, start, end))
@@ -850,7 +850,7 @@ class Activite(object):
             return 0.0
 
     def create(self):
-        print('nouvelle activite', end=' ')
+        print('nouvelle activite',)
         if self.value is None:
             values = creche.activites.keys()
             value = Activite.last_value + 1
@@ -1291,7 +1291,7 @@ class Creche(object):
         self.groupes = []
         self.categories = []
         self.couleurs = {ABSENCE_NON_PREVENUE: Activite(creation=False, value=ABSENCE_NON_PREVENUE,
-                                                        couleur=[0, 0, 255, 150, wx.SOLID])}
+                                                        couleur=[0, 0, 255, 150, 100])}
         self.activites = {}
         self.salaries = []
         self.professeurs = []
