@@ -17,7 +17,6 @@
 
 from __future__ import unicode_literals
 
-import __builtin__
 from constants import *
 import datetime
 from functions import GetInscriptions, GetDateIntersection, GetDateMinus, GetPrenomNom
@@ -76,6 +75,6 @@ def GetAlertes(fresh_only=False):
             if GetRetardDePaiement(reservataire):
                 add_alerte(today, "Le solde de %s est négatif depuis plus de %d jours" % (reservataire.nom, reservataire.delai_paiement if reservataire.delai_paiement else 0))
 
-    alertes.sort(key=lambda (date, message, ack): date, reverse=True)
+    alertes.sort(key=lambda date, message, ack: date, reverse=True)
     return alertes
 

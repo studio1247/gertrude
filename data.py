@@ -16,6 +16,7 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
+from __future__ import print_function
 
 import __builtin__
 import requests
@@ -61,14 +62,14 @@ class HttpConnection(object):
 
     def send_action(self, action):
         url = self.get_url(action)
-        print url
+        print(url)
         response = requests.get(url, auth=self.auth, proxies=self.proxies)
         if response.status_code != requests.codes.ok:
             return 0
         result = response.content
         try:
             # (pas sur mac)
-            print '=>', result[:64]
+            print('=>', result[:64])
         except:
             pass
         if result.isdigit():
@@ -78,7 +79,7 @@ class HttpConnection(object):
 
     def get_server_data(self, action):
         url = self.get_url(action)
-        print url
+        print(url)
         response = requests.get(url, auth=self.auth, proxies=self.proxies)
         if response.status_code != requests.codes.ok:
             return 0
@@ -101,7 +102,7 @@ class HttpConnection(object):
             self.token = self.get_server_data('force_token')
         else:
             self.token = self.get_server_data('get_token')
-        print self.token
+        print(self.token)
         self.check_token()
         if not self.token:
             return 0
@@ -166,7 +167,7 @@ class HttpConnection(object):
                 return eval(response.content)
             else:
                 return response.content
-        except Exception, e:
+        except Exception as e:
             raise
 
     def upload(self):
@@ -345,7 +346,7 @@ class FileConnection(object):
                         os.makedirs(BACKUPS_DIRECTORY)
                     self.backup = 'backup_%s_%d.db' % (os.path.split(self.filename)[1], time.time())
                     shutil.copyfile(self.filename, BACKUPS_DIRECTORY + '/' + self.backup)
-            except Exception, e:
+            except Exception as e:
                 progress_handler.display('Impossible de faire la sauvegarde' + str(e))
     
     def Liste(self, progress_handler=default_progress_handler):
@@ -364,8 +365,8 @@ class FileConnection(object):
                 self.file_mtime = os.stat(self.filename).st_mtime
                 _sql_connection = SQLConnection(self.filename)
                 _creche = _sql_connection.Load(None)
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
         return _sql_connection, _creche
     
     def Load(self, progress_handler=default_progress_handler, autosave=False):

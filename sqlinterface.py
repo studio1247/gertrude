@@ -18,7 +18,8 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-import datetime, __builtin__
+import datetime
+import __builtin__
 try:
     import sqlite3
 except:
@@ -26,7 +27,6 @@ except:
 from functions import *
 from sqlobjects import *
 from facture import FactureCloturee
-import wx
 import bcrypt
 
 VERSION = 112
@@ -595,12 +595,12 @@ class SQLConnection(object):
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2012, 1, 1), datetime.date(2012, 12, 31), 7181.04, 85740.00))
         cur.execute('INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)', (datetime.date(2013, 1, 1), datetime.date(2013, 12, 31), 7306.56, 85740.00))
 
-        couleur = [5, 203, 28, 150, wx.SOLID]
-        couleur_supplement = [5, 203, 28, 250, wx.SOLID]
-        couleur_previsionnel = [5, 203, 28, 50, wx.SOLID]
+        couleur = [5, 203, 28, 150, 100]
+        couleur_supplement = [5, 203, 28, 250, 100]
+        couleur_previsionnel = [5, 203, 28, 50, 100]
         cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)', ("Présences", 0, 0, str(couleur), str(couleur_supplement), str(couleur_previsionnel), ""))
-        vacances = (0, 0, 255, 150, wx.SOLID)
-        malade = (190, 35, 29, 150, wx.SOLID)
+        vacances = (0, 0, 255, 150, 100)
+        malade = (190, 35, 29, 150, 100)
         cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)', ("Vacances", -1, 0, str(vacances), str(vacances), str(vacances), ""))
         cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)', ("Malade", -2, 0, str(malade), str(malade), str(malade), ""))
 
@@ -1253,17 +1253,17 @@ class SQLConnection(object):
             cur.execute('UPDATE INSCRIPTIONS SET duree_reference=?', (7,))
 
         if version < 25:
-            couleurs = [[5, 203, 28, 150, wx.SOLID],
+            couleurs = [[5, 203, 28, 150, 100],
                         [250, 0, 0, 150, wx.BDIAGONAL_HATCH],
                         [0, 0, 255, 150, wx.FDIAGONAL_HATCH],
                         [255, 0, 255, 150, wx.FDIAGONAL_HATCH],
                         [255, 255, 0, 150, wx.FDIAGONAL_HATCH]]
-            couleurs_supplement = [[5, 203, 28, 250, wx.SOLID],
+            couleurs_supplement = [[5, 203, 28, 250, 100],
                         [250, 0, 0, 250, wx.BDIAGONAL_HATCH],
                         [0, 0, 255, 250, wx.FDIAGONAL_HATCH],
                         [255, 0, 255, 250, wx.FDIAGONAL_HATCH],
                         [255, 255, 0, 250, wx.FDIAGONAL_HATCH]]
-            couleurs_previsionnel = [[5, 203, 28, 50, wx.SOLID],
+            couleurs_previsionnel = [[5, 203, 28, 50, 100],
                         [250, 0, 0, 50, wx.BDIAGONAL_HATCH],
                         [0, 0, 255, 50, wx.FDIAGONAL_HATCH],
                         [255, 0, 255, 50, wx.FDIAGONAL_HATCH],
@@ -1279,8 +1279,8 @@ class SQLConnection(object):
             cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel) VALUES(NULL,?,?,?,?,?,?)', ("Présences", 0, 0, str(couleurs[0]), str(couleurs_supplement[0]), str(couleurs_previsionnel[0])))
 
         if version < 26:
-            vacances = (0, 0, 255, 150, wx.SOLID)
-            malade = (190, 35, 29, 150, wx.SOLID)
+            vacances = (0, 0, 255, 150, 100)
+            malade = (190, 35, 29, 150, 100)
             cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel) VALUES(NULL,?,?,?,?,?,?)', ("Vacances", -1, 0, str(vacances), str(vacances), str(vacances)))
             cur.execute('INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel) VALUES(NULL,?,?,?,?,?,?)', ("Malade", -2, 0, str(malade), str(malade), str(malade)))
 
