@@ -137,7 +137,7 @@ class GertrudeListbook(Listbook):
 
 class GertrudeFrame(wx.Frame):
     def __init__(self, progress_handler=None):
-        wx.Frame.__init__(self, None, -1, "Gertrude v%s" % VERSION, wx.DefaultPosition, config.window_size)
+        wx.Frame.__init__(self, None, -1, "Gertrude v%s - %s" % (VERSION, creche.nom), wx.DefaultPosition, config.window_size)
 
         # Icon
         icon = wx.Icon(GetBitmapFile('gertrude.ico'), wx.BITMAP_TYPE_ICO)
@@ -432,14 +432,14 @@ class GertrudeFrame(wx.Frame):
         info = wx.AboutDialogInfo()
         info.Name = "Gertrude"
         info.Version = VERSION
-        info.Copyright = "(C) 2005-2013 Bertrand Songis"
+        info.Copyright = "(C) 2005-2017 Bertrand Songis"
         info.Description = wx.lib.wordwrap.wordwrap(
             "Gertrude est un logiciel libre adapté aux besoins de gestion des crèches et haltes-garderies en France.\n\n"
             "Développé pour une crèche parentale rennaise début 2005, il a été adapté de 2007 à 2015 pour d’autres crèches ; il est désormais accessible à tous.\n\n"
             "Il permet l'édition de contrats, la gestion de planning, la facturation, les appels de cotisations, les attestations de paiement, les rapports de fréquentation, la synthèse des contributions familiales.\n\n",
             350, wx.ClientDC(self))
-        info.WebSite = ("http://gertrude.creches.free.fr", "Gertrude")
-        info.Contributors = [ "Mairie des Orres" ]
+        info.WebSite = ("https://www.gertrude-logiciel.org", "Gertrude")
+        info.Contributors = ["Mairie des Orres"]
         info.License = wx.lib.wordwrap.wordwrap(
             "Gertrude is free software; you can redistribute it and/or modify "
             "it under the terms of the GNU General Public License as published by "
