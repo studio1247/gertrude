@@ -360,7 +360,7 @@ def SaveConfig(progress_handler):
             for key in parameters.keys():
                 parser.set(DEFAULT_SECTION, key, parameters[key])
             parser.write(file(config.filename, "w"))
-        except Exception, e:
+        except Exception as e:
             print(e)
             progress_handler.display("Impossible d'enregistrer les paramètres de configuration !")
 
