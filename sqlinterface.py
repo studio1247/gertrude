@@ -45,7 +45,7 @@ class SQLConnection(object):
         self.con = None
 
     def open(self, autosave=False):
-        print "Open database %r" % self.filename
+        print("Open database %r" % self.filename)
         if autosave:
             self.con = sqlite3.connect(self.filename, isolation_level=None)
         else:
@@ -617,7 +617,7 @@ class SQLConnection(object):
         # cur.execute('DELETE FROM FACTURES where date=?', (datetime.date(2016, 12, 1), ))
         # cur.execute('UPDATE INSCRIPTIONS SET debut=?, fin=?', (datetime.date(2017, 1, 1), datetime.date(2017, 12, 31)))
         self.commit()
-        print "Facture déclôturée"
+        print("Facture déclôturée")
 
     def remove_all_inscrits(self):
         cur = self.cursor()
@@ -695,7 +695,7 @@ class SQLConnection(object):
             try:
                 creche.tranches_capacite[jour].AddActivity(debut, fin, value, idx)
             except:
-                print "TODO"
+                print("TODO")
 
         cur.execute('SELECT nom, adresse, code_postal, ville, telephone, capacite, groupe, idx FROM SITES')
         for site_entry in cur.fetchall():
@@ -844,7 +844,7 @@ class SQLConnection(object):
                 if i < 2:
                     famille.parents[i] = parent
                 else:
-                    print "Famille avec plus de 2 parents : fonction non supportée"
+                    print("Famille avec plus de 2 parents : fonction non supportée")
                     continue
                 cur.execute('SELECT debut, fin, revenu, chomage, conge_parental, regime, idx FROM REVENUS WHERE parent=?', (parent.idx,))
                 for revenu_entry in cur.fetchall():
@@ -921,8 +921,8 @@ class SQLConnection(object):
                         try:
                             reference_day = inscription.reference[day]
                             reference_day.AddActivity(debut, fin, value, idx)
-                        except Exception, e:
-                            print inscrit.prenom, inscrit.nom, day, debut, fin, value, e
+                        except Exception as e:
+                            print(inscrit.prenom, inscrit.nom, day, debut, fin, value, e)
                     # print inscrit.prenom, day, debut, fin, value
             cur.execute('SELECT debut, fin, label, idx FROM CONGES_INSCRITS WHERE inscrit=?', (inscrit.idx,))
             for conges_entry in cur.fetchall():
@@ -1853,7 +1853,7 @@ class SQLConnection(object):
                     moyen_paiement INTEGER
                   );""")
             except:
-                print "Erreur sur creation table ENCAISSEMENTS"
+                print("Erreur sur creation table ENCAISSEMENTS")
 
         if version < 92:
             cur.execute("ALTER TABLE SITES ADD groupe INTEGER;")

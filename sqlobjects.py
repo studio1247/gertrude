@@ -27,7 +27,7 @@ from cotisation import GetDateRevenus
 class SQLObject(object):
     def delete(self):
         if self.idx is not None:
-            print 'suppression %s (table=%s, idx=%d)' % (self.__class__.__name__, self.table, self.idx)
+            print('suppression %s (table=%s, idx=%d)' % (self.__class__.__name__, self.table, self.idx))
             sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.table, (self.idx,))
             self.idx = None
 
@@ -330,7 +330,7 @@ class Day(object):
         return self.GetTotalActivitesParMode(MODE_PERMANENCE)
 
     def delete(self):
-        print 'suppression jour'
+        print('suppression jour')
         for start, end, value in self.activites.keys():
             self.RemoveActivity(start, end, value)
         for value in self.activites_sans_horaires.keys():
@@ -339,13 +339,13 @@ class Day(object):
     def RemoveActivity(self, start, end, value):
         if start is None and end is None:
             if self.activites_sans_horaires[value] is not None:
-                print 'delete %r (table=%s, idx=%d)' % (self.nom, self.table, self.activites_sans_horaires[value])
+                print('delete %r (table=%s, idx=%d)' % (self.nom, self.table, self.activites_sans_horaires[value]))
                 sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.table,
                                        (self.activites_sans_horaires[value],))
             del self.activites_sans_horaires[value]
         else:
             if self.activites[(start, end, value)] is not None:
-                print 'delete %r (table=%s, idx=%d)' % (self.nom, self.table, self.activites[(start, end, value)])
+                print('delete %r (table=%s, idx=%d)' % (self.nom, self.table, self.activites[(start, end, value)]))
                 sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.table,
                                        (self.activites[(start, end, value)],))
             del self.activites[(start, end, value)]
@@ -376,12 +376,12 @@ class JourneeCapacite(Day):
         self.salarie = None
 
     def InsertActivity(self, start, end, value):
-        print 'nouvelle tranche horaire %s de capacité (%r, %r %d)' % (self.label, start, end, value),
+        print('nouvelle tranche horaire %s de capacité (%r, %r %d)' % (self.label, start, end, value), end=' ')
         result = sql_connection.execute('INSERT INTO CAPACITE (idx, value, debut, fin, jour) VALUES (NULL,?,?,?,?)',
                                         (value, start, end, self.jour))
         idx = result.lastrowid
         self.activites[(start, end, value)] = idx
-        print idx
+        print(idx)
 
 
 class JourneeReferenceInscription(Day):
@@ -395,7 +395,7 @@ class JourneeReferenceInscription(Day):
         self.mode_arrondi = 'arrondi_heures'
 
     def InsertActivity(self, start, end, value):
-        print 'nouvelle activite de reference (%r, %r %d)' % (start, end, value),
+        print('nouvelle activite de reference (%r, %r %d)' % (start, end, value), end=' ')
         result = sql_connection.execute(
             'INSERT INTO REF_ACTIVITIES (idx, reference, day, value, debut, fin) VALUES (NULL,?,?,?,?,?)',
             (self.inscription.idx, self.day, value, start, end))
@@ -404,7 +404,7 @@ class JourneeReferenceInscription(Day):
             self.activites_sans_horaires[value] = idx
         else:
             self.activites[(start, end, value)] = idx
-        print idx
+        print(idx)
 
 
 class JourneeReferenceSalarie(Day):
@@ -418,7 +418,7 @@ class JourneeReferenceSalarie(Day):
         self.mode_arrondi = 'arrondi_heures_salaries'
 
     def InsertActivity(self, start, end, value):
-        print 'salarie : nouvelle activite de reference (%r, %r %d)' % (start, end, value),
+        print('salarie : nouvelle activite de reference (%r, %r %d)' % (start, end, value), end=' ')
         result = sql_connection.execute(
             'INSERT INTO REF_JOURNEES_SALARIES (idx, reference, day, value, debut, fin) VALUES (NULL,?,?,?,?,?)',
             (self.contrat.idx, self.day, value, start, end))
@@ -427,7 +427,7 @@ class JourneeReferenceSalarie(Day):
             self.activites_sans_horaires[value] = idx
         else:
             self.activites[(start, end, value)] = idx
-        print idx
+        print(idx)
 
 
 class WeekActivity(SQLObject):
@@ -446,7 +446,7 @@ class WeekActivity(SQLObject):
             self.idx = idx
 
     def create(self):
-        print 'nouvelle activite semaine', self.inscrit.idx, self.date, self.activity, self.value
+        print('nouvelle activite semaine', self.inscrit.idx, self.date, self.activity, self.value)
         result = sql_connection.execute(
             'INSERT INTO PLANNING_HEBDOMADAIRE (idx, inscrit, date, activity, value) VALUES (NULL,?,?,?,?)',
             (self.inscrit.idx, self.date, self.activity, self.value))
@@ -455,7 +455,7 @@ class WeekActivity(SQLObject):
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ('date', 'activity', 'value') and self.idx:
-            print 'update', name
+            print('update', name)
             sql_connection.execute('UPDATE PLANNING_HEBDOMADAIRE SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -489,21 +489,21 @@ class Journee(Day):
         self.commentaire = commentaire
         if sql_connection:
             if self.commentaire_idx is None:
-                print 'nouveau commentaire'
+                print('nouveau commentaire')
                 result = sql_connection.execute('INSERT INTO COMMENTAIRES (idx, inscrit, date, commentaire) VALUES (NULL,?,?,?)', (self.inscrit_idx, self.date, commentaire))
                 self.commentaire_idx = result.lastrowid
             else:
-                print 'update commentaire'
+                print('update commentaire')
                 sql_connection.execute('UPDATE COMMENTAIRES SET commentaire=? WHERE idx=?', (commentaire, self.commentaire_idx))
 
     def InsertActivity(self, start, end, value):
         if sql_connection:
-            print 'nouvelle activite %d (%r, %r, %d)' % (self.inscrit_idx, start, end, value),
+            print('nouvelle activite %d (%r, %r, %d)' % (self.inscrit_idx, start, end, value), end=' ')
             result = sql_connection.execute(
                 'INSERT INTO ACTIVITES (idx, inscrit, date, value, debut, fin) VALUES (NULL,?,?,?,?,?)',
                 (self.inscrit_idx, self.date, value, start, end))
             idx = result.lastrowid
-            print idx
+            print(idx)
         else:
             idx = None
         if start is None and end is None:
@@ -530,24 +530,24 @@ class JourneeSalarie(Day):
         self.commentaire = commentaire
         if sql_connection:
             if self.commentaire_idx is None:
-                print 'nouveau commentaire'
+                print('nouveau commentaire')
                 result = sql_connection.execute(
                     'INSERT INTO COMMENTAIRES_SALARIES (idx, salarie, date, commentaire) VALUES (NULL,?,?,?)',
                     (self.salarie_idx, self.date, commentaire))
                 self.commentaire_idx = result.lastrowid
             else:
-                print 'update commentaire'
+                print('update commentaire')
                 sql_connection.execute('UPDATE COMMENTAIRES_SALARIES SET commentaire=? WHERE idx=?',
                                                 (commentaire, self.commentaire_idx))
 
     def InsertActivity(self, start, end, value):
         if sql_connection:
-            print 'nouvelle activite (%r, %r, %d)' % (start, end, value),
+            print('nouvelle activite (%r, %r, %d)' % (start, end, value), end=' ')
             result = sql_connection.execute(
                 'INSERT INTO ACTIVITES_SALARIES (idx, salarie, date, value, debut, fin) VALUES (NULL,?,?,?,?,?)',
                 (self.salarie_idx, self.date, value, start, end))
             idx = result.lastrowid
-            print idx
+            print(idx)
         else:
             idx = None
         if start is None and end is None:
@@ -577,7 +577,7 @@ class Bureau(SQLObject):
             self.create()
 
     def create(self):
-        print 'nouveau bureau'
+        print('nouveau bureau')
         result = sql_connection.execute(
             'INSERT INTO BUREAUX (idx, debut, fin, president, vice_president, tresorier, secretaire, directeur) VALUES (NULL,?,?,?,?,?,?,?)',
             (
@@ -589,7 +589,7 @@ class Bureau(SQLObject):
         self.__dict__[name] = value
         if name in ['debut', 'fin', 'president', 'vice_president', 'tresorier', 'secretaire', 'directeur', 'gerant',
                     'directeur_adjoint', 'comptable'] and self.idx:
-            print 'update', name
+            print('update', name)
             sql_connection.execute('UPDATE BUREAUX SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -605,20 +605,20 @@ class BaremeCAF(object):
             self.create()
 
     def create(self):
-        print 'nouveau bareme caf'
+        print('nouveau bareme caf')
         result = sql_connection.execute(
             'INSERT INTO BAREMESCAF (idx, debut, fin, plancher, plafond) VALUES (NULL,?,?,?,?)',
             (self.debut, self.fin, self.plancher, self.plafond))
         self.idx = result.lastrowid
 
     def delete(self):
-        print 'suppression bareme caf'
+        print('suppression bareme caf')
         sql_connection.execute('DELETE FROM BAREMESCAF WHERE idx=?', (self.idx,))
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['debut', 'fin', 'plancher', 'plafond'] and self.idx:
-            print 'update', name
+            print('update', name)
             sql_connection.execute('UPDATE BAREMESCAF SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -635,7 +635,7 @@ class TarifHoraire(object):
 
     def UpdateFormule(self, changed=True):
         if changed:
-            print 'update formule_taux_horaire', self.formule
+            print('update formule_taux_horaire', self.formule)
             sql_connection.execute('UPDATE TARIFS_HORAIRES SET formule=? WHERE idx=?', (str(self.formule), self.idx))
         self.conversion_formule = GetFormuleConversion(self.formule)
 
@@ -643,20 +643,20 @@ class TarifHoraire(object):
         return creche.CheckFormule(self.conversion_formule, index)
 
     def create(self):
-        print 'nouveau tarif horaire'
+        print('nouveau tarif horaire')
         result = sql_connection.execute(
             'INSERT INTO TARIFS_HORAIRES (idx, debut, fin, formule) VALUES (NULL,?,?,?)',
             (self.debut, self.fin, str(self.formule)))
         self.idx = result.lastrowid
 
     def delete(self):
-        print 'suppression tarif horaire'
+        print('suppression tarif horaire')
         sql_connection.execute('DELETE FROM TARIFS_HORAIRES WHERE idx=?', (self.idx,))
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['debut', 'fin'] and self.idx:
-            print 'update', name
+            print('update', name)
             sql_connection.execute('UPDATE TARIFS_HORAIRES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -670,7 +670,7 @@ class Charges(object):
             self.create()
 
     def create(self):
-        print 'nouvelles charges'
+        print('nouvelles charges')
         result = sql_connection.execute('INSERT INTO CHARGES (idx, date, charges) VALUES (NULL,?,?)',
                                         (self.date, self.charges))
         self.idx = result.lastrowid
@@ -678,7 +678,7 @@ class Charges(object):
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['date', 'charges'] and self.idx:
-            print 'update', name
+            print('update', name)
             sql_connection.execute('UPDATE CHARGES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -693,19 +693,19 @@ class User(object):
             self.create()
 
     def create(self):
-        print 'nouveau user'
+        print('nouveau user')
         result = sql_connection.execute('INSERT INTO USERS (idx, login, password, profile) VALUES (NULL,?,?,?)',
                                         (self.login, self.password, self.profile))
         self.idx = result.lastrowid
 
     def delete(self):
-        print 'suppression user'
+        print('suppression user')
         sql_connection.execute('DELETE FROM USERS WHERE idx=?', (self.idx,))
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['login', 'password', 'profile'] and self.idx:
-            print 'update', name
+            print('update', name)
             sql_connection.execute('UPDATE USERS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -749,7 +749,7 @@ class Reservataire(SQLObject):
         return True
 
     def create(self):
-        print 'nouveau reservataire'
+        print('nouveau reservataire')
         result = sql_connection.execute(
             'INSERT INTO RESERVATAIRES (idx, debut, fin, nom, adresse, code_postal, ville, telephone, email, places, heures_jour, heures_semaine, tarif, periode_facturation, delai_paiement, options) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
             (self.debut, self.fin, self.nom, self.adresse, self.code_postal, self.ville, self.telephone, self.email, self.places, self.heures_jour, self.heures_semaine, self.tarif, self.periode_facturation, self.delai_paiement, self.options))
@@ -758,7 +758,7 @@ class Reservataire(SQLObject):
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['debut', 'fin', 'nom', 'adresse', 'code_postal', 'ville', 'telephone', 'email', 'places', 'heures_jour', 'heures_semaine', 'tarif', 'periode_facturation', 'delai_paiement', 'options'] and self.idx:
-            print 'update', name
+            print('update', name)
             sql_connection.execute('UPDATE RESERVATAIRES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -776,21 +776,21 @@ class Conge(object):
             self.create()
 
     def create(self):
-        print 'nouveau conge'
+        print('nouveau conge')
         result = sql_connection.execute(
             'INSERT INTO %s (idx, debut, fin, label, options) VALUES (NULL,?,?,?,?)' % self.__table__,
             (self.debut, self.fin, self.label, self.options))
         self.idx = result.lastrowid
 
     def delete(self):
-        print 'suppression conge'
+        print('suppression conge')
         sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.__table__, (self.idx,))
         self.parent.CalculeJoursConges()
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['debut', 'fin', 'label', 'options'] and self.idx:
-            print 'update', name
+            print('update', name)
             sql_connection.execute('UPDATE %s SET %s=? WHERE idx=?' % (self.__table__, name), (value, self.idx))
             self.parent.CalculeJoursConges()
 
@@ -799,7 +799,7 @@ class CongeInscrit(Conge):
     __table__ = "CONGES_INSCRITS"
 
     def create(self):
-        print 'nouveau conge'
+        print('nouveau conge')
         result = sql_connection.execute(
             'INSERT INTO %s (idx, inscrit, debut, fin, label) VALUES (NULL,?,?,?,?)' % self.__table__,
             (self.parent.idx, self.debut, self.fin, self.label))
@@ -810,7 +810,7 @@ class CongeSalarie(Conge):
     __table__ = "CONGES_SALARIES"
 
     def create(self):
-        print 'nouveau conge salarie'
+        print('nouveau conge salarie')
         result = sql_connection.execute(
             'INSERT INTO %s (idx, salarie, debut, fin, label) VALUES (NULL,?,?,?,?)' % self.__table__,
             (self.parent.idx, self.debut, self.fin, self.label))
@@ -839,25 +839,25 @@ class Activite(object):
             for tarif in creche.tarifs_speciaux:
                 try:
                     exec("%s = %r" % (tarif.label.lower().replace(" ", "_"), inscrit.famille.tarifs & (1 << tarif.idx)))
-                except Exception, e:
-                    print "Exception tarif special", e
+                except Exception as e:
+                    print("Exception tarif special", e)
             try:
                 return eval(self.formule_tarif)
-            except Exception, e:
-                print "Exception tarif activite", e
+            except Exception as e:
+                print("Exception tarif activite", e)
                 return 0.0
         else:
             return 0.0
 
     def create(self):
-        print 'nouvelle activite',
+        print('nouvelle activite', end=' ')
         if self.value is None:
             values = creche.activites.keys()
             value = Activite.last_value + 1
             while value in values:
                 value += 1
             Activite.last_value = self.value = value
-        print self.value
+        print(self.value)
         result = sql_connection.execute(
             'INSERT INTO ACTIVITIES (idx, label, value, mode, couleur, couleur_supplement, couleur_previsionnel, formule_tarif, owner) VALUES(NULL,?,?,?,?,?,?,?,?)',
             (self.label, self.value, self.mode, str(self.couleur), str(self.couleur_supplement),
@@ -865,7 +865,7 @@ class Activite(object):
         self.idx = result.lastrowid
 
     def delete(self):
-        print 'suppression activite'
+        print('suppression activite')
         sql_connection.execute('DELETE FROM ACTIVITIES WHERE idx=?', (self.idx,))
 
     def __setattr__(self, name, value):
@@ -874,7 +874,7 @@ class Activite(object):
         else:
             self.__dict__[name] = value
         if name in ['label', 'value', 'mode', 'couleur', "couleur_supplement", "couleur_previsionnel", "formule_tarif", "owner"] and self.idx:
-            print 'update', name, value
+            print('update', name, value)
             if name in ("couleur", "couleur_supplement", "couleur_previsionnel") and not isinstance(value, basestring):
                 value = str(value)
             sql_connection.execute('UPDATE ACTIVITIES SET %s=? WHERE idx=?' % name, (value, self.idx))
@@ -956,14 +956,14 @@ class Contrat(PeriodeReference):
         return result
 
     def create(self):
-        print 'nouveau contrat'
+        print('nouveau contrat')
         result = sql_connection.execute(
             'INSERT INTO CONTRATS (idx, employe, debut, fin, site, fonction, duree_reference) VALUES (NULL,?,?,?,?,?,?)',
             (self.salarie.idx, self.debut, self.fin, self.site, self.fonction, self.duree_reference))
         self.idx = result.lastrowid
 
     def delete(self):
-        print 'suppression contrat'
+        print('suppression contrat')
         sql_connection.execute('DELETE FROM CONTRATS WHERE idx=?', (self.idx,))
 
     def __setattr__(self, name, value):
@@ -971,7 +971,7 @@ class Contrat(PeriodeReference):
         if name in ['debut', 'fin', 'site', 'fonction', 'duree_reference'] and self.idx:
             if name == 'site':
                 value = value.idx
-            print 'update', name
+            print('update', name)
             sql_connection.execute('UPDATE CONTRATS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -1089,7 +1089,7 @@ class Salarie(object):
                     else:
                         date_fin_periode = datetime.date.max
                     if date_fin_periode < date_debut_periode:
-                        print "Periode incorrecte pour %s :" % GetPrenomNom(self), date_debut_periode, date_fin_periode
+                        print("Periode incorrecte pour %s :" % GetPrenomNom(self), date_debut_periode, date_fin_periode)
                         continue
                     if ((date_debut_periode <= date_debut <= date_fin_periode) or
                             (date_debut_periode <= date_fin <= date_fin_periode) or
@@ -1104,7 +1104,7 @@ class Salarie(object):
         return self.GetContrat(date)
 
     def AddConge(self, conge, calcule=True):
-        print "AddConge", conge, calcule
+        print("AddConge", conge, calcule)
         self.conges.append(conge)
         if calcule:
             self.CalculeJoursConges()
@@ -1172,7 +1172,7 @@ class Salarie(object):
                 return ABSENT
 
     def create(self):
-        print 'nouveau salarie'
+        print('nouveau salarie')
         result = sql_connection.execute(
             'INSERT INTO EMPLOYES (idx, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, email, diplomes, combinaison) VALUES(NULL,?,?,?,?,?,?,?,?,?)',
             (self.prenom, self.nom, self.telephone_domicile, self.telephone_domicile_notes, self.telephone_portable,
@@ -1180,7 +1180,7 @@ class Salarie(object):
         self.idx = result.lastrowid
 
     def delete(self):
-        print 'suppression salarie'
+        print('suppression salarie')
         sql_connection.execute('DELETE FROM EMPLOYES WHERE idx=?', (self.idx,))
         for obj in self.contrats + self.journees.values():
             obj.delete()
@@ -1189,7 +1189,7 @@ class Salarie(object):
         self.__dict__[name] = value
         if name in ['prenom', 'nom', 'telephone_domicile', 'telephone_domicile_notes', 'telephone_portable',
                     'telephone_portable_notes', 'email', 'diplomes', 'combinaison'] and self.idx:
-            print 'update', name
+            print('update', name)
             sql_connection.execute('UPDATE EMPLOYES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -1207,7 +1207,7 @@ class Professeur(SQLObject):
             self.create()
 
     def create(self):
-        print 'nouveau professeur'
+        print('nouveau professeur')
         result = sql_connection.execute(
             'INSERT INTO PROFESSEURS (idx, prenom, nom, entree, sortie) VALUES(NULL,?,?,?,?)',
             (self.prenom, self.nom, self.entree, self.sortie))
@@ -1216,7 +1216,7 @@ class Professeur(SQLObject):
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['prenom', 'nom', 'entree', 'sortie'] and self.idx:
-            print 'update', name
+            print('update', name)
             sql_connection.execute('UPDATE PROFESSEURS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -1234,20 +1234,20 @@ class Site(object):
             self.create()
 
     def create(self):
-        print 'nouveau site'
+        print('nouveau site')
         result = sql_connection.execute(
             'INSERT INTO SITES (idx, nom, adresse, code_postal, ville, telephone, capacite, groupe) VALUES(NULL,?,?,?,?,?,?,?)',
             (self.nom, self.adresse, self.code_postal, self.ville, self.telephone, self.capacite, self.groupe))
         self.idx = result.lastrowid
 
     def delete(self):
-        print 'suppression site'
+        print('suppression site')
         sql_connection.execute('DELETE FROM SITES WHERE idx=?', (self.idx,))
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['nom', 'adresse', 'code_postal', 'ville', 'telephone', 'capacite', 'groupe'] and self.idx:
-            print 'update', name
+            print('update', name)
             sql_connection.execute('UPDATE SITES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -1540,12 +1540,12 @@ class Creche(object):
             test = eval(formule[index][0])
             return True
         except Exception as e:
-            print e
+            print(e)
             return False
 
     def UpdateFormuleTauxEffort(self, changed=True):
         if changed:
-            print 'update formule_taux_effort', self.formule_taux_effort
+            print('update formule_taux_effort', self.formule_taux_effort)
             sql_connection.execute('UPDATE CRECHE SET formule_taux_effort=?', (str(self.formule_taux_effort),))
         self.conversion_formule_taux_effort = GetFormuleConversion(self.formule_taux_effort)
 
@@ -1664,7 +1664,7 @@ class Creche(object):
                     'last_tablette_synchro', 'changement_groupe_auto', 'allergies',
                     'regularisation_fin_contrat', 'date_raz_permanences',
                     'conges_payes_salaries', 'conges_supplementaires_salaries', 'cout_journalier', 'iban', 'bic', 'creditor_id', 'siret'] and self.idx:
-            print 'update', name, value
+            print('update', name, value)
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
 
 
@@ -1683,20 +1683,20 @@ class Revenu(object):
             self.create()
 
     def create(self):
-        print 'nouveau revenu'
+        print('nouveau revenu')
         result = sql_connection.execute(
             'INSERT INTO REVENUS (idx, parent, debut, fin, revenu, chomage, conge_parental, regime) VALUES(NULL,?,?,?,?,?,?,?)',
             (self.parent.idx, self.debut, self.fin, self.revenu, self.chomage, self.conge_parental, self.regime))
         self.idx = result.lastrowid
 
     def delete(self):
-        print 'suppression revenu'
+        print('suppression revenu')
         sql_connection.execute('DELETE FROM REVENUS WHERE idx=?', (self.idx,))
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['debut', 'fin', 'revenu', 'chomage', 'conge_parental', 'regime'] and self.idx:
-            print 'update', name
+            print('update', name)
             sql_connection.execute('UPDATE REVENUS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -1731,7 +1731,7 @@ class Parent(object):
                 self.revenus.append(Revenu(self, debut, fin))
 
     def create(self):
-        print 'nouveau parent'
+        print('nouveau parent')
         result = sql_connection.execute(
             'INSERT INTO PARENTS (idx, famille, relation, prenom, nom, telephone_domicile, telephone_domicile_notes, telephone_portable, telephone_portable_notes, telephone_travail, telephone_travail_notes, profession, email) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?)',
             (self.famille.idx, self.relation, self.prenom, self.nom, self.telephone_domicile,
@@ -1742,7 +1742,7 @@ class Parent(object):
             revenu.create()
 
     def delete(self):
-        print 'suppression parent'
+        print('suppression parent')
         sql_connection.execute('DELETE FROM PARENTS WHERE idx=?', (self.idx,))
         for revenu in self.revenus:
             revenu.delete()
@@ -1755,7 +1755,7 @@ class Parent(object):
         self.__dict__[name] = value
         if name in ['relation', 'prenom', 'nom', 'adresse', 'code_postal', 'ville', 'telephone_domicile', 'telephone_domicile_notes', 'telephone_portable',
                     'telephone_portable_notes', 'telephone_travail', 'telephone_travail_notes', 'profession', 'email'] and self.idx:
-            print 'update', name
+            print('update', name)
             sql_connection.execute('UPDATE PARENTS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -1772,7 +1772,7 @@ class Referent(SQLObject):
             self.create()
 
     def create(self):
-        print 'nouveau referent'
+        print('nouveau referent')
         result = sql_connection.execute(
             'INSERT INTO REFERENTS (idx, famille, prenom, nom, telephone) VALUES(NULL,?,?,?,?)',
             (self.famille.idx, self.prenom, self.nom, self.telephone))
@@ -1781,7 +1781,7 @@ class Referent(SQLObject):
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['prenom', 'nom', 'telephone'] and self.idx:
-            print 'update', name
+            print('update', name)
             sql_connection.execute('UPDATE REFERENTS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -1799,7 +1799,7 @@ class TarifSpecial(SQLObject):
             self.create()
 
     def create(self):
-        print 'nouveau tarif special'
+        print('nouveau tarif special')
         result = sql_connection.execute(
             'INSERT INTO TARIFSSPECIAUX (idx, label, type, unite, valeur, portee) VALUES(NULL,?,?,?,?,?)',
             (self.label, self.type, self.unite, self.valeur, self.portee))
@@ -1808,7 +1808,7 @@ class TarifSpecial(SQLObject):
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['label', 'type', 'unite', 'valeur', 'portee'] and self.idx:
-            print 'update', name, value
+            print('update', name, value)
             sql_connection.execute('UPDATE TARIFSSPECIAUX SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -1824,7 +1824,7 @@ class PlageHoraire(SQLObject):
             self.create()
 
     def create(self):
-        print 'nouvelle plage horaire'
+        print('nouvelle plage horaire')
         result = sql_connection.execute('INSERT INTO PLAGESHORAIRES (idx, debut, fin, flags) VALUES(NULL,?,?,?)',
                                         (self.debut, self.fin, self.flags))
         self.idx = result.lastrowid
@@ -1835,7 +1835,7 @@ class PlageHoraire(SQLObject):
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['debut', 'fin', 'flags'] and self.idx:
-            print 'update', name, value
+            print('update', name, value)
             sql_connection.execute('UPDATE PLAGESHORAIRES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -1851,7 +1851,7 @@ class Groupe(SQLObject):
             self.create()
 
     def create(self):
-        print 'nouveau groupe'
+        print('nouveau groupe')
         result = sql_connection.execute('INSERT INTO GROUPES (idx, nom, ordre, age_maximum) VALUES(NULL,?,?,?)',
                                         (self.nom, self.ordre, self.age_maximum))
         self.idx = result.lastrowid
@@ -1862,7 +1862,7 @@ class Groupe(SQLObject):
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['nom', 'ordre', 'age_maximum'] and self.idx:
-            print 'update', name, value
+            print('update', name, value)
             sql_connection.execute('UPDATE GROUPES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -1876,14 +1876,14 @@ class Categorie(SQLObject):
             self.create()
 
     def create(self):
-        print 'nouvelle categorie'
+        print('nouvelle categorie')
         result = sql_connection.execute('INSERT INTO CATEGORIES (idx, nom) VALUES(NULL,?)', (self.nom,))
         self.idx = result.lastrowid
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['nom'] and self.idx:
-            print 'update', name, value
+            print('update', name, value)
             sql_connection.execute('UPDATE CATEGORIES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -2025,7 +2025,7 @@ class Inscription(PeriodeReference):
         return ', '.join(result)
 
     def create(self):
-        print 'nouvelle inscription'
+        print('nouvelle inscription')
         result = sql_connection.execute(
             'INSERT INTO INSCRIPTIONS (idx, inscrit, debut, fin, depart, mode, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_mensuel_heures, semaines_conges, heures_permanences, tarifs) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
             (self.inscrit.idx, self.debut, self.fin, self.depart, self.mode, self.forfait_mensuel, self.frais_inscription, self.allocation_mensuelle_caf, self.fin_periode_adaptation, self.duree_reference, self.forfait_mensuel_heures, self.semaines_conges, self.heures_permanences, self.tarifs))
@@ -2046,7 +2046,7 @@ class Inscription(PeriodeReference):
                     'allocation_mensuelle_caf', 'fin_periode_adaptation', 'duree_reference', 'forfait_mensuel_heures',
                     'semaines_conges', 'heures_permanences', 'preinscription', 'site', 'sites_preinscription',
                     'professeur', 'reservataire', 'groupe', 'tarifs'] and self.idx:
-            print 'update', name, value
+            print('update', name, value)
             sql_connection.execute('UPDATE INSCRIPTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -2064,20 +2064,20 @@ class Frere_Soeur(object):
             self.create()
 
     def create(self):
-        print 'nouveau frere / soeur'
+        print('nouveau frere / soeur')
         result = sql_connection.execute(
             'INSERT INTO FRATRIES (idx, famille, prenom, naissance, entree, sortie) VALUES(NULL,?,?,?,?,?)',
             (self.famille.idx, self.prenom, self.naissance, self.entree, self.sortie))
         self.idx = result.lastrowid
 
     def delete(self):
-        print 'suppression frere / soeur'
+        print('suppression frere / soeur')
         sql_connection.execute('DELETE FROM FRATRIES WHERE idx=?', (self.idx,))
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['prenom', 'naissance', 'entree', 'sortie'] and self.idx:
-            print 'update', name
+            print('update', name)
             sql_connection.execute('UPDATE FRATRIES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -2092,7 +2092,7 @@ class NumeroFacture(SQLObject):
         self.ready = True
 
     def create(self):
-        print 'nouveau numero de facture'
+        print('nouveau numero de facture')
         result = sql_connection.execute('INSERT INTO NUMEROS_FACTURE (idx, date, valeur) VALUES (NULL,?,?)',
                                         (self.date, self.valeur))
         self.idx = result.lastrowid
@@ -2102,7 +2102,7 @@ class NumeroFacture(SQLObject):
 
         if self.ready and name in ['valeur']:
             if self.idx and self.valeur:
-                print 'update', name
+                print('update', name)
                 sql_connection.execute('UPDATE NUMEROS_FACTURE SET %s=? WHERE idx=?' % name, (value, self.idx))
             elif value and not self.idx:
                 self.create()
@@ -2123,14 +2123,14 @@ class Correction(SQLObject):
         self.ready = True
 
     def create(self):
-        print 'nouvelle correction'
+        print('nouvelle correction')
         result = sql_connection.execute(
             'INSERT INTO CORRECTIONS (idx, inscrit, date, valeur, libelle) VALUES (NULL,?,?,?,?)',
             (self.inscrit.idx, self.date, self.valeur, self.libelle))
         self.idx = result.lastrowid
 
     def delete(self):
-        print 'suppression correction'
+        print('suppression correction')
         sql_connection.execute('DELETE FROM CORRECTIONS WHERE idx=?', (self.idx,))
         self.idx = None
 
@@ -2139,7 +2139,7 @@ class Correction(SQLObject):
 
         if self.ready and name in ['valeur', 'libelle']:
             if self.idx and (self.valeur or self.libelle):
-                print 'update', name
+                print('update', name)
                 sql_connection.execute('UPDATE CORRECTIONS SET %s=? WHERE idx=?' % name, (value, self.idx))
             elif value and not self.idx:
                 self.create()
@@ -2183,7 +2183,7 @@ class Famille(object):
                 self.parents[1] = Parent(self, "maman")
 
     def create(self):
-        print 'nouvelle famille'
+        print('nouvelle famille')
         result = sql_connection.execute(
             'INSERT INTO FAMILLES (idx, adresse, code_postal, ville, numero_securite_sociale, numero_allocataire_caf, tarifs, notes, medecin_traitant, telephone_medecin_traitant, assureur, numero_police_assurance, code_client, iban, bic, mandate_id, jour_prelevement_automatique, date_premier_prelevement_automatique) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
             (self.adresse, self.code_postal, self.ville, self.numero_securite_sociale, self.numero_allocataire_caf,
@@ -2195,7 +2195,7 @@ class Famille(object):
                 obj.create()
 
     def delete(self):
-        print 'suppression famille'
+        print('suppression famille')
         sql_connection.execute('DELETE FROM FAMILLES WHERE idx=?', (self.idx,))
         for obj in self.parents + self.freres_soeurs + self.referents:
             if obj:
@@ -2210,7 +2210,7 @@ class Famille(object):
         if name in ['adresse', 'code_postal', 'ville', 'numero_securite_sociale', 'numero_allocataire_caf', 'tarifs',
                     'notes', 'medecin_traitant', 'telephone_medecin_traitant', 'assureur', 'numero_police_assurance',
                     'code_client', 'iban', 'bic', 'mandate_id', 'jour_prelevement_automatique', 'date_premier_prelevement_automatique'] and self.idx:
-            print 'update', name, (old_value, value)
+            print('update', name, (old_value, value))
             sql_connection.execute('UPDATE FAMILLES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -2270,7 +2270,7 @@ class Inscrit(object):
             self.famille = Famille()
 
     def create(self):
-        print 'nouvel inscrit'
+        print('nouvel inscrit')
         result = sql_connection.execute(
             'INSERT INTO INSCRITS (idx, prenom, nom, naissance, handicap, marche, photo, notes, combinaison, categorie, allergies, famille) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?)',
             (self.prenom, self.nom, self.naissance, self.handicap, self.marche, self.photo, self.notes,
@@ -2281,7 +2281,7 @@ class Inscrit(object):
             inscription.create()
 
     def delete(self):
-        print 'suppression inscrit'
+        print('suppression inscrit')
         sql_connection.execute('DELETE FROM INSCRITS WHERE idx=?', (self.idx,))
         for obj in self.inscriptions + self.journees.values():
             if obj is not None:
@@ -2299,7 +2299,7 @@ class Inscrit(object):
             value = value.idx
         if name in ['prenom', 'nom', 'sexe', 'naissance', 'handicap', 'marche', 'photo', 'combinaison', 'notes',
                     'categorie', 'allergies', 'famille'] and self.idx:
-            print 'update', self.idx, name, (old_value, value)
+            print('update', self.idx, name, (old_value, value))
             sql_connection.execute('UPDATE INSCRITS SET %s=? WHERE idx=?' % name, (value, self.idx))
 
     def AddConge(self, conge, calcule=True):
@@ -2402,7 +2402,7 @@ class Inscrit(object):
                     else:
                         date_fin_periode = datetime.date.max
                     if date_fin_periode < date_debut_periode:
-                        print "Periode incorrecte pour %s :" % GetPrenomNom(self), date_debut_periode, date_fin_periode
+                        print("Periode incorrecte pour %s :" % GetPrenomNom(self), date_debut_periode, date_fin_periode)
                         continue
                     if ((date_debut_periode <= date_debut <= date_fin_periode) or
                             (date_debut_periode <= date_fin <= date_fin_periode) or
@@ -2615,19 +2615,19 @@ class Alerte(object):
             self.create()
 
     def create(self):
-        print 'nouvelle alerte'
+        print('nouvelle alerte')
         result = sql_connection.execute('INSERT INTO ALERTES (idx, date, texte, acquittement) VALUES(NULL,?,?,?)',
                                         (self.date, self.texte, self.acquittement))
         self.idx = result.lastrowid
 
     def delete(self):
-        print 'suppression alerte'
+        print('suppression alerte')
         sql_connection.execute('DELETE FROM ALERTES WHERE idx=?', (self.idx,))
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if name in ['acquittement'] and self.idx:
-            print 'update', name
+            print('update', name)
             sql_connection.execute('UPDATE ALERTES SET %s=? WHERE idx=?' % name, (value, self.idx))
 
 
@@ -2644,14 +2644,14 @@ class EncaissementBase(SQLObject):
             self.create()
 
     def delete(self):
-        print 'suppression encaissement'
+        print('suppression encaissement')
         sql_connection.execute('DELETE FROM %s WHERE idx=?' % self.table, (self.idx,))
         self.idx = None
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
         if self.ready and name in ['date', 'valeur', 'moyen_paiement']:
-            print 'update', name
+            print('update', name)
             sql_connection.execute('UPDATE ENCAISSEMENTS SET %s=? WHERE idx=?' % (self.table, name), (value, self.idx))
 
 
@@ -2664,7 +2664,7 @@ class Encaissement(EncaissementBase):
         EncaissementBase.__init__(self, date, valeur, moyen_paiement, idx)
 
     def create(self):
-        print 'nouvel encaissement'
+        print('nouvel encaissement')
         result = sql_connection.execute(
             'INSERT INTO ENCAISSEMENTS (idx, famille, date, valeur, moyen_paiement) VALUES (NULL,?,?,?,?)',
             (self.famille.idx, self.date, self.valeur, self.moyen_paiement))
@@ -2680,7 +2680,7 @@ class EncaissementReservataire(EncaissementBase):
         EncaissementBase.__init__(self, date, valeur, moyen_paiement, idx)
 
     def create(self):
-        print 'nouvel encaissement reservataire'
+        print('nouvel encaissement reservataire')
         result = sql_connection.execute(
             'INSERT INTO ENCAISSEMENTS_RESERVATAIRES (idx, reservataire, date, valeur, moyen_paiement) VALUES (NULL,?,?,?,?)',
             (self.reservataire.idx, self.date, self.valeur, self.moyen_paiement))
