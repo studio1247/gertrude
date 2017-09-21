@@ -315,7 +315,7 @@ class PlanningLineGrid(BufferedWindow):
                 r, g, b, t, s = GetActivityColor(activity)
                 try:
                     dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
-                    dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
+                    dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s if s != 50 else 100))
                 except:
                     dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
                     dc.SetBrush(wx.Brush(wx.Colour(r, g, b), s))
