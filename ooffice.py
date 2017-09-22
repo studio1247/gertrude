@@ -709,7 +709,6 @@ def SendDocument(filename, generator, to=None, introduction_filename=None, saas=
         print("From: %s, To:" % creche.email, to + [creche.email])
         print(msg.as_string()[:1200], '...')
     else:
-        toto
         s = smtplib.SMTP(smtp_server, port)
         if "gmail" in smtp_server:
             s.starttls()
