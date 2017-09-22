@@ -671,16 +671,17 @@ def SendDocument(filename, generator, to=None, introduction_filename=None, saas=
     try:
         with open(introduction_filename) as f:
             text = f.read()
-            for field, value in generator.fields:
-                text = text.replace("<%s>" % field, value)
+            text = text.decode("utf-8")
+            for field, _, value in evalFields(generator.GetIntroductionFields()):
+                if isinstance(value, basestring):
+                    text = text.replace("<%s>" % field, value)
             introduction = MIMEMultipart('alternative')
-            html = "<html><head></head><body><p>%s</p></body></html>" % text.replace("\n", "<br>")
+            html = "<html><head><meta charset='UTF-8'></head><body><p>" + text.replace("\n", "<br>") + "</p></body></html>"
             introduction.attach(MIMEText(text, 'plain', _charset='UTF-8'))
-            introduction.attach(MIMEText(html, 'html'))
+            introduction.attach(MIMEText(html, 'html', _charset='UTF-8'))
             msg.attach(introduction)
-    except:
-        print("ERREUR")
-        pass
+    except Exception as e:
+        print("Exception", e)
 
     with open(filename, 'rb') as f:
         doc = MIMEBase('application', 'octet-stream')
@@ -708,6 +709,7 @@ def SendDocument(filename, generator, to=None, introduction_filename=None, saas=
         print("From: %s, To:" % creche.email, to + [creche.email])
         print(msg.as_string()[:1200], '...')
     else:
+        toto
         s = smtplib.SMTP(smtp_server, port)
         if "gmail" in smtp_server:
             s.starttls()

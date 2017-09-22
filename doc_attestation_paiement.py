@@ -62,6 +62,9 @@ class AttestationModifications(object):
         self.introduction_filename = "Accompagnement attestation paiement.txt"
         self.reservataire = None
 
+    def GetIntroductionFields(self):
+        return []
+
     def SetDefaultMultiParam(self):
         if self.debut.year == self.fin.year and self.debut.month == self.fin.month:
             self.email_subject = u"Attestations de paiement %s %d" % (months[self.debut.month - 1], self.debut.year)

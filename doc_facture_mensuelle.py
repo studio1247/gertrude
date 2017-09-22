@@ -94,6 +94,7 @@ class FactureModifications(object):
             self.template = 'Facture mensuelle.odt'
 
         self.introduction_filename = "Accompagnement facture.txt"
+        self.introduction_fields = {}
 
     def GetSimpleFilename(self, filename, inscrit):
         result = filename.replace("Factures", "Facture %s" % GetPrenomNom(inscrit)) \
@@ -169,6 +170,9 @@ class FactureModifications(object):
                 for i in range(row + 1, len(rows)):
                     table.removeChild(rows[i])
         ReplaceTextFields(section, facture.fields)
+
+    def GetIntroductionFields(self):
+        return self.introduction_fields
 
     def GetMetas(self, dom):
         metas = dom.getElementsByTagName('meta:user-defined')
@@ -295,6 +299,7 @@ class FactureModifications(object):
                         if not last_inscription or not last_inscription.fin or (tmp.fin and tmp.fin > last_inscription.fin):
                             last_inscription = tmp
                     facture.fields = fields + GetInscritFields(enfant) + GetInscriptionFields(last_inscription) + GetFactureFields(facture) + GetCotisationFields(facture.last_cotisation)
+                    self.introduction_fields = facture.fields
                     factures.append(facture)
 
                 if has_errors:
