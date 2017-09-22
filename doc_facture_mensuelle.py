@@ -310,8 +310,9 @@ class FactureModifications(object):
                 for template in templates:
                     clone = template.cloneNode(1)
 
-                    fields = GetSiteFields(facture.last_cotisation.inscription.site)
-                    ReplaceTextFields(clone, fields)
+                    if facture.last_cotisation:
+                        fields = GetSiteFields(facture.last_cotisation.inscription.site)
+                        ReplaceTextFields(clone, fields)
 
                     if clone.nodeName in ("draw:frame", "draw:custom-shape"):
                         doc.insertBefore(clone, template)
