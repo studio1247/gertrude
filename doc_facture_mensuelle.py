@@ -93,7 +93,7 @@ class FactureModifications(object):
         else:
             self.template = 'Facture mensuelle.odt'
 
-        self.email_text = "Accompagnement facture.txt"
+        self.introduction_filename = "Accompagnement facture.txt"
 
     def GetSimpleFilename(self, filename, inscrit):
         result = filename.replace("Factures", "Facture %s" % GetPrenomNom(inscrit)) \

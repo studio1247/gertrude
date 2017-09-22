@@ -59,7 +59,7 @@ class AttestationModifications(object):
         self.inscrits = GetEnfantsTriesSelonParametreTriFacture(self.inscrits)
         self.email = True
         self.site = None
-        self.email_text = "Accompagnement attestation paiement.txt"
+        self.introduction_filename = "Accompagnement attestation paiement.txt"
         self.reservataire = None
 
     def SetDefaultMultiParam(self):

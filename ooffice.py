@@ -649,12 +649,16 @@ def GenerateDocument(modifications, filename, gauge=None):
         return GenerateTextDocument(modifications, filename, gauge)
 
 
-def SendDocument(filename, text, subject, to, saas=False):
+def SendDocument(filename, generator, to=None, introduction_filename=None, saas=False):
+    if to is None:
+        to = generator.email_to
+    if introduction_filename is None:
+        introduction_filename = GetTemplateFile(generator.introduction_filename)
     COMMASPACE = ', '
 
     # Create the container (outer) email message.
     msg = MIMEMultipart()
-    msg['Subject'] = subject
+    msg['Subject'] = generator.email_subject
     if saas:
         msg_from = "saas@gertrude-logiciel.org"
         msg['Reply-to'] = creche.email
@@ -665,16 +669,22 @@ def SendDocument(filename, text, subject, to, saas=False):
     msg['CC'] = creche.email
 
     try:
-        with open(text) as fp:
-            doc = MIMEText(fp.read(), _charset='UTF-8')
-            msg.attach(doc)
+        with open(introduction_filename) as f:
+            text = f.read()
+            for field, value in generator.fields:
+                text = text.replace("<%s>" % field, value)
+            introduction = MIMEMultipart('alternative')
+            html = "<html><head></head><body><p>%s</p></body></html>" % text.replace("\n", "<br>")
+            introduction.attach(MIMEText(text, 'plain', _charset='UTF-8'))
+            introduction.attach(MIMEText(html, 'html'))
+            msg.attach(introduction)
     except:
         print("ERREUR")
         pass
 
-    with open(filename, 'rb') as fp:
+    with open(filename, 'rb') as f:
         doc = MIMEBase('application', 'octet-stream')
-        doc.set_payload(fp.read())
+        doc.set_payload(f.read())
         encoders.encode_base64(doc)
         doc.add_header('Content-Disposition', 'attachment', filename=unicode(os.path.split(filename)[1]).encode("latin-1"))
         msg.attach(doc)
@@ -894,14 +904,14 @@ class DocumentDialog(wx.Dialog):
                         filename, e = os.path.splitext(oo_filename)
                         filename += ".pdf"
                     try:
-                        SendDocument(filename, GetTemplateFile(modifs.email_text), modifs.email_subject, modifs.email_to)
+                        SendDocument(filename, modifs)
                     except Exception as e:
                         dlg = wx.MessageDialog(self, "Impossible d'envoyer le document %s\n%r" % (filename, e), 'Erreur', wx.OK | wx.ICON_WARNING)
                         dlg.ShowModal()
                         dlg.Destroy()
             else:
                 try:
-                    SendDocument(self.filename, GetTemplateFile(self.modifications.email_text), self.modifications.email_subject, self.modifications.email_to)
+                    SendDocument(self.filename, self.modifications)
                 except Exception as e:
                     dlg = wx.MessageDialog(self, "Impossible d'envoyer le document %s\n%r" % (self.filename, e), 'Erreur', wx.OK | wx.ICON_WARNING)
                     dlg.ShowModal()
@@ -911,7 +921,9 @@ class DocumentDialog(wx.Dialog):
         self.OnSauver(event)
         if self.document_generated:
             try:
-                SendDocument(self.filename, GetTemplateFile(self.modifications.email_text[:-4] + " CAF" + self.modifications.email_text[-4:]), self.modifications.email_subject, [creche.caf_email])
+                root, ext = os.path.splitext(self.modifications.introduction_filename)
+                introduction_filename = root + " CAF" + ext
+                SendDocument(self.filename, to=[creche.caf_email], introduction_filename=GetTemplateFile(introduction_filename))
             except Exception as e:
                 dlg = wx.MessageDialog(self, "Impossible d'envoyer le document %s\n%r" % (self.filename, e), 'Erreur', wx.OK | wx.ICON_WARNING)
                 dlg.ShowModal()
