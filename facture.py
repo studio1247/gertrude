@@ -602,13 +602,13 @@ class FactureFinMois(FactureBase):
                     if options & TRACES:
                         print(" activites mensualisees : %0.2f * %d / %d = %0.2f" % (cotisation.montant_mensuel_activites, cotisation.jours_ouvres, self.jours_ouvres, montant_activites_mensualisees))
 
-                if creche.regularisation_fin_contrat:
+                if creche.regularisation_fin_contrat or creche.regularisation_conges_non_pris:
                     depart_anticipe = creche.gestion_depart_anticipe and inscription.depart and self.debut_recap <= inscription.depart <= self.fin_recap
                     dernier_mois = (depart_anticipe or inscription.fin and self.debut_recap <= inscription.fin <= self.fin_recap)
 
                     if depart_anticipe and cotisation.Include(inscription.depart):
                         date_fin_cotisation = inscription.depart
-                        if creche.repartition != REPARTITION_SANS_MENSUALISATION:
+                        if creche.regularisation_fin_contrat and creche.repartition != REPARTITION_SANS_MENSUALISATION:
                             date = cotisation.debut
                             while date <= inscription.depart:
                                 cotisation_regularisee = Cotisation(inscrit, date, options=NO_ADDRESS | DEPART_ANTICIPE | self.options)
@@ -622,24 +622,25 @@ class FactureFinMois(FactureBase):
                     else:
                         date_fin_cotisation = inscription.fin
 
-                    if inscription.mode in (MODE_FORFAIT_HEBDOMADAIRE, MODE_FORFAIT_MENSUEL):
-                        jours_presence = GetNombreJoursSemaineTravailles()
-                    else:
-                        jours_presence = inscription.GetNombreJoursPresenceSemaine()
-                    if jours_presence and inscription.semaines_conges:
-                        if dernier_mois:
-                            if creche.repartition == REPARTITION_MENSUALISATION_12MOIS:
-                                semaines_conges_a_prendre = float(inscription.semaines_conges) * (date_fin_cotisation - inscription.debut).days / 365
-                            else:
-                                semaines_conges_a_prendre = inscription.semaines_conges
-                            semaines_conges_non_pris = semaines_conges_a_prendre - float(inscription.GetNombreJoursCongesPoses()) / jours_presence
-                            if semaines_conges_non_pris > 0:
-                                heures = cotisation.heures_semaine * semaines_conges_non_pris
-                                regularisation_conges_non_pris = heures * cotisation.montant_heure_garde
-                                if options & TRACES:
-                                    print(" régularisation congés non pris (%0.1f semaines, %d jours pris) : %0.1fh * %0.2f = %0.2f" % (semaines_conges_a_prendre, inscription.GetNombreJoursCongesPoses(), heures, cotisation.montant_heure_garde, regularisation_conges_non_pris))
-                                self.regularisation += regularisation_conges_non_pris
-                                self.raison_regularisation.add("congés non pris")
+                    if creche.regularisation_conges_non_pris:
+                        if inscription.mode in (MODE_FORFAIT_HEBDOMADAIRE, MODE_FORFAIT_MENSUEL):
+                            jours_presence = GetNombreJoursSemaineTravailles()
+                        else:
+                            jours_presence = inscription.GetNombreJoursPresenceSemaine()
+                        if jours_presence and inscription.semaines_conges:
+                            if dernier_mois:
+                                if creche.repartition == REPARTITION_MENSUALISATION_12MOIS:
+                                    semaines_conges_a_prendre = float(inscription.semaines_conges) * (date_fin_cotisation - inscription.debut).days / 365
+                                else:
+                                    semaines_conges_a_prendre = inscription.semaines_conges
+                                semaines_conges_non_pris = semaines_conges_a_prendre - float(inscription.GetNombreJoursCongesPoses()) / jours_presence
+                                if semaines_conges_non_pris > 0:
+                                    heures = cotisation.heures_semaine * semaines_conges_non_pris
+                                    regularisation_conges_non_pris = heures * cotisation.montant_heure_garde
+                                    if options & TRACES:
+                                        print(" régularisation congés non pris (%0.1f semaines, %d jours pris) : %0.1fh * %0.2f = %0.2f" % (semaines_conges_a_prendre, inscription.GetNombreJoursCongesPoses(), heures, cotisation.montant_heure_garde, regularisation_conges_non_pris))
+                                    self.regularisation += regularisation_conges_non_pris
+                                    self.raison_regularisation.add("congés non pris")
 
         if self.supplement > 0 and self.heures_supplementaires_facture > 0:
             self.supplement_heures_supplementaires = self.supplement

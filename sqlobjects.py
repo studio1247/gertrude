@@ -1357,6 +1357,7 @@ class Creche(object):
         self.changement_groupe_auto = False
         self.allergies = ""
         self.regularisation_fin_contrat = True
+        self.regularisation_conges_non_pris = True
         self.conges_payes_salaries = 25
         self.conges_supplementaires_salaries = 0
         self.cout_journalier = 0.0
@@ -1662,7 +1663,7 @@ class Creche(object):
                     'gestion_depart_anticipe', 'alerte_depassement_planning', 'tri_planning', 'tri_inscriptions',
                     'tri_factures', 'smtp_server', 'caf_email', 'mode_accueil_defaut', 'mode_saisie_planning',
                     'last_tablette_synchro', 'changement_groupe_auto', 'allergies',
-                    'regularisation_fin_contrat', 'date_raz_permanences',
+                    'regularisation_fin_contrat', 'regularisation_conges_non_pris', 'date_raz_permanences',
                     'conges_payes_salaries', 'conges_supplementaires_salaries', 'cout_journalier', 'iban', 'bic', 'creditor_id', 'siret'] and self.idx:
             print('update', name, value)
             sql_connection.execute('UPDATE CRECHE SET %s=?' % name, (value,))
