@@ -109,6 +109,8 @@ def getOptions(parser):
             options |= NEWSLETTERS
         if "reglements" in str:
             options |= REGLEMENTS
+        if "tarifs-speciaux" in str:
+            options |= TARIFS_SPECIAUX
     except:
         pass
     return options
