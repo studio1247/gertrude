@@ -30,7 +30,6 @@ from email.mime.multipart import MIMEMultipart
 import wx
 import wx.lib.filebrowsebutton
 import traceback
-import unicodedata
 from functions import *
 import subprocess
 
@@ -440,7 +439,7 @@ def GenerateOODocument(modifications, filename=None, gauge=None):
     if gauge:
         gauge.SetValue(0)
     if not filename:
-        filename = unicodedata.normalize("NFKD", modifications.default_output).encode('ascii', 'ignore')
+        filename = normalize_filename(modifications.default_output)
     template = GetTemplateFile(modifications.template, modifications.site)
     errors = {}
     zip = zipfile.ZipFile(template, 'r')
@@ -492,7 +491,7 @@ def GenerateTextDocument(modifications, filename=None, gauge=None):
     if gauge:
         gauge.SetValue(0)
     if not filename:
-        filename = unicodedata.normalize("NFKD", modifications.default_output).encode('ascii', 'ignore')
+        filename = normalize_filename(modifications.default_output)
     if modifications.template:
         template = GetTemplateFile(modifications.template)
         text = file(template, 'r').read()
@@ -687,7 +686,7 @@ def SendDocument(filename, generator, to=None, introduction_filename=None, saas=
         doc = MIMEBase('application', 'octet-stream')
         doc.set_payload(f.read())
         encoders.encode_base64(doc)
-        doc.add_header('Content-Disposition', 'attachment', filename=unicode(os.path.split(filename)[1]).encode("latin-1"))
+        doc.add_header('Content-Disposition', 'attachment', filename=os.path.split(filename)[1])
         msg.attach(doc)
 
     if saas:
@@ -749,7 +748,7 @@ class DocumentDialog(wx.Dialog):
         self.format.SetSelection(0)
         self.Bind(wx.EVT_CHOICE, self.onFormat, self.format)
         sizer.Add(self.format, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 5)
-        default_output = unicodedata.normalize("NFKD", unicode(modifications.default_output)).encode('ascii', 'ignore')
+        default_output = normalize_filename(modifications.default_output)
 
         self.extension = os.path.splitext(default_output)[-1]
         wildcard = "OpenDocument (*%s)|*%s|PDF files (*.pdf)|*.pdf" % (self.extension, self.extension)

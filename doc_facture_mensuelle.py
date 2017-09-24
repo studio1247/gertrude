@@ -68,13 +68,13 @@ class FactureModifications(object):
             self.site = None
             self.email_subject = "Facture %s %s %d" % (self.reservataire.nom, months[periode.month - 1], periode.year)
             self.email_to = [self.reservataire.email]
-            self.default_output = self.email_subject + ".odt"
+            self.default_output = normalize_filename(self.email_subject + ".odt")
         elif len(inscrits) > 1:
             self.multi = True
             self.inscrits = GetEnfantsTriesSelonParametreTriFacture(inscrits)
             self.site = self.inscrits[0].GetInscriptions(self.periode_facturation, None)[0].site
             self.email_subject = "Factures %s %d" % (months[periode.month - 1], periode.year)
-            self.default_output = "Factures %s %d.odt" % (months[periode.month - 1], periode.year)
+            self.default_output = normalize_filename("Factures %s %d.odt" % (months[periode.month - 1], periode.year))
             self.email_to = None
         else:
             self.inscrits = inscrits
@@ -82,7 +82,7 @@ class FactureModifications(object):
             self.site = who.GetInscriptions(self.periode_facturation, None)[0].site
             self.email_subject = "Facture %s %s %d" % (self.GetPrenomNom(who), months[periode.month - 1], periode.year)
             self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
-            self.default_output = self.email_subject + ".odt"
+            self.default_output = normalize_filename(self.email_subject + ".odt")
 
         if self.reservataire:
             self.template = "Facture reservataire.odt"
@@ -103,7 +103,7 @@ class FactureModifications(object):
                          .replace("<nom>", inscrit.nom)
         if result == filename:
             result = "[%s] %s" % (GetPrenomNom(inscrit), filename)
-        return result
+        return normalize_filename(result)
 
     def GetSimpleModifications(self, filename):
         return [(self.GetSimpleFilename(filename, inscrit), FactureModifications([inscrit], self.periode)) for inscrit in self.inscrits]

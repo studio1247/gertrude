@@ -21,6 +21,7 @@ from __future__ import print_function
 import sys
 import time
 import os.path
+import unicodedata
 from constants import *
 from parameters import *
 
@@ -1342,3 +1343,7 @@ def GetDateIntersection(periodes):
                     if (earliest_end - latest_start).days > 0:
                         return latest_start
     return None
+
+
+def normalize_filename(filename):
+    return unicodedata.normalize('NFKD', filename).encode('ascii', 'ignore')
