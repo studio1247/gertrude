@@ -301,6 +301,7 @@ def LoadConfig(path=None, progress_handler=default_progress_handler):
     config.preinscription_redirect = getStringParameter(parser, "preinscription-redirect", "")
     config.preinscription_template = getStringParameter(parser, "preinscription-template", "")
     config.preinscription_required = getStringParameter(parser, "preinscription-required", "")
+    config.child_selection_widget = getStringParameter(parser, "child-selection-widget", "autocomplete")
 
     years_before, years_after = getYearsDisplayed(parser)
     config.first_date = datetime.date(today.year - years_before, 1, 1)
