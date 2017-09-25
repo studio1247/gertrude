@@ -660,7 +660,8 @@ def SendDocument(filename, generator, to=None, introduction_filename=None, saas=
     msg['Subject'] = generator.email_subject
     if saas:
         msg_from = "saas@gertrude-logiciel.org"
-        msg['Reply-to'] = creche.email
+        msg["Reply-to"] = creche.email
+        msg["Return-path"] = creche.email
     else:
         msg_from = creche.email
     msg['From'] = msg_from
