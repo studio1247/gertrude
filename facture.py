@@ -587,7 +587,7 @@ class FactureFinMois(FactureBase):
                             print(" prorata : %f * %f / %f = %f" % (prorata, cotisation.jours_ouvres, self.jours_ouvres, new_prorata))
                         prorata = new_prorata
 
-                    if cotisation.IsContratFacture(cotisation.debut):
+                    if cotisation.IsContratFacture(self.debut_recap):
                         self.cotisation_mensuelle += prorata
 
                     self.total_contractualise += prorata

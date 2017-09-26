@@ -223,6 +223,45 @@ class PSUTests(GertrudeTestCase):
         self.assertEquals(cotisation.nombre_factures, 8)
 
 
+class NosPetitsPoucesTests(GertrudeTestCase):
+    def setUp(self):
+        GertrudeTestCase.setUp(self)
+        creche.mode_facturation = FACTURATION_PAJE
+        self.AddConge("Août", options=MOIS_SANS_FACTURE)
+        # bureau = Bureau(creation=False)
+        # bureau.debut = datetime.date(2010, 1, 1)
+        # creche.bureaux.append(bureau)
+
+    def test_exception_missing_formula(self):
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit, creation=False)
+        inscription.debut = datetime.date(2010, 1, 1)
+        inscrit.inscriptions.append(inscription)
+        self.assertRaises(CotisationException, Cotisation, inscrit, datetime.date(2010, 1, 1), NO_ADDRESS | NO_PARENTS)
+        creche.tarifs_horaires.append(TarifHoraire([["", 0.0]], creation=False))
+        creche.tarifs_horaires[0].UpdateFormule(changed=False)
+        cotisation = Cotisation(inscrit, datetime.date(2010, 1, 1), NO_ADDRESS | NO_PARENTS)
+
+    def test_august_without_invoice(self):
+        creche.tarifs_horaires.append(TarifHoraire([["", 10.0]], creation=False))
+        creche.tarifs_horaires[0].UpdateFormule(changed=False)
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit, creation=False)
+        inscription.debut = datetime.date(2010, 1, 1)
+        inscription.reference[0].AddActivity(96, 180, 0, -1)
+        inscription.reference[1].AddActivity(96, 180, 0, -1)
+        inscription.reference[2].AddActivity(96, 180, 0, -1)
+        inscription.reference[3].AddActivity(96, 180, 0, -1)
+        inscription.reference[4].AddActivity(96, 180, 0, -1)
+        inscrit.inscriptions.append(inscription)
+        cotisation = Cotisation(inscrit, datetime.date(2010, 1, 1), NO_ADDRESS | NO_PARENTS)
+        self.assertPrec2Equals(cotisation.cotisation_mensuelle, 1654.55)
+        facture = Facture(inscrit, 2010, 1, NO_ADDRESS | NO_PARENTS)
+        self.assertPrec2Equals(facture.total, 1654.55)
+        facture = Facture(inscrit, 2010, 8, NO_ADDRESS | NO_PARENTS)
+        self.assertPrec2Equals(facture.total, 0.0)
+
+
 class PAJETests(GertrudeTestCase):
     def test_pas_de_taux_horaire(self):
         creche.mode_facturation = FACTURATION_PAJE
