@@ -1346,4 +1346,4 @@ def GetDateIntersection(periodes):
 
 
 def normalize_filename(filename):
-    return unicodedata.normalize('NFKD', filename).encode('ascii', 'ignore')
+    return unicodedata.normalize('NFKD', unicode(filename)).encode('ascii', 'ignore')
