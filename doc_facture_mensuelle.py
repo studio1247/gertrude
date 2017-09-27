@@ -292,7 +292,7 @@ class FactureModifications(object):
                         prenoms.append(enfant.prenom)
                         facture = Facture(enfant, self.periode.year, self.periode.month, options=0 if config.saas_port else TRACES)
                         total_facture += facture.total
-                    except CotisationException, e:
+                    except CotisationException as e:
                         errors[GetPrenomNom(enfant)] = e.errors
                         has_errors = True
                         continue

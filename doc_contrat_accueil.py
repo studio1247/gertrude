@@ -24,6 +24,7 @@ from functions import *
 from sqlobjects import Parent
 from cotisation import Cotisation, CotisationException
 from ooffice import *
+from doc_facture_mensuelle import FactureModifications
 
 
 class DocumentAccueilModifications(object):
@@ -303,7 +304,7 @@ class FraisGardeModifications(DocumentAccueilModifications):
 
 class DossierInscriptionModifications(DocumentAccueilModifications):
     title = "Dossier d'inscription"
-    template = ''
+    template = ""
 
     def __init__(self, who, date):
         DocumentAccueilModifications.__init__(self, who, date)
@@ -315,6 +316,39 @@ class DossierInscriptionModifications(DocumentAccueilModifications):
 
     def GetAttachments(self):
         return glob.glob("templates/Dossier inscription/*.pdf")
+
+    def GetIntroductionFields(self):
+        fields = self.GetFields()
+        for i, field in enumerate(fields):
+            if len(field) > 2 and field[2] == FIELD_EUROS:
+                fields[i] = (field[0], "%.2f" % field[1])
+        return fields
+
+
+class PremiereFactureModifications(DocumentAccueilModifications):
+    title = "Première facture"
+    template = ""
+
+    def __init__(self, who, date):
+        DocumentAccueilModifications.__init__(self, who, date)
+        self.multi = False
+        self.default_output = ""
+        self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
+        self.email_subject = "Contrat d'accueil et première facture"
+        self.introduction_filename = "Premiere facture.txt"
+        self.contrat_accueil = ContratAccueilModifications(who, date)
+        GenerateDocument(self.contrat_accueil, filename=self.contrat_accueil.default_output)
+        inscription = who.GetInscription(date, preinscription=True)
+        if inscription.preinscription:
+            inscription.preinscription = False
+            preinscription_changed = True
+        self.facture = FactureModifications([who], date)
+        GenerateDocument(self.facture, filename=self.facture.default_output)
+        if preinscription_changed:
+            inscription.preinscription = True
+
+    def GetAttachments(self):
+        return [self.contrat_accueil.default_output, self.facture.default_output]
 
     def GetIntroductionFields(self):
         fields = self.GetFields()
