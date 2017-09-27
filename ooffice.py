@@ -18,10 +18,18 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-import datetime, time, locale, numbers
-import sys, os, shutil, types, zipfile
+import datetime
+import time
+import locale
+import numbers
+import sys
+import os
+import shutil
+import types
+import zipfile
 import xml.dom.minidom
-import re, urllib
+import re
+import urllib
 import smtplib
 from email import encoders
 from email.mime.base import MIMEBase
@@ -683,12 +691,21 @@ def SendDocument(filename, generator, to=None, introduction_filename=None, saas=
     except Exception as e:
         print("Exception", e)
 
-    with open(filename, 'rb') as f:
-        doc = MIMEBase('application', 'octet-stream')
-        doc.set_payload(f.read())
-        encoders.encode_base64(doc)
-        doc.add_header('Content-Disposition', 'attachment', filename=os.path.split(filename)[1])
-        msg.attach(doc)
+    if filename:
+        with open(filename, 'rb') as f:
+            doc = MIMEBase('application', 'octet-stream')
+            doc.set_payload(f.read())
+            encoders.encode_base64(doc)
+            doc.add_header('Content-Disposition', 'attachment', filename=os.path.split(filename)[1])
+            msg.attach(doc)
+
+    for attachment in generator.GetAttachments():
+        with open(attachment, 'rb') as f:
+            doc = MIMEBase('application', 'octet-stream')
+            doc.set_payload(f.read())
+            encoders.encode_base64(doc)
+            doc.add_header('Content-Disposition', 'attachment', filename=os.path.split(attachment)[1])
+            msg.attach(doc)
 
     if saas:
         smtp_server = "localhost"

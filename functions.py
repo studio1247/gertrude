@@ -1042,7 +1042,10 @@ def GetCotisationFields(cotisation):
               ('semaines-conges', cotisation.conges_inscription),
               ('liste-conges', ", ".join(cotisation.liste_conges)),
               ('montant-allocation-caf', cotisation.montant_allocation_caf, FIELD_EUROS),
+              ('montant-credit-impots', cotisation.montant_credit_impots, FIELD_EUROS),
               ('cotisation-mensuelle-apres-allocation-caf', cotisation.cotisation_mensuelle-cotisation.montant_allocation_caf, FIELD_EUROS),
+              ('cotisation-mensuelle-apres-allocation-caf-et-credit-impots', cotisation.cotisation_mensuelle-cotisation.montant_allocation_caf-cotisation.montant_credit_impots, FIELD_EUROS),
+              ('cotisation-mensuelle-avec-activites-apres-allocation-caf-et-credit-impots', cotisation.cotisation_mensuelle_avec_activites-cotisation.montant_allocation_caf-cotisation.montant_credit_impots, FIELD_EUROS)
               ]
     if cotisation.montant_heure_garde is not None:
         result.append(('montant-semaine', cotisation.heures_semaine*cotisation.montant_heure_garde, FIELD_EUROS))

@@ -18,6 +18,7 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
+import glob
 from constants import *
 from functions import *
 from sqlobjects import Parent
@@ -275,7 +276,7 @@ class FraisGardeModifications(DocumentAccueilModifications):
         table = spreadsheet.getElementsByTagName("table:table").item(0)       
         lignes = table.getElementsByTagName("table:table-row")
 
-        fields = self.GetFields()             
+        fields = self.GetFields()
         ReplaceFields(lignes, fields)
                 
         if len(self.cotisation.revenus_parents) < 2:
@@ -297,4 +298,27 @@ class FraisGardeModifications(DocumentAccueilModifications):
             table.removeChild(lignes[11])
             table.removeChild(lignes[14])
             
-        return {} 
+        return {}
+
+
+class DossierInscriptionModifications(DocumentAccueilModifications):
+    title = "Dossier d'inscription"
+    template = ''
+
+    def __init__(self, who, date):
+        DocumentAccueilModifications.__init__(self, who, date)
+        self.multi = False
+        self.default_output = ""
+        self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
+        self.email_subject = "Dossier d'inscription"
+        self.introduction_filename = "Dossier inscription.txt"
+
+    def GetAttachments(self):
+        return glob.glob("templates/Dossier inscription/*.pdf")
+
+    def GetIntroductionFields(self):
+        fields = self.GetFields()
+        for i, field in enumerate(fields):
+            if len(field) > 2 and field[2] == FIELD_EUROS:
+                fields[i] = (field[0], "%.2f" % field[1])
+        return fields

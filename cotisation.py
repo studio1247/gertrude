@@ -182,6 +182,7 @@ class Cotisation(object):
         self.parents = 0
         self.frais_inscription = self.inscription.frais_inscription
         self.montant_allocation_caf = self.inscription.allocation_mensuelle_caf
+        self.montant_credit_impots = 0.0
         for parent in inscrit.famille.parents:
             if parent and parent.relation is not None:
                 self.parents += 1
@@ -470,6 +471,8 @@ class Cotisation(object):
                 print(" cotisation periode :", self.cotisation_periode)
                 print(" montant heure garde supplementaire :", self.montant_heure_garde)
             self.cotisation_mensuelle = self.cotisation_periode / self.GetNombreContratsFactures()
+            self.montant_allocation_caf = self.EvalAllocationCaf()
+            self.montant_credit_impots = self.EvalCreditImpots()
         elif creche.nom == "LA VOLIERE":
             if self.enfants_a_charge == 1:
                 tranche = GetTranche(self.assiette_annuelle, [20281.0, 45068.0])
@@ -608,7 +611,26 @@ class Cotisation(object):
             print(" cotisation mensuelle :", self.cotisation_mensuelle)
             print(" montant heure garde :", self.montant_heure_garde)
             print()
-    
+
+    def EvalAllocationCaf(self):
+        """
+        - de 3 ans	        846,22 €	729,47 €	612,77 €
+        de 3 ans à 6 ans	423,12 €	364,74 €	306,39 €
+        """
+        if not self.inscrit.naissance or not self.tranche_paje or self.inscription.debut > GetDateMinus(self.inscrit.naissance, years=-6):
+            result = 0.0
+        elif self.inscription.debut > GetDateMinus(self.inscrit.naissance, years=-3):
+            result = [423.12, 364.74, 306.39][self.tranche_paje-1]
+        else:
+            result = [846.22, 729.47, 612.77][self.tranche_paje-1]
+        return min(result, self.cotisation_mensuelle * 15 / 100)
+
+    def EvalCreditImpots(self):
+        assiette = min(self.cotisation_mensuelle * 12, 2300)
+        if self.inscrit.garde_alternee:
+            assiette /= 2
+        return assiette / 2
+
     def AjustePeriode(self, param):
         if isinstance(param, tuple):
             debut, fin = param

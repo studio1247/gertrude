@@ -174,6 +174,9 @@ class FactureModifications(object):
     def GetIntroductionFields(self):
         return self.introduction_fields
 
+    def GetAttachments(self):
+        return []
+
     def GetMetas(self, dom):
         metas = dom.getElementsByTagName('meta:user-defined')
         for meta in metas:
