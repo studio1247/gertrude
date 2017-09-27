@@ -2237,6 +2237,7 @@ class Inscrit(object):
         self.corrections = {}
         self.allergies = ""
         self.famille = None
+        self.garde_alternee = False
 
         if creation:
             self.famille = Famille(automatic=automatic)
@@ -2273,10 +2274,10 @@ class Inscrit(object):
     def create(self):
         print('nouvel inscrit')
         result = sql_connection.execute(
-            'INSERT INTO INSCRITS (idx, prenom, nom, naissance, handicap, marche, photo, notes, combinaison, categorie, allergies, famille) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?)',
+            'INSERT INTO INSCRITS (idx, prenom, nom, naissance, handicap, marche, photo, notes, combinaison, categorie, allergies, famille, garde_alternee) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?)',
             (self.prenom, self.nom, self.naissance, self.handicap, self.marche, self.photo, self.notes,
              self.combinaison,
-             self.categorie, self.allergies, self.famille.idx))
+             self.categorie, self.allergies, self.famille.idx, self.garde_alternee))
         self.idx = result.lastrowid
         for inscription in self.inscriptions:
             inscription.create()
@@ -2299,7 +2300,7 @@ class Inscrit(object):
         elif name in ('categorie', 'famille') and value is not None and self.idx:
             value = value.idx
         if name in ['prenom', 'nom', 'sexe', 'naissance', 'handicap', 'marche', 'photo', 'combinaison', 'notes',
-                    'categorie', 'allergies', 'famille'] and self.idx:
+                    'categorie', 'allergies', 'famille', 'garde_alternee'] and self.idx:
             print('update', self.idx, name, (old_value, value))
             sql_connection.execute('UPDATE INSCRITS SET %s=? WHERE idx=?' % name, (value, self.idx))
 

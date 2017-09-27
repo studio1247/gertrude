@@ -29,7 +29,7 @@ from sqlobjects import *
 from facture import FactureCloturee
 import bcrypt
 
-VERSION = 113
+VERSION = 114
 
 
 def getdate(s):
@@ -293,7 +293,8 @@ class SQLConnection(object):
             combinaison VARCHAR,
             categorie INTEGER REFERENCES CATEGORIES(idx),
             allergies VARCHAR,
-            famille INTEGER REFERENCES FAMILLES(idx)
+            famille INTEGER REFERENCES FAMILLES(idx),
+            garde_alternee BOOLEAN
           );""")
 
         cur.execute("""
@@ -876,8 +877,8 @@ class SQLConnection(object):
                 date = getdate(date)
                 famille.encaissements.append(Encaissement(famille, date, valeur, moyen_paiement, idx))
 
-        cur.execute('SELECT idx, prenom, nom, sexe, naissance, handicap, marche, notes, photo, combinaison, categorie, allergies, famille FROM INSCRITS')
-        for idx, prenom, nom, sexe, naissance, handicap, marche, notes, photo, combinaison, categorie, allergies, famille in cur.fetchall():
+        cur.execute('SELECT idx, prenom, nom, sexe, naissance, handicap, marche, notes, photo, combinaison, categorie, allergies, famille, garde_alternee FROM INSCRITS')
+        for idx, prenom, nom, sexe, naissance, handicap, marche, notes, photo, combinaison, categorie, allergies, famille, garde_alternee in cur.fetchall():
             # print idx, prenom, nom, naissance
             if photo:
                 photo = binascii.a2b_base64(photo)
@@ -891,7 +892,7 @@ class SQLConnection(object):
                 if famille == tmp.idx:
                     inscrit.famille = tmp
                     break
-            inscrit.prenom, inscrit.nom, inscrit.sexe, inscrit.naissance, inscrit.handicap, inscrit.marche, inscrit.notes, inscrit.photo, inscrit.combinaison, inscrit.allergies, inscrit.idx = prenom, nom, sexe, getdate(naissance), handicap, getdate(marche), notes, photo, combinaison, allergies, idx
+            inscrit.prenom, inscrit.nom, inscrit.sexe, inscrit.naissance, inscrit.handicap, inscrit.marche, inscrit.notes, inscrit.photo, inscrit.combinaison, inscrit.allergies, inscrit.garde_alternee, inscrit.idx = prenom, nom, sexe, getdate(naissance), handicap, getdate(marche), notes, photo, combinaison, allergies, garde_alternee, idx
             cur.execute('SELECT idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_mensuel_heures, semaines_conges, heures_permanences, preinscription, site, sites_preinscription, professeur, newsletters, tarifs FROM INSCRIPTIONS WHERE inscrit=?', (inscrit.idx,))
             for idx, debut, fin, depart, mode, reservataire, groupe, forfait_mensuel, frais_inscription, allocation_mensuelle_caf, fin_periode_adaptation, duree_reference, forfait_mensuel_heures, semaines_conges, heures_permanences, preinscription, site, sites_preinscription, professeur, newsletters, tarifs in cur.fetchall():
                 inscription = Inscription(inscrit, duree_reference, creation=False)
@@ -2026,6 +2027,10 @@ class SQLConnection(object):
         if version < 113:
             cur.execute("ALTER TABLE CRECHE ADD regularisation_conges_non_pris BOOLEAN;")
             cur.execute("UPDATE CRECHE SET regularisation_conges_non_pris=regularisation_fin_contrat;")
+
+        if version < 114:
+            cur.execute("ALTER TABLE INSCRITS ADD garde_alternee BOOLEAN;")
+            cur.execute("UPDATE INSCRITS SET garde_alternee=?", (False, ))
 
         if version < VERSION:
             try:
