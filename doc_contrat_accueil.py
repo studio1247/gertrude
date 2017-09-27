@@ -15,6 +15,9 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+from __future__ import print_function
+
 from constants import *
 from functions import *
 from sqlobjects import Parent
@@ -33,7 +36,7 @@ class DocumentAccueilModifications(object):
     def GetMetas(self, dom):
         metas = dom.getElementsByTagName('meta:user-defined')
         for meta in metas:
-            # print meta.toprettyxml()
+            # print(meta.toprettyxml())
             name = meta.getAttribute('meta:name')
             try:
                 value = meta.childNodes[0].wholeText
@@ -51,8 +54,8 @@ class DocumentAccueilModifications(object):
                 label = key[8:]
                 try:
                     value = eval(self.metas[key])
-                except Exception, e:
-                    print "Exception formule:", label, self.metas[key], e
+                except Exception as e:
+                    print("Exception formule:", label, self.metas[key], e)
                     continue
                 if isinstance(value, tuple):
                     field = label, value[0], value[1]
@@ -186,7 +189,7 @@ class OdtDocumentAccueilModifications(DocumentAccueilModifications):
             return None
         
         doc = dom.getElementsByTagName("office:text")[0]
-        # print doc.toprettyxml()
+        # print(doc.toprettyxml())
         
         for table in doc.getElementsByTagName("table:table"):
             table_name = table.getAttribute("table:name")
@@ -202,11 +205,11 @@ class OdtDocumentAccueilModifications(DocumentAccueilModifications):
                                     text = text.replace("[%d]" % i, "[%d]" % (i + semaine * 7))
                                 child.replaceWholeText(text)
                         table.insertBefore(clone, rows[-1])
-                # print table.toprettyxml()
+                # print(table.toprettyxml())
             elif table_name == "Echeancier":
                 rows = table.getElementsByTagName("table:table-row")
                 template = rows[1]
-                # print template.toprettyxml()
+                # print(template.toprettyxml())
                 for date, valeur in self.cotisation.get_echeances():
                     clone = template.cloneNode(1)
                     table.insertBefore(clone, template)
@@ -217,7 +220,7 @@ class OdtDocumentAccueilModifications(DocumentAccueilModifications):
                     ReplaceTextFields(clone, fields_echeance)
                 table.removeChild(template)
         
-        # print doc.toprettyxml()
+        # print(doc.toprettyxml())
         ReplaceTextFields(doc, fields)
         return {}
 
@@ -228,7 +231,7 @@ class DevisAccueilModifications(OdtDocumentAccueilModifications):
 
     def __init__(self, who, date):
         OdtDocumentAccueilModifications.__init__(self, who, date)
-        self.default_output = u"Devis accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
+        self.default_output = "Devis accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
 
 
 class ContratAccueilModifications(OdtDocumentAccueilModifications):
@@ -243,7 +246,7 @@ class ContratAccueilModifications(OdtDocumentAccueilModifications):
             self.template = "Contrat accueil forfait mensuel.odt"
         elif self.inscription.mode == MODE_HALTE_GARDERIE and IsTemplateFile("Contrat accueil halte garderie.odt"):
             self.template = "Contrat accueil halte garderie.odt"
-        self.default_output = u"Contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
+        self.default_output = "Contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
 
 
 class AvenantContratAccueilModifications(OdtDocumentAccueilModifications):
@@ -252,7 +255,7 @@ class AvenantContratAccueilModifications(OdtDocumentAccueilModifications):
 
     def __init__(self, who, date):
         OdtDocumentAccueilModifications.__init__(self, who, date)
-        self.default_output = u"Avenant contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
+        self.default_output = "Avenant contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
 
 
 class FraisGardeModifications(DocumentAccueilModifications):
@@ -262,7 +265,7 @@ class FraisGardeModifications(DocumentAccueilModifications):
     def __init__(self, who, date):
         DocumentAccueilModifications.__init__(self, who, date)
         self.multi = False
-        self.default_output = u"Frais de garde %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
+        self.default_output = "Frais de garde %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
         
     def execute(self, filename, dom):
         if filename != 'content.xml':
