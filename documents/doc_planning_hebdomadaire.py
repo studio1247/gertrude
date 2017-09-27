@@ -145,6 +145,7 @@ class PlanningHebdomadaireSalariesModifications(PlanningHebdomadaireModification
 
     def __init__(self, debut):
         PlanningHebdomadaireModifications.__init__(self, debut)
+        self.default_output = "Planning salariés semaine %d.ods" % debut.isocalendar()[1]
 
     def get_people(self):
         return GetSalaries(self.debut, self.fin)
