@@ -16,6 +16,7 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
+from __future__ import print_function
 
 from constants import *
 from functions import *
@@ -58,7 +59,7 @@ class PlanningDetailleModifications(object):
         if filename == 'meta.xml':
             metas = dom.getElementsByTagName('meta:user-defined')
             for meta in metas:
-                # print meta.toprettyxml()
+                # print(meta.toprettyxml())
                 name = meta.getAttribute('meta:name')
                 if len(meta.childNodes) > 0:
                     value = meta.childNodes[0].wholeText
@@ -89,9 +90,9 @@ class PlanningDetailleModifications(object):
             drawing = dom.getElementsByTagName('office:presentation').item(0)
             
         template = drawing.getElementsByTagName("draw:page").item(0)
-        # print template.toprettyxml()
+        # print(template.toprettyxml())
         shapes = getNamedShapes(template)
-        # print shapes
+        # print(shapes)
         for shape in shapes:
             if shape in ["legende-heure", "ligne-heure", "ligne-quart-heure", "libelle", "separateur", "ligne-cahier", "category"] or shape.startswith("activite-"):
                 template.removeChild(shapes[shape])
@@ -188,7 +189,7 @@ class PlanningDetailleModifications(object):
                                 v &= ~PREVISIONNEL
                                 key = "activite-%d" % v
                                 if key in shapes:
-                                    # print a,b,v
+                                    # print(a,b,v)
                                     node = shapes[key].cloneNode(1)
                                     node.setAttribute('svg:x', '%fcm' % (left + labels_width + float(a - affichage_min) * step))
                                     node.setAttribute('svg:y', '%fcm' % (0.10 + top + line_height * i))
@@ -200,7 +201,7 @@ class PlanningDetailleModifications(object):
                                     ReplaceTextFields(node, [('texte', ''), ('allergies', allergies)])
                                     page.appendChild(node)
                                 else:
-                                    print "Pas de forme pour %s" % key
+                                    print("Pas de forme pour %s" % key)
                             
                 if page_index + 1 == pages_count:
                     AddCategoryShape(page, "Totaux", 0.20 + top + line_height * lines_count)
@@ -242,7 +243,7 @@ class PlanningDetailleModifications(object):
                                 
                             if nv != v or nw != w:
                                 if v != 0:
-                                    # print a, x, v
+                                    # print(a, x, v)
                                     key = "activite-%d" % w
                                     if key in shapes:
                                         node = shapes[key].cloneNode(1)
@@ -251,7 +252,7 @@ class PlanningDetailleModifications(object):
                                         if key in shapes:
                                             node = shapes[key].cloneNode(1)
                                         else:
-                                            print "Pas de forme pour %s" % key
+                                            print("Pas de forme pour %s" % key)
                                             node = None
                                     if node:
                                         node.setAttribute('svg:x', '%fcm' % (left + labels_width + (float(a - affichage_min) * step)))
@@ -304,7 +305,7 @@ class PlanningDetailleModifications(object):
         for index, inscription in enumerate(inscriptions):
             inscrit = inscription.inscrit
             row = template.cloneNode(1)
-            # print row.toprettyxml()
+            # print(row.toprettyxml())
             date = debut
             cell = 0
             weekday = date.weekday()
