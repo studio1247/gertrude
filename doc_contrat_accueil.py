@@ -352,6 +352,8 @@ class PremiereFactureModifications(DocumentAccueilModifications):
 
     def GetIntroductionFields(self):
         fields = self.GetFields()
+        if self.facture.last_facture:
+            fields.append(("total-premiere-facture", self.facture.last_facture.total))
         for i, field in enumerate(fields):
             if len(field) > 2 and field[2] == FIELD_EUROS:
                 fields[i] = (field[0], "%.2f" % field[1])

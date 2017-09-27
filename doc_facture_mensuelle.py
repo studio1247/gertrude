@@ -16,6 +16,7 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
+from __future__ import print_function
 
 from constants import *
 from functions import *
@@ -54,6 +55,7 @@ class FactureModifications(object):
             return GetPrenomNom(who)
 
     def __init__(self, inscrits, periode):
+        self.last_facture = None
         self.metas = {}
         self.multi = False
         self.periode = periode
@@ -180,7 +182,7 @@ class FactureModifications(object):
     def GetMetas(self, dom):
         metas = dom.getElementsByTagName('meta:user-defined')
         for meta in metas:
-            # print meta.toprettyxml()
+            # print(meta.toprettyxml())
             name = meta.getAttribute('meta:name')
             try:
                 value = meta.childNodes[0].wholeText
@@ -223,14 +225,14 @@ class FactureModifications(object):
 
         errors = {}
 
-        # print dom.toprettyxml()
+        # print(dom.toprettyxml())
 
         doc = dom.getElementsByTagName("office:text")[0]
         templates = doc.childNodes[:]
 
         if "Couleurs" in self.metas:
             couleurs = eval(self.metas["Couleurs"])
-            print "METAS COULEURS", couleurs
+            print("METAS COULEURS", couleurs)
         else:
             styleB3, styleC3, styleD3 = False, False, False
             for style in doc.getElementsByTagName('style:style'):
@@ -291,6 +293,7 @@ class FactureModifications(object):
                     try:
                         prenoms.append(enfant.prenom)
                         facture = Facture(enfant, self.periode.year, self.periode.month, options=0 if config.saas_port else TRACES)
+                        self.last_facture = facture
                         total_facture += facture.total
                     except CotisationException as e:
                         errors[GetPrenomNom(enfant)] = e.errors
@@ -376,7 +379,7 @@ class FactureModifications(object):
         for template in templates:
             doc.removeChild(template)
 
-        # print doc.toprettyxml()
+        # print(doc.toprettyxml())
         return errors
 
     def GetFactureCustomFields(self, facture):
@@ -388,8 +391,8 @@ class FactureModifications(object):
                 label = key[8:]
                 try:
                     value = eval(self.metas[key])
-                except Exception, e:
-                    print "Exception formule:", label, self.metas[key], e
+                except Exception as e:
+                    print("Exception formule:", label, self.metas[key], e)
                     continue
                 if isinstance(value, tuple):
                     field = label, value[0], value[1]
