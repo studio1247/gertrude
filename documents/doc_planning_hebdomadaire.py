@@ -22,15 +22,11 @@ from ooffice import *
 from documents import templates
 
 
-class PlanningHebdomadaireSalariesModifications(object):
-    title = "Planning hebdomadaire salariés"
-    template = "Planning hebdomadaire salaries.ods"
-
+class PlanningHebdomadaireModifications(object):
     def __init__(self, debut):
         self.debut = debut
         self.fin = self.debut + datetime.timedelta(5)
         self.multi = False
-        self.default_output = "Planning salaries semaine %d.ods" % debut.isocalendar()[1]
         self.email = None
         self.site = None
         self.metas = {}
@@ -64,16 +60,18 @@ class PlanningHebdomadaireSalariesModifications(object):
 
         first_color_column = int(self.metas["FirstColorColumn"])
         last_color_column = first_color_column + 4
-              
+
         spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
         table = spreadsheet.getElementsByTagName("table:table")[0]
         lignes = table.getElementsByTagName("table:table-row")
 
         # lecture des couleurs
         couleurs = {}
-        for i, salarie in enumerate(creche.salaries):
-            line = lignes[first_color_line + (i % (last_color_line - first_color_line))]
-            couleurs[GetPrenomNom(salarie)] = [GetCell(line, j).getAttribute("table:style-name") for j in range(first_color_column, last_color_column)]
+        for i, person in enumerate(self.get_people()):
+            line = lignes[first_color_line + (person.idx % (last_color_line - first_color_line))]
+            couleurs[GetPrenomNom(person)] = []
+            for j in range(first_color_column, last_color_column):
+                couleurs[GetPrenomNom(person)].append(GetCell(line, j).getAttribute("table:style-name"))
 
         # suppression des lignes des couleurs
         for line in lignes[first_color_line:last_color_line]:
@@ -81,7 +79,7 @@ class PlanningHebdomadaireSalariesModifications(object):
         del lignes[first_color_line:last_color_line]
 
         template = lignes[0:template_lines_count]
-        for salarie in GetSalaries(self.debut, self.fin):
+        for person in self.get_people():
             lines = []
             for line in template:
                 clone = line.cloneNode(1)
@@ -92,29 +90,31 @@ class PlanningHebdomadaireSalariesModifications(object):
             jour = 0
             heures_semaine = 0.0
             while date < self.fin:
-                line = lines[3+jour]
-                journee = salarie.GetJournee(date)
+                line = lines[3 + jour]
+                journee = person.GetJournee(date)
                 if journee:
-                    for c in range(int(2*(hour_end-hour_start))):
+                    for c in range(int(2 * (hour_end - hour_start))):
                         hour = (hour_start + c * 0.5) * 12
                         border_column_offset = 0 if hour % 12 == 0 else 1
                         cell = GetCell(line, c + 1)
-                        if IsPresentDuringTranche(journee, hour, hour+6):
-                            cell.setAttribute("table:style-name", couleurs[GetPrenomNom(salarie)][2 + border_column_offset])
+                        if IsPresentDuringTranche(journee, hour, hour + 6):
+                            cell.setAttribute("table:style-name",
+                                              couleurs[GetPrenomNom(person)][2 + border_column_offset])
                         else:
-                            cell.setAttribute("table:style-name", couleurs[GetPrenomNom(salarie)][0 + border_column_offset])
+                            cell.setAttribute("table:style-name",
+                                              couleurs[GetPrenomNom(person)][0 + border_column_offset])
                     heures_jour = journee.GetNombreHeures()
                     heures_semaine += heures_jour
                     ReplaceFields(line, [
                         ('heures-jour[%d]' % jour, GetHeureString(heures_jour)),
-                        ])
+                    ])
                 date += datetime.timedelta(1)
                 jour += 1
 
             # La ligne de titre + le total
             ReplaceFields(lines, [
-                ('prenom', salarie.prenom),
-                ('nom', salarie.nom),
+                ('prenom', person.prenom),
+                ('nom', person.nom),
                 ('date-debut', self.debut),
                 ('date-fin', self.fin),
                 ('heures-semaine', GetHeureString(heures_semaine))
@@ -127,6 +127,30 @@ class PlanningHebdomadaireSalariesModifications(object):
         return
 
 
+class PlanningHebdomadaireEnfantsModifications(PlanningHebdomadaireModifications):
+    title = "Planning hebdomadaire enfants"
+    template = "Planning hebdomadaire enfants.ods"
+
+    def __init__(self, debut):
+        PlanningHebdomadaireModifications.__init__(self, debut)
+        self.default_output = "Planning enfants semaine %d.ods" % debut.isocalendar()[1]
+
+    def get_people(self):
+        return GetInscrits(self.debut, self.fin)
+
+
+class PlanningHebdomadaireSalariesModifications(PlanningHebdomadaireModifications):
+    title = "Planning hebdomadaire salariés"
+    template = "Planning hebdomadaire salaries.ods"
+
+    def __init__(self, debut):
+        PlanningHebdomadaireModifications.__init__(self, debut)
+
+    def get_people(self):
+        return GetSalaries(self.debut, self.fin)
+
+
+templates["planning"].append(PlanningHebdomadaireEnfantsModifications)
 templates["planning"].append(PlanningHebdomadaireSalariesModifications)
 
 
@@ -137,7 +161,7 @@ if __name__ == '__main__':
     from data import *
     from functions import *
     __builtin__.creche, result = FileConnection("databases/monteillou.db").Load()
-    modifications = PlanningHebdomadaireSalariesModifications(datetime.date(2017, 9, 25))
+    modifications = PlanningHebdomadaireEnfantsModifications(datetime.date(2017, 9, 25))
     filename = "./test-%f.odt" % random.random()
     errors = GenerateOODocument(modifications, filename=filename, gauge=None)
     StartLibreOffice(filename)
