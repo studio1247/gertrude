@@ -15,6 +15,9 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+from __future__ import print_function
+
 from ooffice import *
 from documents import templates
 
@@ -35,14 +38,14 @@ class PlanningHebdomadaireSalariesModifications(object):
     def get_metas(self, dom):
         metas = dom.getElementsByTagName('meta:user-defined')
         for meta in metas:
-            # print meta.toprettyxml()
+            # print(meta.toprettyxml())
             name = meta.getAttribute('meta:name')
             value = meta.childNodes[0].wholeText
             if meta.getAttribute('meta:value-type') == 'float':
                 self.metas[name] = float(value)
             else:
                 self.metas[name] = value
-            print name, self.metas[name]
+            print(name, self.metas[name])
 
     def execute(self, filename, dom):
         if filename == 'meta.xml':
@@ -78,7 +81,6 @@ class PlanningHebdomadaireSalariesModifications(object):
         del lignes[first_color_line:last_color_line]
 
         template = lignes[0:template_lines_count]
-
         for salarie in GetSalaries(self.debut, self.fin):
             lines = []
             for line in template:
@@ -86,15 +88,9 @@ class PlanningHebdomadaireSalariesModifications(object):
                 lines.append(clone)
                 table.insertBefore(clone, template[0])
 
-            # La ligne de titre
-            ReplaceFields(lines, [
-                ('prenom', salarie.prenom),
-                ('nom', salarie.nom),
-                ('date-debut', self.debut),
-                ('date-fin', self.fin)])
-
             date = self.debut
             jour = 0
+            heures_semaine = 0.0
             while date < self.fin:
                 line = lines[3+jour]
                 journee = salarie.GetJournee(date)
@@ -107,13 +103,27 @@ class PlanningHebdomadaireSalariesModifications(object):
                             cell.setAttribute("table:style-name", couleurs[GetPrenomNom(salarie)][2 + border_column_offset])
                         else:
                             cell.setAttribute("table:style-name", couleurs[GetPrenomNom(salarie)][0 + border_column_offset])
+                    heures_jour = journee.GetNombreHeures()
+                    heures_semaine += heures_jour
+                    ReplaceFields(line, [
+                        ('heures-jour[%d]' % jour, GetHeureString(heures_jour)),
+                        ])
                 date += datetime.timedelta(1)
                 jour += 1
+
+            # La ligne de titre + le total
+            ReplaceFields(lines, [
+                ('prenom', salarie.prenom),
+                ('nom', salarie.nom),
+                ('date-debut', self.debut),
+                ('date-fin', self.fin),
+                ('heures-semaine', GetHeureString(heures_semaine))
+            ])
 
         for line in template:
             table.removeChild(line)
 
-        # print dom.toprettyxml()
+        # print(dom.toprettyxml())
         return
 
 
@@ -126,8 +136,8 @@ if __name__ == '__main__':
     from config import *
     from data import *
     from functions import *
-    __builtin__.creche, result = FileConnection("databases/gertrude.db").Load()
-    modifications = PlanningHebdomadaireSalariesModifications(datetime.date(2017, 7, 17))
+    __builtin__.creche, result = FileConnection("databases/monteillou.db").Load()
+    modifications = PlanningHebdomadaireSalariesModifications(datetime.date(2017, 9, 25))
     filename = "./test-%f.odt" % random.random()
     errors = GenerateOODocument(modifications, filename=filename, gauge=None)
     StartLibreOffice(filename)

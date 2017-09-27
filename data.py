@@ -377,7 +377,7 @@ class FileConnection(object):
         if not os.path.isfile(self.filename):
             try:
                 sql_connection.Create(progress_handler)
-            except:
+            except Exception as e:
                 sql_connection.close()
                 os.remove(self.filename)
                 raise
