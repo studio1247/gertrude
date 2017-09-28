@@ -623,7 +623,7 @@ class Cotisation(object):
             result = [423.12, 364.74, 306.39][self.tranche_paje-1]
         else:
             result = [846.22, 729.47, 612.77][self.tranche_paje-1]
-        return min(result, self.cotisation_mensuelle * 15 / 100)
+        return min(result, self.cotisation_mensuelle * 85 / 100)
 
     def EvalCreditImpots(self):
         assiette = min(self.cotisation_mensuelle * 12, 2300)
