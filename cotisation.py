@@ -629,7 +629,7 @@ class Cotisation(object):
         assiette = min(self.cotisation_mensuelle * 12, 2300)
         if self.inscrit.garde_alternee:
             assiette /= 2
-        return assiette / 2
+        return math.ceil(assiette / 24)
 
     def AjustePeriode(self, param):
         if isinstance(param, tuple):
