@@ -850,6 +850,7 @@ class SQLConnection(object):
                     print("Famille avec plus de 2 parents ou relation indéterminée : fonction non supportée")
                     cur.execute("DELETE FROM PARENTS WHERE idx=?", (parent.idx, ))
                     cur.execute("DELETE FROM REVENUS WHERE parent=?", (parent.idx, ))
+                    self.con.commit()
                     continue
                 cur.execute('SELECT debut, fin, revenu, chomage, conge_parental, regime, idx FROM REVENUS WHERE parent=?', (parent.idx,))
                 for revenu_entry in cur.fetchall():
