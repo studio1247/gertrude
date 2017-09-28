@@ -192,7 +192,13 @@ class OdtDocumentAccueilModifications(DocumentAccueilModifications):
         
         doc = dom.getElementsByTagName("office:text")[0]
         # print(doc.toprettyxml())
-        
+
+        for section in doc.getElementsByTagName("text:section"):
+            section_name = section.getAttribute("text:name")
+            index = ["parent1", "parent2"].index(section_name)
+            if index >= 0 and self.inscrit.famille.parents[index] is None:
+                doc.removeChild(section)
+
         for table in doc.getElementsByTagName("table:table"):
             table_name = table.getAttribute("table:name")
             if table_name in ("Tableau3", "Horaires"):

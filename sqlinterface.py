@@ -844,10 +844,12 @@ class SQLConnection(object):
             for i, parent_entry in enumerate(cur.fetchall()):
                 parent = Parent(famille, creation=False)
                 parent.relation, parent.prenom, parent.nom, parent.adresse, parent.code_postal, parent.ville, parent.telephone_domicile, parent.telephone_domicile_notes, parent.telephone_portable, parent.telephone_portable_notes, parent.telephone_travail, parent.telephone_travail_notes, parent.profession, parent.email, parent.idx = parent_entry
-                if i < 2:
+                if i < 2 and parent.relation is not None:
                     famille.parents[i] = parent
                 else:
-                    print("Famille avec plus de 2 parents : fonction non supportée")
+                    print("Famille avec plus de 2 parents ou relation indéterminée : fonction non supportée")
+                    cur.execute("DELETE FROM PARENTS WHERE idx=?", (parent.idx, ))
+                    cur.execute("DELETE FROM REVENUS WHERE parent=?", (parent.idx, ))
                     continue
                 cur.execute('SELECT debut, fin, revenu, chomage, conge_parental, regime, idx FROM REVENUS WHERE parent=?', (parent.idx,))
                 for revenu_entry in cur.fetchall():
