@@ -304,7 +304,7 @@ class FactureModifications(object):
                     for tmp in enfant.inscriptions:
                         if not last_inscription or not last_inscription.fin or (tmp.fin and tmp.fin > last_inscription.fin):
                             last_inscription = tmp
-                    facture.fields = fields + GetInscritFields(enfant) + GetInscriptionFields(last_inscription) + GetFactureFields(facture) + GetCotisationFields(facture.last_cotisation)
+                    facture.fields = fields + GetInscritFields(enfant) + GetInscriptionFields(last_inscription) + GetSiteFields(last_inscription.site) + GetFactureFields(facture) + GetCotisationFields(facture.last_cotisation)
                     self.introduction_fields = facture.fields
                     factures.append(facture)
 
@@ -315,11 +315,6 @@ class FactureModifications(object):
 
                 for template in templates:
                     clone = template.cloneNode(1)
-
-                    if facture.last_cotisation:
-                        fields = GetSiteFields(facture.last_cotisation.inscription.site)
-                        ReplaceTextFields(clone, fields)
-
                     if clone.nodeName in ("draw:frame", "draw:custom-shape"):
                         doc.insertBefore(clone, template)
                     else:
@@ -364,13 +359,13 @@ class FactureModifications(object):
                                 self.FillRecapSection(section_clone, facture)
 
                     # Les autres champs de la facture
-                    facture_fields = fields + GetFamilleFields(inscrit.famille) + \
-                        [('total', total_facture, FIELD_EUROS), ('solde', solde, FIELD_EUROS),
-                         ('prenoms', ", ".join(prenoms)),
-                         ('montant-a-regler', total_facture + solde, FIELD_EUROS),
-                         ('url-tipi', GetUrlTipi(inscrit.famille))] + \
-                        GetFactureFields(factures[0]) + \
-                        self.GetFactureCustomFields(facture)
+                    facture_fields = [
+                        ('total', total_facture, FIELD_EUROS),
+                        ('solde', solde, FIELD_EUROS),
+                        ('prenoms', ", ".join(prenoms)),
+                        ('montant-a-regler', total_facture + solde, FIELD_EUROS),
+                        ('url-tipi', GetUrlTipi(inscrit.famille))]
+                    facture_fields += factures[0].fields + self.GetFactureCustomFields(factures[0])
                     ReplaceTextFields(clone, facture_fields)
 
                     if not recap_section_found:
