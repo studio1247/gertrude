@@ -304,7 +304,7 @@ class FactureModifications(object):
                     for tmp in enfant.inscriptions:
                         if not last_inscription or not last_inscription.fin or (tmp.fin and tmp.fin > last_inscription.fin):
                             last_inscription = tmp
-                    facture.fields = fields + GetInscritFields(enfant) + GetInscriptionFields(last_inscription) + GetSiteFields(last_inscription.site) + GetFactureFields(facture) + GetCotisationFields(facture.last_cotisation)
+                    facture.fields = fields + GetInscritFields(enfant) + GetInscriptionFields(last_inscription) + GetFactureFields(facture) + GetCotisationFields(facture.last_cotisation)
                     self.introduction_fields = facture.fields
                     factures.append(facture)
 

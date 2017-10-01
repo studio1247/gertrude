@@ -942,7 +942,6 @@ def GetParentFields(parent, index=None):
            ('adresse-%s' % ref, parent.adresse if parent.adresse else parent.famille.adresse),
            ('code-postal-%s' % ref, GetCodePostal(parent) if parent.code_postal else GetCodePostal(parent.famille)),
            ('ville-%s' % ref, parent.ville if parent.ville else parent.famille.ville),
-           ('email-%s' % ref, parent.email),
            ('telephone-domicile-%s' % ref, parent.telephone_domicile),
            ('telephone-travail-%s' % ref, parent.telephone_travail),
            ('telephone-portable-%s' % ref, parent.telephone_portable),
@@ -987,6 +986,7 @@ def GetInscritFields(inscrit):
         ('age', GetAgeString(inscrit.naissance) if inscrit else ""),
         ('entree', inscrit.inscriptions[0].debut if inscrit else ""),
         ('sortie', inscrit.inscriptions[-1].fin if inscrit else ""),
+        ('notes', inscrit.notes),
     ]
 
 
@@ -1017,6 +1017,7 @@ def GetInscriptionFields(inscription):
             ('groupe', inscription.groupe.nom if inscription.groupe else ""),
             ('professeur-prenom', GetPrenom(inscription.professeur)),
             ('professeur-nom', GetNom(inscription.professeur)),
+            ("jours-presence", ", ".join([days[i] for i in range(7) if inscription.reference[i].GetState() > 0]))
             ] + GetSiteFields(inscription.site)
 
 
