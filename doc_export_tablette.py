@@ -68,7 +68,7 @@ class ExportTabletteModifications(object):
                     array[idx][date].append(PeriodePresence(date, malade=True))
                 else:
                     print "Ligne %s inconnue" % label
-            except Exception, e:
+            except Exception as e:
                 print e
                 pass
     
@@ -98,7 +98,6 @@ class ExportTabletteModifications(object):
                 table.insertBefore(ligne, lineTemplate)
         table.removeChild(lineTemplate)
 
-    
     def SortedKeys(self, array, function):
         keys = array.keys()
         keys.sort(key=lambda key: GetPrenomNom(function(key)))
