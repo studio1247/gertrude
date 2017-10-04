@@ -317,7 +317,7 @@ class DossierInscriptionModifications(DocumentAccueilModifications):
         self.multi = False
         self.default_output = ""
         self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
-        self.email_subject = "Dossier d'inscription"
+        self.email_subject = "Dossier d'inscription pour %s" % GetPrenomNom(who)
         self.introduction_filename = "Dossier inscription.txt"
 
     def GetAttachments(self):
@@ -340,7 +340,7 @@ class PremiereFactureModifications(DocumentAccueilModifications):
         self.multi = False
         self.default_output = ""
         self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
-        self.email_subject = "Contrat d'accueil et première facture"
+        self.email_subject = "Contrat d'accueil et première facture pour %s" % GetPrenomNom(who)
         self.introduction_filename = "Premiere facture.txt"
         self.contrat_accueil = ContratAccueilModifications(who, date)
         GenerateDocument(self.contrat_accueil, filename=self.contrat_accueil.default_output)
