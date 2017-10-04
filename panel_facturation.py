@@ -508,8 +508,10 @@ class FacturationNotebook(wx.Notebook):
     def UpdateContents(self):
         self.OnPageChanged(None)
 
-    def OnPageChanged(self, _):
+    def OnPageChanged(self, evt):
         self.GetCurrentPage().UpdateContents()
+        if evt:
+            evt.Skip()
 
 
 class FacturationPanel(GPanel):
