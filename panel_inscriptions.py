@@ -23,7 +23,7 @@ from controls import *
 from planning import *
 from cotisation import *
 from ooffice import *
-from doc_contrat_accueil import ContratAccueilModifications, DevisAccueilModifications, FraisGardeModifications
+from doc_contrat_accueil import ContratAccueilModifications, DevisAccueilModifications, FraisGardeModifications, AvenantContratAccueilModifications
 import sqlinterface
 
 
@@ -1184,7 +1184,7 @@ class InscriptionsPanel(GPanel):
         self.sizer.Add(sizer, 0, wx.EXPAND|wx.LEFT, MACOS_MARGIN)
         # le notebook pour la fiche d'inscription
         self.notebook = InscriptionsNotebook(self)
-        self.sizer.Add(self.notebook, 1, wx.EXPAND|wx.TOP, 5)
+        self.sizer.Add(self.notebook, 1, wx.EXPAND | wx.TOP, 5)
         self.InitInscrits()
 
     def UpdateContents(self):
