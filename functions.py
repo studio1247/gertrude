@@ -1351,3 +1351,10 @@ def GetDateIntersection(periodes):
 
 def normalize_filename(filename):
     return unicodedata.normalize('NFKD', unicode(filename)).encode('ascii', 'ignore')
+
+
+def get_emails(str):
+    if str is None:
+        return []
+    else:
+        return [email.strip() for email in str.split(",") if email.strip() != ""]

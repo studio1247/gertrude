@@ -662,19 +662,23 @@ def SendDocument(filename, generator, to=None, introduction_filename=None, saas=
     if introduction_filename is None:
         introduction_filename = GetTemplateFile(generator.introduction_filename)
     COMMASPACE = ', '
+    creche_emails = get_emails(creche.email)
+
+    if not creche_emails:
+        return False, "Vous devez renseigner l'adresse email de la structure"
 
     # Create the container (outer) email message.
     msg = MIMEMultipart()
     msg['Subject'] = generator.email_subject
     if saas:
         msg_from = "saas@gertrude-logiciel.org"
-        msg["Reply-to"] = creche.email
-        msg["Return-path"] = creche.email
+        msg["Reply-to"] = creche_emails[0]
+        msg["Return-path"] = creche_emails[0]
     else:
-        msg_from = creche.email
+        msg_from = creche_emails[0]
     msg['From'] = msg_from
     msg['To'] = COMMASPACE.join(to)
-    msg['CC'] = creche.email
+    msg['CC'] = COMMASPACE.join(creche_emails)
 
     try:
         with open(introduction_filename) as f:
@@ -723,7 +727,7 @@ def SendDocument(filename, generator, to=None, introduction_filename=None, saas=
         pass
 
     if config.debug:
-        print("From: %s, To:" % creche.email, to + [creche.email])
+        print("From: %s, To:" % msg_from, to + creche_emails)
         print(msg.as_string()[:1200], '...')
     else:
         s = smtplib.SMTP(smtp_server, port)
@@ -731,7 +735,7 @@ def SendDocument(filename, generator, to=None, introduction_filename=None, saas=
             s.starttls()
         if login:
             s.login(login, password)
-        s.sendmail(msg_from, to + [creche.email], msg.as_string())
+        s.sendmail(msg_from, to + creche_emails, msg.as_string())
         s.quit()
 
 
