@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 import datetime
 from globals import *
 from constants import *
@@ -38,7 +40,7 @@ class DayPlanningPanel(PlanningWidget):
         for start, end in plages_selectionnees:
             for i in range(start, end):
                 if activites[0][i][0] > creche.GetCapacite(line.day):
-                    dlg = wx.MessageDialog(None, u"Dépassement de la capacité sur ce créneau horaire !", u"Attention", wx.OK|wx.ICON_WARNING)
+                    dlg = wx.MessageDialog(None, "Dépassement de la capacité sur ce créneau horaire !", "Attention", wx.OK|wx.ICON_WARNING)
                     dlg.ShowModal()
                     dlg.Destroy()
                     self.state = None
@@ -53,7 +55,7 @@ class DayPlanningPanel(PlanningWidget):
                 if conge.label:
                     self.Disable(conge.label)
                 else:
-                    self.Disable(u"Etablissement fermé")
+                    self.Disable("Etablissement fermé")
                 return
         else:
             self.SetInfo("")
@@ -72,7 +74,7 @@ class DayPlanningPanel(PlanningWidget):
 
         self.lignes_salaries = GetPlanningLinesSalaries(self.date, self.site)
         if self.lignes_salaries:
-            lines.append(u"Salariés")
+            lines.append("Salariés")
             lines += self.lignes_salaries
         self.SetLines(lines)
 
@@ -107,7 +109,7 @@ class PlanningBasePanel(GPanel):
     profil = PROFIL_PLANNING
 
     def __init__(self, parent):
-        GPanel.__init__(self, parent, u'Planning')
+        GPanel.__init__(self, parent, 'Planning')
         self.topsizer = wx.BoxSizer(wx.HORIZONTAL)
         self.current_site = 0
 
@@ -255,7 +257,7 @@ class PlanningHorairePanel(PlanningBasePanel):
         errors = tablette.sync_tablette()
 
         if errors:
-            dlg = wx.MessageDialog(None, u"\n".join(errors), u'Erreurs de saisie tablette', wx.OK | wx.ICON_WARNING)
+            dlg = wx.MessageDialog(None, "\n".join(errors), 'Erreurs de saisie tablette', wx.OK | wx.ICON_WARNING)
             dlg.ShowModal()
             dlg.Destroy()
 

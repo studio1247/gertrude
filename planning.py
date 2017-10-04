@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 import wx
 import wx.lib.scrolledpanel
 from buffered_window import BufferedWindow
@@ -29,24 +31,24 @@ from globals import *
 # Elements size
 LABEL_WIDTH = 130  # px
 ICONS_WIDTH = 50  # px
-LINE_HEIGHT = 32 # px
+LINE_HEIGHT = 32  # px
 CHECKBOX_WIDTH = 25  # px
 COMMENT_BUTTON_WIDTH = 31  # px
 RECAP_WIDTH = 100  # px
 
 try:
-    BUTTON_BITMAPS = {ABSENT: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), u'Absent'),
-                      ABSENT+PREVISIONNEL: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), u'Congés'),
-                      PRESENT: (wx.Bitmap(GetBitmapFile("icone_presence.png"), wx.BITMAP_TYPE_PNG), u'Présent'),
-                      PRESENT+PREVISIONNEL: (wx.Bitmap(GetBitmapFile("icone_presence_prev.png"), wx.BITMAP_TYPE_PNG), u'Présent'),
-                      VACANCES: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), u'Congés'),
-                      CONGES_PAYES: (wx.Bitmap(GetBitmapFile("icone_conges_payes.png"), wx.BITMAP_TYPE_PNG), u'Congés payés'),
-                      MALADE: (wx.Bitmap(GetBitmapFile("icone_maladie.png"), wx.BITMAP_TYPE_PNG), u'Malade'),
-                      HOPITAL: (wx.Bitmap(GetBitmapFile("icone_hopital.png"), wx.BITMAP_TYPE_PNG), u'Maladie avec hospitalisation'),
-                      MALADE_SANS_JUSTIFICATIF: (wx.Bitmap(GetBitmapFile("icone_maladie_sans_justificatif.png"), wx.BITMAP_TYPE_PNG), u'Maladie sans justificatif'),
-                      ABSENCE_NON_PREVENUE: (wx.Bitmap(GetBitmapFile("icone_absence_non_prevenue.png"), wx.BITMAP_TYPE_PNG), u'Absence non prévenue'),
-                      ABSENCE_CONGE_SANS_PREAVIS: (wx.Bitmap(GetBitmapFile("icone_absence_sans_preavis.png"), wx.BITMAP_TYPE_PNG), u'Congés sans préavis'),
-                      CONGES_DEPASSEMENT: (wx.Bitmap(GetBitmapFile("icone_conges_depassement.png"), wx.BITMAP_TYPE_PNG), u'Absence non déductible (dépassement)'),
+    BUTTON_BITMAPS = {ABSENT: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), 'Absent'),
+                      ABSENT+PREVISIONNEL: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), 'Congés'),
+                      PRESENT: (wx.Bitmap(GetBitmapFile("icone_presence.png"), wx.BITMAP_TYPE_PNG), 'Présent'),
+                      PRESENT+PREVISIONNEL: (wx.Bitmap(GetBitmapFile("icone_presence_prev.png"), wx.BITMAP_TYPE_PNG), 'Présent'),
+                      VACANCES: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), 'Congés'),
+                      CONGES_PAYES: (wx.Bitmap(GetBitmapFile("icone_conges_payes.png"), wx.BITMAP_TYPE_PNG), 'Congés payés'),
+                      MALADE: (wx.Bitmap(GetBitmapFile("icone_maladie.png"), wx.BITMAP_TYPE_PNG), 'Malade'),
+                      HOPITAL: (wx.Bitmap(GetBitmapFile("icone_hopital.png"), wx.BITMAP_TYPE_PNG), 'Maladie avec hospitalisation'),
+                      MALADE_SANS_JUSTIFICATIF: (wx.Bitmap(GetBitmapFile("icone_maladie_sans_justificatif.png"), wx.BITMAP_TYPE_PNG), 'Maladie sans justificatif'),
+                      ABSENCE_NON_PREVENUE: (wx.Bitmap(GetBitmapFile("icone_absence_non_prevenue.png"), wx.BITMAP_TYPE_PNG), 'Absence non prévenue'),
+                      ABSENCE_CONGE_SANS_PREAVIS: (wx.Bitmap(GetBitmapFile("icone_absence_sans_preavis.png"), wx.BITMAP_TYPE_PNG), 'Congés sans préavis'),
+                      CONGES_DEPASSEMENT: (wx.Bitmap(GetBitmapFile("icone_conges_depassement.png"), wx.BITMAP_TYPE_PNG), 'Absence non déductible (dépassement)'),
                       }
 
     BULLE_BITMAP = wx.Bitmap(GetBitmapFile("bulle.png"))
@@ -451,7 +453,7 @@ class PlanningLineGrid(BufferedWindow):
             
             if self.state > 0:
                 if not self.activity_combobox:
-                    dlg = TextDialog(self, u"Capacité", "10")
+                    dlg = TextDialog(self, "Capacité", "10")
                     response = dlg.ShowModal()
                     dlg.Destroy()
                     try:
@@ -719,7 +721,7 @@ class PlanningLine(wx.Window):
 
     def OnCommentButtonPressed(self, _):
         if not (self.line.readonly or readonly):
-            dlg = TextDialog(self, u"Commentaire", self.line.commentaire)
+            dlg = TextDialog(self, "Commentaire", self.line.commentaire)
             response = dlg.ShowModal()
             dlg.Destroy()
             if response == wx.ID_OK:
