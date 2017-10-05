@@ -973,7 +973,7 @@ class SQLConnection(object):
             cur.execute('SELECT idx, date, cotisation_mensuelle, total_contractualise, total_realise, total_facture, supplement_activites, supplement, deduction FROM FACTURES where inscrit=?', (inscrit.idx,))
             for idx, date, cotisation_mensuelle, total_contractualise, total_realise, total_facture, supplement_activites, supplement, deduction in cur.fetchall():
                 date = getdate(date)
-                inscrit.factures_cloturees[date] = FactureCloturee(inscrit, date, cotisation_mensuelle, total_contractualise, total_realise, total_facture, supplement_activites, supplement, deduction)
+                inscrit.factures_cloturees[date] = FactureCloturee(creche, inscrit, date, cotisation_mensuelle, total_contractualise, total_realise, total_facture, supplement_activites, supplement, deduction)
 
             cur.execute('SELECT idx, date, valeur, libelle FROM CORRECTIONS where inscrit=?', (inscrit.idx,))
             for idx, date, valeur, libelle in cur.fetchall():

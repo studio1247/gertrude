@@ -847,9 +847,14 @@ def CreateFacture(inscrit, annee, mois, options=0):
 
 
 class FactureCloturee(FactureBase):
-    def __init__(self, inscrit, date, cotisation_mensuelle, total_contractualise, total_realise, total_facture, supplement_activites, supplement, deduction):
+    def __init__(self, creche, inscrit, date, cotisation_mensuelle, total_contractualise, total_realise, total_facture, supplement_activites, supplement, deduction):
         self.inscrit = inscrit
         self.date = date
+        if creche.temps_facturation == FACTURATION_FIN_MOIS:
+            self.debut_recap = datetime.date(date.year, date.month, 1)
+        else:
+            self.debut_recap = GetNextMonthStart(datetime.date(date.year, date.month, 1))
+        self.fin_recap = GetMonthEnd(self.debut_recap)
         self.cotisation_mensuelle = cotisation_mensuelle
         self.total_contractualise = total_contractualise
         self.total_realise = total_realise
@@ -932,9 +937,7 @@ def GetHistoriqueSolde(who, jalon, derniere_facture=True):
                             if facture.fin_recap < GetMonthStart(jalon):
                                 lignes.append(facture)
                 except Exception as e:
-                    pass
-                    # print "Exception %r" % e
-
+                    print("Exception", e)
             date = GetNextMonthStart(date)
     return lignes
 
@@ -947,9 +950,9 @@ def CalculeSolde(who, date):
             if isinstance(ligne, Encaissement):
                 solde -= ligne.valeur
             else:
-                solde += ligne.total
-        except:
-            pass
+                solde += ligne.total_facture
+        except Exception as e:
+            print("Exception", e)
     return solde
 
 
