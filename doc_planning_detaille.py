@@ -25,13 +25,6 @@ from cotisation import CotisationException
 from sqlobjects import Inscription
 from ooffice import *
 
-left = 1.5
-right = 2.0
-top = 6.0
-labels_width = 3.5
-line_height = 0.75
-lines_max = 25
-
 
 class PlanningDetailleModifications(object):
     title = "Planning détaillé"
@@ -52,7 +45,17 @@ class PlanningDetailleModifications(object):
             else:
                 self.default_output = "Planning presences %s-%s.odg" % (GetDateString(self.start, weekday=False), GetDateString(self.end, weekday=False))
         self.errors = {}
-        self.metas = {"Format": 0}
+        self.metas = {"format": 0,
+                      "left": 1.5,
+                      "right": 2.0,
+                      "top": 6.0,
+                      "label-length": 20,
+                      "labels-width": 3.5,
+                      "line-height": 0.75,
+                      "lines-max": 25,
+                      "lignes-vides": False,
+                      "summary": True
+                      }
         self.email = None
 
     def execute(self, filename, dom):
@@ -60,35 +63,43 @@ class PlanningDetailleModifications(object):
             metas = dom.getElementsByTagName('meta:user-defined')
             for meta in metas:
                 # print(meta.toprettyxml())
-                name = meta.getAttribute('meta:name')
+                name = meta.getAttribute('meta:name').lower()
                 if len(meta.childNodes) > 0:
                     value = meta.childNodes[0].wholeText
-                    if meta.getAttribute('meta:value-type') == 'float':
-                        self.metas[name] = int(value)
+                    value_type = meta.getAttribute('meta:value-type')
+                    if value_type == "float":
+                        self.metas[name] = float(value)
+                    elif value_type == "boolean":
+                        self.metas[name] = True if value == "true" else False
                     else:
                         self.metas[name] = value
+            # for name in self.metas:
+            #     print("Meta", name, type(self.metas[name]), self.metas[name])
             return None        
         elif filename != 'content.xml':
             return None
         elif IsTemplateFile("Planning detaille.ods"):
-            if self.metas["Format"] == 1:
+            if self.metas["format"] == 1:
                 return self.executeTemplateCalcJulien(filename, dom)
-            elif self.metas["Format"] == 2:
+            elif self.metas["format"] == 2:
                 return self.executeTemplateCalc123APetitsPas(filename, dom)
             else:
                 return self.executeTemplateCalc(filename, dom)
         else:
-            return self.executeTemplateDraw(filename, dom)
+            if self.metas["format"] == "one-page":
+                return self.executeTemplateOnePage(filename, dom)
+            else:
+                return self.executeTemplateDraw(filename, dom)
 
     def executeTemplateDraw(self, filename, dom):
         affichage_min = int(creche.affichage_min * 60 / BASE_GRANULARITY)
         affichage_max = int(creche.affichage_max * 60 / BASE_GRANULARITY)
-        step = (21.0-left-right-labels_width) / (affichage_max - affichage_min)
-       
-        drawing = dom.getElementsByTagName('office:drawing').item(0)            
+        step = (21.0-self.metas["left"]-self.metas["right"]-self.metas["labels-width"]) / (affichage_max - affichage_min)
+
+        drawing = dom.getElementsByTagName('office:drawing').item(0)
         if not drawing:
             drawing = dom.getElementsByTagName('office:presentation').item(0)
-            
+
         template = drawing.getElementsByTagName("draw:page").item(0)
         # print(template.toprettyxml())
         shapes = getNamedShapes(template)
@@ -107,15 +118,13 @@ class PlanningDetailleModifications(object):
                 ReplaceTextFields(node, [('category', text)])
                 page.appendChild(node)
 
-        lignes_vides = self.metas["lignes-vides"] if "lignes-vides" in self.metas else False
-
         day = self.start
         while day <= self.end:
             if day in creche.jours_fermeture:
                 day += datetime.timedelta(1)
                 continue
 
-            lines_enfants = GetLines(day, creche.inscrits, presence=not lignes_vides, site=self.site, groupe=self.groupe, summary=SUMMARY_ENFANT)
+            lines_enfants = GetLines(day, creche.inscrits, presence=not self.metas["lignes-vides"], site=self.site, groupe=self.groupe, summary=SUMMARY_ENFANT)
             lines_enfants = GetEnfantsTriesSelonParametreTriPlanning(lines_enfants)
             lines_salaries = GetLines(day, creche.salaries, site=self.site, summary=SUMMARY_SALARIE)
 
@@ -123,20 +132,20 @@ class PlanningDetailleModifications(object):
                 lines = lines_enfants + ["Salariés"] + lines_salaries
             else:
                 lines = lines_enfants
-            
-            pages_count = 1 + (len(lines)) / lines_max
+
+            pages_count = 1 + (len(lines)) / self.metas["lines-max"]
             for page_index in range(pages_count):
-                lines_count = min(lines_max, len(lines)-page_index*lines_max)
+                lines_count = min(self.metas["lines-max"], len(lines)-page_index*self.metas["lines-max"])
                 page = template.cloneNode(1)
                 page.setAttribute("draw:name", GetDateString(day))
                 drawing.appendChild(page)
-                
+
                 # le quadrillage et l'echelle
                 h = affichage_min
                 while h <= affichage_max:
                     if h % (60 / BASE_GRANULARITY) == 0:
                         node = shapes["legende-heure"].cloneNode(1)
-                        node.setAttribute('svg:x', '%fcm' % (left + labels_width - 0.5 + (float(h)-affichage_min) * step))
+                        node.setAttribute('svg:x', '%fcm' % (self.metas["left"] + self.metas["labels-width"] - 0.5 + (float(h)-affichage_min) * step))
                         # node.setAttribute('svg:y', '1cm')
                         node.setAttribute('svg:width', '1cm')
                         node.firstChild.firstChild.firstChild.firstChild.replaceWholeText('%dh' % int(round(h/(60 / BASE_GRANULARITY))))
@@ -144,17 +153,17 @@ class PlanningDetailleModifications(object):
                         node = shapes["ligne-heure"].cloneNode(1)
                     else:
                         node = shapes["ligne-quart-heure"].cloneNode(1)
-                    node.setAttribute('svg:x1', '%fcm' % (left + labels_width + (h-affichage_min) * step))
+                    node.setAttribute('svg:x1', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + (h-affichage_min) * step))
                     # node.setAttribute('svg:y1', '2cm')
-                    node.setAttribute('svg:x2', '%fcm' % (left + labels_width + (h-affichage_min) * step))
+                    node.setAttribute('svg:x2', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + (h-affichage_min) * step))
                     # node.setAttribute('svg:y2', '29cm')
                     page.appendChild(node)
                     h += creche.granularite / BASE_GRANULARITY
 
                 if "ligne-cahier" in shapes:
                     ligne_cahier = shapes["ligne-cahier"].cloneNode(1)
-                    ligne_cahier.setAttribute('svg:x1', '%fcm' % left)
-                    ligne_cahier.setAttribute('svg:x2', '%fcm' % (21.0 - right))
+                    ligne_cahier.setAttribute('svg:x1', '%fcm' % self.metas["left"])
+                    ligne_cahier.setAttribute('svg:x2', '%fcm' % (21.0 - self.metas["right"]))
                 else:
                     ligne_cahier = None
 
@@ -162,23 +171,23 @@ class PlanningDetailleModifications(object):
 
                 # les enfants et salaries
                 for i in range(lines_count):
-                    line_idx = i + lines_max * page_index
+                    line_idx = i + self.metas["lines-max"] * page_index
                     line = lines[line_idx]
                     if isinstance(line, basestring):
-                        AddCategoryShape(page, line, 0.20 + top + line_height * i)
+                        AddCategoryShape(page, line, 0.20 + self.metas["top"] + self.metas["line-height"] * i)
                         ajoute_ligne_cahier = False
                     else:
                         if ajoute_ligne_cahier and ligne_cahier and creche.tri_planning & TRI_LIGNES_CAHIER:
                             node = ligne_cahier.cloneNode(1)
-                            node.setAttribute('svg:y1', '%fcm' % (top + line_height * i))
-                            node.setAttribute('svg:y2', '%fcm' % (top + line_height * i))
+                            node.setAttribute('svg:y1', '%fcm' % (self.metas["top"] + self.metas["line-height"] * i))
+                            node.setAttribute('svg:y2', '%fcm' % (self.metas["top"] + self.metas["line-height"] * i))
                             page.appendChild(node)
                         else:
                             ajoute_ligne_cahier = True
                         node = shapes["libelle"].cloneNode(1)
-                        node.setAttribute('svg:x', '%fcm' % left)
-                        node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
-                        node.setAttribute('svg:width', '%fcm' % labels_width)
+                        node.setAttribute('svg:x', '%fcm' % self.metas["left"])
+                        node.setAttribute('svg:y', '%fcm' % (self.metas["top"] + self.metas["line-height"] * i))
+                        node.setAttribute('svg:width', '%fcm' % self.metas["labels-width"])
                         fields = [('nom', line.nom),
                                   ('prenom', line.prenom),
                                   ('label', line.label)]
@@ -191,21 +200,21 @@ class PlanningDetailleModifications(object):
                                 if key in shapes:
                                     # print(a,b,v)
                                     node = shapes[key].cloneNode(1)
-                                    node.setAttribute('svg:x', '%fcm' % (left + labels_width + float(a - affichage_min) * step))
-                                    node.setAttribute('svg:y', '%fcm' % (0.10 + top + line_height * i))
+                                    node.setAttribute('svg:x', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + float(a - affichage_min) * step))
+                                    node.setAttribute('svg:y', '%fcm' % (0.10 + self.metas["top"] + self.metas["line-height"] * i))
                                     node.setAttribute('svg:width', '%fcm' % ((b - a) * step))
                                     if isinstance(line.inscription, Inscription):
                                         allergies = ', '.join(line.inscription.inscrit.GetAllergies())
                                     else:
-                                        allergies = ''                                    
+                                        allergies = ''
                                     ReplaceTextFields(node, [('texte', ''), ('allergies', allergies)])
                                     page.appendChild(node)
                                 else:
                                     print("Pas de forme pour %s" % key)
-                            
-                if page_index + 1 == pages_count:
-                    AddCategoryShape(page, "Totaux", 0.20 + top + line_height * lines_count)
-                    
+
+                if self.metas["summary"] and page_index + 1 == pages_count:
+                    AddCategoryShape(page, "Totaux", 0.20 + self.metas["top"] + self.metas["line-height"] * lines_count)
+
                     # le récapitulatif par activité
                     i = lines_count
                     summary = GetActivitiesSummary(creche, lines)[0]
@@ -218,9 +227,9 @@ class PlanningDetailleModifications(object):
                         else:
                             label = creche.activites[activity].label
                         node = shapes["libelle"].cloneNode(1)
-                        node.setAttribute('svg:x', '%fcm' % left)
-                        node.setAttribute('svg:y', '%fcm' % (top + line_height * i))
-                        node.setAttribute('svg:width', '%fcm' % labels_width)
+                        node.setAttribute('svg:x', '%fcm' % self.metas["left"])
+                        node.setAttribute('svg:y', '%fcm' % (self.metas["top"] + self.metas["line-height"] * i))
+                        node.setAttribute('svg:width', '%fcm' % self.metas["labels-width"])
                         fields = [('nom', ''),
                                   ('prenom', label),
                                   ('label', label)]
@@ -235,12 +244,12 @@ class PlanningDetailleModifications(object):
                                 nv, nw = 0, 0
                             else:
                                 nv, nw = line[x]
-                                
+
                             if activity == 0 and (nw == 0 or nv > creche.GetCapacite(day.weekday()) or float(nv)/nw > 6.5):
                                 nw = activity | SUPPLEMENT
                             else:
                                 nw = activity
-                                
+
                             if nv != v or nw != w:
                                 if v != 0:
                                     # print(a, x, v)
@@ -255,15 +264,15 @@ class PlanningDetailleModifications(object):
                                             print("Pas de forme pour %s" % key)
                                             node = None
                                     if node:
-                                        node.setAttribute('svg:x', '%fcm' % (left + labels_width + (float(a - affichage_min) * step)))
-                                        node.setAttribute('svg:y', '%fcm' % (0.10 + top + line_height * i))
+                                        node.setAttribute('svg:x', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + (float(a - affichage_min) * step)))
+                                        node.setAttribute('svg:y', '%fcm' % (0.10 + self.metas["top"] + self.metas["line-height"] * i))
                                         node.setAttribute('svg:width', '%fcm' % (float(x - a) * step))
                                         ReplaceTextFields(node, [('texte', '%d' % v)])
                                         page.appendChild(node)
-                                a = x    
+                                a = x
                                 v, w = nv, nw
                             x += creche.granularite / BASE_GRANULARITY
-    
+
                 fields = GetCrecheFields(creche) + GetSiteFields(self.site)
                 if pages_count > 1:
                     fields.append(('date', GetDateString(day) + " (%d/%d)" % (page_index + 1, pages_count)))
@@ -272,6 +281,111 @@ class PlanningDetailleModifications(object):
 
                 ReplaceTextFields(page, fields)
             day += datetime.timedelta(1)
+        return None
+
+    def executeTemplateOnePage(self, filename, dom):
+        affichage_min = int(creche.affichage_min * 60 / BASE_GRANULARITY)
+        affichage_max = int(creche.affichage_max * 60 / BASE_GRANULARITY)
+        step = (21.0 - self.metas["left"] - self.metas["right"] - self.metas["labels-width"]) / (affichage_max - affichage_min)
+
+        drawing = dom.getElementsByTagName('office:drawing').item(0)
+        if not drawing:
+            drawing = dom.getElementsByTagName('office:presentation').item(0)
+
+        template = drawing.getElementsByTagName("draw:page").item(0)
+        # print(template.toprettyxml())
+        shapes = getNamedShapes(template)
+        # print(shapes)
+        for shape in shapes:
+            if shape in ["legende-heure", "ligne-heure", "ligne-quart-heure", "libelle", "jour", "separateur", "ligne-cahier", "category"] or shape.startswith("activite-"):
+                template.removeChild(shapes[shape])
+        drawing.removeChild(template)
+        if not "activite-%d" % PRESENCE_SALARIE in shapes:
+            shapes["activite-%d" % PRESENCE_SALARIE] = shapes["activite-%d" % 0]
+
+        def drawPage(people, days):
+            page = template.cloneNode(1)
+            page.setAttribute("draw:name", GetDateString(self.start))
+            drawing.appendChild(page)
+
+            # le quadrillage
+            h = affichage_min
+            while h <= affichage_max:
+                if h % (60 / BASE_GRANULARITY) == 0:
+                    node = shapes["ligne-heure"].cloneNode(1)
+                else:
+                    node = shapes["ligne-quart-heure"].cloneNode(1)
+                node.setAttribute('svg:x1', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + (h - affichage_min) * step))
+                node.setAttribute('svg:x2', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + (h - affichage_min) * step))
+                page.appendChild(node)
+                h += creche.granularite / BASE_GRANULARITY
+
+            current_top = self.metas["top"] - 0.5
+
+            for day in days:
+                if day in creche.jours_fermeture:
+                    continue
+
+                # l'échelle
+                h = affichage_min
+                while h <= affichage_max:
+                    if h % (60 / BASE_GRANULARITY) == 0:
+                        node = shapes["legende-heure"].cloneNode(1)
+                        node.setAttribute('svg:y', '%fcm' % current_top)
+                        node.setAttribute('svg:x', '%fcm' % (self.metas["left"] + self.metas["labels-width"] - 0.5 + (float(h) - affichage_min) * step))
+                        node.setAttribute('svg:width', '1cm')
+                        node.firstChild.firstChild.firstChild.firstChild.replaceWholeText('%dh' % int(round(h / (60 / BASE_GRANULARITY))))
+                        page.appendChild(node)
+                    h += creche.granularite / BASE_GRANULARITY
+
+                # le nom du jour
+                node = shapes["jour"].cloneNode(1)
+                node.setAttribute('svg:y', '%fcm' % current_top)
+                fields = [('jour', GetDateString(day))]
+                ReplaceTextFields(node, fields)
+                page.appendChild(node)
+                current_top += self.metas["line-height"]
+
+                lines = GetLines(day, people, presence=not self.metas["lignes-vides"], site=self.site, groupe=self.groupe, summary=SUMMARY_ENFANT)
+                lines = GetEnfantsTriesSelonParametreTriPlanning(lines)
+                for i, line in enumerate(lines):
+                    node = shapes["libelle"].cloneNode(1)
+                    # node.setAttribute('svg:x', '%fcm' % self.metas["left"])
+                    node.setAttribute('svg:y', '%fcm' % current_top)
+                    # node.setAttribute('svg:width', '%fcm' % self.metas["labels-width"])
+                    fields = [('nom', line.nom),
+                              ('prenom', line.prenom),
+                              ('label', truncate(line.label, self.metas["label-length"]))]
+                    ReplaceTextFields(node, fields)
+                    page.appendChild(node)
+                    for a, b, v in line.activites:
+                        if v >= 0:
+                            v &= ~PREVISIONNEL
+                            key = "activite-%d" % v
+                            if key in shapes:
+                                # print(a,b,v)
+                                node = shapes[key].cloneNode(1)
+                                node.setAttribute('svg:x', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + float(a - affichage_min) * step))
+                                node.setAttribute('svg:y', '%fcm' % (0.20 + current_top))
+                                node.setAttribute('svg:width', '%fcm' % ((b - a) * step))
+                                page.appendChild(node)
+                            else:
+                                print("Pas de forme pour %s" % key)
+
+                    fields = GetCrecheFields(creche) + GetSiteFields(self.site)
+                    ReplaceTextFields(page, fields)
+                    current_top += self.metas["line-height"]
+
+                if "line-per-day" in self.metas:
+                    current_top += self.metas["line-height"] * (self.metas["line-per-day"] - len(lines))
+
+        working_days = [(self.start + datetime.timedelta(i)) for i in range(5)]
+        drawPage(creche.inscrits, working_days)
+        drawPage(creche.salaries, working_days)
+        if "split-saturdays" in self.metas:
+            saturdays = [(self.start + datetime.timedelta(5 + 7 * i)) for i in range(5)]
+            drawPage(creche.inscrits, saturdays)
+
         return None
     
     def executeTemplateCalc(self, filename, dom):
@@ -488,3 +602,16 @@ class PlanningDetailleModifications(object):
             date += datetime.timedelta(1)
 
         spreadsheet_template.parentNode.removeChild(spreadsheet_template)
+
+
+if __name__ == '__main__':
+    import __builtin__
+    import random
+    from config import *
+    from data import *
+    from functions import *
+    __builtin__.creche, result = FileConnection("databases/opagaio.db").Load()
+    modifications = PlanningDetailleModifications((datetime.date(2017, 7, 3), datetime.date(2017, 7, 7)))
+    filename = "./test-%f.odt" % random.random()
+    errors = GenerateOODocument(modifications, filename=filename, gauge=None)
+    StartLibreOffice(filename)

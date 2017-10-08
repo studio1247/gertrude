@@ -1358,3 +1358,10 @@ def get_emails(str):
         return []
     else:
         return [email.strip() for email in str.split(",") if email.strip() != ""]
+
+
+def truncate(string, length):
+    if len(string) > length:
+        return string[:length] + "..."
+    else:
+        return string
