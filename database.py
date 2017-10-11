@@ -654,7 +654,7 @@ class Timeslot(object):
 
 class Day(object):
     def __init__(self):
-        self.timeslots = InstrumentedList()
+        self.timeslots = []
 
     def get_state(self):
         for timeslot in self.timeslots:
@@ -676,19 +676,23 @@ class DayCollection(dict):
     def __init__(self, key):
         self.keyfunc = operator.attrgetter(key)
 
+    @collection.iterator
+    def __iter__(self):
+        for day in self.values():
+            for timeslot in day.timeslots:
+                yield timeslot
+
     @collection.appender
-    @collection.internally_instrumented
-    def add(self, timeslot, _sa_initiator=None):
+    def add(self, timeslot):
         key = self.keyfunc(timeslot)
         if not self.get(key):
             dict.__setitem__(self, key, Day())
-        dict.__getitem__(self, key).timeslots.append(timeslot)
+        self[key].timeslots.append(timeslot)
 
     @collection.remover
-    @collection.internally_instrumented
-    def remove(self, timeslot, _sa_initiator=None):
+    def remove(self, timeslot):
         key = self.keyfunc(timeslot)
-        timeslots = self.__getitem__(key).timeslots
+        timeslots = self[key].timeslots
         timeslots.remove(timeslot)
         if not timeslots:
             dict.__delitem__(self, key)
