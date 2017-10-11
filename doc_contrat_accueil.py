@@ -25,6 +25,7 @@ from sqlobjects import Parent
 from cotisation import Cotisation, CotisationException
 from ooffice import *
 from doc_facture_mensuelle import FactureModifications
+from math import *
 
 
 class DocumentAccueilModifications(object):
