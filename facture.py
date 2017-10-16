@@ -937,7 +937,7 @@ def GetHistoriqueSolde(who, jalon, derniere_facture=True):
                             if facture.fin_recap < GetMonthStart(jalon):
                                 lignes.append(facture)
                 except Exception as e:
-                    print("Exception", e)
+                    print("Exception", repr(e))
             date = GetNextMonthStart(date)
     return lignes
 
