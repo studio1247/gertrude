@@ -2351,11 +2351,12 @@ class Inscrit(object):
             except:
                 pass
 
-    def IsPresent(self, debut, fin, site, handicap=None):
+    def IsPresent(self, debut, fin, site=None, handicap=None, reservataire=None):
         for inscription in self.inscriptions:
             if ((inscription.fin is None or inscription.fin >= debut) and
                     (not creche.preinscriptions or not inscription.preinscription) and
                     (site is None or inscription.site == site) and
+                    (reservataire is None or inscription.reservataire == reservataire) and
                     (inscription.debut is not None) and
                     (not fin or inscription.debut <= fin) and
                     (handicap is None or self.handicap == handicap)):

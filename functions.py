@@ -663,10 +663,10 @@ def GetPresentsIndexes(indexes, periode, site=None):
     return result
 
 
-def GetInscrits(start, end, site=None, handicap=None):
+def GetInscrits(start, end, site=None, handicap=None, reservataire=None):
     result = []
     for inscrit in creche.inscrits:
-        if inscrit.IsPresent(start, end, site, handicap):
+        if inscrit.IsPresent(start, end, site, handicap, reservataire):
             result.append(inscrit)
     return result
 

@@ -256,11 +256,40 @@ class FactureModifications(object):
             for index, reservataire in enumerate(self.inscrits):
                 for template in templates:
                     clone = template.cloneNode(1)
+                    debut_facture = self.periode_facturation
+                    fin_facture = GetMonthEnd(debut_facture)
+                    if self.reservataire.periode_facturation == 1:
+                        mois_string = "%s %d" % (months[debut_facture.month - 1], debut_facture.year)
+                    else:
+                        if self.reservataire.periode_facturation > 1:
+                            for i in range(self.reservataire.periode_facturation - 1):
+                                fin_facture = GetMonthEnd(GetNextMonthStart(fin_facture))
+                        if fin_facture.year == debut_facture.year:
+                            mois_string = "%s à %s %d" % (months[debut_facture.month - 1], months[fin_facture.month - 1], debut_facture.year)
+                        else:
+                            mois_string += "%s %d à %s %d" % (months[debut_facture.month - 1], debut_facture.year, months[fin_facture.month - 1], fin_facture.year)
+                    try:
+                        numero = int(creche.numeros_facture[debut_facture].valeur)
+                        numero += len([inscrit for inscrit in creche.inscrits if inscrit.HasFacture(debut_facture)])
+                        numero += self.reservataire.idx
+                    except Exception as e:
+                        print(e)
+                        numero = 0
+
+                    if config.numfact:
+                        numfact = config.numfact % {"inscritid": len(creche.inscrits) + self.reservataire.idx,
+                                                    "numero": numero,
+                                                    "annee": debut_facture.year,
+                                                    "mois": debut_facture.month
+                                                    }
+                    else:
+                        numfact = "%03d%04d%02d" % (900+reservataire.idx, self.periode_facturation.year, self.periode_facturation.month)
                     fields = GetCrecheFields(creche) + GetReservataireFields(reservataire) + [
                         ("date", self.periode_facturation),
-                        ("mois", '%s %d' % (months[self.periode_facturation.month - 1], self.periode_facturation.year)),
-                        ("numfact", "%03d%04d%02d" % (900+reservataire.idx, self.periode_facturation.year, self.periode_facturation.month)),
+                        ("mois", mois_string),
+                        ("numfact", numfact),
                     ]
+                    fields.append(("inscrits-reservataire", ", ".join([GetPrenomNom(inscrit) for inscrit in GetInscrits(debut_facture, fin_facture, reservataire=self.reservataire)])))
                     ReplaceTextFields(clone, fields)
 
                     if clone.nodeName in ("draw:frame", "draw:custom-shape"):
@@ -395,3 +424,18 @@ class FactureModifications(object):
                     field = label, value
                 fields.append(field)
         return fields
+
+
+if __name__ == '__main__':
+    import __builtin__
+    import random
+    from config import *
+    from data import *
+    from functions import *
+
+    config.numfact = "%(annee)04d%(mois)02d%(numero)04d"
+    __builtin__.creche, result = FileConnection("databases/mer-et-terre.db").Load()
+    modifications = FactureModifications(creche.reservataires, datetime.date(2017, 9, 1))
+    filename = "./test-%f.odt" % random.random()
+    errors = GenerateOODocument(modifications, filename=filename, gauge=None)
+    StartLibreOffice(filename)
