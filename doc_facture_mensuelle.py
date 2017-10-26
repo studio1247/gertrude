@@ -289,7 +289,21 @@ class FactureModifications(object):
                         ("mois", mois_string),
                         ("numfact", numfact),
                     ]
-                    fields.append(("inscrits-reservataire", ", ".join([GetPrenomNom(inscrit) for inscrit in GetInscrits(debut_facture, fin_facture, reservataire=self.reservataire)])))
+
+                    inscrits = GetInscrits(debut_facture, fin_facture, reservataire=self.reservataire)
+                    if inscrits:
+                        inscrit = inscrits[0]
+                        fields += GetInscritFields(inscrit)
+                        inscriptions = inscrit.GetInscriptions(debut_facture, fin_facture)
+                        if inscriptions:
+                            inscription = inscriptions[0]
+                            fields += GetInscriptionFields(inscription)
+                            try:
+                                cotisation = Cotisation(inscrit, inscription.debut)
+                                fields += GetCotisationFields(cotisation)
+                            except:
+                                pass
+
                     ReplaceTextFields(clone, fields)
 
                     if clone.nodeName in ("draw:frame", "draw:custom-shape"):

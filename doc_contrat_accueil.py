@@ -154,6 +154,7 @@ class DocumentAccueilModifications(object):
 
         fields += self.GetCustomFields(self.inscrit, self.inscrit.famille, inscription, self.cotisation)
 
+        # print(fields)
         return fields
 
     def IsPresentDuringTranche(self, weekday, debut, fin):
