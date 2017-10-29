@@ -108,7 +108,8 @@ MODE_FORFAIT_MENSUEL = 16
 MODE_TEMPS_PARTIEL = 32
 MODE_ACCUEIL_URGENCE = 64
 MODE_FORFAIT_HEBDOMADAIRE = 128
-MODE_MAX = MODE_FORFAIT_HEBDOMADAIRE
+MODE_FORFAIT_GLOBAL_CONTRAT = 256
+MODE_MAX = MODE_FORFAIT_GLOBAL_CONTRAT
 
 ModeAccueilItems = [
     ("Temps plein", MODE_5_5),
@@ -117,6 +118,7 @@ ModeAccueilItems = [
     # ("3/5èmes", MODE_3_5),
     ("Forfait horaire mensuel", MODE_FORFAIT_MENSUEL),
     ("Forfait horaire hebdomadaire", MODE_FORFAIT_HEBDOMADAIRE),
+    ("Forfait horaire global sur la durée du contrat", MODE_FORFAIT_GLOBAL_CONTRAT),
     ("Halte-garderie", MODE_HALTE_GARDERIE),
     ("Accueil urgence", MODE_ACCUEIL_URGENCE)
 ]

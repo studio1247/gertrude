@@ -356,7 +356,7 @@ class FactureFinMois(FactureBase):
                                 elif creche.mode_facturation == FACTURATION_FORFAIT_10H:
                                     affectation_jours_supplementaires = True
                                     self.CalculeSupplement(cotisation, 10)
-                                elif (creche.presences_supplementaires or heures_reference == 0) and (cotisation.inscription.mode not in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE)):
+                                elif (creche.presences_supplementaires or heures_reference == 0) and (cotisation.inscription.mode not in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE, MODE_FORFAIT_GLOBAL_CONTRAT)):
                                     cotisation.heures_supplementaires += heures_supplementaires_facturees
                                     self.heures_supplementaires += heures_supplementaires_facturees
                                     self.heures_facture_par_mode[cotisation.mode_garde] += heures_supplementaires_facturees
@@ -476,6 +476,21 @@ class FactureFinMois(FactureBase):
             self.numero = 0
         else:
             self.numero = self.GetNumeroFacture()
+
+        if inscription.mode == MODE_FORFAIT_GLOBAL_CONTRAT:
+            for cotisation in cotisations_mensuelles:
+                reste_heures = cotisation.inscription.forfait_mensuel_heures
+                date = cotisation.debut
+                while date < self.debut_recap and reste_heures > 0:
+                    day = inscrit.journees.get(date, cotisation.inscription.GetJourneeReference(date))
+                    reste_heures -= day.GetNombreHeures(facturation=True)
+                    date += datetime.timedelta(1)
+                reste_heures = max(0, reste_heures)
+                if cotisation.heures_realisees > reste_heures:
+                    cotisation.heures_supplementaires = cotisation.heures_realisees - reste_heures
+                    self.CalculeSupplement(cotisation, cotisation.heures_supplementaires)
+                    if self.options & TRACES:
+                        print(" heures supplémentaires :", cotisation.heures_realisees, "-", reste_heures, "=", cotisation.heures_supplementaires, "heures")
 
         if inscrit.HasFacture(self.debut_recap):
             for cotisation in cotisations_mensuelles:

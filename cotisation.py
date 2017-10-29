@@ -296,6 +296,8 @@ class Cotisation(object):
                 self.heures_semaine = self.heures_mois / (52.0 / 12)  # attention Le Nid Des Trésors
             elif self.inscription.mode == MODE_FORFAIT_HEBDOMADAIRE:
                 self.heures_semaine = self.inscription.forfait_mensuel_heures  # TODO rename to forfait
+            elif self.inscription.mode == MODE_FORFAIT_GLOBAL_CONTRAT:
+                self.heures_periode = self.inscription.forfait_mensuel_heures  # TODO rename to forfait
             elif creche.mode_facturation == FACTURATION_PAJE_10H:
                 self.heures_semaine = 10.0 * self.jours_semaine
             else:
@@ -315,8 +317,8 @@ class Cotisation(object):
                     date = GetMonthStart(self.debut_inscription)
                     fin_decompte_conges_et_factures = GetMonthEnd(self.fin_inscription)
                     if options & TRACES:
-                        print(' début théorique en date du', date)
-                        print(' fin théorique en date du', fin_decompte_conges_et_factures)
+                        print(" début théorique en date du", date)
+                        print(" fin théorique en date du", fin_decompte_conges_et_factures)
                 else:
                     self.prorata = (self.fin_inscription != self.fin or self.debut_inscription != self.debut)
                     date = self.debut
@@ -330,15 +332,15 @@ class Cotisation(object):
                             #     debut_conge = date
                             if creche.jours_fermeture[date].options == ACCUEIL_NON_FACTURE:
                                 if options & TRACES:
-                                    print(' accueil non facturé :', date, "(%fh)" % heures)
+                                    print(" accueil non facturé :", date, "(%fh)" % heures)
                                 self.heures_accueil_non_facture += heures
                             else:
                                 if options & TRACES:
-                                    print(' jour de fermeture :', date, "(%fh)" % heures)
+                                    print(" jour de fermeture :", date, "(%fh)" % heures)
                                 self.heures_fermeture_creche += heures
                         elif date in inscrit.jours_conges:
                             if options & TRACES:
-                                print(' jour de congé inscription :', date, "(%fh)" % heures)
+                                print(" jour de congé inscription :", date, "(%fh)" % heures)
                             self.conges_inscription.append(date)
                             # if debut_conge is None:
                             #     debut_conge = date                            
@@ -352,12 +354,13 @@ class Cotisation(object):
                 #     self.liste_conges.append(date2str(debut_conge) + " - " + date2str(self.fin_inscription))
                 if self.inscription.semaines_conges:
                     if options & TRACES:
-                        print(' + %d semaines de congés' % self.inscription.semaines_conges)
-                    self.heures_periode -= self.inscription.semaines_conges * self.heures_semaine
+                        print(" + %d semaines de congés" % self.inscription.semaines_conges)
+                    if self.inscription.mode != MODE_FORFAIT_GLOBAL_CONTRAT:
+                        self.heures_periode -= self.inscription.semaines_conges * self.heures_semaine
                     self.liste_conges.append("%d semaines de congés" % self.inscription.semaines_conges)
                 self.heures_periode = math.ceil(self.heures_periode)
                 if options & TRACES:
-                    print(' heures période :', self.heures_periode)
+                    print(" heures période :", self.heures_periode)
                 self.semaines_periode = 1 + (self.fin_inscription - self.debut_inscription).days / 7
                 if creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
                     self.nombre_factures = GetNombreFacturesContrat(self.debut_inscription, fin_decompte_conges_et_factures)
@@ -365,17 +368,23 @@ class Cotisation(object):
                     self.nombre_factures = GetNombreFacturesContrat(self.debut, fin_decompte_conges_et_factures)
 
                 if options & TRACES:
-                    print(' nombres de factures :', self.nombre_factures)
+                    print(" nombres de factures :", self.nombre_factures)
 
                 if creche.mode_facturation != FACTURATION_FORFAIT_MENSUEL and self.inscription.mode != MODE_FORFAIT_MENSUEL:
                     if creche.arrondi_mensualisation == SANS_ARRONDI:
                         self.heures_mois = (self.heures_periode / self.GetNombreFactures())
                         if options & TRACES:
-                            print(' heures mensuelles : %f' % self.heures_mois)
+                            print(" heures mensuelles : %f" % self.heures_mois)
                     else:
                         self.heures_mois = math.ceil(self.heures_periode / self.GetNombreContratsFactures())
                         if options & TRACES:
-                            print(' heures mensuelles : %f (%f)' % (self.heures_mois, self.heures_periode / self.GetNombreContratsFactures()))
+                            print(" heures mensuelles : %f (%f)" % (self.heures_mois, self.heures_periode / self.GetNombreContratsFactures()))
+
+                if self.inscription.mode == MODE_FORFAIT_GLOBAL_CONTRAT:
+                    self.heures_semaine = self.heures_periode / self.semaines_periode
+                    if options & TRACES:
+                        print(" semaines période", self.semaines_periode)
+                        print(" heures / semaine", self.heures_semaine)
             else:
                 if creche.repartition == REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS:
                     if self.fin_inscription is None:

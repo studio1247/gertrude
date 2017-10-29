@@ -966,7 +966,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
             self.duree_reference_choice.SetSelection(inscription.duree_reference / 7 - 1)
             self.planning_panel.SetInscription(inscription)
             for item in self.forfait_heures_items:
-                item.Show(inscription.mode in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE))
+                item.Show(inscription.mode in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE, MODE_FORFAIT_GLOBAL_CONTRAT))
             self.UpdateDecompteConges(inscription=inscription)
         else:
             self.planning_panel.SetInscription(None)
