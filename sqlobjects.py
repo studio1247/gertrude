@@ -2541,13 +2541,20 @@ class Inscrit(object):
                     if value in (0, PREVISIONNEL):
                         heures_realisees += tranche * GetDureeArrondie(creche.arrondi_heures, start, end)
 
-                union = GetUnionHeures(journee, reference)
-                if inscription.IsInPeriodeAdaptation(date):
-                    for start, end in union:
-                        heures_facturees += tranche * GetDureeArrondie(creche.arrondi_facturation_periode_adaptation, start, end)
+                if creche.nom == "Le Nid Des Trésors" and not inscription.IsInPeriodeAdaptation(date):
+                    # TODO ajouter un paramètre quand la branche SQLAlchemy sera mergée
+                    for start, end, value in journee.activites:
+                        if value in (0, PREVISIONNEL):
+                            heures_facturees += tranche * GetDureeArrondie(creche.arrondi_facturation, start, end)
+                    heures_facturees = max(heures_facturees, heures_reference)
                 else:
-                    for start, end in union:
-                        heures_facturees += tranche * GetDureeArrondie(creche.arrondi_facturation, start, end)
+                    union = GetUnionHeures(journee, reference)
+                    if inscription.IsInPeriodeAdaptation(date):
+                        for start, end in union:
+                            heures_facturees += tranche * GetDureeArrondie(creche.arrondi_facturation_periode_adaptation, start, end)
+                    else:
+                        for start, end in union:
+                            heures_facturees += tranche * GetDureeArrondie(creche.arrondi_facturation, start, end)
 
                 return State(PRESENT, heures_reference, heures_realisees, heures_facturees)
         else:
