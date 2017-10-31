@@ -22,6 +22,7 @@ import shutil
 import thread
 import traceback
 import bcrypt
+import requests
 import wx.lib.newevent
 from config import LoadConfig, Load, Exit, CONFIG_FILENAME, DEFAULT_DATABASE, DEMO_DATABASE
 from functions import *
@@ -180,7 +181,11 @@ class StartDialog(wx.Dialog):
                     wx.PostEvent(self, self.LoadedEvent(result=None))
                     return
             result = Load(ProgressHandler(self.AppendMessage, self.SetGauge, 5, 50))
-        except Exception, e:
+        except requests.ConnectionError:
+            traceback.print_exc()
+            self.info.AppendText("Erreur de connection avec le serveur\n")
+            result = False
+        except Exception as e:
             traceback.print_exc()
             try:
                 self.info.AppendText(str(e) + "\n")
