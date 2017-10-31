@@ -16,6 +16,10 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+
 from facture import *
 from sqlobjects import *
 from cotisation import CotisationException
@@ -70,9 +74,9 @@ class AttestationModifications(object):
 
     def SetDefaultMultiParam(self):
         if self.debut.year == self.fin.year and self.debut.month == self.fin.month:
-            self.email_subject = u"Attestations de paiement %s %d" % (months[self.debut.month - 1], self.debut.year)
+            self.email_subject = "Attestations de paiement %s %d" % (months[self.debut.month - 1], self.debut.year)
         else:
-            self.email_subject = u"Attestations de paiement %s-%s %d" % (months[self.debut.month - 1], months[self.fin.month - 1], self.debut.year)
+            self.email_subject = "Attestations de paiement %s-%s %d" % (months[self.debut.month - 1], months[self.fin.month - 1], self.debut.year)
         self.email_to = None
         self.multi = True
 
@@ -106,7 +110,7 @@ class AttestationModifications(object):
         templates = doc.getElementsByTagName('text:section')
         for template in templates:
             doc.removeChild(template)
-        
+
         for inscrit in self.inscrits:
             facture_debut = facture_fin = None
             date = self.debut
@@ -166,9 +170,9 @@ class AttestationModifications(object):
                 ])
     
             if inscrit.sexe == 1:
-                fields.append(('ne-e', u"né"))
+                fields.append(('ne-e', "né"))
             else:
-                fields.append(('ne-e', u"née"))
+                fields.append(('ne-e', "née"))
             
             for template in templates:
                 section = template.cloneNode(1)
