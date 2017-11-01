@@ -168,11 +168,6 @@ class AttestationModifications(object):
                     ('mois', months[facture_debut.month - 1]),
                     ('annee', facture_debut.year)
                 ])
-    
-            if inscrit.sexe == 1:
-                fields.append(('ne-e', "né"))
-            else:
-                fields.append(('ne-e', "née"))
             
             for template in templates:
                 section = template.cloneNode(1)
