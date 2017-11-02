@@ -256,18 +256,22 @@ class FactureModifications(object):
             for index, reservataire in enumerate(self.inscrits):
                 for template in templates:
                     clone = template.cloneNode(1)
-                    debut_facture = self.periode_facturation
-                    fin_facture = GetMonthEnd(debut_facture)
+                    debut_facture = self.periode
+                    date = debut_facture
+                    nombre_mois = self.reservataire.periode_facturation
+                    for i in range(self.reservataire.periode_facturation):
+                        fin_facture = GetMonthEnd(date)
+                        if self.reservataire.debut > fin_facture or (self.reservataire.fin and self.reservataire.fin < date):
+                            nombre_mois -= 1
+                        date = GetNextMonthStart(date)
+
                     if self.reservataire.periode_facturation == 1:
                         mois_string = "%s %d" % (months[debut_facture.month - 1], debut_facture.year)
+                    elif fin_facture.year == debut_facture.year:
+                        mois_string = "%s à %s %d" % (months[debut_facture.month - 1], months[fin_facture.month - 1], debut_facture.year)
                     else:
-                        if self.reservataire.periode_facturation > 1:
-                            for i in range(self.reservataire.periode_facturation - 1):
-                                fin_facture = GetMonthEnd(GetNextMonthStart(fin_facture))
-                        if fin_facture.year == debut_facture.year:
-                            mois_string = "%s à %s %d" % (months[debut_facture.month - 1], months[fin_facture.month - 1], debut_facture.year)
-                        else:
-                            mois_string += "%s %d à %s %d" % (months[debut_facture.month - 1], debut_facture.year, months[fin_facture.month - 1], fin_facture.year)
+                        mois_string = "%s %d à %s %d" % (months[debut_facture.month - 1], debut_facture.year, months[fin_facture.month - 1], fin_facture.year)
+
                     try:
                         numero = int(creche.numeros_facture[debut_facture].valeur)
                         numero += len([inscrit for inscrit in creche.inscrits if inscrit.HasFacture(debut_facture)])
@@ -277,32 +281,34 @@ class FactureModifications(object):
                         numero = 0
 
                     if config.numfact:
-                        numfact = config.numfact % {"inscritid": len(creche.inscrits) + self.reservataire.idx,
-                                                    "numero": numero,
-                                                    "annee": debut_facture.year,
-                                                    "mois": debut_facture.month
-                                                    }
+                        numfact = config.numfact % {
+                            "inscritid": len(creche.inscrits) + self.reservataire.idx,
+                            "numero": numero,
+                            "annee": debut_facture.year,
+                            "mois": debut_facture.month
+                            }
                     else:
                         numfact = "%03d%04d%02d" % (900+reservataire.idx, self.periode_facturation.year, self.periode_facturation.month)
+
                     fields = GetCrecheFields(creche) + GetReservataireFields(reservataire) + [
                         ("date", self.periode_facturation),
                         ("mois", mois_string),
                         ("numfact", numfact),
+                        ('tarif-periode-reservataire', reservataire.tarif * nombre_mois),
                     ]
 
-                    inscrits = GetInscrits(debut_facture, fin_facture, reservataire=self.reservataire)
+                    inscrits = GetInscrits(debut_facture, None, reservataire=self.reservataire)  # parce qu'on veut aussi voir les enfants qui arrivent plus tard
                     if inscrits:
                         inscrit = inscrits[0]
                         fields += GetInscritFields(inscrit)
-                        inscriptions = inscrit.GetInscriptions(debut_facture, fin_facture)
-                        if inscriptions:
-                            inscription = inscriptions[0]
+                        if inscrit.inscriptions:
+                            inscription = inscrit.inscriptions[-1]
                             fields += GetInscriptionFields(inscription)
                             try:
-                                cotisation = Cotisation(inscrit, inscription.debut)
+                                cotisation = Cotisation(inscrit, inscription.debut, options=NO_REVENUS | NO_PARENTS)
                                 fields += GetCotisationFields(cotisation)
-                            except:
-                                pass
+                            except Exception as e:
+                                print(e)
 
                     ReplaceTextFields(clone, fields)
 

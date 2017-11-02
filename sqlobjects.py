@@ -737,11 +737,14 @@ class Reservataire(SQLObject):
     def GetFacturesList(self):
         result = []
         if self.debut:
-            date = GetMonthStart(self.debut)
-            while date <= datetime.date.today():
-                result.append(date)
+            date = datetime.date(self.debut.year, 9, 1) if self.debut.month >= 9 else datetime.date(self.debut.year - 1, 9, 1)
+            while date <= datetime.date.today() and (not self.fin or date < self.fin):
+                next_date = date
                 for i in range(self.periode_facturation):
-                    date = GetNextMonthStart(date)
+                    next_date = GetNextMonthStart(next_date)
+                if self.debut < next_date:
+                    result.append(date)
+                date = next_date
         return result
 
     def HasFacture(self, date, site):

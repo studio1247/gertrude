@@ -83,7 +83,7 @@ def GetNextMonthStart(date):
 
 
 def GetTrimestreStart(date):
-    return datetime.date(date.year, 1 + 3 * ((date.month - 1) / 3), 1)
+    return datetime.date(date.year, 1 + 3 * ((date.month - 1) // 3), 1)
 
 
 def GetTrimestreEnd(date):
@@ -879,7 +879,6 @@ def GetCrecheFields(creche):
 def GetReservataireFields(reservataire):
     return [('nom-reservataire', reservataire.nom),
             ('tarif-reservataire', reservataire.tarif),
-            ('tarif-periode-reservataire', reservataire.tarif * reservataire.periode_facturation),
             ('periodicite-reservataire', reservataire.periode_facturation),
             ('adresse-reservataire', reservataire.adresse),
             ('code-postal-reservataire', GetCodePostal(reservataire)),
