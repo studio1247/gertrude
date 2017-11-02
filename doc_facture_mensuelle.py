@@ -281,12 +281,15 @@ class FactureModifications(object):
                         numero = 0
 
                     if config.numfact:
-                        numfact = config.numfact % {
+                        fields = {
                             "inscritid": len(creche.inscrits) + self.reservataire.idx,
                             "numero": numero,
                             "annee": debut_facture.year,
                             "mois": debut_facture.month
-                            }
+                        }
+                        if "numero-global" in config.numfact:
+                            fields["numero-global"] = config.numerotation_factures.get("reservataire-%d" % self.reservataire.idx, debut_facture)
+                        numfact = config.numfact % fields
                     else:
                         numfact = "%03d%04d%02d" % (900+reservataire.idx, self.periode_facturation.year, self.periode_facturation.month)
 

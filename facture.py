@@ -37,7 +37,15 @@ class FactureBase(object):
 
     def GetFactureId(self):
         if config.numfact:
-            return config.numfact % {"inscritid": self.inscrit.idx, "numero": self.numero, "annee": self.annee, "mois": self.mois}
+            fields = {
+                "inscritid": self.inscrit.idx,
+                "numero": self.numero,
+                "annee": self.annee,
+                "mois": self.mois
+            }
+            if "numero-global" in config.numfact:
+                fields["numero-global"] = config.numerotation_factures.get("inscrit-%d" % self.inscrit.idx, datetime.date(self.annee, self.mois, 1))
+            return config.numfact % fields
         else:
             return '%03d%04d%02d' % (self.inscrit.idx, self.annee, self.mois)
 
@@ -1009,3 +1017,4 @@ def ClotureFactures(inscrits, date, cloture=True):
             errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
             continue
     return errors
+

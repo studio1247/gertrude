@@ -23,6 +23,7 @@ import sys, os.path, shutil, time
 import ConfigParser
 from functions import *
 from data import FileConnection, SharedFileConnection, HttpConnection
+import numeros_facture
 
 CONFIG_FILENAME = "gertrude.ini"
 DEFAULT_SECTION = "gertrude"
@@ -62,12 +63,15 @@ class Config(object):
         self.first_date = datetime.date(today.year - 2, 1, 1)
         self.last_date = datetime.date(today.year + 1, 12, 31)
         self.inscriptions_semaines_conges = None
-        
+        self.numerotation_factures = None
+
     def setSection(self, section):
         self.default_section = section
         self.database = self.sections[section].database
         self.connection = self.database.connection
         self.numfact = self.sections[section].numfact
+        if self.numfact and "numero-global" in self.numfact:
+            self.numerotation_factures = numeros_facture.NumerotationMerEtTerre()
         self.codeclient = self.sections[section].codeclient
 
 __builtin__.config = Config()
