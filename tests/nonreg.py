@@ -237,7 +237,7 @@ class PAJETests(GertrudeTestCase):
         inscrit.inscriptions.append(inscription)
         self.assertRaises(CotisationException, Cotisation, inscrit, datetime.date(2010, 1, 1), NO_ADDRESS)
         database.creche.tarifs_horaires.append(TarifHoraire(database.creche,[["", 0.0]]))
-         Cotisation(inscrit, datetime.date(2010, 1, 1), NO_ADDRESS)
+        Cotisation(inscrit, datetime.date(2010, 1, 1), NO_ADDRESS)
         
     def test_nospetitspouces(self):
         database.creche.mode_facturation = FACTURATION_PAJE
