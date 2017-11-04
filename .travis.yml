@@ -13,6 +13,7 @@ install:
   - sudo pip install SQLAlchemy
   - sudo pip install sqlalchemy-utils
   - sudo pip install future
+  - sudo pip install configparser
 
 script:
   - cd tests && sudo python ./nonreg.py -v
