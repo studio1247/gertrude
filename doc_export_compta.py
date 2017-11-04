@@ -15,14 +15,16 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-from constants import *
-from functions import *
+from __future__ import unicode_literals
+from __future__ import print_function
+from builtins import str
+
 from facture import *
 from cotisation import CotisationException
 from ooffice import *
 
 
-class ExportComptaCotisationsModifications(object):
+class ExportComptaCotisationsModifications:
     title = "Export compta"
     template = "Export compta cotisations.txt"
 
@@ -44,7 +46,7 @@ class ExportComptaCotisationsModifications(object):
                              "nom": inscrit.nom.upper(),
                              "total": "%.02f" % total
                              }
-        return unicode(result).encode("latin-1")
+        return str(result).encode("latin-1")
 
     @staticmethod
     def generate_ciel_line_tiers(inscrit):
@@ -52,7 +54,7 @@ class ExportComptaCotisationsModifications(object):
         result = template % {"client": inscrit.famille.code_client,
                              "nom": inscrit.nom.upper(),
                              }
-        return unicode(result).encode("latin-1")
+        return str(result).encode("latin-1")
 
     def execute(self, text):
         if "<lines-ciel-mvt>" in text or "<lines-ciel-tiers>" in text:
@@ -65,7 +67,7 @@ class ExportComptaCotisationsModifications(object):
         for inscrit in self.inscrits:
             try:
                 facture = Facture(inscrit, self.periode.year, self.periode.month, NO_NUMERO)
-            except CotisationException, e:
+            except CotisationException as e:
                 self.errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
                 continue
             date = GetMonthStart(self.periode)
@@ -103,16 +105,16 @@ class ExportComptaCotisationsModifications(object):
         for inscrit in self.inscrits:
             try:
                 facture = Facture(inscrit, self.periode.year, self.periode.month, NO_NUMERO)
-            except CotisationException, e:
+            except CotisationException as e:
                 errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
                 continue
 
             indexOperation += 1
             date = GetMonthEnd(self.periode)
-            if len(creche.sites) > 1 and facture.site:
+            if len(database.creche.sites) > 1 and facture.site:
                 site = facture.site.nom
             else:
-                site = creche.nom
+                site = database.creche.nom
 
             fields = {'date-fin-mois': '%.2d/%.2d/%d' % (date.day, date.month, date.year),
                       'index-operation': "%04d" % indexOperation,
@@ -161,7 +163,7 @@ class ExportComptaCotisationsModifications(object):
 
                 line = template
                 for field in fields:
-                    value = unicode(fields[field]).encode("latin-1")
+                    value = str(fields[field]).encode("latin-1")
                     if value in replacements.keys():
                         value = replacements[value]
                     line = line.replace("<%s>" % field, value)
@@ -190,7 +192,7 @@ class ExportComptaReglementsModifications(object):
                              "client": inscrit.famille.code_client,
                              "nom": inscrit.nom.upper(),
                              }
-        return unicode(result).encode("latin-1")
+        return str(result).encode("latin-1")
 
     @staticmethod
     def generate_ciel_line_mvt_banque(date, total):
@@ -199,7 +201,7 @@ class ExportComptaReglementsModifications(object):
                              "total": "%.02f" % total,
                              "mois": months[date.month-1].upper(),
                              }
-        return unicode(result).encode("latin-1")
+        return str(result).encode("latin-1")
 
     @staticmethod
     def generate_ciel_line_tiers(inscrit):
@@ -207,7 +209,7 @@ class ExportComptaReglementsModifications(object):
         result = template % {"client": inscrit.famille.code_client,
                              "nom": inscrit.nom.upper(),
                              }
-        return unicode(result).encode("latin-1")
+        return str(result).encode("latin-1")
 
     def generate_ciel_sections(self):
         mvt, tiers = [], []

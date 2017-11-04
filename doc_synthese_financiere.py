@@ -39,12 +39,12 @@ class SyntheseFinanciereModifications(object):
 
     def execute(self, filename, dom):
         if filename == 'styles.xml':
-            fields = GetCrecheFields(creche)
+            fields = GetCrecheFields(database.creche)
             ReplaceTextFields(dom, fields)
             return []
 
         elif filename == 'content.xml':
-            global_indexes = GetTriParCommuneEtNomIndexes(range(len(creche.inscrits)))
+            global_indexes = GetTriParCommuneEtNomIndexes(range(len(database.creche.inscrits)))
     
             spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
             tables = spreadsheet.getElementsByTagName("table:table")
@@ -52,7 +52,7 @@ class SyntheseFinanciereModifications(object):
             lines = table.getElementsByTagName("table:table-row")
             # line_heures_ouvrees = lines[2]
     
-            fields = GetCrecheFields(creche) + GetTarifsHorairesFields(creche, datetime.date(self.annee, 1, 1))
+            fields = GetCrecheFields(database.creche) + GetTarifsHorairesFields(database.creche, datetime.date(self.annee, 1, 1))
             fields.append(("annee", self.annee))
             for mois in range(1, 13):
                 heures_accueil = GetHeuresAccueil(self.annee, mois, self.site)
@@ -62,8 +62,8 @@ class SyntheseFinanciereModifications(object):
                 
                 debut = datetime.date(self.annee, mois, 1)
                 fin = GetMonthEnd(debut)
-                for inscrit in creche.inscrits:
-                    if inscrit.GetInscriptions(debut, fin):
+                for inscrit in database.creche.inscrits:
+                    if inscrit.get_inscriptions(debut, fin):
                         facture = FactureFinMois(inscrit, self.annee, mois)
                         for mode in (MODE_FORFAIT_MENSUEL, MODE_HALTE_GARDERIE):
                             heures_facturees_par_mode[mode] += facture.heures_facturees_par_mode[mode]
@@ -75,16 +75,16 @@ class SyntheseFinanciereModifications(object):
                 fields.append(("heures-facturees[hg][%d]" % (mois), heures_facturees_par_mode[MODE_HALTE_GARDERIE]))
                 fields.append(("heures-facturees[%d]" % (mois), heures_facturees))
                 fields.append(("cotisations[%d]" % (mois), cotisations_facturees))
-                fields.append(("charges[%d]" % (mois), creche.charges[datetime.date(self.annee, mois, 1)].charges))
+                fields.append(("charges[%d]" % (mois), database.creche.charges[datetime.date(self.annee, mois, 1)].charges))
 
             ReplaceFields(lines, fields)
             
             
 #                debut = datetime.date(annee, mois+1, 1)
 #                fin = GetMonthEnd(debut)
-#                for inscrit in creche.inscrits:
+#                for inscrit in database.creche.inscrits:
 #                    try:
-#                        if inscrit.GetInscriptions(debut, fin):
+#                        if inscrit.get_inscriptions(debut, fin):
 #                            facture = FactureFinMois(inscrit, annee, mois+1)
 #                            heures_contractualisees += facture.heures_contractualisees
 #                            heures_realisees += facture.heures_realisees                       
@@ -92,7 +92,7 @@ class SyntheseFinanciereModifications(object):
 #                            cotisations_contractualisees += facture.cotisation_mensuelle
 #                            cotisations_realisees += facture.total_realise
 #                            cotisations_facturees += facture.total
-#                    except Exception, e:
+#                    except Exception as e:
 #                        erreurs.append((inscrit, e))
                         
             # LES 4 TRIMESTRES

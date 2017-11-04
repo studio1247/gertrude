@@ -17,11 +17,24 @@
 
 from __future__ import unicode_literals
 
+import sys
+import os
+
 
 days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
 months = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
 months_abbrev = ["Janv", "Fév", "Mars", "Avril", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"]
 ordinaux = ["1er", "2ème", "3ème", "4ème"]
+
+# Sexe
+MASCULIN = 1
+FEMININ = 2
+
+RelationsItems = [
+    ("Parent manquant", None),
+    ("Papa", MASCULIN),
+    ("Maman", FEMININ),
+    ]
 
 # Profils des utilisateurs
 PROFIL_INSCRIPTIONS = 1
@@ -96,7 +109,7 @@ ACTIVITY_OWNER_SALARIES = 2
 
 # Granularité du planning dans la base
 BASE_GRANULARITY = 5  # 5 minutes
-DAY_SIZE = 24 * 60 / BASE_GRANULARITY
+DAY_SIZE = 24 * 60 // BASE_GRANULARITY
 
 # Modes d'inscription
 MODE_CRECHE = 0
@@ -322,9 +335,22 @@ MALADE = -2
 VACANCES = -1
 ABSENT = 0
 PRESENT = 1 << 0  # activité 0
-CLOTURE = 1 << 28  # pas d'activité > 27 !
-SUPPLEMENT = 1 << 29
-PREVISIONNEL = 1 << 30  # flag previsionnel
+SUPPLEMENT = 1 << 30
+
+# Equivalences
+PRESENCE_CAROUSSEL = {
+    PRESENT: PRESENT,
+    PRESENCE_SALARIE: PRESENT,
+    VACANCES: VACANCES,
+    CONGES_PAYES: CONGES_PAYES,
+    CONGES_DEPASSEMENT: VACANCES,
+    ABSENT: ABSENT,
+    ABSENCE_CONGE_SANS_PREAVIS: ABSENCE_CONGE_SANS_PREAVIS,
+    ABSENCE_NON_PREVENUE: ABSENCE_NON_PREVENUE,
+    MALADE: MALADE,
+    MALADE_SANS_JUSTIFICATIF: MALADE_SANS_JUSTIFICATIF,
+    HOPITAL: HOPITAL
+}
 
 # Types des champs OpenOffice
 FIELD_EUROS = 1
@@ -353,7 +379,8 @@ REGLEMENTS = 1 << 13
 COMPATIBILITY_MODE_DECOMPTE_SEMAINES_2017 = 1 << 14
 FRAIS_INSCRIPTION_RESERVATAIRES = 1 << 15
 TARIFS_SPECIAUX = 1 << 16
-ALERTES_NON_PAIEMENT = 1 << 17
+NO_PASSWORD = 1 << 17
+ALERTES_NON_PAIEMENT = 1 << 18
 
 # Atributs de plages horaires spéciales
 PLAGE_FERMETURE = 0
@@ -396,4 +423,18 @@ AlertesItems = [
 OrdreAffichageItems = [
     ("Par prénom", TRI_PRENOM),
     ("Par nom", TRI_NOM)
+]
+
+# Types de connection
+CONNECTION_TYPE_FILE = 0
+CONNECTION_TYPE_SHARED_FILE = 1
+CONNECTION_TYPE_HTTP = 2
+
+# Types de gestion salariés
+GESTION_SIMPLE_PLANNINGS_SALARIES = 0
+GESTION_GLOBALE_PLANNINGS_SALARIES = 1
+
+modes_gestion_plannings_salaries = [
+    ("Planning spécifique à chaque salarié", GESTION_SIMPLE_PLANNINGS_SALARIES),
+    ("Planning global pour l'équipe", GESTION_GLOBALE_PLANNINGS_SALARIES),
 ]

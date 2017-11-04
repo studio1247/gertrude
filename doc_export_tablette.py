@@ -67,9 +67,9 @@ class ExportTabletteModifications(object):
                 elif label == "malade":
                     array[idx][date].append(PeriodePresence(date, malade=True))
                 else:
-                    print "Ligne %s inconnue" % label
+                    print("Ligne %s inconnue" % label)
             except Exception as e:
-                print e
+                print(e)
                 pass
     
     def GetHeureString(self, value):
@@ -112,19 +112,19 @@ class ExportTabletteModifications(object):
         self.spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
         self.template = self.spreadsheet.getElementsByTagName("table:table").item(0)
 
-        for key in self.SortedKeys(self.array_enfants, creche.GetInscrit):
-            inscrit = creche.GetInscrit(key)
+        for key in self.SortedKeys(self.array_enfants, database.creche.GetInscrit):
+            inscrit = database.creche.GetInscrit(key)
             if inscrit:
                 self.AddSheet(inscrit, self.array_enfants[key], GetInscritFields(inscrit))
             else:
-                print "Inscrit %d inconnu"
+                print("Inscrit inconnu")
                 
-        for key in self.SortedKeys(self.array_salaries, creche.GetSalarie):
-            salarie = creche.GetSalarie(key)
+        for key in self.SortedKeys(self.array_salaries, database.creche.GetSalarie):
+            salarie = database.creche.GetSalarie(key)
             if salarie:
                 self.AddSheet(salarie, self.array_salaries[key], GetSalarieFields(salarie))
             else:
-                print "Salarie %d inconnu"
+                print("Salarie inconnu")
                         
         self.spreadsheet.removeChild(self.template)
         

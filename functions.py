@@ -17,17 +17,14 @@
 
 from __future__ import unicode_literals
 from __future__ import print_function
+from builtins import str
 
-import sys
 import time
 import os.path
-import unicodedata
-from constants import *
 from parameters import *
-
-if sys.platform != "win32":
-    HOME = os.path.expanduser("~")
-    GERTRUDE_DIRECTORY = HOME + "/.gertrude"
+from globals import *
+from config import config
+from helpers import *
 
 
 def GetCurrentMonday(date):
@@ -40,72 +37,6 @@ def GetNextMonday(date):
 
 def GetFirstMonday():
     return config.first_date - datetime.timedelta(config.first_date.weekday())
-
-
-def GetYearStart(date):
-    return datetime.date(date.year, 1, 1)
-
-
-def GetYearEnd(date):
-    return datetime.date(date.year, 12, 31)
-
-
-def GetDateMinus(date, years, months=0):
-    d = date.day
-    if date.month > months:
-        y = date.year-years
-        m = date.month-months
-    else:
-        y = date.year-1-years
-        m = date.month+12-months
-    end = GetMonthEnd(datetime.date(y, m, 1))
-    if d > end.day:
-        d = end.day
-    return datetime.date(y, m, d)
-
-
-def GetMonthStart(date):
-    return datetime.date(date.year, date.month, 1)
-
-
-def GetMonthEnd(date):
-    if date.month == 12:
-        return datetime.date(date.year, 12, 31)
-    else:
-        return datetime.date(date.year, date.month + 1, 1) - datetime.timedelta(1)
-
-
-def GetNextMonthStart(date):
-    if date.month == 12:
-        return datetime.date(date.year+1, 1, 1)
-    else:
-        return datetime.date(date.year, date.month+1, 1)
-
-
-def GetTrimestreStart(date):
-    return datetime.date(date.year, 1 + 3 * ((date.month - 1) // 3), 1)
-
-
-def GetTrimestreEnd(date):
-    nextTrimestre = GetTrimestreStart(date) + datetime.timedelta(80)
-    return GetTrimestreStart(nextTrimestre) - datetime.timedelta(1)    
-
-
-def GetHeureString(value):
-    if value is None:
-        return ""
-    if not isinstance(value, int):
-        value = int(round(value * 12))
-    minutes = value * 5
-    if value >= 0:
-        heures = minutes / 60
-        minutes -= heures * 60
-        return "%dh%02d" % (heures, minutes)
-    else:
-        minutes = -minutes
-        heures = (minutes / 60)
-        minutes -= heures * 60
-        return "-%dh%02d" % (heures, minutes)
 
 
 def GetAge(naissance, date=today):
@@ -144,22 +75,9 @@ def GetDateString(date, weekday=True):
         return date_str
 
 
-def GetDureeArrondie(mode, start, end):
-    if mode == ARRONDI_HEURE_ARRIVEE_DEPART:
-        return (((end + 11) / 12) - (start / 12)) * 12  
-    elif mode == ARRONDI_HEURE:
-        return ((end - start + 11) / 12) * 12
-    elif mode == ARRONDI_HEURE_MARGE_DEMI_HEURE:
-        return ((end - start + 5) / 12) * 12
-    elif mode == ARRONDI_DEMI_HEURE:
-        return ((end - start + 5) / 6) * 6
-    else:
-        return end - start
-
-
 def IsPresentDuringTranche(journee, debut, fin):
     for start, end, value in journee.activites:
-        if start < fin and end > debut and (not value & PREVISIONNEL or not value & CLOTURE):
+        if start < fin and end > debut:
             return True
     return False
 
@@ -167,7 +85,7 @@ def IsPresentDuringTranche(journee, debut, fin):
 def HeuresTranche(journee, debut, fin):
     result = [0] * (24 * 60 / BASE_GRANULARITY)
     for start, end, value in journee.activites:
-        if start < fin and end > debut and (not value & PREVISIONNEL or not value & CLOTURE):
+        if start < fin and end > debut:
             for i in range(max(start, debut), min(end, fin)):
                 result[i] = 1
     return float(sum(result) * BASE_GRANULARITY) / 60
@@ -177,7 +95,7 @@ def GetJoursOuvres(annee, mois):
     jours_ouvres = 0
     date = datetime.date(annee, mois, 1)
     while date.month == mois:
-        if not date in creche.jours_fermeture:
+        if not date in database.creche.jours_fermeture:
             jours_ouvres += 1
         date += datetime.timedelta(1)
     return jours_ouvres        
@@ -185,12 +103,12 @@ def GetJoursOuvres(annee, mois):
 
 def GetHeuresAccueil(annee, mois, site=None):
     if site is not None:
-        return GetJoursOuvres(annee, mois) * (creche.fermeture - creche.ouverture) * site.capacite
+        return GetJoursOuvres(annee, mois) * (database.creche.fermeture - database.creche.ouverture) * site.capacite
     result = 0.0
     date = datetime.date(annee, mois, 1)
     while date.month == mois:
-        if not date in creche.jours_fermeture:
-            result += creche.GetHeuresAccueil(date.weekday()) 
+        if not date in database.creche.jours_fermeture:
+            result += database.creche.GetHeuresAccueil(date.weekday())
         date += datetime.timedelta(1)
     return result        
 
@@ -238,7 +156,7 @@ def GetPrenomNom(person, maj_nom=False, tri=None):
         return ""
     nom = person.nom
     if tri is None:
-        tri = creche.tri_planning
+        tri = database.creche.tri_planning
     if maj_nom:
         nom = nom.upper()
     if (tri & 255) == TRI_NOM:
@@ -247,13 +165,9 @@ def GetPrenomNom(person, maj_nom=False, tri=None):
         return "%s %s" % (person.prenom, nom)
 
 
-def GetDateAnniversaire(date, count=1):
-    return datetime.date(date.year + count, date.month, date.day)
-
-
 def GetInscritsFamille(famille):
     result = []
-    for inscrit in creche.inscrits:
+    for inscrit in database.creche.inscrits:
         if inscrit.famille is famille:
             result.append(inscrit)
     return result
@@ -261,41 +175,10 @@ def GetInscritsFamille(famille):
 
 def GetInscritsFrereSoeurs(inscrit):
     result = []
-    for candidat in creche.inscrits:
+    for candidat in database.creche.inscrits:
         if candidat is not inscrit and candidat.famille == inscrit.famille:
             result.append(candidat)
     return result
-
-
-def GetEnfantsCount(inscrit, date):
-    enfants_a_charge = 1
-    enfants_en_creche = 1
-    debut, fin = None, None
-    for frere_soeur in inscrit.famille.freres_soeurs:
-        if frere_soeur.naissance:
-            if frere_soeur.naissance <= date:
-                if not debut or frere_soeur.naissance > debut:
-                    debut = frere_soeur.naissance
-                enfants_a_charge += 1
-                if frere_soeur.entree and frere_soeur.entree <= date and (frere_soeur.sortie is None or frere_soeur.sortie > date):
-                    enfants_en_creche += 1
-            else:
-                if not fin or frere_soeur.naissance < fin:
-                    fin = frere_soeur.naissance
-    for candidat in creche.inscrits:
-        if candidat is not inscrit and candidat.famille == inscrit.famille:
-            if candidat.naissance:
-                if candidat.naissance <= date:
-                    if not debut or candidat.naissance > debut:
-                        debut = candidat.naissance
-                    enfants_a_charge += 1
-                    inscription = candidat.GetInscription(date)
-                    if inscription and inscription.debut and inscription.debut <= date and (inscription.fin is None or inscription.fin > date):
-                        enfants_en_creche += 1
-                else:
-                    if not fin or candidat.naissance < fin:
-                        fin = candidat.naissance 
-    return enfants_a_charge, enfants_en_creche, debut, fin
 
 
 def GetTranche(valeur, tranches):
@@ -319,15 +202,15 @@ def GetFile(filename, site, path, path_dist):
     if site and site.nom:
         paths.append("%s/%s_%s" % (path, site.nom, filename))
     try:
-        paths.append("%s/[%s] %s" % (path, creche.nom.replace('"', ''), filename))
-        paths.append("%s/[%s] %s" % (path, creche.nom.lower().replace('"', ''), filename))
+        paths.append("%s/[%s] %s" % (path, database.creche.nom.replace('"', ''), filename))
+        paths.append("%s/[%s] %s" % (path, database.creche.nom.lower().replace('"', ''), filename))
     except:
         pass
     paths.append("%s/%s" % (path, filename))
     paths.append("%s/%s" % (path_dist, filename))
     if sys.platform == "darwin":
         paths.append("../Resources/%s" % filename)
-    for directory in ["", "~/.gertrude/", "/usr/share/gertrude/"]:
+    for directory in ["", "~/.gertrude/", "/usr/share/gertrude/", os.path.dirname(os.path.realpath(__file__)) + "/"]:
         for path in paths:
             if os.path.isfile(directory + path):
                 return directory + path
@@ -339,13 +222,13 @@ def GetBitmapFile(filename, site=None):
 
 
 def GetTemplateFile(filename, site=None):
-    return GetFile(filename, site, config.templates, "templates_dist")
+    return GetFile(filename, site, config.templates_directory, "templates_dist")
 
 
 def IsCustomTemplateFile(filename):
-    if os.path.isfile("%s/%s" % (config.templates, filename)):
+    if os.path.isfile("%s/%s" % (config.templates_directory, filename)):
         return True
-    elif os.path.isfile("%s/[%s] %s" % (config.templates, creche.nom, filename)):
+    elif os.path.isfile("%s/[%s] %s" % (config.templates_directory, database.creche.nom, filename)):
         return True
     else:
         return False
@@ -360,97 +243,16 @@ def IsTemplateFile(filename):
         return False
 
 
-def str2date(s, year=None, day=None):
-    s = s.strip()
-    if s.count('/') == 1:
-        if year:
-            s += '/%d' % year
-        elif day:
-            s = '01/' + s
-    try:
-        (jour, mois, annee) = map(lambda x: int(x), s.split('/'))
-        if annee < 1900:
-            return None
-        else:
-            return datetime.date(annee, mois, jour)
-    except:
-        return None
-
-
-def Number2String(value):
-    if isinstance(value, float):
-        return "%.2f" % value
-    else:
-        return "%d" % value
-
-
-def date2str(date):
-    try:
-        return '%.02d/%.02d/%.04d' % (date.day, date.month, date.year)
-    except:
-        return ''
-
-
-def GetPeriodeString(o):
-    if None in (o.debut, o.fin) or (o.debut.year, o.debut.month, o.debut.day) != (o.fin.year, 1, 1) or (o.fin.month, o.fin.day) != (12, 31):
-        return date2str(o.debut) + ' - ' + date2str(o.fin)
-    else:
-        return "Année %d" % o.debut.year
-
-
-def IsJourSemaineTravaille(day):
-    day %= 7
-    if days[day] in creche.feries:
-        return False
-    elif day == 5 or day == 6:
-        return "Week-end" not in creche.feries
-    else:
-        return True
-
-
-def GetNombreJoursSemaineTravailles():
-    result = 0
-    for day in range(7):
-        if IsJourSemaineTravaille(day):
-            result += 1
-    return result
-
-
-def Select(obj, date):
-    for o in obj:
-        if (not o.debut or date >= o.debut) and (not o.fin or date <= o.fin):
-            return o
-    return None
-
-
-def GetDeStr(s):
-    if len(s) > 0 and s[0].lower() in ('a', 'e', 'i', 'o', 'u'):
-        return "d'" + s
-    else:
-        return "de " + s
-
-
-def GetDeMoisStr(mois):
-    return GetDeStr(months[mois].lower())
-
-
-def GetBoolStr(val):
-    if val:
-        return "OUI"
-    else:
-        return "NON"
-
-
 def GetParentsString(famille):
-    if not famille.parents[0] and not famille.parents[1]:
+    parent1 = famille.parents[0] if len(famille.parents) > 0 else None
+    parent2 = famille.parents[1] if len(famille.parents) > 1 else None
+    if not parent1 and not parent2:
         return "Pas de parents"
-    elif not famille.parents[1]:
-        return GetPrenomNom(famille.parents[0])
-    elif not famille.parents[0]:
-        return GetPrenomNom(famille.parents[1])
+    elif not parent2:
+        return GetPrenomNom(parent1)
+    elif not parent1:
+        return GetPrenomNom(parent2)
     else:
-        parent1 = famille.parents[0]
-        parent2 = famille.parents[1]
         if parent1.nom == parent2.nom:
             return '%s et %s %s' % (parent2.prenom, parent1.prenom, parent1.nom)
         else:
@@ -458,8 +260,8 @@ def GetParentsString(famille):
 
 
 def GetParentsPrenomsString(famille):
-    parent1 = famille.parents[0]
-    parent2 = famille.parents[1]
+    parent1 = famille.parents[0] if len(famille.parents) > 0 else None
+    parent2 = famille.parents[1] if len(famille.parents) > 1 else None
     if parent1:
         if parent2:
             return '%s/%s' % (parent1.prenom, parent2.prenom)
@@ -472,8 +274,8 @@ def GetParentsPrenomsString(famille):
 
 
 def GetParentsNomsString(famille):
-    parent1 = famille.parents[0]
-    parent2 = famille.parents[1]
+    parent1 = famille.parents[0] if len(famille.parents) > 0 else None
+    parent2 = famille.parents[1] if len(famille.parents) > 1 else None
     if parent1:
         if parent2 and parent1.nom != parent2.nom:
             return '%s-%s' % (parent1.nom, parent2.nom)
@@ -490,34 +292,26 @@ def GetParentsCivilitesString(famille):
     mesdames = []
     for parent in famille.parents:
         if parent is not None:
-            if parent.relation == "papa":
+            if parent.sexe == MASCULIN:
                 messieurs.append("M.")
-            elif parent.relation == "maman":
+            elif parent.sexe == FEMININ:
                 mesdames.append("Mme")
     return "/".join(mesdames + messieurs)
 
 
 def GetInscritsByMode(start, end, mode, site=None):  # TODO pourquoi retourner les index
     result = []
-    for i, inscrit in enumerate(creche.inscrits):
-        for inscription in inscrit.GetInscriptions(start, end):
+    for i, inscrit in enumerate(database.creche.inscrits):
+        for inscription in inscrit.get_inscriptions(start, end):
             if inscription.mode & mode and (site is None or inscription.site == site):
                 result.append(i)
                 break
     return result
 
 
-def GetInscriptions(start, end):
-    result = []
-    for inscrit in creche.inscrits:
-        for inscription in inscrit.GetInscriptions(start, end):
-            result.append(inscription)
-    return result
-
-
 def GetSalaries(start, end, site=None):
     result = []
-    for salarie in creche.salaries:
+    for salarie in database.creche.salaries:
         for contrat in salarie.GetContrats(start, end):
             if site is None or contrat.site == site:
                 result.append(salarie)
@@ -528,7 +322,7 @@ def GetSalaries(start, end, site=None):
 def GetTriParCommuneEtNomIndexes(indexes):
     # Tri par commune (Rennes en premier) + ordre alphabetique des noms
     def tri(one, two):
-        i1 = creche.inscrits[one] ; i2 = creche.inscrits[two]
+        i1 = database.creche.inscrits[one] ; i2 = database.creche.inscrits[two]
         if i1.famille.ville.lower() != 'rennes' and i2.famille.ville.lower() == 'rennes':
             return 1
         elif i1.famille.ville.lower() == 'rennes' and i2.famille.ville.lower() != 'rennes':
@@ -543,7 +337,7 @@ def GetTriParCommuneEtNomIndexes(indexes):
 def GetTriParPrenomIndexes(indexes):
     # Tri par ordre alphabetique des prenoms
     def tri(one, two):
-        i1, i2 = creche.inscrits[one], creche.inscrits[two]
+        i1, i2 = database.creche.inscrits[one], database.creche.inscrits[two]
         return cmp(i1.prenom, i2.prenom)
 
     indexes.sort(tri)
@@ -552,38 +346,38 @@ def GetTriParPrenomIndexes(indexes):
 
 def GetTriParNomIndexes(indexes):
     def tri(one, two):
-        i1, i2 = creche.inscrits[one], creche.inscrits[two]
+        i1, i2 = database.creche.inscrits[one], database.creche.inscrits[two]
         return cmp(i1.nom, i2.nom)
 
     indexes.sort(tri)
     return indexes
 
 
-def GetEnfantsTries(enfants, tri):
+def GetEnfantsTries(enfants, sort_key):
     if enfants is None:
-        enfants = creche.inscrits[:]
+        enfants = database.creche.inscrits[:]
     else:
         enfants = enfants[:]
-    enfants.sort(tri)
+    enfants.sort(key=sort_key)
     return enfants
 
 
 def GetEnfantsTriesParNom(enfants=None):
-    def tri(one, two):
-        return cmp(GetPrenomNom(one, tri=TRI_NOM), GetPrenomNom(two, tri=TRI_NOM))
-    return GetEnfantsTries(enfants, tri)
+    def sort_key(x):
+        return GetPrenomNom(x, tri=TRI_NOM)
+    return GetEnfantsTries(enfants, sort_key)
 
 
 def GetEnfantsTriesParPrenom(enfants=None):
-    def tri(one, two):
-        return cmp(GetPrenomNom(one), GetPrenomNom(two))
-    return GetEnfantsTries(enfants, tri)
+    def sort_key(x):
+        return GetPrenomNom(x)
+    return GetEnfantsTries(enfants, sort_key)
 
 
 def GetEnfantsTriesParNomParents(enfants=None):
-    def tri(one, two):
-        return cmp(GetParentsNomsString(one.famille), GetParentsNomsString(two.famille))
-    return GetEnfantsTries(enfants, tri)
+    def sort_key(x):
+        return GetParentsNomsString(x.famille)
+    return GetEnfantsTries(enfants, sort_key)
 
 
 def GetGroupesEnfants(lines):
@@ -596,15 +390,10 @@ def GetGroupesEnfants(lines):
 
     keys = groupes.keys()
 
-    def tri(one, two):
-        if one is None:
-            return -1
-        elif two is None:
-            return 1
-        else:
-            return cmp(one.ordre, two.ordre)
+    def sort_key(x):
+        return x.ordre if x else -1
 
-    keys.sort(tri)
+    keys.sort(key=sort_key)
 
     result = []
     for key in keys:
@@ -623,20 +412,20 @@ def GetEnfantsTriesParGroupe(lines):
 
 
 def GetEnfantsTriesSelonParametreTriPlanning(enfants):
-    if creche.tri_planning & TRI_GROUPE:
+    if database.creche.tri_planning & TRI_GROUPE:
         return GetEnfantsTriesParGroupe(enfants)
-    elif creche.tri_planning == TRI_NOM:
+    elif database.creche.tri_planning == TRI_NOM:
         return GetEnfantsTriesParNom(enfants)
     else:
         return GetEnfantsTriesParPrenom(enfants)
 
 
 def GetEnfantsTriesSelonParametreTriFacture(enfants):
-    if creche.tri_factures == TRI_NOM:
+    if database.creche.tri_factures == TRI_NOM:
         return GetEnfantsTriesParNom(enfants)
-    elif creche.tri_factures == TRI_NOM_PARENTS:
+    elif database.creche.tri_factures == TRI_NOM_PARENTS:
         return GetEnfantsTriesParNomParents(enfants)
-    elif creche.tri_factures == TRI_PRENOM:
+    elif database.creche.tri_factures == TRI_PRENOM:
         return GetEnfantsTriesParPrenom(enfants)
     else:
         return enfants
@@ -645,16 +434,16 @@ def GetEnfantsTriesSelonParametreTriFacture(enfants):
 def GetPresentsIndexes(indexes, periode, site=None):
     debut, fin = periode
     if indexes is None:
-        indexes = range(len(creche.inscrits))
+        indexes = range(len(database.creche.inscrits))
     result = []
     if debut is None:
         return result
     for i in range(len(indexes)):
-        inscrit = creche.inscrits[indexes[i]]
+        inscrit = database.creche.inscrits[indexes[i]]
         #print inscrit.prenom
         for inscription in inscrit.inscriptions:
             if (inscription.fin is None or inscription.fin >= debut) and \
-                    (not creche.preinscriptions or not inscription.preinscription) and \
+                    (not database.creche.preinscriptions or not inscription.preinscription) and \
                     (site is None or inscription.site == site) and \
                     (inscription.debut is not None) and \
                     (not fin or inscription.debut <= fin):
@@ -663,35 +452,24 @@ def GetPresentsIndexes(indexes, periode, site=None):
     return result
 
 
-def GetInscrits(start, end, site=None, handicap=None, reservataire=None):
-    result = []
-    for inscrit in creche.inscrits:
-        if inscrit.IsPresent(start, end, site, handicap, reservataire):
-            result.append(inscrit)
-    return result
-
-
 def GetLines(date, inscrits, presence=False, site=None, groupe=None, summary=SUMMARY_ENFANT):
     lines = []
     for inscrit in inscrits:
-        inscription = inscrit.GetInscription(date)
+        inscription = inscrit.get_planning(date)
         if inscription and (site is None or inscription.site == site) and (groupe is None or inscription.groupe == groupe):
             if presence:
-                state = inscrit.GetStateSimple(date)
+                state = inscrit.get_state(date)
                 if state < 0 or not state & PRESENT:
                     continue
-            if date in inscrit.jours_conges or inscrit.GetStateSimple(date) < 0:
+            if date in inscrit.jours_conges or inscrit.get_state(date) < 0:
                 continue
-            if date in inscrit.journees:
-                line = inscrit.journees[date]
-            else:
-                line = inscription.GetJourneeReferenceCopy(date)
+            line = inscrit.days.get(date, inscription.get_day_from_date(date))
             line.nom = inscrit.nom
             line.prenom = inscrit.prenom
             line.label = GetPrenomNom(inscrit)
             line.sublabel = ""
             line.inscription = inscription
-            line.reference = inscription.GetJourneeReference(date)
+            line.reference = inscription.get_day_from_date(date)
             line.summary = summary
             lines.append(line)
     return lines
@@ -737,15 +515,13 @@ def GetActivityColor(value):
             value = MALADE
         if value in (ABSENCE_CONGE_SANS_PREAVIS, CONGES_PAYES):
             value = VACANCES
-        return creche.couleurs[value].couleur
-    activity = value & ~(PREVISIONNEL|SUPPLEMENT|CLOTURE)
-    if activity in creche.activites:
-        if value & PREVISIONNEL:
-            return creche.activites[activity].couleur_previsionnel
+        return database.creche.couleurs[value].couleur
+    activity = value & ~SUPPLEMENT
+    if activity in database.creche.activites:
         if value & SUPPLEMENT:
-            return creche.activites[activity].couleur_supplement
+            return database.creche.activites[activity].couleur_supplement
         else:
-            return creche.activites[activity].couleur
+            return database.creche.activites[activity].couleur
     else:
         return 0, 0, 0, 0, 100
 
@@ -786,93 +562,75 @@ def GetNombreSemainesPeriode(debut, fin):
     jours = (fin - debut).days
     if not (config.options & COMPATIBILITY_MODE_DECOMPTE_SEMAINES_2017):
         jours += 1
-    if creche.arrondi_semaines == ARRONDI_SEMAINE_SUPERIEURE:
+    if database.creche.arrondi_semaines == ARRONDI_SEMAINE_SUPERIEURE:
         return (jours + 6) / 7
-    elif creche.arrondi_semaines == ARRONDI_SEMAINE_PLUS_PROCHE:
+    elif database.creche.arrondi_semaines == ARRONDI_SEMAINE_PLUS_PROCHE:
         return round(float(jours) / 7)
     else:
         return float(jours) / 7
 
 
-class State(object):
-    def __init__(self, state, heures_contractualisees=.0, heures_realisees=.0, heures_facturees=.0):
-        self.state = state
-        self.heures_contractualisees = heures_contractualisees
-        self.heures_realisees = heures_realisees 
-        self.heures_facturees = heures_facturees
-        
-    def __str__(self):
-        return "state:%d, contrat:%f, realise:%f, facture:%f" % (self.state, self.heures_contractualisees, self.heures_realisees, self.heures_facturees) 
-
-
-class Summary(list):
+class Summary(object):
     def __init__(self, label):
-        self.options = 0
         self.label = label
-        self.sublabel = ""
-        self.GetDynamicText = None
+        self.array = list()
         for i in range(DAY_SIZE):
-            self.append([0, 0])
+            self.array.append([0, 0])
 
 
-def GetActivitiesSummary(creche, lines, options=0):
+def GetActivitiesSummary(lines, options=0):
     activites = {}
     activites_sans_horaires = {}
-    for key in creche.activites:
-        activite = creche.activites[key]
+    for key, activite in database.creche.activites.items():
         if activite.mode == MODE_SANS_HORAIRES:
-            activites_sans_horaires[key] = 0
-        elif activite.mode not in (MODE_SYSTEMATIQUE_SANS_HORAIRES, MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE):
-            activites[key] = Summary(activite.label)
-    if not (options & NO_SALARIES) and len(creche.salaries) > 0:
+            activites_sans_horaires[activite.value] = 0
+        elif activite.value >= 0 and activite.mode not in (MODE_SYSTEMATIQUE_SANS_HORAIRES, MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE):
+            activites[activite.value] = Summary(activite.label)
+    if not (options & NO_SALARIES) and len(database.creche.salaries) > 0:
         activite_salaries = activites[PRESENCE_SALARIE] = Summary("Présences salariés")
     else:
         activite_salaries = None
-        
+
     for line in lines:
-        if line is not None and not isinstance(line, basestring):
-            for start, end, value in line.activites:
-                if value < PREVISIONNEL+CLOTURE:
-                    value &= ~(PREVISIONNEL+CLOTURE)
-                    if value in creche.activites:
-                        if value == 0:
-                            for i in range(start, end):
-                                if value in activites:
-                                    activites[value][i][line.summary-1] += 1
-                                    if not (options & NO_SALARIES) and line.summary == SUMMARY_SALARIE and activite_salaries:
-                                        activite_salaries[i][0] += 1
-                                    
-            for key in line.activites_sans_horaires:
-                if key in activites_sans_horaires:
-                    activites_sans_horaires[key] += 1  
-    
+        for timeslot in line.timeslots:
+            if timeslot.value in activites_sans_horaires:
+                activites_sans_horaires[timeslot.value] += 1
+            else:
+                value = timeslot.value
+                if value in database.creche.activites:
+                    if value == 0:
+                        for i in range(timeslot.debut, timeslot.fin):
+                            if value in activites:
+                                activites[value].array[i][0] += 1
+                                if not (options & NO_SALARIES) and line.summary == SUMMARY_SALARIE and activite_salaries:
+                                    activite_salaries.array[i][0] += 1
     return activites, activites_sans_horaires
 
 
 def GetSiteFields(site):
     return [('site', GetNom(site)),
             ('nom-site', GetNom(site)),
-            ('adresse-site', site.adresse if site else creche.adresse),
-            ('code-postal-site', GetCodePostal(site) if site else GetCodePostal(creche)),
-            ('ville-site', site.ville if site else creche.ville),
-            ('telephone-site', site.telephone if site else creche.telephone),
-            ('capacite-site', site.capacite if site else creche.GetCapacite()),
+            ('adresse-site', site.adresse if site else database.creche.adresse),
+            ('code-postal-site', GetCodePostal(site) if site else GetCodePostal(database.creche)),
+            ('ville-site', site.ville if site else database.creche.ville),
+            ('telephone-site', site.telephone if site else database.creche.telephone),
+            ('capacite-site', site.capacite if site else database.creche.GetCapacite()),
             ]
 
 
 def GetCrecheFields(creche):
-    return [('nom-creche', creche.nom),
-            ('adresse-creche', creche.adresse),
+    return [('nom-creche', database.creche.nom),
+            ('adresse-creche', database.creche.adresse),
             ('code-postal-creche', GetCodePostal(creche)),
             ('departement-creche', GetDepartement(creche.code_postal)),
-            ('ville-creche', creche.ville),
-            ('telephone-creche', creche.telephone),
-            ('email-creche', creche.email),
-            ('capacite', creche.GetCapacite()),
-            ('capacite-creche', creche.GetCapacite()),
-            ('amplitude-horaire', creche.GetAmplitudeHoraire()),
-            ('sepa-creditor-id', creche.creditor_id),
-            ('siret-creche', creche.siret),
+            ('ville-creche', database.creche.ville),
+            ('telephone-creche', database.creche.telephone),
+            ('email-creche', database.creche.email),
+            ('capacite', database.creche.GetCapacite()),
+            ('capacite-creche', database.creche.GetCapacite()),
+            ('amplitude-horaire', database.creche.get_amplitude_horaire()),
+            ('sepa-creditor-id', database.creche.creditor_id),
+            ('siret-creche', database.creche.siret),
             ]
 
 
@@ -929,7 +687,7 @@ def GetEmail(famille):
 
 
 def GetTarifsFamilleFields(famille):
-    return [(tarif.label.lower().replace(" ", "_"), tarif.label if (famille and (famille.tarifs & (1 << tarif.idx))) else "") for tarif in creche.tarifs_speciaux]
+    return [(tarif.label.lower().replace(" ", "_"), tarif.label if (famille and (famille.tarifs & (1 << tarif.idx))) else "") for tarif in database.creche.tarifs_speciaux]
 
 
 def GetParentFields(parent, index=None):
@@ -937,7 +695,7 @@ def GetParentFields(parent, index=None):
     return[(ref, GetPrenomNom(parent)),
            ('prenom-%s' % ref, parent.prenom),
            ('nom-%s' % ref, parent.nom),
-           ('relation-%s' % ref, parent.relation),
+           ('relation-%s' % ref, "papa" if parent.sexe == MASCULIN else "maman"),
            ('adresse-%s' % ref, parent.adresse if parent.adresse else parent.famille.adresse),
            ('code-postal-%s' % ref, GetCodePostal(parent) if parent.code_postal else GetCodePostal(parent.famille)),
            ('ville-%s' % ref, parent.ville if parent.ville else parent.famille.ville),
@@ -1008,7 +766,7 @@ def GetTypeContratString(type_contrat):
 def GetInscriptionFields(inscription):
     return [('debut-contrat', inscription.debut),
             ('fin-contrat', inscription.fin),
-            ('type-contrat', GetTypeContratString(inscription.type)),
+            ('type-contrat', GetTypeContratString(inscription.mode)),
             ('debut-inscription', inscription.debut),
             ('fin-inscription', inscription.fin),
             ('fin-adaptation', inscription.fin_periode_adaptation),
@@ -1017,7 +775,7 @@ def GetInscriptionFields(inscription):
             ('groupe', inscription.groupe.nom if inscription.groupe else ""),
             ('professeur-prenom', GetPrenom(inscription.professeur)),
             ('professeur-nom', GetNom(inscription.professeur)),
-            ("jours-presence", ", ".join([days[i] for i in range(7) if inscription.reference[i].GetState() > 0]))
+            ("jours-presence", ", ".join([days[i] for i in range(7) if inscription.get_day_from_index(i).get_state() > 0]))
             ] + GetSiteFields(inscription.site)
 
 
@@ -1141,35 +899,13 @@ def GetFactureFields(facture):
                   ]
         if config.codeclient == "custom":
             result.append(('codeclient', facture.inscrit.famille.code_client))
-        elif isinstance(config.codeclient, basestring):
-            result.append(('codeclient', config.codeclient % {"inscritid": facture.inscrit.idx, "nom": facture.inscrit.nom, "prenom": facture.inscrit.prenom, "nom4p1": GetNom4P1(facture.inscrit, creche.inscrits)}))
+        elif isinstance(config.codeclient, str):
+            result.append(('codeclient', config.codeclient % {"inscritid": facture.inscrit.idx, "nom": facture.inscrit.nom, "prenom": facture.inscrit.prenom, "nom4p1": GetNom4P1(facture.inscrit, database.creche.inscrits)}))
         return result
     else:
         return [(label, '?') for label in ('mois', 'de-mois', 'de-mois-recap', 'date', 'numfact', 'montant-heure-garde', 'cotisation-mensuelle', 
                                            'heures-contractualisees', 'heures-realisees', 'heures-contractualisees-realisees', 'heures-supplementaires', 'heures-previsionnelles', 
                                            'supplement', 'deduction', 'raison-deduction', 'supplement-activites', 'majoration', 'total')]
-
-
-class ProgressHandler:
-    def __init__(self, display_fn=None, gauge_fn=None, min=None, max=None):
-        self.display_fn = display_fn
-        self.gauge_fn = gauge_fn
-        self.min, self.max = min, max
-        self.value = min
-        
-    def set(self, value):
-        if self.gauge_fn:
-            self.gauge_fn(self.min + (self.max-self.min)*value/100)
-
-    def display(self, s):
-        print(s)
-        if self.display_fn:
-            self.display_fn(s+"\n")
-
-    def new(self, ratio):
-        return ProgressHandler(self.display_fn, self.gauge_fn, self.value, self.value + (self.max-self.min)*ratio/100)
-
-default_progress_handler = ProgressHandler()
 
 
 def SelectValueInChoice(choice, value):
@@ -1240,10 +976,10 @@ def SplitLineTablette(line):
 
 def AddInscritsToChoice(choice):
     def __add_in_array(array, cell):
-        if isinstance(cell, basestring):
+        if isinstance(cell, str):
             return '[%s]' % cell
 
-        key = GetPrenomNom(cell, tri=creche.tri_inscriptions)
+        key = GetPrenomNom(cell, tri=database.creche.tri_inscriptions)
         if key.isspace():
             key = 'Nouvelle inscription'
         count = array.count(key)
@@ -1262,32 +998,32 @@ def AddInscritsToChoice(choice):
 
     inscrits = []
     autres = []
-    for inscrit in creche.inscrits:
-        if (creche.tri_inscriptions & TRI_SANS_SEPARATION) or inscrit.GetInscription(datetime.date.today(), preinscription=True):
+    for inscrit in database.creche.inscrits:
+        if (database.creche.tri_inscriptions & TRI_SANS_SEPARATION) or inscrit.get_inscription(datetime.date.today(), preinscription=True):
             inscrits.append(inscrit)
         else:
             autres.append(inscrit)
     
-    if (config.options & RESERVATAIRES) and len(creche.reservataires):
+    if (config.options & RESERVATAIRES) and len(database.creche.reservataires):
         inscrits = GetEnfantsTriesParReservataire(inscrits)
     else:
         if len(inscrits) > 0 and len(autres) > 0:
             choice.Append("[Inscrits]", None)
-        inscrits.sort(key=lambda inscrit: GetPrenomNom(inscrit, tri=creche.tri_inscriptions))
+        inscrits.sort(key=lambda inscrit: GetPrenomNom(inscrit, tri=database.creche.tri_inscriptions))
 
     __add_in_inscrits_choice(choice, inscrits)        
     
     if len(inscrits) > 0 and len(autres) > 0:
         choice.Append("[Anciens]", None)
 
-    autres.sort(key=lambda inscrit: GetPrenomNom(inscrit, tri=creche.tri_inscriptions))
+    autres.sort(key=lambda inscrit: GetPrenomNom(inscrit, tri=database.creche.tri_inscriptions))
 
     __add_in_inscrits_choice(choice, autres)
 
 
 def GetListePermanences(date):
     result = []
-    for inscrit in creche.inscrits:
+    for inscrit in database.creche.inscrits:
         journee = inscrit.GetJournee(date)
         if journee:
             liste = journee.GetListeActivitesParMode(MODE_PERMANENCE)
@@ -1297,71 +1033,4 @@ def GetListePermanences(date):
 
 
 def GetUrlTipi(famille):
-    return config.database.tipi % {"famille": famille.idx}
-
-
-def GetPlanningStates(salarie=False):
-    if salarie:
-        return [VACANCES, CONGES_PAYES, MALADE, PRESENT]
-    else:
-        states = [VACANCES, ABSENCE_CONGE_SANS_PREAVIS, ABSENCE_NON_PREVENUE, MALADE, HOPITAL, MALADE_SANS_JUSTIFICATIF, PRESENT]
-        if not creche.gestion_preavis_conges:
-            states.remove(ABSENCE_CONGE_SANS_PREAVIS)
-        if not creche.gestion_absences_non_prevenues:
-            states.remove(ABSENCE_NON_PREVENUE)
-        if not creche.gestion_maladie_hospitalisation:
-            states.remove(HOPITAL)
-        if not creche.gestion_maladie_sans_justificatif:
-            states.remove(MALADE_SANS_JUSTIFICATIF)
-        return states
-
-
-class LigneConge(object):
-    def __init__(self, state, info):
-        self.state = state
-        self.info = info
-        self.readonly = True
-        self.reference = None
-        self.options = 0
-        self.commentaire = ""
-
-    def GetNombreHeures(self):
-        return 0.0
-
-    def GetDynamicText(self):
-        return None
-
-    def GetStateIcon(self):
-        return self.state
-
-
-def GetDateIntersection(periodes):
-    for one in range(0, len(periodes)-1):
-        i1 = periodes[one]
-        if i1.debut:
-            for two in range(one+1, len(periodes)):
-                i2 = periodes[two]
-                if i2.debut:
-                    latest_start = max(i1.debut, i2.debut)
-                    earliest_end = min(i1.GetFin(), i2.GetFin())
-                    if (earliest_end - latest_start).days > 0:
-                        return latest_start
-    return None
-
-
-def normalize_filename(filename):
-    return unicodedata.normalize('NFKD', unicode(filename)).encode('ascii', 'ignore')
-
-
-def get_emails(str):
-    if str is None:
-        return []
-    else:
-        return [email.strip() for email in str.split(",") if email.strip() != ""]
-
-
-def truncate(string, length):
-    if len(string) > length:
-        return string[:length] + "..."
-    else:
-        return string
+    return config.tipi % {"famille": famille.idx}

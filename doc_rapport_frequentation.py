@@ -49,7 +49,7 @@ class RapportFrequentationModifications(object):
                       }
     
     def execute(self, filename, dom):
-        fields = GetCrecheFields(creche)
+        fields = GetCrecheFields(database.creche)
                       
         if filename == 'styles.xml':
             ReplaceTextFields(dom, fields)
@@ -86,15 +86,15 @@ class RapportFrequentationModifications(object):
                     heures_accueil = GetHeuresAccueil(self.annee, mois, self.site)
                     heures_realisees = {}
                     heures_facturees = {}
-                    for categorie in creche.categories:
+                    for categorie in database.creche.categories:
                         nom = categorie.nom.lower()
                         heures_realisees[nom] = 0.0
                         heures_facturees[nom] = 0.0
                     total_heures_realisees = 0.0
                     total_heures_facturees = 0.0
-                    inscrits = GetInscrits(debut, fin, self.site)
+                    inscrits = database.creche.select_inscrits(debut, fin, self.site)
                     for inscrit in inscrits:
-                        inscriptions = inscrit.GetInscriptions(debut, fin)
+                        inscriptions = inscrit.get_inscriptions(debut, fin)
                         if inscriptions and (self.site is None or inscriptions[0].site == self.site):
                             try:
                                 facture = Facture(inscrit, self.annee, mois, NO_NUMERO)
@@ -109,7 +109,7 @@ class RapportFrequentationModifications(object):
                                     heures_facturees[nom] += facture_heures_facturees 
                                 total_heures_realisees += facture_heures_realisees
                                 total_heures_facturees += facture_heures_facturees
-                            except CotisationException, e:
+                            except CotisationException as e:
                                 self.errors[GetPrenomNom(inscrit)] = e.errors
 
                     taux_remplissage = 0.0
@@ -152,12 +152,12 @@ class RapportFrequentationModifications(object):
                     if fin > today:
                         break
         
-                    inscrits = GetInscrits(debut, fin, self.site)
+                    inscrits = list(database.creche.select_inscrits(debut, fin, self.site))
                     inscrits.sort(lambda x, y: cmp(x.nom.lower(), y.nom.lower()))
                     if not inscrits:
                         continue
                     
-                    jours = [jour for jour in range(debut.day, fin.day + 1) if datetime.date(debut.year, debut.month, jour) not in creche.jours_fermeture]
+                    jours = [jour for jour in range(debut.day, fin.day + 1) if datetime.date(debut.year, debut.month, jour) not in database.creche.jours_fermeture]
                     
                     table = template.cloneNode(1)
                     spreadsheet.insertBefore(table, template)

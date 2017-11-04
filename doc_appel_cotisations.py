@@ -44,15 +44,15 @@ class AppelCotisationsModifications(object):
         templates = spreadsheet.getElementsByTagName("table:table")
         template = templates[0]
                 
-        if len(creche.sites) > 1:
+        if len(database.creche.sites) > 1:
             spreadsheet.removeChild(template)
-            for i, site in enumerate(creche.sites):
+            for i, site in enumerate(database.creche.sites):
                 table = template.cloneNode(1)
                 spreadsheet.appendChild(table)
                 table.setAttribute("table:name", site.nom)
                 self.RemplitFeuilleMois(table, site, errors)
                 if self.gauge:
-                    self.gauge.SetValue((90/len(creche.sites)) * (i+1))
+                    self.gauge.SetValue((90/len(database.creche.sites)) * (i+1))
         else:
             self.RemplitFeuilleMois(template, None, errors)
             if self.gauge:
@@ -74,8 +74,8 @@ class AppelCotisationsModifications(object):
             fields.append(('site', None))
         ReplaceFields(lignes, fields)
         
-        inscrits = GetInscrits(self.debut, self.fin, site=site)
-        inscrits.sort(cmp=lambda x,y: cmp(GetPrenomNom(x), GetPrenomNom(y)))
+        inscrits = list(database.creche.select_inscrits(self.debut, self.fin, site=site))
+        inscrits.sort(key=lambda x: GetPrenomNom(x))
         
         # Les cotisations
         lines_template = [lignes.item(7), lignes.item(8)]
@@ -86,12 +86,12 @@ class AppelCotisationsModifications(object):
             try:
                 facture = Facture(inscrit, self.debut.year, self.debut.month, self.options)
                 commentaire = None
-            except CotisationException, e:
+            except CotisationException as e:
                 facture = None
                 commentaire = '\n'.join(e.errors)
                 errors[GetPrenomNom(inscrit)] = e.errors
                 
-            fields = GetCrecheFields(creche) + GetInscritFields(inscrit) + GetFactureFields(facture) + GetReglementFields(inscrit.famille, self.debut.year, self.debut.month) + [('commentaire', commentaire)]            
+            fields = GetCrecheFields(database.creche) + GetInscritFields(inscrit) + GetFactureFields(facture) + GetReglementFields(inscrit.famille, self.debut.year, self.debut.month) + [('commentaire', commentaire)]
             ReplaceFields(line, fields)
             
             table.insertBefore(line, lines_template[0])
@@ -101,11 +101,11 @@ class AppelCotisationsModifications(object):
         table.removeChild(lines_template[1])
         
     def RemplitFeuilleEnfants(self, template, errors):
-        inscrits = GetInscrits(self.debut, self.fin)
+        inscrits = list(database.creche.select_inscrits(self.debut, self.fin))
         inscrits.sort(cmp=lambda x,y: cmp(GetPrenomNom(x), GetPrenomNom(y)))
         lines_template = template.getElementsByTagName("table:table-row")[1:21]
         for i, inscrit in enumerate(inscrits):
-            inscrit_fields = GetCrecheFields(creche) + GetInscritFields(inscrit)
+            inscrit_fields = GetCrecheFields(database.creche) + GetInscritFields(inscrit)
             mois = 1
             for line in lines_template:
                 clone = line.cloneNode(1)
@@ -115,7 +115,7 @@ class AppelCotisationsModifications(object):
                     try:
                         facture = Facture(inscrit, self.debut.year, mois, self.options)
                         commentaire = None
-                    except CotisationException, e:
+                    except CotisationException as e:
                         errors[GetPrenomNom(inscrit)] = e.errors
                         continue
                     fields = inscrit_fields + GetFactureFields(facture) + GetReglementFields(inscrit.famille, self.debut.year, mois) + [('commentaire', commentaire)]

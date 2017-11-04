@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 from constants import *
 from functions import *
 from ooffice import *
@@ -31,19 +33,19 @@ class ReleveSalariesModifications(object):
         self.site = None
         self.multi = False
         if len(salaries) > 1:
-            self.default_output = u"Releve salaries %s %d.ods" % (months[periode.month-1], periode.year)
+            self.default_output = "Releve salaries %s %d.ods" % (months[periode.month-1], periode.year)
         else:
             who = salaries[0]
-            self.default_output = u"Releve salaries %s - %s %d.ods" % (GetPrenomNom(who), months[periode.month - 1], periode.year)
+            self.default_output = "Releve salaries %s - %s %d.ods" % (GetPrenomNom(who), months[periode.month - 1], periode.year)
     
     def GetFields(self, salarie):
-        fields = [('nom-creche', creche.nom),
-                  ('adresse-creche', creche.adresse),
-                  ('code-postal-creche', str(creche.code_postal)),
-                  ('departement-creche', GetDepartement(creche.code_postal)),
-                  ('ville-creche', creche.ville),
-                  ('telephone-creche', creche.telephone),
-                  ('email-creche', creche.email),
+        fields = [('nom-creche', database.creche.nom),
+                  ('adresse-creche', database.creche.adresse),
+                  ('code-postal-creche', str(database.creche.code_postal)),
+                  ('departement-creche', GetDepartement(database.creche.code_postal)),
+                  ('ville-creche', database.creche.ville),
+                  ('telephone-creche', database.creche.telephone),
+                  ('email-creche', database.creche.email),
                   ('prenom', salarie.prenom),
                   ('nom', salarie.nom),
                   ('mois', months[self.periode.month-1]),
@@ -60,12 +62,9 @@ class ReleveSalariesModifications(object):
             semaines += 1
             for i in range(7):
                 if day.month == self.periode.month:
-                    contrat = salarie.GetContrat(day)
+                    contrat = salarie.get_contrat(day)
                     if contrat is not None:
-                        if day in salarie.journees:
-                            heures = salarie.journees[day].GetNombreHeures()
-                        else:
-                            heures = contrat.GetJourneeReference(day).GetNombreHeures()
+                        heures = salarie.days.get(day, salarie.GetJourneeReference(day)).get_duration()
                     else:
                         heures = 0
                 else:
@@ -92,7 +91,7 @@ class ReleveSalariesModifications(object):
 
         inc = 0
         for salarie in self.salaries:
-            if salarie.GetContrat(datetime.date.today()):
+            if salarie.get_contrat(datetime.date.today()):
                 semaines, fields = self.GetFields(salarie)
                 lignes = []
                 for l, line in enumerate(template):

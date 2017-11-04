@@ -136,7 +136,7 @@ class PlanningHebdomadaireEnfantsModifications(PlanningHebdomadaireModifications
         self.default_output = "Planning enfants semaine %d.ods" % debut.isocalendar()[1]
 
     def get_people(self):
-        return GetInscrits(self.debut, self.fin)
+        return database.creche.select_inscrits(self.debut, self.fin)
 
 
 class PlanningHebdomadaireSalariesModifications(PlanningHebdomadaireModifications):

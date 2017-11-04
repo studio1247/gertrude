@@ -42,18 +42,18 @@ class ExportSepaModifications(object):
             try:
                 factures.append(Facture(inscrit, self.periode.year, self.periode.month, NO_NUMERO))
                 # TODO test cloture
-            except CotisationException, e:
+            except CotisationException as e:
                 errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
                 continue
         return self.export_sepa(factures), errors
 
     @staticmethod
     def export_sepa(factures):
-        config = {"name": creche.nom,
-                  "IBAN": creche.iban,
-                  "BIC": creche.bic,
+        config = {"name": database.creche.nom,
+                  "IBAN": database.creche.iban,
+                  "BIC": database.creche.bic,
                   "batch": True,
-                  "creditor_id": creche.creditor_id,
+                  "creditor_id": database.creche.creditor_id,
                   "currency": "EUR"
                   }
         sepa = PySepaDD(config)

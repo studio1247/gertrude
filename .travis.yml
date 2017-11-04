@@ -1,12 +1,18 @@
-language: python
+language:
+  python
 
 addons:
   apt:
     packages:
     - python-wxversion
     - python-wxgtk2.8
-    - python-bcrypt
-    - python-requests
+
+install:
+  - sudo pip install bcrypt
+  - sudo pip install requests
+  - sudo pip install SQLAlchemy
+  - sudo pip install sqlalchemy-utils
+  - sudo pip install future
 
 script:
   - cd tests && sudo python ./nonreg.py -v

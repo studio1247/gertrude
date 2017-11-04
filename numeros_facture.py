@@ -21,7 +21,7 @@ from __future__ import print_function
 
 import os
 import collections
-from functions import date2str, str2date
+from helpers import date2str, str2date
 
 
 class NumerotationFactureBase:

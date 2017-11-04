@@ -40,7 +40,7 @@ class EtatPlacesModifications(object):
 
     def execute(self, filename, dom):
         if filename == 'styles.xml':
-            fields = GetCrecheFields(creche)
+            fields = GetCrecheFields(database.creche)
             ReplaceTextFields(dom, fields)
             return []
 
@@ -51,17 +51,17 @@ class EtatPlacesModifications(object):
             lines = table.getElementsByTagName("table:table-row")
             # line_heures_ouvrees = lines[2]
     
-            fields = GetCrecheFields(creche) + GetTarifsHorairesFields(creche, datetime.date(self.annee, 1, 1))
+            fields = GetCrecheFields(database.creche) + GetTarifsHorairesFields(database.creche, datetime.date(self.annee, 1, 1))
             fields.append(("annee", self.annee))
             ReplaceFields(lines, fields)
             
             date = datetime.date(self.annee, 1, 1)
             while date.year == self.annee:
                 count = 0
-                for inscrit in creche.inscrits:
-                    inscription = inscrit.GetInscription(date)
+                for inscrit in database.creche.inscrits:
+                    inscription = inscrit.get_inscription(date)
                     if inscription and (not self.site or self.site == inscription.site):
-                        state = inscrit.GetStateSimple(date)
+                        state = inscrit.get_state(date)
                         if state > 0 and state & PRESENT:
                             count += 1
                 cell = GetCell(GetRow(table, date.month+3), date.day)

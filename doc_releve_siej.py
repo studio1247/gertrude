@@ -57,7 +57,7 @@ class ReleveSIEJModifications(object):
     def calculeTable(self):
         self.table = [Regime(), Regime(), Regime(), Regime()]
         self.reel, self.previsionnel, self.facture, self.realise = 0, 0, 0, 0
-        for inscrit in GetInscrits(self.debut, self.fin):
+        for inscrit in database.creche.select_inscrits(self.debut, self.fin):
             date = self.debut
             for mois in range(12):
                 trimestreEnd = GetTrimestreEnd(date)
@@ -79,7 +79,7 @@ class ReleveSIEJModifications(object):
                         self.table[regime].previsionnel_facture += facture_heures_facturees
                         self.table[regime].previsionnel_realise += facture.heures_realisees
                         self.previsionnel += facture_heures_facturees
-                except CotisationException, e:
+                except CotisationException as e:
                     self.errors[GetPrenomNom(inscrit)] = e.errors                            
                 date = GetNextMonthStart(date)
 
@@ -97,14 +97,14 @@ class ReleveSIEJModifications(object):
             return None
                 
         elif filename == 'styles.xml':
-            ReplaceTextFields(dom, GetCrecheFields(creche))
+            ReplaceTextFields(dom, GetCrecheFields(database.creche))
             return []
 
         elif filename == 'content.xml':
             self.calculeTable()
             doc = dom.getElementsByTagName("office:text")[0]
             
-            fields = GetCrecheFields(creche) + [('annee', self.annee),
+            fields = GetCrecheFields(database.creche) + [('annee', self.annee),
                                                 ('date-debut-reel', self.debut),
                                                 ('date-fin-reel', GetTrimestreStart(today) - datetime.timedelta(1)),
                                                 ('date-debut-previsionnel', GetTrimestreStart(today)),

@@ -18,12 +18,13 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 from __future__ import unicode_literals
+from __future__ import print_function
 
 import codecs
 import os
 import sys
 import wx
-import __builtin__
+
 
 if sys.executable.endswith("pythonw.exe"):
     logfile = file("gertrude.log", "a")
@@ -39,11 +40,11 @@ except:
     pass
 
 if sys.platform != "win32":
-    from functions import GERTRUDE_DIRECTORY
+    from config import GERTRUDE_DIRECTORY
     if not os.path.exists(GERTRUDE_DIRECTORY):
         os.mkdir(GERTRUDE_DIRECTORY)
     try:
-        print "Démarrage de Gertrude ..."
+        print("Démarrage de Gertrude ...")
     except:
         sys.stdout = codecs.open(GERTRUDE_DIRECTORY + "/gertrude.log", "w", "utf-8")
 
@@ -52,7 +53,8 @@ class GertrudeApp(wx.App):
     def OnInit(self):
         self.SetAssertMode(wx.PYAPP_ASSERT_SUPPRESS)
         self.locale = wx.Locale(wx.LANGUAGE_DEFAULT)
-        __builtin__.readonly = False
+        print("TODO tester readonly")
+        #  __builtin__.readonly = False
         self.instance = wx.SingleInstanceChecker("Gertrude")
         if self.instance.IsAnotherRunning():
             dlg = wx.MessageDialog(
@@ -64,12 +66,15 @@ class GertrudeApp(wx.App):
             response = dlg.ShowModal()
             dlg.Destroy()
             if response == wx.ID_OK:
-                __builtin__.readonly = True
+                pass
+                print("TODO tester readonly")
+                # __builtin__.readonly = True
             else:
                 return False
         dialog = StartDialog()
         dialog.Show(True)
         return True
+
 
 if __name__ == '__main__':
     app = GertrudeApp(False)

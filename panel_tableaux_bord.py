@@ -41,10 +41,16 @@ from doc_releve_salaries import ReleveSalariesModifications
 from doc_releve_siej import ReleveSIEJModifications
 from doc_synthese_financiere import SyntheseFinanciereModifications
 from doc_export_facturation import ExportFacturationModifications
-from ooffice import *
+from document_dialog import *
 from planning import *
 from alertes import *
 from statistiques import GetStatistiques
+
+
+class TableauDeBordSummary(Summary, NumberPlanningLine):
+    def __init__(self, label):
+        Summary.__init__(self, label)
+        NumberPlanningLine.__init__(self, label, options=0)
 
 
 class SitesPlanningPanel(PlanningWidget):
@@ -53,44 +59,41 @@ class SitesPlanningPanel(PlanningWidget):
         lines = []
         for week_day in range(7):
             date = first_monday + datetime.timedelta(self.semaine * 7 + week_day)
-            if date in creche.jours_fermeture:
+            if date in database.creche.jours_fermeture:
                 continue
             
             day_lines = {}
-            if len(creche.sites) > 1:
+            if len(database.creche.sites) > 1:
                 lines.append(days[week_day])
-                for site in creche.sites:
-                    line = Summary(site.nom)
-                    for i in range(int(creche.ouverture * 60 / BASE_GRANULARITY), int(creche.fermeture * 60 / BASE_GRANULARITY)):
-                        line[i][0] = site.capacite
+                for site in database.creche.sites:
+                    line = TableauDeBordSummary(site.nom)
+                    for i in range(int(database.creche.ouverture * 60 / BASE_GRANULARITY), int(database.creche.fermeture * 60 / BASE_GRANULARITY)):
+                        line.array[i][0] = site.capacite
                     day_lines[site] = line
                     lines.append(line)
             else:
-                site_line = Summary(days[week_day])
-                for i in range(int(creche.ouverture * 60 / BASE_GRANULARITY), int(creche.fermeture * 60 / BASE_GRANULARITY)):
-                    site_line[i][0] = 0
-                for start, end, value in creche.tranches_capacite[week_day].activites:
-                    for i in range(start, end):
-                        site_line[i][0] = value
+                site_line = TableauDeBordSummary(days[week_day])
+                for i in range(int(database.creche.ouverture * 60 / BASE_GRANULARITY), int(database.creche.fermeture * 60 / BASE_GRANULARITY)):
+                    site_line.array[i][0] = 0
+                for timeslot in database.creche.tranches_capacite[week_day].timeslots:
+                    for i in range(timeslot.debut, timeslot.fin):
+                        site_line.array[i][0] = timeslot.value
                 lines.append(site_line)
             
-            for inscrit in creche.inscrits:
+            for inscrit in database.creche.inscrits:
                 if date not in inscrit.jours_conges:
-                    inscription = inscrit.GetInscription(date)
+                    inscription = inscrit.get_inscription(date)
                     if inscription is not None:
-                        if date in inscrit.journees:
-                            line = inscrit.journees[date]
-                        else:
-                            line = inscrit.GetJourneeReference(date)
-                        if len(creche.sites) > 1:
+                        line = inscrit.days.get(date, inscrit.GetJourneeReference(date))
+                        if len(database.creche.sites) > 1:
                             if inscription.site and inscription.site in day_lines:
                                 site_line = day_lines[inscription.site]
                             else:
                                 continue
-                        for start, end, value in line.activites:
-                            if value in (0, PREVISIONNEL):
-                                for i in range(start, end):
-                                    site_line[i][0] -= 1
+                        for timeslot in line.timeslots:
+                            if timeslot.value == 0:
+                                for i in range(timeslot.debut, timeslot.fin):
+                                    site_line.array[i][0] -= 1
 
         self.SetLines(lines)
 
@@ -105,32 +108,32 @@ class ReservatairesPlanningPanel(PlanningWidget):
         lines = []
         for week_day in range(7):
             date = first_monday + datetime.timedelta(self.semaine * 7 + week_day)
-            if date in creche.jours_fermeture:
+            if date in database.creche.jours_fermeture:
                 continue
             
             day_lines = {}
             lines.append(days[week_day])
             places_reservees = 0
-            for reservataire in creche.reservataires:
+            for reservataire in database.creche.reservataires:
                 line = Summary(reservataire.nom)
-                for i in range(int(creche.ouverture * 60 / BASE_GRANULARITY), int(creche.fermeture * 60 / BASE_GRANULARITY)):
+                for i in range(int(database.creche.ouverture * 60 / BASE_GRANULARITY), int(database.creche.fermeture * 60 / BASE_GRANULARITY)):
                     line[i][0] = reservataire.places
                 day_lines[reservataire] = line
                 if reservataire.places:
                     places_reservees += reservataire.places
                 lines.append(line)
             line = Summary("[Structure]")
-            for i in range(int(creche.ouverture * 60 / BASE_GRANULARITY), int(creche.fermeture * 60 / BASE_GRANULARITY)):
+            for i in range(int(database.creche.ouverture * 60 / BASE_GRANULARITY), int(database.creche.fermeture * 60 / BASE_GRANULARITY)):
                 line[i][0] = 0
-            for start, end, value in creche.tranches_capacite[week_day].activites:
+            for start, end, value in database.creche.tranches_capacite[week_day].activites:
                 for i in range(start, end):
                     line[i][0] = max(0, value)
             day_lines[None] = line
             lines.append(line)
             
-            for inscrit in creche.inscrits:
+            for inscrit in database.creche.inscrits:
                 if date not in inscrit.jours_conges:
-                    inscription = inscrit.GetInscription(date)
+                    inscription = inscrit.get_inscription(date)
                     if inscription is not None:
                         line = inscrit.GetJournee(date)
                         if inscription.reservataire and inscription.reservataire in day_lines:
@@ -138,7 +141,7 @@ class ReservatairesPlanningPanel(PlanningWidget):
                         else:
                             reservataire_line = None
                         for start, end, value in line.activites:
-                            if value in (0, PREVISIONNEL):
+                            if value == 0:
                                 for i in range(start, end):
                                     day_lines[None][i][0] -= 1
                                     if reservataire_line is not None:
@@ -211,36 +214,36 @@ class PlacesUtiliseesPlanningPanel(PlanningWidget):
         lines = []
         for week_day in range(7):
             date = first_monday + datetime.timedelta(self.semaine * 7 + week_day)
-            if date in creche.jours_fermeture:
+            if date in database.creche.jours_fermeture:
                 continue
 
             day_lines = {}
-            lines.append(days[week_day])
-            for groupe in creche.groupes:
-                line = Summary(groupe.nom)
+            lines.append(WxPlanningSeparator(days[week_day]))
+            for groupe in database.creche.groupes:
+                line = TableauDeBordSummary(groupe.nom)
                 day_lines[groupe] = line
                 lines.append(line)
-            line = Summary("[Structure]")
-            for i in range(int(creche.ouverture * 60 / BASE_GRANULARITY), int(creche.fermeture * 60 / BASE_GRANULARITY)):
-                line[i][0] = 0
+            line = TableauDeBordSummary("[Structure]")
+            for i in range(int(database.creche.ouverture * 60 / BASE_GRANULARITY), int(database.creche.fermeture * 60 / BASE_GRANULARITY)):
+                line.array[i][0] = 0
             day_lines[None] = line
             lines.append(line)
 
-            for inscrit in creche.inscrits:
+            for inscrit in database.creche.inscrits:
                 if date not in inscrit.jours_conges:
-                    inscription = inscrit.GetInscription(date)
+                    inscription = inscrit.get_inscription(date)
                     if inscription is not None:
                         line = inscrit.GetJournee(date)
                         if inscription.groupe and inscription.groupe in day_lines:
                             groupe_line = day_lines[inscription.groupe]
                         else:
                             groupe_line = None
-                        for start, end, value in line.activites:
-                            if value in (0, PREVISIONNEL):
-                                for i in range(start, end):
-                                    day_lines[None][i][0] += 1
+                        for timeslot in line.timeslots:
+                            if timeslot.value == 0:
+                                for i in range(timeslot.debut, timeslot.fin):
+                                    day_lines[None].array[i][0] += 1
                                     if groupe_line is not None:
-                                        groupe_line[i][0] += 1
+                                        groupe_line.array[i][0] += 1
 
         self.SetLines(lines)
 
@@ -311,20 +314,20 @@ class EtatsPresenceTab(AutoTab):
         self.Bind(wx.EVT_CHOICE, self.onChoice, self.inscrits_choice)
 
     def FillSites(self, debut=None, fin=None, inscrit=None, professeur=None):
-        if len(creche.sites) < 2:
+        if len(database.creche.sites) < 2:
             self.sites_choice.Show(False)
             return
         
         if debut is None and fin is None and inscrit is None:
-            sites = creche.sites
+            sites = database.creche.sites
         else:
             sites = set()
             if inscrit:
                 inscrits = [inscrit]
             else:
-                inscrits = creche.inscrits
+                inscrits = database.creche.inscrits
             for inscrit in inscrits:
-                for inscription in inscrit.GetInscriptions(debut, fin):
+                for inscription in inscrit.get_inscriptions(debut, fin):
                     if inscription.site:
                         sites.add(inscription.site)
         self.sites_choice.Show(True)
@@ -335,14 +338,14 @@ class EtatsPresenceTab(AutoTab):
         self.sites_choice.Select(0)
         
     def FillProfesseurs(self, debut=None, fin=None, site=None, inscrit=None):
-        if creche.type != TYPE_GARDERIE_PERISCOLAIRE or not creche.professeurs:
+        if database.creche.type != TYPE_GARDERIE_PERISCOLAIRE or not database.creche.professeurs:
             self.professeurs_choice.Show(False)
             return
         
         self.professeurs_choice.Show(True)
         self.professeurs_choice.Clear()
         self.professeurs_choice.Append("Tous les professeurs", None)
-        for professeur in creche.professeurs:
+        for professeur in database.creche.professeurs:
             self.professeurs_choice.Append(professeur.prenom + " " + professeur.nom, professeur)
         self.professeurs_choice.Select(0)
     
@@ -350,11 +353,11 @@ class EtatsPresenceTab(AutoTab):
         self.inscrits_choice.Clear()
         self.inscrits_choice.Append("Tous les inscrits", None)
         if debut is None and fin is None and site is None and professeur is None:
-            inscrits = creche.inscrits
+            inscrits = database.creche.inscrits
         else:
             inscrits = set()
-            for inscrit in creche.inscrits:
-                for inscription in inscrit.GetInscriptions(debut, fin):
+            for inscrit in database.creche.inscrits:
+                for inscription in inscrit.get_inscriptions(debut, fin):
                     if (site is None or inscription.site == site) and (professeur is None or inscription.professeur == professeur):
                         inscrits.add(inscrit)
 
@@ -367,7 +370,7 @@ class EtatsPresenceTab(AutoTab):
     def UpdateContents(self):
         if self.grid.GetNumberRows() > 0:
             self.grid.DeleteRows(0, self.grid.GetNumberRows())
-        if len(creche.sites) < 2:
+        if len(database.creche.sites) < 2:
             if self.site_col_displayed:
                 self.grid.DeleteCols(1)
                 self.site_col_displayed = 0
@@ -377,7 +380,7 @@ class EtatsPresenceTab(AutoTab):
                 self.grid.SetColLabelValue(1, "Site")
                 self.grid.SetColSize(1, 100)
                 self.site_col_displayed = 1
-        if creche.type == TYPE_GARDERIE_PERISCOLAIRE:
+        if database.creche.type == TYPE_GARDERIE_PERISCOLAIRE:
             if not self.professeur_col_displayed:
                 self.grid.InsertCols(1+self.site_col_displayed)
                 self.grid.SetColLabelValue(1+self.site_col_displayed, "Professeur")
@@ -465,11 +468,11 @@ class EtatsPresenceTab(AutoTab):
     def GetSelection(self):
         debut = self.debut_control.GetValue()
         fin = self.fin_control.GetValue()
-        if len(creche.sites) < 2:
+        if len(database.creche.sites) < 2:
             site = None
         else:
             site = self.sites_choice.GetClientData(self.sites_choice.GetSelection())
-        if creche.type != TYPE_GARDERIE_PERISCOLAIRE or not creche.professeurs:
+        if database.creche.type != TYPE_GARDERIE_PERISCOLAIRE or not database.creche.professeurs:
             professeur = None
         else:
             professeur = self.professeurs_choice.GetClientData(self.professeurs_choice.GetSelection())
@@ -477,7 +480,7 @@ class EtatsPresenceTab(AutoTab):
         if inscrit:
             inscrits = [inscrit]
         else:
-            inscrits = creche.inscrits
+            inscrits = database.creche.inscrits
         if not debut:
             debut = datetime.date(2004, 1, 1)
         if not fin:
@@ -485,7 +488,7 @@ class EtatsPresenceTab(AutoTab):
         
         selection = {}
         for inscrit in inscrits:
-            for inscription in inscrit.GetInscriptions(debut, fin):
+            for inscription in inscrit.get_inscriptions(debut, fin):
                 if (site is None or inscription.site == site) and (professeur is None or inscription.professeur == professeur):
                     date = max(debut, inscription.debut)
                     if inscription.fin:
@@ -497,13 +500,10 @@ class EtatsPresenceTab(AutoTab):
                         if state.state > 0 and state.state & PRESENT:
                             if date not in selection:
                                 selection[date] = []
-                            if date in inscrit.journees:
-                                journee = inscrit.journees[date]
-                            else:
-                                journee = inscrit.GetJourneeReference(date)
-                            arrivee, depart = journee.GetPlageHoraire()
+                            day = inscrit.days.get(date, inscrit.GetJourneeReference(date))
+                            arrivee, depart = day.GetPlageHoraire()
                             # print date, arrivee, depart, journee.activites
-                            selection[date].append((inscription.site, inscription.professeur, inscrit, arrivee, depart, state.heures_realisees, journee.commentaire))
+                            selection[date].append((inscription.site, inscription.professeur, inscrit, arrivee, depart, state.heures_realisees, inscrit.commentaires.get(date, "")))
                         date += datetime.timedelta(1)
         return selection
     
@@ -534,11 +534,11 @@ class EtatsPresenceTab(AutoTab):
     def OnExport(self, _):
         debut = self.debut_control.GetValue()
         fin = self.fin_control.GetValue()
-        if len(creche.sites) < 2:
+        if len(database.creche.sites) < 2:
             site = None
         else:
             site = self.sites_choice.GetClientData(self.sites_choice.GetSelection())
-        if creche.type != TYPE_GARDERIE_PERISCOLAIRE or not creche.professeurs:
+        if database.creche.type != TYPE_GARDERIE_PERISCOLAIRE or not database.creche.professeurs:
             professeur = None
         else:
             professeur = self.professeurs_choice.GetClientData(self.professeurs_choice.GetSelection())
@@ -615,11 +615,11 @@ class StatistiquesFrequentationTab(AutoTab):
         self.Layout()
         
     def UpdateContents(self):
-        if len(creche.sites) > 1:
+        if len(database.creche.sites) > 1:
             self.sitechoice.Show(True)
             site_selected = self.sitechoice.GetSelection()
             self.sitechoice.Clear()
-            for site in creche.sites:
+            for site in database.creche.sites:
                 self.sitechoice.Append(site.nom, site)
             if site_selected < 0 or site_selected >= self.sitechoice.GetCount():
                 site_selected = 0
@@ -629,7 +629,7 @@ class StatistiquesFrequentationTab(AutoTab):
         self.OnChangementPeriode(None)
         
     def OnChangementPeriode(self, _):
-        if len(creche.sites) > 1:
+        if len(database.creche.sites) > 1:
             current_site = self.sitechoice.GetSelection()
             site = self.sitechoice.GetClientData(current_site)
         else:
@@ -645,7 +645,7 @@ class StatistiquesFrequentationTab(AutoTab):
         statistiques = GetStatistiques(debut, fin, site)
                               
         if statistiques.erreurs:
-            msg = "\n\n".join(["%s:\n%s" % (inscrit, "\n".join(erreurs)) for inscrit, erreurs in statistiques.erreurs.iteritems()])
+            msg = "\n\n".join(["%s:\n%s" % (inscrit, "\n".join(erreurs)) for inscrit, erreurs in statistiques.erreurs.items()])
             self.message.SetValue(msg)
             self.message.Show(True)
             for ctrl in (self.presences_contrat_heures, self.presences_realisees_heures, self.presences_facturees_heures,
@@ -817,7 +817,7 @@ class RelevesTab(AutoTab):
         self.detail_start_date = DateCtrl(self)
         self.detail_end_date = DateCtrl(self)
         day = today
-        while day in creche.jours_fermeture:
+        while day in database.creche.jours_fermeture:
             day += datetime.timedelta(1)
         self.detail_start_date.SetValue(day)
         button = wx.Button(self, -1, "Génération")
@@ -851,11 +851,11 @@ class RelevesTab(AutoTab):
         self.UpdateContents()        
 
     def UpdateContents(self):
-        if len(creche.sites) > 1:
+        if len(database.creche.sites) > 1:
             self.site_choice.Show(True)
             site_selected = self.site_choice.GetSelection()
             self.site_choice.Clear()
-            for site in creche.sites:
+            for site in database.creche.sites:
                 self.site_choice.Append(site.nom, site)
             if site_selected < 0 or site_selected >= self.site_choice.GetCount():
                 site_selected = 0
@@ -870,12 +870,12 @@ class RelevesTab(AutoTab):
     def UpdateContentsReleveSalaries(self):
         for choice in self.salaries_choice.values():
             choice.Clear()
-            choice.Append('Tous les salariés', creche.salaries)
+            choice.Append('Tous les salariés', database.creche.salaries)
 
         salaries = {}
         autres = {}
-        for salarie in creche.salaries:
-            if salarie.GetContrat(datetime.date.today()) is not None:
+        for salarie in database.creche.salaries:
+            if salarie.get_contrat(datetime.date.today()) is not None:
                 salaries[GetPrenomNom(salarie)] = salarie
             else:
                 autres[GetPrenomNom(salarie)] = salarie
@@ -902,7 +902,7 @@ class RelevesTab(AutoTab):
         self.EvtReleveSalariesSalarieChoice(None)
 
     def GetSelectedSite(self):
-        if len(creche.sites) > 1:
+        if len(database.creche.sites) > 1:
             current_site = self.site_choice.GetSelection()
             return self.site_choice.GetClientData(current_site)
         else:
@@ -913,7 +913,7 @@ class RelevesTab(AutoTab):
         salarie = self.salaries_choice["releves"].GetClientData(self.salaries_choice["releves"].GetSelection())
         date = GetFirstMonday()
         while date <= datetime.date.today():
-            if isinstance(salarie, list) or salarie.GetContrat(date):
+            if isinstance(salarie, list) or salarie.get_contrat(date):
                 self.releve_salaries_monthchoice.Append('%s %d' % (months[date.month - 1], date.year), date)
             date = GetNextMonthStart(date)
         self.releve_salaries_monthchoice.SetSelection(self.releve_salaries_monthchoice.GetCount() - 1)
@@ -927,7 +927,7 @@ class RelevesTab(AutoTab):
         salaries = self.salaries_choice["releves"].GetClientData(self.salaries_choice["releves"].GetSelection())
         periode = self.releve_salaries_monthchoice.GetClientData(self.releve_salaries_monthchoice.GetSelection())
         if isinstance(salaries, list):
-            salaries = [salarie for salarie in salaries if salarie.GetContrat(periode)]
+            salaries = [salarie for salarie in salaries if salarie.get_contrat(periode)]
         else:
             salaries = [salaries]
         return salaries, periode
@@ -1092,8 +1092,8 @@ class SalariesTab(AutoTab):
             self.grid.SetCellValue(index, 2, GetHeureString(realise[0] - contrat[0]) + " (" + GetHeureString(realise[1] - contrat[1]) + ")")
         else:
             self.grid.SetCellValue(index, 2, GetHeureString(realise - contrat))
-        self.grid.SetCellValue(index, 3, "%d/%d" % cp if isinstance(cp, tuple) else str(cp))
-        self.grid.SetCellValue(index, 4, "%d/%d" % cs if isinstance(cs, tuple) else str(cs))
+        self.grid.SetCellValue(index, 3, ("%d/%d" % cp) if isinstance(cp, tuple) else str(cp))
+        self.grid.SetCellValue(index, 4, ("%d/%d" % cs) if isinstance(cs, tuple) else str(cs))
 
     def Disable(self):
         self.EffaceLignes()
@@ -1106,7 +1106,7 @@ class SalariesTab(AutoTab):
         self.EffaceLignes()
         if self.selection:
             lignes = []
-            for salarie in creche.salaries:
+            for salarie in database.creche.salaries:
                 if isinstance(self.selection, int):
                     debut, fin = datetime.date(self.selection, 1, 1), datetime.date(self.selection, 12, 31)
                     cp_total, cs_total = salarie.GetCongesAcquis(self.selection)
@@ -1124,7 +1124,7 @@ class SalariesTab(AutoTab):
         else:
             self.Disable()
 
-    def OnMonthChoice(self, event):
+    def OnMonthChoice(self, _):
         selected = self.choice.GetSelection()
         self.selection = self.choice.GetClientData(selected)
         self.AfficheLignes()
@@ -1133,20 +1133,20 @@ class SalariesTab(AutoTab):
 class TableauxDeBordNotebook(wx.Notebook):
     def __init__(self, parent):
         wx.Notebook.__init__(self, parent, style=wx.LB_DEFAULT)
-        if len(creche.groupes) > 0:
+        if len(database.creche.groupes) > 0:
             self.AddPage(PlacesInformationTab(self, PlacesUtiliseesPlanningPanel), "Places utilisées")
-        if creche.mode_saisie_planning == SAISIE_HORAIRE:
-            if (config.options & RESERVATAIRES) and len(creche.reservataires) > 0:
+        if database.creche.mode_saisie_planning == SAISIE_HORAIRE:
+            if (config.options & RESERVATAIRES) and len(database.creche.reservataires) > 0:
                 planning_class = ReservatairesPlanningPanel
             else:
                 planning_class = SitesPlanningPanel
-            self.AddPage(PlacesInformationTab(self, planning_class), "Places disponibles")
+            # self.AddPage(PlacesInformationTab(self, planning_class), "Places disponibles")
         self.AddPage(EtatsPresenceTab(self), "Etats de présence")
         self.AddPage(StatistiquesFrequentationTab(self), 'Statistiques de fréquentation')
         self.AddPage(RelevesTab(self), 'Edition de relevés')
-        if creche.mode_saisie_planning == SAISIE_HORAIRE:
+        if database.creche.mode_saisie_planning == SAISIE_HORAIRE:
             self.AddPage(SalariesTab(self), 'Salariés')
-        if creche.masque_alertes:
+        if database.creche.masque_alertes:
             self.AddPage(AlertesTab(self), 'Alertes')
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
 

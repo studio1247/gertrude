@@ -45,11 +45,11 @@ class EtatsTrimestrielsModifications(object):
 
     def execute(self, filename, dom):
         if filename == 'styles.xml':
-            ReplaceTextFields(dom, GetCrecheFields(creche))
+            ReplaceTextFields(dom, GetCrecheFields(database.creche))
             return []
 
         elif filename == 'content.xml':
-            global_indexes = GetTriParCommuneEtNomIndexes(range(len(creche.inscrits)))
+            global_indexes = GetTriParCommuneEtNomIndexes(range(len(database.creche.inscrits)))
     
             spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
             tables = spreadsheet.getElementsByTagName("table:table")
@@ -105,7 +105,7 @@ class EtatsTrimestrielsModifications(object):
                         previsionnel = [0] * 3
     
                         if index < len(indexes):
-                            inscrit = creche.inscrits[indexes[index]]
+                            inscrit = database.creche.inscrits[indexes[index]]
     
                             # Calcul du nombre d'heures pour chaque mois
                             for i in range(3):
@@ -181,7 +181,7 @@ class EtatsTrimestrielsModifications(object):
         if (inscrit.idx, mois) not in self.factures:
             try:
                 self.factures[inscrit.idx, mois] = Facture(inscrit, self.annee, mois, options=NO_REVENUS|NO_NUMERO)
-            except CotisationException, e:
+            except CotisationException as e:
                 label = "%s %s" % (inscrit.prenom, inscrit.nom)
                 if not label in self.errors:
                     self.errors[label] = set(e.errors)
@@ -206,7 +206,7 @@ class EtatsTrimestrielsModifications(object):
         total = [0] * 12
         total_previsionnel = [0] * 12
         for i in range(len(indexes)):
-            inscrit = creche.inscrits[indexes[i]]
+            inscrit = database.creche.inscrits[indexes[i]]
             ligne = template.cloneNode(1)
             table.insertBefore(ligne, template)
 
@@ -264,14 +264,3 @@ class EtatsTrimestrielsModifications(object):
             else:
                 fields.append(('total', sum(total)))
         ReplaceFields(ligne, fields)
-        
-# if __name__ == '__main__':
-#     import __builtin__, random
-#     from config import *
-#     from data import *
-#     from functions import *
-#     __builtin__.creche, result = FileConnection(DEFAULT_DATABASE).Load()
-#     modifications = EtatsTrimestrielsModifications(None, 2015)
-#     filename = "./test-%f.odt" % random.random()
-#     errors = GenerateOODocument(modifications, filename=filename, gauge=None)
-#     StartLibreOffice(filename)

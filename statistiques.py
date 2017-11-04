@@ -58,9 +58,9 @@ def GetStatistiques(start, end, site=None, bargraph=False):
         fin_mois = GetMonthEnd(date)
         if start <= date <= end:
             result.heures_accueil += GetHeuresAccueil(date.year, date.month, site)
-        for inscrit in creche.inscrits:
+        for inscrit in database.creche.inscrits:
             try:
-                inscriptions = inscrit.GetInscriptions(date, fin_mois)
+                inscriptions = inscrit.get_inscriptions(date, fin_mois)
                 if inscriptions and (site is None or inscriptions[0].site == site):
                     facture = Facture(inscrit, date.year, date.month, NO_NUMERO)
                     if config.options & HEURES_CONTRAT:

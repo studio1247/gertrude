@@ -50,8 +50,8 @@ class EtatsInscriptionsModifications(object):
         # Les lignes
         template = lignes.item(7)
         
-        for inscrit in creche.inscrits:
-            inscription = inscrit.GetInscription(self.date)
+        for inscrit in database.creche.inscrits:
+            inscription = inscrit.get_inscription(self.date)
             if inscription and (not self.site or inscription.site == self.site):
                 ligne = template.cloneNode(1)                        
                 fields = GetInscritFields(inscrit) + GetInscriptionFields(inscription)

@@ -100,7 +100,7 @@ def main():
         p.description = u"Logiciel de gestion de creches"
         p.url = "http://www.gertrude-logiciel.org"
         p.icon = "./bitmaps_dist/gertrude.png"
-        p.depends = "bash, python, python-gtk2, python-bcrypt, python-wxgtk2.8 | python-wxgtk3.0, python-requests"
+        p.depends = "bash, python, python-gtk2, python-bcrypt, python-wxgtk2.8 | python-wxgtk3.0, python-requests, python-sqlalchemy, python-sqlalchemy-utils"
         p.license = "gpl"
         p.section = "utils"
         p.arch = "all"

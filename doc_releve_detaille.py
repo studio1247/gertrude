@@ -32,7 +32,8 @@ class ReleveDetailleModifications(object):
         self.email = None
         self.metas = {}
 
-    def GenerateOptimomesTable(self, inscrits, (feuille, lines), agemin=0, agemax=0):
+    def GenerateOptimomesTable(self, inscrits, template, agemin=0, agemax=0):
+        feuille, lines = template
         template_first, template, after = lines[0], lines[1], lines[2]
         feuille.removeChild(template)
 
@@ -68,7 +69,7 @@ class ReleveDetailleModifications(object):
                     try:
                         facture = Facture(inscrit, self.annee, mois+1, NO_NUMERO)
                         fields = [('heures-facturees', facture.heures_facture), ('heures-realisees', facture.heures_realisees), ('total', facture.total)]
-                    except CotisationException, e:
+                    except CotisationException as e:
                         self.errors[GetPrenomNom(inscrit)] = e.errors
                 if count == 0:
                     cells = clone.getElementsByTagName("table:table-cell")[3+mois*3:6+mois*3]
@@ -98,7 +99,7 @@ class ReleveDetailleModifications(object):
             return None
                 
         elif filename == 'styles.xml':
-            ReplaceTextFields(dom, GetCrecheFields(creche))
+            ReplaceTextFields(dom, GetCrecheFields(database.creche))
             return []
 
         elif filename == 'content.xml':
@@ -107,7 +108,7 @@ class ReleveDetailleModifications(object):
                 feuille = spreadsheet.getElementsByTagName("table:table").item(0)
                 lines = feuille.getElementsByTagName("table:table-row")
                 ReplaceTextFields(lines[0], [('date-debut', datetime.date(self.annee, 1, 1)), ('date-fin', datetime.date(self.annee, 12, 31))])
-                inscrits = GetInscrits(datetime.date(self.annee, 1, 1), datetime.date(self.annee, 12, 31))
+                inscrits = list(database.creche.select_inscrits(datetime.date(self.annee, 1, 1), datetime.date(self.annee, 12, 31)))
                 self.GenerateOptimomesTable(inscrits, (feuille, lines[4:]), agemax=4)
                 self.GenerateOptimomesTable(inscrits, (feuille, lines[7:]), agemin=4)
             else:
@@ -118,11 +119,11 @@ class ReleveDetailleModifications(object):
                 after = lines[13]
                 for line in template:
                     feuille.removeChild(line)
-                for inscrit in GetInscrits(datetime.date(self.annee, 1, 1), datetime.date(self.annee, 12, 31)):
+                for inscrit in database.creche.select_inscrits(datetime.date(self.annee, 1, 1), datetime.date(self.annee, 12, 31)):
                     for i, line in enumerate(template):
                         try:
                             facture = Facture(inscrit, self.annee, i+1, NO_NUMERO)
-                        except CotisationException, e:
+                        except CotisationException as e:
                             facture = None
                             self.errors[GetPrenomNom(inscrit)] = e.errors                            
                         clone = line.cloneNode(1)

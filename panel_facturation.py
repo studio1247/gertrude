@@ -18,14 +18,14 @@
 from __future__ import unicode_literals
 
 from facture import *
-from ooffice import *
+from document_dialog import *
 from controls import *
+from database import Site, Creche, NumeroFacture, Correction
 from doc_facture_mensuelle import FactureModifications
 from doc_export_compta import ExportComptaCotisationsModifications, ExportComptaReglementsModifications
 from doc_attestation_paiement import AttestationModifications
 from doc_appel_cotisations import AppelCotisationsModifications
 from doc_export_sepa import ExportSepaModifications
-from sqlobjects import *
 
 
 class CorrectionsTab(AutoTab):
@@ -57,19 +57,19 @@ class CorrectionsTab(AutoTab):
             self.corrections_sizer.Detach(0)
             
         date = self.monthchoice.GetClientData(self.monthchoice.GetSelection())
-        if not date in creche.numeros_facture:
-            creche.numeros_facture[date] = NumeroFacture(date)
-        self.numfacture.SetInstance(creche.numeros_facture[date])
+        if date not in database.creche.numeros_facture:
+            database.creche.numeros_facture[date] = NumeroFacture()
+        self.numfacture.SetInstance(database.creche.numeros_facture[date])
         
-        if creche.tri_planning == TRI_PRENOM:
+        if database.creche.tri_planning == TRI_PRENOM:
             inscrits = GetEnfantsTriesParPrenom()
         else:
             inscrits = GetEnfantsTriesParNom()
 
         for inscrit in inscrits:
-            if inscrit.HasFacture(date):  # TODO and date not in inscrit.factures_cloturees:
-                if not date in inscrit.corrections:
-                    inscrit.corrections[date] = Correction(inscrit, date)
+            if inscrit.has_facture(date):  # TODO and date not in inscrit.clotures:
+                if date not in inscrit.corrections:
+                    inscrit.corrections[date] = Correction(inscrit=inscrit, date=date)
                 sizer = wx.BoxSizer(wx.HORIZONTAL)
                 sizer.Add(wx.StaticText(self, -1, GetPrenomNom(inscrit), size=(200, -1)), 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 15)
                 sizer.AddMany([(wx.StaticText(self, -1, 'Libellé :'), 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, inscrit.corrections[date], 'libelle')])
@@ -174,7 +174,7 @@ class FacturationTab(AutoTab):
     def OnFacturesMonthChoice(self, _=None):
         inscrits, periode = self.__GetFactureSelection()
         for inscrit in inscrits:
-            if inscrit.HasFacture(periode) and periode not in inscrit.factures_cloturees:
+            if inscrit.has_facture(periode) and periode not in inscrit.clotures:
                 self.cloture_button.Enable()
                 break
         else:
@@ -185,14 +185,14 @@ class FacturationTab(AutoTab):
         inscrit = self.inscrits_choice["attestations"].GetClientData(self.inscrits_choice["attestations"].GetSelection())
         if isinstance(inscrit, Inscrit):
             for year in range(today.year-10, today.year):
-                if inscrit.GetInscriptions(datetime.date(year, 1, 1), datetime.date(year, 12, 31)):
+                if inscrit.get_inscriptions(datetime.date(year, 1, 1), datetime.date(year, 12, 31)):
                     self.attestations_periodechoice.Append(u"Année %d" % year, (datetime.date(year, 1, 1), datetime.date(year, 12, 31)))
             for year in range(today.year-10, today.year):
-                if inscrit.GetInscriptions(datetime.date(year - 1, 12, 1), datetime.date(year, 11, 30)):
+                if inscrit.get_inscriptions(datetime.date(year - 1, 12, 1), datetime.date(year, 11, 30)):
                     self.attestations_periodechoice.Append(u"Décembre %d - Novembre %d" % (year - 1, year), (datetime.date(year - 1, 12, 1), datetime.date(year, 11, 30)))
-            if inscrit.GetInscriptions(datetime.date(today.year, 1, 1), GetMonthEnd(today)):
+            if inscrit.get_inscriptions(datetime.date(today.year, 1, 1), GetMonthEnd(today)):
                 debut = 1
-                while not inscrit.GetInscriptions(datetime.date(today.year, debut, 1), GetMonthEnd(datetime.date(today.year, debut, 1))) and debut < today.month:
+                while not inscrit.get_inscriptions(datetime.date(today.year, debut, 1), GetMonthEnd(datetime.date(today.year, debut, 1))) and debut < today.month:
                     debut += 1
                 if debut == today.month:
                     self.attestations_periodechoice.Append("%s %d" % (months[debut - 1], today.year), (datetime.date(today.year, debut, 1), GetMonthEnd(datetime.date(today.year, debut, 1))))
@@ -210,7 +210,7 @@ class FacturationTab(AutoTab):
         
         date = GetFirstMonday()
         while date < today:
-            if not isinstance(inscrit, Inscrit) or inscrit.GetInscriptions(datetime.date(date.year, date.month, 1), GetMonthEnd(date)):
+            if not isinstance(inscrit, Inscrit) or inscrit.get_inscriptions(datetime.date(date.year, date.month, 1), GetMonthEnd(date)):
                 self.attestations_periodechoice.Append('%s %d' % (months[date.month - 1], date.year), (datetime.date(date.year, date.month, 1), GetMonthEnd(date)))
             date = GetNextMonthStart(date)
         self.attestations_periodechoice.SetSelection(0)
@@ -225,7 +225,7 @@ class FacturationTab(AutoTab):
             if debut.month == fin.month and debut < today:
                 date = debut
                 while date < today:
-                    if not isinstance(inscrit, Inscrit) or inscrit.GetInscriptions(datetime.date(date.year, date.month, 1), GetMonthEnd(date)):
+                    if not isinstance(inscrit, Inscrit) or inscrit.get_inscriptions(datetime.date(date.year, date.month, 1), GetMonthEnd(date)):
                         self.attestations_endchoice.Append('%s %d' % (months[date.month - 1], date.year), (datetime.date(date.year, date.month, 1), GetMonthEnd(date)))
                     date = GetNextMonthStart(date)
                 self.attestations_endchoice.Enable()
@@ -239,7 +239,7 @@ class FacturationTab(AutoTab):
             inscrit = self.inscrits_choice["attestations-mensuelles"].GetClientData(self.inscrits_choice["attestations-mensuelles"].GetSelection())
             date = GetFirstMonday()
             while date < today:
-                if not isinstance(inscrit, Inscrit) or inscrit.GetInscriptions(datetime.date(date.year, date.month, 1), GetMonthEnd(date)):
+                if not isinstance(inscrit, Inscrit) or inscrit.get_inscriptions(datetime.date(date.year, date.month, 1), GetMonthEnd(date)):
                     self.attestations_mensuelles_periodechoice.Append('%s %d' % (months[date.month - 1], date.year), (datetime.date(date.year, date.month, 1), GetMonthEnd(date)))
                 date = GetNextMonthStart(date)
             self.attestations_mensuelles_periodechoice.SetSelection(0)
@@ -247,20 +247,20 @@ class FacturationTab(AutoTab):
     def UpdateContents(self):
         for choice in self.inscrits_choice.values():
             choice.Clear()
-            choice.Append('Tous les enfants', creche)
-            if len(creche.sites) > 1:
-                for site in creche.sites:
+            choice.Append('Tous les enfants', database.creche)
+            if len(database.creche.sites) > 1:
+                for site in database.creche.sites:
                     choice.Append('Enfants du site ' + site.nom.strip(), site)
 
         inscrits = {}
         autres = {}
-        for inscrit in creche.inscrits:
-            if inscrit.GetInscription(datetime.date.today()) is not None:
+        for inscrit in database.creche.inscrits:
+            if inscrit.get_inscription(datetime.date.today()) is not None:
                 inscrits[GetPrenomNom(inscrit)] = inscrit
             else:
                 autres[GetPrenomNom(inscrit)] = inscrit
         
-        keys = inscrits.keys()
+        keys = list(inscrits.keys())
         keys.sort()
         for key in keys:
             for choice in self.inscrits_choice.values():
@@ -270,7 +270,7 @@ class FacturationTab(AutoTab):
             for choice in self.inscrits_choice.values():
                 choice.Append(20 * '-', None)
         
-        keys = autres.keys()
+        keys = list(autres.keys())
         keys.sort()
         for key in keys:
             for choice in self.inscrits_choice.values():
@@ -279,7 +279,7 @@ class FacturationTab(AutoTab):
         for choice in self.inscrits_choice.values():
             choice.SetSelection(0)
         
-        self.cloture_button.Show(creche.cloture_facturation)
+        self.cloture_button.Show(database.creche.cloture_facturation)
 
         self.OnFacturesInscritChoice(None)
         self.OnAttestationsInscritChoice(None)
@@ -293,9 +293,9 @@ class FacturationTab(AutoTab):
 
     def __GetSelection(self, periode, data):
         if isinstance(data, Creche):
-            inscrits = [inscrit for inscrit in creche.inscrits if inscrit.HasFacture(periode)]
+            inscrits = [inscrit for inscrit in database.creche.inscrits if inscrit.has_facture(periode)]
         elif isinstance(data, Site):
-            inscrits = [inscrit for inscrit in GetInscrits(GetMonthStart(periode), GetMonthEnd(periode), site=data) if inscrit.HasFacture(periode)]
+            inscrits = [inscrit for inscrit in database.creche.select_inscrits(GetMonthStart(periode), GetMonthEnd(periode), site=data) if inscrit.has_facture(periode)]
         else:
             inscrits = [data]
         return inscrits, periode
@@ -304,9 +304,9 @@ class FacturationTab(AutoTab):
         periode = self.factures_monthchoice.GetClientData(self.factures_monthchoice.GetSelection())
         data = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
         if isinstance(data, Creche):
-            inscrits = [inscrit for inscrit in creche.inscrits if inscrit.HasFacture(periode)]
+            inscrits = [inscrit for inscrit in database.creche.inscrits if inscrit.has_facture(periode)]
         elif isinstance(data, Site):
-            inscrits = [inscrit for inscrit in GetInscrits(GetMonthStart(periode), GetMonthEnd(periode), site=data) if inscrit.HasFacture(periode)]
+            inscrits = [inscrit for inscrit in database.creche.select_inscrits(GetMonthStart(periode), GetMonthEnd(periode), site=data) if inscrit.has_facture(periode)]
         else:
             inscrits = [data]
         return inscrits, periode
@@ -407,7 +407,7 @@ class ReglementsTab(AutoTab):
 
     def UpdateContents(self):
         AddInscritsToChoice(self.choice)
-        if len(creche.inscrits) > 0 and self.inscrit is not None and self.inscrit in creche.inscrits:
+        if len(database.creche.inscrits) > 0 and self.inscrit is not None and self.inscrit in database.creche.inscrits:
             SelectValueInChoice(self.choice, self.inscrit)
             self.AfficheLignes()
         else:
@@ -420,7 +420,7 @@ class ReglementsTab(AutoTab):
         self.grid.AppendRows(1)
         self.grid.SetCellAlignment(index, 2, wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
         self.grid.SetCellAlignment(index, 3, wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
-        if isinstance(ligne, Encaissement):
+        if isinstance(ligne, EncaissementFamille):
             moyen = ModesEncaissement[ligne.moyen_paiement] if ligne.moyen_paiement is not None else ""
             valeur = ligne.valeur
             self.index += 1
@@ -472,7 +472,7 @@ class ReglementsTab(AutoTab):
             
     def OnClickDroitLabel(self, event):
         line = self.lignes[event.GetRow()]
-        if isinstance(line, Encaissement):
+        if isinstance(line, EncaissementFamille):
             self.current_line = line
             menu = wx.Menu()
             menu.Append(0, "Supprimer")
@@ -483,7 +483,7 @@ class ReglementsTab(AutoTab):
     def OnAjoutReglement(self, _):
         if self.add_date.GetValue() <= today:
             history.Append(Delete(self.inscrit.famille.encaissements, -1))
-            self.inscrit.famille.encaissements.append(Encaissement(self.inscrit.famille, self.add_date.GetValue(), self.add_montant.GetValue(), self.add_moyen_paiement.GetValue()))
+            self.inscrit.famille.encaissements.append(EncaissementFamille(famille=self.inscrit.famille, date=self.add_date.GetValue(), valeur=self.add_montant.GetValue(), moyen_paiement=self.add_moyen_paiement.GetValue()))
             self.AfficheLignes()
         else:
             dlg = wx.MessageDialog(None, "Date erronée", 'Erreur', wx.OK | wx.ICON_WARNING)
@@ -493,7 +493,6 @@ class ReglementsTab(AutoTab):
     def OnSuppressionReglement(self, _):
         history.Append(None)
         self.inscrit.famille.encaissements.remove(self.current_line)
-        self.current_line.delete()
         self.AfficheLignes()
 
 

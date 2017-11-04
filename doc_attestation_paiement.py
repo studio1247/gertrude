@@ -21,9 +21,9 @@ from __future__ import print_function
 from __future__ import division
 
 from facture import *
-from sqlobjects import *
 from cotisation import CotisationException
 from ooffice import *
+from database import Creche, Site
 
 
 class AttestationModifications(object):
@@ -37,15 +37,15 @@ class AttestationModifications(object):
             self.template = 'Attestation mensuelle.odt'
             self.attestation_mensuelle = True
         if isinstance(who, list):
-            self.inscrits = [inscrit for inscrit in who if inscrit.GetInscriptions(debut, fin)]
+            self.inscrits = [inscrit for inscrit in who if inscrit.get_inscriptions(debut, fin)]
             self.SetDefaultMultiParam()
         elif isinstance(who, Creche):
-            self.inscrits = [inscrit for inscrit in who.inscrits if inscrit.GetInscriptions(debut, fin)]
+            self.inscrits = [inscrit for inscrit in who.inscrits if inscrit.get_inscriptions(debut, fin)]
             self.SetDefaultMultiParam()
         elif isinstance(who, Site):
             self.inscrits = []
-            for inscrit in creche.inscrits:
-                for inscription in inscrit.GetInscriptions(debut, fin):
+            for inscrit in database.creche.inscrits:
+                for inscription in inscrit.get_inscriptions(debut, fin):
                     if inscription.site == who:
                         self.inscrits.append(inscrit)
                         break
@@ -100,7 +100,7 @@ class AttestationModifications(object):
         errors = {}
         tresorier = ""
         directeur = ""
-        bureau = Select(creche.bureaux, today)
+        bureau = Select(database.creche.bureaux, today)
         if bureau:
             tresorier = bureau.tresorier
             directeur = bureau.directeur
@@ -132,7 +132,7 @@ class AttestationModifications(object):
                         heures_facture += facture.heures_facture
                         heures_contractualisees += facture.heures_contractualisees
                     date = GetNextMonthStart(date)
-            except CotisationException, e:
+            except CotisationException as e:
                 errors[GetPrenomNom(inscrit)] = e.errors
                 continue
             
@@ -145,7 +145,7 @@ class AttestationModifications(object):
                     last_inscription = tmp 
             
             # Les champs de l'attestation
-            fields = GetCrecheFields(creche) + GetInscritFields(inscrit) + GetInscriptionFields(last_inscription) + [
+            fields = GetCrecheFields(database.creche) + GetInscritFields(inscrit) + GetInscriptionFields(last_inscription) + [
                 ('de-debut', '%s %d' % (GetDeMoisStr(facture_debut.month - 1), facture_debut.year)),
                 ('de-fin', '%s %d' % (GetDeMoisStr(facture_fin.month - 1), facture_fin.year)),
                 ('tresorier', tresorier),

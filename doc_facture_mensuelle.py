@@ -23,7 +23,8 @@ from functions import *
 from facture import *
 from cotisation import CotisationException
 from ooffice import *
-from sqlobjects import Reservataire
+from database import Reservataire
+
 
 PRESENCE_NON_FACTUREE = 256
 CONGES = 257
@@ -60,7 +61,7 @@ class FactureModifications(object):
         self.multi = False
         self.periode = periode
         self.periode_facturation = periode
-        if creche.temps_facturation != FACTURATION_FIN_MOIS:
+        if database.creche.temps_facturation != FACTURATION_FIN_MOIS:
             self.periode_facturation = GetMonthStart(periode - datetime.timedelta(1))
         self.email = True
         self.reservataire = False
@@ -74,14 +75,14 @@ class FactureModifications(object):
         elif len(inscrits) > 1:
             self.multi = True
             self.inscrits = GetEnfantsTriesSelonParametreTriFacture(inscrits)
-            self.site = self.inscrits[0].GetInscriptions(self.periode_facturation, None)[0].site
+            self.site = self.inscrits[0].get_inscriptions(self.periode_facturation, None)[0].site
             self.email_subject = "Factures %s %d" % (months[periode.month - 1], periode.year)
             self.default_output = normalize_filename("Factures %s %d.odt" % (months[periode.month - 1], periode.year))
             self.email_to = None
         else:
             self.inscrits = inscrits
             who = self.inscrits[0]
-            self.site = who.GetInscriptions(self.periode_facturation, None)[0].site
+            self.site = who.get_inscriptions(self.periode_facturation, None)[0].site
             self.email_subject = "Facture %s %s %d" % (self.GetPrenomNom(who), months[periode.month - 1], periode.year)
             self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
             self.default_output = normalize_filename(self.email_subject + ".odt")
@@ -90,8 +91,8 @@ class FactureModifications(object):
             self.template = "Facture reservataire.odt"
         elif self.site and IsTemplateFile("Facture mensuelle %s.odt" % self.site.nom):
             self.template = "Facture mensuelle %s.odt" % self.site.nom
-        elif IsTemplateFile("Facture mensuelle %s.odt" % creche.nom):
-            self.template = "Facture mensuelle %s.odt" % creche.nom
+        elif IsTemplateFile("Facture mensuelle %s.odt" % database.creche.nom):
+            self.template = "Facture mensuelle %s.odt" % database.creche.nom
         else:
             self.template = 'Facture mensuelle.odt'
 
@@ -116,7 +117,7 @@ class FactureModifications(object):
     def FillRecapSection(self, section, facture):
         column_heures = 1 if "heures-facturees" in self.metas else 0
         empty_cells = facture.debut_recap.weekday()
-        if "Week-end" in creche.feries and empty_cells > 4:
+        if "Week-end" in database.creche.feries and empty_cells > 4:
             empty_cells -= 7
 
         tables = section.getElementsByTagName('table:table')
@@ -149,7 +150,7 @@ class FactureModifications(object):
                             details = " (%s)" % GetHeureString(facture.jours_absence_non_prevenue[date])
                         elif date in facture.jours_maladie:
                             state = HOPITAL
-                        elif facture.inscrit.IsDateConge(date):
+                        elif facture.inscrit.is_date_conge(date):
                             state = CONGES
                         elif date in facture.jours_conges_non_factures:
                             state = VACANCES
@@ -221,7 +222,7 @@ class FactureModifications(object):
             self.GetMetas(dom)
             return None
 
-        fields = GetCrecheFields(creche)
+        fields = GetCrecheFields(database.creche)
         if filename != 'content.xml':
             ReplaceTextFields(dom, fields)
             return None
@@ -296,14 +297,14 @@ class FactureModifications(object):
                     else:
                         numfact = "%03d%04d%02d" % (900+reservataire.idx, self.periode_facturation.year, self.periode_facturation.month)
 
-                    fields = GetCrecheFields(creche) + GetReservataireFields(reservataire) + [
+                    fields = GetCrecheFields(database.creche) + GetReservataireFields(reservataire) + [
                         ("date", self.periode_facturation),
                         ("mois", mois_string),
                         ("numfact", numfact),
                         ('tarif-periode-reservataire', reservataire.tarif * nombre_mois),
                     ]
 
-                    inscrits = GetInscrits(debut_facture, None, reservataire=self.reservataire)  # parce qu'on veut aussi voir les enfants qui arrivent plus tard
+                    inscrits = database.creche.select_inscrits(debut_facture, None, reservataire=self.reservataire)  # parce qu'on veut aussi voir les enfants qui arrivent plus tard
                     if inscrits:
                         inscrit = inscrits[0]
                         fields += GetInscritFields(inscrit)
@@ -329,7 +330,7 @@ class FactureModifications(object):
             for index, inscrit in enumerate(self.inscrits):
                 if config.options & FACTURES_FAMILLES:
                     skip = False
-                    enfants = [enfant for enfant in GetInscritsFamille(inscrit.famille) if enfant.HasFacture(self.periode)]
+                    enfants = [enfant for enfant in GetInscritsFamille(inscrit.famille) if enfant.has_facture(self.periode)]
                     for enfant in enfants:
                         if enfant in done:
                             skip = True
@@ -454,15 +455,10 @@ class FactureModifications(object):
 
 
 if __name__ == '__main__':
-    import __builtin__
     import random
-    from config import *
-    from data import *
-    from functions import *
-
-    config.numfact = "%(annee)04d%(mois)02d%(numero)04d"
-    __builtin__.creche, result = FileConnection("databases/mer-et-terre.db").Load()
-    modifications = FactureModifications(creche.reservataires, datetime.date(2017, 9, 1))
+    database.init("databases/opagaio.db")
+    database.load()
+    modifications = FactureModifications(database.creche.inscrits, datetime.date(2017, 9, 1))
     filename = "./test-%f.odt" % random.random()
     errors = GenerateOODocument(modifications, filename=filename, gauge=None)
     StartLibreOffice(filename)

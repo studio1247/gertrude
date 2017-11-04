@@ -30,7 +30,7 @@ class BufferedWindow(wx.Window):
     def Draw(self, dc):
         pass
 
-    def OnSize(self, event):
+    def OnSize(self, _):
         self.width, self.height = self.GetClientSizeTuple()
         self.bufferDC = wx.EmptyBitmap(self.width, self.height)
         self.needs_drawing = True

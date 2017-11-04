@@ -48,14 +48,14 @@ class EtatsPresenceModifications(object):
         lignes = table.getElementsByTagName("table:table-row")
 
         titres = GetValues(lignes.item(7))
-        if creche.type != TYPE_GARDERIE_PERISCOLAIRE:
+        if database.creche.type != TYPE_GARDERIE_PERISCOLAIRE:
             for i in range(7):
                 if u'Professeur : <critere-professeur>' in GetValues(lignes.item(i)):
                     table.removeChild(lignes.item(i))
                     break                
             if titres[2] == "Professeur":
                 RemoveColumn(lignes, 2)
-        if len(creche.sites) < 2:
+        if len(database.creche.sites) < 2:
             for i in range(7):
                 if u'Site : <critere-site>' in GetValues(lignes.item(i)):
                     table.removeChild(lignes.item(i))
@@ -79,8 +79,8 @@ class EtatsPresenceModifications(object):
                 ligne = template.cloneNode(1)
                 fields = GetInscritFields(inscrit)
                 fields.extend([('date', date),
-                               ('debut-contrat', inscrit.GetInscription(date).debut),
-                               ('fin-contrat', inscrit.GetInscription(date).fin),
+                               ('debut-contrat', inscrit.get_inscription(date).debut),
+                               ('fin-contrat', inscrit.get_inscription(date).fin),
                                ('heure-arrivee', GetHeureString(heure_arrivee)),
                                ('heure-depart', GetHeureString(heure_depart)),
                                ('site', GetNom(site)),

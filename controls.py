@@ -16,13 +16,19 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
+from __future__ import print_function
 
-import sys, __builtin__
-import wx, wx.lib, wx.lib.scrolledpanel, wx.lib.masked, wx.lib.stattext, wx.combo
+import wx
+import wx.lib
+import wx.lib.scrolledpanel
+import wx.lib.masked
+import wx.lib.stattext
+import wx.combo
 from wx.lib.masked import Field
-import fpformat, datetime, time
-from globals import *
+from helpers import *
 from functions import *
+from config import config
+from history import Change, Insert, Delete
 
 
 class GPanel(wx.Panel):
@@ -481,6 +487,8 @@ class TimeCtrl(wx.lib.masked.TimeCtrl):
 
 
 class AutoMixin:
+    default = None
+
     def __init__(self, parent, instance, member, fixed_instance=False, observers=[], mask=None):
         self.__ontext = True
         self.parent = parent
@@ -514,11 +522,12 @@ class AutoMixin:
         else:
             self.__ontext = False
             try:
-                self.SetValue(self.GetCurrentValue())
-            except:
-                print "Erreur lors de l'evaluation de self.instance.%s" % self.member
+                value = self.GetCurrentValue()
+                self.SetValue(self.default if value is None else value)
+            except Exception as e:
+                print("Erreur lors de l'evaluation de self.instance.%s" % self.member, e)
             self.__ontext = True
-            self.Enable(not readonly)
+            self.Enable(not config.readonly)
 
     def onText(self, event):
         obj = event.GetEventObject()
@@ -543,6 +552,8 @@ class AutoMixin:
 
 
 class AutoTextCtrl(wx.TextCtrl, AutoMixin):
+    default = ""
+
     def __init__(self, parent, instance, member, fixed_instance=False, observers=[], *args, **kwargs):
         wx.TextCtrl.__init__(self, parent.GetWindow(), -1, *args, **kwargs)
         AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
@@ -561,6 +572,8 @@ class AutoComboBox(wx.ComboBox, AutoMixin):
 
 
 class AutoDateCtrl(DateCtrl, AutoMixin):
+    default = None
+
     def __init__(self, parent, instance, member, fixed_instance=False, observers=[], *args, **kwargs):
         DateCtrl.__init__(self, parent.GetWindow(), id=-1,
                           style=wx.DP_DEFAULT | wx.DP_DROPDOWN | wx.DP_SHOWCENTURY | wx.DP_ALLOWNONE, *args, **kwargs)
@@ -598,6 +611,8 @@ class AutoTimeCtrl(TimeCtrl, AutoMixin):
 
 
 class AutoNumericCtrl(NumericCtrl, AutoMixin):
+    default = ""
+
     def __init__(self, parent, instance, member, fixed_instance=False, observers=[], *args, **kwargs):
         NumericCtrl.__init__(self, parent.GetWindow(), *args, **kwargs)
         AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
@@ -607,6 +622,8 @@ class AutoNumericCtrl(NumericCtrl, AutoMixin):
 
 
 class AutoPhoneCtrl(PhoneCtrl, AutoMixin):
+    default = ""
+
     def __init__(self, parent, instance, member, fixed_instance=False, observers=[], *args, **kwargs):
         PhoneCtrl.__init__(self, parent, -1, *args, **kwargs)
         AutoMixin.__init__(self, parent, instance, member, fixed_instance, observers)
@@ -680,7 +697,7 @@ class AutoChoiceCtrl(ChoiceWithoutScroll, AutoMixin):
                 self.SetSelection(self.values[value])
             else:
                 self.SetSelection(-1)
-            self.Enable(not readonly)
+            self.Enable(not config.readonly)
 
     def SetItems(self, items):
         ChoiceWithoutScroll.Clear(self)
@@ -755,7 +772,7 @@ class AutoBinaryChoiceCtrl(ChoiceWithoutScroll, AutoMixin):
                 self.SetSelection(self.values[value])
             else:
                 self.SetSelection(-1)
-            self.Enable(not readonly)
+            self.Enable(not config.readonly)
 
     def SetItems(self, items):
         ChoiceWithoutScroll.Clear(self)
@@ -819,7 +836,7 @@ class TextDialog(wx.Dialog):
     def GetText(self):
         return self.textctrl.GetValue()
 
-    def OnEnter(self, event):
+    def OnEnter(self, _):
         self.EndModal(wx.ID_OK)
 
 
@@ -858,12 +875,14 @@ else:
 
 
 class PeriodeChoice(wx.BoxSizer):
-    def __init__(self, parent, constructor, default=None):
+    def __init__(self, parent, constructor, default=None, onModify=None):
         wx.BoxSizer.__init__(self, wx.HORIZONTAL)
         self.parent = parent
         self.constructor = constructor
+        self.onModify = onModify  # TODO rather raise events
         self.defaultPeriode = default
         self.instance = None
+        self.readonly = False
 
         self.periodechoice = wx.Choice(parent, size=(220, -1))
         parent.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.periodechoice)
@@ -905,12 +924,9 @@ class PeriodeChoice(wx.BoxSizer):
         self.parent.SetPeriode(self.periode)
         self.Enable()
 
-    def EvtPeriodeAddButton(self, evt):
+    def EvtPeriodeAddButton(self, _):
         self.periode = len(self.instance)
-        try:
-            new_periode = self.constructor()
-        except:
-            new_periode = self.constructor(self.parent.instance)
+        new_periode = self.constructor()
         if len(self.instance) > 0:
             last_periode = self.instance[-1]
             new_periode.debut = last_periode.fin + datetime.timedelta(1)
@@ -931,14 +947,13 @@ class PeriodeChoice(wx.BoxSizer):
 
     def EvtPeriodeDelButton(self, evt):
         dlg = wx.MessageDialog(self.parent,
-                               u'Cette période va être supprimée, confirmer ?',
-                               'Confirmation',
+                               "Cette période va être supprimée, confirmer ?",
+                               "Confirmation",
                                wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
         if dlg.ShowModal() == wx.ID_YES:
             index = self.periodechoice.GetSelection()
             periode = self.instance[index]
             history.Append(Insert(self.instance, index, periode))
-            periode.delete()
             del self.instance[index]
             self.periodechoice.Delete(index)
             self.periode = len(self.instance) - 1
@@ -946,24 +961,27 @@ class PeriodeChoice(wx.BoxSizer):
             self.parent.SetPeriode(self.periode)
             self.Enable()
 
-    def EvtPeriodeSettingsButton(self, evt):
+    def EvtPeriodeSettingsButton(self, _):
         periode = self.instance[self.periode]
         dlg = PeriodeDialog(self.parent, periode)
         response = dlg.ShowModal()
         dlg.Destroy()
         if response == wx.ID_OK:
-            history.Append([Change(periode, 'debut', periode.debut), Change(periode, 'fin', periode.fin)])
+            history.Append([Change(periode, "debut", periode.debut), Change(periode, "fin", periode.fin)])
             periode.debut, periode.fin = dlg.debut_ctrl.GetValue(), dlg.fin_ctrl.GetValue()
+            self.onModify()
             self.periodechoice.SetString(self.periode, GetPeriodeString(periode))
             self.periodechoice.SetSelection(self.periode)
             self.Enable()
 
-    def Enable(self, value=True):
-        self.periodechoice.Enable(value and len(self.instance) > 0)
-        self.periodesettingsbutton.Enable(value and len(self.instance) > 0 and not readonly)
-        self.periodeaddbutton.Enable(value and self.instance is not None and (
-        len(self.instance) == 0 or self.instance[-1].fin is not None) and not readonly)
-        self.periodedelbutton.Enable(value and self.instance is not None and len(self.instance) > 0 and not readonly)
+    def set_readonly(self, readonly):
+        self.readonly = readonly
+
+    def Enable(self, enable=True):
+        self.periodechoice.Enable(enable and len(self.instance) > 0)
+        self.periodesettingsbutton.Enable(enable and len(self.instance) > 0 and not config.readonly and not self.readonly)
+        self.periodeaddbutton.Enable(enable and self.instance is not None and (len(self.instance) == 0 or self.instance[-1].fin is not None) and not config.readonly and not self.readonly)
+        self.periodedelbutton.Enable(enable and self.instance is not None and len(self.instance) > 0 and not config.readonly and not self.readonly)
 
     def Disable(self):
         self.Enable(False)
@@ -1101,10 +1119,10 @@ class ActivityComboBox(HashComboBox):
     def Update(self):
         self.Clear()
         selected = 0
-        if creche.HasActivitesAvecHoraires():
+        if database.creche.has_activites_avec_horaires():
             self.Show(True)
-            for i, activity in enumerate(creche.activites.values()):
-                if activity.mode not in (MODE_SANS_HORAIRES, MODE_SYSTEMATIQUE_SANS_HORAIRES, MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE):
+            for i, activity in database.creche.activites.items():
+                if activity.has_horaires():
                     self.Append(activity.label, activity)
                     try:
                         if self.activity_choice.activity.value == activity.value:
@@ -1113,7 +1131,7 @@ class ActivityComboBox(HashComboBox):
                         pass
         else:
             self.Show(False)
-            self.Append(creche.activites[0].label, creche.activites[0])
+            self.Append(database.creche.activites[0].label, database.creche.activites[0])
         self.SetSelection(selected)
 
 
@@ -1178,7 +1196,7 @@ class TabletteSizer(wx.StaticBoxSizer):
         internalSizer.Add(self.combinaisonSizer)
         settingsbmp = wx.Bitmap(GetBitmapFile("settings.png"), wx.BITMAP_TYPE_PNG)
         self.button = wx.BitmapButton(parent, -1, settingsbmp)
-        self.button.Enable(not readonly)
+        self.button.Enable(not config.readonly)
         parent.Bind(wx.EVT_BUTTON, self.OnModifyCombinaison, self.button)
         internalSizer.Add(self.button, 0, wx.LEFT, 10)
         self.Add(internalSizer, 0, wx.TOP | wx.BOTTOM, 10)
@@ -1195,7 +1213,7 @@ class TabletteSizer(wx.StaticBoxSizer):
     def UpdateCombinaison(self):
         self.combinaisonSizer.DeleteWindows()
         if self.object:
-            self.button.Enable(not readonly)
+            self.button.Enable(not config.readonly)
             if self.object.combinaison:
                 for letter in self.object.combinaison:
                     bitmap = GetPictoBitmap(letter, size=32)

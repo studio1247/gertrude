@@ -35,7 +35,7 @@ class ExportFacturationModifications(object):
 
     def execute(self, filename, dom):
         if filename == 'styles.xml':
-            ReplaceTextFields(dom, GetCrecheFields(creche))
+            ReplaceTextFields(dom, GetCrecheFields(database.creche))
             return []
 
         elif filename == 'content.xml':
@@ -59,7 +59,7 @@ class ExportFacturationModifications(object):
                 total_line = lines[3]
                 total_cell = total_line.getElementsByTagName("table:table-cell")[2]
 
-                inscrits = GetInscrits(debut, fin)
+                inscrits = database.creche.select_inscrits(debut, fin)
                 index = 0
                 for i, inscrit in enumerate(inscrits):
                     try:
@@ -67,8 +67,8 @@ class ExportFacturationModifications(object):
                         if facture.total > 0:
                             facture2 = Facture(inscrit, self.annee, m+2, NO_NUMERO)
                             facture.jours_realises += facture2.jours_realises
-                            for value in creche.activites:
-                                label = creche.activites[value].label
+                            for value in database.creche.activites:
+                                label = database.creche.activites[value].label
                                 facture.heures_supplement_activites[label] += facture2.heures_supplement_activites[label]
                         else:
                             facture = Facture(inscrit, self.annee, m+2, NO_NUMERO)
@@ -76,7 +76,7 @@ class ExportFacturationModifications(object):
                             continue
                         line = template_line.cloneNode(1)
                         fields = GetInscritFields(inscrit) + GetFactureFields(facture)
-                    except CotisationException, e:
+                    except CotisationException as e:
                         self.errors[GetPrenomNom(inscrit)] = e.errors
                         continue
 
@@ -92,14 +92,3 @@ class ExportFacturationModifications(object):
             spreadsheet.removeChild(template_table)
 
         return self.errors
-
-# if __name__ == '__main__':
-#     import __builtin__, random
-#     from config import *
-#     from data import *
-#     from functions import *
-#     __builtin__.creche, result = FileConnection(DEFAULT_DATABASE).Load()
-#     modifications = CompteExploitationModifications(None, 2015)
-#     filename = "./test-%f.odt" % random.random()
-#     errors = GenerateOODocument(modifications, filename=filename, gauge=None)
-#     StartLibreOffice(filename)

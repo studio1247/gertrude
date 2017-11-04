@@ -22,6 +22,7 @@ class Change:
     def Undo(self):
         exec('self.instance.%s = self.value' % self.member)
 
+
 class Delete:
     def __init__(self, instance, index):
         self.instance, self.index = instance, index
@@ -29,6 +30,7 @@ class Delete:
     def Undo(self):
         self.instance[self.index].delete()
         del self.instance[self.index]
+
 
 class Insert:
     def __init__(self, instance, index, value):
@@ -39,7 +41,7 @@ class Insert:
             self.instance.insert(self.index, self.value)
         else:
             self.instance[self.index] = self.value
-        self.value.create()
+
 
 class Call:
     def __init__(self, function, args=None):

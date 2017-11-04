@@ -82,7 +82,7 @@ class PlanningModifications(object):
             ligne_total = lignes.item(7)
 
             # Les lignes
-            indexes = GetPresentsIndexes(range(len(creche.inscrits)), (self.debut, date_fin))
+            indexes = GetPresentsIndexes(range(len(database.creche.inscrits)), (self.debut, date_fin))
             indexes = GetTriParPrenomIndexes(indexes)
             self.printPresences(table, indexes, 3)
             nb_55 = 1 + max(2, len(indexes)) if len(indexes) > 0 else 0
@@ -96,7 +96,7 @@ class PlanningModifications(object):
                     cellule.setAttribute('table:formula', formule)
         elif self.metas["Format"] == 2:
             # Le format utilisé par une garderie périscolaire (tri par professeur)
-            inscriptions = GetInscriptions(self.debut, date_fin)
+            inscriptions = database.creche.select_inscriptions(self.debut, date_fin)
             tableau = {}  # par professeur
             for inscription in inscriptions:
                 if inscription.professeur in tableau:
@@ -105,7 +105,7 @@ class PlanningModifications(object):
                     tableau[inscription.professeur] = [inscription]
 
             def GetState(local_inscription, delta):
-                state = local_inscription.inscrit.GetStateSimple(self.debut + datetime.timedelta(delta))
+                state = local_inscription.inscrit.get_state(self.debut + datetime.timedelta(delta))
                 if state <= 0:
                     return 0
                 else:
@@ -133,7 +133,7 @@ class PlanningModifications(object):
             # Mon petit bijou
             # lecture des couleurs
             couleurs = {}
-            for i, inscrit in enumerate(creche.inscrits):
+            for i, inscrit in enumerate(database.creche.inscrits):
                 line = lignes[5 + (i % 40)]
                 couleurs[GetPrenomNom(inscrit)] = [GetCell(line, j).getAttribute("table:style-name") for j in range(1, 5)]
             for line in lignes[5:45]:
@@ -145,7 +145,7 @@ class PlanningModifications(object):
             jour = 0
             while date < fin:
                 template = lignes[4 + 3 * jour]
-                lignes_presence = GetLines(date, creche.inscrits, presence=True, site=self.site)
+                lignes_presence = GetLines(date, database.creche.inscrits, presence=True, site=self.site)
                 for i, presence in enumerate(lignes_presence):
                     if i == 0:
                         line = lignes[3 + 3 * jour]
@@ -176,7 +176,7 @@ class PlanningModifications(object):
             lignes_entete = lignes[0:6]
             template = lignes[4]
             total_template = lignes[6]
-            inscriptions = GetInscriptions(self.debut, fin)
+            inscriptions = database.creche.select_inscriptions(self.debut, fin)
             for index, inscription in enumerate(inscriptions):
                 if index != 0 and index % 24 == 0:
                     for i, line in enumerate(lignes_entete):
@@ -190,7 +190,7 @@ class PlanningModifications(object):
                 line = template.cloneNode(1)
                 date = self.debut
                 cell = 0
-                tranches = [(creche.ouverture, 12), (14, creche.fermeture)]
+                tranches = [(database.creche.ouverture, 12), (14, database.creche.fermeture)]
                 while date < fin:
                     journee = inscrit.GetJournee(date)
                     for t in range(2):
@@ -227,7 +227,7 @@ class PlanningModifications(object):
                 cellule = cellules.item(2 + jour)
                 ReplaceFields([cellule], [('date', date)])
 
-            inscriptions = GetInscriptions(self.debut, fin)
+            inscriptions = database.creche.select_inscriptions(self.debut, fin)
             lines = [Ligne(inscription) for inscription in inscriptions]
             lines = GetEnfantsTriesParGroupe(lines)
 
@@ -247,7 +247,7 @@ class PlanningModifications(object):
                 else:
                     line = templates[inscription.groupe.ordre].cloneNode(1)
                 cell = 0
-                tranches = [(creche.ouverture, 12), (14, creche.fermeture)]
+                tranches = [(database.creche.ouverture, 12), (14, database.creche.fermeture)]
                 date = self.debut
                 while date <= fin:
                     if date in inscrit.journees:
@@ -291,7 +291,7 @@ class PlanningModifications(object):
         lignes = dom.getElementsByTagName("table:table-row")
         for i in range(nb_lignes):
             if i < len(indexes):
-                inscrit = creche.inscrits[indexes[i]]
+                inscrit = database.creche.inscrits[indexes[i]]
             else:
                 inscrit = None
             ligne = lignes.item(ligne_depart + i)
@@ -308,7 +308,7 @@ class PlanningModifications(object):
                     for t in range(2):
                         cellule = cellules.item(1 + semaine * 12 + jour * 2 + t)
                         if inscrit and journee:
-                            tranches = [(creche.ouverture, 12.30), (13.30, creche.fermeture)]
+                            tranches = [(database.creche.ouverture, 12.30), (13.30, database.creche.fermeture)]
                             ReplaceFields([cellule], [('p', int(IsPresentDuringTranche(journee, tranches[t][0] * 12, tranches[t][1] * 12)))])
                         else:
                             ReplaceFields([cellule], [('p', '')])
@@ -338,7 +338,7 @@ class PlanningHoraireModifications(PlanningModifications):
                               ('date-fin', date_fin),
                               ('numero-semaine', self.debut.isocalendar()[1])])
 
-        inscriptions = GetInscriptions(self.debut, date_fin)
+        inscriptions = database.creche.select_inscriptions(self.debut, date_fin)
         lignes = [Ligne(inscription) for inscription in inscriptions]
         lignes = GetEnfantsTriesParGroupe(lignes)
 

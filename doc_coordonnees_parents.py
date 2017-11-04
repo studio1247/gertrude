@@ -58,7 +58,7 @@ class CoordonneesModifications(object):
         lignes = table.getElementsByTagName("table:table-row")
         template = lignes[1]
         for inscrit in GetEnfantsTriesParPrenom():
-            inscription = inscrit.GetInscription(self.date)
+            inscription = inscrit.get_inscription(self.date)
             if inscription and (self.site is None or inscription.site == self.site):
                 inscrit_fields = GetInscritFields(inscrit)
                 for parent in inscrit.famille.parents:
@@ -76,7 +76,7 @@ class CoordonneesModifications(object):
         if filename != 'content.xml':
             return None
 
-        fields = GetCrecheFields(creche)
+        fields = GetCrecheFields(database.creche)
         fields.append(('date', '%.2d/%.2d/%d' % (self.date.day, self.date.month, self.date.year)))
         ReplaceTextFields(dom, fields)
         
@@ -85,7 +85,7 @@ class CoordonneesModifications(object):
                 template = table.getElementsByTagName('table:table-row')[1]
                 #print template.toprettyxml()
                 for inscrit in GetEnfantsTriesParPrenom():
-                    inscription = inscrit.GetInscription(self.date) 
+                    inscription = inscrit.get_inscription(self.date)
                     if inscription and (self.site is None or inscription.site == self.site):
                         line = template.cloneNode(1)
                         referents = [GetPrenomNom(referent) for referent in inscrit.famille.referents]
@@ -135,7 +135,7 @@ class CoordonneesModifications(object):
             if table.getAttribute('table:name') == 'Employes':
                 template = table.getElementsByTagName('table:table-row')[0]
                 #print template.toprettyxml()
-                for salarie in creche.salaries:
+                for salarie in database.creche.salaries:
                     if 1:  # TODO
                         line = template.cloneNode(1)
                         ReplaceTextFields(line, [('prenom', salarie.prenom),

@@ -58,16 +58,16 @@ class EtatPresenceModifications(object):
             fields = [("semaine", "Semaine %d" % date.isocalendar()[1])]
             for j in range(7):
                 total_matin = total_apres_midi = 0
-                if IsJourSemaineTravaille(j):
-                    for inscrit in creche.inscrits:
+                if database.creche.is_jour_semaine_travaille(j):
+                    for inscrit in database.creche.inscrits:
                         matin = apres_midi = 0
                         day = inscrit.GetJournee(date)
                         if day:
-                            for debut, fin, value in day.activites:
-                                if value >= 0:
-                                    if debut < 13*12:
+                            for timeslot in day.timeslots:
+                                if timeslot.debut is not None and timeslot.value >= 0:
+                                    if timeslot.debut < 13*12:
                                         matin = 1
-                                    if fin > 13.25*12:
+                                    if timeslot.fin > 13.25*12:
                                         apres_midi = 1
                         total_matin += matin
                         total_apres_midi += apres_midi
@@ -80,16 +80,3 @@ class EtatPresenceModifications(object):
         if self.gauge:
             self.gauge.SetValue(90)
         return errors
-
-
-if __name__ == '__main__':
-    import __builtin__, random
-    from config import *
-    from data import *
-    from functions import *
-    __builtin__.creche, result = FileConnection("databases/gertrude.db").Load()
-    modifications = EtatPresenceModifications(None, datetime.date(2017, 1, 2), datetime.date(2017, 12, 20))
-    filename = "./test-%f.odt" % random.random()
-    errors = GenerateOODocument(modifications, filename=filename, gauge=None)
-    StartLibreOffice(filename)
-

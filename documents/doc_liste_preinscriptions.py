@@ -54,7 +54,7 @@ class ListePreinscriptionsModifications(object):
         template = lignes.item(3)
 
         ordre = 1
-        for inscrit in creche.inscrits:
+        for inscrit in database.creche.inscrits:
             for inscription in inscrit.inscriptions:
                 if inscription.preinscription:
                     ligne = template.cloneNode(1)

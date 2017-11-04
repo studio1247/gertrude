@@ -18,159 +18,27 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-import __builtin__
-import sys, os.path, shutil, time
-import ConfigParser
-from functions import *
-from data import FileConnection, SharedFileConnection, HttpConnection
+import os.path
+import datetime
+from configparser import ConfigParser
+from constants import *
+from progress import *
 import numeros_facture
+
 
 CONFIG_FILENAME = "gertrude.ini"
 DEFAULT_SECTION = "gertrude"
 if sys.platform == "win32":
-  DEFAULT_DATABASE = "gertrude.db"
-  CONFIG_PATHS = [""]
+    DEFAULT_DATABASE = "gertrude.db"
+    BACKUPS_DIRECTORY = "./backups"
+    CONFIG_PATHS = [""]
 else:
-  DEFAULT_DATABASE = GERTRUDE_DIRECTORY + "/gertrude.db"
-  CONFIG_PATHS = ["./", GERTRUDE_DIRECTORY + "/", "/etc/gertrude/"]
+    HOME = os.path.expanduser("~")
+    GERTRUDE_DIRECTORY = HOME + "/.gertrude"
+    DEFAULT_DATABASE = GERTRUDE_DIRECTORY + "/gertrude.db"
+    BACKUPS_DIRECTORY = GERTRUDE_DIRECTORY + '/backups'
+    CONFIG_PATHS = ["./", GERTRUDE_DIRECTORY + "/", "/etc/gertrude/"]
 DEMO_DATABASE = "demo.db"
-
-
-class Database(object):
-    def __init__(self, section=None, filename=DEFAULT_DATABASE):
-        self.section = section
-        self.filename = filename
-        self.connection = FileConnection(filename)
-        self.tipi = ""
-
-
-class Section(object):
-    def __init__(self, database):
-        self.database = database
-        self.numfact = None
-        self.codeclient = None
-
-
-class Config(object):
-    def __init__(self):
-        self.filename = CONFIG_FILENAME
-        self.sections = {}
-        self.options = 0
-        self.connection = None
-        self.numfact = None
-        self.codeclient = None
-        self.templates = "templates"
-        self.first_date = datetime.date(today.year - 2, 1, 1)
-        self.last_date = datetime.date(today.year + 1, 12, 31)
-        self.inscriptions_semaines_conges = None
-        self.numerotation_factures = None
-
-    def setSection(self, section):
-        self.default_section = section
-        self.database = self.sections[section].database
-        self.connection = self.database.connection
-        self.numfact = self.sections[section].numfact
-        if self.numfact and "numero-global" in self.numfact:
-            self.numerotation_factures = numeros_facture.NumerotationMerEtTerre()
-        self.codeclient = self.sections[section].codeclient
-
-__builtin__.config = Config()
-
-
-def getOptions(parser):
-    options = 0
-    try:
-        str = parser.get(DEFAULT_SECTION, "options")
-        if "lecture-seule" in str:
-            options |= READONLY
-        if "reservataires" in str:
-            options |= RESERVATAIRES
-        if "frais-inscription-reservataires" in str:
-            options |= FRAIS_INSCRIPTION_RESERVATAIRES
-        if "categories" in str:
-            options |= CATEGORIES
-        if "heures-contrat" in str:
-            options |= HEURES_CONTRAT
-        if "tablette" in str:
-            options |= TABLETTE
-        if "decloture" in str:
-            options |= DECLOTURE
-        if "factures-familles" in str:
-            options |= FACTURES_FAMILLES
-        if "groupes-sites" in str:
-            options |= GROUPES_SITES
-        if "no-backups" in str:
-            options |= NO_BACKUPS
-        if "compatibility-conges-2016" in str:
-            options |= COMPATIBILITY_MODE_CONGES_2016
-        if "compatibility-adaptations-2016" in str:
-            options |= COMPATIBILITY_MODE_ADAPTATIONS_2016
-        if "compatibility-decompte-semaines-2017" in str:
-            options |= COMPATIBILITY_MODE_DECOMPTE_SEMAINES_2017
-        if "prelevements-automatiques" in str:
-            options |= PRELEVEMENTS_AUTOMATIQUES
-        if "newsletters" in str:
-            options |= NEWSLETTERS
-        if "reglements" in str:
-            options |= REGLEMENTS
-        if "tarifs-speciaux" in str:
-            options |= TARIFS_SPECIAUX
-        if "alertes-non-paiement" in str:
-            options |= ALERTES_NON_PAIEMENT
-    except:
-        pass
-    return options
-
-
-def getWindowSize(parser):
-    try:
-        window_width = int(parser.get(DEFAULT_SECTION, "window-width"))
-        window_height = int(parser.get(DEFAULT_SECTION, "window-height"))
-        return window_width, window_height
-    except:
-        return 1000, 600
-
-
-def getYearsDisplayed(parser):
-    try:
-        years_before = int(parser.get(DEFAULT_SECTION, "years-before"))
-        years_after = int(parser.get(DEFAULT_SECTION, "years-after"))
-        return years_before, years_after
-    except:
-        return 2, 1
-
-
-def getPictos(parser):
-    try:
-        pictos_enfants = int(parser.get(DEFAULT_SECTION, "pictos-enfants"))
-        pictos_salaries = int(parser.get(DEFAULT_SECTION, "pictos-salaries"))
-        return pictos_enfants, pictos_salaries
-    except:
-        return None, None
-
-
-def getStringParameter(parser, label, default=""):
-    try:
-        return parser.get(DEFAULT_SECTION, label)
-    except:
-        return default
-
-
-def getIntegerParameter(parser, label, default=0):
-    try:
-        return int(parser.get(DEFAULT_SECTION, label))
-    except:
-        return default
-
-
-def getTimeParameter(parser, label, default=None):
-    value = getStringParameter(parser, label, default)
-    if value:
-        splitted = value.split(":")
-        value = 3600 * int(splitted[0])
-        if len(splitted) == 2:
-            value += 60 * int(splitted[1])
-    return value
 
 
 def getDefaultDocumentsDirectory():
@@ -181,261 +49,301 @@ def getDefaultDocumentsDirectory():
             pidl = df.ParseDisplayName(0, None, "::{450d8fba-ad25-11d0-98a8-0800361b1103}")[1]
             return shell.SHGetPathFromIDList(pidl)
         except:
-            print("L'extension win32com pour python est recommandée (plateforme windows) !")
+            print("L'extension win32com pour python est recommandée (plateforme windows)")
             return os.getcwd()
     else:
         return os.getcwd()
 
 
-def getDocumentsDirectory(parser):
-    try:
-        directory = parser.get(DEFAULT_SECTION, "documents-directory")
-        assert os.path.isdir(directory)
-        return directory
-    except:
-        return getDefaultDocumentsDirectory()
+class Section(object):
+    def __init__(self, parser, name=None):
+        self.parser = parser
+        self.name = name
+        self.connection_type = CONNECTION_TYPE_FILE
+        self.auth = None
+        self.proxy = None
+        self.database = self.getStringParameter("database", None)
+        self.options = self.getOptionsParameter()
+        self.identity = self.getStringParameter("identity")
+        self.tipi = self.getStringParameter("tipi")
 
+        if parser.has_option(self.name, "url"):
+            self.url = parser.get(self.name, "url")
+            if self.url.startswith("http://") or self.url.startswith("https://"):
+                self.connection_type = CONNECTION_TYPE_HTTP
+                if parser.has_option(self.name, "login") and parser.has_option(self.name, "password"):
+                    self.auth = (parser.get(self.name, "login"), parser.get(self.name, "password"))
+                if parser.has_option(self.name, "proxy-host") and parser.has_option(self.name, "proxy-port"):
+                    self.proxy = {'host': self.getStringParameter("proxy-host"),
+                                  'port': self.getIntegerParameter("proxy-port"),
+                                  }
+                    if parser.has_option(self.name, "proxy-user") and parser.has_option(self.name, "proxy-pass"):
+                        self.proxy.update({'user': self.getStringParameter("proxy-user"),
+                                           'pass': self.getStringParameter("proxy-pass"),
+                                           })
+            elif self.url.startswith("file://"):
+                self.connection_type = CONNECTION_TYPE_SHARED_FILE
+                self.url = self.url[7:]
 
-def getTemplatesDirectory(parser):
-    try:
-        directory = parser.get(DEFAULT_SECTION, "templates")
-        assert os.path.isdir(directory)
-        return directory
-    except:
-        return "templates"
-
-
-def getBackupsDirectory(parser):
-    try:
-        directory = parser.get(DEFAULT_SECTION, "backups-directory")
-        assert os.path.isdir(directory)
-        return directory
-    except:
-        return ""
-
-
-def getField(parser, section, field):
-    try:
-        return parser.get(section, field)
-    except:
-        try:
-            return parser.get(DEFAULT_SECTION, field)
-        except:
-            return None
-
-
-def getDatabase(parser, section):
-    try:
-        filename = parser.get(section, "database")
-    except:
-        if section == DEFAULT_SECTION:
-            return None
+        self.numfact = self.getStringParameter("numfact", None)
+        if self.numfact and "numero-global" in self.numfact:
+            self.numerotation_factures = numeros_facture.NumerotationMerEtTerre()
         else:
-            filename = DEFAULT_DATABASE
+            self.numerotation_factures = None
 
-    database = Database(section, filename)
+        self.codeclient = self.getStringParameter("codeclient", None)
 
-    try:
-        url = parser.get(section, "url")
-    except:
-        return database
+        self.original_window_size = self.getWindowSize()
+        self.window_size = self.original_window_size
+        self.column_width = self.getIntegerParameter("column-width", 4)
 
-    if url.startswith("http://") or url.startswith("https://"):
-        try:
-            auth_info = (parser.get(section, "login"), parser.get(section, "password"))
-        except:
-            auth_info = None
-        try:
-            identity = parser.get(section, "identity")
-        except:
-            identity = ""
-        try:
-            proxy_info = {'host': parser.get(DEFAULT_SECTION, "proxy-host"),
-                          'port': int(parser.get(DEFAULT_SECTION, "proxy-port")),
-                          }
+        self.debug = self.getIntegerParameter("debug")
+        self.saas_port = self.getIntegerParameter("port", None)
+        self.heure_synchro_tablette = self.getTimeParameter("heure-synchro-tablette", None)
+        self.preinscription_redirect = self.getStringParameter("preinscription-redirect", "")
+        self.preinscription_template = self.getStringParameter("preinscription-template", "")
+        self.preinscription_required = self.getStringParameter("preinscription-required", "")
+        self.child_selection_widget = self.getStringParameter("child-selection-widget", "autocomplete")
+
+        years_before, years_after = self.getYearsDisplayed()
+        today = datetime.date.today()
+        self.first_date = datetime.date(today.year - years_before, 1, 1)
+        self.last_date = datetime.date(today.year + years_after, 12, 31)
+
+        self.inscriptions_semaines_conges = self.getIntegerParameter("inscriptions.semaines_conges", None)
+
+        self.pictos = self.getPictos()
+        self.hide = self.getStringParameter("hide")
+
+        self.templates_directory = self.getTemplatesDirectory()
+        self.original_documents_directory = self.getDocumentsDirectory()
+        self.documents_directory = self.original_documents_directory
+
+        self.original_backups_directory = self.getBackupsDirectory()
+        self.backups_directory = self.original_backups_directory
+
+        self.original_import_database = self.getStringParameter("import-database", None)
+        self.import_database = self.original_import_database
+
+    def getStringParameter(self, key, default=""):
+        if self.parser.has_option(self.name, key):
+            return self.parser.get(self.name, key)
+        elif self.parser.has_option(DEFAULT_SECTION, key):
+            return self.parser.get(DEFAULT_SECTION, key)
+        else:
+            return default
+
+    def getIntegerParameter(self, key, default=0):
+        value = self.getStringParameter(key, None)
+        if value is not None:
             try:
-                proxy_user_info = {'user': parser.get(DEFAULT_SECTION, "proxy-user"),
-                                   'pass': parser.get(DEFAULT_SECTION, "proxy-pass")
-                                   }
-                proxy_info.extend(proxy_user_info)
+                return int(value)
+            except Exception as e:
+                print("Erreur de config pour le paramètre %s" % key, e)
+        return default
+
+    def getTimeParameter(self, key, default=None):
+        value = self.getStringParameter(key, default)
+        if value:
+            splitted = value.split(":")
+            value = 3600 * int(splitted[0])
+            if len(splitted) == 2:
+                value += 60 * int(splitted[1])
+        return value
+
+    def getOptionsParameter(self):
+        options = 0
+        value = self.getStringParameter("options")
+        if "lecture-seule" in value:
+            options |= READONLY
+        if "reservataires" in value:
+            options |= RESERVATAIRES
+        if "frais-inscription-reservataires" in value:
+            options |= FRAIS_INSCRIPTION_RESERVATAIRES
+        if "categories" in value:
+            options |= CATEGORIES
+        if "heures-contrat" in value:
+            options |= HEURES_CONTRAT
+        if "tablette" in value:
+            options |= TABLETTE
+        if "decloture" in value:
+            options |= DECLOTURE
+        if "factures-familles" in value:
+            options |= FACTURES_FAMILLES
+        if "groupes-sites" in value:
+            options |= GROUPES_SITES
+        if "no-backups" in value:
+            options |= NO_BACKUPS
+        if "compatibility-conges-2016" in value:
+            options |= COMPATIBILITY_MODE_CONGES_2016
+        if "compatibility-adaptations-2016" in value:
+            options |= COMPATIBILITY_MODE_ADAPTATIONS_2016
+        if "compatibility-decompte-semaines-2017" in value:
+            options |= COMPATIBILITY_MODE_DECOMPTE_SEMAINES_2017
+        if "prelevements-automatiques" in value:
+            options |= PRELEVEMENTS_AUTOMATIQUES
+        if "newsletters" in value:
+            options |= NEWSLETTERS
+        if "reglements" in value:
+            options |= REGLEMENTS
+        if "tarifs-speciaux" in value:
+            options |= TARIFS_SPECIAUX
+        if "no-password" in value:
+            options |= NO_PASSWORD
+        if "alertes-non-paiement" in value:
+            options |= ALERTES_NON_PAIEMENT
+        return options
+
+    def getWindowSize(self):
+        return self.getIntegerParameter("window-width", 1000), self.getIntegerParameter("window-height", 600)
+
+    def getYearsDisplayed(self):
+        return self.getIntegerParameter("years-before", 2), self.getIntegerParameter("years-after", 1)
+
+    def getPictos(self):
+        return self.getIntegerParameter("pictos-enfants", None), self.getIntegerParameter("pictos-salaries", None)
+
+    def getDocumentsDirectory(self):
+        directory = self.getStringParameter("documents-directory")
+        return directory if os.path.isdir(directory) else getDefaultDocumentsDirectory()
+
+    def getTemplatesDirectory(self):
+        directory = self.getStringParameter("templates-directory")
+        return directory if os.path.isdir(directory) else "templates"
+
+    def getBackupsDirectory(self):
+        directory = self.getStringParameter("backups-directory")
+        return directory if os.path.isdir(directory) else "backups"
+
+
+class DefaultConfig(object):
+    def __init__(self):
+        self.first_date = datetime.date.today() - datetime.timedelta(365)
+        self.last_date = datetime.date.today() + datetime.timedelta(365)
+        self.templates_directory = "templates"
+        self.options = 0
+        self.saas_port = None
+        self.numfact = None
+        self.codeclient = None
+        self.tipi = ""
+
+
+class Config(object):
+    def __init__(self):
+        self.filename = CONFIG_FILENAME
+        self.path = None
+        self.sections = {}
+        self.default_section = None
+        self.current_section = None
+        self.readonly = False
+        self.default_config = DefaultConfig()
+
+    @staticmethod
+    def find_config_file():
+        for folder in CONFIG_PATHS:
+            path = folder + CONFIG_FILENAME
+            if os.path.isfile(path):
+                return path
+        return None
+
+    def load(self, path=None, progress_handler=default_progress_handler):
+        if path is None:
+            path = self.find_config_file()
+
+        progress_handler.display("Chargement de la configuration %s ..." % (path if path else "par défaut"))
+        parser = ConfigParser()
+
+        if path:
+            try:
+                parser.read(path)
+                self.path = path
             except:
-                pass
-        except:
-            proxy_info = None
-        database.connection = HttpConnection(url, filename, identity, auth_info, proxy_info)
-        try:
-            database.tipi = parser.get(section, "tipi")
-        except:
-            pass
-    elif url.startswith("file://"):
-        try:
-            identity = parser.get(section, "identity")
-        except:
-            identity = datetime.time()
-        database.connection = SharedFileConnection(url[7:], filename, identity)
-        
-    return database
+                progress_handler.display("Fichier %s erroné. Utilisation de la configuration par défaut." % path)
+
+        if parser:
+            for name in parser.sections():
+                section = Section(parser, name)
+                if section.database:
+                    self.sections[name] = Section(parser, name)
+
+        self.sections_names = list(self.sections.keys())
+        self.sections_names.sort(key=lambda name: name.upper())
+
+        if not self.sections:
+            self.sections[None] = Section(parser, "")
+
+        section_name = Section(parser).getStringParameter("default-section", None)
+        self.default_section = self.sections.get(section_name, None)
+
+        if len(self.sections) == 1:
+            self.set_current_section(self.sections_names[0])
+            if not self.current_section.database:
+                self.current_section.database = DEFAULT_DATABASE
+
+    def save(self, progress_handler):
+        parameters = {}
+        if self.window_size != self.original_window_size:
+            parameters["window-width"] = str(self.window_size[0])
+            parameters["window-height"] = str(self.window_size[1])
+        if self.documents_directory != self.original_documents_directory:
+            parameters["documents-directory"] = self.documents_directory
+        if self.backups_directory != self.original_backups_directory:
+            parameters["backups-directory"] = self.backups_directory
+        if self.current_section != self.default_section:
+            parameters["default-section"] = self.current_section.name
+        if parameters:
+            try:
+                if not self.parser.has_section(DEFAULT_SECTION):
+                    self.parser.add_section(DEFAULT_SECTION)
+                for key in parameters.keys():
+                    if self.parser.has_option(self.current_section, key):
+                        self.parser.set(self.current_section, key, parameters[key])
+                    else:
+                        self.parser.set(DEFAULT_SECTION, key, parameters[key])
+                with open(self.path, "w") as f:
+                    self.parser.write(f)
+            except Exception as e:
+                print(e)
+                progress_handler.display("Impossible d'enregistrer les paramètres de configuration !")
+
+    def set_current_section(self, section_name):
+        print("Section %s choisie" % section_name)
+        self.current_section = self.sections[section_name]
+
+    def __getattr__(self, key):
+        if self.current_section and hasattr(self.current_section, key):
+            return getattr(self.current_section, key)
+        else:
+            return getattr(self.default_config, key)
 
 
-def GetConfigFile():
-    for folder in CONFIG_PATHS:
-        path = folder + CONFIG_FILENAME
-        if os.path.isfile(path):
-            return path
-    return None
+config = Config()
 
 
-def LoadConfig(path=None, progress_handler=default_progress_handler):
-    if path is None:
-        path = GetConfigFile()
+print("TODO Fin config à revoir")
 
-    progress_handler.display("Chargement de la configuration %s ..." % (path if path else "par défaut"))
-    parser = ConfigParser.SafeConfigParser()
-
-    if path:
-        try:
-            parser.read(path)
-            config.filename = path
-        except:
-            progress_handler.display("Fichier %s erroné. Utilisation de la configuration par défaut." % path)
-
-    config.original_window_size = getWindowSize(parser)
-    config.window_size = config.original_window_size
-    config.column_width = getIntegerParameter(parser, "column-width", 4)
-
-    config.debug = getIntegerParameter(parser, "debug")
-    config.saas_port = getIntegerParameter(parser, "port", None)
-    config.heure_synchro_tablette = getTimeParameter(parser, "heure-synchro-tablette", None)
-    config.preinscription_redirect = getStringParameter(parser, "preinscription-redirect", "")
-    config.preinscription_template = getStringParameter(parser, "preinscription-template", "")
-    config.preinscription_required = getStringParameter(parser, "preinscription-required", "")
-    config.child_selection_widget = getStringParameter(parser, "child-selection-widget", "autocomplete")
-
-    years_before, years_after = getYearsDisplayed(parser)
-    config.first_date = datetime.date(today.year - years_before, 1, 1)
-    config.last_date = datetime.date(today.year + years_after, 12, 31)
-
-    config.inscriptions_semaines_conges = getIntegerParameter(parser, "inscriptions.semaines_conges", None)
-
-    config.pictos = getPictos(parser)
-    config.hide = getStringParameter(parser, "hide")
-
-    config.options = getOptions(parser)
-    config.templates = getTemplatesDirectory(parser)
-    
-    config.original_documents_directory = getDocumentsDirectory(parser)
-    config.documents_directory = config.original_documents_directory
-    
-    config.original_backups_directory = getBackupsDirectory(parser)
-    config.backups_directory = config.original_backups_directory
-    
-    config.original_default_section = getStringParameter(parser, "default-database", None)
-    config.default_section = config.original_default_section
-
-    config.original_import_database = getStringParameter(parser, "import-database", None)
-    config.import_database = config.original_import_database
-
-    if parser:
-        for section in parser.sections():
-            database = getDatabase(parser, section)
-            if database:
-                config.sections[section] = Section(database)
-                config.sections[section].numfact = getField(parser, section, "numfact")
-                config.sections[section].codeclient = getField(parser, section, "codeclient")
-                
-    if not config.sections:
-        config.sections[None] = Section(Database())
-    if len(config.sections) == 1:
-        config.setSection(config.sections.keys()[0])
-
-
-def SaveConfig(progress_handler):
-    parameters = {}
-    if config.window_size != config.original_window_size:
-        parameters["window-width"] = str(config.window_size[0])
-        parameters["window-height"] = str(config.window_size[1])
-    if config.documents_directory != config.original_documents_directory:
-        parameters["documents-directory"] = config.documents_directory
-    if config.backups_directory != config.original_backups_directory:
-        parameters["backups-directory"] = config.backups_directory
-    if config.default_section != config.original_default_section:
-        parameters["default-database"] = config.default_section
-    if parameters:
-        try:
-            parser = ConfigParser.SafeConfigParser()
-            parser.read(config.filename)
-            if not parser.has_section(DEFAULT_SECTION):
-                parser.add_section(DEFAULT_SECTION)
-            for key in parameters.keys():
-                parser.set(DEFAULT_SECTION, key, parameters[key])
-            parser.write(file(config.filename, "w"))
-        except Exception as e:
-            print(e)
-            progress_handler.display("Impossible d'enregistrer les paramètres de configuration !")
-
-
-def Filter():
-    # filtrage des inscrits trop anciens (< config.first_date)
-    inscrits = []
-    for inscrit in creche.inscrits:
-        if len(inscrit.inscriptions) > 0:
-            inscrits_famille = GetInscritsFamille(inscrit.famille)
-            for enfant in inscrits_famille:
-                stop = False
-                for inscription in enfant.inscriptions:
-                    if not inscription.debut or not inscription.fin or inscription.fin >= config.first_date:
-                        inscrits.append(inscrit)
-                        stop = True
+if 0:
+    def Filter():
+        # filtrage des inscrits trop anciens (< config.first_date)
+        inscrits = []
+        for inscrit in database.creche.inscrits:
+            if len(inscrit.inscriptions) > 0:
+                inscrits_famille = GetInscritsFamille(inscrit.famille)
+                for enfant in inscrits_famille:
+                    stop = False
+                    for inscription in enfant.inscriptions:
+                        if not inscription.debut or not inscription.fin or inscription.fin >= config.first_date:
+                            inscrits.append(inscrit)
+                            stop = True
+                            break
+                    if stop:
                         break
-                if stop:
-                    break
-        else:
-            inscrits.append(inscrit)
-    print("%d inscrits filtrés" % (len(creche.inscrits) - len(inscrits)))
-    creche.inscrits = inscrits
+            else:
+                inscrits.append(inscrit)
+        print("%d inscrits filtrés" % (len(database.creche.inscrits) - len(inscrits)))
 
+    def Update():
+        return config.connection.Update()
 
-def Load(progress_handler=default_progress_handler, autosave=False):
-    __builtin__.creche, _readonly = config.connection.Load(progress_handler, autosave)
-    Filter()
-    if _readonly:
-        __builtin__.readonly = True
-    return creche is not None
-
-
-def Save(progress_handler=default_progress_handler):
-    return config.connection.Save(progress_handler)
-
-
-def Restore(progress_handler=default_progress_handler):
-    return config.connection.Restore(progress_handler)
-
-
-def Update():
-    return config.connection.Update()
-
-
-def Exit(progress_handler=default_progress_handler):
-    SaveConfig(progress_handler)
-    return config.connection.Exit(progress_handler)
-
-
-def Liste(progress_handler=default_progress_handler):
-    result = {}
-    try:
-        c = creche
-    except:
-        c = None
-    for value in config.sections.values():
-        if value.section == config.default_section and c:
-            for inscrit in c.inscrits:
-                result[GetPrenomNom(inscrit)] = value
-        else:
-            for entry in database.connection.Liste(progress_handler):
-                result[entry] = value
-    return result
-
-
-def RemoveIncompatibleSAASOptions():
-    creche.tri_planning &= ~TRI_GROUPE
-
+    def RemoveIncompatibleSAASOptions():
+        database.creche.tri_planning &= ~TRI_GROUPE

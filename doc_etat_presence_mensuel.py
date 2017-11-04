@@ -51,14 +51,14 @@ class EtatPresenceMensuelModifications(object):
             
         #return errors
 
-        inscrits = GetInscrits(self.date, GetMonthEnd(self.date))
+        inscrits = list(database.creche.select_inscrits(self.date, GetMonthEnd(self.date)))
         inscrits.sort(cmp=lambda x, y: cmp(GetPrenomNom(x), GetPrenomNom(y)))
         
         template = lignes.item(5)
         for inscrit in inscrits:
             fields = GetInscritFields(inscrit)
             cantine, garderie = 0, 0
-            if creche.mode_saisie_planning == SAISIE_HORAIRE:
+            if database.creche.mode_saisie_planning == SAISIE_HORAIRE:
                 date = self.date
                 while date.month == self.date.month:
                     journee = inscrit.GetJournee(date)
@@ -79,7 +79,7 @@ class EtatPresenceMensuelModifications(object):
                     for key in facture.heures_supplement_activites:
                         fields.append((key, facture.heures_supplement_activites[key]))
                         fields.append(("montant-%s" % key, facture.detail_supplement_activites[key], FIELD_EUROS))
-                except CotisationException, e:
+                except CotisationException as e:
                     errors[GetPrenomNom(inscrit)] = e.errors
                     continue
 

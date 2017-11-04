@@ -31,17 +31,6 @@ class CotisationException(Exception):
         return '\n'.join(self.errors)
 
 
-def GetDateRevenus(date):
-    if creche.periode_revenus == REVENUS_CAFPRO:
-        return datetime.date(date.year, date.month, 1)
-    elif date >= datetime.date(2008, 9, 1):
-        return datetime.date(date.year - 2, date.month, 1)
-    elif date < datetime.date(date.year, 9, 1):
-        return datetime.date(date.year - 2, 1, 1)
-    else:
-        return datetime.date(date.year - 1, 1, 1)
-
-
 def GetNombreFacturesContrat(debut, fin):
     nombre_factures = 0
     date = debut
@@ -54,19 +43,19 @@ def GetNombreFacturesContrat(debut, fin):
 
 def GetNombreMoisSansFactureContrat(annee):
     result = 0
-    if annee in creche.mois_sans_facture.keys():
-        result += len(creche.mois_sans_facture[annee])
-    if annee in creche.mois_facture_uniquement_heures_supp.keys():
-        result += len(creche.mois_facture_uniquement_heures_supp[annee])
+    if annee in database.creche.mois_sans_facture.keys():
+        result += len(database.creche.mois_sans_facture[annee])
+    if annee in database.creche.mois_facture_uniquement_heures_supp.keys():
+        result += len(database.creche.mois_facture_uniquement_heures_supp[annee])
     return result    
 
 
 def IsFacture(date):
-    return date.year not in creche.mois_sans_facture.keys() or date.month not in creche.mois_sans_facture[date.year]
+    return date.year not in database.creche.mois_sans_facture.keys() or date.month not in database.creche.mois_sans_facture[date.year]
 
 
 def IsContratFacture(date):
-    return IsFacture(date) and (date.year not in creche.mois_facture_uniquement_heures_supp.keys() or date.month not in creche.mois_facture_uniquement_heures_supp[date.year])
+    return IsFacture(date) and (date.year not in database.creche.mois_facture_uniquement_heures_supp.keys() or date.month not in database.creche.mois_facture_uniquement_heures_supp[date.year])
 
 
 def GetTranchesPaje(date, naissance, enfants_a_charge):
@@ -125,7 +114,7 @@ class Cotisation(object):
             else:
                 multiplier = heures / heures_mois
             while heure < heures_mois:
-                montant_heure_garde = creche.EvalTauxHoraire(self.debut, self.mode_garde, self.inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, self.inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, heure, self.tranche_paje, self.inscrit.famille.tarifs | self.inscription.tarifs)
+                montant_heure_garde = database.creche.EvalTauxHoraire(self.debut, self.mode_garde, self.inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, self.inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, heure, self.tranche_paje, self.inscrit.famille.tarifs | self.inscription.tarifs)
                 result += multiplier * montant_heure_garde * min(1.0, heures_mois - heure)
                 tarifs.add(montant_heure_garde)
                 heure += 1.0
@@ -142,7 +131,7 @@ class Cotisation(object):
             errors.append(" - La date de début de la période n'est pas renseignée.")
             raise CotisationException(errors)
 
-        inscription = inscrit.GetInscription(date, preinscription=True, array=True)
+        inscription = inscrit.get_inscription(date, preinscription=True, array=True)
         if len(inscription) == 0:
             errors.append(" - Il n'y a pas d'inscription à cette date (%s)." % str(date))
             raise CotisationException(errors)
@@ -157,12 +146,12 @@ class Cotisation(object):
         self.debut = self.debut_inscription
         self.fin = self.fin_inscription
 
-        if creche.gestion_depart_anticipe and self.inscription.depart:
+        if database.creche.gestion_depart_anticipe and self.inscription.depart:
             self.fin = self.inscription.depart
             if options & DEPART_ANTICIPE:
                 self.fin_inscription = self.inscription.depart
 
-        if creche.facturation_periode_adaptation not in (PERIODE_ADAPTATION_FACTUREE_NORMALEMENT, PERIODE_ADAPTATION_FACTUREE_NORMALEMENT_SANS_HEURES_SUPPLEMENTAIRES) and self.inscription.fin_periode_adaptation:
+        if database.creche.facturation_periode_adaptation not in (PERIODE_ADAPTATION_FACTUREE_NORMALEMENT, PERIODE_ADAPTATION_FACTUREE_NORMALEMENT_SANS_HEURES_SUPPLEMENTAIRES) and self.inscription.fin_periode_adaptation:
             if self.inscription.IsInPeriodeAdaptation(self.date):
                 self.fin = self.inscription.fin_periode_adaptation
             else:
@@ -177,53 +166,50 @@ class Cotisation(object):
         self.conges_inscription = []
         self.chomage = 0
         self.conge_parental = 0
-        self.date_revenus = GetDateRevenus(self.date)
+        self.date_revenus = self.inscrit.creche.GetDateRevenus(self.date)
         self.assiette_annuelle = 0.0
-        self.parents = 0
+        self.parents = len(inscrit.famille.parents)
         self.frais_inscription = self.inscription.frais_inscription
         self.montant_allocation_caf = self.inscription.allocation_mensuelle_caf
         self.montant_credit_impots = 0.0
-
         if not (options & NO_PARENTS):
             for parent in inscrit.famille.parents:
-                if parent and parent.relation is not None:
-                    self.parents += 1
-                    revenus_parent = Select(parent.revenus, self.date_revenus)
-                    are_revenus_needed = creche.AreRevenusNeeded()
-                    if are_revenus_needed and (revenus_parent is None or revenus_parent.revenu == ''):
-                        errors.append(" - Les déclarations de revenus de %s sont incomplètes." % parent.relation)
-                    elif revenus_parent:
-                        if revenus_parent.revenu:
-                            revenu = float(revenus_parent.revenu)
-                        else:
-                            revenu = 0.0
-                        if creche.periode_revenus == REVENUS_CAFPRO:
-                            revenu_debut, revenu_fin = revenus_parent.debut, revenus_parent.fin
-                        elif self.date >= datetime.date(2008, 9, 1):
-                            revenu_debut, revenu_fin = revenus_parent.debut, revenus_parent.fin
-                            if isinstance(revenu_debut, datetime.date):
-                                revenu_debut = datetime.date(revenu_debut.year + 2, revenu_debut.month, revenu_debut.day)
-                            if isinstance(revenu_fin, datetime.date):
-                                revenu_fin = datetime.date(revenu_fin.year + 2, revenu_fin.month, revenu_fin.day)
-                        else:
-                            revenu_debut, revenu_fin = (GetYearStart(self.date), GetYearEnd(self.date))
-                        if are_revenus_needed:
-                            self.AjustePeriode((revenu_debut, revenu_fin))
-                        self.assiette_annuelle += revenu
-                        if revenus_parent.chomage:
-                            abattement = 0.3 * revenu
-                            self.assiette_annuelle -= abattement
-                            self.chomage += 1
-                        else:
-                            abattement = None
-                        if revenus_parent.conge_parental:
-                            self.conge_parental += 1
-                        self.revenus_parents.append((parent, revenu, abattement))
+                revenus_parent = Select(parent.revenus, self.date_revenus)
+                are_revenus_needed = self.inscrit.creche.are_revenus_needed()
+                if are_revenus_needed and (revenus_parent is None or revenus_parent.revenu == ''):
+                    errors.append(" - Les déclarations de revenus de %s sont incomplètes." % RelationsItems[parent.sexe][0].lower())
+                elif revenus_parent:
+                    if revenus_parent.revenu:
+                        revenu = float(revenus_parent.revenu)
+                    else:
+                        revenu = 0.0
+                    if database.creche.periode_revenus == REVENUS_CAFPRO:
+                        revenu_debut, revenu_fin = revenus_parent.debut, revenus_parent.fin
+                    elif self.date >= datetime.date(2008, 9, 1):
+                        revenu_debut, revenu_fin = revenus_parent.debut, revenus_parent.fin
+                        if isinstance(revenu_debut, datetime.date):
+                            revenu_debut = datetime.date(revenu_debut.year + 2, revenu_debut.month, revenu_debut.day)
+                        if isinstance(revenu_fin, datetime.date):
+                            revenu_fin = datetime.date(revenu_fin.year + 2, revenu_fin.month, revenu_fin.day)
+                    else:
+                        revenu_debut, revenu_fin = (GetYearStart(self.date), GetYearEnd(self.date))
+                    if are_revenus_needed:
+                        self.AjustePeriode((revenu_debut, revenu_fin))
+                    self.assiette_annuelle += revenu
+                    if revenus_parent.chomage:
+                        abattement = 0.3 * revenu
+                        self.assiette_annuelle -= abattement
+                        self.chomage += 1
+                    else:
+                        abattement = None
+                    if revenus_parent.conge_parental:
+                        self.conge_parental += 1
+                    self.revenus_parents.append((parent, revenu, abattement))
 
         if options & TRACES:
             print(" assiette annuelle :", self.assiette_annuelle)
 
-        self.bareme_caf = Select(creche.baremes_caf, self.date)
+        self.bareme_caf = Select(database.creche.baremes_caf, self.date)
         if self.bareme_caf:
             if self.bareme_caf.plafond and self.assiette_annuelle > self.bareme_caf.plafond:
                 self.AjustePeriode(self.bareme_caf)
@@ -241,16 +227,16 @@ class Cotisation(object):
                     
         self.assiette_mensuelle = self.assiette_annuelle / 12
         
-        if creche.modes_inscription == MODE_5_5:
+        if database.creche.modes_inscription == MODE_5_5:
             self.mode_garde = MODE_5_5  # TODO a renommer en mode_inscription
             self.jours_semaine = 5
             self.heures_reelles_semaine = 50.0
         else:
             self.mode_garde = self.inscription.mode
-            self.jours_semaine, self.heures_reelles_semaine = self.inscription.GetJoursHeuresReference()
-            self.semaines_reference = self.inscription.duree_reference / 7
+            self.jours_semaine = self.inscription.get_days_per_week()
+            self.heures_reelles_semaine = self.inscription.get_duration_per_week(self.inscrit.creche.arrondi_heures)
+            self.semaines_reference = self.inscription.duree_reference // 7
             self.jours_semaine /= self.semaines_reference
-            self.heures_reelles_semaine /= self.semaines_reference
         
         if self.mode_garde is None:
             errors.append(" - Le mode de garde n'est pas renseigné.")
@@ -260,7 +246,7 @@ class Cotisation(object):
         else:
             self.mode_inscription = MODE_CRECHE
 
-        self.enfants_a_charge, self.enfants_en_creche, debut, fin = GetEnfantsCount(inscrit, self.date)
+        self.enfants_a_charge, self.enfants_en_creche, debut, fin = inscrit.famille.GetEnfantsCount(self.date)
         self.AjustePeriode((debut, fin))
         
         if self.fin is None:
@@ -282,12 +268,12 @@ class Cotisation(object):
         self.heures_accueil_non_facture = 0.0
         self.semaines_periode = 0
               
-        if creche.mode_facturation == FACTURATION_FORFAIT_10H:
+        if database.creche.mode_facturation == FACTURATION_FORFAIT_10H:
             self.heures_semaine = 10.0 * self.jours_semaine
             self.heures_mois = self.heures_semaine * 4
             self.heures_periode = self.heures_mois * 12
             self.nombre_factures = 12 - GetNombreMoisSansFactureContrat(self.date.year)
-        elif creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
+        elif database.creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
             self.heures_semaine = self.heures_reelles_semaine
             self.heures_mois = self.heures_semaine * 4
             self.heures_periode = self.heures_mois * 12
@@ -300,7 +286,7 @@ class Cotisation(object):
                 self.heures_semaine = self.inscription.forfait_mensuel_heures  # TODO rename to forfait
             elif self.inscription.mode == MODE_FORFAIT_GLOBAL_CONTRAT:
                 self.heures_periode = self.inscription.forfait_mensuel_heures  # TODO rename to forfait
-            elif creche.mode_facturation == FACTURATION_PAJE_10H:
+            elif database.creche.mode_facturation == FACTURATION_PAJE_10H:
                 self.heures_semaine = 10.0 * self.jours_semaine
             else:
                 self.heures_semaine = self.heures_reelles_semaine
@@ -310,12 +296,12 @@ class Cotisation(object):
             else:
                 fin_decompte_conges_et_factures = self.fin_inscription
 
-            if creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS and self.inscription.mode not in (MODE_FORFAIT_HEBDOMADAIRE, MODE_FORFAIT_MENSUEL, MODE_FORFAIT_GLOBAL_CONTRAT):
+            if database.creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS and self.inscription.mode not in (MODE_FORFAIT_HEBDOMADAIRE, MODE_FORFAIT_MENSUEL, MODE_FORFAIT_GLOBAL_CONTRAT):
                 if self.fin_inscription is None:
                     errors.append(" - La période d'inscription n'a pas de fin.")
                     raise CotisationException(errors)
 
-                if creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
+                if database.creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
                     date = GetMonthStart(self.debut_inscription)
                     fin_decompte_conges_et_factures = GetMonthEnd(self.fin_inscription)
                     if options & TRACES:
@@ -327,12 +313,12 @@ class Cotisation(object):
 
                 # debut_conge = None
                 while date <= fin_decompte_conges_et_factures:
-                    heures = self.inscription.GetJourneeReference(date).GetNombreHeures()
+                    heures = self.inscription.get_day_from_date(date).get_duration(self.inscrit.creche.arrondi_heures)
                     if heures:
-                        if date in creche.jours_fermeture:
+                        if date in database.creche.jours_fermeture:
                             # if debut_conge is None:
                             #     debut_conge = date
-                            if creche.jours_fermeture[date].options == ACCUEIL_NON_FACTURE:
+                            if database.creche.jours_fermeture[date].options == ACCUEIL_NON_FACTURE:
                                 if options & TRACES:
                                     print(" accueil non facturé :", date, "(%fh)" % heures)
                                 self.heures_accueil_non_facture += heures
@@ -363,7 +349,7 @@ class Cotisation(object):
                 if options & TRACES:
                     print(" heures période :", self.heures_periode)
                 self.semaines_periode = 1 + (self.fin_inscription - self.debut_inscription).days / 7
-                if creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
+                if database.creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
                     self.nombre_factures = GetNombreFacturesContrat(self.debut_inscription, fin_decompte_conges_et_factures)
                 else:
                     self.nombre_factures = GetNombreFacturesContrat(self.debut, fin_decompte_conges_et_factures)
@@ -371,8 +357,8 @@ class Cotisation(object):
                 if options & TRACES:
                     print(" nombres de factures :", self.nombre_factures)
 
-                if creche.mode_facturation != FACTURATION_FORFAIT_MENSUEL:
-                    if creche.arrondi_mensualisation == SANS_ARRONDI:
+                if database.creche.mode_facturation != FACTURATION_FORFAIT_MENSUEL:
+                    if database.creche.arrondi_mensualisation == SANS_ARRONDI:
                         self.heures_mois = (self.heures_periode / self.GetNombreFactures())
                         if options & TRACES:
                             print(" heures mensuelles : %f" % self.heures_mois)
@@ -381,25 +367,25 @@ class Cotisation(object):
                         if options & TRACES:
                             print(" heures mensuelles : %f (%f)" % (self.heures_mois, self.heures_periode / self.GetNombreContratsFactures()))
             else:
-                if creche.repartition == REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS:
+                if database.creche.repartition == REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS:
                     if self.fin_inscription is None:
                         errors.append(" - La période d'inscription n'a pas de fin.")
                         raise CotisationException(errors)
-                    if creche.facturation_periode_adaptation in (PERIODE_ADAPTATION_GRATUITE, PERIODE_ADAPTATION_HORAIRES_REELS) and self.inscription.fin_periode_adaptation:
+                    if database.creche.facturation_periode_adaptation in (PERIODE_ADAPTATION_GRATUITE, PERIODE_ADAPTATION_HORAIRES_REELS) and self.inscription.fin_periode_adaptation:
                         self.debut_inscription = self.inscription.fin_periode_adaptation + datetime.timedelta(1)
                     self.semaines_periode = GetNombreSemainesPeriode(self.debut_inscription, self.fin_inscription)
                     self.nombre_factures = GetNombreFacturesContrat(self.debut_inscription, self.fin_inscription)
                     self.prorata = False  # Fait pour O-pagaio (self.fin_inscription != self.fin or self.debut_inscription != self.debut)
-                elif creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
+                elif database.creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
                     if self.fin_inscription is None:
                         errors.append(" - La période d'inscription n'a pas de fin.")
                         raise CotisationException(errors)
                     if not config.options & COMPATIBILITY_MODE_ADAPTATIONS_2016:
-                        if creche.facturation_periode_adaptation in (PERIODE_ADAPTATION_GRATUITE, PERIODE_ADAPTATION_HORAIRES_REELS) and self.inscription.fin_periode_adaptation:
+                        if database.creche.facturation_periode_adaptation in (PERIODE_ADAPTATION_GRATUITE, PERIODE_ADAPTATION_HORAIRES_REELS) and self.inscription.fin_periode_adaptation:
                             self.debut_inscription = self.inscription.fin_periode_adaptation + datetime.timedelta(1)
                     self.semaines_periode = GetNombreSemainesPeriode(self.debut_inscription, self.fin_inscription)
                     self.nombre_factures = GetNombreFacturesContrat(self.debut_inscription, self.fin_inscription)
-                elif creche.repartition == REPARTITION_SANS_MENSUALISATION:
+                elif database.creche.repartition == REPARTITION_SANS_MENSUALISATION:
                     if self.fin_inscription is None:
                         self.semaines_periode = 52
                         self.nombre_factures = 12 - GetNombreMoisSansFactureContrat(self.date.year)
@@ -422,7 +408,7 @@ class Cotisation(object):
                 else:
                     self.heures_periode = (self.semaines_periode - self.semaines_conges) * self.heures_semaine
 
-                    if creche.mode_facturation != FACTURATION_FORFAIT_MENSUEL and self.inscription.mode != MODE_FORFAIT_MENSUEL:
+                    if database.creche.mode_facturation != FACTURATION_FORFAIT_MENSUEL and self.inscription.mode != MODE_FORFAIT_MENSUEL:
                         self.heures_mois = self.heures_periode / self.GetNombreContratsFactures()
 
                     if options & TRACES:
@@ -444,17 +430,17 @@ class Cotisation(object):
             errors.append(" - La date de naissance n'est pas renseignée.")
             raise CotisationException(errors)
 
-        if creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
+        if database.creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
             self.montant_heure_garde = 0.0
             self.cotisation_periode = 0.0
             self.cotisation_mensuelle = self.inscription.forfait_mensuel
-        elif creche.mode_facturation == FACTURATION_HORAIRES_REELS or self.inscription.mode == MODE_FORFAIT_MENSUEL:
+        elif database.creche.mode_facturation == FACTURATION_HORAIRES_REELS or self.inscription.mode == MODE_FORFAIT_MENSUEL:
             if self.inscription.mode == MODE_FORFAIT_MENSUEL:
                 self.forfait_mensuel_heures = self.inscription.forfait_mensuel_heures
                 # print "heures : ", self.heures_semaine, self.heures_mois
             try:
                 self.tranche_paje = 1 + GetTranche(self.assiette_annuelle, GetTranchesPaje(date, inscrit.naissance, self.enfants_a_charge))
-                self.montant_heure_garde = creche.EvalTauxHoraire(self.debut, self.mode_garde, inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, 0, self.tranche_paje, inscrit.famille.tarifs | self.inscription.tarifs)
+                self.montant_heure_garde = database.creche.EvalTauxHoraire(self.debut, self.mode_garde, inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, 0, self.tranche_paje, inscrit.famille.tarifs | self.inscription.tarifs)
                 if options & TRACES:
                     print(" montant heure de garde (Forfait horaire) :", self.montant_heure_garde)
             except Exception as e:
@@ -463,14 +449,14 @@ class Cotisation(object):
                 raise CotisationException(errors)
             self.cotisation_periode = None
             self.cotisation_mensuelle, self.montants_heure_garde = self.CalculeFraisGardeComplete(self.forfait_mensuel_heures, self.heures_mois)
-        elif creche.mode_facturation in (FACTURATION_PAJE, FACTURATION_PAJE_10H):
+        elif database.creche.mode_facturation in (FACTURATION_PAJE, FACTURATION_PAJE_10H):
             self.tranche_paje = 1 + GetTranche(self.assiette_annuelle, GetTranchesPaje(date, inscrit.naissance, self.enfants_a_charge))
             if date < datetime.date(2016, 1, 1):
                 self.AjustePeriode((debut, datetime.date(2015, 12, 31)))
             else:
                 self.AjustePeriode((datetime.date(2016, 1, 1), fin))
             try:
-                self.montant_heure_garde = creche.EvalTauxHoraire(self.debut, self.mode_garde, inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, None, self.tranche_paje, inscrit.famille.tarifs | self.inscription.tarifs)
+                self.montant_heure_garde = database.creche.EvalTauxHoraire(self.debut, self.mode_garde, inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, None, self.tranche_paje, inscrit.famille.tarifs | self.inscription.tarifs)
                 if options & TRACES:
                     print(" montant heure de garde (PAJE) :", self.montant_heure_garde)
             except Exception as e:
@@ -486,7 +472,7 @@ class Cotisation(object):
             self.cotisation_mensuelle = self.cotisation_periode / self.GetNombreContratsFactures()
             self.montant_allocation_caf = self.EvalAllocationCaf()
             self.montant_credit_impots = self.EvalCreditImpots()
-        elif creche.nom == "LA VOLIERE":
+        elif database.creche.nom == "LA VOLIERE":
             if self.enfants_a_charge == 1:
                 tranche = GetTranche(self.assiette_annuelle, [20281.0, 45068.0])
             elif self.enfants_a_charge == 2:
@@ -495,7 +481,7 @@ class Cotisation(object):
                 tranche = GetTranche(self.assiette_annuelle, [27033.0, 60074.0])
             else:
                 tranche = GetTranche(self.assiette_annuelle, [30716.0, 68259.0])
-            B20 = creche.cout_journalier / 10
+            B20 = database.creche.cout_journalier / 10
             B2X = B20 * (1.10, 1.15, 1.20)[tranche]
             self.a = (B20 - B2X) / 229
             self.b = (230 * B2X - B20) / 229
@@ -507,15 +493,15 @@ class Cotisation(object):
             else:
                 self.mode_taux_effort = '1 enfant à charge'
                 
-            if creche.mode_facturation == FACTURATION_PSU_TAUX_PERSONNALISES:
+            if database.creche.mode_facturation == FACTURATION_PSU_TAUX_PERSONNALISES:
                 try:
-                    self.taux_effort = creche.EvalTauxEffort(self.mode_garde, inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, 0, self.tranche_paje, inscrit.famille.tarifs | self.inscription.tarifs)
+                    self.taux_effort = database.creche.EvalTauxEffort(self.mode_garde, inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, 0, self.tranche_paje, inscrit.famille.tarifs | self.inscription.tarifs)
                 except Exception as e:
                     print("Exception formule de calcul", e)
                     errors.append(" - La formule de calcul du taux d'effort n'est pas correcte.")
                     raise CotisationException(errors)
             else:
-                if creche.type == TYPE_PARENTAL and date.year < 2013:
+                if database.creche.type == TYPE_PARENTAL and date.year < 2013:
                     tranche = self.enfants_a_charge
                     if inscrit.handicap:
                         tranche += 1
@@ -527,7 +513,7 @@ class Cotisation(object):
                         self.taux_effort = 0.04
                     else:
                         self.taux_effort = 0.05
-                elif creche.type in (TYPE_FAMILIAL, TYPE_PARENTAL, TYPE_MICRO_CRECHE):
+                elif database.creche.type in (TYPE_FAMILIAL, TYPE_PARENTAL, TYPE_MICRO_CRECHE):
                     tranche = self.enfants_a_charge
                     if inscrit.handicap:
                         tranche += 1
@@ -554,16 +540,16 @@ class Cotisation(object):
                     else:
                         self.taux_effort = 0.06
             if options & TRACES:
-                print(" taux d'effort=%.02f, mode=%s, type creche=%d" % (self.taux_effort, self.mode_taux_effort, creche.type))
+                print(" taux d'effort=%.02f, mode=%s, type creche=%d" % (self.taux_effort, self.mode_taux_effort, database.creche.type))
                 
             self.montant_heure_garde = self.assiette_mensuelle * self.taux_effort / 100
-            if creche.mode_facturation in (FACTURATION_PSU, FACTURATION_PSU_TAUX_PERSONNALISES):
+            if database.creche.mode_facturation in (FACTURATION_PSU, FACTURATION_PSU_TAUX_PERSONNALISES):
                 self.montant_heure_garde = round(self.montant_heure_garde, 2)
                 self.cotisation_mensuelle = self.heures_mois * self.montant_heure_garde
             else:
                 self.cotisation_mensuelle = self.assiette_mensuelle * self.taux_effort * self.heures_mois / 100
         
-        if creche.facturation_periode_adaptation not in (PERIODE_ADAPTATION_FACTUREE_NORMALEMENT, PERIODE_ADAPTATION_FACTUREE_NORMALEMENT_SANS_HEURES_SUPPLEMENTAIRES) and self.inscription.IsInPeriodeAdaptation(self.date):
+        if database.creche.facturation_periode_adaptation not in (PERIODE_ADAPTATION_FACTUREE_NORMALEMENT, PERIODE_ADAPTATION_FACTUREE_NORMALEMENT_SANS_HEURES_SUPPLEMENTAIRES) and self.inscription.IsInPeriodeAdaptation(self.date):
             self.cotisation_periode = 0.0
             self.cotisation_mensuelle = 0.0
         
@@ -571,7 +557,7 @@ class Cotisation(object):
         self.majoration_journaliere = 0.0
         self.raison_majoration_journaliere = set()
         if self.montant_heure_garde is not None:
-            for tarif in creche.tarifs_speciaux:
+            for tarif in database.creche.tarifs_speciaux:
                 if (inscrit.famille.tarifs | self.inscription.tarifs) & (1 << tarif.idx):
                     heure_garde_diff = 0.0
                     jour_garde_diff = 0.0
@@ -607,12 +593,12 @@ class Cotisation(object):
         if self.majoration_mensuelle:
             self.cotisation_mensuelle += self.majoration_mensuelle
         
-        if creche.arrondi_mensualisation_euros == ARRONDI_EURO_PLUS_PROCHE:
+        if database.creche.arrondi_mensualisation_euros == ARRONDI_EURO_PLUS_PROCHE:
             self.cotisation_mensuelle = round(self.cotisation_mensuelle)
 
         self.montant_journalier_activites = 0.0
-        for key in creche.activites:
-            activite = creche.activites[key]
+        for key in database.creche.activites:
+            activite = database.creche.activites[key]
             if activite.mode == MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE:
                 self.montant_journalier_activites += activite.EvalTarif(inscrit, self.debut, reservataire=self.inscription.reservataire)
         if options & TRACES:
@@ -683,12 +669,12 @@ class Cotisation(object):
             date = debut
             while date <= fin:
                 valeur = self.cotisation_mensuelle
-                if creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
+                if database.creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
                     if date == debut or (self.fin and date == fin):
                         num, den = 0, 0
                         d = GetMonthStart(date)
                         while d.month == date.month:
-                            if d not in creche.jours_fermeture and (creche.conges_inscription != GESTION_CONGES_INSCRIPTION_SIMPLE or d not in self.inscrit.jours_conges):
+                            if d not in database.creche.jours_fermeture and (database.creche.conges_inscription != GESTION_CONGES_INSCRIPTION_SIMPLE or d not in self.inscrit.jours_conges):
                                 den += 1
                                 if self.debut <= d and (not self.fin or d <= self.fin):
                                     num += 1
@@ -703,7 +689,7 @@ class Cotisation(object):
 def GetCotisations(inscrit, options=TRACES):
     result = []
     date = config.first_date
-    for inscription in inscrit.GetInscriptions(preinscriptions=True):
+    for inscription in inscrit.inscriptions:
         if inscription.debut:
             date = max(date, inscription.debut)
             while date.year < today.year + 2:
@@ -713,7 +699,7 @@ def GetCotisations(inscrit, options=TRACES):
                     date = cotisation.fin + datetime.timedelta(1)
                     if inscription.fin and date > inscription.fin:
                         break
-                    if creche.gestion_depart_anticipe and inscription.depart and date > inscription.depart:
+                    if database.creche.gestion_depart_anticipe and inscription.depart and date > inscription.depart:
                         break
                 except CotisationException as e:
                     if inscription.fin:
@@ -776,11 +762,11 @@ def generateFraisGardeHtml(cotisation):
         filename = "Frais garde forfait hebdomadaire.html"
     elif cotisation.inscription.mode == MODE_FORFAIT_MENSUEL and IsTemplateFile("Frais garde forfait mensuel.html"):
         filename = "Frais garde forfait mensuel.html"
-    elif creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
+    elif database.creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
         filename = "Frais garde forfait.html"
-    elif creche.mode_facturation == FACTURATION_HORAIRES_REELS:
+    elif database.creche.mode_facturation == FACTURATION_HORAIRES_REELS:
         filename = "Frais garde reel.html"
-    elif creche.mode_facturation in (FACTURATION_PAJE, FACTURATION_PAJE_10H):
+    elif database.creche.mode_facturation in (FACTURATION_PAJE, FACTURATION_PAJE_10H):
         filename = "Frais garde paje.html"
     else:
         filename = "Frais garde defaut.html"

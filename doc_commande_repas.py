@@ -15,6 +15,9 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+from __future__ import print_function
+
 from constants import *
 from functions import *
 from facture import *
@@ -34,8 +37,8 @@ class CommandeRepasModifications(object):
     def repas(self, jour, categories=None):
         try:
             return self.presents(jour, categories, 12 * 12, 14 * 12, True)
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
     
     def gouters(self, jour, categories=None):
         return self.presents(jour, categories, 16 * 12, 17 * 12, False)
@@ -43,13 +46,13 @@ class CommandeRepasModifications(object):
     def presents(self, jour, categories, debut, fin, allergies):
         if categories is None:
             categories = []
-        elif isinstance(categories, basestring):
+        elif isinstance(categories, str):
             categories = [categories]
         total = 0
         normal = 0
         allergiques = {}
         date = self.debut + datetime.timedelta(jour)
-        for inscrit in GetInscrits(date, date, site=self.site):
+        for inscrit in database.creche.select_inscrits(date, date, site=self.site):
             if not categories or (inscrit.categorie and inscrit.categorie.nom in categories):
                 journee = inscrit.GetJournee(date)
                 if journee and IsPresentDuringTranche(journee, debut, fin):
@@ -85,12 +88,12 @@ class CommandeRepasModifications(object):
         elif filename != 'content.xml':
             return None
               
-        fields = GetCrecheFields(creche) + GetSiteFields(self.site)
+        fields = GetCrecheFields(database.creche) + GetSiteFields(self.site)
         fields.append(('numero-semaine', self.debut.isocalendar()[1]))
         fields.append(('debut-semaine', date2str(self.debut)))
         fields.append(('fin-semaine', date2str(self.debut+datetime.timedelta(4))))
                 
-        for categorie in creche.categories:
+        for categorie in database.creche.categories:
             for day in range(7):
                 fields.append(("repas", self.repas))
                 fields.append(("gouters", self.gouters))
