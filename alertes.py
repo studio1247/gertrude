@@ -49,7 +49,7 @@ def GetAlertes(fresh_only=False):
             if today > date:
                 message = "L'inscription de %s %s se terminera dans 2 mois" % (inscrit.prenom, inscrit.nom)
                 add_alerte(date, message)
-        if (config.options & REGLEMENTS) and creche.cloture_facturation:
+        if config.options & ALERTES_NON_PAIEMENT:
             # On ne calcule les retards de paiement que si la clôture est activée, sinon surcharge appli !
             if GetRetardDePaiement(inscrit.famille):
                 add_alerte(today, "Le solde de %s est négatif depuis plus de 30 jours" % GetPrenomNom(inscrit))
@@ -70,7 +70,7 @@ def GetAlertes(fresh_only=False):
         if date:
             add_alerte(date, "%s %s a 2 contrats actifs à la même date" % (salarie.prenom, salarie.nom))
 
-    if (config.options & REGLEMENTS) and creche.cloture_facturation:
+    if config.options & ALERTES_NON_PAIEMENT:
         for reservataire in creche.reservataires:
             if GetRetardDePaiement(reservataire):
                 add_alerte(today, "Le solde de %s est négatif depuis plus de %d jours" % (reservataire.nom, reservataire.delai_paiement if reservataire.delai_paiement else 0))

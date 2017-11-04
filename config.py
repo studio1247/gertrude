@@ -115,6 +115,8 @@ def getOptions(parser):
             options |= REGLEMENTS
         if "tarifs-speciaux" in str:
             options |= TARIFS_SPECIAUX
+        if "alertes-non-paiement" in str:
+            options |= ALERTES_NON_PAIEMENT
     except:
         pass
     return options
