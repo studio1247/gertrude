@@ -940,15 +940,17 @@ class Salarie(Base):
     def get_planning(self, date):
         result = None
         contrat = self.get_contrat(date)
-        if contrat:
+        if contrat and contrat.debut:
             if self.creche.gestion_plannings_salaries == GESTION_GLOBALE_PLANNINGS_SALARIES:
                 for planning in contrat.plannings:
-                    if (not planning.debut or date >= planning.debut) and (not planning.fin or date <= planning.fin):
-                        if result is None or result.debut is None or result.debut < planning.debut:
+                    if planning.debut and date >= planning.debut and (not planning.fin or date <= planning.fin):
+                        if result is None or result.debut < planning.debut:
                             result = planning
             else:
                 if contrat.plannings:
                     result = contrat.plannings[0]
+                    if result.debut is None:
+                        result.debut = contrat.debut
         return result
 
     def get_contrat(self, date):
