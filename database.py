@@ -1979,7 +1979,7 @@ class CongeSalarie(Base):
     label = Column(String)
 
     def __init__(self, salarie, debut=None, fin=None, label=None):
-        Base.__init__(salarie=salarie, debut=debut, fin=fin, label=label)
+        Base.__init__(self, salarie=salarie, debut=debut, fin=fin, label=label)
 
     def __setattr__(self, name, value):
         # Call the parent class method first.
@@ -2057,6 +2057,9 @@ class Correction(Base):
     date = Column(Date)
     valeur = Column(Float)
     libelle = Column(String)
+
+    def __init__(self, inscrit, date, **kwargs):
+        Base.__init__(self, inscrit=inscrit, date=date, **kwargs)
 
 
 class Groupe(Base):

@@ -138,7 +138,7 @@ class FactureModifications(object):
                     col = date.weekday()
                     if col < cells_count:
                         details = ""
-                        row = (date.day + empty_cells - 1) / 7
+                        row = (date.day + empty_cells - 1) // 7
                         cell = cells[row][col]
                         # ecriture de la date dans la cellule
                         text_node = cell.getElementsByTagName('text:p')[0]

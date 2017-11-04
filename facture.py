@@ -34,6 +34,7 @@ class FactureBase(object):
         self.fin_recap = GetMonthEnd(self.debut_recap)
         self.date = self.fin_recap
         self.options = options
+        self.cloture = None
 
     def GetFactureId(self):
         if config.numfact:
@@ -915,14 +916,14 @@ def GetHistoriqueSolde(who, jalon, derniere_facture=True):
                     facture = Facture(inscrit, date.year, date.month, NO_NUMERO | NO_RESTORE_CLOTURE)
                     if facture.total_facture != 0 and (not database.creche.cloture_facturation or facture.cloture):
                         if derniere_facture:
-                            # desactivé pour Moulon (la dernière facture de juillet clôturée le 10 juillet et non visible dans les règlements
+                            # desactivé pour Moulon (la dernière facture de juillet clôturée le 10 juillet et non visible dans les règlements)
                             # if facture.fin_recap <= fin:
                             lignes.append(facture)
                         else:
                             if facture.fin_recap < GetMonthStart(jalon):
                                 lignes.append(facture)
                 except Exception as e:
-                    print("Exception", repr(e))
+                    print("Exception iciiiii", repr(e))
             date = GetNextMonthStart(date)
     return lignes
 
