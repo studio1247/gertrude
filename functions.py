@@ -76,17 +76,17 @@ def GetDateString(date, weekday=True):
 
 
 def IsPresentDuringTranche(journee, debut, fin):
-    for start, end, value in journee.activites:
-        if start < fin and end > debut:
+    for timeslot in journee.timeslots:
+        if timeslot.debut < fin and timeslot.fin > debut:
             return True
     return False
 
 
 def HeuresTranche(journee, debut, fin):
     result = [0] * (24 * 60 / BASE_GRANULARITY)
-    for start, end, value in journee.activites:
-        if start < fin and end > debut:
-            for i in range(max(start, debut), min(end, fin)):
+    for timeslot in journee.timeslots:
+        if timeslot.debut < fin and timeslot.fin > debut:
+            for i in range(max(timeslot.debut, debut), min(timeslot.fin, fin)):
                 result[i] = 1
     return float(sum(result) * BASE_GRANULARITY) / 60
 
