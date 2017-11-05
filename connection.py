@@ -60,7 +60,7 @@ class SharedFileConnection(Connection):
     @staticmethod
     def read_token(filename):
         try:
-            return file(filename).read()
+            return open(filename).read()
         except:
             return None
             
@@ -74,8 +74,8 @@ class SharedFileConnection(Connection):
         if self.force_token or self.read_token(self.token_url) is None:
             self.force_token = False
             self.token = self.identity
-            file(TOKEN_FILENAME, 'w').write(self.token)
-            file(self.token_url, 'w').write(self.token)
+            open(TOKEN_FILENAME, 'w').write(self.token)
+            open(self.token_url, 'w').write(self.token)
             return 1
         else:
             self.token_already_used = True
@@ -213,7 +213,7 @@ class FileConnection(Connection):
         directory = os.path.dirname(self.filename)
         journal_path = os.path.join(directory, 'journal.txt')
         if os.path.isfile(journal_path):
-            return file(journal_path).read()
+            return open(journal_path).read()
         else:
             return None
 
@@ -233,7 +233,7 @@ class HttpConnection(FileConnection):
         else:
             self.proxies = None
         if os.path.isfile(TOKEN_FILENAME):
-            self.token = file(TOKEN_FILENAME).read()
+            self.token = open(TOKEN_FILENAME).read()
             self.check_token()
         else:
             self.token = 0
@@ -295,7 +295,7 @@ class HttpConnection(FileConnection):
             self.token_already_used = True
             return 0
         else:
-            file(TOKEN_FILENAME, 'w').write(self.token)
+            open(TOKEN_FILENAME, 'w').write(self.token)
             return 1
 
     def rel_token(self):
@@ -318,7 +318,7 @@ class HttpConnection(FileConnection):
         self.progress_handler.display("Téléchargement de la base ...")
         data = self.get_server_data('download')
         if data:
-            f = file(self.filename, 'wb')
+            f = open(self.filename, 'wb')
             f.write(data)
             f.close()
             self.progress_handler.display('%d octets transférés.' % len(data))
