@@ -381,6 +381,7 @@ FRAIS_INSCRIPTION_RESERVATAIRES = 1 << 15
 TARIFS_SPECIAUX = 1 << 16
 NO_PASSWORD = 1 << 17
 ALERTES_NON_PAIEMENT = 1 << 18
+GESTION_REPAS = 1 << 19
 
 # Atributs de plages horaires spéciales
 PLAGE_FERMETURE = 0
@@ -438,3 +439,7 @@ modes_gestion_plannings_salaries = [
     ("Planning spécifique à chaque salarié", GESTION_SIMPLE_PLANNINGS_SALARIES),
     ("Planning global pour l'équipe", GESTION_GLOBALE_PLANNINGS_SALARIES),
 ]
+
+# Type de repas
+REPAS_PUREE = 0
+REPAS_MORCEAUX = 1

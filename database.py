@@ -30,7 +30,7 @@ from parameters import *
 import bcrypt
 from config import config
 
-DB_VERSION = 115
+DB_VERSION = 116
 
 Base = declarative_base()
 
@@ -291,6 +291,7 @@ class Creche(Base):
     tranches_capacite = relationship("TrancheCapacite", collection_class=lambda: DayCollection("jour"), cascade="all, delete-orphan")
     charges = relationship("Charge", collection_class=attribute_mapped_collection("date"), cascade="all, delete-orphan")
     alertes = relationship("Alerte", cascade="all, delete-orphan")
+    food_needs = relationship("FoodNeed", cascade="all, delete-orphan")
 
     def __init__(self, **kwargs):
         Base.__init__(self, **kwargs)
@@ -676,6 +677,19 @@ class Site(Base):
     telephone = Column(String)
     capacite = Column(Integer)
     groupe = Column(Integer)
+
+
+class FoodNeed(Base):
+    __tablename__ = "food_needs"
+    idx = Column(Integer, primary_key=True)
+    creche_id = Column(Integer, ForeignKey("creche.idx"))
+    creche = relationship(Creche)
+    label = Column(String)
+    tranche_4_6 = Column(Integer)
+    tranche_6_12 = Column(Integer)
+    tranche_12_18 = Column(Integer)
+    tranche_18_24 = Column(Integer)
+    tranche_24_ = Column(Integer)
 
 
 class Bureau(Base):
@@ -1265,6 +1279,7 @@ class Inscrit(Base):
     categorie = relationship("Categorie")
     allergies = Column(String, default="")
     garde_alternee = Column(Boolean, default=False)
+    type_repas = Column(Integer, default=REPAS_PUREE)
     inscriptions = relationship("Inscription", cascade="all, delete-orphan")
     days = relationship("TimeslotInscrit", collection_class=lambda: DayCollection("date"), cascade="all, delete-orphan")
     weekslots = relationship("WeekSlotInscrit", cascade="all, delete-orphan")
@@ -2663,6 +2678,24 @@ class Database(object):
                             trash.append(row2)
                 for idx, _ in trash:
                     self.engine.execute("DELETE FROM conges WHERE idx=?", idx)
+
+            if version < 116:
+                creche_id = self.engine.execute('SELECT idx FROM CRECHE').first()[0]
+                self.engine.execute("""
+                    CREATE TABLE food_needs (
+                        idx INTEGER PRIMARY KEY,
+                        creche_id INTEGER REFERENCES creche(idx),
+                        label VARCHAR,
+                        tranche_4_6 INTEGER,
+                        tranche_6_12 INTEGER,
+                        tranche_12_18 INTEGER,
+                        tranche_18_24 INTEGER,
+                        tranche_24_ INTEGER
+                    )""")
+                for label in ("Protéines", "Féculents", "Légumes"):
+                    self.engine.execute("INSERT INTO food_needs(idx, creche_id, label, tranche_4_6, tranche_6_12, tranche_12_18, tranche_18_24, tranche_24_) VALUES(NULL,?,?,?,?,?,?,?)", creche_id, label, 0, 0, 0, 0, 0)
+                self.engine.execute("ALTER TABLE inscrits ADD type_repas INGEGER")
+                self.engine.execute("UPDATE inscrits SET type_repas=0")
 
             version_entry.value = DB_VERSION
             self.commit()
