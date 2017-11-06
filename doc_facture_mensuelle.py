@@ -95,8 +95,11 @@ class FactureModifications(object):
         else:
             self.template = 'Facture mensuelle.odt'
 
-        self.introduction_filename = "Accompagnement facture.txt"
-        self.introduction_fields = {}
+        if self.reservataire:
+            self.introduction_filename = "Accompagnement facture reservataire.txt"
+        else:
+            self.introduction_filename = "Accompagnement facture.txt"
+        self.introduction_fields = []
 
     def GetSimpleFilename(self, filename, inscrit):
         result = filename.replace("Factures", "Facture %s" % GetPrenomNom(inscrit)) \
@@ -313,6 +316,7 @@ class FactureModifications(object):
                             except Exception as e:
                                 print(e)
 
+                    self.introduction_fields = fields
                     ReplaceTextFields(clone, fields)
 
                     if clone.nodeName in ("draw:frame", "draw:custom-shape"):

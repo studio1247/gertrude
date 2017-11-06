@@ -692,8 +692,9 @@ def SendDocument(filename, generator, to=None, introduction_filename=None, saas=
             introduction.attach(MIMEText(text, 'plain', _charset='UTF-8'))
             introduction.attach(MIMEText(html, 'html', _charset='UTF-8'))
             msg.attach(introduction)
-    except Exception as e:
-        print("Exception", e)
+    except Exception:
+        print("Exception lors de la generation du texte d'accompagnement email")
+        traceback.print_exc()
 
     if filename:
         with open(filename, 'rb') as f:
