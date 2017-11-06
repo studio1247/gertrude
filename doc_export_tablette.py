@@ -86,7 +86,7 @@ class ExportTabletteModifications(object):
         lignes = table.getElementsByTagName("table:table-row")
         ReplaceFields(lignes, fields)
         lineTemplate = lignes.item(3)
-        dates = array.keys()
+        dates = list(array.keys())
         dates.sort()
         for date in dates:
             for jour in array[date]:
@@ -99,7 +99,7 @@ class ExportTabletteModifications(object):
         table.removeChild(lineTemplate)
 
     def SortedKeys(self, array, function):
-        keys = array.keys()
+        keys = list(array.keys())
         keys.sort(key=lambda key: GetPrenomNom(function(key)))
         return keys
             

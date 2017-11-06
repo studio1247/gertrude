@@ -336,20 +336,20 @@ def GetTriParCommuneEtNomIndexes(indexes):
 
 def GetTriParPrenomIndexes(indexes):
     # Tri par ordre alphabetique des prenoms
-    def tri(one, two):
-        i1, i2 = database.creche.inscrits[one], database.creche.inscrits[two]
-        return cmp(i1.prenom, i2.prenom)
+    def sort_key(x):
+        inscrit = database.creche.inscrits[x]
+        return inscrit.prenom
 
-    indexes.sort(tri)
+    indexes.sort(key=sort_key)
     return indexes
 
 
 def GetTriParNomIndexes(indexes):
-    def tri(one, two):
-        i1, i2 = database.creche.inscrits[one], database.creche.inscrits[two]
-        return cmp(i1.nom, i2.nom)
+    def sort_key(x):
+        inscrit = database.creche.inscrits[x]
+        return inscrit.nom
 
-    indexes.sort(tri)
+        indexes.sort(key=sort_key)
     return indexes
 
 
