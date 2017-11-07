@@ -354,7 +354,10 @@ class Creche(Base):
         if activity.value is None:
             activity.value = self.get_next_activity_value()
         self._activites.append(activity)
-        self.activites[activity.value] = activity
+        if activity.value < 0:
+            self.couleurs[activity.value] = activity
+        else:
+            self.activites[activity.value] = activity
 
     def delete_activite(self, activity):
         self._activites.remove(activity)
@@ -2719,15 +2722,15 @@ class Database(object):
                 (datetime.date(2013, 1, 1), datetime.date(2013, 12, 31), 7306.56, 85740.00),
             ]:
                 creche.baremes_caf.append(BaremeCAF(creche=creche, debut=debut, fin=fin, plancher=plancher, plafond=plafond))
-        self.add(Activite(creche=creche, label="Présences", value=0, mode=0,
+        creche.add_activite(Activite(creche=creche, label="Présences", value=0, mode=0,
                           _couleur="[5, 203, 28, 150, 100]",
                           _couleur_supplement="[5, 203, 28, 250, 100]",
                           formule_tarif=""))
-        self.add(Activite(creche=creche, label="Vacances", value=VACANCES, mode=0,
+        creche.add_activite(Activite(creche=creche, label="Vacances", value=VACANCES, mode=0,
                           _couleur="[0, 0, 255, 150, 100]",
                           _couleur_supplement="[0, 0, 255, 150, 100]",
                           formule_tarif=""))
-        self.add(Activite(creche=creche, label="Malade", value=MALADE, mode=0,
+        creche.add_activite(Activite(creche=creche, label="Malade", value=MALADE, mode=0,
                           _couleur="[190, 35, 29, 150, 100]",
                           _couleur_supplement="[190, 35, 29, 150, 100]",
                           formule_tarif=""))

@@ -273,6 +273,7 @@ class Config(object):
 
         if not self.sections:
             self.sections[None] = Section(parser, "")
+            self.sections_names.append(None)
 
         section_name = Section(parser).getStringParameter("default-section", None)
         self.default_section = self.sections.get(section_name, None)

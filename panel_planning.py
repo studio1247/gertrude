@@ -101,7 +101,7 @@ class DayPlanningPanel(PlanningWidget):
             children_presence = activites[0]
             revised_children_presence = []
             for timeslot in children_presence:
-                revised_children_presence.extend(check_timeslot(timeslot, database.creche.tranches_capacite[self.date.weekday()].timeslots, lambda timeslot, capacite_timeslot: timeslot <= capacite_timeslot))
+                revised_children_presence.extend(check_timeslot(timeslot, database.creche.tranches_capacite.get(self.date.weekday(), Day()).timeslots, lambda timeslot, capacite_timeslot: timeslot <= capacite_timeslot))
             activites[0] = revised_children_presence
             if database.creche.salaries:
                 debut, fin = revised_children_presence[0].debut, revised_children_presence[-1].fin
