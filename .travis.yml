@@ -8,12 +8,12 @@ addons:
     - python-wxgtk2.8
 
 install:
-  - sudo pip install bcrypt
-  - sudo pip install requests
-  - sudo pip install SQLAlchemy
-  - sudo pip install sqlalchemy-utils
-  - sudo pip install future
-  - sudo pip install configparser
+  - pip install bcrypt
+  - pip install requests
+  - pip install SQLAlchemy
+  - pip install sqlalchemy-utils
+  - pip install future
+  - pip install configparser
 
 script:
-  - cd tests && sudo python ./nonreg.py -v
+  - cd tests && python ./nonreg.py -v
