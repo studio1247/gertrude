@@ -20,6 +20,7 @@ from __future__ import print_function
 
 import math
 import xml.dom.minidom
+from builtins import str
 from functions import *
 
 
@@ -715,7 +716,7 @@ def GetCotisations(inscrit, options=TRACES):
 
 def ParseHtml(filename, context):
     locals().update(context.__dict__)
-    data = file(filename, 'r').read()
+    data = open(filename, "r").read()
 
     # remplacement des <if>
     while 1:
@@ -748,9 +749,9 @@ def ParseHtml(filename, context):
             replacement = eval(dom.getElementsByTagName('var')[0].getAttribute('value'))
         except:
             replacement = "<erreur (%s)>" % dom.getElementsByTagName('var')[0].getAttribute('value')
-        if type(replacement) == datetime.date:
+        if isinstance(replacement, datetime.date):
             replacement = date2str(replacement)
-        elif type(replacement) != str and type(replacement) != unicode:
+        elif not isinstance(replacement, str):
             replacement = str(replacement)
         data = data.replace(text, replacement)
 
