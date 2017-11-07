@@ -2521,7 +2521,7 @@ class Inscrit(object):
         if inscription is None:
             return State(ABSENT)
 
-        reference = inscription.GetJourneeReference(date)
+        reference = self.GetJourneeReference(date)  # Attention pas depuis inscription à cause des congés inscription avec supplément
         heures_reference = reference.GetNombreHeures()
         ref_state = reference.GetState()  # TODO on peut s'en passer ?
 

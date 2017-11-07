@@ -35,6 +35,8 @@ from doc_releve_detaille import ReleveDetailleModifications
 from doc_etats_trimestriels import EtatsTrimestrielsModifications
 from ooffice import GenerateOODocument
 from config import Config
+from statistiques import GetStatistiques
+
 
 __builtin__.config = Config()
 config.first_date = datetime.date(2010, 1, 1)
@@ -859,6 +861,7 @@ class RibambelleTests(GertrudeTestCase):
         creche.type = TYPE_PARENTAL
         creche.repartition = REPARTITION_SANS_MENSUALISATION
         creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
+        creche.conges_inscription = GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT
     
     def test_normal(self):
         inscrit = self.AddInscrit()
@@ -892,6 +895,25 @@ class RibambelleTests(GertrudeTestCase):
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2015, 10)
         self.assertPrec2Equals(facture.total, 275 - 10*1.25)
+
+    def test_statistiques_conges_avec_supplement(self):
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit, creation=False)
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.debut = datetime.date(2016, 1, 1)
+        conge = CongeInscrit(inscrit, creation=False)
+        conge.debut, conge.fin = "01/02/2016", "05/02/2016"
+        inscrit.AddConge(conge)
+        inscription.reference[0].AddActivity(93, 213, 0, -1)  # 10h
+        inscription.reference[1].AddActivity(93, 213, 0, -1)  # 10h
+        inscription.reference[2].AddActivity(93, 213, 0, -1)  # 10h
+        inscription.reference[3].AddActivity(93, 213, 0, -1)  # 10h
+        inscription.reference[4].AddActivity(93, 213, 0, -1)  # 10h
+        inscrit.inscriptions.append(inscription)
+        statistiques = GetStatistiques(datetime.date(2016, 1, 1), datetime.date(2016, 12, 31))
+        self.assertPrec2Equals(statistiques.heures_contrat, 2560.0)
+        self.assertPrec2Equals(statistiques.heures_reel, 2560.0)
+        self.assertPrec2Equals(statistiques.heures_facture, 2560.0)
 
 
 class LaCabaneAuxFamillesTests(GertrudeTestCase):
