@@ -96,10 +96,10 @@ class PreparationRepasModifications(object):
                 present = journee and IsPresentDuringTranche(journee, database.creche.ouverture * 12, 12.5 * 12)
                 food_needs = {}
                 for food_need in database.creche.food_needs:
-                    quantity = getattr(food_need, field) if present else 0
+                    quantity = getattr(food_need, field) if present else ""
                     food_needs[food_need.label[0].lower()] = quantity
-                    food_needs[food_need.label[0].lower() + "p"] = quantity if inscrit.type_repas == REPAS_PUREE else 0
-                    food_needs[food_need.label[0].lower() + "m"] = quantity if inscrit.type_repas == REPAS_MORCEAUX else 0
+                    food_needs[food_need.label[0].lower() + "p"] = quantity if inscrit.type_repas == REPAS_PUREE else ""
+                    food_needs[food_need.label[0].lower() + "m"] = quantity if inscrit.type_repas == REPAS_MORCEAUX else ""
                 ReplaceFields(cell, list(food_needs.items()))
             dom.insertBefore(line, template)
         dom.removeChild(template)
