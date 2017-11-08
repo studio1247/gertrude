@@ -323,7 +323,7 @@ class Config(object):
 config = Config()
 
 
-print("TODO Fin config à revoir")
+print("TODO Fin config a revoir")
 
 if 0:
     def Filter():

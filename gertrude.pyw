@@ -30,16 +30,7 @@ if sys.executable.endswith("pythonw.exe"):
     logfile = file("gertrude.log", "a")
     sys.stdout = codecs.getwriter('utf8')(logfile)
     sys.stderr = codecs.getwriter('utf8')(logfile)
-
-
-from startdialog import StartDialog
-
-try:
-    import winsound
-except:
-    pass
-
-if sys.platform != "win32":
+elif sys.platform != "win32":
     from config import GERTRUDE_DIRECTORY
     if not os.path.exists(GERTRUDE_DIRECTORY):
         os.mkdir(GERTRUDE_DIRECTORY)
@@ -47,6 +38,9 @@ if sys.platform != "win32":
         print("Démarrage de Gertrude ...")
     except:
         sys.stdout = codecs.open(GERTRUDE_DIRECTORY + "/gertrude.log", "w", "utf-8")
+
+
+from startdialog import StartDialog
 
 
 class GertrudeApp(wx.App):
