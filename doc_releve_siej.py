@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 from constants import *
 from functions import *
 from facture import *
@@ -41,7 +43,7 @@ class ReleveSIEJModifications(object):
         self.errors = {}
         self.email = None
         self.metas = {}
-        self.regimes = [u"général et fonctionnaire", "agricole", "maritime", "autres"]
+        self.regimes = ["général et fonctionnaire", "agricole", "maritime", "autres"]
 
     def GetRegime(self, inscrit, date):
         regime = inscrit.GetRegime(date)
@@ -127,7 +129,7 @@ class ReleveSIEJModifications(object):
             for i, regime in enumerate(self.table):
                 section = section_regime.cloneNode(1)
                 doc.insertBefore(section, section_regime)
-                fields = [('regime', u'Régime %s' % self.regimes[i]),
+                fields = [('regime', 'Régime %s' % self.regimes[i]),
                           ('reel-facture', regime.reel_facture),
                           ('reel-realise', regime.reel_realise),
                           ('previsionnel-facture', regime.previsionnel_facture),

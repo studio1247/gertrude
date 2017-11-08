@@ -19,6 +19,7 @@ from __future__ import unicode_literals
 from __future__ import print_function
 from builtins import str
 
+import subprocess
 import wx
 import wx.lib.filebrowsebutton
 from ooffice import *
@@ -55,7 +56,7 @@ class DocumentDialog(wx.Dialog):
         self.format.SetSelection(0)
         self.Bind(wx.EVT_CHOICE, self.onFormat, self.format)
         sizer.Add(self.format, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
-        default_output = str(normalize_filename(modifications.default_output))
+        default_output = normalize_filename(modifications.default_output)
 
         self.extension = os.path.splitext(default_output)[-1]
         wildcard = "OpenDocument (*%s)|*%s|PDF files (*.pdf)|*.pdf" % (self.extension, self.extension)
@@ -314,3 +315,4 @@ def StartAcrobatReader(filename):
     dlg = wx.MessageDialog(None, "Impossible d'ouvrir le document", 'Erreur', wx.OK | wx.ICON_WARNING)
     dlg.ShowModal()
     dlg.Destroy()
+

@@ -186,7 +186,7 @@ def GetHeureString(value):
 
 
 def normalize_filename(filename):
-    return str(unicodedata.normalize('NFKD', str(filename)).encode('ascii', 'ignore'))
+    return unicodedata.normalize('NFKD', filename).encode('utf-8')
 
 
 def get_emails(str):

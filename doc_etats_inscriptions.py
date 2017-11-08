@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 from constants import *
 from functions import *
 from facture import *
@@ -30,7 +32,7 @@ class EtatsInscriptionsModifications(object):
             self.date = today
         else:
             self.date = date
-        self.default_output = u"Etats inscriptions %s.ods" % GetDateString(self.date, weekday=False)
+        self.default_output = "Etats inscriptions %s.ods" % GetDateString(self.date, weekday=False)
         self.gauge = None
         self.email = None
         self.site = None

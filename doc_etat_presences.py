@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 from constants import *
 from functions import *
 from facture import *
@@ -50,14 +52,14 @@ class EtatsPresenceModifications(object):
         titres = GetValues(lignes.item(7))
         if database.creche.type != TYPE_GARDERIE_PERISCOLAIRE:
             for i in range(7):
-                if u'Professeur : <critere-professeur>' in GetValues(lignes.item(i)):
+                if 'Professeur : <critere-professeur>' in GetValues(lignes.item(i)):
                     table.removeChild(lignes.item(i))
                     break                
             if titres[2] == "Professeur":
                 RemoveColumn(lignes, 2)
         if len(database.creche.sites) < 2:
             for i in range(7):
-                if u'Site : <critere-site>' in GetValues(lignes.item(i)):
+                if 'Site : <critere-site>' in GetValues(lignes.item(i)):
                     table.removeChild(lignes.item(i))
                     break
             if titres[1] == "Site":
