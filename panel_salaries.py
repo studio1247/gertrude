@@ -411,7 +411,6 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
                     item.Show(True)
                 for item in self.sites_items[2:4]:
                     item.Show(False)
-
             self.duree_reference_choice.SetSelection(planning.duree_reference // 7 - 1)
             self.planning_panel.SetPlanning(planning)
         else:
@@ -517,11 +516,15 @@ class PlanningsEquipePanel(wx.lib.scrolledpanel.ScrolledPanel, PeriodeMixin):
                 planning_panel = PlanningEquipeInternalPanel(self.notebook, self.activity_choice)
                 self.notebook.AddPage(planning_panel, days[weekday])
         sizer.Add(self.notebook, 1, wx.EXPAND)
+        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnChangementJour, self.notebook)
 
         self.salarie = None
 
         self.SetSizer(sizer)
         self.UpdateContents()
+
+    def OnChangementJour(self, _):
+        self.notebook.GetCurrentPage().UpdateContents()
 
     def SetSalarie(self, salarie):
         self.salarie = salarie
@@ -534,7 +537,7 @@ class PlanningsEquipePanel(wx.lib.scrolledpanel.ScrolledPanel, PeriodeMixin):
                     planning = self.get_salarie_planning(salarie, periode.debut)
                     if not planning and periode.debut not in self.plannings:
                         previous = self.get_salarie_previous_planning(salarie, periode.debut)
-                        planning = self.get_planning_copy(previous)
+                        planning = self.get_planning_copy(contrat, previous)
                         planning.contrat = contrat
                         planning.debut = periode.debut
                         contrat.plannings.append(planning)
@@ -596,13 +599,13 @@ class PlanningsEquipePanel(wx.lib.scrolledpanel.ScrolledPanel, PeriodeMixin):
         return result
 
     @staticmethod
-    def get_planning_copy(planning):
+    def get_planning_copy(contrat, planning):
         if planning:
-            clone = PlanningSalarie(duree_reference=planning.duree_reference)
+            clone = PlanningSalarie(contrat=contrat, duree_reference=planning.duree_reference)
             for timeslot in planning.days:
                 clone.days.add(TimeslotPlanningSalarie(day=timeslot.day, debut=timeslot.debut, fin=timeslot.fin, value=timeslot.value))
         else:
-            clone = PlanningSalarie(duree_reference=7)
+            clone = PlanningSalarie(contrat=contrat, duree_reference=7)
         return clone
 
     def UpdatePeriodes(self):
@@ -633,7 +636,7 @@ class PlanningsEquipePanel(wx.lib.scrolledpanel.ScrolledPanel, PeriodeMixin):
                         planning = self.get_salarie_planning(salarie, date)
                         if not planning:
                             previous = self.get_salarie_previous_planning(salarie, date)
-                            planning = self.get_planning_copy(previous)
+                            planning = self.get_planning_copy(contrat, previous)
                             planning.contrat = contrat
                             planning.debut = date
                             contrat.plannings.append(planning)

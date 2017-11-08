@@ -39,42 +39,6 @@ def GetFirstMonday():
     return config.first_date - datetime.timedelta(config.first_date.weekday())
 
 
-def GetAge(naissance, date=today):
-    age = 0
-    if naissance:
-        age = (date.year - naissance.year) * 12 + date.month - naissance.month
-        if date.day < naissance.day:
-            age -= 1
-    return age
-
-
-def GetAgeString(naissance, date=today):
-    if naissance:
-        age = GetAge(naissance, date)
-        annees, mois = age / 12, age % 12
-        if annees < 0:
-            return ""   
-        elif annees and mois:
-            return "%d ans et %d mois" % (annees, mois)
-        elif annees:
-            return "%d ans" % annees
-        else:
-            return "%d mois" % mois
-    else:
-        return ""
-
-
-def GetDateString(date, weekday=True):
-    if date.day == 1:
-        date_str = "1er %s %d" % (months[date.month - 1].lower(), date.year)
-    else:
-        date_str = "%d %s %d" % (date.day, months[date.month - 1].lower(), date.year)
-    if weekday:
-        return days[date.weekday()].lower() + " " + date_str
-    else:
-        return date_str
-
-
 def IsPresentDuringTranche(journee, debut, fin):
     for timeslot in journee.timeslots:
         if timeslot.debut < fin and timeslot.fin > debut:

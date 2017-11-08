@@ -570,14 +570,16 @@ class ActivitesTab(AutoTab):
             for color in (wx.RED, wx.BLUE, wx.CYAN, wx.GREEN, wx.LIGHT_GREY):
                 r, g, b = color.Get()
                 if (r, g, b, 150, h) not in colors:
-                    activity.couleur = (r, g, b, 150, h)
-                    activity.couleur_supplement = (r, g, b, 250, h)
+                    couleur = (r, g, b, 150, h)
+                    couleur_supplement = (r, g, b, 250, h)
                     break
-            if activity.couleur:
+            if couleur:
                 break
         else:
-            activity.couleur = 0, 0, 0, 150, wx.SOLID
-            activity.couleur_supplement = 0, 0, 0, 250, wx.SOLID
+            couleur = 0, 0, 0, 150, wx.SOLID
+            couleur_supplement = 0, 0, 0, 250, wx.SOLID
+        activity.set_color("couleur", couleur)
+        activity.set_color("couleur_supplement", couleur_supplement)
         database.creche.add_activite(activity)
         history.Append(Delete(database.creche.activites, activity.value))
         self.AjouteLigneActivite(activity)

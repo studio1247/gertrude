@@ -341,7 +341,8 @@ class PlanningDetailleModifications:
                 # le nom du jour
                 node = shapes["jour"].cloneNode(1)
                 node.setAttribute('svg:y', '%fcm' % current_top)
-                fields = [('jour', GetDateString(day))]
+                fields = [('jour', GetDateString(day)),
+                          ('jour-sans-annee', GetDateString(day, annee=False))]
                 ReplaceTextFields(node, fields)
                 page.appendChild(node)
                 current_top += self.metas["line-height"]

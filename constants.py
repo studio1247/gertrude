@@ -52,6 +52,7 @@ TypesProfil = [
     ("Equipe", PROFIL_ALL),
     ("Inscriptions, planning et salariés", PROFIL_INSCRIPTIONS | PROFIL_PLANNING | PROFIL_SALARIES),
     ("Inscriptions et planning", PROFIL_INSCRIPTIONS | PROFIL_PLANNING),
+    ("Planning et salariés", PROFIL_PLANNING | PROFIL_SALARIES),
     ("Saisie planning", PROFIL_PLANNING),
     ("Utilisateur lecture seule", PROFIL_ALL | PROFIL_LECTURE_SEULE),
     ("Planning lecture seule", PROFIL_PLANNING | PROFIL_LECTURE_SEULE),

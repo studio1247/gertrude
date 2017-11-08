@@ -820,25 +820,25 @@ class Activite(Base):
         self.couleur = self.get_color(self._couleur)
         self.couleur_supplement = self.get_color(self._couleur_supplement)
 
-    def get_color(self, str, default=[0, 0, 0, 0, 0]):
-        if str:
+    @reconstructor
+    def init_on_load(self):
+        self.couleur = self.get_color(self._couleur)
+        self.couleur_supplement = self.get_color(self._couleur_supplement)
+
+    def get_color(self, color, default=[0, 0, 0, 255, 100]):
+        if color:
             try:
-                return eval(str)
+                return eval(color)
             except Exception as e:
-                print("Exception couleur '%s'" % str, e)
+                print("Exception couleur '%s'" % color, e)
                 return default
         else:
-            return [0, 0, 0, 0, 0]
+            return default
 
     def set_color(self, key, value):
         if key in ("couleur", "couleur_supplement"):
             setattr(self, key, value)
             setattr(self, "_%s" % key, str(value))
-
-    @reconstructor
-    def init_on_load(self):
-        self.couleur = self.get_color(self._couleur)
-        self.couleur_supplement = self.get_color(self._couleur_supplement)
 
     def has_horaires(self):
         return self.mode in (MODE_NORMAL, MODE_LIBERE_PLACE, MODE_PRESENCE_NON_FACTUREE, MODE_PERMANENCE)

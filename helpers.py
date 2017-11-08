@@ -19,7 +19,6 @@ from __future__ import unicode_literals
 from __future__ import print_function
 from __future__ import division
 from builtins import str
-
 import datetime
 import unicodedata
 from constants import *
@@ -208,3 +207,41 @@ def Select(obj, date):
         if (not o.debut or date >= o.debut) and (not o.fin or date <= o.fin):
             return o
     return None
+
+
+def GetAge(naissance, date=datetime.date.today()):
+    age = 0
+    if naissance:
+        age = (date.year - naissance.year) * 12 + date.month - naissance.month
+        if date.day < naissance.day:
+            age -= 1
+    return age
+
+
+def GetAgeString(naissance, date=datetime.date.today()):
+    if naissance:
+        age = GetAge(naissance, date)
+        annees, mois = age / 12, age % 12
+        if annees < 0:
+            return ""
+        elif annees and mois:
+            return "%d ans et %d mois" % (annees, mois)
+        elif annees:
+            return "%d ans" % annees
+        else:
+            return "%d mois" % mois
+    else:
+        return ""
+
+
+def GetDateString(date, weekday=True, annee=True):
+    if date.day == 1:
+        date_str = "1er %s" % (months[date.month - 1].lower())
+    else:
+        date_str = "%d %s" % (date.day, months[date.month - 1].lower())
+    if annee:
+        date_str += " %d" % date.year
+    if weekday:
+        return days[date.weekday()].lower() + " " + date_str
+    else:
+        return date_str
