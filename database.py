@@ -30,7 +30,7 @@ from parameters import *
 import bcrypt
 from config import config
 
-DB_VERSION = 116
+DB_VERSION = 117
 
 Base = declarative_base()
 
@@ -271,6 +271,7 @@ class Creche(Base):
     creditor_id = Column(String)
     siret = Column(String)
     gestion_plannings_salaries = Column(Integer, default=0)
+    delai_paiement_familles = Column(Integer)
     users = relationship("User", cascade="all, delete-orphan")
     sites = relationship("Site", cascade="all, delete-orphan")
     bureaux = relationship("Bureau", cascade="all, delete-orphan")
@@ -784,6 +785,9 @@ class Reservataire(Base):
         if self.nom is None:
             self.nom = ""
 
+    def get_delai_paiement(self):
+        return self.delai_paiement
+
     def GetFacturesList(self):
         result = []
         if self.debut:
@@ -1186,6 +1190,9 @@ class Famille(Base):
                 Parent(self, MASCULIN),
                 Parent(self, FEMININ)
             ]
+
+    def get_delai_paiement(self):
+        return self.creche.delai_paiement_familles
 
     def GetEnfantsCount(self, date):
         enfants_a_charge = 0
@@ -2700,6 +2707,9 @@ class Database(object):
                 self.engine.execute("ALTER TABLE inscrits ADD type_repas INGEGER")
                 self.engine.execute("UPDATE inscrits SET type_repas=0")
 
+            if version < 117:
+                self.engine.execute("ALTER TABLE creche ADD delai_paiement_familles INGEGER")
+
             version_entry.value = DB_VERSION
             self.commit()
 
@@ -2723,17 +2733,17 @@ class Database(object):
             ]:
                 creche.baremes_caf.append(BaremeCAF(creche=creche, debut=debut, fin=fin, plancher=plancher, plafond=plafond))
         creche.add_activite(Activite(creche=creche, label="Présences", value=0, mode=0,
-                          _couleur="[5, 203, 28, 150, 100]",
-                          _couleur_supplement="[5, 203, 28, 250, 100]",
-                          formule_tarif=""))
+                            _couleur="[5, 203, 28, 150, 100]",
+                            _couleur_supplement="[5, 203, 28, 250, 100]",
+                            formule_tarif=""))
         creche.add_activite(Activite(creche=creche, label="Vacances", value=VACANCES, mode=0,
-                          _couleur="[0, 0, 255, 150, 100]",
-                          _couleur_supplement="[0, 0, 255, 150, 100]",
-                          formule_tarif=""))
+                            _couleur="[0, 0, 255, 150, 100]",
+                            _couleur_supplement="[0, 0, 255, 150, 100]",
+                            formule_tarif=""))
         creche.add_activite(Activite(creche=creche, label="Malade", value=MALADE, mode=0,
-                          _couleur="[190, 35, 29, 150, 100]",
-                          _couleur_supplement="[190, 35, 29, 150, 100]",
-                          formule_tarif=""))
+                            _couleur="[190, 35, 29, 150, 100]",
+                            _couleur_supplement="[190, 35, 29, 150, 100]",
+                            formule_tarif=""))
         self.commit()
 
     def delete_all_inscriptions(self):

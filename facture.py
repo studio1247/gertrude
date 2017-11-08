@@ -923,7 +923,7 @@ def GetHistoriqueSolde(who, jalon, derniere_facture=True):
                             if facture.fin_recap < GetMonthStart(jalon):
                                 lignes.append(facture)
                 except Exception as e:
-                    print("Exception iciiiii", repr(e))
+                    print("Exception", repr(e))
             date = GetNextMonthStart(date)
     return lignes
 
@@ -943,8 +943,11 @@ def CalculeSolde(who, date):
 
 
 def GetRetardDePaiement(who):
-    delai = who.delai_paiement if who.delai_paiement else 0
-    return CalculeSolde(who, datetime.date.today() - datetime.timedelta(delai)) > 0
+    delai = who.get_delai_paiement()
+    if delai is None:
+        return False
+    else:
+        return CalculeSolde(who, datetime.date.today() - datetime.timedelta(delai)) > 0
 
 
 def GetFacturesList(inscrit):
