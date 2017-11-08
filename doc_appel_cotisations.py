@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+from __future__ import print_function
 from constants import *
 from functions import *
 from facture import *
@@ -28,17 +30,54 @@ class AppelCotisationsModifications(object):
 
     def __init__(self, date, options=0):
         self.multi = False
-        self.default_output = u"Appel cotisations %s %d.ods" % (months[date.month - 1], date.year)
+        self.default_output = "Appel cotisations %s %d.ods" % (months[date.month - 1], date.year)
         self.debut, self.fin = date, GetMonthEnd(date)
         self.options = options
         self.gauge = None
         self.email = None
         self.site = None
+        self.metas = {}
+
+    def GetMetas(self, dom):
+        metas = dom.getElementsByTagName('meta:user-defined')
+        for meta in metas:
+            # print(meta.toprettyxml())
+            name = meta.getAttribute('meta:name')
+            try:
+                value = meta.childNodes[0].wholeText
+                if meta.getAttribute('meta:value-type') == 'float':
+                    self.metas[name] = float(value)
+                else:
+                    self.metas[name] = value
+            except:
+                pass
+
+    def GetCustomFields(self, facture):
+        inscrit = facture.inscrit
+        famille = inscrit.famille
+        fields = []
+        for key in self.metas:
+            if key.lower().startswith("formule "):
+                label = key[8:]
+                try:
+                    value = eval(self.metas[key])
+                except Exception as e:
+                    print("Exception formule:", label, self.metas[key], e)
+                    continue
+                if isinstance(value, tuple):
+                    field = label, value[0], value[1]
+                else:
+                    field = label, value
+                fields.append(field)
+        return fields
         
     def execute(self, filename, dom):
+        if filename == 'meta.xml':
+            self.GetMetas(dom)
+
         if filename != 'content.xml':
             return None
-        
+
         errors = {}
         spreadsheet = dom.getElementsByTagName('office:spreadsheet')[0]
         templates = spreadsheet.getElementsByTagName("table:table")
@@ -90,19 +129,23 @@ class AppelCotisationsModifications(object):
                 facture = None
                 commentaire = '\n'.join(e.errors)
                 errors[GetPrenomNom(inscrit)] = e.errors
-                
-            fields = GetCrecheFields(database.creche) + GetInscritFields(inscrit) + GetFactureFields(facture) + GetReglementFields(inscrit.famille, self.debut.year, self.debut.month) + [('commentaire', commentaire)]
+
+            fields = GetCrecheFields(database.creche) + GetInscritFields(inscrit) + GetFactureFields(facture) + self.GetCustomFields(facture) + GetReglementFields(inscrit.famille, self.debut.year, self.debut.month) + [('commentaire', commentaire)]
             ReplaceFields(line, fields)
-            
+
             table.insertBefore(line, lines_template[0])
             IncrementFormulas(lines_template[i % 2], row=+2)
 
         table.removeChild(lines_template[0])
         table.removeChild(lines_template[1])
-        
+
+        if len(lignes) >= 11:
+            line_total = lignes.item(10)
+            IncrementFormulas(line_total, row=+len(inscrits) - 2, flags=FLAG_SUM_MAX)
+
     def RemplitFeuilleEnfants(self, template, errors):
         inscrits = list(database.creche.select_inscrits(self.debut, self.fin))
-        inscrits.sort(cmp=lambda x,y: cmp(GetPrenomNom(x), GetPrenomNom(y)))
+        inscrits.sort(key=lambda x: GetPrenomNom(x))
         lines_template = template.getElementsByTagName("table:table-row")[1:21]
         for i, inscrit in enumerate(inscrits):
             inscrit_fields = GetCrecheFields(database.creche) + GetInscritFields(inscrit)
