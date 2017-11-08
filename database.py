@@ -30,7 +30,7 @@ from parameters import *
 import bcrypt
 from config import config
 
-DB_VERSION = 117
+DB_VERSION = 118
 
 Base = declarative_base()
 
@@ -1153,6 +1153,7 @@ class Famille(Base):
     mandate_id = Column(String, default="")
     jour_prelevement_automatique = Column(Integer, default="")
     date_premier_prelevement_automatique = Column(Date)
+    autorisation_attestation_paje = Column(Boolean, default=True)
     inscrits = relationship("Inscrit", cascade="all, delete-orphan")
     freres_soeurs = relationship("Fratrie", cascade="all, delete-orphan")
     parents = relationship("Parent", cascade="all, delete-orphan")
@@ -2164,7 +2165,7 @@ class Database(object):
         self.reload()
 
     def reload(self):
-        print("Chargement de la base de données...")
+        print("Chargement de la base de données %s..." % self.uri)
         self.creche = self.query(Creche).first()
 
     def exists(self):
@@ -2688,6 +2689,9 @@ class Database(object):
                             trash.append(row2)
                 for idx, _ in trash:
                     self.engine.execute("DELETE FROM conges WHERE idx=?", idx)
+                rows = list(self.engine.execute("SELECT debut, fin, idx FROM reservataires"))
+                for debut, fin, idx in rows:
+                    self.engine.execute("UPDATE reservataires SET debut=?, fin=? WHERE idx=?", str2date(debut), str2date(fin), idx)
 
             if version < 116:
                 creche_id = self.engine.execute('SELECT idx FROM CRECHE').first()[0]
@@ -2709,6 +2713,10 @@ class Database(object):
 
             if version < 117:
                 self.engine.execute("ALTER TABLE creche ADD delai_paiement_familles INGEGER")
+
+            if version < 118:
+                self.engine.execute("ALTER TABLE familles ADD autorisation_attestation_paje BOOLEAN")
+                self.engine.execute("UPDATE familles SET autorisation_attestation_paje=?", False)
 
             version_entry.value = DB_VERSION
             self.commit()

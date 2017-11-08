@@ -251,7 +251,7 @@ class GertrudeFrame(wx.Frame):
         dlg.Destroy()
         if result == wx.ID_NO:
             for date, message in event.new_alertes:
-                alerte = Alerte(creche=database.creche, date=date, text=message, acquittement=True)
+                alerte = Alerte(creche=database.creche, date=date, texte=message, acquittement=True)
                 database.creche.alertes.append(alerte)
             history.append(None)
 

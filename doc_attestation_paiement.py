@@ -34,7 +34,7 @@ class AttestationModifications(object):
         self.debut, self.fin = debut, fin
         self.attestation_mensuelle = False
         if attestation_mensuelle and IsTemplateFile("Attestation mensuelle.odt"):
-            self.template = 'Attestation mensuelle.odt'
+            self.template = "Attestation mensuelle.odt"
             self.attestation_mensuelle = True
         if isinstance(who, list):
             self.inscrits = [inscrit for inscrit in who if inscrit.get_inscriptions(debut, fin)]
@@ -107,7 +107,7 @@ class AttestationModifications(object):
         
         # print dom.toprettyxml()
         doc = dom.getElementsByTagName("office:text")[0]
-        templates = doc.getElementsByTagName('text:section')
+        templates = doc.getElementsByTagName("text:section")
         for template in templates:
             doc.removeChild(template)
 
@@ -169,9 +169,16 @@ class AttestationModifications(object):
                     ('annee', facture_debut.year)
                 ])
             
+            empty_fields = [(field[0], "") for field in fields]
+
             for template in templates:
                 section = template.cloneNode(1)
                 doc.appendChild(section)
-                ReplaceTextFields(section, fields)
+                section_name = section.getAttribute("text:name")
+                autorisation = inscrit.famille.autorisation_attestation_paje
+                if (section_name == "Famille uniquement" and autorisation) or (section_name == "Structure uniquement" and not autorisation):
+                    ReplaceFields(section, empty_fields)
+                else:
+                    ReplaceTextFields(section, fields)
                 
         return errors
