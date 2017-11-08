@@ -103,7 +103,8 @@ def GetJoursOuvres(annee, mois):
 
 def GetHeuresAccueil(annee, mois, site=None):
     if site is not None:
-        return GetJoursOuvres(annee, mois) * (database.creche.fermeture - database.creche.ouverture) * site.capacite
+        capacite = 0 if site.capacite is None else site.capacite
+        return GetJoursOuvres(annee, mois) * (database.creche.fermeture - database.creche.ouverture) * capacite
     result = 0.0
     date = datetime.date(annee, mois, 1)
     while date.month == mois:
