@@ -105,10 +105,11 @@ class Section(object):
         self.preinscription_required = self.getStringParameter("preinscription-required", "")
         self.child_selection_widget = self.getStringParameter("child-selection-widget", "autocomplete")
 
-        years_before, years_after = self.getYearsDisplayed()
+        self.years_before = self.getIntegerParameter("years-before", 2)
+        self.years_after = self.getIntegerParameter("years-after", 1)
         today = datetime.date.today()
-        self.first_date = datetime.date(today.year - years_before, 1, 1)
-        self.last_date = datetime.date(today.year + years_after, 12, 31)
+        self.first_date = datetime.date(today.year - self.years_before, 1, 1)
+        self.last_date = datetime.date(today.year + self.years_after, 12, 31)
 
         self.inscriptions_semaines_conges = self.getIntegerParameter("inscriptions.semaines_conges", None)
 
@@ -198,9 +199,6 @@ class Section(object):
 
     def getWindowSize(self):
         return self.getIntegerParameter("window-width", 1000), self.getIntegerParameter("window-height", 600)
-
-    def getYearsDisplayed(self):
-        return self.getIntegerParameter("years-before", 2), self.getIntegerParameter("years-after", 1)
 
     def getPictos(self):
         return self.getIntegerParameter("pictos-enfants", None), self.getIntegerParameter("pictos-salaries", None)
