@@ -1490,7 +1490,7 @@ class Inscrit(Base):
         if inscription is None:
             return State(ABSENT)
 
-        reference = inscription.get_day_from_date(date)
+        reference = self.GetJourneeReference(date)  # Attention pas depuis inscription à cause des congés inscription avec supplément
         heures_reference = reference.get_duration(mode_arrondi)
         ref_state = reference.get_state()  # TODO on peut s'en passer ?
 

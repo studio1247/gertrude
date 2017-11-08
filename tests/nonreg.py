@@ -808,7 +808,8 @@ class RibambelleTests(GertrudeTestCase):
         database.creche.type = TYPE_PARENTAL
         database.creche.repartition = REPARTITION_SANS_MENSUALISATION
         database.creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
-    creche.conges_inscription = GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT
+        database.creche.conges_inscription = GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT
+
     def test_normal(self):
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit=inscrit)
@@ -844,17 +845,16 @@ class RibambelleTests(GertrudeTestCase):
 
     def test_statistiques_conges_avec_supplement(self):
         inscrit = self.AddInscrit()
-        inscription = Inscription(inscrit, creation=False)
+        inscription = Inscription(inscrit=inscrit)
         inscription.mode = MODE_TEMPS_PARTIEL
         inscription.debut = datetime.date(2016, 1, 1)
-        conge = CongeInscrit(inscrit, creation=False)
-        conge.debut, conge.fin = "01/02/2016", "05/02/2016"
-        inscrit.AddConge(conge)
-        inscription.reference[0].AddActivity(93, 213, 0, -1)  # 10h
-        inscription.reference[1].AddActivity(93, 213, 0, -1)  # 10h
-        inscription.reference[2].AddActivity(93, 213, 0, -1)  # 10h
-        inscription.reference[3].AddActivity(93, 213, 0, -1)  # 10h
-        inscription.reference[4].AddActivity(93, 213, 0, -1)  # 10h
+        conge = CongeInscrit(inscrit=inscrit, debut="01/02/2016", fin="05/02/2016")
+        inscrit.add_conge(conge)
+        inscription.days.add(TimeslotInscription(day=0, debut=93, fin=213, value=0))  # 10h
+        inscription.days.add(TimeslotInscription(day=1, debut=93, fin=213, value=0))  # 10h
+        inscription.days.add(TimeslotInscription(day=2, debut=93, fin=213, value=0))  # 10h
+        inscription.days.add(TimeslotInscription(day=3, debut=93, fin=213, value=0))  # 10h
+        inscription.days.add(TimeslotInscription(day=4, debut=93, fin=213, value=0))  # 10h
         inscrit.inscriptions.append(inscription)
         statistiques = GetStatistiques(datetime.date(2016, 1, 1), datetime.date(2016, 12, 31))
         self.assertPrec2Equals(statistiques.heures_contrat, 2560.0)
