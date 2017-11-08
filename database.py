@@ -2716,7 +2716,7 @@ class Database(object):
 
             if version < 118:
                 self.engine.execute("ALTER TABLE familles ADD autorisation_attestation_paje BOOLEAN")
-                self.engine.execute("UPDATE familles SET autorisation_attestation_paje=?", False)
+                self.engine.execute("UPDATE familles SET autorisation_attestation_paje=?", True)
 
             version_entry.value = DB_VERSION
             self.commit()

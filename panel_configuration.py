@@ -1429,7 +1429,7 @@ class UsersTab(AutoTab):
 
     def AddUser(self, _):
         history.Append(Delete(database.creche.users, -1))
-        database.creche.users.append(User())
+        database.creche.users.append(User(creche=database.creche))
         self.AjouteLigneUtilisateur(len(database.creche.users) - 1)
         self.sizer.Layout()
 

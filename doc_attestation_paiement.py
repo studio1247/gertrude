@@ -169,16 +169,18 @@ class AttestationModifications(object):
                     ('annee', facture_debut.year)
                 ])
             
-            empty_fields = [(field[0], "") for field in fields]
+            empty_fields = [(field[0], " ") for field in fields]
 
             for template in templates:
                 section = template.cloneNode(1)
-                doc.appendChild(section)
                 section_name = section.getAttribute("text:name")
                 autorisation = inscrit.famille.autorisation_attestation_paje
                 if (section_name == "Famille uniquement" and autorisation) or (section_name == "Structure uniquement" and not autorisation):
-                    ReplaceFields(section, empty_fields)
+                    continue
+                elif (section_name == "Famille" and autorisation) or (section_name == "Structure" and not autorisation):
+                    ReplaceTextFields(section, empty_fields)
                 else:
                     ReplaceTextFields(section, fields)
+                doc.appendChild(section)
                 
         return errors

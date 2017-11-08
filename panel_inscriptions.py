@@ -207,8 +207,7 @@ class IdentitePanel(InscriptionsTab):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddMany([(AutoTextCtrl(self, None, 'famille.assureur'), 1, wx.EXPAND),
                        (AutoTextCtrl(self, None, 'famille.numero_police_assurance'), 1, wx.EXPAND | wx.LEFT, 5)])
-        grid_sizer.AddMany([(wx.StaticText(self, -1, "Assurance :"), 0, wx.ALIGN_CENTER_VERTICAL),
-                            (sizer, 0, wx.EXPAND)])
+        grid_sizer.AddMany([(wx.StaticText(self, -1, "Assurance :"), 0, wx.ALIGN_CENTER_VERTICAL), (sizer, 0, wx.EXPAND)])
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         if config.options & PRELEVEMENTS_AUTOMATIQUES:
             sizer.AddMany([(wx.StaticText(self, -1, "IBAN"), 0, wx.ALIGN_CENTER_VERTICAL),
@@ -223,6 +222,9 @@ class IdentitePanel(InscriptionsTab):
                            (AutoDateCtrl(self, None, 'famille.date_premier_prelevement_automatique'), 1, wx.EXPAND | wx.LEFT, 5)])
             grid_sizer.AddMany([(wx.StaticText(self, -1, "Prélèvements automatiques :"), 0, wx.ALIGN_CENTER_VERTICAL),
                                 (sizer, 0, wx.EXPAND)])
+        if database.creche.mode_facturation == FACTURATION_PAJE:
+            grid_sizer.AddMany([(wx.StaticText(self, -1, "Autorisation attestation PAJE :"), 0, wx.ALIGN_CENTER_VERTICAL),
+                                (AutoCheckBox(self, None, "famille.autorisation_attestation_paje"), 0, wx.EXPAND)])
         if database.creche.type == TYPE_PARENTAL:
             self.permanences_dues_widget = wx.TextCtrl(self, -1)
             self.permanences_dues_widget.Disable()
