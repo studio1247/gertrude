@@ -732,9 +732,9 @@ def ParseHtml(filename, context):
                 replacement = text[text.index('>') + 1:-5]
             else:
                 replacement = ''
-        except:
-            print('TODO', text)
-            replacement = ''  # TODO la période de référence du contrat est cassée
+        except Exception as e:
+            print("Exception dans un <if> du template HTML", text)
+            replacement = ""
         data = data.replace(text, replacement)
 
     # remplacement des <var>

@@ -78,7 +78,7 @@
    <td><b>Montant de la cotisation mensuelle (A*B*C)</b></td>
    <td><b>= <var value="'%.02f' % cotisation_mensuelle"/> &euro;</b></td>
   </tr>
-  <if value="creche.mode_facturation == FACTURATION_FORFAIT_10H">
+  <if value="database.creche.mode_facturation == FACTURATION_FORFAIT_10H">
   <tr>
    <td><b>Montant par jour de garde suppl&eacute;mentaire</b></td>
    <td><b>= <var value="'%.02f' % (montant_heure_garde * 10)"/> &euro;</b></td>
