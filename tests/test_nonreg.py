@@ -22,11 +22,7 @@ from __future__ import unicode_literals
 from __future__ import division
 
 import unittest
-import sys
-
-# sys.path.append("..")
 import pytest
-
 from cotisation import *
 from facture import Facture
 from doc_planning_detaille import PlanningDetailleModifications
@@ -103,20 +99,20 @@ class GertrudeTestCase(unittest.TestCase):
 
 @pytest.mark.skipif(sys.version_info < (3, 0))
 class PlanningTests(GertrudeTestCase):
-    from planning import BasePlanningLine
-
     def setUp(self):
         GertrudeTestCase.setUp(self)
         database.creche.activites[1] = Activite(database.creche, value=1, mode=MODE_LIBERE_PLACE)
         database.creche.activites[2] = Activite(database.creche, value=2, mode=MODE_NORMAL)
 
     def test_ski(self):
+        from planning import BasePlanningLine
         day = BasePlanningLine()
         day.set_activity(0, 10, 0)
         day.set_activity(2, 8, 1)
         self.assertEquals(len(day.timeslots), 3)
     
     def test_repas(self):
+        from planning import BasePlanningLine
         day = BasePlanningLine()
         day.set_activity(0, 10, 0)
         day.set_activity(2, 8, 2)
