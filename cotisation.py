@@ -349,7 +349,7 @@ class Cotisation(object):
                 self.heures_periode = math.ceil(self.heures_periode)
                 if options & TRACES:
                     print(" heures période :", self.heures_periode)
-                self.semaines_periode = 1 + (self.fin_inscription - self.debut_inscription).days / 7
+                self.semaines_periode = 1 + (self.fin_inscription - self.debut_inscription).days // 7
                 if database.creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
                     self.nombre_factures = GetNombreFacturesContrat(self.debut_inscription, fin_decompte_conges_et_factures)
                 else:
@@ -482,10 +482,10 @@ class Cotisation(object):
                 tranche = GetTranche(self.assiette_annuelle, [27033.0, 60074.0])
             else:
                 tranche = GetTranche(self.assiette_annuelle, [30716.0, 68259.0])
-            B20 = database.creche.cout_journalier / 10
-            B2X = B20 * (1.10, 1.15, 1.20)[tranche]
-            self.a = (B20 - B2X) / 229
-            self.b = (230 * B2X - B20) / 229
+            b20 = database.creche.cout_journalier / 10
+            b2x = b20 * (1.10, 1.15, 1.20)[tranche]
+            self.a = (b20 - b2x) / 229
+            self.b = (230 * b2x - b20) / 229
             self.montant_heure_garde = (self.a * self.heures_mois + self.b)
             self.cotisation_mensuelle = self.heures_mois * self.montant_heure_garde
         else:
