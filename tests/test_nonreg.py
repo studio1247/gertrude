@@ -25,6 +25,8 @@ import unittest
 import sys
 
 # sys.path.append("..")
+import pytest
+
 from cotisation import *
 from facture import Facture
 from doc_planning_detaille import PlanningDetailleModifications
@@ -32,7 +34,6 @@ from doc_coordonnees_parents import CoordonneesModifications
 from doc_releve_detaille import ReleveDetailleModifications
 from doc_etats_trimestriels import EtatsTrimestrielsModifications
 from ooffice import GenerateOODocument
-from planning import BasePlanningLine
 from database import *
 from globals import *
 from statistiques import GetStatistiques
@@ -100,7 +101,10 @@ class GertrudeTestCase(unittest.TestCase):
         self.assertEquals("%.2f" % montant1, "%.2f" % montant2)
 
 
+@pytest.mark.skipif(sys.version_info < (3, 0))
 class PlanningTests(GertrudeTestCase):
+    from planning import BasePlanningLine
+
     def setUp(self):
         GertrudeTestCase.setUp(self)
         database.creche.activites[1] = Activite(database.creche, value=1, mode=MODE_LIBERE_PLACE)
