@@ -282,7 +282,7 @@ class PlanningLineGrid(BufferedWindow):
 
     def OnLeftButtonDown(self, event):
         posX = self.__get_pos(event.GetX())
-        self.curStartX = (posX // (database.creche.granularite//BASE_GRANULARITY)) * (database.creche.granularite//BASE_GRANULARITY)
+        self.curStartX = (posX // (database.creche.granularite // BASE_GRANULARITY)) * (database.creche.granularite // BASE_GRANULARITY)
         # TODO config.readonly pourrait empecher l'evenement
         if not self.line.readonly and not config.readonly:
             # TODO plutôt notifier d'un changement dans la combo
@@ -299,7 +299,7 @@ class PlanningLineGrid(BufferedWindow):
             self.OnLeftButtonDragging(event)
 
     def GetPlagesSelectionnees(self):
-        start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX) + database.creche.granularite//BASE_GRANULARITY
+        start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX) + database.creche.granularite // BASE_GRANULARITY
         
         affichage_min = int(database.creche.affichage_min * (60 // BASE_GRANULARITY))
         affichage_max = int(database.creche.affichage_max * (60 // BASE_GRANULARITY))
@@ -334,7 +334,7 @@ class PlanningLineGrid(BufferedWindow):
     def OnLeftButtonDragging(self, event):
         if self.state is not None:
             posX = self.__get_pos(event.GetX())
-            self.curEndX = (posX // (database.creche.granularite//BASE_GRANULARITY)) * (database.creche.granularite//BASE_GRANULARITY)
+            self.curEndX = (posX // (database.creche.granularite // BASE_GRANULARITY)) * (database.creche.granularite // BASE_GRANULARITY)
             
             clone = self.line.clone()
             clone.widget = self.parent

@@ -67,13 +67,13 @@ class SitesPlanningPanel(PlanningWidget):
                 lines.append(days[week_day])
                 for site in database.creche.sites:
                     line = TableauDeBordSummary(site.nom)
-                    for i in range(int(database.creche.ouverture * 60 / BASE_GRANULARITY), int(database.creche.fermeture * 60 / BASE_GRANULARITY)):
+                    for i in range(int(database.creche.ouverture * 60 // BASE_GRANULARITY), int(database.creche.fermeture * 60 // BASE_GRANULARITY)):
                         line.array[i][0] = site.capacite
                     day_lines[site] = line
                     lines.append(line)
             else:
                 site_line = TableauDeBordSummary(days[week_day])
-                for i in range(int(database.creche.ouverture * 60 / BASE_GRANULARITY), int(database.creche.fermeture * 60 / BASE_GRANULARITY)):
+                for i in range(int(database.creche.ouverture * 60 // BASE_GRANULARITY), int(database.creche.fermeture * 60 // BASE_GRANULARITY)):
                     site_line.array[i][0] = 0
                 for timeslot in database.creche.tranches_capacite[week_day].timeslots:
                     for i in range(timeslot.debut, timeslot.fin):
@@ -116,14 +116,14 @@ class ReservatairesPlanningPanel(PlanningWidget):
             places_reservees = 0
             for reservataire in database.creche.reservataires:
                 line = Summary(reservataire.nom)
-                for i in range(int(database.creche.ouverture * 60 / BASE_GRANULARITY), int(database.creche.fermeture * 60 / BASE_GRANULARITY)):
+                for i in range(int(database.creche.ouverture * 60 // BASE_GRANULARITY), int(database.creche.fermeture * 60 // BASE_GRANULARITY)):
                     line[i][0] = reservataire.places
                 day_lines[reservataire] = line
                 if reservataire.places:
                     places_reservees += reservataire.places
                 lines.append(line)
             line = Summary("[Structure]")
-            for i in range(int(database.creche.ouverture * 60 / BASE_GRANULARITY), int(database.creche.fermeture * 60 / BASE_GRANULARITY)):
+            for i in range(int(database.creche.ouverture * 60 // BASE_GRANULARITY), int(database.creche.fermeture * 60 // BASE_GRANULARITY)):
                 line[i][0] = 0
             for start, end, value in database.creche.tranches_capacite[week_day].activites:
                 for i in range(start, end):
@@ -224,7 +224,7 @@ class PlacesUtiliseesPlanningPanel(PlanningWidget):
                 day_lines[groupe] = line
                 lines.append(line)
             line = TableauDeBordSummary("[Structure]")
-            for i in range(int(database.creche.ouverture * 60 / BASE_GRANULARITY), int(database.creche.fermeture * 60 / BASE_GRANULARITY)):
+            for i in range(int(database.creche.ouverture * 60 // BASE_GRANULARITY), int(database.creche.fermeture * 60 // BASE_GRANULARITY)):
                 line.array[i][0] = 0
             day_lines[None] = line
             lines.append(line)

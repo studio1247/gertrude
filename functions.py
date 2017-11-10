@@ -47,12 +47,12 @@ def IsPresentDuringTranche(journee, debut, fin):
 
 
 def HeuresTranche(journee, debut, fin):
-    result = [0] * (24 * 60 / BASE_GRANULARITY)
+    result = [0] * (24 * 60 // BASE_GRANULARITY)
     for timeslot in journee.timeslots:
         if timeslot.debut < fin and timeslot.fin > debut:
             for i in range(max(timeslot.debut, debut), min(timeslot.fin, fin)):
                 result[i] = 1
-    return float(sum(result) * BASE_GRANULARITY) / 60
+    return float(sum(result) * BASE_GRANULARITY) // 60
 
 
 def GetJoursOuvres(annee, mois):

@@ -107,10 +107,10 @@ def sync_tablette_lines(lines, tz=None):
             value = MALADE
         elif not periode.arrivee:
             errors.append(u"%s : Pas d'arrivée enregistrée le %s" % (GetPrenomNom(who), periode.date))
-            periode.arrivee = int(database.creche.ouverture * (60 / BASE_GRANULARITY))
+            periode.arrivee = int(database.creche.ouverture * (60 // BASE_GRANULARITY))
         elif not periode.depart:
             errors.append(u"%s : Pas de départ enregistré le %s" % (GetPrenomNom(who), periode.date))
-            periode.depart = int(database.creche.fermeture * (60 / BASE_GRANULARITY))
+            periode.depart = int(database.creche.fermeture * (60 // BASE_GRANULARITY))
 
         if value < 0:
             journee.SetState(value)
@@ -138,14 +138,14 @@ def sync_tablette_lines(lines, tz=None):
             if date not in array[idx]:
                 array[idx][date] = []
             if label == "arrivee":
-                arrivee = (heure + TABLETTE_MARGE_ARRIVEE) / database.creche.granularite * (database.creche.granularite / BASE_GRANULARITY)
+                arrivee = (heure + TABLETTE_MARGE_ARRIVEE) // database.creche.granularite * (database.creche.granularite // BASE_GRANULARITY)
                 if len(array[idx][date]) == 0 or (array[idx][date][-1].arrivee and array[idx][date][-1].depart):
                     array[idx][date].append(PeriodePresence(date, arrivee))
                 elif array[idx][date][-1].depart:
                     array[idx][date][-1].arrivee = array[idx][date][-1].depart
                     array[idx][date][-1].depart = None
             elif label == "depart":
-                depart = (heure + database.creche.granularite - TABLETTE_MARGE_ARRIVEE) / database.creche.granularite * (database.creche.granularite / BASE_GRANULARITY)
+                depart = (heure + database.creche.granularite - TABLETTE_MARGE_ARRIVEE) // database.creche.granularite * (database.creche.granularite // BASE_GRANULARITY)
                 if len(array[idx][date]) > 0:
                     last = array[idx][date][-1]
                     last.depart = depart

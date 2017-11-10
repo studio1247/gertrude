@@ -556,7 +556,7 @@ class Creche(Base):
                         result.insert(i + 1, (plage.fin, fin))
                         break
         if conversion:
-            result = [(int(debut * (60 / BASE_GRANULARITY)), int(fin * (60 / BASE_GRANULARITY))) for debut, fin in
+            result = [(int(debut * (60 // BASE_GRANULARITY)), int(fin * (60 // BASE_GRANULARITY))) for debut, fin in
                       result]
         return result
 
@@ -566,7 +566,7 @@ class Creche(Base):
             if plage.flags == plage_type and plage.debut and plage.fin > plage.debut:
                 result.append((plage.debut, plage.fin))
         if conversion:
-            result = [(int(debut * (60 / BASE_GRANULARITY)), int(fin * (60 / BASE_GRANULARITY))) for debut, fin in
+            result = [(int(debut * (60 // BASE_GRANULARITY)), int(fin * (60 // BASE_GRANULARITY))) for debut, fin in
                       result]
         return result
 
