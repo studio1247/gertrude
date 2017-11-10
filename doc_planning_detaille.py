@@ -134,7 +134,7 @@ class PlanningDetailleModifications:
             else:
                 lines = lines_enfants
 
-            pages_count = 1 + (len(lines)) / self.metas["lines-max"]
+            pages_count = 1 + (len(lines)) // self.metas["lines-max"]
             for page_index in range(pages_count):
                 lines_count = min(self.metas["lines-max"], len(lines)-page_index*self.metas["lines-max"])
                 page = template.cloneNode(1)

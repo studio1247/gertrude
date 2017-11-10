@@ -286,16 +286,11 @@ def GetSalaries(start, end, site=None):
 
 def GetTriParCommuneEtNomIndexes(indexes):
     # Tri par commune (Rennes en premier) + ordre alphabetique des noms
-    def tri(one, two):
-        i1 = database.creche.inscrits[one] ; i2 = database.creche.inscrits[two]
-        if i1.famille.ville.lower() != 'rennes' and i2.famille.ville.lower() == 'rennes':
-            return 1
-        elif i1.famille.ville.lower() == 'rennes' and i2.famille.ville.lower() != 'rennes':
-            return -1
-        else:
-            return cmp("%s %s" % (i1.nom, i1.prenom), "%s %s" % (i2.nom, i2.prenom))
-
-    indexes.sort(tri)
+    def sort_key(x):
+        inscrit = database.creche.inscrits[x]
+        key = "%s %s %s" % (inscrit.famille.ville, inscrit.nom, inscrit.prenom)
+        return key.lower()
+    indexes.sort(key=sort_key)
     return indexes
 
 
@@ -304,7 +299,6 @@ def GetTriParPrenomIndexes(indexes):
     def sort_key(x):
         inscrit = database.creche.inscrits[x]
         return inscrit.prenom
-
     indexes.sort(key=sort_key)
     return indexes
 
@@ -313,8 +307,7 @@ def GetTriParNomIndexes(indexes):
     def sort_key(x):
         inscrit = database.creche.inscrits[x]
         return inscrit.nom
-
-        indexes.sort(key=sort_key)
+    indexes.sort(key=sort_key)
     return indexes
 
 
