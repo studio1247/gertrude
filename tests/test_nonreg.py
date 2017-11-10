@@ -24,7 +24,7 @@ from __future__ import division
 import unittest
 import sys
 
-sys.path.append("..")
+# sys.path.append("..")
 from cotisation import *
 from facture import Facture
 from doc_planning_detaille import PlanningDetailleModifications
