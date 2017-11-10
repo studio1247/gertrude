@@ -10,7 +10,6 @@ importations
 /*.ini
 /*.csv
 /*.od?
-/*.txt
 /*.pyc
 /*.iss
 /*.backup
