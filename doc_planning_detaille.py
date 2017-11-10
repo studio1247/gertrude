@@ -93,8 +93,9 @@ class PlanningDetailleModifications:
                 return self.executeTemplateDraw(filename, dom)
 
     def executeTemplateDraw(self, filename, dom):
-        affichage_min = int(database.creche.affichage_min * 60 / BASE_GRANULARITY)
-        affichage_max = int(database.creche.affichage_max * 60 / BASE_GRANULARITY)
+        affichage_min = int(database.creche.affichage_min * (60 // BASE_GRANULARITY))
+        affichage_max = int(database.creche.affichage_max * (60 // BASE_GRANULARITY))
+        print(affichage_min, affichage_max)
         step = (21.0-self.metas["left"]-self.metas["right"]-self.metas["labels-width"]) / (affichage_max - affichage_min)
 
         drawing = dom.getElementsByTagName('office:drawing').item(0)
@@ -144,12 +145,12 @@ class PlanningDetailleModifications:
                 # le quadrillage et l'echelle
                 h = affichage_min
                 while h <= affichage_max:
-                    if h % (60 / BASE_GRANULARITY) == 0:
+                    if h % (60 // BASE_GRANULARITY) == 0:
                         node = shapes["legende-heure"].cloneNode(1)
                         node.setAttribute('svg:x', '%fcm' % (self.metas["left"] + self.metas["labels-width"] - 0.5 + (float(h)-affichage_min) * step))
                         # node.setAttribute('svg:y', '1cm')
                         node.setAttribute('svg:width', '1cm')
-                        node.firstChild.firstChild.firstChild.firstChild.replaceWholeText('%dh' % int(round(h/(60 / BASE_GRANULARITY))))
+                        node.firstChild.firstChild.firstChild.firstChild.replaceWholeText('%dh' % int(round(h/(60 // BASE_GRANULARITY))))
                         page.appendChild(node)
                         node = shapes["ligne-heure"].cloneNode(1)
                     else:
@@ -159,7 +160,7 @@ class PlanningDetailleModifications:
                     node.setAttribute('svg:x2', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + (h-affichage_min) * step))
                     # node.setAttribute('svg:y2', '29cm')
                     page.appendChild(node)
-                    h += database.creche.granularite / BASE_GRANULARITY
+                    h += database.creche.granularite // BASE_GRANULARITY
 
                 if "ligne-cahier" in shapes:
                     ligne_cahier = shapes["ligne-cahier"].cloneNode(1)
@@ -272,7 +273,7 @@ class PlanningDetailleModifications:
                                         page.appendChild(node)
                                 a = x
                                 v, w = nv, nw
-                            x += database.creche.granularite / BASE_GRANULARITY
+                            x += database.creche.granularite // BASE_GRANULARITY
                 fields = GetCrecheFields(database.creche) + GetSiteFields(self.site)
                 if pages_count > 1:
                     fields.append(('date', GetDateString(day) + " (%d/%d)" % (page_index + 1, pages_count)))
@@ -284,8 +285,8 @@ class PlanningDetailleModifications:
         return None
 
     def executeTemplateOnePage(self, filename, dom):
-        affichage_min = int(database.creche.affichage_min * 60 / BASE_GRANULARITY)
-        affichage_max = int(database.creche.affichage_max * 60 / BASE_GRANULARITY)
+        affichage_min = int(database.creche.affichage_min * (60 // BASE_GRANULARITY))
+        affichage_max = int(database.creche.affichage_max * (60 // BASE_GRANULARITY))
         step = (21.0 - self.metas["left"] - self.metas["right"] - self.metas["labels-width"]) / (affichage_max - affichage_min)
 
         drawing = dom.getElementsByTagName('office:drawing').item(0)
@@ -311,14 +312,14 @@ class PlanningDetailleModifications:
             # le quadrillage
             h = affichage_min
             while h <= affichage_max:
-                if h % (60 / BASE_GRANULARITY) == 0:
+                if h % (60 // BASE_GRANULARITY) == 0:
                     node = shapes["ligne-heure"].cloneNode(1)
                 else:
                     node = shapes["ligne-quart-heure"].cloneNode(1)
                 node.setAttribute('svg:x1', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + (h - affichage_min) * step))
                 node.setAttribute('svg:x2', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + (h - affichage_min) * step))
                 page.appendChild(node)
-                h += database.creche.granularite / BASE_GRANULARITY
+                h += database.creche.granularite // BASE_GRANULARITY
 
             current_top = self.metas["top"] - 0.5
 
@@ -329,14 +330,14 @@ class PlanningDetailleModifications:
                 # l'échelle
                 h = affichage_min
                 while h <= affichage_max:
-                    if h % (60 / BASE_GRANULARITY) == 0:
+                    if h % (60 // BASE_GRANULARITY) == 0:
                         node = shapes["legende-heure"].cloneNode(1)
                         node.setAttribute('svg:y', '%fcm' % current_top)
                         node.setAttribute('svg:x', '%fcm' % (self.metas["left"] + self.metas["labels-width"] - 0.5 + (float(h) - affichage_min) * step))
                         node.setAttribute('svg:width', '1cm')
-                        node.firstChild.firstChild.firstChild.firstChild.replaceWholeText('%dh' % int(round(h / (60 / BASE_GRANULARITY))))
+                        node.firstChild.firstChild.firstChild.firstChild.replaceWholeText('%dh' % int(round(h / (60 // BASE_GRANULARITY))))
                         page.appendChild(node)
-                    h += database.creche.granularite / BASE_GRANULARITY
+                    h += database.creche.granularite // BASE_GRANULARITY
 
                 # le nom du jour
                 node = shapes["jour"].cloneNode(1)

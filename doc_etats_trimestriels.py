@@ -81,7 +81,7 @@ class EtatsTrimestrielsModifications(object):
                 for line in page_template:
                     table.removeChild(line)
     
-                nb_pages = (len(indexes) / template_lines_count) + (len(indexes) % template_lines_count > 0)
+                nb_pages = (len(indexes) // template_lines_count) + (len(indexes) % template_lines_count > 0)
                 total = [[0, 0, 0], [0, 0, 0]]
 
                 for page in range(nb_pages):

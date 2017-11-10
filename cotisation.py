@@ -413,7 +413,7 @@ class Cotisation(object):
                         self.heures_mois = self.heures_periode / self.GetNombreContratsFactures()
 
                     if options & TRACES:
-                        print(' heures / periode : (%d-%f) * %f = %f' % (self.semaines_periode, self.semaines_conges, self.heures_semaine, self.heures_periode))
+                        print(' heures / periode : (%f-%f) * %f = %f' % (self.semaines_periode, self.semaines_conges, self.heures_semaine, self.heures_periode))
                         print(' nombre de factures : %d' % self.nombre_factures)
                         print(' heures / mois : %f' % self.heures_mois)
                 

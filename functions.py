@@ -290,8 +290,7 @@ def GetTriParCommuneEtNomIndexes(indexes):
         inscrit = database.creche.inscrits[x]
         key = "%s %s %s" % (inscrit.famille.ville, inscrit.nom, inscrit.prenom)
         return key.lower()
-    indexes.sort(key=sort_key)
-    return indexes
+    return list(indexes).sort(key=sort_key)
 
 
 def GetTriParPrenomIndexes(indexes):
@@ -521,11 +520,11 @@ def GetNombreSemainesPeriode(debut, fin):
     if not (config.options & COMPATIBILITY_MODE_DECOMPTE_SEMAINES_2017):
         jours += 1
     if database.creche.arrondi_semaines == ARRONDI_SEMAINE_SUPERIEURE:
-        return (jours + 6) / 7
+        return (jours + 6) // 7
     elif database.creche.arrondi_semaines == ARRONDI_SEMAINE_PLUS_PROCHE:
-        return round(float(jours) / 7)
+        return round(jours / 7)
     else:
-        return float(jours) / 7
+        return jours / 7
 
 
 class Summary(object):
