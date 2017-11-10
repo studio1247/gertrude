@@ -21,7 +21,7 @@ from __future__ import print_function
 import locale
 from cotisation import *
 from globals import *
-from database import Inscrit, Reservataire, EncaissementFamille, ClotureFacture
+from database import Inscrit, Reservataire, EncaissementFamille, EncaissementReservataire, ClotureFacture
 
 
 class FactureBase(object):
@@ -932,13 +932,10 @@ def CalculeSolde(who, date):
     solde = 0.0
     historique = GetHistoriqueSolde(who, date, False)
     for ligne in historique:
-        try:
-            if isinstance(ligne, EncaissementFamille):
-                solde -= ligne.valeur
-            else:
-                solde += ligne.total_facture
-        except Exception as e:
-            print("Exception", e)
+        if isinstance(ligne, EncaissementFamille) or isinstance(ligne, EncaissementReservataire):
+            solde -= ligne.valeur
+        else:
+            solde += ligne.total_facture
     return solde
 
 

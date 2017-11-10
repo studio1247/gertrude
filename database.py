@@ -776,6 +776,7 @@ class Reservataire(Base):
     periode_facturation = Column(Integer)
     delai_paiement = Column(Integer)
     tarif = Column(Float)
+    encaissements = relationship("EncaissementReservataire", cascade="all, delete-orphan")
 
     def __init__(self, creche, nom="", **kwargs):
         Base.__init__(self, creche=creche, nom=nom)
@@ -2062,7 +2063,7 @@ class EncaissementFamille(Base):
 class EncaissementReservataire(Base):
     __tablename__ = "encaissements_reservataires"
     idx = Column(Integer, primary_key=True)
-    reservataire_idx = Column(Integer, ForeignKey("reservataires.idx"))
+    reservataire_idx = Column(Integer, ForeignKey("reservataires.idx"), name="reservataire")
     date = Column(Date)
     valeur = Column(Float)
     moyen_paiement = Column(Integer)
