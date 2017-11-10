@@ -97,7 +97,7 @@ class GertrudeTestCase(unittest.TestCase):
         self.assertEquals("%.2f" % montant1, "%.2f" % montant2)
 
 
-@pytest.mark.skipif(sys.version_info < (3, 0))
+@pytest.mark.skipif("sys.version_info < (3, 0)")
 class PlanningTests(GertrudeTestCase):
     def setUp(self):
         GertrudeTestCase.setUp(self)
