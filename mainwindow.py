@@ -413,8 +413,6 @@ class GertrudeFrame(wx.Frame):
         history.Clear()
         self.SetStatusText("")
 
-    print("TODO tester backups")
-
     def OnBackup(self, _):
         self.SetStatusText("Copie de secours ...")
         Save(ProgressHandler(self.SetStatusText))
