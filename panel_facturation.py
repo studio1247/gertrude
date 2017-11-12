@@ -165,9 +165,9 @@ class FacturationTab(AutoTab):
 
     def OnFacturesInscritChoice(self, _):
         self.factures_monthchoice.Clear()
-        inscrit = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
-        for facture in GetFacturesList(inscrit):
-            self.factures_monthchoice.Append('%s %d' % (months[facture.month - 1], facture.year), facture)
+        who = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
+        for date in who.get_factures_list():
+            self.factures_monthchoice.Append('%s %d' % (months[facture.month - 1], facture.year), date)
         self.factures_monthchoice.SetSelection(self.factures_monthchoice.GetCount()-1)
         self.OnFacturesMonthChoice()
         
@@ -208,7 +208,7 @@ class FacturationTab(AutoTab):
             else:
                 self.attestations_periodechoice.Append(u"Janvier - %s %d" % (months[today.month - 1], today.year), (datetime.date(today.year, 1, 1), datetime.date(today.year, today.month, 1)))
         
-        date = GetFirstMonday()
+        date = config.get_first_monday()
         while date < today:
             if not isinstance(inscrit, Inscrit) or inscrit.get_inscriptions(datetime.date(date.year, date.month, 1), GetMonthEnd(date)):
                 self.attestations_periodechoice.Append('%s %d' % (months[date.month - 1], date.year), (datetime.date(date.year, date.month, 1), GetMonthEnd(date)))
@@ -237,7 +237,7 @@ class FacturationTab(AutoTab):
         if "attestations-mensuelles" in self.inscrits_choice:
             self.attestations_mensuelles_periodechoice.Clear()
             inscrit = self.inscrits_choice["attestations-mensuelles"].GetClientData(self.inscrits_choice["attestations-mensuelles"].GetSelection())
-            date = GetFirstMonday()
+            date = config.get_first_monday()
             while date < today:
                 if not isinstance(inscrit, Inscrit) or inscrit.get_inscriptions(datetime.date(date.year, date.month, 1), GetMonthEnd(date)):
                     self.attestations_mensuelles_periodechoice.Append('%s %d' % (months[date.month - 1], date.year), (datetime.date(date.year, date.month, 1), GetMonthEnd(date)))

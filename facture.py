@@ -889,7 +889,7 @@ class FactureReservataire(object):
 def GetHistoriqueSolde(who, jalon, derniere_facture=True):
     if isinstance(who, Reservataire):
         lignes = [encaissement for encaissement in who.encaissements if not encaissement.date or encaissement.date <= jalon]
-        for date in who.GetFacturesList():
+        for date in who.get_factures_list():
             if date <= jalon:
                 lignes.append(FactureReservataire(who, date))
     else:
@@ -945,16 +945,6 @@ def GetRetardDePaiement(who):
         return False
     else:
         return CalculeSolde(who, datetime.date.today() - datetime.timedelta(delai)) > 0
-
-
-def GetFacturesList(inscrit):
-    result = []
-    date = GetFirstMonday()
-    while date <= datetime.date.today():
-        if not isinstance(inscrit, Inscrit) or inscrit.has_facture(date):
-            result.append(date)
-        date = GetNextMonthStart(date)
-    return result
 
 
 def ClotureFactures(inscrits, date, cloture=True):

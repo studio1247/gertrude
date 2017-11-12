@@ -665,7 +665,7 @@ class ReferencePlanningPanel(PlanningWidget):
         self.parent.UpdateDecompteConges()
                
     def CheckDate(self, date, plages):
-        capacite = database.creche.GetCapacite(date.weekday())
+        capacite = database.creche.get_capacite(date.weekday())
         lines = GetLines(date, database.creche.inscrits)
         activites, activites_sans_horaires = GetActivitiesSummary(lines)
         for start, end in plages:                        

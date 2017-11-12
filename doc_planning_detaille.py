@@ -247,7 +247,7 @@ class PlanningDetailleModifications:
                             else:
                                 nv, nw = line.array[x]
 
-                            if activity == 0 and (nw == 0 or nv > database.creche.GetCapacite(day.weekday()) or float(nv)/nw > 6.5):
+                            if activity == 0 and (nw == 0 or nv > database.creche.get_capacite(day.weekday()) or float(nv)/nw > 6.5):
                                 nw = activity | SUPPLEMENT
                             else:
                                 nw = activity

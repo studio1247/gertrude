@@ -311,6 +311,9 @@ class Config(object):
         print("Section %s choisie" % section_name)
         self.current_section = self.sections[section_name]
 
+    def get_first_monday(self):
+        return self.first_date - datetime.timedelta(self.first_date.weekday())
+
     def __getattr__(self, key):
         if self.current_section and hasattr(self.current_section, key):
             return getattr(self.current_section, key)

@@ -35,10 +35,6 @@ def GetNextMonday(date):
     return date + datetime.timedelta(7 - date.weekday())
 
 
-def GetFirstMonday():
-    return config.first_date - datetime.timedelta(config.first_date.weekday())
-
-
 def IsPresentDuringTranche(journee, debut, fin):
     for timeslot in journee.timeslots:
         if timeslot.debut < fin and timeslot.fin > debut:
@@ -571,7 +567,7 @@ def GetSiteFields(site):
             ('code-postal-site', GetCodePostal(site) if site else GetCodePostal(database.creche)),
             ('ville-site', site.ville if site else database.creche.ville),
             ('telephone-site', site.telephone if site else database.creche.telephone),
-            ('capacite-site', site.capacite if site else database.creche.GetCapacite()),
+            ('capacite-site', site.capacite if site else database.creche.get_capacite()),
             ]
 
 
@@ -583,8 +579,8 @@ def GetCrecheFields(creche):
             ('ville-creche', database.creche.ville),
             ('telephone-creche', database.creche.telephone),
             ('email-creche', database.creche.email),
-            ('capacite', database.creche.GetCapacite()),
-            ('capacite-creche', database.creche.GetCapacite()),
+            ('capacite', database.creche.get_capacite()),
+            ('capacite-creche', database.creche.get_capacite()),
             ('amplitude-horaire', database.creche.get_amplitude_horaire()),
             ('sepa-creditor-id', database.creche.creditor_id),
             ('siret-creche', database.creche.siret),
@@ -896,7 +892,7 @@ def Add2MonthsToChoice(choice):
 
 
 def AddWeeksToChoice(choice):
-    date = first_monday = GetFirstMonday()
+    date = first_monday = config.get_first_monday()
     while date < config.last_date:
         str = 'Semaine %d (%d %s %d)' % (date.isocalendar()[1], date.day, months[date.month - 1], date.year)
         choice.Append(str, date)

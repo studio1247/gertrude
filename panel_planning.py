@@ -120,7 +120,7 @@ class DayPlanningPanel(PlanningWidget):
         activites, activites_sans_horaires = GetActivitiesSummary(lines)
         for start, end in plages_selectionnees:
             for i in range(start, end):
-                if activites[0][i][0] > database.creche.GetCapacite(line.day):
+                if activites[0][i][0] > database.creche.get_capacite(line.day):
                     dlg = wx.MessageDialog(None, "Dépassement de la capacité sur ce créneau horaire !", "Attention", wx.OK|wx.ICON_WARNING)
                     dlg.ShowModal()
                     dlg.Destroy()
@@ -291,7 +291,7 @@ class PlanningHorairePanel(PlanningBasePanel):
         # Le notebook pour les jours de la semaine
         self.notebook = wx.Notebook(self, style=wx.LB_DEFAULT)
         self.sizer.Add(self.notebook, 1, wx.EXPAND|wx.TOP, 5)
-        first_monday = GetFirstMonday()
+        first_monday = config.get_first_monday()
         delta = datetime.date.today() - first_monday
         semaine = int(delta.days / 7)
         for week_day in range(7):

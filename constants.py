@@ -444,3 +444,8 @@ modes_gestion_plannings_salaries = [
 # Type de repas
 REPAS_PUREE = 0
 REPAS_MORCEAUX = 1
+
+# Type de repas (2ème choix)
+REPAS_ASSIETTE = 0
+REPAS_PETIT_POT = 1
+REPAS_BIBERON = 2

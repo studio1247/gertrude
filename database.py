@@ -30,7 +30,7 @@ from parameters import *
 import bcrypt
 from config import config
 
-DB_VERSION = 118
+DB_VERSION = 120
 
 Base = declarative_base()
 
@@ -492,13 +492,21 @@ class Creche(Base):
             result += timeslot.value * (timeslot.fin - timeslot.debut)
         return result / 12
 
-    def GetCapacite(self, jour=None, tranche=None):
+    def get_factures_list(self):
+        result = []
+        date = config.get_first_monday()
+        while date <= datetime.date.today():
+            result.append(date)
+            date = GetNextMonthStart(date)
+        return result
+
+    def get_capacite(self, jour=None, tranche=None):
         if jour is None:
             jours, result = 0, 0.0
             for jour in range(7):
                 if self.is_jour_semaine_travaille(jour):
                     jours += 1
-                    result += self.GetCapacite(jour)
+                    result += self.get_capacite(jour)
             return result / jours
         elif tranche is None:
             return self.GetHeuresAccueil(jour) / self.get_amplitude_horaire()
@@ -789,7 +797,7 @@ class Reservataire(Base):
     def get_delai_paiement(self):
         return self.delai_paiement
 
-    def GetFacturesList(self):
+    def get_factures_list(self):
         result = []
         if self.debut:
             date = datetime.date(self.debut.year, 9, 1) if self.debut.month >= 9 else datetime.date(self.debut.year - 1, 9, 1)
@@ -921,6 +929,7 @@ class Salarie(Base):
     telephone_portable = Column(String)
     telephone_portable_notes = Column(String)
     email = Column(String)
+    notes = Column(String)
     diplomes = Column(String)
     combinaison = Column(String)
     contrats = relationship("ContratSalarie", cascade="all, delete-orphan")
@@ -1292,6 +1301,7 @@ class Inscrit(Base):
     allergies = Column(String, default="")
     garde_alternee = Column(Boolean, default=False)
     type_repas = Column(Integer, default=REPAS_PUREE)
+    type_repas2 = Column(Integer, default=REPAS_ASSIETTE)
     inscriptions = relationship("Inscription", cascade="all, delete-orphan")
     days = relationship("TimeslotInscrit", collection_class=lambda: DayCollection("date"), cascade="all, delete-orphan")
     weekslots = relationship("WeekSlotInscrit", cascade="all, delete-orphan")
@@ -1389,6 +1399,15 @@ class Inscrit(Base):
             if self.get_inscriptions(GetMonthStart(previous_month_end), previous_month_end, site):
                 return True
         return False
+
+    def get_factures_list(self):
+        result = []
+        date = config.get_first_monday()
+        while date <= datetime.date.today():
+            if self.has_facture(date):
+                result.append(date)
+            date = GetNextMonthStart(date)
+        return result
 
     def GetPeriodeInscriptions(self):
         if len(self.inscriptions) == 0:
@@ -2718,6 +2737,13 @@ class Database(object):
             if version < 118:
                 self.engine.execute("ALTER TABLE familles ADD autorisation_attestation_paje BOOLEAN")
                 self.engine.execute("UPDATE familles SET autorisation_attestation_paje=?", True)
+
+            if version < 119:
+                self.engine.execute("ALTER TABLE employes ADD notes VARCHAR")
+
+            if version < 120:
+                self.engine.execute("ALTER TABLE inscrits ADD type_repas2 INGEGER")
+                self.engine.execute("UPDATE inscrits SET type_repas2=0")
 
             version_entry.value = DB_VERSION
             self.commit()

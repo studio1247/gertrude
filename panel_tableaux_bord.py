@@ -55,7 +55,7 @@ class TableauDeBordSummary(Summary, NumberPlanningLine):
 
 class SitesPlanningPanel(PlanningWidget):
     def UpdateContents(self):          
-        first_monday = GetFirstMonday()
+        first_monday = config.get_first_monday()
         lines = []
         for week_day in range(7):
             date = first_monday + datetime.timedelta(self.semaine * 7 + week_day)
@@ -104,7 +104,7 @@ class SitesPlanningPanel(PlanningWidget):
 
 class ReservatairesPlanningPanel(PlanningWidget):
     def UpdateContents(self):          
-        first_monday = GetFirstMonday()
+        first_monday = config.get_first_monday()
         lines = []
         for week_day in range(7):
             date = first_monday + datetime.timedelta(self.semaine * 7 + week_day)
@@ -172,7 +172,7 @@ class PlacesInformationTab(AutoTab):
         # La combobox pour la selection de la semaine
         self.week_choice = wx.Choice(self, -1)
         sizer.Add(self.week_choice, 1, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
-        day = first_monday = GetFirstMonday()
+        day = first_monday = config.get_first_monday()
         while day < config.last_date:
             string = 'Semaine %d (%d %s %d)' % (day.isocalendar()[1], day.day, months[day.month - 1], day.year)
             self.week_choice.Append(string, day)
@@ -210,7 +210,7 @@ class PlacesInformationTab(AutoTab):
 
 class PlacesUtiliseesPlanningPanel(PlanningWidget):
     def UpdateContents(self):
-        first_monday = GetFirstMonday()
+        first_monday = config.get_first_monday()
         lines = []
         for week_day in range(7):
             date = first_monday + datetime.timedelta(self.semaine * 7 + week_day)
@@ -911,7 +911,7 @@ class RelevesTab(AutoTab):
     def EvtReleveSalariesSalarieChoice(self, _):
         self.releve_salaries_monthchoice.Clear()
         salarie = self.salaries_choice["releves"].GetClientData(self.salaries_choice["releves"].GetSelection())
-        date = GetFirstMonday()
+        date = config.get_first_monday()
         while date <= datetime.date.today():
             if isinstance(salarie, list) or salarie.get_contrat(date):
                 self.releve_salaries_monthchoice.Append('%s %d' % (months[date.month - 1], date.year), date)
