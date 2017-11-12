@@ -594,7 +594,7 @@ class PlanningsEquipePanel(wx.lib.scrolledpanel.ScrolledPanel, PeriodeMixin):
         result = None
         for contrat in salarie.contrats:
             for planning in contrat.plannings:
-                if (not planning.debut or planning.debut < date) and (result is None or result.debut or (planning.debut and planning.debut > result.debut)):
+                if (not planning.debut or planning.debut < date) and (not result or not result.debut or (planning.debut and planning.debut > result.debut)):
                     result = planning
         return result
 
