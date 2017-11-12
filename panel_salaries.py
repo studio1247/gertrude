@@ -403,6 +403,8 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
     def UpdatePlanningPanel(self):
         if self.salarie and self.periode is not None and self.periode != -1 and self.periode < len(self.salarie.contrats):
             contrat = self.salarie.contrats[self.periode]
+            PeriodeMixin.SetPeriode(self, self.periode)
+            self.plannings_panel.periode = min(self.plannings_panel.periode, len(contrat.plannings) - 1)
             planning = contrat.plannings[self.plannings_panel.periode]
             for obj in [self.duree_reference_choice, self.button_copy]:
                 obj.Enable(not config.readonly)
@@ -538,7 +540,6 @@ class PlanningsEquipePanel(wx.lib.scrolledpanel.ScrolledPanel, PeriodeMixin):
                     if not planning and periode.debut not in self.plannings:
                         previous = self.get_salarie_previous_planning(salarie, periode.debut)
                         planning = self.get_planning_copy(contrat, previous)
-                        planning.contrat = contrat
                         planning.debut = periode.debut
                         contrat.plannings.append(planning)
         self.UpdatePeriodes()
@@ -546,10 +547,9 @@ class PlanningsEquipePanel(wx.lib.scrolledpanel.ScrolledPanel, PeriodeMixin):
     def delPeriode(self, periode):
         history.append(None)
         for salarie in database.creche.salaries:
-            for contrat in salarie.contrats:
-                planning = self.get_salarie_planning(salarie, periode.debut)
-                if planning:
-                    contrat.plannings.remove(planning)
+            planning = self.get_salarie_planning(salarie, periode.debut)
+            if planning:
+                planning.contrat.plannings.remove(planning)
         self.UpdatePeriodes()
 
     def onDureeReferenceChoice(self, _):
@@ -632,7 +632,7 @@ class PlanningsEquipePanel(wx.lib.scrolledpanel.ScrolledPanel, PeriodeMixin):
         for salarie in database.creche.salaries:
             for contrat in salarie.contrats:
                 for date in dates:
-                    if date >= contrat.debut:
+                    if (contrat.debut and date >= contrat.debut) and (not contrat.fin or date <= contrat.fin):
                         planning = self.get_salarie_planning(salarie, date)
                         if not planning:
                             previous = self.get_salarie_previous_planning(salarie, date)
