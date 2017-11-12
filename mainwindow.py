@@ -415,7 +415,7 @@ class GertrudeFrame(wx.Frame):
 
     def OnBackup(self, _):
         self.SetStatusText("Copie de secours ...")
-        Save(ProgressHandler(self.SetStatusText))
+        self.Save()
         wildcard = "ZIP files (*.zip)|*.zip"
         dlg = wx.FileDialog(self, style=wx.SAVE, wildcard=wildcard, defaultDir=config.backups_directory, defaultFile="gertrude-%d-%d-%d.zip" % (today.day, today.month, today.year))
         result = dlg.ShowModal()
