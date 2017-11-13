@@ -81,7 +81,7 @@ class PreparationRepasModifications(object):
             cells = line.getElementsByTagName("table:table-cell")
             ReplaceFields(cells, GetInscritFields(inscrit))
             for i, cell in enumerate(cells):
-                day = (i - 1) // 4
+                day = (i - 3) // 5
                 date = self.debut + datetime.timedelta(day)
                 age = GetAge(inscrit.naissance, date)
                 fields = [
