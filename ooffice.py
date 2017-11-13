@@ -495,15 +495,15 @@ def GenerateTextDocument(modifications, filename=None, gauge=None):
         filename = normalize_filename(modifications.default_output)
     if modifications.template:
         template = GetTemplateFile(modifications.template)
-        text = file(template, 'r').read()
+        text = open(template, "r").read()
     else:
-        text = None
+        text = ""
     if gauge:
         modifications.gauge = gauge
         gauge.SetValue(5)
-        
+
     text, errors = modifications.execute(text)
-    file(filename, 'w').write(text)
+    open(filename, "wb").write(text)
     if gauge:
         gauge.SetValue(100)
         

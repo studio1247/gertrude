@@ -167,7 +167,7 @@ class FacturationTab(AutoTab):
         self.factures_monthchoice.Clear()
         who = self.inscrits_choice["factures"].GetClientData(self.inscrits_choice["factures"].GetSelection())
         for date in who.get_factures_list():
-            self.factures_monthchoice.Append('%s %d' % (months[facture.month - 1], facture.year), date)
+            self.factures_monthchoice.Append('%s %d' % (months[date.month - 1], date.year), date)
         self.factures_monthchoice.SetSelection(self.factures_monthchoice.GetCount()-1)
         self.OnFacturesMonthChoice()
         

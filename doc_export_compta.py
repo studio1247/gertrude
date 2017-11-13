@@ -31,7 +31,7 @@ class ExportComptaCotisationsModifications:
     def __init__(self, inscrits, periode):
         self.inscrits = inscrits
         self.periode = periode
-        self.default_output = u"Export compta cotisations %s %d.txt" % (months[periode.month - 1], periode.year)
+        self.default_output = "Export compta cotisations %s %d.txt" % (months[periode.month - 1], periode.year)
         self.email_to = None
         self.multi = False
         self.email = False
@@ -39,24 +39,25 @@ class ExportComptaCotisationsModifications:
 
     @staticmethod
     def generate_ciel_line_mvt(inscrit, date, total):
-        template = u'"77"\t"VT"\t"%(date)s"\t"%(client)s"\t"%(nom)s"\t"%(total)s"\tD\tB\t"COTISATION %(nom)s"\t"10"\t"%(date)s"\n' + \
-                   u'"77"\t"VT"\t"%(date)s"\t"706410"\t"PARTICIPATION FAMILIALE"\t"%(total)s"\tC\tB\t"COTISATION %(nom)s""10"'
+        template = '"77"\t"VT"\t"%(date)s"\t"%(client)s"\t"%(nom)s"\t"%(total)s"\tD\tB\t"COTISATION %(nom)s"\t"10"\t"%(date)s"\n' + \
+                   '"77"\t"VT"\t"%(date)s"\t"706410"\t"PARTICIPATION FAMILIALE"\t"%(total)s"\tC\tB\t"COTISATION %(nom)s""10"'
         result = template % {"date": date2str(date),
                              "client": inscrit.famille.code_client,
                              "nom": inscrit.nom.upper(),
                              "total": "%.02f" % total
                              }
-        return str(result).encode("latin-1")
+        return str(result)
 
     @staticmethod
     def generate_ciel_line_tiers(inscrit):
-        template = u'"%(client)s"\t"%(nom)s"\t"SR"\t"FRA"'
+        template = '"%(client)s"\t"%(nom)s"\t"SR"\t"FRA"'
         result = template % {"client": inscrit.famille.code_client,
                              "nom": inscrit.nom.upper(),
                              }
-        return str(result).encode("latin-1")
+        return str(result)
 
     def execute(self, text):
+        text = text.decode("latin-1")
         if "<lines-ciel-mvt>" in text or "<lines-ciel-tiers>" in text:
             return self.execute_ciel(text)
         else:
@@ -79,7 +80,7 @@ class ExportComptaCotisationsModifications:
         mvt_section, tiers_section = self.generate_ciel_sections()
         text = text.replace("<lines-ciel-mvt>", mvt_section)
         text = text.replace("<lines-ciel-tiers>", tiers_section)
-        return text, self.errors
+        return text.encode("latin-1"), self.errors
 
     def execute_ebp(self, text):
         errors = {}
@@ -163,13 +164,13 @@ class ExportComptaCotisationsModifications:
 
                 line = template
                 for field in fields:
-                    value = str(fields[field]).encode("latin-1")
+                    value = str(fields[field])
                     if value in replacements.keys():
                         value = replacements[value]
                     line = line.replace("<%s>" % field, value)
                 result.append(line)
 
-        return ''.join(result), errors
+        return ("".join(result)).encode("latin-1"), errors
 
 
 class ExportComptaReglementsModifications(object):
@@ -177,7 +178,7 @@ class ExportComptaReglementsModifications(object):
         self.template = 'Export compta reglements.txt'
         self.inscrits = inscrits
         self.periode = periode
-        self.default_output = u"Export compta reglements %s %d.txt" % (months[periode.month - 1], periode.year)
+        self.default_output = "Export compta reglements %s %d.txt" % (months[periode.month - 1], periode.year)
         self.email_to = None
         self.multi = False
         self.email = False
@@ -185,31 +186,31 @@ class ExportComptaReglementsModifications(object):
 
     @staticmethod
     def generate_ciel_line_mvt_inscrit(inscrit, date, total):
-        template = u'"78"\t"BQ"\t"%(date)s"\t"%(client)s"\t"%(nom)s"\t"%(total)s"\tC\tB\t"COTISATION %(mois)s"\t"10"\t"%(date)s"'
+        template = '"78"\t"BQ"\t"%(date)s"\t"%(client)s"\t"%(nom)s"\t"%(total)s"\tC\tB\t"COTISATION %(mois)s"\t"10"\t"%(date)s"'
         result = template % {"date": date,
                              "mois": months[date.month - 1].upper(),
                              "total": "%.02f" % total,
                              "client": inscrit.famille.code_client,
                              "nom": inscrit.nom.upper(),
                              }
-        return str(result).encode("latin-1")
+        return str(result)
 
     @staticmethod
     def generate_ciel_line_mvt_banque(date, total):
-        template = u'"78"\t"BQ"\t"%(date)s"\t"512000"\t"Banque"\t"%(total)s"\tD\tB\t"RECETTES COTISATION %(mois)s"\t"10"'
+        template = '"78"\t"BQ"\t"%(date)s"\t"512000"\t"Banque"\t"%(total)s"\tD\tB\t"RECETTES COTISATION %(mois)s"\t"10"'
         result = template % {"date": date,
                              "total": "%.02f" % total,
                              "mois": months[date.month-1].upper(),
                              }
-        return str(result).encode("latin-1")
+        return str(result)
 
     @staticmethod
     def generate_ciel_line_tiers(inscrit):
-        template = u'"%(client)s"\t"%(nom)s"\t"SR"\t"FRA"'
+        template = '"%(client)s"\t"%(nom)s"\t"SR"\t"FRA"'
         result = template % {"client": inscrit.famille.code_client,
                              "nom": inscrit.nom.upper(),
                              }
-        return str(result).encode("latin-1")
+        return str(result)
 
     def generate_ciel_sections(self):
         mvt, tiers = [], []

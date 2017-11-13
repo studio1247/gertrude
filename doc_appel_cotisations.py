@@ -53,6 +53,8 @@ class AppelCotisationsModifications(object):
                 pass
 
     def GetCustomFields(self, facture):
+        if not facture:
+            return []
         inscrit = facture.inscrit
         famille = inscrit.famille
         fields = []
