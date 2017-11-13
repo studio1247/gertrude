@@ -457,6 +457,6 @@ REPAS_BIBERON = 2
 
 types_repas_2 = [
     ("Assiette", REPAS_ASSIETTE),
-    ("Petit pots", REPAS_PETIT_POT),
+    ("Petit pot", REPAS_PETIT_POT),
     ("Biberon", REPAS_BIBERON)
 ]
