@@ -18,8 +18,6 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-# TODO pb in GetActivitiesSummary from __future__ import division
-
 import datetime
 import urllib
 from constants import *
@@ -29,7 +27,7 @@ from globals import *
 
 def write_apache_logs_to_journal(filename):
     # Recuperation des logs Apache
-    lines = file(filename).readlines()
+    lines = open(filename).readlines()
     result = []
     for line in lines:
         print(line)
@@ -52,7 +50,7 @@ def write_apache_logs_to_journal(filename):
         for inscrit in database.creche.inscrits:
             letter = inscrit.nom[0] if len(inscrit.nom) > 0 else ""
             name = urllib.quote_plus(inscrit.prenom.encode("utf-8")) + "+" + urllib.quote_plus(letter.encode("utf-8"))
-            # print "comparaison", name, combinaison
+            # print("comparaison", name, combinaison)
             if name == combinaison:
                 who = inscrit
 
@@ -60,7 +58,7 @@ def write_apache_logs_to_journal(filename):
             for inscrit in database.creche.salaries:
                 letter = inscrit.nom[0] if len(inscrit.nom) > 0 else ""
                 name = urllib.quote_plus(inscrit.prenom.encode("utf-8")) + "+" + urllib.quote_plus(letter.encode("utf-8"))
-                # print "comparaison", name, combinaison
+                # print("comparaison", name, combinaison)
                 if name == combinaison:
                     action += "_salarie"
                     who = inscrit
@@ -76,7 +74,7 @@ def write_apache_logs_to_journal(filename):
                 result.append((action, who.idx, date))
 
     result.sort(key=lambda tup: tup[-1])  # sorts in place
-    f = file("journal.txt", "w")
+    f = open("journal.txt", "w")
     for action, idx, date in result:
         print(action, idx, date)
         f.write("%s %d %s\n" % (action, idx, date))
@@ -106,10 +104,10 @@ def sync_tablette_lines(lines, tz=None):
         elif periode.malade:
             value = MALADE
         elif not periode.arrivee:
-            errors.append(u"%s : Pas d'arrivée enregistrée le %s" % (GetPrenomNom(who), periode.date))
+            errors.append("%s : Pas d'arrivée enregistrée le %s" % (GetPrenomNom(who), periode.date))
             periode.arrivee = int(database.creche.ouverture * (60 // BASE_GRANULARITY))
         elif not periode.depart:
-            errors.append(u"%s : Pas de départ enregistré le %s" % (GetPrenomNom(who), periode.date))
+            errors.append("%s : Pas de départ enregistré le %s" % (GetPrenomNom(who), periode.date))
             periode.depart = int(database.creche.fermeture * (60 // BASE_GRANULARITY))
 
         if value < 0:
@@ -161,25 +159,25 @@ def sync_tablette_lines(lines, tz=None):
         except Exception as e:
             print(e)
 
-    # print array_salaries
+    # print(array_salaries)
 
     errors = []
     for key in array_enfants:
         inscrit = database.creche.GetInscrit(key)
         if inscrit:
             for date in array_enfants[key]:
-                if not database.creche.cloture_facturation or not inscrit.IsFactureCloturee(date):
+                if not database.creche.cloture_facturation or date not in inscrit.clotures:
                     AddPeriodes(inscrit, date, array_enfants[key][date])
         else:
-            errors.append(u"Inscrit %d: Inconnu!" % key)
+            errors.append("Inscrit %d: Inconnu!" % key)
     for key in array_salaries:
         salarie = database.creche.GetSalarie(key)
         if salarie:
             for date in array_salaries[key]:
-                # print key, GetPrenomNom(salarie), periode
+                # print(key, GetPrenomNom(salarie), periode)
                 AddPeriodes(salarie, date, array_salaries[key][date])
         else:
-            errors.append(u"Salarié %d: Inconnu!" % key)
+            errors.append("Salarié %d: Inconnu!" % key)
 
     return errors
 
