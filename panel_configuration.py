@@ -629,9 +629,9 @@ class ActivitesTab(AutoTab):
                 hash_cb.SetSelection(i)
     
     def OnChangementMode(self, event):
-        object = event.GetEventObject()
-        color_button = object.color_button
-        value = object.GetClientData(object.GetSelection())
+        obj = event.GetEventObject()
+        color_button = obj.color_button
+        value = obj.GetClientData(obj.GetSelection())
         color_button.Enable(value != MODE_SANS_HORAIRES)
         color_button.static.Enable(value != MODE_SANS_HORAIRES)
         color_button.hash_cb.Enable(value != MODE_SANS_HORAIRES)
@@ -691,12 +691,12 @@ class ChargesTab(AutoTab, PeriodeMixin):
         sizer.Fit(self)
         self.SetSizer(sizer)
 
-    def OnAnneeChoice(self, evt):
+    def OnAnneeChoice(self, _):
         selected = self.annee_choice.GetSelection()
         annee = self.annee_choice.GetClientData(selected)
         for m in range(12):
             date = datetime.date(annee, m+1, 1)
-            if not date in database.creche.charges:
+            if date not in database.creche.charges:
                 database.creche.charges[date] = Charge(creche=database.creche, date=date)
             self.charges_ctrls[m].SetInstance(database.creche.charges[date])
         
