@@ -2712,9 +2712,13 @@ class Database(object):
                             trash.append(row2)
                 for idx, _ in trash:
                     self.engine.execute("DELETE FROM conges WHERE idx=?", idx)
+
                 rows = list(self.engine.execute("SELECT debut, fin, idx FROM reservataires"))
                 for debut, fin, idx in rows:
-                    self.engine.execute("UPDATE reservataires SET debut=?, fin=? WHERE idx=?", str2date(debut), str2date(fin), idx)
+                    if isinstance(debut, str):
+                        self.engine.execute("UPDATE reservataires SET debut=? WHERE idx=?", (str2date(debut), idx))
+                    if isinstance(fin, str):
+                        self.engine.execute("UPDATE reservataires SET fin=? WHERE idx=?", (str2date(fin), idx))
 
             if version < 116:
                 creche_id = self.engine.execute('SELECT idx FROM CRECHE').first()[0]

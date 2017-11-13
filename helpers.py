@@ -122,22 +122,22 @@ def GetTrimestreEnd(date):
     return GetTrimestreStart(nextTrimestre) - datetime.timedelta(1)
 
 
-def str2date(string, year=None, day=None):
+def str2date(string, annee=None, jour=None):
     s = string.strip()
-    if s.count('/') == 1:
-        if year:
-            s += '/%d' % year
-        elif day:
-            s = '01/' + s
-    try:
-        (jour, mois, annee) = map(lambda x: int(x), s.split('/'))
-        if annee < 1900:
-            return None
-        else:
-            return datetime.date(annee, mois, jour)
-    except Exception as e:
-        # print("Date invalide", string, e)
+    if s.count("-") == 2:
+        annee, mois, jour = map(lambda x: int(x), s.split("-"))
+    elif s.count("/") == 2:
+        jour, mois, annee = map(lambda x: int(x), s.split("/"))
+    elif annee and s.count("/") == 1:
+        jour, mois = map(lambda x: int(x), s.split("/"))
+    elif jour and s.count("/") == 1:
+        mois, annee = map(lambda x: int(x), s.split("/"))
+    else:
         return None
+    if annee < 1900:
+        return None
+    else:
+        return datetime.date(annee, mois, jour)
 
 
 def GetDureeArrondie(mode, start, end):

@@ -277,16 +277,16 @@ class FactureModifications(object):
                         mois_string = "%s %d à %s %d" % (months[debut_facture.month - 1], debut_facture.year, months[fin_facture.month - 1], fin_facture.year)
 
                     try:
-                        numero = int(creche.numeros_facture[debut_facture].valeur)
-                        numero += len([inscrit for inscrit in creche.inscrits if inscrit.HasFacture(debut_facture)])
+                        numero = int(database.creche.numeros_facture[debut_facture].valeur)
+                        numero += len([inscrit for inscrit in database.creche.inscrits if inscrit.has_facture(debut_facture)])
                         numero += self.reservataire.idx
                     except Exception as e:
-                        print(e)
+                        print("Exception numéro de facture", e)
                         numero = 0
 
                     if config.numfact:
                         fields = {
-                            "inscritid": len(creche.inscrits) + self.reservataire.idx,
+                            "inscritid": len(database.creche.inscrits) + self.reservataire.idx,
                             "numero": numero,
                             "annee": debut_facture.year,
                             "mois": debut_facture.month
@@ -304,7 +304,7 @@ class FactureModifications(object):
                         ('tarif-periode-reservataire', reservataire.tarif * nombre_mois),
                     ]
 
-                    inscrits = database.creche.select_inscrits(debut_facture, None, reservataire=self.reservataire)  # parce qu'on veut aussi voir les enfants qui arrivent plus tard
+                    inscrits = list(database.creche.select_inscrits(debut_facture, None, reservataire=self.reservataire))  # parce qu'on veut aussi voir les enfants qui arrivent plus tard
                     if inscrits:
                         inscrit = inscrits[0]
                         fields += GetInscritFields(inscrit)
@@ -456,6 +456,7 @@ class FactureModifications(object):
 
 if __name__ == '__main__':
     import random
+    from document_dialog import StartLibreOffice
     database.init("databases/opagaio.db")
     database.load()
     modifications = FactureModifications(database.creche.inscrits, datetime.date(2017, 9, 1))
