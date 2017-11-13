@@ -17,7 +17,7 @@
 
 from __future__ import unicode_literals
 from __future__ import print_function
-from builtins import str
+from builtins import str as text
 import traceback
 import subprocess
 import wx
@@ -185,7 +185,7 @@ class DocumentDialog(wx.Dialog):
     def OnSauverOuvrir(self, event):
         self.OnSauver(event)
         if self.document_generated:
-            if self.filename.endswith("pdf"):
+            if self.filename.endswith(".pdf"):
                 StartAcrobatReader(self.filename)
             else:
                 StartLibreOffice(self.filename)
@@ -248,7 +248,7 @@ class DocumentDialog(wx.Dialog):
 
 def StartLibreOffice(filename):
     if sys.platform == 'win32':
-        filename = "".join(["file:", urllib.pathname2url(os.path.abspath(filename))])
+        filename = "".join(["file:", urllib.pathname2url(os.path.abspath(filename.encode("utf-8")))])
         # print filename
         try:
             StarDesktop, objServiceManager, core_reflection = getOOoContext()

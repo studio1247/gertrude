@@ -433,7 +433,11 @@ def AddLogo(dom, logo):
                 manifest.insertBefore(clone, file)
                 return
 
-files_order = ["meta.xml", "content.xml"]
+
+files_order = [
+    "meta.xml",
+    "content.xml"
+]
 
 
 def GenerateOODocument(modifications, filename=None, gauge=None):
@@ -469,7 +473,7 @@ def GenerateOODocument(modifications, filename=None, gauge=None):
                     logo_inserted = ModifyLogo(dom, LOGO)
                 elif logo_inserted and f == 'META-INF/manifest.xml':
                     AddLogo(dom, LOGO)
-                    files.append((LOGO, file("templates/logo.png", "rb").read()))
+                    files.append((LOGO, open("templates/logo.png", "rb").read()))
             new_errors = modifications.execute(f, dom)
             if new_errors:
                 errors.update(new_errors)

@@ -122,22 +122,34 @@ def GetTrimestreEnd(date):
     return GetTrimestreStart(nextTrimestre) - datetime.timedelta(1)
 
 
-def str2date(string, annee=None, jour=None):
+def str2date(string, year=None, day=None):
     s = string.strip()
     if s.count("-") == 2:
-        annee, mois, jour = map(lambda x: int(x), s.split("-"))
+        year, month, day = s.split("-")
+        if not day.isdigit() or not month.isdigit() or not year.isdigit():
+            return None
+        day, month, year = int(day), int(month), int(year)
     elif s.count("/") == 2:
-        jour, mois, annee = map(lambda x: int(x), s.split("/"))
-    elif annee and s.count("/") == 1:
-        jour, mois = map(lambda x: int(x), s.split("/"))
-    elif jour and s.count("/") == 1:
-        mois, annee = map(lambda x: int(x), s.split("/"))
+        day, month, year = s.split("/")
+        if not day.isdigit() or not month.isdigit() or not year.isdigit():
+            return None
+        day, month, year = int(day), int(month), int(year)
+    elif year and s.count("/") == 1:
+        day, month = s.split("/")
+        if not day.isdigit() or not month.isdigit():
+            return None
+        day, month = int(day), int(month)
+    elif day and s.count("/") == 1:
+        month, year = map(lambda x: x, s.split("/"))
+        if not month.isdigit() or not year.isdigit():
+            return None
+        month, year = int(month), int(year)
     else:
         return None
-    if annee < 1900:
+    if year < 1900:
         return None
     else:
-        return datetime.date(annee, mois, jour)
+        return datetime.date(year, month, day)
 
 
 def GetDureeArrondie(mode, start, end):
@@ -185,7 +197,7 @@ def GetHeureString(value):
 
 
 def normalize_filename(filename):
-    return unicodedata.normalize('NFKD', filename).encode('utf-8')
+    return unicodedata.normalize("NFKD", filename)
 
 
 def get_emails(str):

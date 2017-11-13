@@ -706,13 +706,16 @@ class CafTab(AutoTab, PeriodeMixin):
         AutoTab.__init__(self, parent)
         PeriodeMixin.__init__(self, "baremes_caf")
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(PeriodeChoice(self, BaremeCAF), 0, wx.TOP, 5)
+        sizer.Add(PeriodeChoice(self, self.new_bareme_caf), 0, wx.TOP, 5)
         sizer2 = wx.FlexGridSizer(4, 2, 5, 5)
         sizer2.AddMany([wx.StaticText(self, -1, "Plancher annuel :"), AutoNumericCtrl(self, None, "plancher", precision=2)])
         sizer2.AddMany([wx.StaticText(self, -1, "Plafond annuel :"), AutoNumericCtrl(self, None, "plafond", precision=2)])
         sizer.Add(sizer2, 0, wx.ALL, 5)
         sizer.Fit(self)
         self.SetSizer(sizer)
+
+    def new_bareme_caf(self):
+        return BaremeCAF(creche=database.creche)
 
     def UpdateContents(self):
         self.SetInstance(database.creche)

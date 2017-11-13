@@ -599,9 +599,9 @@ def GetReservataireFields(reservataire):
 
 
 def GetTarifsHorairesFields(creche, date):
-    tarifs = Select(creche.tarifs_horaires, date)
-    if tarifs:
-        return [('tarif(%s)' % cas[0], cas[1]) for cas in tarifs]
+    tarif = Select(creche.tarifs_horaires, date)
+    if tarif:
+        return [('tarif(%s)' % cas[0], cas[1]) for cas in tarif.formule]
     else:
         return []
 
@@ -982,7 +982,7 @@ def GetListePermanences(date):
     for inscrit in database.creche.inscrits:
         journee = inscrit.GetJournee(date)
         if journee:
-            liste = journee.GetListeActivitesParMode(MODE_PERMANENCE)
+            liste = journee.get_activities_timeslots(database.creche.get_activities_per_mode(MODE_PERMANENCE))
             for start, end in liste:
                 result.append((start, end, inscrit))
     return result
