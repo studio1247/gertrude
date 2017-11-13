@@ -694,6 +694,7 @@ def GetInscritFields(inscrit):
         ('sexe', GetInscritSexe(inscrit) if inscrit else ""),
         ('naissance', inscrit.naissance if inscrit else ""),
         ('age', GetAgeString(inscrit.naissance) if inscrit else ""),
+        ('age-mois', GetAge(inscrit.naissance) if inscrit and inscrit.naissance else ""),
         ('entree', inscrit.inscriptions[0].debut if inscrit else ""),
         ('sortie', inscrit.inscriptions[-1].fin if inscrit else ""),
         ('ne-e', "né" if inscrit.sexe == 1 else "née"),
