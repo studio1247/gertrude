@@ -456,7 +456,7 @@ def GetEnfantsTriesParReservataire(inscrits):
         if key:
             reservataires[key].insert(0, key.nom)
         else:
-            reservataires[key].insert(0, u'Pas de réservataire')
+            reservataires[key].insert(0, "Pas de réservataire")
         lines.extend(reservataires[key])
 
     return lines
@@ -698,6 +698,8 @@ def GetInscritFields(inscrit):
         ('entree', inscrit.inscriptions[0].debut if inscrit else ""),
         ('sortie', inscrit.inscriptions[-1].fin if inscrit else ""),
         ('ne-e', "né" if inscrit.sexe == 1 else "née"),
+        ('type-repas-1', types_repas_1[inscrit.type_repas][0] if inscrit else ""),
+        ('type-repas-2', types_repas_2[inscrit.type_repas2][0] if inscrit else ""),
         ('notes', inscrit.notes),
     ]
 
@@ -872,14 +874,14 @@ def SelectValueInChoice(choice, value):
 
 def AddYearsToChoice(choice):
     for year in range(config.first_date.year, config.last_date.year + 1):
-        choice.Append(u'Année %d' % year, year)
+        choice.Append('Année %d' % year, year)
     choice.SetSelection(today.year - config.first_date.year)
 
 
 def AddMonthsToChoice(choice):
     date = config.first_date
     while date < config.last_date:
-        choice.Append(u'%s %d' % (months[date.month - 1], date.year), date)
+        choice.Append('%s %d' % (months[date.month - 1], date.year), date)
         date = GetNextMonthStart(date)
     choice.SetStringSelection('%s %d' % (months[today.month - 1], today.year))
 
@@ -887,7 +889,7 @@ def AddMonthsToChoice(choice):
 def Add2MonthsToChoice(choice):
     date = config.first_date
     while date < config.last_date:
-        choice.Append(u'%s %d' % (months[date.month - 1], date.year), date)
+        choice.Append('%s %d' % (months[date.month - 1], date.year), date)
         date = GetNextMonthStart(GetNextMonthStart(date))
     choice.SetStringSelection('%s %d' % (months[(today.month - 1) & 0xfe], today.year))
 

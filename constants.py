@@ -445,7 +445,18 @@ modes_gestion_plannings_salaries = [
 REPAS_PUREE = 0
 REPAS_MORCEAUX = 1
 
+types_repas_1 = [
+    ("Purée", REPAS_PUREE),
+    ("Morceaux", REPAS_MORCEAUX)
+]
+
 # Type de repas (2ème choix)
 REPAS_ASSIETTE = 0
 REPAS_PETIT_POT = 1
 REPAS_BIBERON = 2
+
+types_repas_2 = [
+    ("Assiette", REPAS_ASSIETTE),
+    ("Petit pots", REPAS_PETIT_POT),
+    ("Biberon", REPAS_BIBERON)
+]

@@ -53,31 +53,38 @@ class PreparationRepasModifications(object):
             cellules = ligne.getElementsByTagName("table:table-cell")
             for jour in range(5):
                 date = self.debut + datetime.timedelta(jour)
-                cellule = cellules.item(1 + jour)
+                cellule = cellules.item(2 + jour)
                 ReplaceFields([cellule], [('date', date)])
-    
-            ligne_total = lignes.item(5)
 
             # Les lignes
-            indexes = GetPresentsIndexes(range(len(database.creche.inscrits)), (self.debut, date_fin))
-            indexes = GetTriParPrenomIndexes(indexes)
-            self.printPresences(table, indexes, 3)
-    
+            table_petits = []
+            table_grands = []
+            for inscrit in database.creche.select_inscrits(self.debut, date_fin):
+                if GetAge(inscrit.naissance) >= 24:
+                    table_grands.append(inscrit)
+                else:
+                    table_petits.append(inscrit)
+            table_grands.sort(key=lambda x: GetPrenomNom(x))
+            self.printPresences(table, table_grands, 5)
+            table_petits.sort(key=lambda x: GetPrenomNom(x))
+            self.printPresences(table, table_petits, 3)
+
+            # La ligne des totaux
+            ligne_total = lignes.item(7)
             cellules = ligne_total.getElementsByTagName("table:table-cell")
             for i in range(cellules.length):
                 cellule = cellules.item(i)
                 if cellule.hasAttribute('table:formula'):
                     formule = cellule.getAttribute('table:formula')
-                    formule = formule.replace('5', '%d' % (4 + len(indexes)))
+                    formule = formule.replace('7', str(4 + len(table_grands) + len(table_petits)))
                     cellule.setAttribute('table:formula', formule)
 
         #print dom.toprettyxml()
         return None
 
-    def printPresences(self, dom, indexes, ligne_depart):
-        template = dom.getElementsByTagName("table:table-row")[3]
-        for index in indexes:
-            inscrit = database.creche.inscrits[index]
+    def printPresences(self, dom, inscrits, ligne_depart):
+        template = dom.getElementsByTagName("table:table-row")[ligne_depart]
+        for inscrit in inscrits:
             line = template.cloneNode(1)
             cells = line.getElementsByTagName("table:table-cell")
             ReplaceFields(cells, GetInscritFields(inscrit))
@@ -108,7 +115,7 @@ class PreparationRepasModifications(object):
 if __name__ == '__main__':
     import random
     from document_dialog import StartLibreOffice
-    database.init("databases/lutins-miniac.db")
+    database.init("../databases/lutins-miniac.db")
     database.load()
     modifications = PreparationRepasModifications(datetime.date(2017, 11, 6))
     filename = "./test-%f.odt" % random.random()
