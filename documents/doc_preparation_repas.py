@@ -57,26 +57,18 @@ class PreparationRepasModifications(object):
                 ReplaceFields([cellule], [('date', date)])
 
             # Les lignes
-            table_petits = []
-            table_grands = []
-            for inscrit in database.creche.select_inscrits(self.debut, date_fin):
-                if GetAge(inscrit.naissance) >= 24:
-                    table_grands.append(inscrit)
-                else:
-                    table_petits.append(inscrit)
-            table_grands.sort(key=lambda x: GetPrenomNom(x))
-            self.printPresences(table, table_grands, 5)
-            table_petits.sort(key=lambda x: GetPrenomNom(x))
-            self.printPresences(table, table_petits, 3)
+            inscrits = list(database.creche.select_inscrits(self.debut, date_fin))
+            inscrits.sort(key=lambda x: GetPrenomNom(x))
+            self.printPresences(table, inscrits, 3)
 
             # La ligne des totaux
-            ligne_total = lignes.item(7)
+            ligne_total = lignes.item(5)
             cellules = ligne_total.getElementsByTagName("table:table-cell")
             for i in range(cellules.length):
                 cellule = cellules.item(i)
                 if cellule.hasAttribute('table:formula'):
                     formule = cellule.getAttribute('table:formula')
-                    formule = formule.replace('7', str(4 + len(table_grands) + len(table_petits)))
+                    formule = formule.replace('5', str(3 + len(inscrits)))
                     cellule.setAttribute('table:formula', formule)
 
         #print dom.toprettyxml()
