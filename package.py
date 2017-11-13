@@ -35,30 +35,31 @@ def main():
             if os.path.isdir(directory):
                 shutil.rmtree(directory)
 
-        os.chdir("WinPython-32bit-2.7.13.1Zero")
-        paths = ["notebooks", "scripts", "settings", "tools"] + glob.glob("*.exe") + glob.glob("python-2.7.13/Scripts/*.exe")
-        paths += [("python-2.7.13/" + path) for path in ("NEWS.txt", "README.txt", "w9xpopen.exe", "Doc", "include", "Logs", "tcl", "Lib\site-packages\prompt_toolkit", "Lib\site-packages\pygments", "Lib\site-packages\setuptools", "Lib\ensurepip", "Lib\site-packages\win32\Demos", "Lib\site-packages\pip", "Lib\site-packages\jedi", "Lib/unittest", "Lib/test", "Lib/lib2to3", "Lib/lib-tk", "Lib/idlelib", "Lib/distutils", "Lib/ctypes", "Lib/compiler", "Lib/site-packages/wx/tools/Editra", "Lib/site-packages/wx/tools/XRCed")]
+        if 1:
+            os.chdir("WinPython-32bit-2.7.13.1Zero")
+            paths = ["notebooks", "scripts", "settings", "tools"] + glob.glob("*.exe") + glob.glob("python-2.7.13/Scripts/*.exe")
+            paths += [("python-2.7.13/" + path) for path in ("NEWS.txt", "README.txt", "w9xpopen.exe", "Doc", "include", "Logs", "tcl", "Lib\site-packages\prompt_toolkit", "Lib\site-packages\pygments", "Lib\site-packages\setuptools", "Lib\ensurepip", "Lib\site-packages\win32\Demos", "Lib\site-packages\pip", "Lib\site-packages\jedi", "Lib/unittest", "Lib/test", "Lib/lib2to3", "Lib/lib-tk", "Lib/idlelib", "Lib/distutils", "Lib/ctypes", "Lib/compiler", "Lib/site-packages/wx/tools/Editra", "Lib/site-packages/wx/tools/XRCed")]
 
-        for root, dirnames, filenames in os.walk('python-2.7.13'):
-            for filename in fnmatch.filter(filenames, '*.pyc') + fnmatch.filter(filenames, '*.chm'):
-                paths.append(os.path.join(root, filename))
+            for root, dirnames, filenames in os.walk('python-2.7.13'):
+                for filename in fnmatch.filter(filenames, '*.pyc') + fnmatch.filter(filenames, '*.chm'):
+                    paths.append(os.path.join(root, filename))
 
             # for filename in filenames:
             #     if os.stat(os.path.join(root, filename)).st_size > 10000:
             #         print(os.path.join(root, filename), os.stat(os.path.join(root, filename)).st_size)
 
-        for path in paths:
-            print("Remove %s" % path)
-            if os.path.isdir(path):
-                shutil.rmtree(path)
-            elif os.path.exists(path):
-                os.remove(path)
-        os.chdir("..")
+            for path in paths:
+                print("Remove %s" % path)
+                if os.path.isdir(path):
+                    shutil.rmtree(path)
+                elif os.path.exists(path):
+                    os.remove(path)
+            os.chdir("..")
 
         issfile = "setup.iss"
         isscontents = open(issfile + ".template").read().decode("utf-8")
         isscontents = isscontents.replace("@VERSION@", VERSION)
-        open(issfile, "w").write(isscontents.encode("utf-8"))
+        open(issfile, "w").write(isscontents.encode("windows-1252"))
 
         path, name = os.path.split(issfile)
         isspath = os.path.split(win32api.FindExecutable(name, path)[-1])[0]
