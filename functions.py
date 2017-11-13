@@ -698,8 +698,8 @@ def GetInscritFields(inscrit):
         ('entree', inscrit.inscriptions[0].debut if inscrit else ""),
         ('sortie', inscrit.inscriptions[-1].fin if inscrit else ""),
         ('ne-e', "né" if inscrit.sexe == 1 else "née"),
-        ('type-repas-1', types_repas_1[inscrit.type_repas][0] if inscrit else ""),
-        ('type-repas-2', types_repas_2[inscrit.type_repas2][0] if inscrit else ""),
+        ('type-repas-1', types_repas_1[inscrit.type_repas][0] if inscrit and inscrit.type_repas is not None else ""),
+        ('type-repas-2', types_repas_2[inscrit.type_repas2][0] if inscrit and inscrit.type_repas2 is not None else ""),
         ('notes', inscrit.notes),
     ]
 

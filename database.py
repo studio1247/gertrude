@@ -797,6 +797,9 @@ class Reservataire(Base):
     def get_delai_paiement(self):
         return self.delai_paiement
 
+    def has_facture(self, date, site=None):
+        return date in self.get_factures_list()
+
     def get_factures_list(self):
         result = []
         if self.debut:
