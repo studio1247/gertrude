@@ -56,9 +56,9 @@ def main():
         os.chdir("..")
 
         issfile = "setup.iss"
-        isscontents = open(issfile + ".template").read()
+        isscontents = open(issfile + ".template").read().decode("utf-8")
         isscontents = isscontents.replace("@VERSION@", VERSION)
-        open(issfile, "w").write(isscontents)
+        open(issfile, "w").write(isscontents.encode("utf-8"))
 
         path, name = os.path.split(issfile)
         isspath = os.path.split(win32api.FindExecutable(name, path)[-1])[0]
@@ -99,7 +99,7 @@ def main():
         p = Py2deb("gertrude")
         p.author = "Bertrand Songis"
         p.mail = "bsongis@gmail.com"
-        p.description = "Logiciel de gestion de crèches"
+        p.description = "Logiciel de gestion de creches"
         p.url = "https://www.gertrude-logiciel.org"
         p.icon = "./bitmaps_dist/gertrude.png"
         p.depends = "bash, python, python-gtk2, python-bcrypt, python-wxgtk2.8 | python-wxgtk3.0, python-requests, python-sqlalchemy, python-sqlalchemy-utils, python-future, python-configparser"
