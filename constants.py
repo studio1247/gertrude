@@ -49,7 +49,8 @@ PROFIL_SUPERADMIN = 256
 
 TypesProfil = [
     ("Administrateur", PROFIL_ALL | PROFIL_ADMIN),
-    ("Equipe", PROFIL_ALL),
+    ("Bureau / direction", PROFIL_ALL),
+    ("Equipe", PROFIL_ALL - PROFIL_FACTURATION),
     ("Inscriptions, planning et salariés", PROFIL_INSCRIPTIONS | PROFIL_PLANNING | PROFIL_SALARIES),
     ("Inscriptions et planning", PROFIL_INSCRIPTIONS | PROFIL_PLANNING),
     ("Planning et salariés", PROFIL_PLANNING | PROFIL_SALARIES),
