@@ -37,7 +37,7 @@ def GetNextMonday(date):
 
 def IsPresentDuringTranche(journee, debut, fin):
     for timeslot in journee.timeslots:
-        if timeslot.debut < fin and timeslot.fin > debut:
+        if timeslot.value == 0 and timeslot.debut < fin and timeslot.fin > debut:
             return True
     return False
 

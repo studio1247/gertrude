@@ -82,10 +82,10 @@ class PlanningModifications(object):
             ligne_total = lignes.item(7)
 
             # Les lignes
-            indexes = GetPresentsIndexes(range(len(database.creche.inscrits)), (self.debut, date_fin))
-            indexes = GetTriParPrenomIndexes(indexes)
-            self.printPresences(table, indexes, 3)
-            nb_55 = 1 + max(2, len(indexes)) if len(indexes) > 0 else 0
+            inscrits = list(database.creche.select_inscrits(self.debut, date_fin))
+            inscrits.sort(key=lambda x: GetPrenomNom(x))
+            self.printPresences(table, inscrits, 3)
+            nb_55 = 1 + max(2, len(inscrits))
     
             cellules = ligne_total.getElementsByTagName("table:table-cell")
             for i in range(cellules.length):
@@ -272,26 +272,26 @@ class PlanningModifications(object):
         #print dom.toprettyxml()
         return None
 
-    def printPresences(self, dom, indexes, ligne_depart):
+    def printPresences(self, dom, inscrits, ligne_depart):
         lignes = dom.getElementsByTagName("table:table-row")
-        if len(indexes) == 0:
+        if len(inscrits) == 0:
             dom.removeChild(lignes.item(ligne_depart + 2))
             dom.removeChild(lignes.item(ligne_depart + 1))
             dom.removeChild(lignes.item(ligne_depart))
             dom.removeChild(lignes.item(ligne_depart - 1))
             return
         nb_lignes = 3
-        if len(indexes) > 3:
-            for i in range(3, len(indexes)):
+        if len(inscrits) > 3:
+            for i in range(3, len(inscrits)):
                 dom.insertBefore(lignes.item(ligne_depart + 1).cloneNode(1), lignes.item(ligne_depart + 2))
-            nb_lignes = len(indexes)
-        elif len(indexes) < 3:
+            nb_lignes = len(inscrits)
+        elif len(inscrits) < 3:
             dom.removeChild(lignes.item(ligne_depart + 1))
             nb_lignes = 2
         lignes = dom.getElementsByTagName("table:table-row")
         for i in range(nb_lignes):
-            if i < len(indexes):
-                inscrit = database.creche.inscrits[indexes[i]]
+            if i < len(inscrits):
+                inscrit = inscrits[i]
             else:
                 inscrit = None
             ligne = lignes.item(ligne_depart + i)
@@ -305,6 +305,7 @@ class PlanningModifications(object):
                     date = self.debut + datetime.timedelta(semaine * 7 + jour)
                     if inscrit:
                         journee = inscrit.GetJournee(date)
+                        print(inscrit.prenom, date, journee, journee.timeslots if journee else None)
                     for t in range(2):
                         cellule = cellules.item(1 + semaine * 12 + jour * 2 + t)
                         if inscrit and journee:
