@@ -360,7 +360,9 @@ class PlanningDetailleModifications:
                               ('label', truncate(line.label, self.metas["label-length"]))]
                     ReplaceTextFields(node, fields)
                     page.appendChild(node)
-                    for timeslot in line.timeslots:
+                    timeslots = line.timeslots[:]
+                    timeslots.sort(key=lambda timeslot: timeslot.value)
+                    for timeslot in timeslots:
                         a, b, v = timeslot.debut, timeslot.fin, timeslot.value
                         if v >= 0:
                             if v == 0 and salaries:
@@ -611,11 +613,17 @@ class PlanningDetailleModifications:
         spreadsheet_template.parentNode.removeChild(spreadsheet_template)
 
 
-if __name__ == '__main__':
+def test_planning_detaille():
     import random
+    from document_dialog import StartLibreOffice
     database.init("databases/opagaio.db")
     database.load()
-    modifications = PlanningDetailleModifications((datetime.date(2017, 7, 3), datetime.date(2017, 7, 7)))
+    database.creche.nom = "Micro-crèche Opagaïo-Bissy"
+    modifications = PlanningDetailleModifications((datetime.date(2017, 11, 27), datetime.date(2017, 12, 3)))
     filename = "./test-%f.odt" % random.random()
     errors = GenerateOODocument(modifications, filename=filename, gauge=None)
     StartLibreOffice(filename)
+
+
+if __name__ == '__main__':
+    test_planning_detaille()
