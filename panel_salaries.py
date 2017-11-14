@@ -464,7 +464,7 @@ class SpecialPeriodChoice(PeriodeChoice):
         dlg.Destroy()
         if response == wx.ID_OK:
             periode.debut = dlg.debut_ctrl.GetValue()
-            self.parent.addPeriode(periode)
+            self.parent.add_periode(periode)
 
     def EvtPeriodeDelButton(self, evt):
         dlg = wx.MessageDialog(self.parent,
@@ -521,6 +521,9 @@ class PlanningsEquipePanel(wx.lib.scrolledpanel.ScrolledPanel, PeriodeMixin):
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnChangementJour, self.notebook)
 
         self.salarie = None
+        self.semaine = None
+        self.plannings = {}
+        self.periodes = []
 
         self.SetSizer(sizer)
         self.UpdateContents()
@@ -531,7 +534,7 @@ class PlanningsEquipePanel(wx.lib.scrolledpanel.ScrolledPanel, PeriodeMixin):
     def SetSalarie(self, salarie):
         self.salarie = salarie
 
-    def addPeriode(self, periode):
+    def add_periode(self, periode):
         history.append(None)
         for salarie in database.creche.salaries:
             for contrat in salarie.contrats:
@@ -542,7 +545,7 @@ class PlanningsEquipePanel(wx.lib.scrolledpanel.ScrolledPanel, PeriodeMixin):
                         planning = self.get_planning_copy(contrat, previous)
                         planning.debut = periode.debut
                         contrat.plannings.append(planning)
-        self.UpdatePeriodes()
+        self.update_periodes()
 
     def delPeriode(self, periode):
         history.append(None)
@@ -550,7 +553,7 @@ class PlanningsEquipePanel(wx.lib.scrolledpanel.ScrolledPanel, PeriodeMixin):
             planning = self.get_salarie_planning(salarie, periode.debut)
             if planning:
                 planning.contrat.plannings.remove(planning)
-        self.UpdatePeriodes()
+        self.update_periodes()
 
     def onDureeReferenceChoice(self, _):
         history.Append(None)
@@ -608,22 +611,26 @@ class PlanningsEquipePanel(wx.lib.scrolledpanel.ScrolledPanel, PeriodeMixin):
             clone = PlanningSalarie(contrat=contrat, duree_reference=7)
         return clone
 
-    def UpdatePeriodes(self):
-        def add_planning(date, planning):
-            if date not in self.plannings:
-                self.plannings[date] = []
-            if planning:
-                self.plannings[date].append(planning)
+    def add_planning(self, date, planning):
+        if date not in self.plannings:
+            self.plannings[date] = []
+        if planning:
+            self.plannings[date].append(planning)
+
+    def update_periodes(self):
         self.plannings = {}
         for salarie in database.creche.salaries:
             for contrat in salarie.contrats:
                 if contrat.debut:
-                    add_planning(contrat.debut, None)
+                    self.add_planning(contrat.debut, None)
                     if contrat.fin:
-                        add_planning(contrat.fin + datetime.timedelta(1), None)
-                    for planning in contrat.plannings:
-                        debut = planning.debut if planning.debut else contrat.debut
-                        add_planning(debut, planning)
+                        self.add_planning(contrat.fin + datetime.timedelta(1), None)
+                    for planning in contrat.plannings[:]:
+                        if contrat.fin and planning.debut and planning.debut > contrat.fin:
+                            contrat.plannings.remove(planning)
+                        else:
+                            debut = planning.debut if planning.debut else contrat.debut
+                            self.add_planning(debut, planning)
         dates = self.plannings.keys()
         dates.sort()
         self.periodes = []
@@ -675,7 +682,7 @@ class PlanningsEquipePanel(wx.lib.scrolledpanel.ScrolledPanel, PeriodeMixin):
     def UpdateContents(self):
         if database.creche.gestion_plannings_salaries == GESTION_GLOBALE_PLANNINGS_SALARIES:
             self.UpdateActivityChoice()
-            self.UpdatePeriodes()
+            self.update_periodes()
             self.UpdateDureePeriodeReference()
             self.UpdateTabs()
             self.Layout()
@@ -741,11 +748,11 @@ class SalariesPanel(GPanel):
         self.delbutton.SetToolTipString("Retirer ce salarié")
         self.Bind(wx.EVT_BUTTON, self.EvtSalarieAddButton, self.addbutton)
         self.Bind(wx.EVT_BUTTON, self.EvtSalarieDelButton, self.delbutton)
-        sizer.AddMany([(self.choice, 1, wx.EXPAND|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (self.addbutton, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 5), (self.delbutton, 0, wx.ALIGN_CENTER_VERTICAL)])
-        self.sizer.Add(sizer, 0, wx.EXPAND|wx.LEFT, MACOS_MARGIN)
+        sizer.AddMany([(self.choice, 1, wx.EXPAND | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), (self.addbutton, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), (self.delbutton, 0, wx.ALIGN_CENTER_VERTICAL)])
+        self.sizer.Add(sizer, 0, wx.EXPAND | wx.LEFT, MACOS_MARGIN)
         # le notebook pour la fiche d'contrat
         self.notebook = SalariesNotebook(self)
-        self.sizer.Add(self.notebook, 1, wx.EXPAND|wx.TOP, 5)
+        self.sizer.Add(self.notebook, 1, wx.EXPAND | wx.TOP, 5)
         self.InitSalaries()
 
     def UpdateContents(self):
@@ -757,7 +764,7 @@ class SalariesPanel(GPanel):
         salaries = {}
         autres = {}
         for salarie in database.creche.salaries:
-            if salarie.get_contrat(datetime.date.today()) != None:
+            if salarie.get_contrat(datetime.date.today()):
                 salaries[GetPrenomNom(salarie)] = salarie
             else:
                 autres[GetPrenomNom(salarie)] = salarie
@@ -775,7 +782,7 @@ class SalariesPanel(GPanel):
         for key in keys:
             self.choice.Append(key, autres[key])
 
-        if len(database.creche.salaries) > 0 and selected != None and selected in database.creche.salaries:
+        if len(database.creche.salaries) > 0 and selected and selected in database.creche.salaries:
             self.SelectSalarie(selected)
         elif len(database.creche.salaries) > 0:
             self.SelectSalarie(self.choice.GetClientData(0))
@@ -810,16 +817,16 @@ class SalariesPanel(GPanel):
         self.choice.SetSelection(0)
         database.creche.salaries.append(salarie)
         self.notebook.SetSalarie(salarie)
-        self.notebook.SetSelection(0)  # Selectionne la page identite
+        self.notebook.SetSelection(0)  # Sélectionne la page identite
 
-    def EvtSalarieDelButton(self, evt):
+    def EvtSalarieDelButton(self, _):
         selected = self.choice.GetSelection()
         salarie = self.choice.GetClientData(selected)
         if salarie:
             dlg = wx.MessageDialog(self,
                                    'Les données de ce salarié vont être supprimées, êtes-vous sûr de vouloir continuer ?',
                                    'Confirmation',
-                                   wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION )
+                                   wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
             if dlg.ShowModal() == wx.ID_YES:
                 index = database.creche.salaries.index(salarie)
                 history.Append(Insert(database.creche.salaries, index, salarie))
@@ -832,9 +839,9 @@ class SalariesPanel(GPanel):
         
     def ChangePrenomNom(self, salarie):
         if database.creche and salarie:
-            id = GetPrenomNom(salarie)
-            if id.isspace():
-                id = "Nouveau salarié"
+            label = GetPrenomNom(salarie)
+            if label.isspace():
+                label = "Nouveau salarié"
             selection = self.choice.GetSelection()
-            self.choice.SetString(selection, id)
+            self.choice.SetString(selection, label)
             self.choice.SetSelection(selection)
