@@ -112,7 +112,11 @@ def GetPrenom(person):
         return ""
 
 
-def GetPrenomNom(person, maj_nom=False, tri=None):
+def Civilite(who):
+    return "Monsieur" if who.sexe == MASCULIN else "Madame"
+
+
+def GetPrenomNom(person, maj_nom=False, tri=None, monsieur_madame=False):
     if not person:
         return ""
     nom = person.nom
@@ -120,10 +124,11 @@ def GetPrenomNom(person, maj_nom=False, tri=None):
         tri = database.creche.tri_planning
     if maj_nom:
         nom = nom.upper()
+    intro = (Civilite(person) + " ") if monsieur_madame else ""
     if (tri & 255) == TRI_NOM:
-        return "%s %s" % (nom, person.prenom)
+        return intro + "%s %s" % (nom, person.prenom)
     else:
-        return "%s %s" % (person.prenom, nom)
+        return intro + "%s %s" % (person.prenom, nom)
 
 
 def GetInscritsFamille(famille):
@@ -204,20 +209,19 @@ def IsTemplateFile(filename):
         return False
 
 
-def GetParentsString(famille):
+def GetParentsString(famille, version_longue=False):
     parent1 = famille.parents[0] if len(famille.parents) > 0 else None
     parent2 = famille.parents[1] if len(famille.parents) > 1 else None
     if not parent1 and not parent2:
         return "Pas de parents"
     elif not parent2:
-        return GetPrenomNom(parent1)
+        return GetPrenomNom(parent1, monsieur_madame=version_longue)
     elif not parent1:
-        return GetPrenomNom(parent2)
+        return GetPrenomNom(parent2, monsieur_madame=version_longue)
+    elif version_longue or parent1.nom != parent2.nom:
+        return " et ".join([GetPrenomNom(parent1, monsieur_madame=version_longue), GetPrenomNom(parent2, monsieur_madame=version_longue)])
     else:
-        if parent1.nom == parent2.nom:
-            return '%s et %s %s' % (parent2.prenom, parent1.prenom, parent1.nom)
-        else:
-            return '%s %s et %s %s' % (parent2.prenom, parent2.nom, parent1.prenom, parent1.nom)
+        return '%s et %s %s' % (parent2.prenom, parent1.prenom, parent1.nom)
 
 
 def GetParentsPrenomsString(famille):
@@ -674,6 +678,7 @@ def GetFamilleFields(famille):
               ('civilites-parents', GetParentsCivilitesString(famille) if famille else ""),
               ('prenoms-parents', GetParentsPrenomsString(famille) if famille else ""),
               ('parents', GetParentsString(famille) if famille else ""),
+              ('parents-version-longue', GetParentsString(famille, version_longue=True) if famille else ""),
               ('telephone', GetTelephone(famille) if famille else ""),
               ('email', GetEmail(famille) if famille else ""),
               ('sepa-mandate-id', famille.mandate_id),
