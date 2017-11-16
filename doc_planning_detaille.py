@@ -197,22 +197,23 @@ class PlanningDetailleModifications:
                         page.appendChild(node)
                         for timeslot in line.timeslots:
                             a, b, v = timeslot.debut, timeslot.fin, timeslot.value
-                            if v >= 0:
-                                key = "activite-%d" % v
-                                if key in shapes:
-                                    # print(a,b,v)
-                                    node = shapes[key].cloneNode(1)
-                                    node.setAttribute('svg:x', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + float(a - affichage_min) * step))
-                                    node.setAttribute('svg:y', '%fcm' % (0.10 + self.metas["top"] + self.metas["line-height"] * i))
-                                    node.setAttribute('svg:width', '%fcm' % ((b - a) * step))
-                                    if isinstance(line.inscription, Inscription):
-                                        allergies = ', '.join(line.inscription.inscrit.get_allergies())
+                            if a is not None:
+                                if v >= 0:
+                                    key = "activite-%d" % v
+                                    if key in shapes:
+                                        # print(a,b,v)
+                                        node = shapes[key].cloneNode(1)
+                                        node.setAttribute('svg:x', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + float(a - affichage_min) * step))
+                                        node.setAttribute('svg:y', '%fcm' % (0.10 + self.metas["top"] + self.metas["line-height"] * i))
+                                        node.setAttribute('svg:width', '%fcm' % ((b - a) * step))
+                                        if isinstance(line.inscription, Inscription):
+                                            allergies = ', '.join(line.inscription.inscrit.get_allergies())
+                                        else:
+                                            allergies = ''
+                                        ReplaceTextFields(node, [('texte', ''), ('allergies', allergies)])
+                                        page.appendChild(node)
                                     else:
-                                        allergies = ''
-                                    ReplaceTextFields(node, [('texte', ''), ('allergies', allergies)])
-                                    page.appendChild(node)
-                                else:
-                                    print("Pas de forme pour %s" % key)
+                                        print("Pas de forme pour %s" % key)
 
                 if self.metas["summary"] and page_index + 1 == pages_count:
                     AddCategoryShape(page, "Totaux", 0.20 + self.metas["top"] + self.metas["line-height"] * lines_count)

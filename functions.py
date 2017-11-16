@@ -412,21 +412,21 @@ def GetPresentsIndexes(indexes, periode, site=None):
 def GetLines(date, inscrits, presence=False, site=None, groupe=None, summary=SUMMARY_ENFANT):
     lines = []
     for inscrit in inscrits:
-        inscription = inscrit.get_planning(date)
-        if inscription and (site is None or inscription.site == site) and (groupe is None or inscription.groupe == groupe):
+        contrat = inscrit.get_contrat(date)
+        if contrat and (site is None or contrat.site == site) and (groupe is None or contrat.groupe == groupe):
             if presence:
                 state = inscrit.get_state(date)
                 if state < 0 or not state & PRESENT:
                     continue
             if date in inscrit.jours_conges or inscrit.get_state(date) < 0:
                 continue
-            line = inscrit.days.get(date, inscription.get_day_from_date(date))
+            line = inscrit.GetJournee(date)
             line.nom = inscrit.nom
             line.prenom = inscrit.prenom
             line.label = GetPrenomNom(inscrit)
             line.sublabel = ""
-            line.inscription = inscription
-            line.reference = inscription.get_day_from_date(date)
+            line.inscription = contrat
+            line.reference = inscrit.GetJourneeReference(date)
             line.summary = summary
             lines.append(line)
     return lines

@@ -1427,6 +1427,9 @@ class Inscrit(Base):
     def get_planning(self, date):
         return self.get_inscription(date)
 
+    def get_contrat(self, date):
+        return self.get_inscription(date)
+
     def get_inscription(self, date, preinscription=False, departanticipe=True, array=False):
         result = []
         for inscription in self.inscriptions:

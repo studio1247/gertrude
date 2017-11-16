@@ -103,7 +103,7 @@ class PlanningHebdomadaireModifications(object):
                         else:
                             cell.setAttribute("table:style-name",
                                               couleurs[GetPrenomNom(person)][0 + border_column_offset])
-                    heures_jour = journee.GetNombreHeures()
+                    heures_jour = journee.get_duration()
                     heures_semaine += heures_jour
                     ReplaceFields(line, [
                         ('heures-jour[%d]' % jour, GetHeureString(heures_jour)),
