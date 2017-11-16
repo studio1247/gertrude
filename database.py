@@ -1905,14 +1905,8 @@ class Revenu(Base):
     conge_parental = Column(Boolean, default=False)
     regime = Column(Integer, default=0)
 
-    def __init__(self, parent, debut=None, fin=None):
-        self.parent = parent
-        self.debut = debut
-        self.fin = fin
-        self.revenu = ""
-        self.chomage = False
-        self.conge_parental = False
-        self.regime = 0
+    def __init__(self, parent, debut=None, fin=None, revenu="", chomage=False, conge_parental=False, regime=0, **kwargs):
+        Base.__init__(self, parent=parent, debut=debut, fin=fin, revenu=revenu, chomage=chomage, conge_parental=conge_parental, regime=regime, **kwargs)
 
 
 class CommentaireInscrit(Base):
