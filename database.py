@@ -2076,19 +2076,27 @@ class ClotureFacture(Base):
 class EncaissementFamille(Base):
     __tablename__ = "encaissements"
     idx = Column(Integer, primary_key=True)
-    famille = Column(Integer, ForeignKey("familles.idx"))
+    famille_idx = Column(Integer, ForeignKey("familles.idx"), name="famille")
+    famille = relationship(Famille)
     date = Column(Date)
     valeur = Column(Float)
     moyen_paiement = Column(Integer)
+
+    def __init__(self, famille, **kwargs):
+        Base.__init__(self, famille=famille, **kwargs)
 
 
 class EncaissementReservataire(Base):
     __tablename__ = "encaissements_reservataires"
     idx = Column(Integer, primary_key=True)
     reservataire_idx = Column(Integer, ForeignKey("reservataires.idx"), name="reservataire")
+    reservataire = relationship(Reservataire)
     date = Column(Date)
     valeur = Column(Float)
     moyen_paiement = Column(Integer)
+
+    def __init__(self, reservataire, **kwargs):
+        Base.__init__(self, reservataire=reservataire, **kwargs)
 
 
 class NumeroFacture(Base):
