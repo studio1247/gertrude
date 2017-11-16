@@ -618,24 +618,26 @@ class PlanningsEquipePanel(wx.lib.scrolledpanel.ScrolledPanel, PeriodeMixin):
             self.plannings[date].append(planning)
 
     def update_periodes(self):
-        self.plannings = {}
+        dates = set()
         for salarie in database.creche.salaries:
             for contrat in salarie.contrats:
                 if contrat.debut:
-                    self.add_planning(contrat.debut, None)
+                    dates.add(contrat.debut)
                     if contrat.fin:
-                        self.add_planning(contrat.fin + datetime.timedelta(1), None)
+                        dates.add(contrat.fin + datetime.timedelta(1))
                     for planning in contrat.plannings[:]:
                         if contrat.fin and planning.debut and planning.debut > contrat.fin:
                             contrat.plannings.remove(planning)
-                        else:
-                            debut = planning.debut if planning.debut else contrat.debut
-                            self.add_planning(debut, planning)
-        dates = self.plannings.keys()
+                        elif planning.debut:
+                            dates.add(planning.debut)
+        dates = list(dates)
         dates.sort()
         self.periodes = []
         for i, date in enumerate(dates):
             self.periodes.append(Periode(date, (dates[i+1] - datetime.timedelta(1)) if (i < len(dates) - 1) else None))
+        self.plannings = {}
+        for date in dates:
+            self.plannings[date] = []
         for salarie in database.creche.salaries:
             for contrat in salarie.contrats:
                 for date in dates:
@@ -647,7 +649,7 @@ class PlanningsEquipePanel(wx.lib.scrolledpanel.ScrolledPanel, PeriodeMixin):
                             planning.contrat = contrat
                             planning.debut = date
                             contrat.plannings.append(planning)
-                            self.plannings[date].append(planning)
+                        self.plannings[date].append(planning)
         self.periode = 0
         self.periodechoice.SetInstance(self.periodes, self.periode)
         self.periodechoice.Enable(len(self.plannings) > 0)
