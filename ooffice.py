@@ -29,6 +29,7 @@ import xml.dom.minidom
 import re
 import urllib
 import smtplib
+import traceback
 from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
@@ -611,7 +612,6 @@ def SendDocument(filename, generator, to=None, introduction_filename=None, saas=
     try:
         with open(introduction_filename) as f:
             text = f.read()
-            text = text.decode("utf-8")
             for field, _, value in evalFields(generator.GetIntroductionFields()):
                 if isinstance(value, str):
                     text = text.replace("<%s>" % field, value)
@@ -621,7 +621,7 @@ def SendDocument(filename, generator, to=None, introduction_filename=None, saas=
             introduction.attach(MIMEText(html, 'html', _charset='UTF-8'))
             msg.attach(introduction)
     except Exception:
-        print("Exception lors de la generation du texte d'accompagnement email")
+        print("Exception lors de la génération du texte d'accompagnement email")
         traceback.print_exc()
 
     if filename:
