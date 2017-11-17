@@ -291,7 +291,7 @@ class Creche(Base):
     numeros_facture = relationship("NumeroFacture", collection_class=attribute_mapped_collection("date"), cascade="all, delete-orphan")
     tranches_capacite = relationship("TrancheCapacite", collection_class=lambda: DayCollection("jour"), cascade="all, delete-orphan")
     charges = relationship("Charge", collection_class=attribute_mapped_collection("date"), cascade="all, delete-orphan")
-    alertes = relationship("Alerte", cascade="all, delete-orphan")
+    alertes = relationship("Alerte", collection_class=attribute_mapped_collection("texte"), cascade="all, delete-orphan")
     food_needs = relationship("FoodNeed", cascade="all, delete-orphan")
 
     def __init__(self, **kwargs):
