@@ -97,15 +97,16 @@ class PlanningHebdomadaireModifications(object):
                 journee = person.GetJournee(date)
                 if journee:
                     hour = int(hour_start * 12)
-                    c = 0
+                    c = 1
                     while hour < hour_end * 12:
                         border_column_offset = (hour // column_duration) % columns_per_hour
-                        cell = GetCell(line, c + 1)
+                        cell = GetCell(line, c)
                         if IsPresentDuringTranche(journee, hour, hour + column_duration):
                             color_column = border_column_offset
                         else:
                             color_column = columns_per_hour + border_column_offset
                         cell.setAttribute("table:style-name", couleurs[GetPrenomNom(person)][color_column])
+                        SplitCellRepeat(cell)
                         hour += column_duration
                         c += 1
                     heures_jour = journee.get_duration()

@@ -133,10 +133,21 @@ def GetCell(row, index):
     i = 0
     for child in row.childNodes:
         if child.nodeName in ("table:table-cell", "table:covered-table-cell"):
-            if i >= index:
+            repeat = GetRepeat(child)
+            if i <= index < i + repeat:
                 return child
-            i += GetRepeat(child)
+            i += repeat
     return None
+
+
+def SplitCellRepeat(cell):
+    repeat = GetRepeat(cell)
+    if repeat > 1:
+        for i in range(1, repeat):
+            clone = cell.cloneNode(1)
+            clone.setAttribute("table:number-columns-repeated", "1")
+            cell.parentNode.insertBefore(clone, cell)
+        cell.setAttribute("table:number-columns-repeated", "1")
 
 
 def GetValues(row):
