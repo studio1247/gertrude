@@ -18,9 +18,8 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-import datetime
 import urllib
-from constants import *
+from database import Day, TimeslotInscrit, Inscrit, TimeslotSalarie
 from functions import *
 from globals import *
 
@@ -89,31 +88,31 @@ def sync_tablette_lines(lines, tz=None):
         last_imported_day -= datetime.timedelta(1)
 
     def AddPeriodes(who, date, periodes):
-        if date in who.journees:
-            journee = who.journees[date]
-            journee.RemoveActivities(0)
-        else:
-            journee = who.AddJournee(date)
+        day = who.days.get(date, Day())
+        while day.timeslots:
+            del day.timeslots[0]
         for periode in periodes:
-            AddPeriode(who, journee, periode)
+            AddPeriode(who, date, periode, TimeslotInscrit if isinstance(who, Inscrit) else TimeslotSalarie)
 
-    def AddPeriode(who, journee, periode):
-        value = 0
+    def AddPeriode(who, date, periode, cls):
+        arrivee = int(database.creche.ouverture * (60 // BASE_GRANULARITY))
+        depart = int(database.creche.fermeture * (60 // BASE_GRANULARITY))
         if periode.absent:
             value = VACANCES
         elif periode.malade:
             value = MALADE
-        elif not periode.arrivee:
-            errors.append("%s : Pas d'arrivée enregistrée le %s" % (GetPrenomNom(who), periode.date))
-            periode.arrivee = int(database.creche.ouverture * (60 // BASE_GRANULARITY))
-        elif not periode.depart:
-            errors.append("%s : Pas de départ enregistré le %s" % (GetPrenomNom(who), periode.date))
-            periode.depart = int(database.creche.fermeture * (60 // BASE_GRANULARITY))
-
-        if value < 0:
-            journee.SetState(value)
         else:
-            journee.SetActivity(periode.arrivee, periode.depart, value)
+            value = 0
+            if periode.arrivee:
+                arrivee = periode.arrivee
+            else:
+                errors.append("%s : Pas d'arrivée enregistrée le %s" % (GetPrenomNom(who), periode.date))
+            if periode.depart:
+                depart = periode.depart
+            else:
+                errors.append("%s : Pas de départ enregistré le %s" % (GetPrenomNom(who), periode.date))
+
+        who.days.add(cls(date=date, debut=arrivee, fin=depart, value=value))
         history.Append(None)
 
     array_enfants = {}
