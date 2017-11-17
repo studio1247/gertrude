@@ -266,8 +266,8 @@ class FactureFinMois(FactureBase):
                                 reste_heures = cotisation.inscription.forfait_mensuel_heures
                                 index = cotisation.debut
                                 while index < date and reste_heures > 0:
-                                    day = inscrit.journees.get(index, cotisation.inscription.GetJourneeReference(index))
-                                    reste_heures -= day.GetNombreHeures(facturation=True)
+                                    day = inscrit.days.get(index, cotisation.inscription.get_day_from_date(index))
+                                    reste_heures -= day.get_duration(mode_arrondi=database.creche.arrondi_facturation)
                                     index += datetime.timedelta(1)
                                 cotisation.reste_heures = max(0, reste_heures)
                                 #if cotisation.heures_realisees > reste_heures:

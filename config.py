@@ -18,6 +18,7 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
+import codecs
 import os.path
 import datetime
 from configparser import ConfigParser
@@ -255,7 +256,7 @@ class Config(object):
 
         if path:
             try:
-                parser.read(path)
+                parser.read(path, encoding="utf-8")
                 self.path = path
             except:
                 progress_handler.display("Fichier %s erroné. Utilisation de la configuration par défaut." % path)
@@ -301,7 +302,7 @@ class Config(object):
                         self.parser.set(self.current_section, key, parameters[key])
                     else:
                         self.parser.set(DEFAULT_SECTION, key, parameters[key])
-                with open(self.path, "w") as f:
+                with codecs.open(self.path, "w", encoding="utf-8") as f:
                     self.parser.write(f)
             except Exception as e:
                 print(e)

@@ -29,25 +29,26 @@ class PlanningHebdomadaireModifications(object):
         self.multi = False
         self.email = None
         self.site = None
-        self.metas = {}
+        self.metas = {
+            "ColumnsPerHour": 2
+        }
 
     def get_metas(self, dom):
-        metas = dom.getElementsByTagName('meta:user-defined')
+        metas = dom.getElementsByTagName("meta:user-defined")
         for meta in metas:
             # print(meta.toprettyxml())
-            name = meta.getAttribute('meta:name')
+            name = meta.getAttribute("meta:name")
             value = meta.childNodes[0].wholeText
-            if meta.getAttribute('meta:value-type') == 'float':
+            if meta.getAttribute("meta:value-type") == "float":
                 self.metas[name] = float(value)
             else:
                 self.metas[name] = value
-            print(name, self.metas[name])
 
     def execute(self, filename, dom):
-        if filename == 'meta.xml':
+        if filename == "meta.xml":
             self.get_metas(dom)
             return None
-        elif filename != 'content.xml':
+        elif filename != "content.xml":
             return None
 
         hour_start = self.metas["HourStart"]
@@ -59,9 +60,11 @@ class PlanningHebdomadaireModifications(object):
         last_color_line = int(self.metas["LastColorLine"])
 
         first_color_column = int(self.metas["FirstColorColumn"])
-        last_color_column = first_color_column + 4
+        columns_per_hour = int(self.metas["ColumnsPerHour"])
+        column_duration = 12 // columns_per_hour
+        last_color_column = first_color_column + 2 * columns_per_hour
 
-        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
+        spreadsheet = dom.getElementsByTagName("office:spreadsheet").item(0)
         table = spreadsheet.getElementsByTagName("table:table")[0]
         lignes = table.getElementsByTagName("table:table-row")
 
@@ -93,16 +96,18 @@ class PlanningHebdomadaireModifications(object):
                 line = lines[3 + jour]
                 journee = person.GetJournee(date)
                 if journee:
-                    for c in range(int(2 * (hour_end - hour_start))):
-                        hour = (hour_start + c * 0.5) * 12
-                        border_column_offset = 0 if hour % 12 == 0 else 1
+                    hour = int(hour_start * 12)
+                    c = 0
+                    while hour < hour_end * 12:
+                        border_column_offset = (hour // column_duration) % columns_per_hour
                         cell = GetCell(line, c + 1)
-                        if IsPresentDuringTranche(journee, hour, hour + 6):
-                            cell.setAttribute("table:style-name",
-                                              couleurs[GetPrenomNom(person)][2 + border_column_offset])
+                        if IsPresentDuringTranche(journee, hour, hour + column_duration):
+                            color_column = border_column_offset
                         else:
-                            cell.setAttribute("table:style-name",
-                                              couleurs[GetPrenomNom(person)][0 + border_column_offset])
+                            color_column = columns_per_hour + border_column_offset
+                        cell.setAttribute("table:style-name", couleurs[GetPrenomNom(person)][color_column])
+                        hour += column_duration
+                        c += 1
                     heures_jour = journee.get_duration()
                     heures_semaine += heures_jour
                     ReplaceFields(line, [
@@ -156,12 +161,9 @@ templates["planning"].append(PlanningHebdomadaireSalariesModifications)
 
 
 if __name__ == '__main__':
-    import __builtin__
     import random
-    from config import *
-    from data import *
-    from functions import *
-    __builtin__.creche, result = FileConnection("databases/monteillou.db").Load()
+    from document_dialog import StartLibreOffice
+    database.init("../databases/monteillou.db")
     modifications = PlanningHebdomadaireEnfantsModifications(datetime.date(2017, 9, 25))
     filename = "./test-%f.odt" % random.random()
     errors = GenerateOODocument(modifications, filename=filename, gauge=None)

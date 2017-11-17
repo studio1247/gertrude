@@ -19,6 +19,7 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 from controls import *
+from documents.doc_planning_hebdomadaire import PlanningHebdomadaireSalariesModifications
 from planning import PlanningWidget, BaseWxPythonLine, WxPlanningSeparator
 from planning_line import *
 from document_dialog import *
@@ -275,11 +276,15 @@ class PlanningHorairePanel(PlanningBasePanel):
         self.activity_choice = ActivityComboBox(self)
         self.topsizer.Add(self.activity_choice, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
 
-        # Le bouton d'impression
+        # Les boutons d'impression
         bmp = wx.Bitmap(GetBitmapFile("printer.png"), wx.BITMAP_TYPE_PNG)
         button = wx.BitmapButton(self, -1, bmp, style=wx.NO_BORDER)
-        self.topsizer.Add(button, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
+        self.topsizer.Add(button, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 5)
         self.Bind(wx.EVT_BUTTON, self.OnPrintPlanning, button)
+        if IsTemplateFile("Planning hebdomadaire salaries.ods"):
+            button = wx.BitmapButton(self, -1, bmp, style=wx.NO_BORDER)
+            self.topsizer.Add(button, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 5)
+            self.Bind(wx.EVT_BUTTON, self.OnPrintPlanningSalaries, button)
 
         # Le bouton de synchro tablette
         if config.options & TABLETTE:
@@ -308,6 +313,10 @@ class PlanningHorairePanel(PlanningBasePanel):
         start = self.GetSelectionStart()
         end = start + datetime.timedelta(6)
         DocumentDialog(self, PlanningDetailleModifications((start, end), site, groupe)).ShowModal()
+
+    def OnPrintPlanningSalaries(self, _):
+        start = self.GetSelectionStart()
+        DocumentDialog(self, PlanningHebdomadaireSalariesModifications(start)).ShowModal()
 
     def OnChangementSemaineday(self, _):
         self.notebook.GetCurrentPage().UpdateContents()
