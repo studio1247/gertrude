@@ -1738,7 +1738,7 @@ class Inscription(Base, PeriodeReference):
         Base.__init__(self, duree_reference=duree_reference, debut=debut, forfait_mensuel_heures=forfait_mensuel_heures, forfait_mensuel=0, frais_inscription=frais_inscription, semaines_conges=semaines_conges, heures_permanences=heures_permanences, tarifs=tarifs, allocation_mensuelle_caf=allocation_mensuelle_caf, **kwargs)
         self.inscrit = inscrit
         if is_power_of_two(inscrit.creche.modes_inscription):
-            self.mode = math.log(inscrit.creche.modes_inscription, 2)
+            self.mode = int(math.log(inscrit.creche.modes_inscription, 2))
         self.__dict__["sites_preinscription"] = []
 
     @reconstructor
