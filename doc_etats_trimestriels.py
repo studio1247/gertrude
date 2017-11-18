@@ -167,9 +167,8 @@ class EtatsTrimestrielsModifications(object):
                 fin = datetime.date(self.annee, 12, 31)
                 if debut < today:
                     lignes = table.getElementsByTagName("table:table-row")
-    
                     # Les inscrits en creche
-                    indexes = GetInscritsByMode(debut, fin, MODE_5_5|MODE_4_5|MODE_3_5|MODE_FORFAIT_MENSUEL|MODE_TEMPS_PARTIEL, self.site)
+                    indexes = GetInscritsByMode(debut, fin, MODE_TEMPS_PLEIN | MODE_TEMPS_PARTIEL | MODE_FORFAIT_MENSUEL | MODE_FORFAIT_MENSUEL | MODE_FORFAIT_GLOBAL_CONTRAT, self.site)
                     self.Synthese(table, lignes, indexes, MODE_CRECHE, 'creche', 0)
                     # Les inscrits en halte-garderie
                     indexes = GetInscritsByMode(debut, fin, MODE_HALTE_GARDERIE, self.site)

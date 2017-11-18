@@ -131,7 +131,7 @@ class DocumentsTests(GertrudeTestCase):
             inscrit = self.AddInscrit()
             inscription = Inscription(inscrit=inscrit)
             inscription.debut, inscription.fin = datetime.date(2010, 9, 6), datetime.date(2011, 7, 27)
-            inscription.mode = MODE_5_5
+            inscription.mode = MODE_TEMPS_PLEIN
             inscription.days.add(TimeslotInscription(day=0, debut=96, fin=180, value=0))
             inscription.days.add(TimeslotInscription(day=1, debut=96, fin=180, value=0))
             inscription.days.add(TimeslotInscription(day=2, debut=96, fin=180, value=0))

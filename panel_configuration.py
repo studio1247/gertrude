@@ -80,8 +80,9 @@ modes_saisie_planning = [("A partir de l'interface planning (recommandé)", SAIS
                          ("En jours par semaine", SAISIE_JOURS_SEMAINE),
                          ]
 
-modes_inscription = [("Crèche à plein-temps uniquement", MODE_5_5),
-                     ("Tous modes", MODE_5_5+MODE_4_5 | MODE_3_5 | MODE_HALTE_GARDERIE),
+modes_inscription = [("Plein-temps uniquement", MODE_TEMPS_PLEIN),
+                     ("Temps partiel uniquement", MODE_TEMPS_PARTIEL),
+                     ("Tous modes", TOUS_MODES_ACCUEIL),
                      ]
 
 modes_gestion_standard = [("Géré", True),

@@ -228,8 +228,8 @@ class Cotisation(object):
                     
         self.assiette_mensuelle = self.assiette_annuelle / 12
         
-        if database.creche.modes_inscription == MODE_5_5:
-            self.mode_garde = MODE_5_5  # TODO a renommer en mode_inscription
+        if database.creche.modes_inscription == MODE_TEMPS_PLEIN:
+            self.mode_garde = MODE_TEMPS_PLEIN  # TODO a renommer en mode_inscription
             self.jours_semaine = 5
             self.heures_reelles_semaine = 50.0
         else:

@@ -116,21 +116,18 @@ DAY_SIZE = 24 * 60 // BASE_GRANULARITY
 # Modes d'inscription
 MODE_CRECHE = 0
 MODE_HALTE_GARDERIE = 1
-MODE_5_5 = 2
-MODE_4_5 = 4
-MODE_3_5 = 8
+MODE_TEMPS_PLEIN = 2
 MODE_FORFAIT_MENSUEL = 16
 MODE_TEMPS_PARTIEL = 32
 MODE_ACCUEIL_URGENCE = 64
 MODE_FORFAIT_HEBDOMADAIRE = 128
 MODE_FORFAIT_GLOBAL_CONTRAT = 256
 MODE_MAX = MODE_FORFAIT_GLOBAL_CONTRAT
+TOUS_MODES_ACCUEIL = 1023
 
 ModeAccueilItems = [
-    ("Temps plein", MODE_5_5),
+    ("Temps plein", MODE_TEMPS_PLEIN),
     ("Temps partiel", MODE_TEMPS_PARTIEL),
-    # ("4/5èmes", MODE_4_5),
-    # ("3/5èmes", MODE_3_5),
     ("Forfait horaire mensuel", MODE_FORFAIT_MENSUEL),
     ("Forfait horaire hebdomadaire", MODE_FORFAIT_HEBDOMADAIRE),
     ("Forfait horaire global sur la durée du contrat", MODE_FORFAIT_GLOBAL_CONTRAT),

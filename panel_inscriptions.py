@@ -932,7 +932,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
             self.UpdateTarifsSpeciaux()
 
         InscriptionsTab.UpdateContents(self)
-        self.mode_accueil_choice.Enable(database.creche.modes_inscription != MODE_5_5)
+        self.mode_accueil_choice.Enable(is_power_of_two(database.creche.modes_inscription))
         self.validation_button.Show(database.creche.preinscriptions)
 
         self.InternalUpdate()

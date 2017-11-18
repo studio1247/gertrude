@@ -20,6 +20,7 @@ from __future__ import print_function
 from __future__ import division
 
 import operator
+import math
 from sqlalchemy import *
 from sqlalchemy.orm import *
 from sqlalchemy.ext.declarative import *
@@ -219,7 +220,7 @@ class Creche(Base):
     granularite = Column(Integer, default=15)
     preinscriptions = Column(Boolean, default=False)
     presences_supplementaires = Column(Boolean, default=True)
-    modes_inscription = Column(Integer, default=MODE_HALTE_GARDERIE + MODE_4_5 + MODE_3_5)
+    modes_inscription = Column(Integer, default=TOUS_MODES_ACCUEIL)
     minimum_maladie = Column(Integer, default=3)
     email = Column(String)
     type = Column(Integer, default=TYPE_PARENTAL)
@@ -1534,7 +1535,7 @@ class Inscrit(Base):
             if state in (MALADE, HOPITAL, ABSENCE_NON_PREVENUE, ABSENCE_CONGE_SANS_PREAVIS):
                 return State(state, heures_reference, 0, heures_reference)
             elif state in (ABSENT, VACANCES):
-                if inscription.mode == MODE_5_5 or ref_state:
+                if inscription.mode == MODE_TEMPS_PLEIN or ref_state:
                     return State(VACANCES, heures_reference, 0, heures_reference)
                 else:
                     return State(ABSENT, heures_reference, 0, heures_reference)
@@ -1718,7 +1719,7 @@ class Inscription(Base, PeriodeReference):
     debut = Column(Date)
     fin = Column(Date)
     depart = Column(Date)
-    mode = Column(Integer, default=MODE_TEMPS_PARTIEL)
+    mode = Column(Integer)
     fin_periode_adaptation = Column(Date)
     duree_reference = Column(Integer, default=7)
     forfait_mensuel_heures = Column(Float, default=0)
@@ -1728,29 +1729,11 @@ class Inscription(Base, PeriodeReference):
     tarifs = Column(Integer, default=0)
     days = relationship("TimeslotInscription", collection_class=lambda: DayCollection("day"), cascade="all, delete-orphan")
 
-    def __init__(self, inscrit, **kwargs):
-        Base.__init__(self, **kwargs)
+    def __init__(self, inscrit, duree_reference=7, debut=datetime.date.today(), forfait_mensuel_heures=0, forfait_mensuel=0, frais_inscription=0, semaines_conges=0, heures_permanences=0, tarifs=0, allocation_mensuelle_caf=0, **kwargs):
+        Base.__init__(self, duree_reference=duree_reference, debut=debut, forfait_mensuel_heures=forfait_mensuel_heures, forfait_mensuel=0, frais_inscription=frais_inscription, semaines_conges=semaines_conges, heures_permanences=heures_permanences, tarifs=tarifs, allocation_mensuelle_caf=allocation_mensuelle_caf, **kwargs)
         self.inscrit = inscrit
-        if not "debut" in kwargs:
-            self.debut = datetime.date.today()
-        if not "duree_reference" in kwargs:
-            self.duree_reference = 7
-        if not "forfait_mensuel_heures" in kwargs:
-            self.forfait_mensuel_heures = 0
-        if not "forfait_mensuel" in kwargs:
-            self.forfait_mensuel = 0
-        if not "frais_inscription" in kwargs:
-            self.frais_inscription = 0
-        if not "semaines_conges" in kwargs:
-            self.semaines_conges = 0
-        if not "heures_permanences" in kwargs:
-            self.heures_permanences = 0
-        if not "tarifs" in kwargs:
-            self.tarifs = 0
-        if not "newsletters" in kwargs:
-            self.newsletters = ""
-        if not "allocation_mensuelle_caf" in kwargs:
-            self.allocation_mensuelle_caf = 0
+        if is_power_of_two(inscrit.creche.modes_inscription):
+            self.mode = math.log(inscrit.creche.modes_inscription, 2)
         self.__dict__["sites_preinscription"] = []
 
     @reconstructor

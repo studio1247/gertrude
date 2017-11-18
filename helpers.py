@@ -24,6 +24,10 @@ import unicodedata
 from constants import *
 
 
+def is_power_of_two(x):
+    return (x != 0) and (x & (x - 1)) == 0
+
+
 def Number2String(value):
     if isinstance(value, float):
         return "%.2f" % value
