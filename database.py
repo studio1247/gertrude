@@ -1734,9 +1734,8 @@ class Inscription(Base, PeriodeReference):
     tarifs = Column(Integer, default=0)
     days = relationship("TimeslotInscription", collection_class=lambda: DayCollection("day"), cascade="all, delete-orphan")
 
-    def __init__(self, inscrit, duree_reference=7, debut=datetime.date.today(), forfait_mensuel_heures=0, forfait_mensuel=0, frais_inscription=0, semaines_conges=0, heures_permanences=0, tarifs=0, allocation_mensuelle_caf=0, **kwargs):
-        Base.__init__(self, duree_reference=duree_reference, debut=debut, forfait_mensuel_heures=forfait_mensuel_heures, forfait_mensuel=0, frais_inscription=frais_inscription, semaines_conges=semaines_conges, heures_permanences=heures_permanences, tarifs=tarifs, allocation_mensuelle_caf=allocation_mensuelle_caf, **kwargs)
-        self.inscrit = inscrit
+    def __init__(self, inscrit, mode=MODE_TEMPS_PARTIEL, duree_reference=7, debut=datetime.date.today(), forfait_mensuel_heures=0, forfait_mensuel=0, frais_inscription=0, semaines_conges=0, heures_permanences=0, tarifs=0, allocation_mensuelle_caf=0, **kwargs):
+        Base.__init__(self, inscrit=inscrit, mode=mode, duree_reference=duree_reference, debut=debut, forfait_mensuel_heures=forfait_mensuel_heures, forfait_mensuel=forfait_mensuel, frais_inscription=frais_inscription, semaines_conges=semaines_conges, heures_permanences=heures_permanences, tarifs=tarifs, allocation_mensuelle_caf=allocation_mensuelle_caf, **kwargs)
         if is_power_of_two(inscrit.creche.modes_inscription):
             self.mode = int(math.log(inscrit.creche.modes_inscription, 2))
         self.__dict__["sites_preinscription"] = []
