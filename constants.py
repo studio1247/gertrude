@@ -89,6 +89,7 @@ SAISIE_HEURES_SEMAINE = 2
 MODE_NORMAL = 0
 MODE_LIBERE_PLACE = 1
 MODE_SANS_HORAIRES = 2
+MODE_PRESENCE_SUPPLEMENTAIRE = 3
 MODE_PRESENCE_NON_FACTUREE = 4
 MODE_SYSTEMATIQUE_SANS_HORAIRES = 5
 MODE_PERMANENCE = 6
@@ -99,9 +100,10 @@ ActivityModes = [
     ("Libère une place", MODE_LIBERE_PLACE),
     ("Sans horaires", MODE_SANS_HORAIRES),
     ("Présence non facturée", MODE_PRESENCE_NON_FACTUREE),
+    ("Présence facturée en temps supplémentaire", MODE_PRESENCE_SUPPLEMENTAIRE),
     ("Sans horaire, systématique", MODE_SYSTEMATIQUE_SANS_HORAIRES),
     ("Sans horaire, systématique et mensualisé", MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE),
-    ("Permanence", MODE_PERMANENCE),
+    ("Permanence", MODE_PERMANENCE)
 ]
 
 # Propriétaires des activités

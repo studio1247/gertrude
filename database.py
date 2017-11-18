@@ -854,7 +854,7 @@ class Activite(Base):
             setattr(self, "_%s" % key, str(value))
 
     def has_horaires(self):
-        return self.mode in (MODE_NORMAL, MODE_LIBERE_PLACE, MODE_PRESENCE_NON_FACTUREE, MODE_PERMANENCE)
+        return self.mode in (MODE_NORMAL, MODE_LIBERE_PLACE, MODE_PRESENCE_NON_FACTUREE, MODE_PRESENCE_SUPPLEMENTAIRE, MODE_PERMANENCE)
 
     def EvalTarif(self, inscrit, date, montant_heure_garde=0.0, reservataire=False):
         if self.formule_tarif.strip():
@@ -1597,6 +1597,11 @@ class Inscrit(Base):
 
     def GetTotalActivitesPresenceNonFacturee(self, date):
         activities = list(self.creche.get_activities_per_mode(MODE_PRESENCE_NON_FACTUREE))
+        day = self.GetJournee(date)
+        return 0 if day is None else day.get_activities_duration(activities)
+
+    def GetTotalActivitesPresenceFactureesEnSupplement(self, date):
+        activities = list(self.creche.get_activities_per_mode(MODE_PRESENCE_SUPPLEMENTAIRE))
         day = self.GetJournee(date)
         return 0 if day is None else day.get_activities_duration(activities)
 

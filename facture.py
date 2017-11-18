@@ -230,6 +230,7 @@ class FactureFinMois(FactureBase):
                             self.jours_factures += 1
                         heures_facturees_non_realisees = 0.0
                         heures_realisees_non_facturees = inscrit.GetTotalActivitesPresenceNonFacturee(date)
+                        heures_facturees += inscrit.GetTotalActivitesPresenceFactureesEnSupplement(date)
                         heures_supplementaires_facturees = (heures_facturees - heures_reference)
                         if (options & TRACES) and heures_supplementaires_facturees:
                             print("%f heures supplémentaires le" % heures_supplementaires_facturees, date)
