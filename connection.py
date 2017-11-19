@@ -131,7 +131,6 @@ class SharedFileConnection(Connection):
         return self.do_upload()
         
     def Load(self, progress_handler=default_progress_handler):
-        print("TODO tester jeton déjà pris")
         self.progress_handler = progress_handler
         if self.download():
             return True

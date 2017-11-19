@@ -167,8 +167,7 @@ class StartDialog(wx.Dialog):
                 if config.current_section is None:
                     wx.CallAfter(self.OnLoaded, None)
                     return
-            print("Config readonly à revoir")
-            # config.readonly = bool(config.options & READONLY)
+            config.readonly = bool(config.options & READONLY)
             config.connection = get_connection_from_config()
             result = config.connection.Load(ProgressHandler(self.AppendMessage, self.SetGauge, 5, 10))
             database.init(config.database)
