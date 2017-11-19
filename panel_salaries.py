@@ -414,8 +414,8 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
     def UpdatePlanningPanel(self):
         contrat = self.salarie.contrats[self.periode]
         planning = contrat.plannings[self.plannings_panel.periode]
-        for obj in [self.duree_reference_choice, self.button_copy]:
-            obj.Enable(not config.readonly)
+        self.duree_reference_choice.Enable(not config.readonly and database.creche.gestion_plannings_salaries == GESTION_SIMPLE_PLANNINGS_SALARIES)
+        self.button_copy.Enable(not config.readonly)
         if len(database.creche.sites) > 1:
             for item in self.sites_items[0:2]:
                 item.Show(True)
