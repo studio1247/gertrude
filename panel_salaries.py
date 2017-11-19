@@ -367,7 +367,7 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
 
         SalariesTab.UpdateContents(self)
 
-        self.UpdatePlanningPanel()
+        self.UpdateContratPanel()
         self.activity_choice.Clear()
         selected = 0
         if database.creche.has_activites_avec_horaires():
@@ -398,27 +398,31 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
 
     def SetPeriode(self, periode):
         PeriodeMixin.SetPeriode(self, periode)
-        self.UpdatePlanningPanel()
+        self.UpdateContratPanel()
 
-    def UpdatePlanningPanel(self):
+    def UpdateContratPanel(self):
         if self.salarie and self.periode is not None and self.periode != -1 and self.periode < len(self.salarie.contrats):
             contrat = self.salarie.contrats[self.periode]
             PeriodeMixin.SetPeriode(self, self.periode)
             self.plannings_panel.periode = min(self.plannings_panel.periode, len(contrat.plannings) - 1)
-            planning = contrat.plannings[self.plannings_panel.periode]
-            for obj in [self.duree_reference_choice, self.button_copy]:
-                obj.Enable(not config.readonly)
-            if len(database.creche.sites) > 1:
-                for item in self.sites_items[0:2]:
-                    item.Show(True)
-                for item in self.sites_items[2:4]:
-                    item.Show(False)
-            self.duree_reference_choice.SetSelection(planning.duree_reference // 7 - 1)
-            self.planning_panel.SetPlanning(planning)
+            self.UpdatePlanningPanel()
         else:
             self.planning_panel.SetPlanning(None)
             for obj in [self.duree_reference_choice, self.button_copy]:
                 obj.Disable()
+
+    def UpdatePlanningPanel(self):
+        contrat = self.salarie.contrats[self.periode]
+        planning = contrat.plannings[self.plannings_panel.periode]
+        for obj in [self.duree_reference_choice, self.button_copy]:
+            obj.Enable(not config.readonly)
+        if len(database.creche.sites) > 1:
+            for item in self.sites_items[0:2]:
+                item.Show(True)
+            for item in self.sites_items[2:4]:
+                item.Show(False)
+        self.duree_reference_choice.SetSelection(planning.duree_reference // 7 - 1)
+        self.planning_panel.SetPlanning(planning)
 
 
 class PlanningEquipeInternalPanel(PlanningWidget):
