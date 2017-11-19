@@ -272,10 +272,9 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
         sizer1 = wx.FlexGridSizer(0, 2, 5, 10)
         sizer1.AddGrowableCol(1, 1)
 
-        self.sites_items = wx.StaticText(self, -1, "Site :"), AutoChoiceCtrl(self, None, "site"), wx.StaticText(self, -1, "Sites de préinscription :"), wx.CheckListBox(self, -1)
+        self.sites_items = wx.StaticText(self, -1, "Site :"), AutoChoiceCtrl(self, None, "site")
         self.UpdateSiteItems()
         sizer1.AddMany([(self.sites_items[0], 0, wx.ALIGN_CENTER_VERTICAL), (self.sites_items[1], 0, wx.EXPAND)])
-        sizer1.AddMany([(self.sites_items[2], 0, wx.ALIGN_CENTER_VERTICAL), (self.sites_items[3], 0, wx.EXPAND)])
 
         sizer1.AddMany([(wx.StaticText(self, -1, "Fonction :"), 0, wx.ALIGN_CENTER_VERTICAL), (AutoTextCtrl(self, None, "fonction"), 0, wx.EXPAND)])
         sizer.Add(sizer1, 0, wx.ALL | wx.EXPAND, 5)
@@ -354,8 +353,6 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
         if len(database.creche.sites) > 1:
             items = [(site.nom, site) for site in database.creche.sites]
             self.sites_items[1].SetItems(items)
-            for nom, site in items:
-                self.sites_items[3].Append(nom)
         else:
             for item in self.sites_items:
                 item.Show(False)
@@ -417,10 +414,8 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
         self.duree_reference_choice.Enable(not config.readonly and database.creche.gestion_plannings_salaries == GESTION_SIMPLE_PLANNINGS_SALARIES)
         self.button_copy.Enable(not config.readonly)
         if len(database.creche.sites) > 1:
-            for item in self.sites_items[0:2]:
+            for item in self.sites_items:
                 item.Show(True)
-            for item in self.sites_items[2:4]:
-                item.Show(False)
         self.duree_reference_choice.SetSelection(planning.duree_reference // 7 - 1)
         self.planning_panel.SetPlanning(planning)
 

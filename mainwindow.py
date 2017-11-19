@@ -314,12 +314,11 @@ class GertrudeFrame(wx.Frame):
                                    wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
             result = dlg.ShowModal()
             dlg.Destroy()
-            if result == wx.ID_YES:
-                config.connection.set_force_token()
-                result = config.connection.Load(ProgressHandler(self.AppendMessage, self.SetGauge, 5, 10))
-                database.init(config.database)
-                frame.listbook.UpdateContents()
+            if result != wx.ID_YES or not config.connection.get_token(force=True):
+                config.readonly = True
 
+        database.init(config.database)
+        frame.listbook.UpdateContents()
         frame.Show()
         self.Destroy()
 

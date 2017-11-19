@@ -34,11 +34,7 @@ TOKEN_FILENAME = '.token'
 
 class Connection(object):
     def __init__(self):
-        self.force_token = False
         self.token_already_used = False
-
-    def set_force_token(self):
-        self.force_token = True
 
     def is_token_already_used(self):
         return self.token_already_used
@@ -68,11 +64,10 @@ class SharedFileConnection(Connection):
         self.progress_handler.display("Vérification du jeton ...")
         return self.token and self.token == self.read_token(self.token_url)
 
-    def get_token(self):
+    def get_token(self, force=False):
         self.token_already_used = False
         self.progress_handler.display("Récupération du jeton ...")
-        if self.force_token or self.read_token(self.token_url) is None:
-            self.force_token = False
+        if force or self.read_token(self.token_url) is None:
             self.token = self.identity
             open(TOKEN_FILENAME, 'w').write(self.token)
             open(self.token_url, 'w').write(self.token)
@@ -281,11 +276,10 @@ class HttpConnection(FileConnection):
         except:
             self.token = 0
 
-    def get_token(self):
+    def get_token(self, force=False):
         self.token_already_used = False
         self.progress_handler.display("Récupération du jeton ...")
-        if self.force_token:
-            self.force_token = False
+        if force:
             self.token = self.get_server_data('force_token')
         else:
             self.token = self.get_server_data('get_token')

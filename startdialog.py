@@ -127,10 +127,8 @@ class StartDialog(wx.Dialog):
                                    wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
             result = dlg.ShowModal()
             dlg.Destroy()
-            if result == wx.ID_YES:
-                config.connection.set_force_token()
-                wx.CallAfter(self.Load, None)
-                return
+            if result != wx.ID_YES or not config.connection.get_token(force=True):
+                config.readonly = True
 
         self.loaded = True
         database.load()
