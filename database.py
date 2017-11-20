@@ -1753,7 +1753,6 @@ class Inscription(Base, PeriodeReference):
         Base.__setattr__(self, name, value)
         # TODO remove this in next conversions
         if name == "sites_preinscription":
-            print("SITES!!!!", self.sites_preinscription)
             self._sites_preinscription = " ".join([str(value.idx) for value in value])
 
     def GetNombreJoursCongesPeriode(self):
