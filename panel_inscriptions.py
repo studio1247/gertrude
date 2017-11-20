@@ -517,7 +517,7 @@ class ParentsPanel(InscriptionsTab):
                         item.Show(False)
                 choice = AutoChoiceCtrl(panel, None, 'regime')
                 self.regimes_choices.append(choice)
-                for i, regime in enumerate(Regimes):
+                for i, regime in enumerate(RegimesCAF):
                     choice.Append(regime, i)
                 revenus_gridsizer.AddMany([wx.StaticText(panel, -1, "Régime d'appartenance :"), (choice, 0, wx.EXPAND)])
                 revenus_sizer.Add(revenus_gridsizer, 0, wx.ALL | wx.EXPAND, 5)

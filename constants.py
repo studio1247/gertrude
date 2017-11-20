@@ -145,7 +145,7 @@ PeriodiciteFacturationItems = [
     ("Annuelle", 12)
 ]
 
-Regimes = [
+RegimesCAF = [
     "Pas de sélection",
     "Régime général",
     "Régime de la fonction publique",

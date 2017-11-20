@@ -1756,7 +1756,9 @@ class Inscription(Base, PeriodeReference):
             self._sites_preinscription = " ".join([str(value.idx) for value in value])
 
     def GetNombreJoursCongesPeriode(self):
-        if self.semaines_conges:
+        if self.preinscription:
+            return 0
+        elif self.semaines_conges:
             if self.mode == MODE_FORFAIT_HEBDOMADAIRE:
                 return self.semaines_conges * 7
             else:
@@ -1804,7 +1806,7 @@ class Inscription(Base, PeriodeReference):
             return self.fin
 
     def GetNombreJoursCongesPoses(self):
-        if self.debut and self.fin:
+        if self.debut and self.fin and not self.preinscription:
             return self.GetNombreJoursCongesPris(self.GetDebutDecompteJoursConges(), self.GetFinDecompteJoursConges())
         else:
             return 0
