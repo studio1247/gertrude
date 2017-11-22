@@ -160,7 +160,7 @@ class ChildPlanningLine(BasePlanningLine):
         self.idx = self.inscrit.idx
         self.date = date
         BasePlanningLine.__init__(self, GetPrenomNom(self.inscrit))
-        if database.creche.conges_inscription == GESTION_CONGES_INSCRIPTION_SIMPLE and date in self.inscrit.jours_conges:
+        if database.creche.conges_inscription == GESTION_CONGES_INSCRIPTION_MENSUALISES and date in self.inscrit.jours_conges:
             self.state = VACANCES
             self.reference = Day()  # semble nécessaire
             self.commentaire = self.inscrit.jours_conges[date].label
@@ -168,7 +168,7 @@ class ChildPlanningLine(BasePlanningLine):
         else:
             commentaire = self.inscrit.commentaires.get(date, None)
             self.commentaire = commentaire.commentaire if commentaire else ""
-            if database.creche.conges_inscription == GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT and date in self.inscrit.jours_conges:
+            if database.creche.conges_inscription == GESTION_CONGES_INSCRIPTION_MENSUALISES_AVEC_POSSIBILITE_DE_SUPPLEMENT and date in self.inscrit.jours_conges:
                 self.reference = Day()
                 if not self.commentaire:
                     self.commentaire = self.inscrit.jours_conges[date].label

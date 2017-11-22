@@ -675,7 +675,7 @@ class Cotisation(object):
                         num, den = 0, 0
                         d = GetMonthStart(date)
                         while d.month == date.month:
-                            if d not in database.creche.jours_fermeture and (database.creche.conges_inscription != GESTION_CONGES_INSCRIPTION_SIMPLE or d not in self.inscrit.jours_conges):
+                            if d not in database.creche.jours_fermeture and (database.creche.conges_inscription != GESTION_CONGES_INSCRIPTION_MENSUALISES or d not in self.inscrit.jours_conges):
                                 den += 1
                                 if self.debut <= d and (not self.fin or d <= self.fin):
                                     num += 1

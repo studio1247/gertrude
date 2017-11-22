@@ -808,7 +808,7 @@ class RibambelleTests(GertrudeTestCase):
         database.creche.type = TYPE_PARENTAL
         database.creche.repartition = REPARTITION_SANS_MENSUALISATION
         database.creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
-        database.creche.conges_inscription = GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT
+        database.creche.conges_inscription = GESTION_CONGES_INSCRIPTION_MENSUALISES_AVEC_POSSIBILITE_DE_SUPPLEMENT
 
     def test_normal(self):
         inscrit = self.AddInscrit()

@@ -214,7 +214,7 @@ class FactureFinMois(FactureBase):
         if database.creche.mode_saisie_planning == SAISIE_HORAIRE:
             date = self.debut_recap
             while date.month == mois:
-                if date not in database.creche.jours_fermeture and (database.creche.conges_inscription != GESTION_CONGES_INSCRIPTION_SIMPLE or date not in inscrit.jours_conges):
+                if date not in database.creche.jours_fermeture and (database.creche.conges_inscription != GESTION_CONGES_INSCRIPTION_MENSUALISES or date not in inscrit.jours_conges):
                     self.jours_ouvres += 1
                     inscription = inscrit.get_inscription(date)
                     if inscription:
@@ -298,6 +298,16 @@ class FactureFinMois(FactureBase):
                             elif inscription.mode not in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE):
                                 self.CalculeDeduction(cotisation, heures_reference)
                             self.raison_deduction.add('hospitalisation')
+                        elif database.creche.conges_inscription == GESTION_CONGES_INSCRIPTION_NON_MENSUALISES and date in inscrit.jours_conges:
+                            duration = inscription.get_day_from_date(date).get_duration(mode_arrondi=database.creche.arrondi_facturation)
+                            if duration:
+                                if options & TRACES:
+                                    print("jour de congé déduit", date)
+                                self.jours_vacances.append(date)
+                                self.heures_facturees_par_mode[cotisation.mode_garde] -= duration
+                                self.jours_conges_non_factures.append(date)
+                                self.CalculeDeduction(cotisation, duration)
+                                self.raison_deduction.add("absence prévenue")
                         elif state == MALADE or state == MALADE_SANS_JUSTIFICATIF:
                             if options & TRACES:
                                 print("jour maladie", date)
