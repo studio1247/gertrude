@@ -301,7 +301,7 @@ class FactureModifications(object):
                         ("date", self.periode_facturation),
                         ("mois", mois_string),
                         ("numfact", numfact),
-                        ('tarif-periode-reservataire', reservataire.tarif * nombre_mois),
+                        ('tarif-periode-reservataire', reservataire.tarif * nombre_mois, FIELD_EUROS),
                     ]
 
                     inscrits = list(database.creche.select_inscrits(debut_facture, None, reservataire=self.reservataire))  # parce qu'on veut aussi voir les enfants qui arrivent plus tard
