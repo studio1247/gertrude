@@ -160,7 +160,7 @@ class ChildPlanningLine(BasePlanningLine):
         self.idx = self.inscrit.idx
         self.date = date
         BasePlanningLine.__init__(self, GetPrenomNom(self.inscrit))
-        if database.creche.conges_inscription == GESTION_CONGES_INSCRIPTION_MENSUALISES and date in self.inscrit.jours_conges:
+        if database.creche.conges_inscription in (GESTION_CONGES_INSCRIPTION_MENSUALISES, GESTION_CONGES_INSCRIPTION_NON_MENSUALISES) and date in self.inscrit.jours_conges:
             self.state = VACANCES
             self.reference = Day()  # semble nécessaire
             self.commentaire = self.inscrit.jours_conges[date].label
