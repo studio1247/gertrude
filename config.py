@@ -188,7 +188,9 @@ class Section(object):
             options |= NEWSLETTERS
         if "reglements" in value:
             options |= REGLEMENTS
-        if "tarifs-speciaux" in value:
+        if "tarifs-speciaux-labels" in value:
+            options |= TARIFS_SPECIAUX_LABELS
+        elif "tarifs-speciaux" in value:
             options |= TARIFS_SPECIAUX
         if "no-password" in value:
             options |= NO_PASSWORD
