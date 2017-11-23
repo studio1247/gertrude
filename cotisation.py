@@ -327,7 +327,7 @@ class Cotisation(object):
                                 if options & TRACES:
                                     print(" jour de fermeture :", date, "(%fh)" % heures)
                                 self.heures_fermeture_creche += heures
-                        elif date in inscrit.jours_conges:
+                        elif database.creche.conges_inscription in (GESTION_CONGES_INSCRIPTION_MENSUALISES, GESTION_CONGES_INSCRIPTION_MENSUALISES_AVEC_POSSIBILITE_DE_SUPPLEMENT) and date in inscrit.jours_conges:
                             if options & TRACES:
                                 print(" jour de congé inscription :", date, "(%fh)" % heures)
                             self.conges_inscription.append(date)
