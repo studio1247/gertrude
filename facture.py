@@ -897,15 +897,15 @@ class FactureReservataire(object):
         self.total_facture = self.total
 
 
-def GetHistoriqueSolde(who, jalon, derniere_facture=True):
+def GetHistoriqueSolde(who, jalon):
     if isinstance(who, Reservataire):
-        lignes = [encaissement for encaissement in who.encaissements if not encaissement.date or encaissement.date <= jalon]
+        lignes = [encaissement for encaissement in who.encaissements]
         for date in who.get_factures_list():
             if date <= jalon:
                 lignes.append(FactureReservataire(who, date))
     else:
         inscrits = GetInscritsFamille(who)
-        lignes = [encaissement for encaissement in who.encaissements if not encaissement.date or encaissement.date <= jalon]
+        lignes = [encaissement for encaissement in who.encaissements]
         debut, fin = None, None
         for inscrit in inscrits:
             debut_inscrit, fin_inscrit = inscrit.GetPeriodeInscriptions()
@@ -925,14 +925,9 @@ def GetHistoriqueSolde(who, jalon, derniere_facture=True):
             for inscrit in inscrits:
                 try:
                     facture = Facture(inscrit, date.year, date.month, NO_NUMERO | NO_RESTORE_CLOTURE)
-                    if facture.total_facture != 0 and (not database.creche.cloture_facturation or facture.cloture):
-                        if derniere_facture:
-                            # desactivé pour Moulon (la dernière facture de juillet clôturée le 10 juillet et non visible dans les règlements)
-                            # if facture.fin_recap <= fin:
+                    if facture.total_facture != 0:
+                        if (database.creche.cloture_facturation and facture.cloture) or facture.fin_recap < GetMonthStart(jalon):
                             lignes.append(facture)
-                        else:
-                            if facture.fin_recap < GetMonthStart(jalon):
-                                lignes.append(facture)
                 except Exception as e:
                     print("Exception", repr(e))
             date = GetNextMonthStart(date)
@@ -941,7 +936,7 @@ def GetHistoriqueSolde(who, jalon, derniere_facture=True):
 
 def CalculeSolde(who, date):
     solde = 0.0
-    historique = GetHistoriqueSolde(who, date, False)
+    historique = GetHistoriqueSolde(who, date)
     for ligne in historique:
         if isinstance(ligne, EncaissementFamille) or isinstance(ligne, EncaissementReservataire):
             solde -= ligne.valeur

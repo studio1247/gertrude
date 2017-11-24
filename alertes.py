@@ -53,7 +53,6 @@ def GetAlertes(fresh_only=False):
                 message = "L'inscription de %s %s se terminera dans 2 mois" % (inscrit.prenom, inscrit.nom)
                 add_alerte(date, message)
         if config.options & ALERTES_NON_PAIEMENT:
-            # On ne calcule les retards de paiement que si la clôture est activée, sinon surcharge appli !
             if GetRetardDePaiement(inscrit.famille):
                 add_alerte(today, "Le solde de %s est négatif depuis plus de %d jours" % (GetPrenomNom(inscrit), inscrit.famille.get_delai_paiement()))
 
