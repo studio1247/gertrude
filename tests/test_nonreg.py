@@ -125,7 +125,7 @@ class DocumentsTests(GertrudeTestCase):
         self.pwd = os.getcwd()
         os.chdir("..")
         database.creche.mode_facturation = FACTURATION_PAJE
-        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 6.70]]))
+        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 6.70, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
         database.creche.bureaux.append(Bureau(debut=datetime.date(2010, 1, 1)))
         for i in range(10):
             inscrit = self.AddInscrit()
@@ -205,11 +205,11 @@ class NosPetitsPoucesTests(GertrudeTestCase):
         inscription.debut = datetime.date(2010, 1, 1)
         inscrit.inscriptions.append(inscription)
         self.assertRaises(CotisationException, Cotisation, inscrit, datetime.date(2010, 1, 1), NO_ADDRESS)
-        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 0.0]]))
+        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 0.0, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
         Cotisation(inscrit, datetime.date(2010, 1, 1), NO_ADDRESS)
 
     def test_august_without_invoice(self):
-        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 10.0]]))
+        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 10.0, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit=inscrit)
         inscription.debut = datetime.date(2010, 1, 1)
@@ -236,13 +236,13 @@ class PAJETests(GertrudeTestCase):
         inscription.debut = datetime.date(2010, 1, 1)
         inscrit.inscriptions.append(inscription)
         self.assertRaises(CotisationException, Cotisation, inscrit, datetime.date(2010, 1, 1), NO_ADDRESS)
-        database.creche.tarifs_horaires.append(TarifHoraire(database.creche,[["", 0.0]]))
+        database.creche.tarifs_horaires.append(TarifHoraire(database.creche,[["", 0.0, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
         Cotisation(inscrit, datetime.date(2010, 1, 1), NO_ADDRESS)
         
     def test_nospetitspouces(self):
         database.creche.mode_facturation = FACTURATION_PAJE
         database.creche.repartition = REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS
-        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 6.70]]))
+        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 6.70, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
         database.creche.bureaux.append(Bureau(debut=datetime.date(2010, 1, 1)))
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit=inscrit)
@@ -261,7 +261,7 @@ class PAJETests(GertrudeTestCase):
     def test_microcosmos(self):
         database.creche.mode_facturation = FACTURATION_PAJE
         database.creche.repartition = REPARTITION_MENSUALISATION_12MOIS
-        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 10]]))
+        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 10, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
         database.creche.bureaux.append(Bureau(debut=datetime.date(2010, 1, 1)))
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit=inscrit)
@@ -283,7 +283,7 @@ class PAJETests(GertrudeTestCase):
         database.creche.mode_facturation = FACTURATION_PAJE
         database.creche.repartition = REPARTITION_MENSUALISATION_12MOIS
         database.creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
-        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 6.25]]))
+        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 6.25, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
         database.creche.bureaux.append(Bureau(debut=datetime.date(2010, 1, 1)))
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit=inscrit)
@@ -530,7 +530,7 @@ class FacturationDebutMoisContratTests(GertrudeTestCase):
         database.creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
         database.creche.temps_facturation = FACTURATION_DEBUT_MOIS_CONTRAT
         database.creche.type = TYPE_MICRO_CRECHE
-        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["mode=hg", 9.5], ["", 7.0]]))
+        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["mode=hg", 9.5, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE], ["", 7.0, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
 
     def test_forfait_mensuel(self):
         inscrit = self.AddInscrit()
@@ -604,7 +604,7 @@ class MonPetitBijouTests(GertrudeTestCase):
         database.creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
         database.creche.temps_facturation = FACTURATION_DEBUT_MOIS_PREVISIONNEL
         database.creche.type = TYPE_MICRO_CRECHE
-        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["mode=hg", 9.5], ["", 7.0]]))
+        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["mode=hg", 9.5, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE], ["", 7.0, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
 
     def test_forfait_mensuel(self):
         inscrit = self.AddInscrit()
@@ -875,7 +875,7 @@ class LaCabaneAuxFamillesTests(GertrudeTestCase):
         database.creche.regularisation_fin_contrat = True
 
     def test_arrivee_et_depart_en_cours_de_mois(self):
-        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 7.5]]))
+        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 7.5, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit=inscrit, mode=MODE_TEMPS_PARTIEL)
         inscription.semaines_conges = 5
@@ -898,7 +898,7 @@ class LaCabaneAuxFamillesTests(GertrudeTestCase):
         self.assertPrec2Equals(facture.total, 663.31)
 
     def test_regularisation_conges_non_pris(self):
-        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["revenus>0", 10.0]]))
+        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["revenus>0", 10.0, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit=inscrit)
         inscription.mode = MODE_TEMPS_PARTIEL
@@ -969,7 +969,7 @@ class OPagaioTests(GertrudeTestCase):
         database.creche.type = TYPE_MICRO_CRECHE
         database.creche.mode_facturation = FACTURATION_PAJE
         database.creche.gestion_depart_anticipe = True
-        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 9.5]]))
+        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 9.5, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
         database.creche.temps_facturation = FACTURATION_FIN_MOIS
         database.creche.repartition = REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS
         database.creche.facturation_periode_adaptation = PERIODE_ADAPTATION_GRATUITE
