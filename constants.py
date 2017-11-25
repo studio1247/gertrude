@@ -236,7 +236,16 @@ PorteeTarifsSpeciauxItems = [
     ("Contrat", PORTEE_CONTRAT)
 ]
 
-# Unites des tarif spéciaux
+# Unités des tarifs horaires
+TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE = 0
+TARIF_HORAIRE_UNITE_EUROS_PAR_MOIS = 1
+
+UniteTarifsHorairesItems = [
+    ("€/heure", TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE),
+    ("€/mois", TARIF_HORAIRE_UNITE_EUROS_PAR_MOIS),
+]
+
+# Unités des tarifs spéciaux
 TARIF_SPECIAL_UNITE_EUROS = 0
 TARIF_SPECIAL_UNITE_POURCENTAGE = 1
 TARIF_SPECIAL_UNITE_EUROS_PAR_HEURE = 2

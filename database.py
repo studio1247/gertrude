@@ -31,7 +31,7 @@ from parameters import *
 import bcrypt
 from config import config
 
-DB_VERSION = 120
+DB_VERSION = 121
 
 Base = declarative_base()
 
@@ -56,7 +56,7 @@ def GetFormuleConversion(formule):
                     replace("__<>", "!=").\
                     replace("__<eq", "<=").\
                     replace("__>eq", ">=")
-            result.append([condition, cas[1], cas[0]])
+            result.append([condition, cas[1], cas[2], cas[0]])
         return result
     else:
         return None
@@ -602,10 +602,10 @@ class Creche(Base):
         try:
             for cas in formule:
                 if heure_mois is None and "heure_mois" in cas[0]:
-                    return None
+                    return None, None
                 elif eval(cas[0]):
                     # print cas[0], cas[1]
-                    return cas[1]
+                    return cas[1], cas[2]
             else:
                 raise Exception("Aucune condition ne matche")
         except:
@@ -2596,8 +2596,7 @@ class Database(object):
                     fin DATE,
                     formule VARCHAR
                   )""")
-                self.engine.execute("INSERT INTO tarifs_horaires (idx, debut, fin, formule) VALUES (NULL, ?, ?, ?)",
-                                       (None, None, formule_taux_horaire))
+                self.engine.execute("INSERT INTO tarifs_horaires (idx, debut, fin, formule) VALUES (NULL, ?, ?, ?)", (None, None, formule_taux_horaire))
 
             if version < 109:
                 self.engine.execute("ALTER TABLE parents ADD profession VARCHAR")
@@ -2744,6 +2743,15 @@ class Database(object):
             if version < 120:
                 self.engine.execute("ALTER TABLE inscrits ADD type_repas2 INGEGER")
                 self.engine.execute("UPDATE inscrits SET type_repas2=0")
+
+            if version < 121:
+                rows = list(self.engine.execute("SELECT formule, idx FROM tarifs_horaires"))
+                for row in rows:
+                    formule, idx = row
+                    formule = eval(formule)
+                    for cas in formule:
+                        cas.append(0)
+                    self.engine.execute("UPDATE tarifs_horaires SET formule=? WHERE idx=?", (str(formule), idx))
 
             version_entry.value = DB_VERSION
             self.commit()
