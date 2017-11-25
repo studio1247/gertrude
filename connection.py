@@ -342,8 +342,9 @@ class HttpConnection(FileConnection):
 
     def do_upload(self):
         self.progress_handler.display("Envoi vers le serveur ...")
-        files = {'database': ('database', open(self.filename, 'rb'))}
+        files = {'database': ('database', open(self.filename, "rb"))}
         try:
+            print(self.get_url("upload"))
             response = requests.post(self.get_url("upload"), files=files, auth=self.auth, proxies=self.proxies)
             if len(response.content) == 1:
                 return eval(response.content)
