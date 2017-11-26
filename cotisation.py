@@ -347,7 +347,7 @@ class Cotisation(object):
                         print(" + %d semaines de congés" % self.inscription.semaines_conges)
                     self.heures_periode -= self.inscription.semaines_conges * self.heures_semaine
                     self.liste_conges.append("%d semaines de congés" % self.inscription.semaines_conges)
-                self.heures_periode = math.ceil(self.heures_periode)
+                self.heures_periode = float(math.ceil(self.heures_periode))
                 if options & TRACES:
                     print(" heures période :", self.heures_periode)
                 self.semaines_periode = 1 + (self.fin_inscription - self.debut_inscription).days // 7

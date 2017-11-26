@@ -184,6 +184,7 @@ def GetDateIntersection(periodes):
 
 
 def GetHeureString(value):
+    # TODO retirer le truc du int
     if value is None:
         return ""
     if not isinstance(value, int):
