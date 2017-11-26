@@ -360,14 +360,13 @@ class Cotisation(object):
                     print(" nombres de factures :", self.nombre_factures)
 
                 if database.creche.mode_facturation != FACTURATION_FORFAIT_MENSUEL:
-                    if database.creche.arrondi_mensualisation == SANS_ARRONDI:
-                        self.heures_mois = (self.heures_periode / self.GetNombreFactures())
+                    self.heures_mois = (self.heures_periode / self.GetNombreFactures())
+                    if options & TRACES:
+                        print(" heures mensuelles : %f" % self.heures_mois)
+                    if database.creche.arrondi_mensualisation == ARRONDI_HEURE_PLUS_PROCHE:
+                        self.heures_mois = math.ceil(self.heures_mois)
                         if options & TRACES:
-                            print(" heures mensuelles : %f" % self.heures_mois)
-                    else:
-                        self.heures_mois = math.ceil(self.heures_periode / self.GetNombreContratsFactures())
-                        if options & TRACES:
-                            print(" heures mensuelles : %f (%f)" % (self.heures_mois, self.heures_periode / self.GetNombreContratsFactures()))
+                            print(" arrondi heures mensuelles : %f" % self.heures_mois)
             else:
                 if database.creche.repartition == REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS:
                     if self.fin_inscription is None:
