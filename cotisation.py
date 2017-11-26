@@ -360,7 +360,7 @@ class Cotisation(object):
                     print(" nombres de factures :", self.nombre_factures)
 
                 if database.creche.mode_facturation != FACTURATION_FORFAIT_MENSUEL:
-                    self.heures_mois = (self.heures_periode / self.GetNombreFactures())
+                    self.heures_mois = self.heures_periode / self.GetNombreContratsFactures()
                     if options & TRACES:
                         print(" heures mensuelles : %f" % self.heures_mois)
                     if database.creche.arrondi_mensualisation == ARRONDI_HEURE_PLUS_PROCHE:
