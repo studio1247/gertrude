@@ -483,3 +483,16 @@ types_repas_2 = [
     ("Petit pot", REPAS_PETIT_POT),
     ("Biberon", REPAS_BIBERON)
 ]
+
+# Type de congés des salariés
+SALARIE_CONGES_PAYE = 0
+SALARIE_CONGES_SANS_SOLDE = 1
+SALARIE_CONGES_MALADIE = 2
+SALARIE_CONGES_RECUP_HEURES_SUPP = 3
+
+types_conges_salaries = [
+    ("Congés payés", SALARIE_CONGES_PAYE),
+    ("Congés sans solde", SALARIE_CONGES_SANS_SOLDE),
+    ("Congés maladie", SALARIE_CONGES_MALADIE),
+    ("Congés récupération heures supp.", SALARIE_CONGES_RECUP_HEURES_SUPP)
+]

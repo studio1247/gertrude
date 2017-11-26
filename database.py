@@ -31,7 +31,7 @@ from parameters import *
 import bcrypt
 from config import config
 
-DB_VERSION = 121
+DB_VERSION = 122
 
 Base = declarative_base()
 
@@ -2013,6 +2013,7 @@ class CongeSalarie(Base):
     debut = Column(String)
     fin = Column(String)
     label = Column(String)
+    type = Column(Integer)
 
     def __init__(self, salarie, debut=None, fin=None, label=None):
         Base.__init__(self, salarie=salarie, debut=debut, fin=fin, label=label)
@@ -2752,6 +2753,10 @@ class Database(object):
                     for cas in formule:
                         cas.append(0)
                     self.engine.execute("UPDATE tarifs_horaires SET formule=? WHERE idx=?", (str(formule), idx))
+
+            if version < 122:
+                self.engine.execute("ALTER TABLE conges_salaries ADD type INGEGER")
+                self.engine.execute("UPDATE conges_salaries SET type=0")
 
             version_entry.value = DB_VERSION
             self.commit()
