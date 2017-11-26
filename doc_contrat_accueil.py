@@ -271,7 +271,7 @@ class AvenantContratAccueilModifications(OdtDocumentAccueilModifications):
 
 class FraisGardeModifications(DocumentAccueilModifications):
     title = "Frais de garde"
-    template = 'Frais de garde.ods'
+    template = "Frais de garde.ods"
 
     def __init__(self, who, date):
         DocumentAccueilModifications.__init__(self, who, date)
@@ -288,26 +288,23 @@ class FraisGardeModifications(DocumentAccueilModifications):
 
         fields = self.GetFields()
         ReplaceFields(lignes, fields)
-                
+
         if len(self.cotisation.revenus_parents) < 2:
-            table.removeChild(lignes[3])
-            table.removeChild(lignes[4])
+            RemoveNodesContaining(lignes, "parent2")
         elif not self.cotisation.revenus_parents[1][2]:
-            table.removeChild(lignes[4]) 
+            RemoveNodesContaining(lignes, "abattement-parent2")
         if len(self.cotisation.revenus_parents) < 1:
-            table.removeChild(lignes[1])
-            table.removeChild(lignes[2])
-            table.removeChild(lignes[5])
+            RemoveNodesContaining(lignes, "parent1")
         elif not self.cotisation.revenus_parents[0][2]:
-            table.removeChild(lignes[2])
+            RemoveNodesContaining(lignes, "abattement-parent1")
             
         if database.creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
-            table.removeChild(lignes[7])
-            table.removeChild(lignes[8])
-            table.removeChild(lignes[9])
-            table.removeChild(lignes[11])
-            table.removeChild(lignes[14])
-            
+            RemoveNodesContaining(lignes, "assiette-annuelle")
+            RemoveNodesContaining(lignes, "assiette-mensuelle")
+            RemoveNodesContaining(lignes, "taux-effort")
+            RemoveNodesContaining(lignes, "heures-mois")
+            RemoveNodesContaining(lignes, "montant-heure-garde")
+
         return {}
 
 

@@ -160,6 +160,14 @@ def GetValues(row):
     return result
 
 
+def RemoveNodesContaining(nodes, needle):
+    if not isinstance(nodes, list):
+        nodes = [nodes]
+    for node in nodes:
+        if needle in node.toprettyxml():
+            node.parentNode.removeChild(node)
+
+
 def RemoveColumn(rows, index):
     for row in rows:
         cells = row.getElementsByTagName("table:table-cell")
