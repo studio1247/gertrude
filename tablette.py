@@ -90,7 +90,7 @@ def sync_tablette_lines(lines, tz=None):
     def AddPeriodes(who, date, periodes):
         day = who.days.get(date, Day())
         while day.timeslots:
-            del day.timeslots[0]
+            who.days.remove(day.timeslots[0])
         for periode in periodes:
             AddPeriode(who, date, periode, TimeslotInscrit if isinstance(who, Inscrit) else TimeslotSalarie)
 
