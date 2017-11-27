@@ -19,7 +19,7 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 from controls import *
-from documents.doc_planning_hebdomadaire import PlanningHebdomadaireSalariesModifications
+from generation.planning_hebdomadaire import PlanningHebdomadaireSalariesModifications
 from planning import PlanningWidget, BaseWxPythonLine, WxPlanningSeparator
 from planning_line import *
 from document_dialog import *

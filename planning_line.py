@@ -269,6 +269,15 @@ class ChildPlanningLine(BasePlanningLine):
         return result
 
 
+class StateDay:
+    def __init__(self, state):
+        self.state = state
+        self.timeslots = []
+
+    def get_state(self):
+        return self.state
+
+
 class SalariePlanningLine(BasePlanningLine):
     def __init__(self, planning, date, options=0):
         self.planning = planning
@@ -279,8 +288,8 @@ class SalariePlanningLine(BasePlanningLine):
         BasePlanningLine.__init__(self, GetPrenomNom(self.salarie), options)
         self.date = date
         if date in self.salarie.jours_conges:
-            self.state = CONGES_PAYES
-            self.reference = Day()  # semble nécessaire
+            self.state = self.salarie.jours_conges[date].type
+            self.reference = StateDay(self.state)
             self.commentaire = self.salarie.jours_conges[date].label
             self.readonly = True
         else:
@@ -314,7 +323,19 @@ class SalariePlanningLine(BasePlanningLine):
     def update(self):
         self.day = self.salarie.days.get(self.date, None)
         self.timeslots = self.day.timeslots if self.day else self.reference.timeslots[:]
-        self.state = self.day.get_state() if self.day else self.reference.get_state()
+        if self.day:
+            # TODO bidouille tant que les activites ne sont pas referencees directement
+            recup_timeslots = database.creche.get_activities_per_mode(MODE_SALARIE_RECUP_HEURES_SUPP)
+            day_state = self.day.get_state()
+            self.state = day_state
+            for timeslot in self.day.timeslots:
+                if timeslot.value in recup_timeslots:
+                    self.state = CONGES_RECUP_HEURES_SUPP
+                else:
+                    self.state = day_state
+                    break
+        else:
+            self.state = self.reference.get_state()
 
     def add_timeslots(self, timeslots):
         for timeslot in timeslots:
@@ -348,7 +369,7 @@ class SalariePlanningLine(BasePlanningLine):
         self.commentaire = comment
 
     def get_states(self):
-        return [PRESENT, VACANCES, CONGES_PAYES, MALADE]
+        return [PRESENT, VACANCES, CONGES_SANS_SOLDE, MALADE]
 
     def get_summary(self):
         return {PRESENCE_SALARIE: [timeslot for timeslot in self.timeslots if timeslot.value == 0]}

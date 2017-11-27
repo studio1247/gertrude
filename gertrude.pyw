@@ -27,7 +27,7 @@ import wx
 
 
 if sys.executable.endswith("pythonw.exe"):
-    logfile = file("gertrude.log", "a")
+    logfile = open("gertrude.log", "a")
     sys.stdout = codecs.getwriter('utf8')(logfile)
     sys.stderr = codecs.getwriter('utf8')(logfile)
 elif sys.platform != "win32":

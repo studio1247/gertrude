@@ -16,10 +16,6 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
-
-from constants import *
-from functions import *
-from facture import *
 from ooffice import *
 
 
@@ -27,13 +23,14 @@ class CoordonneesModifications(object):
     title = "Coordonnées des parents"
     template = "Coordonnees parents.odt"
 
-    def __init__(self, site, date):
+    def __init__(self, site, date, selection=EXPORT_FAMILLES_PRESENTES):
         self.multi = False
         self.site = site
         if date is None:
             self.date = today
         else:
             self.date = date
+        self.selection = selection
         self.email = None
         if IsTemplateFile("Coordonnees parents.ods"):
             self.template = "Coordonnees parents.ods"
@@ -41,6 +38,24 @@ class CoordonneesModifications(object):
         else:
             self.template = 'Coordonnees parents.odt'
             self.default_output = "Coordonnees parents %s.odt" % GetDateString(self.date, weekday=False)
+
+    def get_inscrits(self):
+        result = []
+        for inscrit in database.creche.inscrits:
+            temporalite = 0
+            for inscription in inscrit.inscriptions:
+                if self.site is None or inscription.site == self.site:
+                    if inscription.debut and inscription.debut > datetime.date.today():
+                        temporalite = EXPORT_FAMILLES_FUTURES
+                    elif inscription.fin and inscription.fin < datetime.date.today():
+                        temporalite = EXPORT_FAMILLES_PARTIES
+                    else:
+                        temporalite = EXPORT_FAMILLES_PRESENTES
+                        break
+            if temporalite & self.selection:
+                result.append(inscrit)
+        result.sort(key=lambda x: GetPrenomNom(x))
+        return result
 
     def execute(self, filename, dom):
         if self.template == "Coordonnees parents.ods":
@@ -57,17 +72,16 @@ class CoordonneesModifications(object):
         table = spreadsheet.getElementsByTagName("table:table")[0]
         lignes = table.getElementsByTagName("table:table-row")
         template = lignes[1]
-        for inscrit in GetEnfantsTriesParPrenom():
-            inscription = inscrit.get_inscription(self.date)
-            if inscription and (self.site is None or inscription.site == self.site):
-                inscrit_fields = GetInscritFields(inscrit)
-                for parent in inscrit.famille.parents:
-                    if parent:
-                        fields = inscrit_fields + GetParentFields(parent)
-                        line = template.cloneNode(1)
-                        ReplaceFields(line, fields)
-                        table.insertBefore(line, template)
-                        inscrit_fields = [(field[0], "") for field in inscrit_fields]
+
+        for inscrit in self.get_inscrits():
+            inscrit_fields = GetInscritFields(inscrit)
+            for parent in inscrit.famille.parents:
+                if parent:
+                    fields = inscrit_fields + GetParentFields(parent)
+                    line = template.cloneNode(1)
+                    ReplaceFields(line, fields)
+                    table.insertBefore(line, template)
+                    inscrit_fields = [(field[0], "") for field in inscrit_fields]
         table.removeChild(template)
         return errors
 
@@ -79,57 +93,57 @@ class CoordonneesModifications(object):
         fields = GetCrecheFields(database.creche)
         fields.append(('date', '%.2d/%.2d/%d' % (self.date.day, self.date.month, self.date.year)))
         ReplaceTextFields(dom, fields)
-        
+
+        inscrits = self.get_inscrits()
+
         for table in dom.getElementsByTagName('table:table'):
             if table.getAttribute('table:name') == 'Enfants':                
                 template = table.getElementsByTagName('table:table-row')[1]
-                #print template.toprettyxml()
-                for inscrit in GetEnfantsTriesParPrenom():
-                    inscription = inscrit.get_inscription(self.date)
-                    if inscription and (self.site is None or inscription.site == self.site):
-                        line = template.cloneNode(1)
-                        referents = [GetPrenomNom(referent) for referent in inscrit.famille.referents]
-                        parents = [GetPrenomNom(parent) for parent in inscrit.famille.parents if parent is not None]
-                        ReplaceTextFields(line, [('prenom', inscrit.prenom),
-                                                 ('parents', parents),
-                                                 ('referents', referents),
-                                                 ('commentaire', None)])
-                        phoneCell = line.getElementsByTagName('table:table-cell')[2]
-                        phoneTemplate = phoneCell.getElementsByTagName('text:p')[0]
-                        phones = { } # clé: [téléphone, initiales, ?travail]
-                        emails = set()
-                        for parent in inscrit.famille.parents:
-                            if parent:
-                                emails.add(parent.email)
-                                for phoneType in ["domicile", "portable", "travail"]:
-                                    phone = getattr(parent, "telephone_" + phoneType)
-                                    if phone:
-                                        if phone in phones.keys():
-                                            phones[phone][1] = ""
-                                        else:
-                                            phones[phone] = [phone, GetInitialesPrenom(parent), phoneType=="travail"]
-                        for phone, initiales, phoneType in phones.values():
-                            if initiales and phoneType:
-                                remark = "(%s travail)" % initiales
-                            elif initiales:
-                                remark = "(%s)" % initiales
-                            elif phoneType:
-                                remark = "(travail)"
-                            else:
-                                remark = ""
-                            phoneLine = phoneTemplate.cloneNode(1)
-                            ReplaceTextFields(phoneLine, [('telephone', phone),
-                                                          ('remarque', remark)])
-                            phoneCell.insertBefore(phoneLine, phoneTemplate)
-                        phoneCell.removeChild(phoneTemplate)
-                        emailCell = line.getElementsByTagName('table:table-cell')[3]
-                        emailTemplate = emailCell.getElementsByTagName('text:p')[0]
-                        for email in emails:
-                            emailLine = emailTemplate.cloneNode(1)
-                            ReplaceTextFields(emailLine, [('email', email)])
-                            emailCell.insertBefore(emailLine, emailTemplate)
-                        emailCell.removeChild(emailTemplate)
-                        table.insertBefore(line, template)
+                # print template.toprettyxml()
+                for inscrit in inscrits:
+                    line = template.cloneNode(1)
+                    referents = [GetPrenomNom(referent) for referent in inscrit.famille.referents]
+                    parents = [GetPrenomNom(parent) for parent in inscrit.famille.parents if parent is not None]
+                    ReplaceTextFields(line, [('prenom', inscrit.prenom),
+                                             ('parents', parents),
+                                             ('referents', referents),
+                                             ('commentaire', None)])
+                    phoneCell = line.getElementsByTagName('table:table-cell')[2]
+                    phoneTemplate = phoneCell.getElementsByTagName('text:p')[0]
+                    phones = {}  # clé: [téléphone, initiales, ?travail]
+                    emails = set()
+                    for parent in inscrit.famille.parents:
+                        if parent:
+                            emails.add(parent.email)
+                            for phoneType in ["domicile", "portable", "travail"]:
+                                phone = getattr(parent, "telephone_" + phoneType)
+                                if phone:
+                                    if phone in phones.keys():
+                                        phones[phone][1] = ""
+                                    else:
+                                        phones[phone] = [phone, GetInitialesPrenom(parent), phoneType=="travail"]
+                    for phone, initiales, phoneType in phones.values():
+                        if initiales and phoneType:
+                            remark = "(%s travail)" % initiales
+                        elif initiales:
+                            remark = "(%s)" % initiales
+                        elif phoneType:
+                            remark = "(travail)"
+                        else:
+                            remark = ""
+                        phoneLine = phoneTemplate.cloneNode(1)
+                        ReplaceTextFields(phoneLine, [('telephone', phone),
+                                                      ('remarque', remark)])
+                        phoneCell.insertBefore(phoneLine, phoneTemplate)
+                    phoneCell.removeChild(phoneTemplate)
+                    emailCell = line.getElementsByTagName('table:table-cell')[3]
+                    emailTemplate = emailCell.getElementsByTagName('text:p')[0]
+                    for email in emails:
+                        emailLine = emailTemplate.cloneNode(1)
+                        ReplaceTextFields(emailLine, [('email', email)])
+                        emailCell.insertBefore(emailLine, emailTemplate)
+                    emailCell.removeChild(emailTemplate)
+                    table.insertBefore(line, template)
                 table.removeChild(template)
 
             if table.getAttribute('table:name') == 'Employes':

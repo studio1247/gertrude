@@ -82,7 +82,7 @@ class Timeslot(object):
     def is_presence(self):
         return self.value == 0
 
-    def get_duration(self, arrondi):
+    def get_duration(self, arrondi=SANS_ARRONDI):
         # TODO a utiliser partout
         return 0 if self.debut is None else 5 * GetDureeArrondie(arrondi, self.debut, self.fin)
 
@@ -247,6 +247,7 @@ class Creche(Base):
     arrondi_mensualisation_euros = Column(Integer, default=SANS_ARRONDI)
     arrondi_semaines = Column(Integer, default=ARRONDI_SEMAINE_SUPERIEURE)
     gestion_maladie_hospitalisation = Column(Boolean, default=False)
+    gestion_conges_sans_solde = Column(Boolean, default=False)
     tri_inscriptions = Column(Integer, default=TRI_NOM)
     tri_planning = Column(Integer, default=TRI_NOM)
     tri_factures = Column(Integer, default=TRI_NOM)
@@ -940,6 +941,8 @@ class Salarie(Base):
     conges = relationship("CongeSalarie", cascade="all, delete-orphan")
     days = relationship("TimeslotSalarie", collection_class=lambda: DayCollection("date"), cascade="all, delete-orphan")
     commentaires = relationship("CommentaireSalarie", collection_class=attribute_mapped_collection("date"), cascade="all, delete-orphan")
+    heures_supp = relationship("HeuresSupp", cascade="all, delete-orphan")
+    credit_conges = relationship("CreditConges", cascade="all, delete-orphan")
 
     def __init__(self, prenom="", nom="", diplomes="", **kwargs):
         Base.__init__(self, prenom=prenom, nom=nom, diplomes=diplomes, **kwargs)
@@ -1105,9 +1108,10 @@ class Salarie(Base):
                 # print("Exception congés", e)
 
     def get_state(self, date):
-        if self.is_date_conge(date):
+        if date in self.creche.jours_fermeture:
             return ABSENT
-
+        if date in self.jours_conges:
+            return self.jours_conges[date].type
         contrat = self.get_contrat(date)
         if contrat is None:
             return ABSENT
@@ -1143,6 +1147,32 @@ class Professeur(Base):
     nom = Column(String)
     entree = Column(Date)
     sortie = Column(Date)
+
+
+class HeuresSupp(Base):
+    __tablename__ = "heures_supp"
+    idx = Column(Integer, primary_key=True)
+    salarie_id = Column(Integer, ForeignKey("employes.idx"))
+    salarie = relationship(Salarie)
+    date = Column(Date)
+    label = Column(String)
+    value = Column(Float)
+
+    def __init__(self, salarie, **kwargs):
+        Base.__init__(self, salarie=salarie, **kwargs)
+
+
+class CreditConges(Base):
+    __tablename__ = "credit_conges"
+    idx = Column(Integer, primary_key=True)
+    salarie_id = Column(Integer, ForeignKey("employes.idx"))
+    salarie = relationship(Salarie)
+    date = Column(Date)
+    label = Column(String)
+    value = Column(Float)
+
+    def __init__(self, salarie, **kwargs):
+        Base.__init__(self, salarie=salarie, **kwargs)
 
 
 class Famille(Base):
@@ -2517,8 +2547,7 @@ class Database(object):
             if version < 98:
                 arrondi_facturation = self.engine.execute("SELECT arrondi_facturation FROM creche").first()[0]
                 self.engine.execute("ALTER TABLE creche ADD arrondi_facturation_periode_adaptation INTEGER")
-                self.engine.execute("UPDATE creche SET arrondi_facturation_periode_adaptation=?",
-                                       (arrondi_facturation,))
+                self.engine.execute("UPDATE creche SET arrondi_facturation_periode_adaptation=?", (arrondi_facturation,))
 
             if version < 99:
                 self.engine.execute("ALTER TABLE creche ADD arrondi_mensualisation INTEGER")
@@ -2757,6 +2786,24 @@ class Database(object):
             if version < 122:
                 self.engine.execute("ALTER TABLE conges_salaries ADD type INGEGER")
                 self.engine.execute("UPDATE conges_salaries SET type=0")
+                self.engine.execute("ALTER TABLE creche ADD gestion_conges_sans_solde BOOLEAN")
+                self.engine.execute("UPDATE creche SET gestion_conges_sans_solde=?", False)
+                self.engine.execute("""
+                    CREATE TABLE heures_supp (
+                        idx INTEGER PRIMARY KEY,
+                        salarie_id INTEGER REFERENCES employes(idx),
+                        date DATE,
+                        label VARCHAR,
+                        value FLOAT
+                    )""")
+                self.engine.execute("""
+                    CREATE TABLE credit_conges (
+                        idx INTEGER PRIMARY KEY,
+                        salarie_id INTEGER REFERENCES employes(idx),
+                        date DATE,
+                        label VARCHAR,
+                        value FLOAT
+                    )""")
 
             version_entry.value = DB_VERSION
             self.commit()

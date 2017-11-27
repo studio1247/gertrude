@@ -94,6 +94,8 @@ MODE_PRESENCE_NON_FACTUREE = 4
 MODE_SYSTEMATIQUE_SANS_HORAIRES = 5
 MODE_PERMANENCE = 6
 MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE = 7
+MODE_SALARIE_HEURES_SUPP = 8
+MODE_SALARIE_RECUP_HEURES_SUPP = 9
 
 ActivityModes = [
     ("Normal", 0),
@@ -103,7 +105,9 @@ ActivityModes = [
     ("Présence facturée en temps supplémentaire", MODE_PRESENCE_SUPPLEMENTAIRE),
     ("Sans horaire, systématique", MODE_SYSTEMATIQUE_SANS_HORAIRES),
     ("Sans horaire, systématique et mensualisé", MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE),
-    ("Permanence", MODE_PERMANENCE)
+    ("Permanence", MODE_PERMANENCE),
+    ("Heures supp. (salariés)", MODE_SALARIE_HEURES_SUPP),
+    ("Récup heures supp. (salariés)", MODE_SALARIE_RECUP_HEURES_SUPP)
 ]
 
 # Propriétaires des activités
@@ -487,14 +491,18 @@ types_repas_2 = [
 ]
 
 # Type de congés des salariés
-SALARIE_CONGES_PAYE = 0
-SALARIE_CONGES_SANS_SOLDE = 1
-SALARIE_CONGES_MALADIE = 2
-SALARIE_CONGES_RECUP_HEURES_SUPP = 3
-
 types_conges_salaries = [
-    ("Congés payés", SALARIE_CONGES_PAYE),
-    ("Congés sans solde", SALARIE_CONGES_SANS_SOLDE),
-    ("Congés maladie", SALARIE_CONGES_MALADIE),
-    ("Congés récupération heures supp.", SALARIE_CONGES_RECUP_HEURES_SUPP)
+    ("Congés payés", CONGES_PAYES),
+    ("Congés sans solde", CONGES_SANS_SOLDE),
+    ("Congés maladie", MALADE),
+]
+
+# Type d'export de coordonnées des parents
+EXPORT_FAMILLES_PRESENTES = 1
+EXPORT_FAMILLES_FUTURES = 2
+EXPORT_FAMILLES_PARTIES = 4
+type_export_coordonnees_parents = [
+    ("Familles présentes", EXPORT_FAMILLES_PRESENTES),
+    ("Familles présentes et futures", EXPORT_FAMILLES_PRESENTES + EXPORT_FAMILLES_FUTURES),
+    ("Familles parties", EXPORT_FAMILLES_PARTIES)
 ]
