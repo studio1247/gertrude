@@ -20,6 +20,7 @@ from __future__ import print_function
 
 import urllib
 from database import Day, TimeslotInscrit, Inscrit, TimeslotSalarie
+from connection import get_connection_from_config
 from functions import *
 from globals import *
 
@@ -80,7 +81,7 @@ def write_apache_logs_to_journal(filename):
     f.close()
 
 
-def sync_tablette_lines(lines, tz=None):
+def sync_tablette_lines(lines, tz=None, traces=False):
     last_imported_day = datetime.date.today()
     date = datetime.datetime.now(tz=tz)
     hour = float(date.hour) + float(date.minute) / 60
@@ -112,6 +113,8 @@ def sync_tablette_lines(lines, tz=None):
             else:
                 errors.append("%s : Pas de départ enregistré le %s" % (GetPrenomNom(who), periode.date))
 
+        if traces:
+            print("Nouveau timeslot pour", date)
         who.days.add(cls(date=date, debut=arrivee, fin=depart, value=value))
         history.Append(None)
 
@@ -178,10 +181,11 @@ def sync_tablette_lines(lines, tz=None):
         else:
             errors.append("Salarié %d: Inconnu!" % key)
 
+    database.commit()
     return errors
 
 
-def sync_tablette():
+def sync_tablette(traces=False):
     print("Synchro tablette ...")
 
     journal = config.connection.LoadJournal()
@@ -202,4 +206,14 @@ def sync_tablette():
         tz = pytz.timezone('Europe/Paris')
     else:
         tz = None
-    sync_tablette_lines(lines[index + 1:], tz)
+    sync_tablette_lines(lines[index + 1:], tz, traces=traces)
+
+
+if __name__ == "__main__":
+    config.load(sys.argv[1])
+    config.connection = get_connection_from_config()
+    database.init(config.database)
+    database.load()
+
+    database.creche.last_tablette_synchro = sys.argv[2]
+    sync_tablette(traces=True)
