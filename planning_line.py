@@ -303,6 +303,7 @@ class SalariePlanningLine(BasePlanningLine):
         fin_semaine = debut_semaine + datetime.timedelta(6)
         debut_mois = GetMonthStart(self.date)
         fin_mois = GetMonthEnd(self.date)
+        heures_jour = 0
         heures_semaine = 0
         heures_mois = 0
         date = min(debut_semaine, debut_mois)
