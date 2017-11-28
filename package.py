@@ -109,7 +109,7 @@ def main():
         p.arch = "all"
 
         p["/usr/share/applications"] = ["./linux/gertrude.desktop|gertrude.desktop"]
-        p["/usr/share/gertrude"] = glob.glob("./*.py") + glob.glob("./documents/*.py") + glob.glob("./demo.db") + glob.glob("./bitmaps_dist/*.*") + glob.glob("./bitmaps_dist/pictos/*") + glob.glob("./templates_dist/*.html") + glob.glob("./templates_dist/*.txt") + glob.glob("./templates_dist/*.od?")
+        p["/usr/share/gertrude"] = glob.glob("./*.py") + glob.glob("./generation/*.py") + glob.glob("./demo.db") + glob.glob("./bitmaps_dist/*.*") + glob.glob("./bitmaps_dist/pictos/*") + glob.glob("./templates_dist/*.html") + glob.glob("./templates_dist/*.txt") + glob.glob("./templates_dist/*.od?")
         p["/usr/bin"] = ["./linux/gertrude|gertrude"]
         p["/usr/share/doc/gertrude"] = ["COPYING"]
         p.generate(VERSION, "", rpm=True, src=True)
