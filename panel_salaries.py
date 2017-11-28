@@ -351,7 +351,7 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
 
     def UpdateSiteItems(self):
         if len(database.creche.sites) > 1:
-            items = [(site.nom, site) for site in database.creche.sites]
+            items = [(site.get_name(), site) for site in database.creche.sites]
             self.sites_items[1].SetItems(items)
         else:
             for item in self.sites_items:

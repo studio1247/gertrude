@@ -334,7 +334,7 @@ class EtatsPresenceTab(AutoTab):
         self.sites_choice.Clear()
         self.sites_choice.Append("Tous les sites", None)
         for site in sites:
-            self.sites_choice.Append(site.nom, site)
+            self.sites_choice.Append(site.get_name(), site)
         self.sites_choice.Select(0)
         
     def FillProfesseurs(self, debut=None, fin=None, site=None, inscrit=None):
@@ -620,7 +620,7 @@ class StatistiquesFrequentationTab(AutoTab):
             site_selected = self.sitechoice.GetSelection()
             self.sitechoice.Clear()
             for site in database.creche.sites:
-                self.sitechoice.Append(site.nom, site)
+                self.sitechoice.Append(site.get_name(), site)
             if site_selected < 0 or site_selected >= self.sitechoice.GetCount():
                 site_selected = 0
             self.sitechoice.SetSelection(site_selected)                
@@ -856,7 +856,7 @@ class RelevesTab(AutoTab):
             site_selected = self.site_choice.GetSelection()
             self.site_choice.Clear()
             for site in database.creche.sites:
-                self.site_choice.Append(site.nom, site)
+                self.site_choice.Append(site.get_name(), site)
             if site_selected < 0 or site_selected >= self.site_choice.GetCount():
                 site_selected = 0
             self.site_choice.SetSelection(site_selected)                

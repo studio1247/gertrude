@@ -198,7 +198,7 @@ class PlanningBasePanel(GPanel):
         # La combobox pour la selection du site
         self.site_choice = wx.Choice(self, -1)
         for site in database.creche.sites:
-            self.site_choice.Append(site.nom, site)
+            self.site_choice.Append(site.get_name(), site)
         self.topsizer.Add(self.site_choice, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.RIGHT, 5)
         if len(database.creche.sites) < 2:
             self.site_choice.Show(False)

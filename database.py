@@ -692,6 +692,9 @@ class Site(Base):
     capacite = Column(Integer)
     groupe = Column(Integer)
 
+    def get_name(self):
+        return self.nom if self.nom else "<sans nom>"
+
 
 class FoodNeed(Base):
     __tablename__ = "food_needs"

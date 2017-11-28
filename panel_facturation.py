@@ -247,10 +247,10 @@ class FacturationTab(AutoTab):
     def UpdateContents(self):
         for choice in self.inscrits_choice.values():
             choice.Clear()
-            choice.Append('Tous les enfants', database.creche)
+            choice.Append("Tous les enfants", database.creche)
             if len(database.creche.sites) > 1:
                 for site in database.creche.sites:
-                    choice.Append('Enfants du site ' + site.nom.strip(), site)
+                    choice.Append("Enfants du site %s" % site.get_name(), site)
 
         inscrits = {}
         autres = {}
