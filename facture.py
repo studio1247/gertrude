@@ -616,9 +616,11 @@ class FactureFinMois(FactureBase):
                     # avec le test suivant on devrait etre bon, parce que sinon on effectue la regle de 3 dans la cotisation + ici
                     if cotisation.prorata and not prorata_effectue:
                         new_prorata = (prorata * cotisation.jours_ouvres) / self.jours_ouvres
+                        new_prorata_heures = (prorata_heures * cotisation.jours_ouvres) / self.jours_ouvres
                         if options & TRACES:
                             print(" prorata : %f * %f / %f = %f" % (prorata, cotisation.jours_ouvres, self.jours_ouvres, new_prorata))
                         prorata = new_prorata
+                        prorata_heures = new_prorata_heures
 
                     if cotisation.IsContratFacture(self.debut_recap):
                         self.cotisation_mensuelle += prorata
@@ -748,7 +750,7 @@ class FactureFinMois(FactureBase):
 
         if options & TRACES:
             print("Récapitulatif :")
-            for var in ["heures_contractualisees", "heures_facturees", "heures_supplementaires", "heures_contractualisees_realisees", "heures_realisees_non_facturees", "cotisation_mensuelle", "supplement", "deduction", "total"]:
+            for var in ["heures_contractualisees", "heures_facturees", "heures_facture", "heures_supplementaires", "heures_contractualisees_realisees", "heures_realisees_non_facturees", "cotisation_mensuelle", "supplement", "deduction", "total"]:
                 print("", var, ':', eval("self.%s" % var))
             print()
         
