@@ -57,6 +57,24 @@ class CoordonneesModifications(object):
         result.sort(key=lambda x: GetPrenomNom(x))
         return result
 
+    def get_salaries(self):
+        result = []
+        for salarie in database.creche.salaries:
+            temporalite = 0
+            for contrat in salarie.contrats:
+                if self.site is None or contrat.site == self.site:
+                    if contrat.debut and contrat.debut > datetime.date.today():
+                        temporalite = EXPORT_FAMILLES_FUTURES
+                    elif contrat.fin and contrat.fin < datetime.date.today():
+                        temporalite = EXPORT_FAMILLES_PARTIES
+                    else:
+                        temporalite = EXPORT_FAMILLES_PRESENTES
+                        break
+            if temporalite & self.selection:
+                result.append(contrat)
+        result.sort(key=lambda x: GetPrenomNom(x))
+        return result
+
     def execute(self, filename, dom):
         if self.template == "Coordonnees parents.ods":
             return self.execute_ods(filename, dom)
@@ -96,9 +114,9 @@ class CoordonneesModifications(object):
 
         inscrits = self.get_inscrits()
 
-        for table in dom.getElementsByTagName('table:table'):
-            if table.getAttribute('table:name') == 'Enfants':                
-                template = table.getElementsByTagName('table:table-row')[1]
+        for table in dom.getElementsByTagName("table:table"):
+            if table.getAttribute("table:name") == "Enfants":
+                template = table.getElementsByTagName("table:table-row")[1]
                 # print template.toprettyxml()
                 for inscrit in inscrits:
                     line = template.cloneNode(1)
@@ -146,10 +164,10 @@ class CoordonneesModifications(object):
                     table.insertBefore(line, template)
                 table.removeChild(template)
 
-            if table.getAttribute('table:name') == 'Employes':
-                template = table.getElementsByTagName('table:table-row')[0]
+            if table.getAttribute("table:name") == 'Employes':
+                template = table.getElementsByTagName("table:table-row")[0]
                 #print template.toprettyxml()
-                for salarie in database.creche.salaries:
+                for salarie in self.get_salaries():
                     if 1:  # TODO
                         line = template.cloneNode(1)
                         ReplaceTextFields(line, [('prenom', salarie.prenom),

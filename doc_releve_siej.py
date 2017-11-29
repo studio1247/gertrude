@@ -141,8 +141,8 @@ class ReleveSIEJModifications(object):
                           ('total', self.reel + self.previsionnel),
                           ]
                     
-                for table in section.getElementsByTagName('table:table'):
-                    table_name = table.getAttribute('table:name')
+                for table in section.getElementsByTagName("table:table"):
+                    table_name = table.getAttribute("table:name")
                     if (i > 0 and table_name == 'Recap') or table_name == 'Facture' or table_name == 'Realise':
                         section.removeChild(table)                                   
                                          
@@ -151,8 +151,8 @@ class ReleveSIEJModifications(object):
             # le tableau recap
             section = section_regime.cloneNode(1)
             doc.insertBefore(section, section_regime)
-            for table in section.getElementsByTagName('table:table'):
-                table_name = table.getAttribute('table:name')
+            for table in section.getElementsByTagName("table:table"):
+                table_name = table.getAttribute("table:name")
                 if table_name == 'Regime':
                     section.removeChild(table)
             fields = [('facture', self.facture),

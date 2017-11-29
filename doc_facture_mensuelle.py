@@ -120,10 +120,10 @@ class FactureModifications(object):
         if "Week-end" in database.creche.feries and empty_cells > 4:
             empty_cells -= 7
 
-        tables = section.getElementsByTagName('table:table')
+        tables = section.getElementsByTagName("table:table")
         for table in tables:
-            if table.getAttribute('table:name').startswith('Presences'):
-                rows = table.getElementsByTagName('table:table-row')[1:]
+            if table.getAttribute("table:name").startswith('Presences'):
+                rows = table.getElementsByTagName("table:table-row")[1:]
                 cells_count = GetCellsCount(rows[0])
                 cells = []
                 for i in range(len(rows)):
@@ -382,9 +382,9 @@ class FactureModifications(object):
                     if clone.tagName == "table:table":
                         tables = [clone]
                     else:
-                        tables = clone.getElementsByTagName('table:table')
+                        tables = clone.getElementsByTagName("table:table")
                     for table in tables:
-                        table_name = table.getAttribute('table:name')
+                        table_name = table.getAttribute("table:name")
                         # Le(s) tableau(x) des montants détaillés
                         if table_name == "Montants":
                             for i, facture in enumerate(factures):
@@ -393,8 +393,8 @@ class FactureModifications(object):
                                     clone.insertBefore(montants_table, table)
                                 else:
                                     montants_table = table
-                                montants_table.setAttribute('table:name', "Montants%d" % (i + 1))
-                                rows = montants_table.getElementsByTagName('table:table-row')
+                                montants_table.setAttribute("table:name", "Montants%d" % (i + 1))
+                                rows = montants_table.getElementsByTagName("table:table-row")
                                 for row in rows:
                                     if self.IsRowRemovable(row, facture):
                                         montants_table.removeChild(row)

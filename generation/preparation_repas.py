@@ -46,7 +46,7 @@ class PreparationRepasModifications(object):
         if 1:
             # Le format utilisé par Les petits potes (séparation adaptation / halte-garderie / mi-temps / plein-temps
             # Changé en format utilisé par les petits lutins (sans la séparation)
-            table.setAttribute('table:name', '%d %s %d - %d %s %d' % (self.debut.day, months[self.debut.month - 1], date_fin.year, date_fin.day, months[date_fin.month - 1], date_fin.year))
+            table.setAttribute("table:name", '%d %s %d - %d %s %d' % (self.debut.day, months[self.debut.month - 1], date_fin.year, date_fin.day, months[date_fin.month - 1], date_fin.year))
 
             # Les jours
             ligne = lignes.item(1)

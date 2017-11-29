@@ -68,7 +68,7 @@ class PlanningModifications(object):
         if self.metas["Format"] == 1:
             # Le format utilisé par Les petits potes (séparation adaptation / halte-garderie / mi-temps / plein-temps
             # Changé en format utilisé par les petits lutins (sans la séparation)
-            table.setAttribute('table:name', '%d %s %d - %d %s %d' % (self.debut.day, months[self.debut.month - 1], date_fin.year, date_fin.day, months[date_fin.month - 1], date_fin.year))
+            table.setAttribute("table:name", '%d %s %d - %d %s %d' % (self.debut.day, months[self.debut.month - 1], date_fin.year, date_fin.day, months[date_fin.month - 1], date_fin.year))
 
             # Les jours
             ligne = lignes.item(1)
@@ -114,7 +114,7 @@ class PlanningModifications(object):
             template = table
             for professeur in tableau:
                 table = template.cloneNode(1)
-                table.setAttribute('table:name', GetPrenomNom(professeur))
+                table.setAttribute("table:name", GetPrenomNom(professeur))
                 template.parentNode.insertBefore(table, template)
                 ligne_template = GetRow(table, 10)
                 for inscription in tableau[professeur]:
