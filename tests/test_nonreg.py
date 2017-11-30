@@ -25,10 +25,10 @@ import unittest
 import pytest
 from cotisation import *
 from facture import Facture
-from doc_planning_detaille import PlanningDetailleModifications
-from doc_coordonnees_parents import CoordonneesModifications
-from doc_releve_detaille import ReleveDetailleModifications
-from doc_etats_trimestriels import EtatsTrimestrielsModifications
+from generation.planning_detaille import PlanningDetailleModifications
+from generation.coordonnees_parents import CoordonneesModifications
+from generation.releve_detaille import ReleveDetailleModifications
+from generation.etats_trimestriels import EtatsTrimestrielsModifications
 from ooffice import GenerateOODocument
 from database import *
 from globals import *

@@ -23,7 +23,7 @@ from generation.planning_hebdomadaire import PlanningHebdomadaireSalariesModific
 from planning import PlanningWidget, BaseWxPythonLine, WxPlanningSeparator
 from planning_line import *
 from document_dialog import *
-from doc_planning_detaille import PlanningDetailleModifications
+from generation.planning_detaille import PlanningDetailleModifications
 import tablette
 
 

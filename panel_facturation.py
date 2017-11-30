@@ -21,11 +21,11 @@ from facture import *
 from document_dialog import *
 from controls import *
 from database import Site, Creche, NumeroFacture, Correction
-from doc_facture_mensuelle import FactureModifications
-from doc_export_compta import ExportComptaCotisationsModifications, ExportComptaReglementsModifications
-from doc_attestation_paiement import AttestationModifications
-from doc_appel_cotisations import AppelCotisationsModifications
-from doc_export_sepa import ExportSepaModifications
+from generation.facture_mensuelle import FactureModifications
+from generation.export_compta import ExportComptaCotisationsModifications, ExportComptaReglementsModifications
+from generation.attestation_paiement import AttestationModifications
+from generation.appel_cotisations import AppelCotisationsModifications
+from generation.export_sepa import ExportSepaModifications
 
 
 class CorrectionsTab(AutoTab):

@@ -21,9 +21,9 @@ from __future__ import print_function
 import glob
 from constants import *
 from functions import *
-from cotisation import Cotisation, CotisationException
+from cotisation import Cotisation
 from ooffice import *
-from doc_facture_mensuelle import FactureModifications
+from generation.facture_mensuelle import FactureModifications
 from math import *
 
 
@@ -368,6 +368,7 @@ class PremiereFactureModifications(DocumentAccueilModifications):
 
 if __name__ == '__main__':
     import random
+    from document_dialog import StartLibreOffice
     database.init("databases/opagaio.db")
     database.load()
     inscrit = database.creche.GetInscrit(44)

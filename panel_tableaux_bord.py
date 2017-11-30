@@ -17,30 +17,29 @@
 
 from __future__ import unicode_literals
 
-import wx
 import wx.grid
 import wx.html
 import wx.lib.expando
 import wx.lib.scrolledpanel
 
 from controls import *
-from doc_commande_repas import CommandeRepasModifications
-from doc_compte_exploitation import CompteExploitationModifications
-from doc_coordonnees_parents import CoordonneesModifications
-from doc_etat_places import EtatPlacesModifications
-from doc_etat_presence_mensuel import EtatPresenceMensuelModifications
-from doc_etat_presences import EtatsPresenceModifications
-from doc_etats_inscriptions import EtatsInscriptionsModifications
-from doc_etats_trimestriels import EtatsTrimestrielsModifications
-from doc_export_tablette import ExportTabletteModifications
-from doc_planning import PlanningModifications, PlanningHoraireModifications
-from doc_planning_detaille import PlanningDetailleModifications
-from doc_rapport_frequentation import RapportFrequentationModifications
-from doc_releve_detaille import ReleveDetailleModifications
-from doc_releve_salaries import ReleveSalariesModifications
-from doc_releve_siej import ReleveSIEJModifications
-from doc_synthese_financiere import SyntheseFinanciereModifications
-from doc_export_facturation import ExportFacturationModifications
+from generation.commande_repas import CommandeRepasModifications
+from generation.compte_exploitation import CompteExploitationModifications
+from generation.coordonnees_parents import CoordonneesModifications
+from generation.etat_places import EtatPlacesModifications
+from generation.etat_presence_mensuel import EtatPresenceMensuelModifications
+from generation.etat_presences import EtatsPresenceModifications
+from generation.etats_inscriptions import EtatsInscriptionsModifications
+from generation.etats_trimestriels import EtatsTrimestrielsModifications
+from generation.export_tablette import ExportTabletteModifications
+from generation.planning import PlanningModifications, PlanningHoraireModifications
+from generation.planning_detaille import PlanningDetailleModifications
+from generation.rapport_frequentation import RapportFrequentationModifications
+from generation.releve_detaille import ReleveDetailleModifications
+from generation.releve_salaries import ReleveSalariesModifications
+from generation.releve_siej import ReleveSIEJModifications
+from generation.synthese_financiere import SyntheseFinanciereModifications
+from generation.export_facturation import ExportFacturationModifications
 from document_dialog import *
 from planning import *
 from alertes import *

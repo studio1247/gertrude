@@ -23,7 +23,7 @@ from controls import *
 from planning import *
 from cotisation import *
 from document_dialog import *
-from doc_contrat_accueil import ContratAccueilModifications, DevisAccueilModifications, FraisGardeModifications, AvenantContratAccueilModifications
+from generation.contrat_accueil import ContratAccueilModifications, DevisAccueilModifications, FraisGardeModifications, AvenantContratAccueilModifications
 from config import config
 from database import Inscrit, TimeslotInscription, Fratrie, Referent, Parent, CongeInscrit, Inscription, Revenu
 
