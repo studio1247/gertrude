@@ -184,12 +184,9 @@ def GetDateIntersection(periodes):
 
 
 def GetHeureString(value):
-    # TODO retirer le truc du int
     if value is None:
         return ""
-    if not isinstance(value, int):
-        value = int(round(value * 12))
-    minutes = value * 5
+    minutes = round(value * 60)
     if value >= 0:
         heures = minutes // 60
         minutes -= heures * 60

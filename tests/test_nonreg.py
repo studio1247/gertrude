@@ -94,7 +94,7 @@ class GertrudeTestCase(unittest.TestCase):
         return result
 
     def assertPrec2Equals(self, montant1, montant2):
-        self.assertEquals("%.2f" % montant1, "%.2f" % montant2)
+        self.assertEqual("%.2f" % montant1, "%.2f" % montant2)
 
 
 @pytest.mark.skipif("sys.version_info >= (3, 0)")

@@ -144,8 +144,8 @@ class DocumentAccueilModifications(object):
         for jour in range(inscription.duree_reference):
             jour_reference = inscription.get_day_from_index(jour)
             debut, fin = jour_reference.GetPlageHoraire()
-            fields.append(('heure-debut[%d]' % jour, GetHeureString(debut)))
-            fields.append(('heure-fin[%d]' % jour, GetHeureString(fin)))
+            fields.append(('heure-debut[%d]' % jour, GetHeureString(5*debut)))
+            fields.append(('heure-fin[%d]' % jour, GetHeureString(5*fin)))
             fields.append(('heures-jour[%d]' % jour, GetHeureString(jour_reference.get_duration())))
 
         for key in database.creche.activites:
