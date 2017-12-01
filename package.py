@@ -80,7 +80,7 @@ def main():
                    "iconfile": "bitmaps_dist/gertrude.icns",
                    "argv_emulation": True,
                    "includes": ["bcrypt", "_cffi_backend", "requests", "sqlalchemy", "sqlalchemy_utils", "future", "configparser", "backports.configparser"],
-                   "packages": ["requests"]
+                   "packages": ["requests", "backports.configparser"]
                    }
         setup(
             name="Gertrude",
