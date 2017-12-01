@@ -351,6 +351,3 @@ if 0:
 
     def Update():
         return config.connection.Update()
-
-    def RemoveIncompatibleSAASOptions():
-        database.creche.tri_planning &= ~TRI_GROUPE

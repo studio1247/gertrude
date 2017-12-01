@@ -1686,24 +1686,29 @@ class Parent(Base):
     email = Column(String, default="")
     revenus = relationship("Revenu", cascade="all, delete-orphan")
 
-    def __init__(self, famille, sexe=FEMININ):
-        self.famille = famille
-        self.prenom = ""
-        self.nom = ""
-        self.sexe = sexe
-        self.adresse = ""
-        self.code_postal = ""
-        self.ville = ""
-        self.telephone_domicile = ""
-        self.telephone_domicile_notes = ""
-        self.telephone_portable = ""
-        self.telephone_portable_notes = ""
-        self.telephone_travail = ""
-        self.telephone_travail_notes = ""
-        self.profession = ""
-        self.email = ""
-        date_revenus = famille.creche.GetDateRevenus(datetime.date.today())
-        self.revenus.append(Revenu(self, GetYearStart(date_revenus), GetYearEnd(date_revenus)))
+    def __init__(self, famille, sexe=FEMININ, prenom="", nom="", adresse="", code_postal="", ville="",
+                 telephone_domicile="", telephone_domicile_notes="", telephone_portable="", telephone_portable_notes="", telephone_travail="", telephone_travail_notes="",
+                 profession="", email="", add_revenus=True, **kwargs):
+        Base.__init__(self,
+                      famille=famille,
+                      sexe=sexe,
+                      prenom=prenom,
+                      nom=nom,
+                      adresse=adresse,
+                      code_postal=code_postal,
+                      ville=ville,
+                      telephone_domicile=telephone_domicile,
+                      telephone_domicile_notes=telephone_domicile_notes,
+                      telephone_portable=telephone_portable,
+                      telephone_portable_notes=telephone_portable_notes,
+                      telephone_travail=telephone_travail,
+                      telephone_travail_notes=telephone_travail_notes,
+                      profession=profession,
+                      email=email,
+                      **kwargs)
+        if add_revenus:
+            date_revenus = famille.creche.GetDateRevenus(datetime.date.today())
+            self.revenus.append(Revenu(self, GetYearStart(date_revenus), GetYearEnd(date_revenus)))
 
 
 class Fratrie(Base):
@@ -2215,6 +2220,9 @@ class Database(object):
         else:
             self.create()
         self.reload()
+
+    def remove_incompatible_saas_options(self):
+        self.creche.tri_planning &= ~TRI_GROUPE
 
     def reload(self):
         print("Chargement de la base de données %s..." % self.uri)
