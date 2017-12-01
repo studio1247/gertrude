@@ -28,7 +28,7 @@ from version import VERSION
 
 
 def main():
-    if sys.platform == 'win32':
+    if sys.platform == "win32":
         import win32api
 
         for directory in ("./dist", "./build"):
@@ -70,23 +70,23 @@ def main():
             os.rename("./Output/setup.exe", exe)
             print("File %s generated (%d bytes)" % (exe, os.stat(exe).st_size))
 
-    elif sys.platform == 'darwin':
+    elif sys.platform == "darwin":
         from setuptools import setup
 
         APP = ["gertrude.pyw"]
         DATA_FILES = glob.glob("bitmaps_dist/*.png") + glob.glob("bitmaps_dist/*.ico") + glob.glob("templates_dist/*.html") + glob.glob("templates_dist/*.txt") + glob.glob("templates_dist/*.od?")
-        OPTIONS = {'site_packages': True,
-                   'arch': 'i386',
-                   'iconfile': 'bitmaps_dist/gertrude.icns',
-                   'argv_emulation': True,
-                   'includes': ["bcrypt", "_cffi_backend", "requests", "sqlalchemy", "sqlalchemy_utils", "configparser", "future"],
-                   'packages': ["requests"]
+        OPTIONS = {"site_packages": True,
+                   "arch": "i386",
+                   "iconfile": "bitmaps_dist/gertrude.icns",
+                   "argv_emulation": True,
+                   "includes": ["bcrypt", "_cffi_backend", "requests", "sqlalchemy", "sqlalchemy_utils", "configparser", "future", "backports"],
+                   "packages": ["requests", "backports"]
                    }
         setup(
             name="Gertrude",
             app=APP,
             data_files=DATA_FILES,
-            options={'py2app': OPTIONS},
+            options={"py2app": OPTIONS},
             setup_requires=["py2app", "requests", "configparser"],
             install_requires=["requests", "configparser"]
         )
