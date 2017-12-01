@@ -1578,7 +1578,8 @@ class Inscrit(Base):
                 heures_facturees = 0.0
 
                 for timeslot in journee.timeslots:
-                    if timeslot.value == 0:
+                    # TODO une petite fonction pour ce code duplique
+                    if timeslot.value == 0 or (timeslot.value in self.creche.activites and self.creche.activites[timeslot.value].mode == MODE_PRESENCE_NON_FACTUREE):
                         heures_realisees += tranche * GetDureeArrondie(self.creche.arrondi_heures, timeslot.debut, timeslot.fin)
 
                 if self.creche.nom == "Le Nid Des Trésors" and not inscription.IsInPeriodeAdaptation(date):
@@ -1591,8 +1592,7 @@ class Inscrit(Base):
                     union = GetUnionHeures(journee, reference)
                     if inscription.IsInPeriodeAdaptation(date):
                         for start, end in union:
-                            heures_facturees += tranche * GetDureeArrondie(
-                                self.creche.arrondi_facturation_periode_adaptation, start, end)
+                            heures_facturees += tranche * GetDureeArrondie(self.creche.arrondi_facturation_periode_adaptation, start, end)
                     else:
                         for start, end in union:
                             heures_facturees += tranche * GetDureeArrondie(self.creche.arrondi_facturation, start, end)
