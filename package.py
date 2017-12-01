@@ -87,8 +87,8 @@ def main():
             app=app,
             data_files=data_files,
             options={"py2app": options},
-            setup_requires=["py2app", "requests", "configparser"],
-            install_requires=["requests", "configparser"]
+            setup_requires=["py2app", "requests"],
+            install_requires=["requests"]
         )
 
     elif "linux" in sys.platform:
