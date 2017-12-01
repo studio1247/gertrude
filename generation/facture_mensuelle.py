@@ -350,7 +350,7 @@ class FactureModifications(object):
                 for enfant in enfants:
                     try:
                         prenoms.append(enfant.prenom)
-                        facture = Facture(enfant, self.periode.year, self.periode.month, options=0 if config.saas_port else TRACES)
+                        facture = Facture(enfant, self.periode.year, self.periode.month, options=0 if config.saas_port and not config.debug else TRACES)
                         self.last_facture = facture
                         total_facture += facture.total
                     except CotisationException as e:

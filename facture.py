@@ -529,6 +529,35 @@ class FactureFinMois(FactureBase):
                 if database.creche.nom == "LA VOLIERE":
                     heures = cotisation.heures_contractualisees + cotisation.heures_supplementaires - cotisation.heures_maladie
                     self.cotisation_mensuelle += heures * (cotisation.a * heures + cotisation.b)
+                elif database.creche.nom == "Le petit monde de Siméon":
+                    self.cotisation_mensuelle += cotisation.cotisation_mensuelle
+                    heures = cotisation.heures_contractualisees + cotisation.heures_supplementaires - cotisation.heures_maladie
+                    tarif_montant, tarif_unite = database.creche.EvalTauxHoraire(cotisation.debut,
+                                                                               cotisation.mode_garde,
+                                                                               inscrit.handicap,
+                                                                               cotisation.assiette_annuelle,
+                                                                               cotisation.enfants_a_charge,
+                                                                               cotisation.jours_semaine,
+                                                                               cotisation.heures_semaine,
+                                                                               inscription.reservataire,
+                                                                               inscrit.nom.lower(),
+                                                                               cotisation.parents,
+                                                                               cotisation.chomage,
+                                                                               cotisation.conge_parental,
+                                                                               heures, None,
+                                                                               cotisation.tranche_paje,
+                                                                               inscrit.famille.tarifs | inscription.tarifs)
+                    if tarif_unite == TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE:
+                        montant = tarif_montant * heures
+                    else:
+                        montant = tarif_montant
+                    if montant > self.cotisation_mensuelle:
+                        self.supplement += montant - self.cotisation_mensuelle
+                        self.raison_supplement.add("%s heures de présence" % GetHeureString(heures))
+                    elif montant < self.cotisation_mensuelle:
+                        self.deduction += self.cotisation_mensuelle - montant
+                        self.raison_deduction.add("%s heures de présence" % GetHeureString(heures))
+                    self.heures_contrat = cotisation.heures_mois
                 elif database.creche.repartition == REPARTITION_SANS_MENSUALISATION:
                     if database.creche.mode_facturation == FACTURATION_HORAIRES_REELS or (database.creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(cotisation.debut)):
                         montant = (cotisation.heures_realisees - cotisation.heures_realisees_non_facturees) * cotisation.montant_heure_garde
@@ -704,6 +733,7 @@ class FactureFinMois(FactureBase):
 
         self.heures_facturees = sum(self.heures_facturees_par_mode)
         if database.creche.mode_saisie_planning == SAISIE_HORAIRE:
+            print(self.heures_contrat, self.heures_supplementaires, self.heures_maladie)
             self.heures_facture = self.heures_contrat + self.heures_supplementaires - self.heures_maladie
         else:
             self.heures_facture = self.heures_facturees
@@ -759,7 +789,7 @@ class FactureFinMois(FactureBase):
 
         if options & TRACES:
             print("Récapitulatif :")
-            for var in ["heures_contractualisees", "heures_facturees", "heures_realisees", "heures_supplementaires", "heures_contractualisees_realisees", "heures_realisees_non_facturees", "heures_facturees_non_realisees", "cotisation_mensuelle", "supplement", "deduction", "total"]:
+            for var in ["heures_contractualisees", "heures_facturees", "heures_facture", "heures_realisees", "heures_supplementaires", "heures_contractualisees_realisees", "heures_realisees_non_facturees", "heures_facturees_non_realisees", "cotisation_mensuelle", "supplement", "deduction", "total"]:
                 print("", var, ':', eval("self.%s" % var))
             print()
         
