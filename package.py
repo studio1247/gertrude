@@ -79,7 +79,7 @@ def main():
                    "arch": "i386",
                    "iconfile": "bitmaps_dist/gertrude.icns",
                    "argv_emulation": True,
-                   "includes": ["bcrypt", "_cffi_backend", "requests", "sqlalchemy", "sqlalchemy_utils", "future", "configparser", "backports.configparser"],
+                   "includes": ["bcrypt", "_cffi_backend", "requests", "sqlalchemy", "sqlalchemy_utils", "future", "backports", "configparser"],
                    "packages": ["requests"]
                    }
         setup(
