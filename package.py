@@ -73,20 +73,20 @@ def main():
     elif sys.platform == "darwin":
         from setuptools import setup
 
-        APP = ["gertrude.pyw"]
-        DATA_FILES = glob.glob("bitmaps_dist/*.png") + glob.glob("bitmaps_dist/*.ico") + glob.glob("templates_dist/*.html") + glob.glob("templates_dist/*.txt") + glob.glob("templates_dist/*.od?")
-        OPTIONS = {"site_packages": True,
+        app = ["gertrude.pyw"]
+        data_files = glob.glob("bitmaps_dist/*.png") + glob.glob("bitmaps_dist/*.ico") + glob.glob("templates_dist/*.html") + glob.glob("templates_dist/*.txt") + glob.glob("templates_dist/*.od?")
+        options = {"site_packages": True,
                    "arch": "i386",
                    "iconfile": "bitmaps_dist/gertrude.icns",
                    "argv_emulation": True,
-                   "includes": ["bcrypt", "_cffi_backend", "requests", "sqlalchemy", "sqlalchemy_utils", "configparser", "future", "backports"],
-                   "packages": ["requests", "backports"]
+                   "includes": ["bcrypt", "_cffi_backend", "requests", "sqlalchemy", "sqlalchemy_utils", "future", "backports/configparser"],
+                   "packages": ["requests"]
                    }
         setup(
             name="Gertrude",
-            app=APP,
-            data_files=DATA_FILES,
-            options={"py2app": OPTIONS},
+            app=app,
+            data_files=data_files,
+            options={"py2app": options},
             setup_requires=["py2app", "requests", "configparser"],
             install_requires=["requests", "configparser"]
         )
