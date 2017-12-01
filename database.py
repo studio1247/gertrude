@@ -2782,8 +2782,9 @@ class Database(object):
                 for row in rows:
                     formule, idx = row
                     formule = eval(formule)
-                    for cas in formule:
-                        cas.append(0)
+                    if formule:
+                        for cas in formule:
+                            cas.append(0)
                     self.engine.execute("UPDATE tarifs_horaires SET formule=? WHERE idx=?", (str(formule), idx))
 
             if version < 122:
