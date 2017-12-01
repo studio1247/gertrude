@@ -23,7 +23,7 @@ import os
 import shutil
 import sys
 import fnmatch
-import configparser
+from configparser import ConfigParser
 import sqlalchemy
 import sqlalchemy_utils
 
