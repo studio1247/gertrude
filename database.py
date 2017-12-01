@@ -2030,6 +2030,9 @@ class CongeInscrit(Base):
     fin = Column(String)
     label = Column(String)
 
+    def __init__(self, inscrit, **kwargs):
+        Base.__init__(self, inscrit=inscrit, **kwargs)
+
     def __setattr__(self, name, value):
         # Call the parent class method first.
         super(CongeInscrit, self).__setattr__(name, value)
