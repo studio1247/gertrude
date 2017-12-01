@@ -23,9 +23,6 @@ import os
 import shutil
 import sys
 import fnmatch
-from configparser import ConfigParser
-import sqlalchemy
-import sqlalchemy_utils
 
 from version import VERSION
 
