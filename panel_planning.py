@@ -149,7 +149,7 @@ class DayPlanningPanel(PlanningWidget):
             for line in self.lignes_enfants:
                 if groupe != line.inscription.groupe:
                     groupe = line.inscription.groupe
-                    lines.append(groupe.nom if groupe else "")
+                    lines.append(WxPlanningSeparator(groupe.nom if groupe else ""))
                 lines.append(line)
         else:
             lines = self.lignes_enfants[:]

@@ -62,27 +62,6 @@ def GetPlanningWidth():
     return (database.creche.affichage_max - database.creche.affichage_min) * (60 // BASE_GRANULARITY) * config.column_width
 
 
-class WxPlanningSeparator(BasePlanningSeparator):
-    def draw_label(self, dc):
-        try:
-            dc.SetPen(wx.Pen(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE)))
-            dc.SetBrush(wx.Brush(wx.Colour(128, 128, 128, 128), wx.SOLID))
-        except:
-            dc.SetPen(wx.Pen(wx.Colour(0, 0, 0)))
-            dc.SetBrush(wx.Brush(wx.Colour(128, 128, 128), wx.SOLID))
-        rect = wx.Rect(2, 4, 125, LINE_HEIGHT - 8)
-        dc.DrawRectangleRect(rect)
-        font = wx.Font(10, wx.SWISS, wx.BOLD, wx.BOLD)
-        dc.SetFont(font)
-        dc.DrawText(self.label, 5, 8)
-
-    def update_button(self, button):
-        button.Hide()
-
-    def draw(self, dc):
-        pass
-
-
 class BaseWxPythonLine:
     def clone(self):
         class Clone(BaseWxPythonLine, BasePlanningLine):
@@ -193,12 +172,31 @@ class BaseWxPythonLine:
         return [PRESENT, ABSENT]
 
 
-class NumberPlanningLine(BasePlanningLine):
+class WxPlanningSeparator(BasePlanningSeparator, BaseWxPythonLine):
+    def draw_label(self, dc):
+        try:
+            dc.SetPen(wx.Pen(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE)))
+            dc.SetBrush(wx.Brush(wx.Colour(128, 128, 128, 128), wx.SOLID))
+        except:
+            dc.SetPen(wx.Pen(wx.Colour(0, 0, 0)))
+            dc.SetBrush(wx.Brush(wx.Colour(128, 128, 128), wx.SOLID))
+        rect = wx.Rect(2, 4, 125, LINE_HEIGHT - 8)
+        dc.DrawRectangleRect(rect)
+        font = wx.Font(10, wx.SWISS, wx.BOLD, wx.BOLD)
+        dc.SetFont(font)
+        dc.DrawText(self.label, 5, 8)
+
+    def update_button(self, button):
+        button.Hide()
+
+    def draw(self, dc):
+        self.draw_grid(dc)
+
+
+class NumberPlanningLine(BasePlanningLine, BaseWxPythonLine):
     def draw(self, dc):
         self.draw_grid(dc)
         pos = -2
-        if not self.options & NO_ICONS:
-            pos += ICONS_WIDTH
         debut = int(database.creche.affichage_min * (60 // BASE_GRANULARITY))
         fin = int(database.creche.affichage_max * (60 // BASE_GRANULARITY))
         x = debut
@@ -879,29 +877,30 @@ class PlanningWidget(wx.Panel):
         summary = self.collect_summary()
         for key in summary:
             timeslots = summary[key]
-            if key > 0 and database.creche.activites[key].mode == MODE_SANS_HORAIRES:
-                activites_sans_horaires[key] = len(timeslots)
-            else:
-                activites[key] = []
-                timeline = []
-                for timeslot in timeslots:
-                    timeline.append([timeslot.debut, +1])
-                    timeline.append([timeslot.fin, -1])
-                timeline.sort(key=lambda event: event[0])
-                start, count = None, 0
-                for i, event in enumerate(timeline):
-                    if event[1] == 0:
-                        pass
-                    elif i + 1 < len(timeline) and event[0] == timeline[i + 1][0]:
-                        timeline[i + 1][1] += event[1]
-                    else:
-                        if start is not None:
-                            activites[key].append(Timeslot(start, event[0], count))
-                        count += event[1]
-                        if count == 0:
-                            start = None
+            if key == 0 or key in database.creche.activites:
+                if key > 0 and database.creche.activites[key].mode == MODE_SANS_HORAIRES:
+                    activites_sans_horaires[key] = len(timeslots)
+                else:
+                    activites[key] = []
+                    timeline = []
+                    for timeslot in timeslots:
+                        timeline.append([timeslot.debut, +1])
+                        timeline.append([timeslot.fin, -1])
+                    timeline.sort(key=lambda event: event[0])
+                    start, count = None, 0
+                    for i, event in enumerate(timeline):
+                        if event[1] == 0:
+                            pass
+                        elif i + 1 < len(timeline) and event[0] == timeline[i + 1][0]:
+                            timeline[i + 1][1] += event[1]
                         else:
-                            start = event[0]
+                            if start is not None:
+                                activites[key].append(Timeslot(start, event[0], count))
+                            count += event[1]
+                            if count == 0:
+                                start = None
+                            else:
+                                start = event[0]
         return activites, activites_sans_horaires
 
     def OnPaint(self, event):
