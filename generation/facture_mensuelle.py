@@ -204,6 +204,7 @@ class FactureModifications(object):
             ("&lt;supplement-activites&gt;" in prettyxml and not facture.supplement_activites) or
             ("&lt;supplement&gt;" in prettyxml and not facture.supplement) or
             ("&lt;supplement-avant-regularisation&gt;" in prettyxml and not facture.supplement_avant_regularisation) or
+            ("&lt;supplement-heures-supplementaires&gt;" in prettyxml and not facture.supplement_heures_supplementaires) or
             ("&lt;deduction-avant-regularisation&gt;" in prettyxml and not facture.deduction_avant_regularisation) or
             ("&lt;regularisation&gt;" in prettyxml and not facture.regularisation) or
             ("&lt;heures-absence-non-prevenue&gt;" in prettyxml and not facture.jours_absence_non_prevenue) or
