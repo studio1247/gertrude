@@ -80,15 +80,15 @@ def main():
                    'iconfile': 'bitmaps_dist/gertrude.icns',
                    'argv_emulation': True,
                    'includes': ["bcrypt", "_cffi_backend", "requests", "sqlalchemy", "sqlalchemy_utils", "configparser", "future"],
-                   'packages': ["requests", "configparser"]
+                   'packages': ["requests"]
                    }
         setup(
             name="Gertrude",
             app=APP,
             data_files=DATA_FILES,
             options={'py2app': OPTIONS},
-            setup_requires=["py2app", "requests"],
-            install_requires=["requests"]
+            setup_requires=["py2app", "requests", "configparser"],
+            install_requires=["requests", "configparser"]
         )
 
     elif "linux" in sys.platform:
