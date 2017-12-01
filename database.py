@@ -1847,6 +1847,8 @@ class Inscription(Base, PeriodeReference):
     def IsNombreSemainesCongesDepasse(self, jalon):
         if self.inscrit.creche.facturation_jours_feries == ABSENCES_DEDUITES_SANS_LIMITE:
             return False
+        if self.mode == MODE_FORFAIT_GLOBAL_CONTRAT:
+            return False
         if self.debut:
             if not self.semaines_conges:
                 return True
