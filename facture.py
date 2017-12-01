@@ -478,7 +478,7 @@ class FactureFinMois(FactureBase):
                                 self.cotisation_periode_adaptation += montant_adaptation
                                 self.total_contractualise += montant_adaptation
                             else:
-                                self.heures_facturees_par_mode[cotisation.mode_garde] += heures_facturees - heures_realisees_non_facturees
+                                self.heures_facturees_par_mode[cotisation.mode_garde] += heures_facturees
                         self.total_realise += cotisation.CalculeFraisGarde(heures_realisees - heures_realisees_non_facturees)
 
                 date += datetime.timedelta(1)
@@ -540,7 +540,7 @@ class FactureFinMois(FactureBase):
                     pass
                 elif database.creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(cotisation.debut):
                     if inscription.mode in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE):
-                        self.heures_facturees_par_mode[cotisation.mode_garde] += cotisation.heures_realisees - cotisation.heures_realisees_non_facturees
+                        self.heures_facturees_par_mode[cotisation.mode_garde] += cotisation.heures_realisees
                     report = cotisation.CalculeFraisGarde(cotisation.heures_realisees)
                     self.report_cotisation_mensuelle += report
                     # cotisation.prorata = False // TODO ? si oui => unittest
@@ -759,7 +759,7 @@ class FactureFinMois(FactureBase):
 
         if options & TRACES:
             print("Récapitulatif :")
-            for var in ["heures_contractualisees", "heures_facturees", "heures_supplementaires", "heures_contractualisees_realisees", "heures_realisees_non_facturees", "cotisation_mensuelle", "supplement", "deduction", "total"]:
+            for var in ["heures_contractualisees", "heures_facturees", "heures_realisees", "heures_supplementaires", "heures_contractualisees_realisees", "heures_realisees_non_facturees", "heures_facturees_non_realisees", "cotisation_mensuelle", "supplement", "deduction", "total"]:
                 print("", var, ':', eval("self.%s" % var))
             print()
         

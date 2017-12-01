@@ -762,21 +762,29 @@ class BebebulTests(GertrudeTestCase):
         inscrit.famille.parents[0].revenus[0].revenu = 42966.0
         inscription = Inscription(inscrit=inscrit)
         inscription.mode = MODE_HALTE_GARDERIE
-        inscription.debut = datetime.date(2012, 10, 1)
-        inscription.days.add(TimeslotInscription(day=1, debut=102, fin=144, value=0))  # 3h30
-        inscription.days.add(TimeslotInscription(day=3, debut=102, fin=144, value=0))  # 3h30
+        inscription.debut = datetime.date(2012, 10, 1)  # lundi
+        inscription.days.add(TimeslotInscription(day=1, debut=102, fin=144, value=0))  # mardi = 3h30
+        inscription.days.add(TimeslotInscription(day=3, debut=102, fin=144, value=0))  # jeudi = 3h30
         inscrit.inscriptions.append(inscription)
         Cotisation(inscrit, datetime.date(2012, 10, 1), NO_ADDRESS)
-        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 2), 105, 138)  # 2h45
-        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 4), 105, 141)  # 3h00
-        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 9), 105, 138)  # 2h45
-        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 11), 105, 132)  # 2h15
-        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 16), 105, 144)  # 3h15
-        self.AddActivite(inscrit, datetime.date(2012, 10, 18), 102, 144, -1)  # conge
-        self.AddActivite(inscrit, datetime.date(2012, 10, 23), 105, 147, ABSENCE_NON_PREVENUE)  # 3h30 absence non prevenue
-        self.AddActivite(inscrit, datetime.date(2012, 10, 25), 105, 147, 1)  # 3h30 permanence
+        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 2), 105, 138)  # mardi 2h45
+        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 4), 105, 141)  # jeudi 3h00 => 5h45
+        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 9), 105, 138)  # mardi 2h45 => 8h30
+        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 11), 105, 132)  # jeudi 2h15 => 10h45
+        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 16), 105, 144)  # mardi 3h15 => 14h
+        self.AddActivite(inscrit, datetime.date(2012, 10, 18), 102, 144, -1)  # jeudi conge
+        self.AddActivite(inscrit, datetime.date(2012, 10, 23), 105, 147, ABSENCE_NON_PREVENUE)  # mardi 3h30 absence non prevenue
+        self.AddActivite(inscrit, datetime.date(2012, 10, 25), 105, 147, 1)  # jeudi 3h30 permanence
+        # mardi 30 => 3h30 (periode de reference)
         facture = Facture(inscrit, 2012, 10)
-        self.assertPrec2Equals(facture.total, 18.73)
+        self.assertPrec2Equals(facture.heures_contractualisees, 31.5)
+        self.assertPrec2Equals(facture.heures_facturees, 21.0)
+        self.assertPrec2Equals(facture.heures_realisees, 21.0)
+        self.assertPrec2Equals(facture.heures_supplementaires, 0.0)
+        self.assertPrec2Equals(facture.heures_contractualisees_realisees, 21.0)
+        self.assertPrec2Equals(facture.heures_realisees_non_facturees, 3.5)
+        self.assertPrec2Equals(facture.heures_facturees_non_realisees, 3.5)
+        self.assertPrec2Equals(facture.total, 22.47)
 
     def test_adaptation_sur_presence_supplementaire(self):
         inscrit = self.AddInscrit()
@@ -786,8 +794,8 @@ class BebebulTests(GertrudeTestCase):
         inscription = inscrit.inscriptions[0]  # Inscription(inscrit=inscrit)
         inscription.mode = MODE_HALTE_GARDERIE
         inscription.debut = datetime.date(2012, 10, 1)
-        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 25), 105, 147)  # 3h00
-        self.AddActivite(inscrit, datetime.date(2012, 10, 25), 105, 147, 1)      # 3h00 adaptation
+        self.AddJourneePresence(inscrit, datetime.date(2012, 10, 25), 105, 147)  # 3h30
+        self.AddActivite(inscrit, datetime.date(2012, 10, 25), 105, 147, 1)      # 3h30 adaptation
         facture = Facture(inscrit, 2012, 10)
         self.assertPrec2Equals(facture.heures_contractualisees, 0.0)
         self.assertPrec2Equals(facture.heures_realisees, 3.5)

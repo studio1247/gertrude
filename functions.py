@@ -483,38 +483,6 @@ def GetActivityColor(value):
         return 0, 0, 0, 0, 100
 
 
-def GetUnionHeures(journee, reference):
-    result = []
-    for start, end, value in journee.activites:
-        if value == 0:
-            result.append((start, end))
-    for start, end, value in reference.activites:
-        if value == 0:
-            result.append((start, end))
-    
-    again = True
-    while again:
-        again = False
-        union = result[:]
-        result = []
-        for start, end in union:
-            found = False
-            for i, (s, e) in enumerate(result):
-                if end < s or start > e:
-                    pass
-                elif start >= s and end <= e:
-                    found = True
-                elif start <= s or end >= e:
-                    result[i] = (min(s, start), max(e, end))
-                    found = True
-            if not found:
-                result.append((start, end))
-            else:
-                again = True
-
-    return result
-
-
 def GetNombreSemainesPeriode(debut, fin):
     jours = (fin - debut).days
     if not (config.options & COMPATIBILITY_MODE_DECOMPTE_SEMAINES_2017):

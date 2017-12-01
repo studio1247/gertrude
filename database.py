@@ -1285,36 +1285,33 @@ class State(object):
         self.state, self.heures_contractualisees, self.heures_realisees, self.heures_facturees)
 
 
-def GetUnionHeures(journee, reference):
-    result = []
-    for timeslot in journee.timeslots:
-        if timeslot.value == 0:
-            result.append((timeslot.debut, timeslot.fin))
-    for timeslot in reference.timeslots:
-        if timeslot.value == 0:
-            result.append((timeslot.debut, timeslot.fin))
-
+def GetUnionTimeslots(timeslots, value=0):
     again = True
     while again:
         again = False
-        union = result[:]
-        result = []
-        for start, end in union:
+        backup = timeslots[:]
+        timeslots = []
+        for timeslot1 in backup:
             found = False
-            for i, (s, e) in enumerate(result):
-                if end < s or start > e:
+            for i, timeslot2 in enumerate(timeslots):
+                if timeslot1.fin < timeslot2.debut or timeslot1.debut > timeslot2.fin:
                     pass
-                elif start >= s and end <= e:
+                elif timeslot1.debut >= timeslot2.debut and timeslot1.fin <= timeslot2.fin:
                     found = True
-                elif start <= s or end >= e:
-                    result[i] = (min(s, start), max(e, end))
+                elif timeslot1.debut <= timeslot2.debut or timeslot1.fin >= timeslot2.fin:
+                    timeslots[i] = Timeslot(min(timeslot2.debut, timeslot1.debut), max(timeslot2.debut, timeslot1.fin), value)
                     found = True
             if not found:
-                result.append((start, end))
+                timeslots.append(timeslot1)
             else:
                 again = True
+    return timeslots
 
-    return result
+
+def GetUnionHeures(journee, reference):
+    timeslots = [timeslot for timeslot in journee.timeslots if timeslot.value == 0]
+    timeslots += [timeslot for timeslot in reference.timeslots if timeslot.value == 0]
+    return GetUnionTimeslots(timeslots)
 
 
 class Inscrit(Base):
@@ -1577,10 +1574,10 @@ class Inscrit(Base):
                 heures_realisees = 0.0
                 heures_facturees = 0.0
 
-                for timeslot in journee.timeslots:
-                    # TODO une petite fonction pour ce code duplique
-                    if timeslot.value == 0 or (timeslot.value in self.creche.activites and self.creche.activites[timeslot.value].mode == MODE_PRESENCE_NON_FACTUREE):
-                        heures_realisees += tranche * GetDureeArrondie(self.creche.arrondi_heures, timeslot.debut, timeslot.fin)
+                # TODO une petite fonction pour ce code duplique dans le test
+                timeslots = GetUnionTimeslots([timeslot for timeslot in journee.timeslots if timeslot.value == 0 or (timeslot.value in self.creche.activites and self.creche.activites[timeslot.value].mode == MODE_PRESENCE_NON_FACTUREE)])
+                for timeslot in timeslots:
+                    heures_realisees += tranche * GetDureeArrondie(self.creche.arrondi_heures, timeslot.debut, timeslot.fin)
 
                 if self.creche.nom == "Le Nid Des Trésors" and not inscription.IsInPeriodeAdaptation(date):
                     # TODO ajouter un paramètre quand la branche SQLAlchemy sera mergée
@@ -1591,11 +1588,11 @@ class Inscrit(Base):
                 else:
                     union = GetUnionHeures(journee, reference)
                     if inscription.IsInPeriodeAdaptation(date):
-                        for start, end in union:
-                            heures_facturees += tranche * GetDureeArrondie(self.creche.arrondi_facturation_periode_adaptation, start, end)
+                        for timeslot in union:
+                            heures_facturees += tranche * GetDureeArrondie(self.creche.arrondi_facturation_periode_adaptation, timeslot.debut, timeslot.fin)
                     else:
-                        for start, end in union:
-                            heures_facturees += tranche * GetDureeArrondie(self.creche.arrondi_facturation, start, end)
+                        for timeslot in union:
+                            heures_facturees += tranche * GetDureeArrondie(self.creche.arrondi_facturation, timeslot.debut, timeslot.fin)
 
                 return State(PRESENT, heures_reference, heures_realisees, heures_facturees)
         else:
