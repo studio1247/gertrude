@@ -555,10 +555,10 @@ class FactureFinMois(FactureBase):
                             montant = tarif_montant
                         if montant > self.cotisation_mensuelle:
                             self.supplement += montant - self.cotisation_mensuelle
-                            self.raison_supplement.add("%s heures supplementaires" % GetHeureString(supplement_heures))
+                            self.raison_supplement.add("%s heures supplémentaires" % GetHeureString(supplement_heures))
                         elif montant < self.cotisation_mensuelle:
                             self.deduction += self.cotisation_mensuelle - montant
-                            self.raison_deduction.add("%s heures de présence" % GetHeureString(supplement_heures))
+                            self.raison_deduction.add("%s heures déduites" % GetHeureString(supplement_heures))
                     self.heures_contrat = cotisation.heures_mois
                 elif database.creche.repartition == REPARTITION_SANS_MENSUALISATION:
                     if database.creche.mode_facturation == FACTURATION_HORAIRES_REELS or (database.creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(cotisation.debut)):
