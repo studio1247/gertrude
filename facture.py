@@ -531,8 +531,10 @@ class FactureFinMois(FactureBase):
                     self.cotisation_mensuelle += heures * (cotisation.a * heures + cotisation.b)
                 elif database.creche.nom == "Le petit monde de Siméon":
                     self.cotisation_mensuelle += cotisation.cotisation_mensuelle
-                    heures = cotisation.heures_contractualisees + cotisation.heures_supplementaires - cotisation.heures_maladie
-                    tarif_montant, tarif_unite = database.creche.EvalTauxHoraire(cotisation.debut,
+                    supplement_heures = cotisation.heures_supplementaires - cotisation.heures_maladie
+                    if supplement_heures:
+                        heures = cotisation.heures_mois + supplement_heures
+                        tarif_montant, tarif_unite = database.creche.EvalTauxHoraire(cotisation.debut,
                                                                                cotisation.mode_garde,
                                                                                inscrit.handicap,
                                                                                cotisation.assiette_annuelle,
@@ -547,16 +549,16 @@ class FactureFinMois(FactureBase):
                                                                                heures, None,
                                                                                cotisation.tranche_paje,
                                                                                inscrit.famille.tarifs | inscription.tarifs)
-                    if tarif_unite == TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE:
-                        montant = tarif_montant * heures
-                    else:
-                        montant = tarif_montant
-                    if montant > self.cotisation_mensuelle:
-                        self.supplement += montant - self.cotisation_mensuelle
-                        self.raison_supplement.add("%s heures de présence" % GetHeureString(heures))
-                    elif montant < self.cotisation_mensuelle:
-                        self.deduction += self.cotisation_mensuelle - montant
-                        self.raison_deduction.add("%s heures de présence" % GetHeureString(heures))
+                        if tarif_unite == TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE:
+                            montant = tarif_montant * heures
+                        else:
+                            montant = tarif_montant
+                        if montant > self.cotisation_mensuelle:
+                            self.supplement += montant - self.cotisation_mensuelle
+                            self.raison_supplement.add("%s heures supplementaires" % GetHeureString(supplement_heures))
+                        elif montant < self.cotisation_mensuelle:
+                            self.deduction += self.cotisation_mensuelle - montant
+                            self.raison_deduction.add("%s heures de présence" % GetHeureString(supplement_heures))
                     self.heures_contrat = cotisation.heures_mois
                 elif database.creche.repartition == REPARTITION_SANS_MENSUALISATION:
                     if database.creche.mode_facturation == FACTURATION_HORAIRES_REELS or (database.creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(cotisation.debut)):
