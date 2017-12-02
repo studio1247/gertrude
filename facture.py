@@ -534,31 +534,33 @@ class FactureFinMois(FactureBase):
                     supplement_heures = cotisation.heures_supplementaires - cotisation.heures_maladie
                     if supplement_heures:
                         heures = cotisation.heures_mois + supplement_heures
-                        tarif_montant, tarif_unite = database.creche.EvalTauxHoraire(cotisation.debut,
-                                                                               cotisation.mode_garde,
-                                                                               inscrit.handicap,
-                                                                               cotisation.assiette_annuelle,
-                                                                               cotisation.enfants_a_charge,
-                                                                               cotisation.jours_semaine,
-                                                                               cotisation.heures_semaine,
-                                                                               inscription.reservataire,
-                                                                               inscrit.nom.lower(),
-                                                                               cotisation.parents,
-                                                                               cotisation.chomage,
-                                                                               cotisation.conge_parental,
-                                                                               heures, None,
-                                                                               cotisation.tranche_paje,
-                                                                               inscrit.famille.tarifs | inscription.tarifs)
-                        if tarif_unite == TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE:
-                            montant = tarif_montant * heures
+                        tarif, unite = database.creche.EvalTauxHoraire(cotisation.debut,
+                                                                       cotisation.mode_garde,
+                                                                       inscrit.handicap,
+                                                                       cotisation.assiette_annuelle,
+                                                                       cotisation.enfants_a_charge,
+                                                                       cotisation.jours_semaine,
+                                                                       cotisation.heures_semaine,
+                                                                       inscription.reservataire,
+                                                                       inscrit.nom.lower(),
+                                                                       cotisation.parents,
+                                                                       cotisation.chomage,
+                                                                       cotisation.conge_parental,
+                                                                       heures, None,
+                                                                       cotisation.tranche_paje,
+                                                                       inscrit.famille.tarifs | inscription.tarifs)
+                        if unite == TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE:
+                            montant = tarif * heures
+                        elif tarif / heures > 10.0:
+                            montant = 10.0 * heures
                         else:
-                            montant = tarif_montant
+                            montant = tarif
                         if montant > self.cotisation_mensuelle:
                             self.supplement += montant - self.cotisation_mensuelle
                             self.raison_supplement.add("%s heures supplémentaires" % GetHeureString(supplement_heures))
                         elif montant < self.cotisation_mensuelle:
                             self.deduction += self.cotisation_mensuelle - montant
-                            self.raison_deduction.add("%s heures déduites" % GetHeureString(supplement_heures))
+                            self.raison_deduction.add("%s heures déduites" % GetHeureString(-supplement_heures))
                     self.heures_contrat = cotisation.heures_mois
                 elif database.creche.repartition == REPARTITION_SANS_MENSUALISATION:
                     if database.creche.mode_facturation == FACTURATION_HORAIRES_REELS or (database.creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(cotisation.debut)):
