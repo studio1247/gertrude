@@ -737,7 +737,6 @@ class FactureFinMois(FactureBase):
 
         self.heures_facturees = sum(self.heures_facturees_par_mode)
         if database.creche.mode_saisie_planning == SAISIE_HORAIRE:
-            print(self.heures_contrat, self.heures_supplementaires, self.heures_maladie)
             self.heures_facture = self.heures_contrat + self.heures_supplementaires - self.heures_maladie
         else:
             self.heures_facture = self.heures_facturees

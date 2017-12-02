@@ -102,7 +102,7 @@ class NumericCtrl(wx.TextCtrl):
 
     def GetValue(self):
         if wx.TextCtrl.GetValue(self) == "":
-            return ""
+            return None
         elif self.__prec > 0:
             return float(wx.TextCtrl.GetValue(self))
         else:
