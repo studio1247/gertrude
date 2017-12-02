@@ -439,7 +439,7 @@ class FactureFinMois(FactureBase):
                             it = debut_semaine
                             while it <= fin_semaine:
                                 if it in inscrit.days:
-                                    heures = inscrit.days[it].GetNombreHeures()
+                                    heures = inscrit.days[it].get_duration()
                                 else:
                                     heures = inscription.get_day_from_index(it).get_duration()
                                 if heures > 0:

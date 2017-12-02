@@ -1068,6 +1068,24 @@ class OPagaioTests(GertrudeTestCase):
         facture = Facture(inscrit, 2017, 5)
         self.assertPrec2Equals(facture.regularisation, 228.00)
 
+    def test_exception_forfait_hebdomadaire(self):
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit=inscrit)
+        inscription.mode = MODE_FORFAIT_HEBDOMADAIRE
+        inscription.forfait_mensuel_heures = 32.0
+        inscription.semaines_conges = 5
+        inscription.debut = datetime.date(2016, 9, 12)
+        inscription.fin = datetime.date(2017, 8, 31)
+        inscription.days.add(TimeslotInscription(day=0, debut=96, fin=216, value=0))  # 10h
+        inscription.days.add(TimeslotInscription(day=4, debut=96, fin=150, value=0))  # 4h30
+        inscrit.inscriptions.append(inscription)
+        self.AddJourneePresence(inscrit, datetime.date(2017, 4, 17), 120, 168)  # 4h00
+        self.AddJourneePresence(inscrit, datetime.date(2017, 4, 18), 120, 174)  # 4h30
+        self.AddJourneePresence(inscrit, datetime.date(2017, 4, 19), 120, 168)  # 4h00
+        self.AddJourneePresence(inscrit, datetime.date(2017, 4, 20), 120, 174)  # 4h30
+        self.AddJourneePresence(inscrit, datetime.date(2017, 4, 21), 120, 174)  # 4h30
+        Facture(inscrit, 2017, 4)
+
 
 class PitchounsTests(GertrudeTestCase):
     def setUp(self):
