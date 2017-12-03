@@ -16,9 +16,6 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
-
-from constants import *
-from functions import *
 from ooffice import *
 
 
