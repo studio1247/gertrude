@@ -352,7 +352,8 @@ SUMMARY_SALARIE = 2
 
 # Valeurs de présence
 PRESENCE_SALARIE = -256
-CONGES_RECUP_HEURES_SUPP = -10
+CONGES_RECUP_HEURES_SUPP = -11
+CONGES_MATERNITE = -10
 CONGES_SANS_SOLDE = -9
 CONGES_PAYES = -8
 CONGES_DEPASSEMENT = -7
@@ -495,6 +496,7 @@ types_conges_salaries = [
     ("Congés payés", CONGES_PAYES),
     ("Congés sans solde", CONGES_SANS_SOLDE),
     ("Congés maladie", MALADE),
+    ("Congés maternité", CONGES_MATERNITE)
 ]
 
 # Type d'export de coordonnées des parents

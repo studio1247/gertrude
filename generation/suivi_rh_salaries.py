@@ -85,11 +85,12 @@ class SuiviRHSalariesModifications(object):
                 if debut and fin and debut >= self.debut_conges_payes and fin <= self.fin_conges_payes:
                     date, value = debut, 0
                     while date <= fin and value < 100:
-                        weekday = date.weekday()
-                        if weekday < 4:
-                            value -= 1
-                        elif weekday == 4:
-                            value -= 2
+                        if date not in database.creche.jours_fete:
+                            weekday = date.weekday()
+                            if weekday < 4:
+                                value -= 1
+                            elif weekday == 4:
+                                value -= 2
                         date += datetime.timedelta(1)
                     lines_conges.append([
                         ("debut", debut),
@@ -125,14 +126,23 @@ class SuiviRHSalariesModifications(object):
         while date.month == self.periode.month:
             count += 1
             line = template1.cloneNode(1)
-            state = salarie.get_state(date)
+            if date.weekday() == 6:
+                state = ABSENT
+            elif date.weekday() == 5:
+                state = salarie.get_state(date - datetime.timedelta(1))
+                if state != CONGES_PAYES:
+                    state = ABSENT
+            else:
+                state = salarie.get_state(date)
             fields = [
                 ("day", date.day),
                 ("weekday", days[date.weekday()]),
                 ("present", 1 if state == PRESENT else 0),
+                ("ferie", 1 if date in database.creche.jours_fete else 0),
                 ("cp", 1 if state == CONGES_PAYES else 0),
                 ("recup", 1 if state == CONGES_RECUP_HEURES_SUPP else 0),
-                ("ss", 1 if state == CONGES_SANS_SOLDE else 0),
+                ("sans-solde", 1 if state == CONGES_SANS_SOLDE else 0),
+                ("maternite", 1 if state == CONGES_MATERNITE else 0),
                 ("malade", 1 if state == MALADE else 0),
             ]
             ReplaceFields(line, fields)
