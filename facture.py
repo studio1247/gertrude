@@ -903,7 +903,7 @@ class FactureCloturee(FactureBase):
 
     def restore(self, options=0):
         if not self.facture:
-            self.facture = CreateFacture(self.cloture.inscrit, self.cloture.date.year, self.cloture.date.month, options=options)
+            self.facture = CreateFacture(self.cloture.inscrit, self.cloture.date.year, self.cloture.date.month, options=self.options)
         return self.facture
 
     def __getattr__(self, item):
