@@ -1084,8 +1084,7 @@ class Salarie(Base):
         def AddPeriode(debut, fin, conge):
             date = debut
             while date <= fin:
-                if date not in self.creche.jours_fermeture:
-                    self.jours_conges[date] = conge
+                self.jours_conges[date] = conge
                 date += datetime.timedelta(1)
 
         for conge in self.conges:
@@ -1107,16 +1106,15 @@ class Salarie(Base):
                             fin = str2date(conge.fin, year)
                         AddPeriode(debut, fin, conge)
             except Exception as e:
-                pass
-                # print("Exception congés", e)
+                print("Exception congés", e)
 
     def get_state(self, date):
-        if date in self.creche.jours_fermeture:
+        contrat = self.get_contrat(date)
+        if contrat is None:
             return ABSENT
         if date in self.jours_conges:
             return self.jours_conges[date].type
-        contrat = self.get_contrat(date)
-        if contrat is None:
+        if date in self.creche.jours_fermeture:
             return ABSENT
 
         reference = self.GetJourneeReference(date)

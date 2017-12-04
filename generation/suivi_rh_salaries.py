@@ -73,12 +73,16 @@ class SuiviRHSalariesModifications(object):
         return lines_heures_supp, solde_heures_supp, compteur_heures_supp
 
     def get_salarie_conges_payes(self, salarie):
-        lines_conges = []
         solde_conges = 0
+        for line in salarie.credit_conges:
+            if line.date == self.debut_conges_payes:
+                solde_conges = line.value
+                break
+        lines_conges = []
         for conge in salarie.conges:
             if conge.type == CONGES_PAYES:
                 debut, fin = str2date(conge.debut), str2date(conge.fin)
-                if debut and fin:
+                if debut and fin and debut >= self.debut_conges_payes and fin <= self.fin_conges_payes:
                     date, value = debut, 0
                     while date <= fin and value < 100:
                         weekday = date.weekday()
@@ -87,13 +91,10 @@ class SuiviRHSalariesModifications(object):
                         elif weekday == 4:
                             value -= 2
                         date += datetime.timedelta(1)
-                    if debut < self.debut_conges_payes:
-                        solde_conges += value
-                    if self.debut_conges_payes <= debut <= self.fin_conges_payes:
-                        lines_conges.append([
-                            ("debut", debut),
-                            ("fin", fin),
-                            ("jours", value)])
+                    lines_conges.append([
+                        ("debut", debut),
+                        ("fin", fin),
+                        ("jours", value)])
         lines_conges.sort(key=lambda l: l[0][0])
         compteur = solde_conges
         for line in lines_conges:
@@ -104,6 +105,7 @@ class SuiviRHSalariesModifications(object):
     def fill_salarie_tab(self, salarie, tab):
         lines = tab.getElementsByTagName("table:table-row")
         template1 = lines[5]
+        total1 = lines[6]
         template2_headers = [lines[10], lines[11], lines[14]]
         template2 = lines[13]
 
@@ -119,7 +121,9 @@ class SuiviRHSalariesModifications(object):
 
         # le mois jour par jour
         date = self.periode
+        count = 0
         while date.month == self.periode.month:
+            count += 1
             line = template1.cloneNode(1)
             state = salarie.get_state(date)
             fields = [
@@ -131,9 +135,10 @@ class SuiviRHSalariesModifications(object):
                 ("ss", 1 if state == CONGES_SANS_SOLDE else 0),
                 ("malade", 1 if state == MALADE else 0),
             ]
-            ReplaceTextFields(line, fields)
+            ReplaceFields(line, fields)
             tab.insertBefore(line, template1)
             date += datetime.timedelta(1)
+        IncrementFormulas(total1, row=+count-1, flags=FLAG_SUM_MAX)
         tab.removeChild(template1)
 
         # suivi des heures supp et des congés (2 tableaux côte à côte)
