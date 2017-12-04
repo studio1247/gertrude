@@ -69,7 +69,7 @@ class SuiviRHSalariesModifications(object):
                     lines_heures_supp.append([
                         ("date", timeslot.date),
                         ("heures-supp", value)])
-        lines_heures_supp.sort(key=lambda l: l[0][0])
+        lines_heures_supp.sort(key=lambda l: l[0][1])
         return lines_heures_supp, solde_heures_supp, compteur_heures_supp
 
     def get_salarie_conges_payes(self, salarie):
@@ -95,7 +95,7 @@ class SuiviRHSalariesModifications(object):
                         ("debut", debut),
                         ("fin", fin),
                         ("jours", value)])
-        lines_conges.sort(key=lambda l: l[0][0])
+        lines_conges.sort(key=lambda l: l[0][1])
         compteur = solde_conges
         for line in lines_conges:
             compteur += line[-1][1]
