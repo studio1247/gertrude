@@ -180,7 +180,7 @@ class PeriodeReference(object):
     def get_days_per_week(self):
         days = len(self.days)
         if self.duree_reference > 7:
-            days /= (self.duree_reference // 7)
+            days //= (self.duree_reference // 7)
         return days
 
     def get_duration_per_week(self, mode_arrondi=SANS_ARRONDI):
