@@ -71,7 +71,7 @@ class CoordonneesModifications(object):
                         temporalite = EXPORT_FAMILLES_PRESENTES
                         break
             if temporalite & self.selection:
-                result.append(contrat)
+                result.append(salarie)
         result.sort(key=lambda x: GetPrenomNom(x))
         return result
 
