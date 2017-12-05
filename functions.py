@@ -470,7 +470,7 @@ def GetActivityColor(value):
     if value < 0:
         if value == HOPITAL or value == MALADE_SANS_JUSTIFICATIF:
             value = MALADE
-        if value in (ABSENCE_CONGE_SANS_PREAVIS, CONGES_PAYES):
+        if value in (ABSENCE_CONGE_SANS_PREAVIS, CONGES_PAYES, CONGES_SANS_SOLDE):
             value = VACANCES
         return database.creche.couleurs[value].couleur
     activity = value & ~SUPPLEMENT
