@@ -16,6 +16,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+from __future__ import print_function
 import glob
 import os
 import shutil
@@ -26,37 +28,38 @@ from version import VERSION
 
 
 def main():
-    if sys.platform == 'win32':
+    if sys.platform == "win32":
         import win32api
 
         for directory in ("./dist", "./build"):
             if os.path.isdir(directory):
                 shutil.rmtree(directory)
 
-        os.chdir("WinPython-32bit-2.7.13.1Zero")
-        paths = ["notebooks", "scripts", "settings", "tools"] + glob.glob("*.exe") + glob.glob("python-2.7.13/Scripts/*.exe")
-        paths += [("python-2.7.13/" + path) for path in ("NEWS.txt", "README.txt", "w9xpopen.exe", "Doc", "include", "Logs", "tcl", "Lib\site-packages\prompt_toolkit", "Lib\site-packages\pygments", "Lib\site-packages\setuptools", "Lib\ensurepip", "Lib\site-packages\win32\Demos", "Lib\site-packages\pip", "Lib\site-packages\jedi", "Lib/unittest", "Lib/test", "Lib/lib2to3", "Lib/lib-tk", "Lib/idlelib", "Lib/distutils", "Lib/ctypes", "Lib/compiler", "Lib/site-packages/wx/tools/Editra", "Lib/site-packages/wx/tools/XRCed")]
+        if 1:
+            os.chdir("WinPython-32bit-2.7.13.1Zero")
+            paths = ["notebooks", "scripts", "settings", "tools"] + glob.glob("*.exe") + glob.glob("python-2.7.13/Scripts/*.exe")
+            paths += [("python-2.7.13/" + path) for path in ("NEWS.txt", "README.txt", "w9xpopen.exe", "Doc", "include", "Logs", "tcl", "Lib\site-packages\prompt_toolkit", "Lib\site-packages\pygments", "Lib\site-packages\setuptools", "Lib\ensurepip", "Lib\site-packages\win32\Demos", "Lib\site-packages\pip", "Lib\site-packages\jedi", "Lib/unittest", "Lib/test", "Lib/lib2to3", "Lib/lib-tk", "Lib/idlelib", "Lib/distutils", "Lib/ctypes", "Lib/compiler", "Lib/site-packages/wx/tools/Editra", "Lib/site-packages/wx/tools/XRCed")]
 
-        for root, dirnames, filenames in os.walk('python-2.7.13'):
-            for filename in fnmatch.filter(filenames, '*.pyc') + fnmatch.filter(filenames, '*.chm'):
-                paths.append(os.path.join(root, filename))
+            for root, dirnames, filenames in os.walk('python-2.7.13'):
+                for filename in fnmatch.filter(filenames, '*.pyc') + fnmatch.filter(filenames, '*.chm'):
+                    paths.append(os.path.join(root, filename))
 
             # for filename in filenames:
             #     if os.stat(os.path.join(root, filename)).st_size > 10000:
-            #         print os.path.join(root, filename), os.stat(os.path.join(root, filename)).st_size
+            #         print(os.path.join(root, filename), os.stat(os.path.join(root, filename)).st_size)
 
-        for path in paths:
-            print "Remove %s" % path
-            if os.path.isdir(path):
-                shutil.rmtree(path)
-            elif os.path.exists(path):
-                os.remove(path)
-        os.chdir("..")
+            for path in paths:
+                print("Remove %s" % path)
+                if os.path.isdir(path):
+                    shutil.rmtree(path)
+                elif os.path.exists(path):
+                    os.remove(path)
+            os.chdir("..")
 
         issfile = "setup.iss"
-        isscontents = file(issfile + ".template").read()
+        isscontents = open(issfile + ".template").read().decode("utf-8")
         isscontents = isscontents.replace("@VERSION@", VERSION)
-        file(issfile, "w").write(isscontents)
+        open(issfile, "w").write(isscontents.encode("windows-1252"))
 
         path, name = os.path.split(issfile)
         isspath = os.path.split(win32api.FindExecutable(name, path)[-1])[0]
@@ -65,25 +68,26 @@ def main():
             if os.path.isfile(exe):
                 os.remove(exe)
             os.rename("./Output/setup.exe", exe)
-            print u"File %s generated (%d bytes)" % (exe, os.stat(exe).st_size)
+            print("File %s generated (%d bytes)" % (exe, os.stat(exe).st_size))
 
-    elif sys.platform == 'darwin':
+    elif sys.platform == "darwin":
         from setuptools import setup
 
-        APP = ["gertrude.pyw"]
-        DATA_FILES = glob.glob("bitmaps_dist/*.png") + glob.glob("bitmaps_dist/*.ico") + glob.glob("templates_dist/*.html") + glob.glob("templates_dist/*.txt") + glob.glob("templates_dist/*.od?")
-        OPTIONS = {'site_packages': True,
-                   'arch': 'i386',
-                   'iconfile': 'bitmaps_dist/gertrude.icns',
-                   'argv_emulation': True,
-                   'includes': ["bcrypt", "_cffi_backend", "requests"],
-                   'packages': ["requests"]
+        app = ["gertrude.pyw"]
+        data_files = glob.glob("bitmaps_dist/*.png") + glob.glob("bitmaps_dist/*.ico") + glob.glob("templates_dist/*.html") + glob.glob("templates_dist/*.txt") + glob.glob("templates_dist/*.od?")
+        sys.path.append("/Library/Python/2.7/site-packages/backports")
+        options = {"site_packages": True,
+                   "arch": "i386",
+                   "iconfile": "bitmaps_dist/gertrude.icns",
+                   "argv_emulation": True,
+                   "includes": ["bcrypt", "_cffi_backend", "requests", "sqlalchemy", "sqlalchemy.sql.default_comparator", "sqlalchemy_utils", "configparser", "future"],
+                   "packages": ["requests"]
                    }
         setup(
             name="Gertrude",
-            app=APP,
-            data_files=DATA_FILES,
-            options={'py2app': OPTIONS},
+            app=app,
+            data_files=data_files,
+            options={"py2app": options},
             setup_requires=["py2app", "requests"],
             install_requires=["requests"]
         )
@@ -97,21 +101,22 @@ def main():
         p = Py2deb("gertrude")
         p.author = "Bertrand Songis"
         p.mail = "bsongis@gmail.com"
-        p.description = u"Logiciel de gestion de creches"
-        p.url = "http://www.gertrude-logiciel.org"
+        p.description = "Logiciel de gestion de creches"
+        p.url = "https://www.gertrude-logiciel.org"
         p.icon = "./bitmaps_dist/gertrude.png"
-        p.depends = "bash, python, python-gtk2, python-bcrypt, python-wxgtk2.8 | python-wxgtk3.0, python-requests"
+        p.depends = "bash, python, python-gtk2, python-bcrypt, python-wxgtk2.8 | python-wxgtk3.0, python-requests, python-sqlalchemy, python-sqlalchemy-utils, python-future, python-configparser"
         p.license = "gpl"
         p.section = "utils"
         p.arch = "all"
 
-        p["/usr/share/applications"] =["./linux/gertrude.desktop|gertrude.desktop"]
-        p["/usr/share/gertrude"] = glob.glob("./*.py") + glob.glob("./demo.db") + glob.glob("./bitmaps_dist/*.*") + glob.glob("./bitmaps_dist/pictos/*") + glob.glob("./templates_dist/*.html") + glob.glob("./templates_dist/*.txt") + glob.glob("./templates_dist/*.od?")
+        p["/usr/share/applications"] = ["./linux/gertrude.desktop|gertrude.desktop"]
+        p["/usr/share/gertrude"] = glob.glob("./*.py") + glob.glob("./generation/*.py") + glob.glob("./demo.db") + glob.glob("./bitmaps_dist/*.*") + glob.glob("./bitmaps_dist/pictos/*") + glob.glob("./templates_dist/*.html") + glob.glob("./templates_dist/*.txt") + glob.glob("./templates_dist/*.od?")
         p["/usr/bin"] = ["./linux/gertrude|gertrude"]
         p["/usr/share/doc/gertrude"] = ["COPYING"]
-        p.generate(VERSION, u"", rpm=True, src=True)
+        p.generate(VERSION, "", rpm=True, src=True)
     else:
-        print u"Plateforme %s non supportée" % sys.platform
+        print("Plateforme %s non supportée" % sys.platform)
+
 
 if __name__ == '__main__':
     main()

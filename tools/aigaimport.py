@@ -1,23 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# from __future__ import unicode_literals
-
-import os
+from __future__ import unicode_literals
 import sys
-import __builtin__
 import shutil
 
 sys.path.append('..')
 
-import sqlinterface
 from functions import *
-from sqlobjects import *
 from config import *
+from database import *
 
 shutil.copyfile("gertrude.db", "../aiga.db")
-__builtin__.sql_connection = sqlinterface.SQLConnection("../aiga.db")
-__builtin__.creche = sql_connection.Load(None)
+database.init("../aiga.db")
 
 
 def get_lines_splitted(filename):
@@ -145,7 +140,7 @@ def get_factures():
 
 
 def insert_planning(obj, heures):
-    print "insert_planning(%d)" % heures
+    print("insert_planning(%d)" % heures)
     jour = 0
     while heures > 0:
         count = min(heures, 10)
@@ -155,14 +150,14 @@ def insert_planning(obj, heures):
 
 
 def main():
-    print "Start import ..."
+    print("Start import ...")
     enfants = get_enfants()
     parents = get_parents()
     inscriptions = get_inscriptions()
     semaines_conges = get_semaines_conges()
     factures = get_factures()
     medecins = get_medecins()
-    print "medecins", medecins
+    print("medecins", medecins)
     salaries = get_salaries()
     for salarie in salaries:
         obj = Salarie()
@@ -216,7 +211,7 @@ def main():
                 conges = semaines_conges[inscription['idx']]
                 obj_inscription.semaines_conges = conges['semaines_conges']
                 insert_planning(obj_inscription, conges['heures'])
-    sql_connection.close()
+    database.commit()
 
 
 if __name__ == "__main__":

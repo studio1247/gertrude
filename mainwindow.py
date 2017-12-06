@@ -19,14 +19,16 @@
 
 from __future__ import unicode_literals
 
-import __builtin__
-import os, sys, codecs, imp, time, locale, shutil, glob, thread, urllib2, zipfile
-import wx, wx.lib.wordwrap
-from wx.lib import masked
-from config import Liste, Load, Update, Save, Restore, Exit, ProgressHandler
+import glob
+import thread
+import zipfile
+import wx
+import wx.lib.wordwrap
+import requests
+from connection import get_connection_from_config
+from database import Alerte
+from progress import ProgressHandler
 from version import VERSION
-from sqlobjects import *
-from globals import *
 from functions import *
 from alertes import *
 try:
@@ -107,10 +109,10 @@ class GertrudeListbook(Listbook):
         import panel_inscriptions
         panels.append(panel_inscriptions.InscriptionsPanel)
         import panel_planning
-        panels.append(panel_planning.PlanningPanel)
+        panels.append(panel_planning.get_planning_class())
         import panel_facturation
         panels.append(panel_facturation.FacturationPanel)
-        if creche.mode_saisie_planning == SAISIE_HORAIRE:
+        if database.creche.mode_saisie_planning == SAISIE_HORAIRE:
             import panel_salaries
             panels.append(panel_salaries.SalariesPanel)
         import panel_tableaux_bord
@@ -118,7 +120,7 @@ class GertrudeListbook(Listbook):
         import panel_configuration
         panels.append(panel_configuration.ConfigurationPanel)
         for i, panel in enumerate(panels):
-            if panel.profil & profil:
+            if panel.profil & config.profil:
                 if progress_handler:
                     progress_handler.set(10 + 80 * i / len(panels))
                     progress_handler.display("Chargement de l'outil %s ..." % panel.name)
@@ -137,7 +139,7 @@ class GertrudeListbook(Listbook):
 
 class GertrudeFrame(wx.Frame):
     def __init__(self, progress_handler=None):
-        wx.Frame.__init__(self, None, -1, "Gertrude v%s - %s" % (VERSION, creche.nom), wx.DefaultPosition, config.window_size)
+        wx.Frame.__init__(self, None, -1, "Gertrude v%s - %s" % (VERSION, database.creche.nom), wx.DefaultPosition, config.window_size)
 
         # Icon
         icon = wx.Icon(GetBitmapFile('gertrude.ico'), wx.BITMAP_TYPE_ICO)
@@ -151,10 +153,11 @@ class GertrudeFrame(wx.Frame):
         menu = wx.Menu()
         if len(config.sections) > 1:
             self.db_menu = wx.Menu()
-            for i, key in enumerate(config.sections.keys()):
+            for i, key in enumerate(config.sections_names):
                 self.db_menu.Append(1001+i, key)
                 self.Bind(wx.EVT_MENU, self.OnChangementStructure, id=1001+i)
-            self.db_menu.FindItemByPosition(config.sections.keys().index(config.default_section)).Enable(False)
+            print("TODO disable la structure courante")
+            # self.db_menu.FindItemByPosition(config.sections.keys().index(config.current_section.name)).Enable(False)
             self.db_menu.AppendSeparator()
             self.db_menu.Append(1099, "Rechercher...")
             self.Bind(wx.EVT_MENU, self.OnRechercher, id=1099)
@@ -195,7 +198,9 @@ class GertrudeFrame(wx.Frame):
         self.Bind(EVT_CHANGEMENT_GROUPES_EVENT, self.OnChangementsGroupeAvailable)        
         self.AlertEvent, EVT_ALERT_EVENT = wx.lib.newevent.NewEvent()
         self.Bind(EVT_ALERT_EVENT, self.OnAlertesAvailable)
-        thread.start_new_thread(self.AutoActions, ())
+        # thread.start_new_thread(self.AutoActions, ())
+        # TODO à finaliser
+        self.AutoActions()
 
         self.Bind(wx.EVT_SIZE, self.OnResize)
         self.Bind(wx.EVT_CLOSE, self.OnExit)
@@ -204,18 +209,18 @@ class GertrudeFrame(wx.Frame):
         self.timer.Start(1000)  # x100 milliseconds
         self.Bind(wx.EVT_TIMER, self.onUpdateTimer, self.timer)  # call the on_timer function
     
-    def onUpdateTimer(self, event):
-        if readonly:
-            _sql_connection, _creche = Update()
-            if _sql_connection and _creche:
-                __builtin__.sql_connection = _sql_connection
-                __builtin__.creche = _creche
-                self.listbook.UpdateContents()
+    def onUpdateTimer(self, _):
+        if config.readonly:
+            print("TODO Update")
+            # _creche = Update()
+            # if _creche:
+            #     __builtin__.creche = _creche
+            #     self.listbook.UpdateContents()
         
     def AutoActions(self):
-        if creche.changement_groupe_auto:
+        if database.creche.changement_groupe_auto:
             changements = []
-            for inscrit in creche.inscrits:
+            for inscrit in database.creche.inscrits:
                 if inscrit.naissance:
                     for inscription in inscrit.inscriptions:
                         if inscription.debut and (not inscription.fin or inscription.fin >= today):
@@ -224,7 +229,7 @@ class GertrudeFrame(wx.Frame):
                                  changements.append((inscription, groupe))
             if changements:
                 wx.PostEvent(self, self.ChangementsGroupeEvent(changements=changements))
-                         
+
         new_alertes = [(date, message) for date, message, ack in GetAlertes() if not ack]
         if new_alertes:
             wx.PostEvent(self, self.AlertEvent(new_alertes=new_alertes))
@@ -246,15 +251,15 @@ class GertrudeFrame(wx.Frame):
         dlg.Destroy()
         if result == wx.ID_NO:
             for date, message in event.new_alertes:
-                alerte = Alerte(date, message, True)
-                creche.alertes[message] = alerte
+                alerte = Alerte(creche=database.creche, date=date, texte=message, acquittement=True)
+                database.creche.alertes.append(alerte)
             history.append(None)
-        
+
     def CheckForUpdates(self):
         try:
-            url = 'https://www.gertrude-logiciel.org/checkupdate.php?version=%s&creche=%s&ville=%s' % (VERSION, urllib2.quote(creche.nom.encode("utf-8")), urllib2.quote(creche.ville.encode("utf-8")))
-            req = urllib2.Request(url)
-            result = urllib2.urlopen(req).read()
+            url = "https://www.gertrude-logiciel.org/checkupdate.php?version=%s&creche=%s&ville=%s" % (VERSION, database.creche.nom, database.creche.ville)
+            req = requests.get(url)
+            result = req.text
             if result:
                 version, location = result.split()
                 wx.PostEvent(self, self.UpdateEvent(version=version, location=location))
@@ -262,12 +267,18 @@ class GertrudeFrame(wx.Frame):
             return None
     
     def OnChangementStructure(self, event):
-        self.ChangeStructure(config.sections.keys()[event.GetId()-1001])
-        
+        self.ChangeStructure(config.sections_names[event.GetId()-1001])
+
+    def Save(self):
+        config.connection.Save(ProgressHandler(self.SetStatusText))
+
+    def Restore(self):
+        config.connection.Restore(ProgressHandler(self.SetStatusText))
+
     def ChangeStructure(self, section):
         self.SetStatusText("Changement en cours ...")
         if len(history) > 0:
-            dlg = wx.MessageDialog(self, "Voulez-vous enregistrer les changements ?", "Gertrude", wx.YES_NO|wx.YES_DEFAULT|wx.CANCEL|wx.ICON_QUESTION)
+            dlg = wx.MessageDialog(self, "Voulez-vous enregistrer les changements ?", "Gertrude", wx.YES_NO|wx.YES_DEFAULT|wx.CANCEL | wx.ICON_QUESTION)
             result = dlg.ShowModal()
             dlg.Destroy()
         else:
@@ -278,53 +289,57 @@ class GertrudeFrame(wx.Frame):
             return
         
         if result == wx.ID_YES:
-            Save(ProgressHandler(self.SetStatusText))
+            self.Save()
         else:
-            Restore(ProgressHandler(self.SetStatusText))
+            self.Restore()
+
         config.connection.Exit(ProgressHandler(self.SetStatusText))
         
         self.Hide()
 
-        config.setSection(section)
+        config.set_current_section(section)
+        config.connection = get_connection_from_config()
+        result = config.connection.Load(ProgressHandler(self.SetStatusText))
+        database.init(config.database)
+        database.load()
+
         history.Clear()
-        Load(ProgressHandler(self.SetStatusText))
 
         frame = GertrudeFrame()
-        if config.options & READONLY:
-            __builtin__.readonly = True
-        elif readonly:
+
+        if config.connection.is_token_already_used():
             dlg = wx.MessageDialog(frame,
                                    "Le jeton n'a pas pu être pris. Gertrude sera accessible en lecture seule. Voulez-vous forcer la prise du jeton ?",
                                    'Gertrude',
                                    wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
             result = dlg.ShowModal()
             dlg.Destroy()
-            if result == wx.ID_YES:
-                __builtin__.force_token = True
-                __builtin__.readonly = False
-                Load(ProgressHandler(frame.SetStatusText))
-                frame.listbook.UpdateContents()
+            if result != wx.ID_YES or not config.connection.get_token(force=True):
+                config.readonly = True
 
+        database.init(config.database)
+        frame.listbook.UpdateContents()
         frame.Show()
         self.Destroy()
-    
-    def OnRechercher(self, event):
+
+    print("TODO Rechercher un enfant")
+    def OnRechercher(self, _):
         class RechercherDialog(wx.Dialog):
             def __init__(self, parent):
                 wx.Dialog.__init__(self, parent, -1, "Rechercher un enfant", wx.DefaultPosition, wx.DefaultSize)
                 self.sizer = wx.BoxSizer(wx.VERTICAL)
                 self.fields_sizer = wx.FlexGridSizer(0, 2, 5, 10)
                 self.fields_sizer.AddGrowableCol(1, 1)
-                self.liste = Liste()
+                self.liste = self.Liste()
                 self.choices = sorted(self.liste.keys())
                 self.text = wx.TextCtrl(self)
                 self.combo = wx.ListBox(self)
                 self.combo.SetItems(self.choices)
                 self.text.Bind(wx.EVT_TEXT, self.OnText)
                 self.combo.Bind(wx.EVT_LEFT_DCLICK, self.OnOK)
-                self.fields_sizer.AddMany([(wx.StaticText(self, -1, "Recherche :"), 0, wx.ALIGN_CENTRE_VERTICAL|wx.ALL-wx.BOTTOM, 5), (self.text, 0, wx.EXPAND|wx.ALIGN_CENTRE_VERTICAL|wx.ALL-wx.BOTTOM, 5)])
-                self.sizer.Add(self.fields_sizer, 0, wx.EXPAND|wx.ALL, 5)
-                self.sizer.Add(self.combo, 0, wx.EXPAND|wx.ALL, 5)
+                self.fields_sizer.AddMany([(wx.StaticText(self, -1, "Recherche :"), 0, wx.ALIGN_CENTRE_VERTICAL | wx.ALL-wx.BOTTOM, 5), (self.text, 0, wx.EXPAND | wx.ALIGN_CENTRE_VERTICAL | wx.ALL-wx.BOTTOM, 5)])
+                self.sizer.Add(self.fields_sizer, 0, wx.EXPAND | wx.ALL, 5)
+                self.sizer.Add(self.combo, 0, wx.EXPAND | wx.ALL, 5)
                 self.btnsizer = wx.StdDialogButtonSizer()
                 self.ok = wx.Button(self, wx.ID_OK)
                 self.btnsizer.AddButton(self.ok)
@@ -334,8 +349,24 @@ class GertrudeFrame(wx.Frame):
                 self.sizer.Add(self.btnsizer, 0, wx.ALL, 5)
                 self.SetSizer(self.sizer)
                 self.sizer.Fit(self)
+
+            def Liste(self):
+                liste = {}
+                for section in config.sections.values():
+                    if section == config.current_section:
+                        section_database = database
+                    else:
+                        connection = get_connection_from_config(section)
+                        result = connection.Load()
+                        if not result:
+                            continue
+                        section_database = Database(section.database)
+                        section_database.load()
+                    for inscrit in section_database.creche.inscrits:
+                        liste[GetPrenomNom(inscrit)] = section.name
+                return liste
                 
-            def OnOK(self, event):
+            def OnOK(self, _):
                 self.EndModal(wx.ID_OK)
                 
             def OnText(self, event):
@@ -351,13 +382,13 @@ class GertrudeFrame(wx.Frame):
         dlg.Destroy()
         if result == wx.ID_OK:
             selection = dlg.combo.GetStringSelection()
-            db = dlg.liste[dlg.combo.GetStringSelection()]
-            if db.section != config.default_database:
-                self.ChangeStructure(db.section)
+            name = dlg.liste[dlg.combo.GetStringSelection()]
+            if name != config.default_section.name:
+                self.ChangeStructure(name)
             self.listbook.ChangePage(0)
-            for inscrit in creche.inscrits:
+            for inscrit in database.creche.inscrits:
                 if selection == "%s %s" % (inscrit.prenom, inscrit.nom):
-                    self.listbook.GetPage(0).SelectInscrit(inscrit)             
+                    self.listbook.GetPage(0).SelectInscrit(inscrit)
         
     def OnUpdateAvailable(self, event):
         if sys.platform == 'win32' and sys.argv[0].endswith("exe"):
@@ -370,20 +401,20 @@ class GertrudeFrame(wx.Frame):
                 import webbrowser
                 webbrowser.open(event.location)
 
-    def OnSave(self, evt):
+    def OnSave(self, _):
         self.SetStatusText("Enregistrement en cours ...")
-        if readonly:
+        if config.readonly:
             dlg = wx.MessageDialog(self, "Gertrude est en lecture seule !", 'Erreur', wx.OK|wx.ICON_WARNING)
             dlg.ShowModal()
             dlg.Destroy()
         else:
-            Save(ProgressHandler(self.SetStatusText))
+            config.connection.Save(ProgressHandler(self.SetStatusText))
         history.Clear()
         self.SetStatusText("")
 
-    def OnBackup(self, evt):
+    def OnBackup(self, _):
         self.SetStatusText("Copie de secours ...")
-        Save(ProgressHandler(self.SetStatusText))
+        self.Save()
         wildcard = "ZIP files (*.zip)|*.zip"
         dlg = wx.FileDialog(self, style=wx.SAVE, wildcard=wildcard, defaultDir=config.backups_directory, defaultFile="gertrude-%d-%d-%d.zip" % (today.day, today.month, today.year))
         result = dlg.ShowModal()
@@ -400,10 +431,10 @@ class GertrudeFrame(wx.Frame):
         config.window_size = evt.GetSize()
         evt.Skip()
         
-    def OnExit(self, evt):
+    def OnExit(self, _):
         self.SetStatusText("Fermeture en cours ...")
-        if not readonly and len(history) > 0:
-            dlg = wx.MessageDialog(self, "Voulez-vous enregistrer les changements ?", "Gertrude", wx.YES_NO|wx.YES_DEFAULT|wx.CANCEL|wx.ICON_QUESTION)
+        if not config.readonly and len(history) > 0:
+            dlg = wx.MessageDialog(self, "Voulez-vous enregistrer les changements ?", "Gertrude", wx.YES_NO|wx.YES_DEFAULT|wx.CANCEL | wx.ICON_QUESTION)
             result = dlg.ShowModal()
             dlg.Destroy()
         else:
@@ -412,14 +443,16 @@ class GertrudeFrame(wx.Frame):
         if result == wx.ID_CANCEL:
             self.SetStatusText("")
             return
-        elif result == wx.ID_YES:
-            Save(ProgressHandler(self.SetStatusText))
+
+        if result == wx.ID_YES:
+            self.Save()
         else:
-            Restore(ProgressHandler(self.SetStatusText))
-        Exit(ProgressHandler(self.SetStatusText))
+            self.Restore()
+        config.connection.Exit(ProgressHandler(self.SetStatusText))
+        config.save(ProgressHandler(self.SetStatusText))
         self.Destroy()
 
-    def OnUndo(self, event):
+    def OnUndo(self, _):
         if history.Undo():
             self.listbook.UpdateContents()
         else:

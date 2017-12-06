@@ -1,0 +1,6 @@
+future
+configparser
+bcrypt
+requests
+SQLAlchemy
+SQLAlchemy-Utils

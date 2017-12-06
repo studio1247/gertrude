@@ -18,18 +18,16 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-# TODO pb in GetActivitiesSummary from __future__ import division
-
-import datetime
 import urllib
-from constants import *
+from database import Day, TimeslotInscrit, Inscrit, TimeslotSalarie
+from connection import get_connection_from_config
 from functions import *
 from globals import *
 
 
 def write_apache_logs_to_journal(filename):
     # Recuperation des logs Apache
-    lines = file(filename).readlines()
+    lines = open(filename).readlines()
     result = []
     for line in lines:
         print(line)
@@ -49,18 +47,18 @@ def write_apache_logs_to_journal(filename):
                 ts = int(val)
 
         who = None
-        for inscrit in creche.inscrits:
+        for inscrit in database.creche.inscrits:
             letter = inscrit.nom[0] if len(inscrit.nom) > 0 else ""
             name = urllib.quote_plus(inscrit.prenom.encode("utf-8")) + "+" + urllib.quote_plus(letter.encode("utf-8"))
-            # print "comparaison", name, combinaison
+            # print("comparaison", name, combinaison)
             if name == combinaison:
                 who = inscrit
 
         if who is None:
-            for inscrit in creche.salaries:
+            for inscrit in database.creche.salaries:
                 letter = inscrit.nom[0] if len(inscrit.nom) > 0 else ""
                 name = urllib.quote_plus(inscrit.prenom.encode("utf-8")) + "+" + urllib.quote_plus(letter.encode("utf-8"))
-                # print "comparaison", name, combinaison
+                # print("comparaison", name, combinaison)
                 if name == combinaison:
                     action += "_salarie"
                     who = inscrit
@@ -76,47 +74,48 @@ def write_apache_logs_to_journal(filename):
                 result.append((action, who.idx, date))
 
     result.sort(key=lambda tup: tup[-1])  # sorts in place
-    f = file("journal.txt", "w")
+    f = open("journal.txt", "w")
     for action, idx, date in result:
         print(action, idx, date)
         f.write("%s %d %s\n" % (action, idx, date))
     f.close()
 
 
-def sync_tablette_lines(lines, tz=None):
+def sync_tablette_lines(lines, tz=None, traces=False):
     last_imported_day = datetime.date.today()
     date = datetime.datetime.now(tz=tz)
     hour = float(date.hour) + float(date.minute) / 60
-    if hour < creche.fermeture:
+    if hour < database.creche.fermeture:
         last_imported_day -= datetime.timedelta(1)
 
     def AddPeriodes(who, date, periodes):
-        if date in who.journees:
-            journee = who.journees[date]
-            journee.RemoveActivities(0)
-            journee.RemoveActivities(0 | PREVISIONNEL)
-        else:
-            journee = who.AddJournee(date)
+        day = who.days.get(date, Day())
+        while day.timeslots:
+            who.days.remove(day.timeslots[0])
         for periode in periodes:
-            AddPeriode(who, journee, periode)
+            AddPeriode(who, date, periode, TimeslotInscrit if isinstance(who, Inscrit) else TimeslotSalarie)
 
-    def AddPeriode(who, journee, periode):
-        value = 0
+    def AddPeriode(who, date, periode, cls):
+        arrivee = int(database.creche.ouverture * (60 // BASE_GRANULARITY))
+        depart = int(database.creche.fermeture * (60 // BASE_GRANULARITY))
         if periode.absent:
             value = VACANCES
         elif periode.malade:
             value = MALADE
-        elif not periode.arrivee:
-            errors.append(u"%s : Pas d'arrivée enregistrée le %s" % (GetPrenomNom(who), periode.date))
-            periode.arrivee = int(creche.ouverture * (60 / BASE_GRANULARITY))
-        elif not periode.depart:
-            errors.append(u"%s : Pas de départ enregistré le %s" % (GetPrenomNom(who), periode.date))
-            periode.depart = int(creche.fermeture * (60 / BASE_GRANULARITY))
-
-        if value < 0:
-            journee.SetState(value)
         else:
-            journee.SetActivity(periode.arrivee, periode.depart, value)
+            value = 0
+            if periode.arrivee:
+                arrivee = periode.arrivee
+            else:
+                errors.append("%s : Pas d'arrivée enregistrée le %s" % (GetPrenomNom(who), periode.date))
+            if periode.depart:
+                depart = periode.depart
+            else:
+                errors.append("%s : Pas de départ enregistré le %s" % (GetPrenomNom(who), periode.date))
+
+        if traces:
+            print("Nouveau timeslot pour", date)
+        who.days.add(cls(date=date, debut=arrivee, fin=depart, value=value))
         history.Append(None)
 
     array_enfants = {}
@@ -139,14 +138,14 @@ def sync_tablette_lines(lines, tz=None):
             if date not in array[idx]:
                 array[idx][date] = []
             if label == "arrivee":
-                arrivee = (heure + TABLETTE_MARGE_ARRIVEE) / creche.granularite * (creche.granularite / BASE_GRANULARITY)
+                arrivee = (heure + TABLETTE_MARGE_ARRIVEE) // database.creche.granularite * (database.creche.granularite // BASE_GRANULARITY)
                 if len(array[idx][date]) == 0 or (array[idx][date][-1].arrivee and array[idx][date][-1].depart):
                     array[idx][date].append(PeriodePresence(date, arrivee))
                 elif array[idx][date][-1].depart:
                     array[idx][date][-1].arrivee = array[idx][date][-1].depart
                     array[idx][date][-1].depart = None
             elif label == "depart":
-                depart = (heure + creche.granularite - TABLETTE_MARGE_ARRIVEE) / creche.granularite * (creche.granularite / BASE_GRANULARITY)
+                depart = (heure + database.creche.granularite - TABLETTE_MARGE_ARRIVEE) // database.creche.granularite * (database.creche.granularite // BASE_GRANULARITY)
                 if len(array[idx][date]) > 0:
                     last = array[idx][date][-1]
                     last.depart = depart
@@ -158,34 +157,35 @@ def sync_tablette_lines(lines, tz=None):
                 array[idx][date].append(PeriodePresence(date, malade=True))
             else:
                 print("Ligne %s inconnue" % label)
-            creche.last_tablette_synchro = line
+            database.creche.last_tablette_synchro = line
         except Exception as e:
             print(e)
 
-    # print array_salaries
+    # print(array_salaries)
 
     errors = []
     for key in array_enfants:
-        inscrit = creche.GetInscrit(key)
+        inscrit = database.creche.GetInscrit(key)
         if inscrit:
             for date in array_enfants[key]:
-                if not creche.cloture_facturation or not inscrit.IsFactureCloturee(date):
+                if not database.creche.cloture_facturation or date not in inscrit.clotures:
                     AddPeriodes(inscrit, date, array_enfants[key][date])
         else:
-            errors.append(u"Inscrit %d: Inconnu!" % key)
+            errors.append("Inscrit %d: Inconnu!" % key)
     for key in array_salaries:
-        salarie = creche.GetSalarie(key)
+        salarie = database.creche.GetSalarie(key)
         if salarie:
             for date in array_salaries[key]:
-                # print key, GetPrenomNom(salarie), periode
+                # print(key, GetPrenomNom(salarie), periode)
                 AddPeriodes(salarie, date, array_salaries[key][date])
         else:
-            errors.append(u"Salarié %d: Inconnu!" % key)
+            errors.append("Salarié %d: Inconnu!" % key)
 
+    database.commit()
     return errors
 
 
-def sync_tablette():
+def sync_tablette(traces=False):
     print("Synchro tablette ...")
 
     journal = config.connection.LoadJournal()
@@ -195,9 +195,9 @@ def sync_tablette():
     lines = journal.split("\n")
 
     index = -1
-    if len(creche.last_tablette_synchro) > 20:
+    if len(database.creche.last_tablette_synchro) > 20:
         try:
-            index = lines.index(creche.last_tablette_synchro)
+            index = lines.index(database.creche.last_tablette_synchro)
         except:
             pass
 
@@ -206,19 +206,14 @@ def sync_tablette():
         tz = pytz.timezone('Europe/Paris')
     else:
         tz = None
-    sync_tablette_lines(lines[index + 1:], tz)
+    sync_tablette_lines(lines[index + 1:], tz, traces=traces)
 
 
 if __name__ == "__main__":
-    import __builtin__
-    import config
-    import sqlinterface
+    config.load(sys.argv[1])
+    config.connection = get_connection_from_config()
+    database.init(config.database)
+    database.load()
 
-    __builtin__.sql_connection = sqlinterface.SQLConnection(sys.argv[1])
-    __builtin__.creche = sql_connection.Load(None)
-
-    # write_apache_logs_to_journal("D:/logs")
-
-    lines = file(sys.argv[2]).readlines()
-    sync_tablette_lines(lines)
-    sql_connection.close()
+    database.creche.last_tablette_synchro = sys.argv[2]
+    sync_tablette(traces=True)

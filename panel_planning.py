@@ -16,30 +16,112 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
+from __future__ import print_function
 
-import datetime
-from globals import *
-from constants import *
-from parameters import *
-from functions import *
-from sqlobjects import *
 from controls import *
-from planning import PlanningWidget, GetPlanningLinesChildren, GetPlanningLinesSalaries
-from ooffice import *
-from doc_planning_detaille import PlanningDetailleModifications
+from generation.planning_hebdomadaire import PlanningHebdomadaireSalariesModifications
+from planning import PlanningWidget, BaseWxPythonLine, WxPlanningSeparator
+from planning_line import *
+from document_dialog import *
+from generation.planning_detaille import PlanningDetailleModifications
 import tablette
+
+
+class WxChildPlanningLine(ChildPlanningLine, BaseWxPythonLine):
+    pass
+
+
+class WxSalariePlanningLine(SalariePlanningLine, BaseWxPythonLine):
+    pass
+
+
+# TODO make those function names consistent
+def timeslots_intersection(timeslot1, timeslot2):
+    min_ts, max_ts = (timeslot1, timeslot2) if timeslot1.debut < timeslot2.debut else (timeslot2, timeslot1)
+    if min_ts.fin <= max_ts.debut:
+        return None
+    else:
+        return Timeslot(max_ts.debut, min_ts.fin if min_ts.fin < max_ts.fin else max_ts.fin, 0)
+
+
+def check_timeslot(timeslot, max_timeslots, check_function):
+    result = []
+    for max_timeslot in max_timeslots:
+        intersection = timeslots_intersection(timeslot, max_timeslot)
+        if intersection:
+            result = []
+            if intersection.debut != timeslot.debut:
+                result.extend(check_timeslot(Timeslot(timeslot.debut, intersection.debut, timeslot.value), max_timeslots, check_function))
+            result.append(Timeslot(intersection.debut, intersection.fin, timeslot.value, overflow=not check_function(timeslot.value, max_timeslot.value)))
+            if intersection.fin != timeslot.fin:
+                result.extend(check_timeslot(Timeslot(intersection.fin, timeslot.fin, timeslot.value), max_timeslots, check_function))
+            break
+    else:
+        timeslot.overflow = not check_function(timeslot.value, 0)
+        result.append(timeslot)
+    result.sort(key=lambda timeslot: timeslot.debut)
+    i = 0
+    while i < len(result) - 1:
+        timeslot1 = result[i]
+        timeslot2 = result[i+1]
+        if timeslot1.fin == timeslot2.debut and timeslot1.value == timeslot2.value and timeslot1.overflow == timeslot2.overflow:
+            timeslot1.fin = timeslot2.fin
+            del result[i+1]
+        else:
+            i += 1
+    return result
+
+
+def fill_timeslots_with_zero(timeslots, debut, fin):
+    if timeslots:
+        timeslots.sort(key=lambda timeslot: timeslot.debut)
+        if timeslots[0].debut > debut:
+            timeslots.insert(0, Timeslot(debut, timeslots[0].debut, 0))
+        if timeslots[-1].fin < fin:
+            timeslots.append(Timeslot(timeslots[-1].fin, fin, 0))
+        i = 0
+        while i < len(timeslots) - 1:
+            if timeslots[i].fin < timeslots[i + 1].debut:
+                timeslots.insert(i + 1, Timeslot(timeslots[i].fin, timeslots[i + 1].debut, 0))
+            i += 1
+    else:
+        timeslots.append(Timeslot(debut, fin, 0))
+
+
+def filter_zero_and_not_overflow_timeslots(timeslots):
+    return [timeslot for timeslot in timeslots if timeslot.value != 0 or timeslot.overflow]
 
 
 class DayPlanningPanel(PlanningWidget):
     def __init__(self, parent, activity_combobox):
-        PlanningWidget.__init__(self, parent, activity_combobox, COMMENTS | ACTIVITES | TWO_PARTS | DEPASSEMENT_CAPACITE, self.CheckLine)
+        PlanningWidget.__init__(self, parent, activity_combobox, COMMENTS | ACTIVITES | TWO_PARTS | DEPASSEMENT_CAPACITE)
 
+    def get_summary(self):
+        activites, activites_sans_horaires = PlanningWidget.get_summary(self)
+        if 0 in activites:
+            children_presence = activites[0]
+            revised_children_presence = []
+            for timeslot in children_presence:
+                revised_children_presence.extend(check_timeslot(timeslot, database.creche.tranches_capacite.get(self.date.weekday(), Day()).timeslots, lambda timeslot, capacite_timeslot: timeslot <= capacite_timeslot))
+            activites[0] = revised_children_presence
+            if database.creche.salaries:
+                debut, fin = revised_children_presence[0].debut, revised_children_presence[-1].fin
+                if PRESENCE_SALARIE in activites:
+                    salaries_presence = activites[PRESENCE_SALARIE]
+                    fill_timeslots_with_zero(salaries_presence, debut, fin)
+                    revised_salaries_presence = []
+                    for timeslot in salaries_presence:
+                        revised_salaries_presence.extend(check_timeslot(timeslot, children_presence, lambda timeslot, children_timeslot: timeslot * 6.5 >= children_timeslot))
+                    activites[PRESENCE_SALARIE] = filter_zero_and_not_overflow_timeslots(revised_salaries_presence)
+        return activites, activites_sans_horaires
+
+    print("TODO CheckLine pas appelé")
     def CheckLine(self, line, plages_selectionnees):
         lines = self.GetSummaryLines()
-        activites, activites_sans_horaires = GetActivitiesSummary(creche, lines)
+        activites, activites_sans_horaires = GetActivitiesSummary(lines)
         for start, end in plages_selectionnees:
             for i in range(start, end):
-                if activites[0][i][0] > creche.GetCapacite(line.day):
+                if activites[0][i][0] > database.creche.get_capacite(line.day):
                     dlg = wx.MessageDialog(None, "Dépassement de la capacité sur ce créneau horaire !", "Attention", wx.OK|wx.ICON_WARNING)
                     dlg.ShowModal()
                     dlg.Destroy()
@@ -47,8 +129,8 @@ class DayPlanningPanel(PlanningWidget):
                     return
 
     def UpdateContents(self):
-        if self.date in creche.jours_fermeture:
-            conge = creche.jours_fermeture[self.date]
+        if self.date in database.creche.jours_fermeture:
+            conge = database.creche.jours_fermeture[self.date]
             if conge.options == ACCUEIL_NON_FACTURE:
                 self.SetInfo(conge.label)
             else:
@@ -60,36 +142,36 @@ class DayPlanningPanel(PlanningWidget):
         else:
             self.SetInfo("")
 
-        self.lignes_enfants = GetPlanningLinesChildren(self.date, self.site, self.groupe)
-        if creche.groupes and (creche.tri_planning & TRI_GROUPE):
+        self.lignes_enfants = WxChildPlanningLine.select(self.date, self.site, self.groupe)
+        if database.creche.groupes and (database.creche.tri_planning & TRI_GROUPE):
             groupe = 0
             lines = []
             for line in self.lignes_enfants:
                 if groupe != line.inscription.groupe:
                     groupe = line.inscription.groupe
-                    lines.append(groupe.nom if groupe else "")
+                    lines.append(WxPlanningSeparator(groupe.nom if groupe else ""))
                 lines.append(line)
         else:
             lines = self.lignes_enfants[:]
 
-        self.lignes_salaries = GetPlanningLinesSalaries(self.date, self.site)
+        self.lignes_salaries = WxSalariePlanningLine.select(self.date, self.site)
         if self.lignes_salaries:
-            lines.append("Salariés")
+            lines.append(WxPlanningSeparator("Salariés"))
             lines += self.lignes_salaries
         self.SetLines(lines)
 
     def GetSummaryDynamicText(self):
         heures = 0.0
         for line in self.lignes_enfants:
-            heures += line.GetNombreHeures()
-            day = line.day
+            heures += line.day.get_duration() if line.day else line.reference.get_duration()
+            # day = line.day
 
         if heures > 0:
             text = GetHeureString(heures)
             if self.site:
-                den = self.site.capacite * creche.GetAmplitudeHoraire()
+                den = self.site.capacite * database.creche.get_amplitude_horaire()
             else:
-                den = creche.GetHeuresAccueil(day)
+                den = database.creche.GetHeuresAccueil(self.date.weekday())
             if den > 0:
                 text += " /  %.1f%%" % (heures * 100 / den)
             return text
@@ -115,10 +197,10 @@ class PlanningBasePanel(GPanel):
 
         # La combobox pour la selection du site
         self.site_choice = wx.Choice(self, -1)
-        for site in creche.sites:
-            self.site_choice.Append(site.nom, site)
+        for site in database.creche.sites:
+            self.site_choice.Append(site.get_name(), site)
         self.topsizer.Add(self.site_choice, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.RIGHT, 5)
-        if len(creche.sites) < 2:
+        if len(database.creche.sites) < 2:
             self.site_choice.Show(False)
         self.site_choice.SetSelection(0)
         self.Bind(wx.EVT_CHOICE, self.OnChangementSemaine, self.site_choice)
@@ -150,9 +232,9 @@ class PlanningBasePanel(GPanel):
         return self.week_choice.GetClientData(selection)
 
     def UpdateGroupeCombobox(self):
-        if len(creche.groupes) > 0:
+        if len(database.creche.groupes) > 0:
             self.groupe_choice.Clear()
-            for groupe, value in [("Tous groupes", None)] + [(groupe.nom, groupe) for groupe in creche.groupes]:
+            for groupe, value in [("Tous groupes", None)] + [(groupe.nom, groupe) for groupe in database.creche.groupes]:
                 self.groupe_choice.Append(groupe, value)
             self.groupe_choice.SetSelection(0)
             self.groupe_choice.Show(True)
@@ -172,14 +254,14 @@ class PlanningBasePanel(GPanel):
         self.OnChangementSemaine()
 
     def GetSelectedSite(self):
-        if len(creche.sites) > 1:
+        if len(database.creche.sites) > 1:
             self.current_site = self.site_choice.GetSelection()
             return self.site_choice.GetClientData(self.current_site)
         else:
             return None
 
     def GetSelectedGroupe(self):
-        if len(creche.groupes) > 1:
+        if len(database.creche.groupes) > 1:
             selection = self.groupe_choice.GetSelection()
             return self.groupe_choice.GetClientData(selection)
         else:
@@ -194,11 +276,15 @@ class PlanningHorairePanel(PlanningBasePanel):
         self.activity_choice = ActivityComboBox(self)
         self.topsizer.Add(self.activity_choice, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
 
-        # Le bouton d'impression
+        # Les boutons d'impression
         bmp = wx.Bitmap(GetBitmapFile("printer.png"), wx.BITMAP_TYPE_PNG)
         button = wx.BitmapButton(self, -1, bmp, style=wx.NO_BORDER)
-        self.topsizer.Add(button, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
+        self.topsizer.Add(button, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 5)
         self.Bind(wx.EVT_BUTTON, self.OnPrintPlanning, button)
+        if IsTemplateFile("Planning hebdomadaire salaries.ods"):
+            button = wx.BitmapButton(self, -1, bmp, style=wx.NO_BORDER)
+            self.topsizer.Add(button, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 5)
+            self.Bind(wx.EVT_BUTTON, self.OnPrintPlanningSalaries, button)
 
         # Le bouton de synchro tablette
         if config.options & TABLETTE:
@@ -210,28 +296,32 @@ class PlanningHorairePanel(PlanningBasePanel):
         # Le notebook pour les jours de la semaine
         self.notebook = wx.Notebook(self, style=wx.LB_DEFAULT)
         self.sizer.Add(self.notebook, 1, wx.EXPAND|wx.TOP, 5)
-        first_monday = GetFirstMonday()
+        first_monday = config.get_first_monday()
         delta = datetime.date.today() - first_monday
         semaine = int(delta.days / 7)
         for week_day in range(7):
-            if IsJourSemaineTravaille(week_day):
+            if database.creche.is_jour_semaine_travaille(week_day):
                 date = first_monday + datetime.timedelta(semaine * 7 + week_day)
                 planning_panel = DayPlanningPanel(self.notebook, self.activity_choice)
                 self.notebook.AddPage(planning_panel, GetDateString(date))
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnChangementSemaineday, self.notebook)
         self.sizer.Layout()
 
-    def OnPrintPlanning(self, evt):
+    def OnPrintPlanning(self, _):
         site = self.GetSelectedSite()
         groupe = self.GetSelectedGroupe()
         start = self.GetSelectionStart()
         end = start + datetime.timedelta(6)
         DocumentDialog(self, PlanningDetailleModifications((start, end), site, groupe)).ShowModal()
 
-    def OnChangementSemaineday(self, evt=None):
+    def OnPrintPlanningSalaries(self, _):
+        start = self.GetSelectionStart()
+        DocumentDialog(self, PlanningHebdomadaireSalariesModifications(start)).ShowModal()
+
+    def OnChangementSemaineday(self, _):
         self.notebook.GetCurrentPage().UpdateContents()
 
-    def OnChangementSemaine(self, evt=None):
+    def OnChangementSemaine(self, _=None):
         self.UpdateWeek()
         self.notebook.SetSelection(0)
         self.sizer.Layout()
@@ -246,12 +336,14 @@ class PlanningHorairePanel(PlanningBasePanel):
         monday = self.week_choice.GetClientData(week_selection)
         page_index = 0
         for week_day in range(7):
-            if IsJourSemaineTravaille(week_day):
+            if database.creche.is_jour_semaine_travaille(week_day):
                 day = monday + datetime.timedelta(week_day)
                 self.notebook.SetPageText(page_index, GetDateString(day))
                 note = self.notebook.GetPage(page_index)
                 note.SetData(site, groupe, day)
                 page_index += 1
+            else:
+                print("TODO desactiver la page si elle existe")
 
     def OnTabletteSynchro(self, _):
         errors = tablette.sync_tablette()
@@ -264,10 +356,10 @@ class PlanningHorairePanel(PlanningBasePanel):
         self.UpdateWeek()
 
     def UpdateContents(self):
-        if len(creche.sites) > 1:
+        if len(database.creche.sites) > 1:
             self.site_choice.Show(True)
             self.site_choice.Clear()
-            for site in creche.sites:
+            for site in database.creche.sites:
                 self.site_choice.Append(site.nom, site)
             self.site_choice.SetSelection(self.current_site)
         else:
@@ -291,7 +383,7 @@ class PlanningHebdomadairePanel(PlanningBasePanel):
         self.grid.CreateGrid(0, 0)
         self.grid.SetDefaultColSize(200)
         self.grid.SetRowLabelSize(250)
-        self.grid.EnableEditing(not readonly)
+        self.grid.EnableEditing(not config.readonly)
         self.sizer.Add(self.grid, -1, wx.EXPAND|wx.RIGHT|wx.TOP, 5)
         self.sizer.Layout()
         self.Bind(wx.grid.EVT_GRID_CELL_CHANGE, self.OnCellChange, self.grid)
@@ -311,7 +403,7 @@ class PlanningHebdomadairePanel(PlanningBasePanel):
         sunday = monday + datetime.timedelta(6)
 
         old_count = self.grid.GetNumberCols()
-        self.activites = creche.activites.values()
+        self.activites = database.creche.activites.values()
         new_count = len(self.activites)
         if new_count > old_count:
             self.grid.AppendCols(new_count - old_count)
@@ -320,9 +412,9 @@ class PlanningHebdomadairePanel(PlanningBasePanel):
 
         for i, activity in enumerate(self.activites):
             self.grid.SetColLabelValue(i, activity.label)
-            self.grid.SetColFormatFloat(i, precision=(0 if activity.mode == MODE_SANS_HORAIRES or creche.mode_saisie_planning == SAISIE_JOURS_SEMAINE else 1))
+            self.grid.SetColFormatFloat(i, precision=(0 if activity.mode == MODE_SANS_HORAIRES or database.creche.mode_saisie_planning == SAISIE_JOURS_SEMAINE else 1))
 
-        self.inscrits = [inscrit for inscrit in creche.inscrits if inscrit.IsPresent(monday, sunday, site)]
+        self.inscrits = [inscrit for inscrit in database.creche.inscrits if inscrit.is_present(monday, sunday, site)]
         self.inscrits = GetEnfantsTriesSelonParametreTriPlanning(self.inscrits)
         old_count = self.grid.GetNumberRows()
         new_count = len(self.inscrits)
@@ -332,24 +424,28 @@ class PlanningHebdomadairePanel(PlanningBasePanel):
             self.grid.DeleteRows(0, old_count - new_count)
         for row, inscrit in enumerate(self.inscrits):
             self.grid.SetRowLabelValue(row, GetPrenomNom(inscrit))
-            if monday in inscrit.semaines:
-                semaine = inscrit.semaines[monday]
-                for i, activity in enumerate(self.activites):
-                    if activity.value in semaine.activities:
-                        self.grid.SetCellValue(row, i, locale.format("%f", semaine.activities[activity.value].value))
+            for i, activity in enumerate(self.activites):
+                activity_slot = inscrit.get_week_activity_slot(monday, activity.value)
+                if activity_slot:
+                    self.grid.SetCellValue(row, i, locale.format("%f", activity_slot.value))
         self.sizer.Layout()
 
     def OnCellChange(self, evt):
         date = self.GetSelectionStart()
         value = self.grid.GetCellValue(evt.GetRow(), evt.GetCol())
+        value = float(value.replace(',', '.'))
         inscrit = self.inscrits[evt.GetRow()]
-        if date not in inscrit.semaines:
-            inscrit.semaines[date] = WeekPlanning(inscrit, date)
+        activity_value = self.activites[evt.GetCol()].value
         history.Append(None)
-        inscrit.semaines[date].SetActivity(self.activites[evt.GetCol()].value, float(value.replace(',', '.')))
+        week_slot = inscrit.get_week_activity_slot(date, activity_value)
+        if week_slot:
+            week_slot.value = value
+        else:
+            inscrit.weekslots.append(WeekSlotInscrit(inscrit=inscrit, date=date, activity=activity_value, value=value))
 
 
-if creche.mode_saisie_planning == SAISIE_HORAIRE:
-    PlanningPanel = PlanningHorairePanel
-else:
-    PlanningPanel = PlanningHebdomadairePanel
+def get_planning_class():
+    if database.creche.mode_saisie_planning == SAISIE_HORAIRE:
+        return PlanningHorairePanel
+    else:
+        return PlanningHebdomadairePanel

@@ -1,4 +1,4 @@
-'''
+"""
 Created on Mar 12, 2014
 
 Copyright (c) 2014 Congressus, The Netherlands
@@ -27,7 +27,7 @@ Copyright (c) 2014 Congressus, The Netherlands
 @author: Congressus
 @license: MIT License
 @version: 1.0
-'''
+"""
 
 import xml.etree.cElementTree as ET
 import random
@@ -173,11 +173,11 @@ class PySepaDD(object):
             self._add_non_batch(TX_nodes, PmtInf_nodes)
 
     def export(self):
-        '''
+        """
         Method to output the xml as string. It will finalize the batches and
         then calculate the checksums (amount sum and transaction count),
         fill these into the group header and output the XML.
-        '''
+        """
         self._finalize_batch()
 
         ctrl_sum_total = 0
@@ -202,8 +202,7 @@ class PySepaDD(object):
 
         #Prepending the XML version is hacky, but cElementTree only offers this
         #automatically if you write to a file, which we don't necessarily want.
-        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + ET.tostring(
-               self._xml, "utf-8")
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + ET.tostring(self._xml, "utf-8")
 
     def _prepare_document(self):
         '''

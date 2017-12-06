@@ -17,18 +17,16 @@
 
 from __future__ import unicode_literals
 
-import __builtin__
 import shutil
-import thread
 import traceback
 import bcrypt
 import requests
 import wx.lib.newevent
-from config import LoadConfig, Load, Exit, CONFIG_FILENAME, DEFAULT_DATABASE, DEMO_DATABASE
+from config import CONFIG_FILENAME, DEFAULT_DATABASE, DEMO_DATABASE
 from functions import *
 from mainwindow import GertrudeFrame
-
-__builtin__.server = None
+from connection import get_connection_from_config
+from progress import *
 
 
 class StartDialog(wx.Dialog):
@@ -44,16 +42,16 @@ class StartDialog(wx.Dialog):
         self.sizer.Add(bmp, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
 
         self.info = wx.TextCtrl(self, -1, "Démarrage ...\n", size=(-1, 70), style=wx.TE_READONLY|wx.TE_MULTILINE)
-        self.sizer.Add(self.info, 0, wx.EXPAND|wx.ALL, 5)
+        self.sizer.Add(self.info, 0, wx.EXPAND | wx.ALL, 5)
         self.gauge = wx.Gauge(self, -1, 100, style=wx.GA_SMOOTH)
-        self.sizer.Add(self.gauge, 0, wx.EXPAND|wx.ALL, 5)
+        self.sizer.Add(self.gauge, 0, wx.EXPAND | wx.ALL, 5)
         
         self.creche_sizer = wx.FlexGridSizer(0, 2, 5, 10)
         self.creche_sizer.AddGrowableCol(1, 1)
         self.creche_ctrl = wx.Choice(self)
-        self.creche_sizer.AddMany([(wx.StaticText(self, -1, "Structure :"), 0, wx.ALIGN_CENTRE_VERTICAL|wx.ALL-wx.BOTTOM, 5), (self.creche_ctrl, 0, wx.EXPAND|wx.ALIGN_CENTRE_VERTICAL|wx.ALL-wx.BOTTOM, 5)])
+        self.creche_sizer.AddMany([(wx.StaticText(self, -1, "Structure :"), 0, wx.ALIGN_CENTRE_VERTICAL|wx.ALL-wx.BOTTOM, 5), (self.creche_ctrl, 0, wx.EXPAND | wx.ALIGN_CENTRE_VERTICAL|wx.ALL-wx.BOTTOM, 5)])
         self.Bind(wx.EVT_TEXT_ENTER, self.OnOk, self.creche_ctrl)
-        self.sizer.Add(self.creche_sizer, 0, wx.EXPAND|wx.ALL, 5)
+        self.sizer.Add(self.creche_sizer, 0, wx.EXPAND | wx.ALL, 5)
         self.sizer.Hide(self.creche_sizer)
         
         self.fields_sizer = wx.FlexGridSizer(0, 2, 5, 10)
@@ -61,12 +59,12 @@ class StartDialog(wx.Dialog):
         self.login_ctrl = wx.TextCtrl(self, style=wx.TE_PROCESS_ENTER)
         self.Bind(wx.EVT_TEXT_ENTER, self.OnOk, self.login_ctrl)
         self.login_ctrl.SetHelpText("Entrez votre identifiant")
-        self.fields_sizer.AddMany([(wx.StaticText(self, -1, "Identifiant :"), 0, wx.ALIGN_CENTRE_VERTICAL|wx.ALL-wx.BOTTOM, 5), (self.login_ctrl, 0, wx.EXPAND|wx.ALIGN_CENTRE_VERTICAL|wx.ALL-wx.BOTTOM, 5)])
-        self.passwd_ctrl = wx.TextCtrl(self, style=wx.TE_PASSWORD|wx.TE_PROCESS_ENTER)
+        self.fields_sizer.AddMany([(wx.StaticText(self, -1, "Identifiant :"), 0, wx.ALIGN_CENTRE_VERTICAL|wx.ALL-wx.BOTTOM, 5), (self.login_ctrl, 0, wx.EXPAND | wx.ALIGN_CENTRE_VERTICAL|wx.ALL-wx.BOTTOM, 5)])
+        self.passwd_ctrl = wx.TextCtrl(self, style=wx.TE_PASSWORD | wx.TE_PROCESS_ENTER)
         self.Bind(wx.EVT_TEXT_ENTER, self.OnOk, self.passwd_ctrl)
         self.passwd_ctrl.SetHelpText("Entrez votre mot de passe")
-        self.fields_sizer.AddMany([(wx.StaticText(self, -1, "Mot de passe :"), 0, wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5), (self.passwd_ctrl, 0, wx.EXPAND|wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5)])
-        self.sizer.Add(self.fields_sizer, 0, wx.EXPAND|wx.ALL, 5)
+        self.fields_sizer.AddMany([(wx.StaticText(self, -1, "Mot de passe :"), 0, wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5), (self.passwd_ctrl, 0, wx.EXPAND | wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5)])
+        self.sizer.Add(self.fields_sizer, 0, wx.EXPAND | wx.ALL, 5)
         self.sizer.Hide(self.fields_sizer)
         
         self.btnsizer = wx.StdDialogButtonSizer()
@@ -88,8 +86,6 @@ class StartDialog(wx.Dialog):
         w, h = self.sizer.GetSize()
         self.SetPosition(((W-w)/2, (H-h)/2 - 50))
 
-        __builtin__.force_token = False
-
         if sys.platform != "darwin" and not os.path.isfile(CONFIG_FILENAME) and not os.path.isfile(DEFAULT_DATABASE) and os.path.isfile(DEMO_DATABASE):
             dlg = wx.MessageDialog(self,
                                    "Vous utilisez Gertrude pour la première fois, voulez-vous installer une base de démonstration ?",
@@ -100,26 +96,22 @@ class StartDialog(wx.Dialog):
                 
         self.MessageEvent, EVT_MESSAGE_EVENT = wx.lib.newevent.NewEvent()
         self.Bind(EVT_MESSAGE_EVENT, self.OnMessage)
-        self.LoadedEvent, EVT_PROGRESS_EVENT = wx.lib.newevent.NewEvent()
-        self.Bind(EVT_PROGRESS_EVENT, self.OnLoaded)       
-        thread.start_new_thread(self.Load, ())
+        wx.CallAfter(self.Load, None)
 
-    def OnLoaded(self, event):
-        if event.result is False:
+    def OnLoaded(self, result):
+        if result is False:
             self.info.AppendText("Erreur lors du chargement !\n")
             self.SetGauge(100)
             return
                 
-        if event.result is None:
+        if result is None:
             self.sizer.Hide(self.gauge)
             self.info.AppendText("Choix de la structure ...\n")
             self.sizer.Show(self.creche_sizer)
-            sections = config.sections.keys()
-            sections.sort(key=lambda v: v.upper())
-            for section in sections:
-                self.creche_ctrl.Append(section)
+            for name in config.sections_names:
+                self.creche_ctrl.Append(name)
             if config.default_section:
-                self.creche_ctrl.SetStringSelection(config.default_section)
+                self.creche_ctrl.SetStringSelection(config.default_section.name)
             else:
                 self.creche_ctrl.SetSelection(0)
             self.sizer.Show(self.btnsizer)
@@ -127,26 +119,21 @@ class StartDialog(wx.Dialog):
             self.sizer.Layout()
             self.sizer.Fit(self)
             return
-        
-        if config.options & READONLY:
-            __builtin__.readonly = True
-        elif readonly:
+
+        if config.connection.is_token_already_used():
             dlg = wx.MessageDialog(self,
                                    "Le jeton n'a pas pu être pris. Gertrude sera accessible en lecture seule. Voulez-vous forcer la prise du jeton ?",
                                    "Gertrude",
                                    wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION)
             result = dlg.ShowModal()
             dlg.Destroy()
-            if result == wx.ID_YES:
-                __builtin__.force_token = True
-                __builtin__.readonly = False
-                thread.start_new_thread(self.Load, ())
-                return
+            if result != wx.ID_YES or not config.connection.get_token(force=True):
+                config.readonly = True
 
-        self.loaded = True        
-        sql_connection.open()
-        if len(creche.users) == 0:
-            __builtin__.profil = PROFIL_ALL | PROFIL_ADMIN
+        self.loaded = True
+        database.load()
+        if (config.options & NO_PASSWORD) or len(database.creche.users) == 0:
+            config.profil = PROFIL_ALL | PROFIL_ADMIN
             self.StartFrame()
         else:
             self.sizer.Hide(self.gauge)
@@ -173,31 +160,27 @@ class StartDialog(wx.Dialog):
                 
     def Load(self, section=None):
         if sys.platform != "darwin":
-            time.sleep(1)
+            time.sleep(0.5)
         try:
             if section is None:
-                LoadConfig(progress_handler=ProgressHandler(self.AppendMessage, self.SetGauge, 0, 5))
-                if config.connection is None:
-                    wx.PostEvent(self, self.LoadedEvent(result=None))
+                config.load(progress_handler=ProgressHandler(self.AppendMessage, self.SetGauge, 0, 5))
+                if config.current_section is None:
+                    wx.CallAfter(self.OnLoaded, None)
                     return
-            result = Load(ProgressHandler(self.AppendMessage, self.SetGauge, 5, 50))
+            config.readonly = bool(config.options & READONLY)
+            config.connection = get_connection_from_config()
+            result = config.connection.Load(ProgressHandler(self.AppendMessage, self.SetGauge, 5, 10))
+            database.init(config.database)
         except requests.ConnectionError:
             traceback.print_exc()
             self.info.AppendText("Erreur de connection avec le serveur\n")
             result = False
         except Exception as e:
+            print("Exception", e)
             traceback.print_exc()
-            try:
-                self.info.AppendText(str(e) + "\n")
-            except:
-                self.info.AppendText("Erreur : " + repr(e) + "\n")
+            self.info.AppendText(str(e) + "\n")
             result = False
-        # we close database since it's opened from an other thread
-        try:
-            sql_connection.close()
-        except:
-            pass
-        wx.PostEvent(self, self.LoadedEvent(result=result))
+        wx.CallAfter(self.OnLoaded, result)
 
     def StartFrame(self):
         frame = GertrudeFrame(ProgressHandler(self.info.AppendText, self.SetGauge, 50, 100))
@@ -208,7 +191,7 @@ class StartDialog(wx.Dialog):
             frame.Show()
 
     def OnOk(self, _):
-        if config.connection is None:
+        if config.current_section is None:
             self.sizer.Hide(self.creche_sizer)
             self.sizer.Hide(self.btnsizer)
             self.sizer.Show(self.gauge)
@@ -216,21 +199,21 @@ class StartDialog(wx.Dialog):
             self.sizer.Fit(self)
             section = self.creche_ctrl.GetStringSelection()
             self.info.AppendText("Structure %s sélectionnée.\n" % section)
-            config.setSection(section)
-            thread.start_new_thread(self.Load, (section, ))
+            config.set_current_section(section)
+            wx.CallAfter(self.Load, section)
             return
             
         login = self.login_ctrl.GetValue()
         password = self.passwd_ctrl.GetValue().encode("utf-8")
 
-        for user in creche.users:
+        for user in database.creche.users:
             hashed = user.password.encode("utf-8")
             if login == user.login and bcrypt.checkpw(password, hashed):
-                __builtin__.profil = user.profile
+                config.profil = user.profile
                 if user.profile & PROFIL_LECTURE_SEULE:
-                    if __builtin__.server:
-                        __builtin__.server.close()
-                    __builtin__.readonly = True
+                    if config.server:
+                        config.server.close()
+                    config.readonly = True
                 self.StartFrame()
                 return
         else:
@@ -241,5 +224,5 @@ class StartDialog(wx.Dialog):
     def OnExit(self, _):
         self.info.AppendText("\nFermeture ...\n")
         if self.loaded:
-            Exit(ProgressHandler(self.info.AppendText, self.SetGauge, 5, 100))
+            config.connection.Exit(ProgressHandler(self.info.AppendText, self.SetGauge, 5, 100))
         self.Destroy()

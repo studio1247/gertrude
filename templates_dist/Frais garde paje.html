@@ -24,7 +24,7 @@
    <td>= <var value="'%.02f' % heures_semaine"/>h</td>
   </tr>
 
-  <if value="creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS">
+  <if value="database.creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS">
   <tr>
    <td>Nombre d'heures de la p&eacute;riode (C)</td>
    <td>= <var value="'%.2f' % heures_periode"/> heures</td>
@@ -38,7 +38,7 @@
   </tr>
   </if>
 
-  <if value="creche.facturation_jours_feries != ABSENCES_DEDUITES_EN_JOURS">
+  <if value="database.creche.facturation_jours_feries != ABSENCES_DEDUITES_EN_JOURS">
   <tr>
    <td>Nombre de semaines de la p&eacute;riode (C)</td>
    <td>= <var value="'%d' % semaines_periode"/> semaines</td>

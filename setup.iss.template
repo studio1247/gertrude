@@ -11,7 +11,7 @@ AppUpdatesURL=https://www.gertrude-logiciel.org
 VersionInfoVersion={#GertrudeVersion}
 VersionInfoCompany=Bertrand Songis
 VersionInfoProductName=Gertrude
-AppCopyright=Copyright © 2005-2017 - Bertrand Songis
+AppCopyright=Copyright Â© 2005-2017 - Bertrand Songis
 
 DefaultDirName={pf}\Gertrude
 DefaultGroupName=Gertrude
@@ -57,6 +57,7 @@ Source: "demo.db";                               DestDir: "{app}";              
 
 ; ---> Subdirectories
 Source: "WinPython-32bit-2.7.13.1Zero\*";        DestDir: "{app}\WinPython-32bit-2.7.13.1Zero";        Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "generation\*.py";                       DestDir: "{app}\generation";                          Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "bitmaps_dist\*";                        DestDir: "{app}\bitmaps_dist";                        Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "bitmaps_dist\pictos\*";                 DestDir: "{app}\bitmaps_dist\pictos";                 Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "templates_dist\*";                      DestDir: "{app}\templates_dist";                      Flags: ignoreversion recursesubdirs createallsubdirs
@@ -66,7 +67,7 @@ Name: "{group}\Gertrude";                        Filename: "{app}\WinPython-32bi
 Name: "{userdesktop}\Gertrude";                  Filename: "{app}\WinPython-32bit-2.7.13.1Zero\python-2.7.13\pythonw.exe"; WorkingDir: "{app}"; Parameters: """{app}\gertrude.pyw"""; IconFilename: "{app}\bitmaps_dist\gertrude.ico"
 
 [Run]
-Filename: "{app}\WinPython-32bit-2.7.13.1Zero\python-2.7.13\pythonw.exe"; Description: "Démarrer Gertrude"; WorkingDir: "{app}"; Parameters: """{app}\gertrude.pyw"""; Flags: nowait postinstall skipifsilent
+Filename: "{app}\WinPython-32bit-2.7.13.1Zero\python-2.7.13\pythonw.exe"; Description: "DÃ©marrer Gertrude"; WorkingDir: "{app}"; Parameters: """{app}\gertrude.pyw"""; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
 ; uninstallation removes the compiled python files

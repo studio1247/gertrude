@@ -17,11 +17,24 @@
 
 from __future__ import unicode_literals
 
+import sys
+import os
+
 
 days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
 months = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
 months_abbrev = ["Janv", "Fév", "Mars", "Avril", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"]
 ordinaux = ["1er", "2ème", "3ème", "4ème"]
+
+# Sexe
+MASCULIN = 1
+FEMININ = 2
+
+RelationsItems = [
+    ("Parent manquant", None),
+    ("Papa", MASCULIN),
+    ("Maman", FEMININ),
+    ]
 
 # Profils des utilisateurs
 PROFIL_INSCRIPTIONS = 1
@@ -36,9 +49,11 @@ PROFIL_SUPERADMIN = 256
 
 TypesProfil = [
     ("Administrateur", PROFIL_ALL | PROFIL_ADMIN),
-    ("Equipe", PROFIL_ALL),
+    ("Bureau / direction", PROFIL_ALL),
+    ("Equipe", PROFIL_ALL - PROFIL_FACTURATION),
     ("Inscriptions, planning et salariés", PROFIL_INSCRIPTIONS | PROFIL_PLANNING | PROFIL_SALARIES),
     ("Inscriptions et planning", PROFIL_INSCRIPTIONS | PROFIL_PLANNING),
+    ("Planning et salariés", PROFIL_PLANNING | PROFIL_SALARIES),
     ("Saisie planning", PROFIL_PLANNING),
     ("Utilisateur lecture seule", PROFIL_ALL | PROFIL_LECTURE_SEULE),
     ("Planning lecture seule", PROFIL_PLANNING | PROFIL_LECTURE_SEULE),
@@ -74,19 +89,25 @@ SAISIE_HEURES_SEMAINE = 2
 MODE_NORMAL = 0
 MODE_LIBERE_PLACE = 1
 MODE_SANS_HORAIRES = 2
+MODE_PRESENCE_SUPPLEMENTAIRE = 3
 MODE_PRESENCE_NON_FACTUREE = 4
 MODE_SYSTEMATIQUE_SANS_HORAIRES = 5
 MODE_PERMANENCE = 6
 MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE = 7
+MODE_SALARIE_HEURES_SUPP = 8
+MODE_SALARIE_RECUP_HEURES_SUPP = 9
 
 ActivityModes = [
     ("Normal", 0),
     ("Libère une place", MODE_LIBERE_PLACE),
     ("Sans horaires", MODE_SANS_HORAIRES),
     ("Présence non facturée", MODE_PRESENCE_NON_FACTUREE),
+    ("Présence facturée en temps supplémentaire", MODE_PRESENCE_SUPPLEMENTAIRE),
     ("Sans horaire, systématique", MODE_SYSTEMATIQUE_SANS_HORAIRES),
     ("Sans horaire, systématique et mensualisé", MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE),
     ("Permanence", MODE_PERMANENCE),
+    ("Heures supp. (salariés)", MODE_SALARIE_HEURES_SUPP),
+    ("Récup heures supp. (salariés)", MODE_SALARIE_RECUP_HEURES_SUPP)
 ]
 
 # Propriétaires des activités
@@ -96,26 +117,23 @@ ACTIVITY_OWNER_SALARIES = 2
 
 # Granularité du planning dans la base
 BASE_GRANULARITY = 5  # 5 minutes
-DAY_SIZE = 24 * 60 / BASE_GRANULARITY
+DAY_SIZE = 24 * 60 // BASE_GRANULARITY
 
 # Modes d'inscription
 MODE_CRECHE = 0
 MODE_HALTE_GARDERIE = 1
-MODE_5_5 = 2
-MODE_4_5 = 4
-MODE_3_5 = 8
+MODE_TEMPS_PLEIN = 2
 MODE_FORFAIT_MENSUEL = 16
 MODE_TEMPS_PARTIEL = 32
 MODE_ACCUEIL_URGENCE = 64
 MODE_FORFAIT_HEBDOMADAIRE = 128
 MODE_FORFAIT_GLOBAL_CONTRAT = 256
 MODE_MAX = MODE_FORFAIT_GLOBAL_CONTRAT
+TOUS_MODES_ACCUEIL = 1023
 
 ModeAccueilItems = [
-    ("Temps plein", MODE_5_5),
+    ("Temps plein", MODE_TEMPS_PLEIN),
     ("Temps partiel", MODE_TEMPS_PARTIEL),
-    # ("4/5èmes", MODE_4_5),
-    # ("3/5èmes", MODE_3_5),
     ("Forfait horaire mensuel", MODE_FORFAIT_MENSUEL),
     ("Forfait horaire hebdomadaire", MODE_FORFAIT_HEBDOMADAIRE),
     ("Forfait horaire global sur la durée du contrat", MODE_FORFAIT_GLOBAL_CONTRAT),
@@ -131,7 +149,7 @@ PeriodiciteFacturationItems = [
     ("Annuelle", 12)
 ]
 
-Regimes = [
+RegimesCAF = [
     "Pas de sélection",
     "Régime général",
     "Régime de la fonction publique",
@@ -222,7 +240,16 @@ PorteeTarifsSpeciauxItems = [
     ("Contrat", PORTEE_CONTRAT)
 ]
 
-# Unites des tarif spéciaux
+# Unités des tarifs horaires
+TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE = 0
+TARIF_HORAIRE_UNITE_EUROS_PAR_MOIS = 1
+
+UniteTarifsHorairesItems = [
+    ("€/heure", TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE),
+    ("€/mois", TARIF_HORAIRE_UNITE_EUROS_PAR_MOIS),
+]
+
+# Unités des tarifs spéciaux
 TARIF_SPECIAL_UNITE_EUROS = 0
 TARIF_SPECIAL_UNITE_POURCENTAGE = 1
 TARIF_SPECIAL_UNITE_EUROS_PAR_HEURE = 2
@@ -246,9 +273,22 @@ ABSENCES_DEDUITES_EN_SEMAINES = 0
 ABSENCES_DEDUITES_EN_JOURS = 1
 ABSENCES_DEDUITES_SANS_LIMITE = 2
 
+# Modes d'absences prévues au contrat
+ABSENCES_PREVUES_AU_CONTRAT_AUCUNE = 0
+ABSENCES_PREVUES_AU_CONTRAT_MENSUALISEES = 1
+ABSENCES_PREVUES_AU_CONTRAT_MENSUALISEES_AVEC_POSSIBILITE_HEURES_SUPPLEMENTAIRES = 2
+
 # Mode de gestion des congés à l'inscription
-GESTION_CONGES_INSCRIPTION_SIMPLE = 1
-GESTION_CONGES_INSCRIPTION_AVEC_SUPPLEMENT = 2
+GESTION_CONGES_INSCRIPTION_AUCUNE = 0
+GESTION_CONGES_INSCRIPTION_MENSUALISES = 1
+GESTION_CONGES_INSCRIPTION_MENSUALISES_AVEC_POSSIBILITE_DE_SUPPLEMENT = 2
+GESTION_CONGES_INSCRIPTION_NON_MENSUALISES = 3
+modes_absences_prevues_au_contrat = [
+    ("Non", GESTION_CONGES_INSCRIPTION_AUCUNE),
+    ("Oui, avec mensualisation", GESTION_CONGES_INSCRIPTION_MENSUALISES),
+    ("Oui, avec mensualisation, et possibilité d'heures supplémentaires", GESTION_CONGES_INSCRIPTION_MENSUALISES_AVEC_POSSIBILITE_DE_SUPPLEMENT),
+    ("Oui, sans mensualisation", GESTION_CONGES_INSCRIPTION_NON_MENSUALISES),
+]
 
 # Mode de facturation des activites
 ACTIVITES_NON_FACTUREES = 0
@@ -312,6 +352,9 @@ SUMMARY_SALARIE = 2
 
 # Valeurs de présence
 PRESENCE_SALARIE = -256
+CONGES_RECUP_HEURES_SUPP = -11
+CONGES_MATERNITE = -10
+CONGES_SANS_SOLDE = -9
 CONGES_PAYES = -8
 CONGES_DEPASSEMENT = -7
 ABSENCE_CONGE_SANS_PREAVIS = -6
@@ -322,9 +365,22 @@ MALADE = -2
 VACANCES = -1
 ABSENT = 0
 PRESENT = 1 << 0  # activité 0
-CLOTURE = 1 << 28  # pas d'activité > 27 !
-SUPPLEMENT = 1 << 29
-PREVISIONNEL = 1 << 30  # flag previsionnel
+SUPPLEMENT = 1 << 30
+
+# Equivalences
+PRESENCE_CAROUSSEL = {
+    PRESENT: PRESENT,
+    PRESENCE_SALARIE: PRESENT,
+    VACANCES: VACANCES,
+    CONGES_PAYES: CONGES_PAYES,
+    CONGES_DEPASSEMENT: VACANCES,
+    ABSENT: ABSENT,
+    ABSENCE_CONGE_SANS_PREAVIS: ABSENCE_CONGE_SANS_PREAVIS,
+    ABSENCE_NON_PREVENUE: ABSENCE_NON_PREVENUE,
+    MALADE: MALADE,
+    MALADE_SANS_JUSTIFICATIF: MALADE_SANS_JUSTIFICATIF,
+    HOPITAL: HOPITAL
+}
 
 # Types des champs OpenOffice
 FIELD_EUROS = 1
@@ -353,7 +409,10 @@ REGLEMENTS = 1 << 13
 COMPATIBILITY_MODE_DECOMPTE_SEMAINES_2017 = 1 << 14
 FRAIS_INSCRIPTION_RESERVATAIRES = 1 << 15
 TARIFS_SPECIAUX = 1 << 16
-ALERTES_NON_PAIEMENT = 1 << 17
+NO_PASSWORD = 1 << 17
+ALERTES_NON_PAIEMENT = 1 << 18
+GESTION_REPAS = 1 << 19
+TARIFS_SPECIAUX_LABELS = 1 << 20
 
 # Atributs de plages horaires spéciales
 PLAGE_FERMETURE = 0
@@ -396,4 +455,56 @@ AlertesItems = [
 OrdreAffichageItems = [
     ("Par prénom", TRI_PRENOM),
     ("Par nom", TRI_NOM)
+]
+
+# Types de connection
+CONNECTION_TYPE_FILE = 0
+CONNECTION_TYPE_SHARED_FILE = 1
+CONNECTION_TYPE_HTTP = 2
+
+# Types de gestion salariés
+GESTION_SIMPLE_PLANNINGS_SALARIES = 0
+GESTION_GLOBALE_PLANNINGS_SALARIES = 1
+
+modes_gestion_plannings_salaries = [
+    ("Planning spécifique à chaque salarié", GESTION_SIMPLE_PLANNINGS_SALARIES),
+    ("Planning global pour l'équipe", GESTION_GLOBALE_PLANNINGS_SALARIES),
+]
+
+# Type de repas
+REPAS_PUREE = 0
+REPAS_MORCEAUX = 1
+
+types_repas_1 = [
+    ("Purée", REPAS_PUREE),
+    ("Morceaux", REPAS_MORCEAUX)
+]
+
+# Type de repas (2ème choix)
+REPAS_ASSIETTE = 0
+REPAS_PETIT_POT = 1
+REPAS_BIBERON = 2
+
+types_repas_2 = [
+    ("Assiette", REPAS_ASSIETTE),
+    ("Petit pot", REPAS_PETIT_POT),
+    ("Biberon", REPAS_BIBERON)
+]
+
+# Type de congés des salariés
+types_conges_salaries = [
+    ("Congés payés", CONGES_PAYES),
+    ("Congés sans solde", CONGES_SANS_SOLDE),
+    ("Congés maladie", MALADE),
+    ("Congés maternité", CONGES_MATERNITE)
+]
+
+# Type d'export de coordonnées des parents
+EXPORT_FAMILLES_PRESENTES = 1
+EXPORT_FAMILLES_FUTURES = 2
+EXPORT_FAMILLES_PARTIES = 4
+type_export_coordonnees_parents = [
+    ("Familles présentes", EXPORT_FAMILLES_PRESENTES),
+    ("Familles présentes et futures", EXPORT_FAMILLES_PRESENTES + EXPORT_FAMILLES_FUTURES),
+    ("Familles parties", EXPORT_FAMILLES_PARTIES)
 ]
