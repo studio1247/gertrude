@@ -487,30 +487,30 @@ class FactureFinMois(FactureBase):
             if monday.day >= 6:
                 monday -= datetime.timedelta(7)
             while (monday + datetime.timedelta(2)).month == mois:
-                if monday in inscrit.semaines:
+                week_slots = inscrit.get_week_slots(monday)
+                if week_slots:
                     cotisation = Cotisation(inscrit, monday, options=NO_ADDRESS | self.options)
                     self.taux_effort = cotisation.taux_effort
                     if database.creche.mode_saisie_planning == SAISIE_JOURS_SEMAINE:
                         self.montant_jour_garde = cotisation.montant_heure_garde
                     else:
                         self.montant_heure_garde = cotisation.montant_heure_garde
-                    semaine = inscrit.semaines[monday]
-                    for key in semaine.activities:
-                        if key in database.creche.activites:
-                            activite = database.creche.activites[key]
-                            compteur = semaine.activities[key]
+                    for slot in week_slots:
+                        if slot.activity in database.creche.activites:
+                            activite = database.creche.activites[slot.activity]
+                            compteur = slot.value
                             if activite.value == 0:
                                 if database.creche.mode_saisie_planning == SAISIE_JOURS_SEMAINE:
-                                    self.jours_realises += compteur.value
+                                    self.jours_realises += compteur
                                 else:
-                                    self.heures_realisees += compteur.value
-                                    self.heures_facturees_par_mode[cotisation.mode_garde] += compteur.value
-                                self.cotisation_mensuelle += compteur.value * cotisation.montant_heure_garde
+                                    self.heures_realisees += compteur
+                                    self.heures_facturees_par_mode[cotisation.mode_garde] += compteur
+                                self.cotisation_mensuelle += compteur * cotisation.montant_heure_garde
                             else:
                                 tarif = activite.EvalTarif(inscrit, monday, cotisation.montant_heure_garde, reservataire=cotisation.inscription.reservataire)
-                                total = compteur.value * tarif
+                                total = compteur * tarif
                                 self.supplement_activites += total
-                                self.heures_supplement_activites[activite.label] += compteur.value
+                                self.heures_supplement_activites[activite.label] += compteur
                                 self.detail_supplement_activites[activite.label] += total
                                 self.tarif_supplement_activites[activite.label] = tarif
 
@@ -534,7 +534,7 @@ class FactureFinMois(FactureBase):
                     supplement_heures = cotisation.heures_supplementaires - cotisation.heures_maladie
                     if supplement_heures:
                         heures = cotisation.heures_mois + supplement_heures
-                        tarif, unite = database.creche.EvalTauxHoraire(cotisation.debut,
+                        tarif, unite = database.creche.eval_tarif(cotisation.debut,
                                                                        cotisation.mode_garde,
                                                                        inscrit.handicap,
                                                                        cotisation.assiette_annuelle,

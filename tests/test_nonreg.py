@@ -1135,5 +1135,29 @@ class PitchounsTests(GertrudeTestCase):
         self.assertPrec2Equals(facture.total, 248.00)
 
 
+class MairieDeMoulonTests(GertrudeTestCase):
+    def setUp(self):
+        GertrudeTestCase.setUp(self)
+        database.creche.mode_facturation = FACTURATION_PSU_TAUX_PERSONNALISES
+        database.creche.temps_facturation = FACTURATION_FIN_MOIS
+        database.creche.repartition = REPARTITION_SANS_MENSUALISATION
+        database.creche.facturation_jours_feries = ABSENCES_DEDUITES_EN_SEMAINES
+        database.creche.arrondi_heures = SANS_ARRONDI
+        database.creche.arrondi_facturation = SANS_ARRONDI
+        database.creche.formule_taux_effort = [["", 100.0]]
+        database.creche.UpdateFormuleTauxEffort(changed=False)
+        for label in ("Week-end", "1er janvier", "14 juillet", "1er novembre", "11 novembre", "Lundi de Pâques", "Jeudi de l'Ascension"):
+            self.add_ferie(label)
+
+    def test_facture(self):
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit=inscrit)
+        inscription.debut = datetime.date(2017, 1, 1)
+        inscription.fin = datetime.date(2017, 12, 31)
+        inscrit.inscriptions.append(inscription)
+        cotisation = Cotisation(inscrit, datetime.date(2017, 1, 1))
+        self.assertPrec2Equals(cotisation.cotisation_mensuelle, 0.00)
+
+
 if __name__ == '__main__':
     unittest.main()

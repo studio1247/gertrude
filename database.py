@@ -38,30 +38,6 @@ Base = declarative_base()
 KEY_VERSION = "VERSION"
 
 
-def GetFormuleConversion(formule):
-    if formule:
-        result = []
-        for cas in formule:
-            condition = cas[0].strip()
-            if condition == "":
-                condition = "True"
-            else:
-                condition = condition.lower().\
-                    replace(" et ", " and ").\
-                    replace(" ou ", " or ").\
-                    replace("!=", "__<>").\
-                    replace("<=", "__<eq").\
-                    replace(">=", "__>eq").\
-                    replace("=", "==").\
-                    replace("__<>", "!=").\
-                    replace("__<eq", "<=").\
-                    replace("__>eq", ">=")
-            result.append([condition, cas[1], cas[2], cas[0]])
-        return result
-    else:
-        return None
-
-
 class DBSettings(Base):
     __tablename__ = "data"
     key = Column(String, primary_key=True)
@@ -322,6 +298,7 @@ class Creche(Base):
         # TODO split conges / feries
         # TODO remove couleurs
         self.formule_taux_effort = eval(self._formule_taux_effort)
+        self.UpdateFormuleTauxEffort(changed=False)
         for activity in self._activites:
             if activity.value < 0:
                 self.couleurs[activity.value] = activity
@@ -589,8 +566,8 @@ class Creche(Base):
     def has_activites_avec_horaires(self):
         return len(self.get_activites_avec_horaires()) > 1
 
-    def EvalFormule(self, formule, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs):
-        # print 'EvalFormule', 'mode=%d' % mode, handicap, 'revenus=%f' % revenus, 'enfants=%d' % enfants, 'jours=%d' % jours, 'heures=%f' % heures, reservataire, nom, 'parents=%d' % parents, chomage, conge_parental, 'heures_mois=%f' % heures_mois, heure_mois
+    def eval_formule_tarif(self, formule, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs):
+        # print 'eval_formule_tarif', 'mode=%d' % mode, handicap, 'revenus=%f' % revenus, 'enfants=%d' % enfants, 'jours=%d' % jours, 'heures=%f' % heures, reservataire, nom, 'parents=%d' % parents, chomage, conge_parental, 'heures_mois=%f' % heures_mois, heure_mois
         hg = MODE_HALTE_GARDERIE
         creche = MODE_CRECHE
         forfait = MODE_FORFAIT_MENSUEL
@@ -607,6 +584,28 @@ class Creche(Base):
                 elif eval(cas[0]):
                     # print cas[0], cas[1]
                     return cas[1], cas[2]
+            else:
+                raise Exception("Aucune condition ne matche")
+        except:
+            raise Exception("Erreur dans la formule")
+
+    def eval_formule_taux_effort(self, formule, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs):
+        # print 'eval_formule_taux_effort', 'mode=%d' % mode, handicap, 'revenus=%f' % revenus, 'enfants=%d' % enfants, 'jours=%d' % jours, 'heures=%f' % heures, reservataire, nom, 'parents=%d' % parents, chomage, conge_parental, 'heures_mois=%f' % heures_mois, heure_mois
+        hg = MODE_HALTE_GARDERIE
+        creche = MODE_CRECHE
+        forfait = MODE_FORFAIT_MENSUEL
+        urgence = MODE_ACCUEIL_URGENCE
+        for tarif in self.tarifs_speciaux:
+            try:
+                exec("%s = %r" % (tarif.label.lower().replace(" ", "_"), tarifs & (1 << tarif.idx)))
+            except:
+                pass
+        try:
+            for cas in formule:
+                if heure_mois is None and "heure_mois" in cas[0]:
+                    return None
+                elif eval(cas[0]):
+                    return cas[1]
             else:
                 raise Exception("Aucune condition ne matche")
         except:
@@ -643,15 +642,41 @@ class Creche(Base):
             print(e)
             return False
 
+    def get_formule_conversion_taux_effort(self, formule):
+        if formule:
+            result = []
+            for cas in formule:
+                condition = cas[0].strip()
+                if condition == "":
+                    condition = "True"
+                else:
+                    condition = condition.lower(). \
+                        replace(" et ", " and "). \
+                        replace(" ou ", " or "). \
+                        replace("!=", "__<>"). \
+                        replace("<=", "__<eq"). \
+                        replace(">=", "__>eq"). \
+                        replace("=", "=="). \
+                        replace("__<>", "!="). \
+                        replace("__<eq", "<="). \
+                        replace("__>eq", ">=")
+                result.append([condition, cas[1], cas[0]])
+            return result
+        else:
+            return None
+
     def UpdateFormuleTauxEffort(self, changed=True):
         if changed:
             print('update formule_taux_effort', self.formule_taux_effort)
             self._formule_taux_effort = str(self.formule_taux_effort)
-        self.conversion_formule_taux_effort = GetFormuleConversion(self.formule_taux_effort)
+        self.conversion_formule_taux_effort = self.get_formule_conversion_taux_effort(self.formule_taux_effort)
 
-    def EvalTauxHoraire(self, date, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs):
+    def EvalTauxEffort(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs):
+        return self.eval_formule_taux_effort(self.conversion_formule_taux_effort, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs)
+
+    def eval_tarif(self, date, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs):
         conversion_formule = Select(self.tarifs_horaires, date).conversion_formule
-        return self.EvalFormule(conversion_formule, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs)
+        return self.eval_formule_tarif(conversion_formule, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs)
 
     def GetAllergies(self):
         return [allergie.strip() for allergie in self.allergies.split(",") if allergie.strip()]
@@ -757,13 +782,36 @@ class TarifHoraire(Base):
     @reconstructor
     def init_on_load(self):
         self.formule = eval(self._formule)
-        self.conversion_formule = GetFormuleConversion(self.formule)
+        self.conversion_formule = self.get_formule_conversion(self.formule)
 
     def UpdateFormule(self, changed=True):
         if changed:
             print('update formule_taux_horaire', self.formule)
             self._formule = str(self.formule)
-        self.conversion_formule = GetFormuleConversion(self.formule)
+        self.conversion_formule = self.get_formule_conversion(self.formule)
+
+    def get_formule_conversion(self, formule):
+        if formule:
+            result = []
+            for cas in formule:
+                condition = cas[0].strip()
+                if condition == "":
+                    condition = "True"
+                else:
+                    condition = condition.lower(). \
+                        replace(" et ", " and "). \
+                        replace(" ou ", " or "). \
+                        replace("!=", "__<>"). \
+                        replace("<=", "__<eq"). \
+                        replace(">=", "__>eq"). \
+                        replace("=", "=="). \
+                        replace("__<>", "!="). \
+                        replace("__<eq", "<="). \
+                        replace("__>eq", ">=")
+                result.append([condition, cas[1], cas[2], cas[0]])
+            return result
+        else:
+            return None
 
     def CheckFormule(self, index):
         return self.creche.CheckFormule(self.conversion_formule, index)
@@ -1352,6 +1400,16 @@ class Inscrit(Base):
     @reconstructor
     def init_on_load(self):
         self.calcule_jours_conges()
+
+    def get_week_slots(self, monday):
+        return [weekslot for weekslot in self.weekslots if weekslot.date == monday]
+
+    def get_week_activity_slot(self, monday, value):
+        for weekslot in self.weekslots:
+            if weekslot.date == monday and weekslot.activity == value:
+                return weekslot
+        else:
+            return None
 
     def add_conge(self, conge):
         self.conges.append(conge)

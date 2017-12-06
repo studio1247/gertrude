@@ -115,7 +115,7 @@ class Cotisation(object):
             else:
                 multiplier = heures / heures_mois
             while heure < heures_mois:
-                montant, unite = database.creche.EvalTauxHoraire(self.debut, self.mode_garde, self.inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, self.inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, heure, self.tranche_paje, self.inscrit.famille.tarifs | self.inscription.tarifs)
+                montant, unite = database.creche.eval_tarif(self.debut, self.mode_garde, self.inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, self.inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, heure, self.tranche_paje, self.inscrit.famille.tarifs | self.inscription.tarifs)
                 if unite == TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE:
                     result += multiplier * montant * min(1.0, heures_mois - heure)
                     tarifs.add(montant)
@@ -441,7 +441,7 @@ class Cotisation(object):
                 # print "heures : ", self.heures_semaine, self.heures_mois
             try:
                 self.tranche_paje = 1 + GetTranche(self.assiette_annuelle, GetTranchesPaje(date, inscrit.naissance, self.enfants_a_charge))
-                self.tarif_montant, self.tarif_unite = database.creche.EvalTauxHoraire(self.debut, self.mode_garde, inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, 0, self.tranche_paje, inscrit.famille.tarifs | self.inscription.tarifs)
+                self.tarif_montant, self.tarif_unite = database.creche.eval_tarif(self.debut, self.mode_garde, inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, 0, self.tranche_paje, inscrit.famille.tarifs | self.inscription.tarifs)
                 if self.tarif_unite == TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE:
                     self.montant_heure_garde = self.tarif_montant
                     if options & TRACES:
@@ -462,7 +462,7 @@ class Cotisation(object):
             else:
                 self.AjustePeriode((datetime.date(2016, 1, 1), fin))
             try:
-                self.tarif_montant, self.tarif_unite = database.creche.EvalTauxHoraire(self.debut, self.mode_garde, inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, None, self.tranche_paje, inscrit.famille.tarifs | self.inscription.tarifs)
+                self.tarif_montant, self.tarif_unite = database.creche.eval_tarif(self.debut, self.mode_garde, inscrit.handicap, self.assiette_annuelle, self.enfants_a_charge, self.jours_semaine, self.heures_semaine, self.inscription.reservataire, inscrit.nom.lower(), self.parents, self.chomage, self.conge_parental, self.heures_mois, None, self.tranche_paje, inscrit.famille.tarifs | self.inscription.tarifs)
                 if self.tarif_unite == TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE:
                     self.montant_heure_garde = self.tarif_montant
                     if options & TRACES:

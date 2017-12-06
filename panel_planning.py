@@ -424,21 +424,24 @@ class PlanningHebdomadairePanel(PlanningBasePanel):
             self.grid.DeleteRows(0, old_count - new_count)
         for row, inscrit in enumerate(self.inscrits):
             self.grid.SetRowLabelValue(row, GetPrenomNom(inscrit))
-            if monday in inscrit.semaines:
-                semaine = inscrit.semaines[monday]
-                for i, activity in enumerate(self.activites):
-                    if activity.value in semaine.activities:
-                        self.grid.SetCellValue(row, i, locale.format("%f", semaine.activities[activity.value].value))
+            for i, activity in enumerate(self.activites):
+                activity_slot = inscrit.get_week_activity_slot(monday, activity.value)
+                if activity_slot:
+                    self.grid.SetCellValue(row, i, locale.format("%f", activity_slot.value))
         self.sizer.Layout()
 
     def OnCellChange(self, evt):
         date = self.GetSelectionStart()
         value = self.grid.GetCellValue(evt.GetRow(), evt.GetCol())
+        value = float(value.replace(',', '.'))
         inscrit = self.inscrits[evt.GetRow()]
-        if date not in inscrit.semaines:
-            inscrit.semaines[date] = WeekPlanning(inscrit, date)
+        activity_value = self.activites[evt.GetCol()].value
         history.Append(None)
-        inscrit.semaines[date].SetActivity(self.activites[evt.GetCol()].value, float(value.replace(',', '.')))
+        week_slot = inscrit.get_week_activity_slot(date, activity_value)
+        if week_slot:
+            week_slot.value = value
+        else:
+            inscrit.weekslots.append(WeekSlotInscrit(inscrit=inscrit, date=date, activity=activity_value, value=value))
 
 
 def get_planning_class():
