@@ -421,7 +421,7 @@ class ReglementsTab(AutoTab):
         self.grid.SetCellAlignment(index, 2, wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
         self.grid.SetCellAlignment(index, 3, wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
         if isinstance(ligne, EncaissementFamille):
-            moyen = ModesEncaissement[ligne.moyen_paiement] if ligne.moyen_paiement is not None else ""
+            moyen = ligne.moyen_paiement if isinstance(ligne.moyen_paiement, str) else ModesEncaissement[ligne.moyen_paiement] if ligne.moyen_paiement is not None else ""
             valeur = ligne.valeur
             self.index += 1
             self.grid.SetRowLabelValue(index, str(self.index))
