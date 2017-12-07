@@ -969,7 +969,8 @@ class PeriodeChoice(wx.BoxSizer):
         if response == wx.ID_OK:
             history.Append([Change(periode, "debut", periode.debut), Change(periode, "fin", periode.fin)])
             periode.debut, periode.fin = dlg.debut_ctrl.GetValue(), dlg.fin_ctrl.GetValue()
-            self.onModify()
+            if self.onModify:
+                self.onModify()
             self.periodechoice.SetString(self.periode, GetPeriodeString(periode))
             self.periodechoice.SetSelection(self.periode)
             self.Enable()
