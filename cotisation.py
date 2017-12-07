@@ -283,7 +283,7 @@ class Cotisation(object):
         else:
             if self.inscription.mode == MODE_FORFAIT_MENSUEL:
                 self.heures_mois = self.inscription.forfait_mensuel_heures
-                self.heures_semaine = self.heures_mois / (52.0 / 12)  # attention Le Nid Des Trésors
+                self.heures_semaine = self.heures_mois / (52.0 / 12) if self.heures_mois else 0.0  # attention Le Nid Des Trésors
             elif self.inscription.mode == MODE_FORFAIT_HEBDOMADAIRE:
                 self.heures_semaine = self.inscription.forfait_mensuel_heures  # TODO rename to forfait
             elif self.inscription.mode == MODE_FORFAIT_GLOBAL_CONTRAT:
