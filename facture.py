@@ -985,7 +985,7 @@ def GetRetardDePaiement(who):
     if delai is None:
         return False
     else:
-        return CalculeSolde(who, datetime.date.today() - datetime.timedelta(delai)) > 0
+        return CalculeSolde(who, datetime.date.today() - datetime.timedelta(delai)) > 0.01
 
 
 def ClotureFactures(inscrits, date, cloture=True):
