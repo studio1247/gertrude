@@ -23,9 +23,10 @@ class SuiviRHSalariesModifications(object):
     title = "Suivi RH salariés"
     template = "Suivi RH salaries.ods"
 
-    def __init__(self, salaries, periode):
+    def __init__(self, salaries, periode, details=True):
         self.salaries = salaries
         self.periode = periode
+        self.details = details
         if self.periode.month >= 6:
             self.debut_conges_payes = datetime.date(self.periode.year, 6, 1)
             self.fin_conges_payes = datetime.date(self.periode.year + 1, 5, 31)
@@ -105,6 +106,7 @@ class SuiviRHSalariesModifications(object):
 
     def fill_salarie_tab(self, salarie, tab):
         lines = tab.getElementsByTagName("table:table-row")
+        header1 = lines[4]
         template1 = lines[5]
         total1 = lines[6]
         template2_headers = [lines[10], lines[11], lines[14]]
@@ -121,35 +123,39 @@ class SuiviRHSalariesModifications(object):
             ReplaceTextFields(line, global_fields)
 
         # le mois jour par jour
-        date = self.periode
-        count = 0
-        while date.month == self.periode.month:
-            count += 1
-            line = template1.cloneNode(1)
-            if date.weekday() == 6:
-                state = ABSENT
-            elif date.weekday() == 5:
-                state = salarie.get_state(date - datetime.timedelta(1))
-                if state != CONGES_PAYES:
+        if self.details:
+            date = self.periode
+            count = 0
+            while date.month == self.periode.month:
+                count += 1
+                line = template1.cloneNode(1)
+                if date.weekday() == 6:
                     state = ABSENT
-            else:
-                state = salarie.get_state(date)
-            fields = [
-                ("day", date.day),
-                ("weekday", days[date.weekday()]),
-                ("present", 1 if state == PRESENT else 0),
-                ("ferie", 1 if date in database.creche.jours_fete else 0),
-                ("cp", 1 if state == CONGES_PAYES else 0),
-                ("recup", 1 if state == CONGES_RECUP_HEURES_SUPP else 0),
-                ("sans-solde", 1 if state == CONGES_SANS_SOLDE else 0),
-                ("maternite", 1 if state == CONGES_MATERNITE else 0),
-                ("malade", 1 if state == MALADE else 0),
-            ]
-            ReplaceFields(line, fields)
-            tab.insertBefore(line, template1)
-            date += datetime.timedelta(1)
-        IncrementFormulas(total1, row=+count-1, flags=FLAG_SUM_MAX)
-        tab.removeChild(template1)
+                elif date.weekday() == 5:
+                    state = salarie.get_state(date - datetime.timedelta(1))
+                    if state != CONGES_PAYES:
+                        state = ABSENT
+                else:
+                    state = salarie.get_state(date)
+                fields = [
+                    ("day", date.day),
+                    ("weekday", days[date.weekday()]),
+                    ("present", 1 if state == PRESENT else 0),
+                    ("ferie", 1 if date in database.creche.jours_fete else 0),
+                    ("cp", 1 if state == CONGES_PAYES else 0),
+                    ("recup", 1 if state == CONGES_RECUP_HEURES_SUPP else 0),
+                    ("sans-solde", 1 if state == CONGES_SANS_SOLDE else 0),
+                    ("maternite", 1 if state == CONGES_MATERNITE else 0),
+                    ("malade", 1 if state == MALADE else 0),
+                ]
+                ReplaceFields(line, fields)
+                tab.insertBefore(line, template1)
+                date += datetime.timedelta(1)
+            IncrementFormulas(total1, row=+count-1, flags=FLAG_SUM_MAX)
+            tab.removeChild(template1)
+        else:
+            for line in (header1, template1, total1):
+                tab.removeChild(line)
 
         # suivi des heures supp et des congés (2 tableaux côte à côte)
         lines_heures_supp, solde_heures_supp, compteur_heures_supp = self.get_salarie_heures_supp(salarie)
