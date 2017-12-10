@@ -1003,6 +1003,9 @@ class Salarie(Base):
     def init_on_load(self):
         self.calcule_jours_conges()
 
+    def slug(self):
+        return "salarie-%d" % self.idx
+
     def is_date_conge(self, date):
         return date in self.creche.jours_fermeture or date in self.jours_conges
 
@@ -1400,6 +1403,9 @@ class Inscrit(Base):
     @reconstructor
     def init_on_load(self):
         self.calcule_jours_conges()
+
+    def slug(self):
+        return "child-%d" % self.idx
 
     def get_week_slots(self, monday):
         return [weekslot for weekslot in self.weekslots if weekslot.date == monday]

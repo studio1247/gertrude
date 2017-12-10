@@ -102,7 +102,7 @@ class FactureModifications(object):
             self.introduction_filename = "Accompagnement facture.txt"
         self.introduction_fields = []
 
-    def GetSimpleFilename(self, filename, inscrit):
+    def get_simple_filename(self, filename, inscrit):
         result = filename.replace("Factures", "Facture %s" % GetPrenomNom(inscrit)) \
                          .replace("<enfant>", GetPrenomNom(inscrit)) \
                          .replace("<prenom>", inscrit.prenom) \
@@ -111,8 +111,8 @@ class FactureModifications(object):
             result = "[%s] %s" % (GetPrenomNom(inscrit), filename)
         return normalize_filename(result)
 
-    def GetSimpleModifications(self, filename):
-        return [(self.GetSimpleFilename(filename, inscrit), FactureModifications([inscrit], self.periode)) for inscrit in self.inscrits]
+    def get_simple_modifications(self, filename):
+        return [(self.get_simple_filename(filename, inscrit), FactureModifications([inscrit], self.periode)) for inscrit in self.inscrits]
 
     def FillRecapSection(self, section, facture):
         column_heures = 1 if "heures-facturees" in self.metas else 0
@@ -180,7 +180,7 @@ class FactureModifications(object):
     def GetIntroductionFields(self):
         return self.introduction_fields
 
-    def GetAttachments(self):
+    def get_attachments(self):
         return []
 
     def GetMetas(self, dom):

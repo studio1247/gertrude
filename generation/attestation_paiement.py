@@ -68,7 +68,7 @@ class AttestationModifications(object):
     def GetIntroductionFields(self):
         return []
 
-    def GetAttachments(self):
+    def get_attachments(self):
         return []
 
     def SetDefaultMultiParam(self):
@@ -79,7 +79,7 @@ class AttestationModifications(object):
         self.email_to = None
         self.multi = True
 
-    def GetSimpleFilename(self, filename, inscrit):
+    def get_simple_filename(self, filename, inscrit):
         result = filename.replace("Attestations de paiement", "Attestation de paiement %s" % GetPrenomNom(inscrit)) \
                          .replace("Attestations", "Attestation %s" % GetPrenomNom(inscrit)) \
                          .replace("<enfant>", GetPrenomNom(inscrit)) \
@@ -89,8 +89,8 @@ class AttestationModifications(object):
             result = "[%s] %s" % (GetPrenomNom(inscrit), filename)
         return result
 
-    def GetSimpleModifications(self, filename):
-        return [(self.GetSimpleFilename(filename, inscrit), AttestationModifications(inscrit, self.debut, self.fin, self.attestation_mensuelle)) for inscrit in self.inscrits]
+    def get_simple_modifications(self, filename):
+        return [(self.get_simple_filename(filename, inscrit), AttestationModifications(inscrit, self.debut, self.fin, self.attestation_mensuelle)) for inscrit in self.inscrits]
         
     def execute(self, filename, dom):
         if filename != 'content.xml':

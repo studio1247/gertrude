@@ -25,6 +25,8 @@ class SuiviRHSalariesModifications(object):
 
     def __init__(self, salaries, periode, details=True):
         self.salaries = salaries
+        self.inscrits = salaries  # bof bof
+        self.reservataire = None
         self.periode = periode
         self.details = details
         if self.periode.month >= 6:
@@ -33,15 +35,28 @@ class SuiviRHSalariesModifications(object):
         else:
             self.debut_conges_payes = datetime.date(self.periode.year - 1, 6, 1)
             self.fin_conges_payes = datetime.date(self.periode.year, 5, 31)
-        self.email = None
+        self.email = True
         self.site = None
         self.multi = False
         self.errors = {}
         if len(salaries) > 1:
+            self.multi = True
             self.default_output = "Suivi RH salaries %s %d.ods" % (months[periode.month - 1], periode.year)
+            self.email_to = None
         else:
             who = salaries[0]
-            self.default_output = "Suivi RH salaries %s - %s %d.ods" % (GetPrenomNom(who), months[periode.month - 1], periode.year)
+            self.email_subject = "Suivi RH %s %s %d" % (GetPrenomNom(who), months[periode.month - 1], periode.year)
+            self.default_output = self.email_subject + ".ods"
+            self.email_to = [who.email]
+        self.introduction_filename = "Accompagnement suivi RH.txt"
+        self.introduction_fields = []
+
+    def get_simple_filename(self, filename, salarie):
+        result = filename.replace("salaries", GetPrenomNom(salarie))
+        return normalize_filename(result)
+
+    def get_simple_modifications(self, filename):
+        return [(self.get_simple_filename(filename, salarie), SuiviRHSalariesModifications([salarie], self.periode)) for salarie in self.salaries]
 
     def get_salarie_heures_supp(self, salarie):
         solde_heures_supp, compteur_heures_supp = 0.0, 0.0
@@ -192,3 +207,6 @@ class SuiviRHSalariesModifications(object):
         spreadsheet.removeChild(template)
 
         return self.errors
+
+    def get_attachments(self):
+        return []

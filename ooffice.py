@@ -651,7 +651,7 @@ def SendDocument(filename, generator, to=None, introduction_filename=None, saas=
             doc.add_header('Content-Disposition', 'attachment', filename=os.path.split(filename)[1])
             msg.attach(doc)
 
-    for attachment in generator.GetAttachments():
+    for attachment in generator.get_attachments():
         with open(attachment, 'rb') as f:
             doc = MIMEBase('application', 'octet-stream')
             doc.set_payload(f.read())

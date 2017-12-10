@@ -320,7 +320,7 @@ class DossierInscriptionModifications(DocumentAccueilModifications):
         self.email_subject = "Dossier d'inscription pour %s" % GetPrenomNom(who)
         self.introduction_filename = "Dossier inscription.txt"
 
-    def GetAttachments(self):
+    def get_attachments(self):
         return glob.glob("templates/Dossier inscription/*.pdf")
 
     def GetIntroductionFields(self):
@@ -353,7 +353,7 @@ class PremiereFactureModifications(DocumentAccueilModifications):
         if preinscription_changed:
             inscription.preinscription = True
 
-    def GetAttachments(self):
+    def get_attachments(self):
         return [self.contrat_accueil.default_output, self.facture.default_output]
 
     def GetIntroductionFields(self):

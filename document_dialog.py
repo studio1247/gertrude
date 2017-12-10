@@ -140,7 +140,7 @@ class DocumentDialog(wx.Dialog):
         try:
             if self.modifications.multi is not False:
                 errors = {}
-                simple_modifications = self.modifications.GetSimpleModifications(self.oo_filename)
+                simple_modifications = self.modifications.get_simple_modifications(self.oo_filename)
                 for i, (filename, modifs) in enumerate(simple_modifications):
                     self.gauge.SetValue((100 * i) / len(simple_modifications))
                     errors.update(GenerateDocument(modifs, filename=filename))
@@ -197,7 +197,7 @@ class DocumentDialog(wx.Dialog):
         self.OnSauverUnitaire(event)
         if self.document_generated:
             if self.modifications.multi is not False:
-                simple_modifications = self.modifications.GetSimpleModifications(self.oo_filename)
+                simple_modifications = self.modifications.get_simple_modifications(self.oo_filename)
                 emails = '\n'.join(
                     [" - %s (%s)" % (modifs.email_subject, ", ".join(modifs.email_to)) for filename, modifs in
                      simple_modifications])
