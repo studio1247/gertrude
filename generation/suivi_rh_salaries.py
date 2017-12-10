@@ -24,10 +24,11 @@ class SuiviRHSalariesModifications(object):
     template = "Suivi RH salaries.ods"
 
     def __init__(self, salaries, periode, details=True):
-        self.salaries = salaries
-        self.inscrits = salaries  # bof bof
-        self.reservataire = None
         self.periode = periode
+        self.month_end = GetMonthEnd(periode)
+        self.salaries = [salarie for salarie in salaries if salarie.GetContrats(periode, self.month_end)]
+        self.inscrits = self.salaries  # bof bof
+        self.reservataire = None
         self.details = details
         if self.periode.month >= 6:
             self.debut_conges_payes = datetime.date(self.periode.year, 6, 1)
@@ -199,10 +200,9 @@ class SuiviRHSalariesModifications(object):
         template = spreadsheet.getElementsByTagName("table:table").item(0)
 
         for salarie in self.salaries:
-            if salarie.GetContrats(self.periode, GetMonthEnd(self.periode)):
-                tab = template.cloneNode(1)
-                self.fill_salarie_tab(salarie, tab)
-                spreadsheet.insertBefore(tab, template)
+            tab = template.cloneNode(1)
+            self.fill_salarie_tab(salarie, tab)
+            spreadsheet.insertBefore(tab, template)
 
         spreadsheet.removeChild(template)
 
