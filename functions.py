@@ -467,6 +467,13 @@ def GetEnfantsTriesParReservataire(inscrits):
 
 
 def GetActivityColor(value):
+    r, g, b, t, s = get_activity_color(value)
+    if s == 50:
+        s = 100
+    return r, g, b, t, s
+
+
+def get_activity_color(value):
     if value < 0:
         if value == HOPITAL or value == MALADE_SANS_JUSTIFICATIF:
             value = MALADE
@@ -526,9 +533,10 @@ def GetActivitiesSummary(lines, options=0):
                     if value == 0:
                         for i in range(timeslot.debut, timeslot.fin):
                             if value in activites:
-                                activites[value].array[i][0] += 1
                                 if not (options & NO_SALARIES) and line.summary == SUMMARY_SALARIE and activite_salaries:
                                     activite_salaries.array[i][0] += 1
+                                else:
+                                    activites[value].array[i][0] += 1
     return activites, activites_sans_horaires
 
 
