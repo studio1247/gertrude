@@ -459,6 +459,7 @@ class RelanceFactureModifications(FactureModifications):
     def __init__(self, who, date):
         FactureModifications.__init__(self, [who], date)
         self.introduction_filename = "Accompagnement relance.txt"
+        self.email_subject = self.email_subject.replace("Facture", "Retard de paiement")
         self.solde = CalculeSolde(who if isinstance(who, Reservataire) else who.famille, date)
         self.introduction_fields.append(("solde", self.solde, FIELD_EUROS))
 
