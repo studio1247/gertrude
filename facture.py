@@ -933,14 +933,13 @@ class FactureReservataire(object):
 
 
 def GetHistoriqueSolde(who, jalon):
+    lignes = [encaissement for encaissement in who.encaissements]
     if isinstance(who, Reservataire):
-        lignes = [encaissement for encaissement in who.encaissements]
         for date in who.get_factures_list():
             if date <= jalon:
                 lignes.append(FactureReservataire(who, date))
     else:
         inscrits = GetInscritsFamille(who)
-        lignes = [encaissement for encaissement in who.encaissements]
         debut, fin = None, None
         for inscrit in inscrits:
             debut_inscrit, fin_inscrit = inscrit.GetPeriodeInscriptions()

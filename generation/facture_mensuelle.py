@@ -318,7 +318,7 @@ class FactureModifications(object):
                             except Exception as e:
                                 print(e)
 
-                    self.introduction_fields = fields
+                    self.introduction_fields.extend(fields)
                     ReplaceTextFields(clone, fields)
 
                     if clone.nodeName in ("draw:frame", "draw:custom-shape"):
@@ -363,7 +363,7 @@ class FactureModifications(object):
                         if not last_inscription or not last_inscription.fin or (tmp.fin and tmp.fin > last_inscription.fin):
                             last_inscription = tmp
                     facture.fields = fields + GetInscritFields(enfant) + GetInscriptionFields(last_inscription) + GetFactureFields(facture) + GetCotisationFields(facture.last_cotisation)
-                    self.introduction_fields = facture.fields
+                    self.introduction_fields.extend(facture.fields)
                     factures.append(facture)
 
                 if has_errors:
@@ -453,6 +453,14 @@ class FactureModifications(object):
                     field = label, value
                 fields.append(field)
         return fields
+
+
+class RelanceFactureModifications(FactureModifications):
+    def __init__(self, who, date):
+        FactureModifications.__init__(self, [who], date)
+        self.introduction_filename = "Accompagnement relance.txt"
+        self.solde = CalculeSolde(who if isinstance(who, Reservataire) else who.famille, date)
+        self.introduction_fields.append(("solde", self.solde, FIELD_EUROS))
 
 
 if __name__ == '__main__':
