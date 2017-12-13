@@ -968,15 +968,19 @@ def GetHistoriqueSolde(who, jalon):
     return lignes
 
 
-def CalculeSolde(who, date):
+def CalculeSoldeFromHistorique(historique):
     solde = 0.0
-    historique = GetHistoriqueSolde(who, date)
     for ligne in historique:
         if isinstance(ligne, EncaissementFamille) or isinstance(ligne, EncaissementReservataire):
             solde -= ligne.valeur
         else:
             solde += ligne.total_facture
     return solde
+
+
+def CalculeSolde(who, date):
+    historique = GetHistoriqueSolde(who, date)
+    return CalculeSoldeFromHistorique(historique)
 
 
 def GetRetardDePaiement(who):
