@@ -634,6 +634,8 @@ def SendDocument(filename, generator, to=None, introduction_filename=None, saas=
             for field, _, value in evalFields(generator.GetIntroductionFields()):
                 if isinstance(value, str):
                     text = text.replace("<%s>" % field, value)
+            if config.debug:
+                print("Intro email:", text)
             introduction = MIMEMultipart('alternative')
             html = "<html><head><meta charset='UTF-8'></head><body><p>" + text.replace("\n", "<br>") + "</p></body></html>"
             introduction.attach(MIMEText(text, 'plain', _charset='UTF-8'))
