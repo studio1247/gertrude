@@ -995,6 +995,7 @@ class CongesPanel(InscriptionsTab):
         delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
         
         InscriptionsTab.__init__(self, parent)
+        self.label = "Absences déduites sans mensualisation" if database.creche.conges_inscription == GESTION_CONGES_INSCRIPTION_NON_MENSUALISES else "Absences prévues au contrat"
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         
         self.conges_creche_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -1041,21 +1042,22 @@ class CongesPanel(InscriptionsTab):
 
     def AfficheCongesCreche(self):
         self.conges_creche_sizer.DeleteWindows()
-        labels_conges = [j[0] for j in jours_fermeture]
-        for label in labels_conges:
-            checkbox = wx.CheckBox(self, -1, label)
-            checkbox.Disable()
-            if label in database.creche.feries:
-                checkbox.SetValue(True)
-            self.conges_creche_sizer.Add(checkbox, 0, wx.EXPAND)
-        for conge in database.creche.conges:
-            sizer = wx.BoxSizer(wx.HORIZONTAL)
-            sizer.AddMany([(wx.StaticText(self, -1, 'Debut :'), 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, conge, 'debut', mois=True, fixed_instance=True)])
-            sizer.AddMany([(wx.StaticText(self, -1, 'Fin :'), 0, wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, conge, 'fin', mois=True, fixed_instance=True)])
-            sizer.AddMany([(wx.StaticText(self, -1, 'Libellé :'), 0, wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, conge, 'label', fixed_instance=True)])
-            for child in sizer.GetChildren():
-                child.GetWindow().Disable()
-            self.conges_creche_sizer.Add(sizer)
+        if database.creche.conges_inscription != GESTION_CONGES_INSCRIPTION_NON_MENSUALISES:
+            labels_conges = [j[0] for j in jours_fermeture]
+            for label in labels_conges:
+                checkbox = wx.CheckBox(self, -1, label)
+                checkbox.Disable()
+                if label in database.creche.feries:
+                    checkbox.SetValue(True)
+                self.conges_creche_sizer.Add(checkbox, 0, wx.EXPAND)
+            for conge in database.creche.conges:
+                sizer = wx.BoxSizer(wx.HORIZONTAL)
+                sizer.AddMany([(wx.StaticText(self, -1, 'Debut :'), 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, conge, 'debut', mois=True, fixed_instance=True)])
+                sizer.AddMany([(wx.StaticText(self, -1, 'Fin :'), 0, wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 10), AutoDateCtrl(self, conge, 'fin', mois=True, fixed_instance=True)])
+                sizer.AddMany([(wx.StaticText(self, -1, 'Libellé :'), 0, wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 10), AutoTextCtrl(self, conge, 'label', fixed_instance=True)])
+                for child in sizer.GetChildren():
+                    child.GetWindow().Disable()
+                self.conges_creche_sizer.Add(sizer)
         self.conges_observer = counters['conges']
 
     def AjouteLigneConge(self, index):
@@ -1111,7 +1113,7 @@ class InscriptionsNotebook(wx.Notebook):
         self.AddPage(ModeAccueilPanel(self), "Mode d'accueil")
         if database.creche.conges_inscription:
             self.conges_panel = CongesPanel(self)
-            self.AddPage(self.conges_panel, "Absences prévues au contrat")
+            self.AddPage(self.conges_panel, self.conges_panel.label)
         else:
             self.conges_panel = None
         self.AddPage(NotesPanel(self), "Notes")
@@ -1137,7 +1139,7 @@ class InscriptionsNotebook(wx.Notebook):
         if database.creche.conges_inscription and not self.conges_panel:
             self.conges_panel = CongesPanel(self)
             self.conges_panel.SetInscrit(self.inscrit)
-            self.InsertPage(3, self.conges_panel, "Absences prévues au contrat")
+            self.InsertPage(3, self.conges_panel, self.conges_panel.label)
         elif self.conges_panel and not database.creche.conges_inscription:
             self.RemovePage(3)
             self.conges_panel.Destroy()
