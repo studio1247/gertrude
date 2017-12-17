@@ -294,12 +294,12 @@ class GertrudeFrame(wx.Frame):
             self.Restore()
 
         config.connection.Exit(ProgressHandler(self.SetStatusText))
-        
         self.Hide()
 
         config.set_current_section(section)
         config.connection = get_connection_from_config()
         result = config.connection.Load(ProgressHandler(self.SetStatusText))
+        # TODO test result
         database.init(config.database)
         database.load()
 
@@ -317,7 +317,6 @@ class GertrudeFrame(wx.Frame):
             if result != wx.ID_YES or not config.connection.get_token(force=True):
                 config.readonly = True
 
-        database.init(config.database)
         frame.listbook.UpdateContents()
         frame.Show()
         self.Destroy()

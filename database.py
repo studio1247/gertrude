@@ -2265,6 +2265,7 @@ class Database(object):
             self.init(filename)
 
     def init(self, filename=None):
+        self.creche = None
         if filename:
             self.uri = "sqlite:///%s" % filename
         self.engine = create_engine(self.uri, echo=False)
