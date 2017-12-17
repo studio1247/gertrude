@@ -282,7 +282,6 @@ class HttpConnection(FileConnection):
             self.token = self.get_server_data('force_token')
         else:
             self.token = self.get_server_data('get_token')
-        print(self.token)
         self.check_token()
         if not self.token:
             self.token_already_used = True
