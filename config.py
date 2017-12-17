@@ -18,10 +18,14 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
+import sys
 import codecs
 import os.path
 import datetime
-from configparser import ConfigParser
+if sys.platform == "darwin":
+    from ConfigParser import ConfigParser
+else:
+    from configparser import ConfigParser
 from constants import *
 from progress import *
 import numeros_facture

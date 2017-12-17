@@ -75,7 +75,6 @@ def main():
 
         app = ["gertrude.pyw"]
         data_files = glob.glob("bitmaps_dist/*.png") + glob.glob("bitmaps_dist/*.ico") + glob.glob("templates_dist/*.html") + glob.glob("templates_dist/*.txt") + glob.glob("templates_dist/*.od?")
-        # sys.path.append("/Library/Python/2.7/site-packages/backports")
         options = {"site_packages": True,
                    "arch": "i386",
                    "iconfile": "bitmaps_dist/gertrude.icns",
