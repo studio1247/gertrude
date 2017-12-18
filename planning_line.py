@@ -79,7 +79,7 @@ class BasePlanningLine(object):
             self.add_timeslot(start, end, value)
         else:
             for i, timeslot in reversed(list(enumerate(self.timeslots))):
-                if timeslot.value < 0:
+                if timeslot.value < 0 or timeslot.value not in database.creche.activites:
                     self.delete_timeslot(i, False)
                 elif value == timeslot.value:
                     if start <= timeslot.fin + 1 and end >= timeslot.debut - 1:
