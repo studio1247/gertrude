@@ -199,7 +199,7 @@ class OdtDocumentAccueilModifications(DocumentAccueilModifications):
         for section in doc.getElementsByTagName("text:section"):
             section_name = section.getAttribute("text:name")
             index = ["parent1", "parent2"].index(section_name)
-            if index >= 0 and self.inscrit.famille.parents[index] is None:
+            if index >= 0 and (index >= len(self.inscrit.famille.parents) or self.inscrit.famille.parents[index] is None):
                 doc.removeChild(section)
 
         for table in doc.getElementsByTagName("table:table"):
