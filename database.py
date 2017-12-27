@@ -98,10 +98,11 @@ class Day(object):
     def GetPlageHoraire(self):
         debut, fin = None, None
         for timeslot in self.timeslots:
-            if not debut or timeslot.debut < debut:
-                debut = timeslot.debut
-            if not fin or timeslot.fin > fin:
-                fin = timeslot.fin
+            if timeslot.debut and timeslot.fin:
+                if not debut or timeslot.debut < debut:
+                    debut = timeslot.debut
+                if not fin or timeslot.fin > fin:
+                    fin = timeslot.fin
         return debut, fin
 
     def GetHeureArrivee(self):
