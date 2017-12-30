@@ -79,7 +79,7 @@ def GetStatistiques(start, end, site=None, bargraph=False):
                         result.cotisations_contrat += facture.total_contractualise
                         result.cotisations_reel += facture.total_realise
                         result.cotisations_facture += facture.total_facture
-                        print(inscrit.prenom, inscrit.nom, facture.date)
+                        print(GetPrenomNom(inscrit), "au", facture.date)
                         print(' ', "heures contractualisées :", facture.heures_contractualisees, ", heures contrat :", facture.heures_contrat)
                         print(' ', "heures réalisées :", facture.heures_realisees)
                         print(' ', "heures facturées :", facture.heures_facturees, ", heures facture :", facture.heures_facture)

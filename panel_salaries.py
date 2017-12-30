@@ -218,8 +218,8 @@ class WxSalariePlanningLine(BasePlanningLine, BaseWxPythonLine):
         self.day = self.planning.get_day_from_index(self.index)
         self.timeslots = self.day.timeslots
 
-    def add_timeslot(self, debut, fin, value):
-        timeslot = TimeslotPlanningSalarie(day=self.index, debut=debut, fin=fin, value=value)
+    def add_timeslot(self, debut, fin, activity):
+        timeslot = TimeslotPlanningSalarie(day=self.index, debut=debut, fin=fin, activity=activity)
         self.planning.days.add(timeslot)
         self.update()
 
@@ -346,7 +346,7 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
             for i in range(len(line.timeslots)):
                 line.delete_timeslot(0)
             for timeslot in self.planning_panel.lines[0].timeslots:
-                line.add_timeslot(timeslot.debut, timeslot.fin, timeslot.value)
+                line.add_timeslot(timeslot.debut, timeslot.fin, timeslot.activity)
         self.UpdateContents()
 
     def UpdateSiteItems(self):
@@ -365,21 +365,7 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
         SalariesTab.UpdateContents(self)
 
         self.UpdateContratPanel()
-        self.activity_choice.Clear()
-        selected = 0
-        if database.creche.has_activites_avec_horaires():
-            self.activity_choice.Show(True)
-            for i, activity in enumerate(database.creche.activites.values()):
-                self.activity_choice.Append(activity.label, activity)
-                try:
-                    if self.activity_choice.activity.value == activity.value:
-                        selected = i
-                except:
-                    pass
-        else:
-            self.activity_choice.Show(False)
-            self.activity_choice.Append(database.creche.activites[0].label, database.creche.activites[0])
-        self.activity_choice.SetSelection(selected)
+        self.activity_choice.Update()
 
         enabled = (database.creche.gestion_plannings_salaries == GESTION_SIMPLE_PLANNINGS_SALARIES)
         self.activity_choice.Show(enabled)
@@ -567,21 +553,7 @@ class PlanningsEquipePanel(wx.lib.scrolledpanel.ScrolledPanel, PeriodeMixin):
         self.UpdateTabs()
 
     def UpdateActivityChoice(self):
-        self.activity_choice.Clear()
-        selected = 0
-        if database.creche.has_activites_avec_horaires():
-            self.activity_choice.Show(True)
-            for i, activity in enumerate(database.creche.activites.values()):
-                self.activity_choice.Append(activity.label, activity)
-                try:
-                    if self.activity_choice.activity.value == activity.value:
-                        selected = i
-                except:
-                    pass
-        else:
-            self.activity_choice.Show(False)
-            self.activity_choice.Append(database.creche.activites[0].label, database.creche.activites[0])
-        self.activity_choice.SetSelection(selected)
+        self.activity_choice.Update()
 
     @staticmethod
     def get_salarie_planning(salarie, date):

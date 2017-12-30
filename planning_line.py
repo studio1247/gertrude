@@ -51,8 +51,8 @@ class BasePlanningLine(object):
     def get_badge_text(self):
         return ""
 
-    def add_timeslot(self, start, end, value):
-        self.timeslots.append(Timeslot(start, end, value))
+    def add_timeslot(self, start, end, activity):
+        self.timeslots.append(Timeslot(start, end, activity))
 
     def delete_timeslot(self, i, check=True):
         del self.timeslots[i]
@@ -60,12 +60,12 @@ class BasePlanningLine(object):
     def set_comment(self, comment):
         self.commentaire = comment
 
-    def set_checkbox(self, value):
-        self.add_timeslot(None, None, value)
+    def set_checkbox(self, activity):
+        self.add_timeslot(None, None, activity)
 
-    def clear_checkbox(self, value):
+    def clear_checkbox(self, activity):
         for i, timeslot in enumerate(self.timeslots):
-            if timeslot.value == value:
+            if timeslot.activity == activity:
                 self.delete_timeslot(i)
                 break
 
@@ -79,56 +79,57 @@ class BasePlanningLine(object):
             self.add_timeslot(start, end, value)
         else:
             for i, timeslot in reversed(list(enumerate(self.timeslots))):
-                if timeslot.value < 0 or timeslot.value not in database.creche.activites:
-                    self.delete_timeslot(i, False)
-                elif value == timeslot.value:
+                if value == timeslot.activity:
                     if start <= timeslot.fin + 1 and end >= timeslot.debut - 1:
                         start, end = min(timeslot.debut, start), max(timeslot.fin, end)
                         self.delete_timeslot(i, False)
-                elif database.creche.activites[value].mode == MODE_LIBERE_PLACE and start < timeslot.fin and end > timeslot.debut:
+                elif value.mode == MODE_LIBERE_PLACE and start < timeslot.fin and end > timeslot.debut:
                     self.delete_timeslot(i, False)
                     if timeslot.debut < start:
-                        self.add_timeslot(timeslot.debut, start, timeslot.value)
+                        self.add_timeslot(timeslot.debut, start, timeslot.activity)
                     if timeslot.fin > end:
-                        self.add_timeslot(end, timeslot.fin, timeslot.value)
-                elif database.creche.activites[timeslot.value].mode == MODE_LIBERE_PLACE and start < timeslot.fin and end > timeslot.debut:
+                        self.add_timeslot(end, timeslot.fin, timeslot.activity)
+                elif timeslot.activity.mode == MODE_LIBERE_PLACE and start < timeslot.fin and end > timeslot.debut:
                     self.delete_timeslot(i, False)
                     if timeslot.debut < start:
-                        self.add_timeslot(timeslot.debut, start, timeslot.value)
+                        self.add_timeslot(timeslot.debut, start, timeslot.activity)
                     if timeslot.fin > end:
-                        self.add_timeslot(end, timeslot.fin, timeslot.value)
+                        self.add_timeslot(end, timeslot.fin, timeslot.activity)
             self.add_timeslot(start, end, value)
-            if value != 0 and database.creche.activites[value].mode in (MODE_NORMAL, MODE_PRESENCE_NON_FACTUREE):
-                self.set_activity(start, end, 0)
+            if value.mode in (MODE_NORMAL, MODE_PRESENCE_NON_FACTUREE):
+                self.set_activity(start, end, database.creche.states[0])
 
     def clear_activity(self, start, end, value):
         if self.options & DRAW_VALUES:
-            for i, timeslot in enumerate(self.timeslots):
+            for i in reversed(range(len(self.timeslots))):
+                timeslot = self.timeslots[i]
                 if start <= timeslot.fin + 1 and end >= timeslot.debut - 1:
-                    if start > timeslot.debut:
-                        self.add_timeslot(timeslot.debut, start, timeslot.value)
-                    if end < timeslot.fin:
-                        self.add_timeslot(end, timeslot.fin, timeslot.value)
-                    self.delete_timeslot(i)
+                    if start <= timeslot.debut and end >= timeslot.fin:
+                        self.delete_timeslot(i)
+                    else:
+                        if start > timeslot.debut:
+                            timeslot.fin = start
+                        if end < timeslot.fin:
+                            timeslot.debut = end
         else:
             for i, timeslot in enumerate(self.timeslots):
-                if value == timeslot.value:
+                if value == timeslot.activity:
                     if start <= timeslot.fin + 1 and end >= timeslot.debut - 1:
                         if start > timeslot.debut:
-                            self.add_timeslot(timeslot.debut, start, timeslot.value)
+                            self.add_timeslot(timeslot.debut, start, timeslot.activity)
                         if end < timeslot.fin:
-                            self.add_timeslot(end, timeslot.fin, timeslot.value)
+                            self.add_timeslot(end, timeslot.fin, timeslot.activity)
                         self.delete_timeslot(i)
-                elif timeslot.value == 0 and database.creche.activites[timeslot.value].mode == MODE_NORMAL and start < timeslot.fin and end > timeslot.debut:
+                elif timeslot.activity.mode == MODE_NORMAL and start < timeslot.fin and end > timeslot.debut:
                     if timeslot.debut < start:
-                        self.add_timeslot(timeslot.debut, start, timeslot.value)
+                        self.add_timeslot(timeslot.debut, start, timeslot.activity)
                     if timeslot.fin > end:
-                        self.add_timeslot(end, timeslot.fin, timeslot.value)
+                        self.add_timeslot(end, timeslot.fin, timeslot.activity)
                     self.delete_timeslot(i)
 
     def is_timeslot_checked(self, activity):
         for timeslot in self.timeslots:
-            if timeslot.value == activity:
+            if timeslot.activity == activity:
                 return True
         else:
             return False
@@ -145,7 +146,7 @@ class BasePlanningLine(object):
             self.add_timeslots(self.reference.timeslots)
         else:
             for debut, fin in database.creche.GetPlagesOuvertureArray():
-                self.add_timeslots([Timeslot(debut, fin, state)])
+                self.add_timeslots([Timeslot(debut, fin, database.creche.states[state])])
         self.update()
 
     def get_summary(self):
@@ -156,8 +157,9 @@ class ChildPlanningLine(BasePlanningLine):
     def __init__(self, inscription, date):
         self.inscription = inscription
         self.inscrit = inscription.inscrit
-        self.site = self.inscription.site
+        self.who = self.inscrit
         self.idx = self.inscrit.idx
+        self.site = self.inscription.site
         self.date = date
         BasePlanningLine.__init__(self, GetPrenomNom(self.inscrit))
         if database.creche.conges_inscription in (GESTION_CONGES_INSCRIPTION_MENSUALISES, GESTION_CONGES_INSCRIPTION_NON_MENSUALISES) and date in self.inscrit.jours_conges:
@@ -187,6 +189,7 @@ class ChildPlanningLine(BasePlanningLine):
     def update(self):
         self.day = self.inscrit.days.get(self.date, None)
         self.timeslots = self.day.timeslots if self.day else self.reference.timeslots[:]
+        self.timeslots.sort(key=lambda timeslot: timeslot.activity.mode)
         self.state = self.day.get_state() if self.day else self.reference.get_state()
         # print("update =>", self.day, self.timeslots, self.state)
         if self.state == VACANCES:
@@ -196,15 +199,15 @@ class ChildPlanningLine(BasePlanningLine):
     def add_timeslots(self, timeslots):
         # print("add_timeslots", timeslots)
         for timeslot in timeslots:
-            self.inscrit.days.add(TimeslotInscrit(date=self.date, debut=timeslot.debut, fin=timeslot.fin, value=timeslot.value))
+            self.inscrit.days.add(TimeslotInscrit(date=self.date, debut=timeslot.debut, fin=timeslot.fin, activity=timeslot.activity))
 
-    def add_timeslot(self, debut, fin, value):
+    def add_timeslot(self, debut, fin, activity):
         # print("add_timeslot", debut, fin, value, self.day, self.state)
         if not self.day:
             self.add_timeslots(self.timeslots)
         elif self.state < 0:
             self.clear_timeslots()
-        self.inscrit.days.add(TimeslotInscrit(date=self.date, debut=debut, fin=fin, value=value))
+        self.inscrit.days.add(TimeslotInscrit(date=self.date, debut=debut, fin=fin, activity=activity))
         self.update()
 
     def delete_timeslot(self, i, check=True):
@@ -245,7 +248,7 @@ class ChildPlanningLine(BasePlanningLine):
         summary = {}
         if self.state > 0:
             for timeslot in self.timeslots:
-                key = timeslot.value
+                key = timeslot.activity
                 if key not in summary:
                     summary[key] = [timeslot]
                 else:
@@ -284,6 +287,7 @@ class SalariePlanningLine(BasePlanningLine):
         self.contrat = self.planning.contrat
         self.site = self.contrat.site
         self.salarie = self.contrat.salarie
+        self.who = self.salarie
         self.idx = self.salarie.idx
         BasePlanningLine.__init__(self, GetPrenomNom(self.salarie), options)
         self.date = date
@@ -323,32 +327,24 @@ class SalariePlanningLine(BasePlanningLine):
 
     def update(self):
         self.day = self.salarie.days.get(self.date, None)
-        self.timeslots = self.day.timeslots if self.day else self.reference.timeslots[:]
         if self.day:
-            # TODO bidouille tant que les activites ne sont pas referencees directement
-            recup_timeslots = database.creche.get_activities_per_mode(MODE_SALARIE_RECUP_HEURES_SUPP)
-            day_state = self.day.get_state()
-            self.state = day_state
-            for timeslot in self.day.timeslots:
-                if timeslot.value in recup_timeslots:
-                    self.state = CONGES_RECUP_HEURES_SUPP
-                else:
-                    self.state = day_state
-                    break
+            self.state = self.day.get_state()
+            self.timeslots = self.day.timeslots
         else:
             self.state = self.reference.get_state()
+            self.timeslots = self.reference.timeslots[:]
 
     def add_timeslots(self, timeslots):
         for timeslot in timeslots:
-            self.salarie.days.add(TimeslotSalarie(date=self.date, debut=timeslot.debut, fin=timeslot.fin, value=timeslot.value))
+            self.salarie.days.add(TimeslotSalarie(date=self.date, debut=timeslot.debut, fin=timeslot.fin, activity=timeslot.activity))
 
-    def add_timeslot(self, debut, fin, value):
+    def add_timeslot(self, debut, fin, activity):
         # print("add_timeslot", debut, fin, value)
         if not self.day:
             self.add_timeslots(self.timeslots)
         elif self.state < 0:
             self.clear_timeslots()
-        self.salarie.days.add(TimeslotSalarie(date=self.date, debut=debut, fin=fin, value=value))
+        self.salarie.days.add(TimeslotSalarie(date=self.date, debut=debut, fin=fin, activity=activity))
         self.update()
 
     def delete_timeslot(self, i, check=True):
@@ -373,7 +369,7 @@ class SalariePlanningLine(BasePlanningLine):
         return [PRESENT, VACANCES, CONGES_SANS_SOLDE, MALADE]
 
     def get_summary(self):
-        return {PRESENCE_SALARIE: [timeslot for timeslot in self.timeslots if timeslot.value == 0]}
+        return {database.creche.states[PRESENCE_SALARIE]: [timeslot for timeslot in self.timeslots if timeslot.activity.mode == 0]}
 
     @classmethod
     def select(cls, date, site=None):

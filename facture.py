@@ -175,10 +175,10 @@ class FactureFinMois(FactureBase):
         self.heures_supplement_activites = {}
         self.detail_supplement_activites = {"Activites mensualisees": 0.0}
         self.tarif_supplement_activites = {"Activites mensualisees": 0.0}
-        for value in database.creche.activites:
-            self.heures_supplement_activites[database.creche.activites[value].label] = 0.0
-            self.detail_supplement_activites[database.creche.activites[value].label] = 0.0
-            self.tarif_supplement_activites[database.creche.activites[value].label] = 0.0
+        for activite in database.creche.activites:
+            self.heures_supplement_activites[activite.label] = 0.0
+            self.detail_supplement_activites[activite.label] = 0.0
+            self.tarif_supplement_activites[activite.label] = 0.0
         self.previsionnel = False
         self.montant_heure_garde = 0.0
         self.montant_jour_garde = 0.0
@@ -419,16 +419,14 @@ class FactureFinMois(FactureBase):
                                 self.raison_supplement = self.raison_supplement.union(cotisation.raison_majoration_journaliere)
 
                         if database.creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE or (database.creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION and inscription.IsInPeriodeAdaptation(date)):
-                            activites = inscrit.GetExtraActivites(date)
-                            for value in activites:
-                                if value in database.creche.activites:
-                                    activite = database.creche.activites[value]
-                                    if activite.mode != MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE:
-                                        tarif = activite.EvalTarif(self.inscrit, date, reservataire=cotisation.inscription.reservataire)
-                                        self.supplement_activites += tarif
-                                        self.heures_supplement_activites[activite.label] += 1
-                                        self.detail_supplement_activites[activite.label] += tarif
-                                        self.tarif_supplement_activites[activite.label] = tarif
+                            timeslots = inscrit.GetExtraActivites(date)
+                            for timeslot in timeslots:
+                                if timeslot.activity.mode != MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE:
+                                    tarif = timeslot.activity.EvalTarif(self.inscrit, date, reservataire=cotisation.inscription.reservataire)
+                                    self.supplement_activites += tarif
+                                    self.heures_supplement_activites[timeslot.activity.label] += 1
+                                    self.detail_supplement_activites[timeslot.activity.label] += tarif
+                                    self.tarif_supplement_activites[timeslot.activity.label] = tarif
                         if 0 < heures_realisees_non_facturees == heures_realisees:
                             self.jours_presence_non_facturee[date] = heures_realisees_non_facturees
 

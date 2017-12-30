@@ -101,7 +101,7 @@ class StructureCapaciteLine(BasePlanningLine, BaseWxPythonLine):
         self.timeslots = self.day.timeslots
 
     def add_timeslot(self, debut, fin, value):
-        timeslot = TrancheCapacite(jour=self.index, debut=debut, fin=fin, value=value)
+        timeslot = TrancheCapacite(creche=database.creche, jour=self.index, debut=debut, fin=fin, value=value)
         database.creche.tranches_capacite.add(timeslot)
         self.update()
 
@@ -470,9 +470,9 @@ class ActivitesTab(AutoTab):
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, "Temps de présence"), wx.VERTICAL)
         flex_sizer = wx.FlexGridSizer(0, 3, 3, 2)
         flex_sizer.AddGrowableCol(1, 1)
-        flex_sizer.AddMany([(wx.StaticText(self, -1, "Libellé :"), 0, wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), wx.Size(10,10), (AutoTextCtrl(self, database.creche, "activites[0].label"), 1, wx.EXPAND)])
+        flex_sizer.AddMany([(wx.StaticText(self, -1, "Libellé :"), 0, wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), wx.Size(10,10), (AutoTextCtrl(self, database.creche.states[MODE_PRESENCE], "label"), 1, wx.EXPAND)])
 
-        for label, activite, field in (("présences", database.creche.activites[0], "couleur"), ("présences supplémentaires", database.creche.activites[0], "couleur_supplement"), ("absences pour congés", database.creche.couleurs[VACANCES], "couleur"), ("absences non prévenues", database.creche.couleurs[ABSENCE_NON_PREVENUE], "couleur"), ("absences pour maladie", database.creche.couleurs[MALADE], "couleur")):
+        for label, activite, field in (("présences", database.creche.states[0], "couleur"), ("présences supplémentaires", database.creche.states[0], "couleur_supplement"), ("absences pour congés", database.creche.states[VACANCES], "couleur"), ("absences non prévenues", database.creche.states[ABSENCE_NON_PREVENUE], "couleur"), ("absences pour maladie", database.creche.states[MALADE], "couleur")):
             color_button = wx.Button(self, -1, "", size=(20, 20))            
             r, g, b, a, h = couleur = getattr(activite, field)
             color_button.SetBackgroundColour(wx.Colour(r, g, b))
@@ -483,7 +483,7 @@ class ActivitesTab(AutoTab):
                 color_button.hash_cb.Disable()
             color_button.activite = color_button.hash_cb.activite = activite
             color_button.field = color_button.hash_cb.field = [field]
-            self.color_buttons[(activite.value, field)] = color_button
+            self.color_buttons[(activite.mode, field)] = color_button
             self.UpdateHash(color_button.hash_cb, couleur)
             self.Bind(wx.EVT_COMBOBOX, self.OnHashChange, color_button.hash_cb)
             flex_sizer.AddMany([(wx.StaticText(self, -1, "Couleur des %s :" % label), 0, wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), (color_button, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), (color_button.hash_cb, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5)])
@@ -495,8 +495,8 @@ class ActivitesTab(AutoTab):
 
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, "Activités"), wx.VERTICAL)
         self.activites_sizer = wx.BoxSizer(wx.VERTICAL)
-        for activity in database.creche.activites.values():
-            if activity.value > 0:
+        for activity in database.creche.activites:
+            if activity.mode > 0:
                 self.AjouteLigneActivite(activity)
         box_sizer.Add(self.activites_sizer, 0, wx.EXPAND | wx.ALL, 5)
         button_add = wx.Button(self, -1, "Nouvelle activité")
@@ -515,28 +515,27 @@ class ActivitesTab(AutoTab):
         self.color_buttons[(0, "couleur_supplement")].Enable(not config.readonly and database.creche.presences_supplementaires)
         self.color_buttons[(0, "couleur_supplement")].hash_cb.Enable(not config.readonly and database.creche.presences_supplementaires)
         self.activites_sizer.Clear(True)
-        for activity in database.creche.activites.values():
-            if activity.value > 0:
-                self.AjouteLigneActivite(activity)
+        for activity in database.creche.activites:
+            self.AjouteLigneActivite(activity)
         self.sizer.Layout()
         
     def OnCouleursDefaut(self, event):
         history.Append(None)
         counters['activites'] += 1
-        database.creche.activites[0].couleur = [5, 203, 28, 150, wx.SOLID]
-        database.creche.activites[0].couleur_supplement = [5, 203, 28, 250, wx.SOLID]
-        database.creche.couleurs[VACANCES].couleur = [0, 0, 255, 150, wx.SOLID]
-        database.creche.couleurs[ABSENCE_NON_PREVENUE].couleur = [0, 0, 255, 150, wx.SOLID]
-        database.creche.couleurs[MALADE].couleur = [190, 35, 29, 150, wx.SOLID]
-        for activite, field in [(database.creche.activites[0], "couleur"), (database.creche.activites[0], "couleur_supplement")]:
+        database.creche.states[0].couleur = [5, 203, 28, 150, wx.SOLID]
+        database.creche.states[0].couleur_supplement = [5, 203, 28, 250, wx.SOLID]
+        database.creche.states[VACANCES].couleur = [0, 0, 255, 150, wx.SOLID]
+        database.creche.states[ABSENCE_NON_PREVENUE].couleur = [0, 0, 255, 150, wx.SOLID]
+        database.creche.states[MALADE].couleur = [190, 35, 29, 150, wx.SOLID]
+        for activite, field in [(database.creche.states[0], "couleur"), (database.creche.states[0], "couleur_supplement")]:
             r, g, b, a, h = color = getattr(activite, field)
             self.color_buttons[(0, field)].SetBackgroundColour(wx.Colour(r, g, b))
             self.UpdateHash(self.color_buttons[(0, field)].hash_cb, color)        
 
     def AjouteLigneActivite(self, activity):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddMany([(wx.StaticText(self, -1, "Libellé :"), 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, database.creche, "activites[%d].label" % activity.value), 1, wx.EXPAND)])
-        mode_choice = AutoChoiceCtrl(self, database.creche, "activites[%d].mode" % activity.value, items=ActivityModes, observers=['activites'])
+        sizer.AddMany([(wx.StaticText(self, -1, "Libellé :"), 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, activity, "label"), 1, wx.EXPAND)])
+        mode_choice = AutoChoiceCtrl(self, activity, "mode", items=ActivityModes, observers=['activites'])
         self.Bind(wx.EVT_CHOICE, self.OnChangementMode, mode_choice)
         sizer.AddMany([(wx.StaticText(self, -1, "Mode :"), 0, wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), (mode_choice, 0, 0)])
         color_button = mode_choice.color_button = wx.Button(self, -1, "", size=(20, 20))
@@ -551,10 +550,10 @@ class ActivitesTab(AutoTab):
         self.Bind(wx.EVT_COMBOBOX, self.OnHashChange, color_button.hash_cb)
         sizer.AddMany([(color_button.static, 0, wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), (color_button, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), (color_button.hash_cb, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5)])
         if database.creche.tarification_activites:
-            sizer.AddMany([(wx.StaticText(self, -1, "Tarif :"), 0, wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, database.creche, "activites[%d].formule_tarif" % activity.value), 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5)])
+            sizer.AddMany([(wx.StaticText(self, -1, "Tarif :"), 0, wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5), (AutoTextCtrl(self, activity, "formule_tarif"), 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5)])
         if not config.readonly:
             delbutton = wx.BitmapButton(self, -1, delbmp)
-            delbutton.index = activity.value
+            delbutton.activity = activity
             sizer.Add(delbutton, 0, wx.LEFT | wx.ALIGN_CENTER_VERTICAL, 5)
             self.Bind(wx.EVT_BUTTON, self.OnSuppressionActivite, delbutton)      
         if config.readonly or activity.mode == MODE_SANS_HORAIRES:
@@ -565,8 +564,8 @@ class ActivitesTab(AutoTab):
 
     def OnAjoutActivite(self, _):
         counters['activites'] += 1
-        activity = Activite(creche=database.creche)
-        colors = [tmp.couleur for tmp in database.creche.activites.values()]
+        activity = Activite(creche=database.creche, mode=MODE_NORMAL)
+        colors = [tmp.couleur for tmp in database.creche.activites]
         for h in (wx.BDIAGONAL_HATCH, wx.CROSSDIAG_HATCH, wx.FDIAGONAL_HATCH, wx.CROSS_HATCH, wx.HORIZONTAL_HATCH, wx.VERTICAL_HATCH, wx.TRANSPARENT, wx.SOLID):
             for color in (wx.RED, wx.BLUE, wx.CYAN, wx.GREEN, wx.LIGHT_GREY):
                 r, g, b = color.Get()
@@ -582,42 +581,32 @@ class ActivitesTab(AutoTab):
         activity.set_color("couleur", couleur)
         activity.set_color("couleur_supplement", couleur_supplement)
         database.creche.add_activite(activity)
-        history.Append(Delete(database.creche.activites, activity.value))
+        history.Append(None)  # TODO Delete(database.creche.activites, activity.value))
         self.AjouteLigneActivite(activity)
         self.sizer.Layout()
 
     def OnSuppressionActivite(self, event):
         counters['activites'] += 1
-        index = event.GetEventObject().index
-        entrees = []
-        print("TODO Suppression automatique via relationship")
-        # for inscrit in database.creche.inscrits:
-        #     for date in inscrit.journees:
-        #         journee = inscrit.journees[date]
-        #         for start, end, activity in journee.activites:
-        #             if activity == index:
-        #                 entrees.append((inscrit, date))
-        #                 break
-        # if len(entrees) > 0:
-        #     message = "Cette activité est utilisée par :\n"
-        #     for inscrit, date in entrees:
-        #         message += "%s %s le %s, " % (inscrit.prenom, inscrit.nom, GetDateString(date))
-        #     message += "\nVoulez-vous vraiment la supprimer ?"
-        #     dlg = wx.MessageDialog(self, message, "Confirmation", wx.OK|wx.CANCEL | wx.ICON_WARNING)
-        #     reponse = dlg.ShowModal()
-        #     dlg.Destroy()
-        #     if reponse != wx.ID_OK:
-        #         return
-        # for inscrit, date in entrees:
-        #     journee = inscrit.journees[date]
-        #     journee.RemoveActivities(index)
-        history.Append(Insert(database.creche.activites, index, database.creche.activites[index]))
+        activity = event.GetEventObject().activity
+        timeslots = database.query(TimeslotInscrit).filter(TimeslotInscrit.activity == activity).all()
+        if len(timeslots) > 0:
+            message = "Cette activité est utilisée par :\n"
+            message += ", ".join(["%s le %s" % (GetPrenomNom(timeslot.inscrit), GetDateString(timeslot.date)) for timeslot in timeslots[:10]])
+            if len(timeslots) > 10:
+                message += ", etc."
+            message += "\nVoulez-vous vraiment la supprimer ?"
+            dlg = wx.MessageDialog(self, message, "Confirmation", wx.OK | wx.CANCEL | wx.ICON_WARNING)
+            reponse = dlg.ShowModal()
+            dlg.Destroy()
+            if reponse != wx.ID_OK:
+                return
+        history.Append(None)
         for i, child in enumerate(self.activites_sizer.GetChildren()):
             sizer = child.GetSizer()
-            if index == sizer.GetItem(len(sizer.Children)-1).GetWindow().index:
+            if activity == sizer.GetItem(len(sizer.Children)-1).GetWindow().activity:
                 sizer.DeleteWindows()
                 self.activites_sizer.Detach(i)
-        del database.creche.activites[index]
+        database.creche.delete_activite(activity)
         self.sizer.Layout()
         self.UpdateContents()
 

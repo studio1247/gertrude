@@ -23,7 +23,7 @@ from database import Inscription
 from functions import *
 from facture import *
 from cotisation import CotisationException
-from planning_line import BasePlanningSeparator
+from planning_line import BasePlanningSeparator, ChildPlanningLine, SalariePlanningLine
 from ooffice import *
 
 
@@ -92,6 +92,17 @@ class PlanningDetailleModifications:
             else:
                 return self.executeTemplateDraw(filename, dom)
 
+    @staticmethod
+    def get_timeslot_shape(shapes, timeslot):
+        key1 = "activite-%s" % timeslot.activity.label
+        key2 = "activite-%d" % (timeslot.activity.mode if timeslot.activity.mode <= 0 else database.creche.activites.index(timeslot.activity) + 1)
+        if key1 in shapes:
+            return shapes[key1]
+        elif key2 in shapes:
+            return shapes[key2]
+        else:
+            return None
+
     def executeTemplateDraw(self, filename, dom):
         affichage_min = int(database.creche.affichage_min * (60 // BASE_GRANULARITY))
         affichage_max = int(database.creche.affichage_max * (60 // BASE_GRANULARITY))
@@ -120,15 +131,14 @@ class PlanningDetailleModifications:
                 ReplaceTextFields(node, [('category', text)])
                 page.appendChild(node)
 
-        day = self.start
-        while day <= self.end:
-            if day in database.creche.jours_fermeture:
-                day += datetime.timedelta(1)
+        date = self.start
+        while date <= self.end:
+            if date in database.creche.jours_fermeture:
+                date += datetime.timedelta(1)
                 continue
 
-            lines_enfants = GetLines(day, database.creche.inscrits, presence=not self.metas["lignes-vides"], site=self.site, groupe=self.groupe, summary=SUMMARY_ENFANT)
-            lines_enfants = GetEnfantsTriesSelonParametreTriPlanning(lines_enfants)
-            lines_salaries = GetLines(day, database.creche.salaries, site=self.site, summary=SUMMARY_SALARIE)
+            lines_enfants = ChildPlanningLine.select(date, self.site, self.groupe)
+            lines_salaries = SalariePlanningLine.select(date, self.site)
 
             if lines_salaries:
                 lines = lines_enfants + [BasePlanningSeparator("Salariés")] + lines_salaries
@@ -139,7 +149,7 @@ class PlanningDetailleModifications:
             for page_index in range(pages_count):
                 lines_count = min(self.metas["lines-max"], len(lines)-page_index*self.metas["lines-max"])
                 page = template.cloneNode(1)
-                page.setAttribute("draw:name", GetDateString(day))
+                page.setAttribute("draw:name", GetDateString(date))
                 drawing.appendChild(page)
 
                 # le quadrillage et l'echelle
@@ -190,99 +200,62 @@ class PlanningDetailleModifications:
                         node.setAttribute('svg:x', '%fcm' % self.metas["left"])
                         node.setAttribute('svg:y', '%fcm' % (self.metas["top"] + self.metas["line-height"] * i))
                         node.setAttribute('svg:width', '%fcm' % self.metas["labels-width"])
-                        fields = [('nom', line.nom),
-                                  ('prenom', line.prenom),
+                        fields = [('nom', line.who.nom),
+                                  ('prenom', line.who.prenom),
                                   ('label', line.label)]
                         ReplaceTextFields(node, fields)
                         page.appendChild(node)
                         for timeslot in line.timeslots:
-                            a, b, v = timeslot.debut, timeslot.fin, timeslot.value
-                            if a is not None:
-                                if v >= 0:
-                                    key = "activite-%d" % v
-                                    if key in shapes:
-                                        # print(a,b,v)
-                                        node = shapes[key].cloneNode(1)
-                                        node.setAttribute('svg:x', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + float(a - affichage_min) * step))
-                                        node.setAttribute('svg:y', '%fcm' % (0.10 + self.metas["top"] + self.metas["line-height"] * i))
-                                        node.setAttribute('svg:width', '%fcm' % ((b - a) * step))
-                                        if isinstance(line.inscription, Inscription):
-                                            allergies = ', '.join(line.inscription.inscrit.get_allergies())
-                                        else:
-                                            allergies = ''
-                                        ReplaceTextFields(node, [('texte', ''), ('allergies', allergies)])
-                                        page.appendChild(node)
-                                    else:
-                                        print("Pas de forme pour %s" % key)
+                            if timeslot.activity.has_horaires():
+                                shape = self.get_timeslot_shape(shapes, timeslot)
+                                if not shape:
+                                    print("Pas de forme pour %s" % timeslot.activity.label)
+                                    continue
+                                node = shape.cloneNode(1)
+                                node.setAttribute('svg:x', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + float(timeslot.debut - affichage_min) * step))
+                                node.setAttribute('svg:y', '%fcm' % (0.10 + self.metas["top"] + self.metas["line-height"] * i))
+                                node.setAttribute('svg:width', '%fcm' % ((timeslot.fin - timeslot.debut) * step))
+                                allergies = line.who.get_allergies() if isinstance(line.who, Inscrit) else []
+                                ReplaceTextFields(node, [("texte", ""), ("allergies", ", ".join(allergies))])
+                                page.appendChild(node)
 
                 if self.metas["summary"] and page_index + 1 == pages_count:
                     AddCategoryShape(page, "Totaux", 0.20 + self.metas["top"] + self.metas["line-height"] * lines_count)
 
                     # le récapitulatif par activité
                     i = lines_count
-                    summary = GetActivitiesSummary(lines)[0]
-                    for activity in summary.keys():
+                    summary = get_lines_summary(lines)[0]
+                    for activity in summary:
                         i += 1
-                        if activity == PRESENCE_SALARIE:
-                            label = "Présences salariés"
-                        elif activity == 0:
-                            label = "Présences"
-                        else:
-                            label = database.creche.activites[activity].label
                         node = shapes["libelle"].cloneNode(1)
                         node.setAttribute('svg:x', '%fcm' % self.metas["left"])
                         node.setAttribute('svg:y', '%fcm' % (self.metas["top"] + self.metas["line-height"] * i))
                         node.setAttribute('svg:width', '%fcm' % self.metas["labels-width"])
                         fields = [('nom', ''),
-                                  ('prenom', label),
-                                  ('label', label)]
+                                  ('prenom', activity.label),
+                                  ('label', activity.label)]
                         ReplaceTextFields(node, fields)
                         page.appendChild(node)
                         line = summary[activity]
-                        x = affichage_min
-                        v, w = 0, 0
-                        a = 0
-                        while x <= affichage_max:
-                            if x == affichage_max:
-                                nv, nw = 0, 0
-                            else:
-                                nv, nw = line.array[x]
-
-                            if activity == 0 and (nw == 0 or nv > database.creche.get_capacite(day.weekday()) or float(nv)/nw > 6.5):
-                                nw = activity | SUPPLEMENT
-                            else:
-                                nw = activity
-
-                            if nv != v or nw != w:
-                                if v != 0:
-                                    # print(a, x, v)
-                                    key = "activite-%d" % w
-                                    if key in shapes:
-                                        node = shapes[key].cloneNode(1)
-                                    else:
-                                        key = "activite-%d" % (w & ~SUPPLEMENT)
-                                        if key in shapes:
-                                            node = shapes[key].cloneNode(1)
-                                        else:
-                                            print("Pas de forme pour %s" % key)
-                                            node = None
-                                    if node:
-                                        node.setAttribute('svg:x', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + (float(a - affichage_min) * step)))
-                                        node.setAttribute('svg:y', '%fcm' % (0.10 + self.metas["top"] + self.metas["line-height"] * i))
-                                        node.setAttribute('svg:width', '%fcm' % (float(x - a) * step))
-                                        ReplaceTextFields(node, [('texte', '%d' % v)])
-                                        page.appendChild(node)
-                                a = x
-                                v, w = nv, nw
-                            x += database.creche.granularite // BASE_GRANULARITY
+                        for timeslot in line:
+                            shape = self.get_timeslot_shape(shapes, timeslot)
+                            if not shape:
+                                print("Pas de forme pour l'activité %s" % timeslot.activity.label)
+                                continue
+                            node = shape.cloneNode(1)
+                            node.setAttribute('svg:x', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + (float(timeslot.debut - affichage_min) * step)))
+                            node.setAttribute('svg:y', '%fcm' % (0.10 + self.metas["top"] + self.metas["line-height"] * i))
+                            node.setAttribute('svg:width', '%fcm' % (float(timeslot.fin - timeslot.debut) * step))
+                            ReplaceTextFields(node, [('texte', str(timeslot.value))])
+                            page.appendChild(node)
                 fields = GetCrecheFields(database.creche) + GetSiteFields(self.site)
                 if pages_count > 1:
-                    fields.append(('date', GetDateString(day) + " (%d/%d)" % (page_index + 1, pages_count)))
+                    fields.append(('date', GetDateString(date) + " (%d/%d)" % (page_index + 1, pages_count)))
                 else:
-                    fields.append(('date', GetDateString(day)))
+                    fields.append(('date', GetDateString(date)))
 
                 ReplaceTextFields(page, fields)
-            day += datetime.timedelta(1)
+            date += datetime.timedelta(1)
         return None
 
     def executeTemplateOnePage(self, filename, dom):

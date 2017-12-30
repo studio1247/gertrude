@@ -634,8 +634,8 @@ class WxInscriptionPlanningLine(BasePlanningLine, BaseWxPythonLine):
     # if self.options & DEPASSEMENT_CAPACITE and self.state > 0 and self.value == 0 and database.creche.alerte_depassement_planning:
     #     self.check_line(line, self.GetPlagesSelectionnees())
 
-    def add_timeslot(self, debut, fin, value):
-        timeslot = TimeslotInscription(day=self.index, debut=debut, fin=fin, value=value)
+    def add_timeslot(self, debut, fin, activity):
+        timeslot = TimeslotInscription(day=self.index, debut=debut, fin=fin, activity=activity)
         self.inscription.days.add(timeslot)
         self.update()
 
@@ -770,7 +770,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         sizer2.AddMany([(self.button_5_5, 0, wx.ALIGN_CENTER_VERTICAL), (self.button_copy, 0, wx.ALIGN_CENTER_VERTICAL)])
         self.Bind(wx.EVT_BUTTON, self.OnMondayCopy, self.button_copy)
         self.activity_choice = ActivityComboBox(self)        
-        sizer2.Add(self.activity_choice, 0, wx.ALIGN_RIGHT)
+        sizer2.Add(self.activity_choice, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_RIGHT)
         grid_sizer.AddMany([(wx.StaticText(self, -1, "Temps de présence :"), 0, wx.ALIGN_CENTER_VERTICAL), (sizer2, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)])
         self.planning_panel = ReferencePlanningPanel(self, self.activity_choice)
         sizer.Add(self.planning_panel, 1, wx.EXPAND)
@@ -835,7 +835,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
             for i in range(len(line.timeslots)):
                 line.delete_timeslot(0)
             for timeslot in self.planning_panel.lines[0].timeslots:
-                line.add_timeslot(timeslot.debut, timeslot.fin, timeslot.value)
+                line.add_timeslot(timeslot.debut, timeslot.fin, timeslot.activity)
         self.UpdateContents()
             
     def OnCheckPreinscriptionSite(self, event):

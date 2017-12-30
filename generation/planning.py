@@ -381,7 +381,7 @@ class PlanningHoraireModifications(PlanningModifications):
 
     def FillPermanences(self, lines):
         for jour in range(5):
-            liste = GetListePermanences(self.debut + datetime.timedelta(jour))
+            liste = get_liste_permanences(self.debut + datetime.timedelta(jour))
             for start, end, inscrit in liste:
                 if start <= 12.5 * 12:
                     line = lines[3 + int(float(start) / 12 - 7.5)]

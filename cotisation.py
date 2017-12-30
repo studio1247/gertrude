@@ -620,8 +620,7 @@ class Cotisation(object):
             self.cotisation_mensuelle = round(self.cotisation_mensuelle)
 
         self.montant_journalier_activites = 0.0
-        for key in database.creche.activites:
-            activite = database.creche.activites[key]
+        for activite in database.creche.activites:
             if activite.mode == MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE:
                 self.montant_journalier_activites += activite.EvalTarif(inscrit, self.debut, reservataire=self.inscription.reservataire)
         if options & TRACES:
