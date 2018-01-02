@@ -93,7 +93,8 @@ def GetStatistiques(start, end, site=None, bargraph=False):
                     result.bargraph[1][date.month-1] += facture.heures_realisees
                     result.bargraph[2][date.month-1] += heures_facture
             except CotisationException as e:
-                result.erreurs[GetPrenomNom(inscrit)] = e.errors
+                if date <= datetime.date.today():
+                    result.erreurs[GetPrenomNom(inscrit)] = e.errors
         date = fin_mois + datetime.timedelta(1)
 
     if result.heures_accueil:
