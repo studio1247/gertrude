@@ -74,13 +74,14 @@ class Day(object):
         self.timeslots = []
 
     def get_state(self):
+        default = ABSENT
         for timeslot in self.timeslots:
             mode = timeslot.activity.mode
-            if mode < 0:
-                return mode
+            if mode < 0 or mode == MODE_SALARIE_RECUP_HEURES_SUPP:
+                default = mode
             else:  # TODO and not checkbox?
                 return PRESENT
-        return ABSENT
+        return default
 
     def get_activity_checkboxes(self):
         return [timeslot for timeslot in self.timeslots if timeslot.debut is None]
@@ -309,6 +310,13 @@ class Creche(Base):
             else:
                 self.conges.append(conge)
         self.calcule_jours_conges()
+
+    def get_activite_by_id(self, id):
+        for activite in self._activites:
+            if activite.idx == id:
+                return activite
+        else:
+            return None
 
     def select_inscriptions(self, start, end):
         for inscrit in self.inscrits:
@@ -1406,6 +1414,12 @@ class Inscrit(Base):
 
     def slug(self):
         return "child-%d" % self.idx
+
+    def is_facture_cloturee(self, date):
+        if self.creche.temps_facturation == FACTURATION_FIN_MOIS:
+            return GetMonthEnd(date) in self.clotures or GetMonthStart(date) in self.clotures
+        else:
+            return date in self.clotures
 
     def get_week_slots(self, monday):
         return [weekslot for weekslot in self.weekslots if weekslot.date == monday]

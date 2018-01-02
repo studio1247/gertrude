@@ -207,7 +207,8 @@ class FactureFinMois(FactureBase):
         if inscrit.has_facture(self.debut_recap) and database.creche.cloture_facturation == CLOTURE_FACTURES_AVEC_CONTROLE and today > self.fin_recap:
             fin = self.debut_recap - datetime.timedelta(1)
             debut = GetMonthStart(fin)
-            if inscrit.get_inscriptions(debut, fin) and debut not in inscrit.clotures and IsFacture(debut) and self.debut_recap >= config.first_date:
+            if inscrit.get_inscriptions(debut, fin) and not inscrit.is_facture_cloturee(debut) and IsFacture(debut) and self.debut_recap >= config.first_date:
+                print(debut, inscrit.clotures, self.debut_recap, config.first_date)
                 error = " - La facture du mois " + GetDeMoisStr(debut.month-1) + " " + str(debut.year) + " n'est pas clôturée"
                 raise CotisationException([error])
 
