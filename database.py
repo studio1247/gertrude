@@ -2912,6 +2912,7 @@ class Database(object):
                     self.engine.execute("ALTER TABLE %s ADD activity INGEGER REFERENCES activities(idx)" % table)
                     for value, activity in activities:
                         self.engine.execute("UPDATE %s SET activity=? WHERE value=?" % table, (activity, value))
+                    self.engine.execute("DELETE FROM %s WHERE activity IS NULL" % table)
 
             # update database version
             version_entry.value = DB_VERSION
