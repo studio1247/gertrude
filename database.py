@@ -77,8 +77,10 @@ class Day(object):
         default = ABSENT
         for timeslot in self.timeslots:
             mode = timeslot.activity.mode
-            if mode < 0 or mode == MODE_SALARIE_RECUP_HEURES_SUPP:
+            if mode < 0:
                 default = mode
+            elif mode == MODE_SALARIE_RECUP_HEURES_SUPP:
+                default = CONGES_RECUP_HEURES_SUPP
             else:  # TODO and not checkbox?
                 return PRESENT
         return default
@@ -1182,7 +1184,7 @@ class Salarie(Base):
         if date in self.days:
             day = self.days[date]
             state = day.get_state()  # TODO on peut s'en passer ?
-            if state in (MALADE, HOPITAL, ABSENCE_NON_PREVENUE):
+            if state in (MALADE, HOPITAL, ABSENCE_NON_PREVENUE, CONGES_RECUP_HEURES_SUPP):
                 return state
             elif state in (ABSENT, VACANCES):
                 if ref_state:
