@@ -2328,7 +2328,9 @@ class Database(object):
     def translate(self):
         version_entry = self.query(DBSettings).filter_by(key=KEY_VERSION).one()
         version = int(version_entry.value)
-        if version != DB_VERSION:
+        if version > DB_VERSION:
+            raise Exception("Version de base de données plus récente que votre version du logiciel.")
+        elif version < DB_VERSION:
             print("Database translation from version %s to version %d..." % (version, DB_VERSION))
 
             if version < 65:
