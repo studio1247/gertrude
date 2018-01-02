@@ -449,9 +449,9 @@ class Creche(Base):
 
     def GetDateRevenus(self, date):
         if self.periode_revenus == REVENUS_CAFPRO:
-            return datetime.date(date.year, date.month, 1)
+            return date
         elif date >= datetime.date(2008, 9, 1):
-            return datetime.date(date.year - 2, date.month, 1)
+            return datetime.date(date.year - 2, date.month, date.day)
         elif date < datetime.date(date.year, 9, 1):
             return datetime.date(date.year - 2, 1, 1)
         else:
@@ -2892,26 +2892,28 @@ class Database(object):
                     )""")
 
             if version < 123:
+                creche_id = self.engine.execute('SELECT idx FROM CRECHE').first()[0]
+                self.engine.execute("INSERT INTO activities(idx, creche_id, label, value, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)", creche_id, "Maladie avec hospitalisation", -3, -3, "[190, 35, 29, 150, 100]", "[190, 35, 29, 150, 100]", "")
+                self.engine.execute("INSERT INTO activities(idx, creche_id, label, value, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)", creche_id, "Absence non prévenue", -4, -4, "[0, 0, 255, 150, 100]", "[0, 0, 255, 150, 100]", "")
+                self.engine.execute("INSERT INTO activities(idx, creche_id, label, value, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)", creche_id, "Maladie sans justificatif", -5, -5, "[190, 35, 29, 150, 100]", "[190, 35, 29, 150, 100]", "")
+                self.engine.execute("INSERT INTO activities(idx, creche_id, label, value, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)", creche_id, "Congés sans préavis", -6, -6, "[0, 0, 255, 150, 100]", "[0, 0, 255, 150, 100]", "")
+                self.engine.execute("INSERT INTO activities(idx, creche_id, label, value, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)", creche_id, "Absence non déductible (dépassement)", -7, -7, "[0, 0, 255, 150, 100]", "[0, 0, 255, 150, 100]", "")
+                self.engine.execute("INSERT INTO activities(idx, creche_id, label, value, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)", creche_id, "Congés payés", -8, -8, "[0, 0, 255, 150, 100]", "[0, 0, 255, 150, 100]", "")
+                self.engine.execute("INSERT INTO activities(idx, creche_id, label, value, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)", creche_id, "Congés sans solde", -9, -9, "[0, 0, 255, 150, 100]", "[0, 0, 255, 150, 100]", "")
+                self.engine.execute("INSERT INTO activities(idx, creche_id, label, value, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)", creche_id, "Congés maternité", -10, -10, "[0, 0, 255, 150, 100]", "[0, 0, 255, 150, 100]", "")
+                self.engine.execute("INSERT INTO activities(idx, creche_id, label, value, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)", creche_id, "Récupération heures supp.", -11, -11, "[0, 0, 255, 150, 100]", "[0, 0, 255, 150, 100]", "")
+                self.engine.execute("INSERT INTO activities(idx, creche_id, label, value, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)", creche_id, "Présence salariés", -256, -256, "[5, 203, 28, 150, 100]", "[5, 203, 28, 250, 100]", "")
+                self.engine.execute("UPDATE activities SET mode=value WHERE value<0")
+                self.engine.execute("UPDATE activities SET mode=10 WHERE mode=2")
+                self.engine.execute("UPDATE activities SET mode=2 WHERE mode=1")
+                self.engine.execute("UPDATE activities SET mode=1 WHERE mode=0 AND value>0")
                 activities = [row for row in self.engine.execute("SELECT value, idx FROM activities")]
                 for table in ("ref_activities", "ref_journees_salaries", "activites", "activites_salaries"):
                     self.engine.execute("ALTER TABLE %s ADD activity INGEGER REFERENCES activities(idx)" % table)
                     for value, activity in activities:
                         self.engine.execute("UPDATE %s SET activity=? WHERE value=?" % table, (activity, value))
-                self.engine.execute("UPDATE activities SET mode=value WHERE value<0")
-                self.engine.execute("UPDATE activities SET mode=10 WHERE mode=2")
-                self.engine.execute("UPDATE activities SET mode=2 WHERE mode=1")
-                self.engine.execute("UPDATE activities SET mode=1 WHERE mode=0 AND value>0")
-                creche_id = self.engine.execute('SELECT idx FROM CRECHE').first()[0]
-                self.engine.execute("INSERT INTO activities(idx, creche_id, label, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?)", creche_id, "Maladie avec hospitalisation", -3, "[190, 35, 29, 150, 100]", "[190, 35, 29, 150, 100]", "")
-                self.engine.execute("INSERT INTO activities(idx, creche_id, label, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?)", creche_id, "Absence non prévenue", -4, "[0, 0, 255, 150, 100]", "[0, 0, 255, 150, 100]", "")
-                self.engine.execute("INSERT INTO activities(idx, creche_id, label, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?)", creche_id, "Maladie sans justificatif", -5, "[190, 35, 29, 150, 100]", "[190, 35, 29, 150, 100]", "")
-                self.engine.execute("INSERT INTO activities(idx, creche_id, label, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?)", creche_id, "Congés sans préavis", -6, "[0, 0, 255, 150, 100]", "[0, 0, 255, 150, 100]", "")
-                self.engine.execute("INSERT INTO activities(idx, creche_id, label, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?)", creche_id, "Absence non déductible (dépassement)", -7, "[0, 0, 255, 150, 100]", "[0, 0, 255, 150, 100]", "")
-                self.engine.execute("INSERT INTO activities(idx, creche_id, label, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?)", creche_id, "Congés payés", -8, "[0, 0, 255, 150, 100]", "[0, 0, 255, 150, 100]", "")
-                self.engine.execute("INSERT INTO activities(idx, creche_id, label, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?)", creche_id, "Congés sans solde", -9, "[0, 0, 255, 150, 100]", "[0, 0, 255, 150, 100]", "")
-                self.engine.execute("INSERT INTO activities(idx, creche_id, label, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?)", creche_id, "Congés maternité", -10, "[0, 0, 255, 150, 100]", "[0, 0, 255, 150, 100]", "")
-                self.engine.execute("INSERT INTO activities(idx, creche_id, label, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?)", creche_id, "Récupération heures supp.", -11, "[0, 0, 255, 150, 100]", "[0, 0, 255, 150, 100]", "")
-                self.engine.execute("INSERT INTO activities(idx, creche_id, label, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?)", creche_id, "Présence salariés", -256, "[5, 203, 28, 150, 100]", "[5, 203, 28, 250, 100]", "")
+
+            # update database version
             version_entry.value = DB_VERSION
             self.commit()
 

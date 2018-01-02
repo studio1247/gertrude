@@ -36,7 +36,7 @@ class FraisGardePanel(wx.Panel):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         sizer1 = wx.BoxSizer(wx.HORIZONTAL)
         self.periodechoice = wx.Choice(self, size=(150, -1))
-        self.Bind(wx.EVT_CHOICE, self.EvtPeriodeChoice, self.periodechoice)
+        self.Bind(wx.EVT_CHOICE, self.onPeriodeChoice, self.periodechoice)
         sizer1.Add(self.periodechoice, 0, wx.ALIGN_CENTER_VERTICAL)
         self.frais_accueil_button = wx.Button(self, -1, "Exporter")
         sizer1.Add(self.frais_accueil_button, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 5)
@@ -115,7 +115,7 @@ class FraisGardePanel(wx.Panel):
             self.EnableButtons(False)
         self.UpdatePage()
         
-    def EvtPeriodeChoice(self, evt):
+    def onPeriodeChoice(self, evt):
         ctrl = evt.GetEventObject()
         self.current_cotisation = self.cotisations[ctrl.GetSelection()]
         self.UpdatePage()
@@ -777,10 +777,16 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.SetSizer(sizer)
         self.UpdateContents()
         
-    def nouvelleInscription(self):  # TODO les autres pareil ...
+    def nouvelleInscription(self):
         inscription = Inscription(inscrit=self.inscrit, mode=MODE_TEMPS_PARTIEL, preinscription=database.creche.preinscriptions)
-        if len(database.creche.groupes) > 0 and self.inscrit.inscriptions:
-            inscription.groupe = self.inscrit.inscriptions[-1].groupe
+        if len(self.inscrit.inscriptions) > 0:
+            previous_inscription = self.inscrit.inscriptions[self.periode]
+            inscription.mode = previous_inscription.mode
+            inscription.duree_reference = previous_inscription.duree_reference
+            for timeslot in previous_inscription.days:
+                inscription.days.add(TimeslotInscription(day=timeslot.day, debut=timeslot.debut, fin=timeslot.fin, activity=timeslot.activity))
+            if len(database.creche.groupes) > 0:
+                inscription.groupe = previous_inscription.groupe
         return inscription
 
     def SetInscrit(self, inscrit):
@@ -1296,8 +1302,8 @@ class InscriptionsPanel(GPanel):
         inscrit = self.choice.GetClientData(selected)
         if inscrit:
             dlg = wx.MessageDialog(self,
-                                   'Cette inscription va être supprimée, êtes-vous sûr de vouloir continuer ?',
-                                   'Confirmation',
+                                   "Cette inscription va être supprimée, êtes-vous sûr de vouloir continuer ?",
+                                   "Confirmation",
                                    wx.YES_NO | wx.NO_DEFAULT | wx.ICON_EXCLAMATION )
             if dlg.ShowModal() == wx.ID_YES:
                 index = database.creche.inscrits.index(inscrit)
@@ -1313,7 +1319,7 @@ class InscriptionsPanel(GPanel):
         if database.creche and inscrit:
             inscritId = GetPrenomNom(inscrit, tri=database.creche.tri_inscriptions)
             if inscritId.isspace():
-                inscritId = 'Nouvelle inscription'
+                inscritId = "Nouvelle inscription"
             selection = self.choice.GetSelection()
             self.choice.SetString(selection, '  ' + inscritId)
             self.choice.SetSelection(selection)

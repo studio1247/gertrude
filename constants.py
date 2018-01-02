@@ -85,32 +85,6 @@ SAISIE_HORAIRE = 0
 SAISIE_JOURS_SEMAINE = 1
 SAISIE_HEURES_SEMAINE = 2
 
-# Modes des activités
-MODE_PRESENCE = 0
-MODE_NORMAL = 1
-MODE_LIBERE_PLACE = 2
-MODE_PRESENCE_SUPPLEMENTAIRE = 3
-MODE_PRESENCE_NON_FACTUREE = 4
-MODE_SYSTEMATIQUE_SANS_HORAIRES = 5
-MODE_PERMANENCE = 6
-MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE = 7
-MODE_SALARIE_HEURES_SUPP = 8
-MODE_SALARIE_RECUP_HEURES_SUPP = 9
-MODE_SANS_HORAIRES = 10
-
-ActivityModes = [
-    ("Normal", MODE_NORMAL),
-    ("Libère une place", MODE_LIBERE_PLACE),
-    ("Présence non facturée", MODE_PRESENCE_NON_FACTUREE),
-    ("Présence facturée en temps supplémentaire", MODE_PRESENCE_SUPPLEMENTAIRE),
-    ("Sans horaire, systématique", MODE_SYSTEMATIQUE_SANS_HORAIRES),
-    ("Sans horaire, systématique et mensualisé", MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE),
-    ("Permanence", MODE_PERMANENCE),
-    ("Heures supp. (salariés)", MODE_SALARIE_HEURES_SUPP),
-    ("Récup heures supp. (salariés)", MODE_SALARIE_RECUP_HEURES_SUPP),
-    ("Sans horaires", MODE_SANS_HORAIRES)
-]
-
 # Propriétaires des activités
 ACTIVITY_OWNER_ALL = 0
 ACTIVITY_OWNER_ENFANTS = 1
@@ -368,9 +342,35 @@ ABSENT = 0
 PRESENT = 1 << 0  # activité 0
 SUPPLEMENT = 1 << 30
 
+# Modes des activités
+MODE_PRESENCE = 0
+MODE_NORMAL = 1
+MODE_LIBERE_PLACE = 2
+MODE_PRESENCE_SUPPLEMENTAIRE = 3
+MODE_PRESENCE_NON_FACTUREE = 4
+MODE_SYSTEMATIQUE_SANS_HORAIRES = 5
+MODE_PERMANENCE = 6
+MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE = 7
+MODE_SALARIE_HEURES_SUPP = 8
+MODE_SALARIE_RECUP_HEURES_SUPP = 9
+MODE_SANS_HORAIRES = 10
+
+ActivityModes = [
+    ("Normal", MODE_NORMAL),
+    ("Présence non facturée", MODE_PRESENCE_NON_FACTUREE),
+    ("Présence facturée en temps supplémentaire", MODE_PRESENCE_SUPPLEMENTAIRE),
+    ("Libère une place", MODE_LIBERE_PLACE),
+    ("Permanence", MODE_PERMANENCE),
+    ("Heures supp. (salariés)", MODE_SALARIE_HEURES_SUPP),
+    ("Récup heures supp. (salariés)", MODE_SALARIE_RECUP_HEURES_SUPP),
+    ("Sans horaires", MODE_SANS_HORAIRES),
+    ("Sans horaire, systématique", MODE_SYSTEMATIQUE_SANS_HORAIRES),
+    ("Sans horaire, systématique et mensualisé", MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE),
+]
+
 # Libellés par défaut
 STATE_LABELS = {
-    0: "Présences",
+    MODE_PRESENCE: "Présences",
     PRESENCE_SALARIE: "Présences salariés",
     VACANCES: "Vacances",
     MALADE: "Malade",

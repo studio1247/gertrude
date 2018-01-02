@@ -40,17 +40,17 @@ COMMENT_BUTTON_WIDTH = 31  # px
 RECAP_WIDTH = 100  # px
 
 try:
-    BUTTON_BITMAPS = {ABSENT: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), 'Absent'),
-                      PRESENT: (wx.Bitmap(GetBitmapFile("icone_presence.png"), wx.BITMAP_TYPE_PNG), 'Présent'),
-                      VACANCES: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), 'Congés'),
-                      CONGES_PAYES: (wx.Bitmap(GetBitmapFile("icone_conges_payes.png"), wx.BITMAP_TYPE_PNG), "Congés payés"),
-                      MALADE: (wx.Bitmap(GetBitmapFile("icone_maladie.png"), wx.BITMAP_TYPE_PNG), 'Malade'),
-                      HOPITAL: (wx.Bitmap(GetBitmapFile("icone_hopital.png"), wx.BITMAP_TYPE_PNG), 'Maladie avec hospitalisation'),
-                      MALADE_SANS_JUSTIFICATIF: (wx.Bitmap(GetBitmapFile("icone_maladie_sans_justificatif.png"), wx.BITMAP_TYPE_PNG), "Maladie sans justificatif"),
-                      ABSENCE_NON_PREVENUE: (wx.Bitmap(GetBitmapFile("icone_absence_non_prevenue.png"), wx.BITMAP_TYPE_PNG), "Absence non prévenue"),
-                      ABSENCE_CONGE_SANS_PREAVIS: (wx.Bitmap(GetBitmapFile("icone_absence_sans_preavis.png"), wx.BITMAP_TYPE_PNG), "Congés sans préavis"),
-                      CONGES_DEPASSEMENT: (wx.Bitmap(GetBitmapFile("icone_conges_depassement.png"), wx.BITMAP_TYPE_PNG), "Absence non déductible (dépassement)"),
-                      CONGES_SANS_SOLDE: (wx.Bitmap(GetBitmapFile("icone_conges_sans_solde.png"), wx.BITMAP_TYPE_PNG), "Congés sans solde"),
+    BUTTON_BITMAPS = {ABSENT: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), "Absent"),
+                      PRESENT: (wx.Bitmap(GetBitmapFile("icone_presence.png"), wx.BITMAP_TYPE_PNG), "Présent"),
+                      VACANCES: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), "Congés"),
+                      CONGES_PAYES: (wx.Bitmap(GetBitmapFile("icone_conges_payes.png"), wx.BITMAP_TYPE_PNG), STATE_LABELS[CONGES_PAYES]),
+                      MALADE: (wx.Bitmap(GetBitmapFile("icone_maladie.png"), wx.BITMAP_TYPE_PNG), STATE_LABELS[MALADE]),
+                      HOPITAL: (wx.Bitmap(GetBitmapFile("icone_hopital.png"), wx.BITMAP_TYPE_PNG), STATE_LABELS[HOPITAL]),
+                      MALADE_SANS_JUSTIFICATIF: (wx.Bitmap(GetBitmapFile("icone_maladie_sans_justificatif.png"), wx.BITMAP_TYPE_PNG), STATE_LABELS[MALADE_SANS_JUSTIFICATIF]),
+                      ABSENCE_NON_PREVENUE: (wx.Bitmap(GetBitmapFile("icone_absence_non_prevenue.png"), wx.BITMAP_TYPE_PNG), STATE_LABELS[ABSENCE_NON_PREVENUE]),
+                      ABSENCE_CONGE_SANS_PREAVIS: (wx.Bitmap(GetBitmapFile("icone_absence_sans_preavis.png"), wx.BITMAP_TYPE_PNG), STATE_LABELS[ABSENCE_CONGE_SANS_PREAVIS]),
+                      CONGES_DEPASSEMENT: (wx.Bitmap(GetBitmapFile("icone_conges_depassement.png"), wx.BITMAP_TYPE_PNG), STATE_LABELS[CONGES_DEPASSEMENT]),
+                      CONGES_SANS_SOLDE: (wx.Bitmap(GetBitmapFile("icone_conges_sans_solde.png"), wx.BITMAP_TYPE_PNG), STATE_LABELS[CONGES_SANS_SOLDE]),
                       }
 
     BULLE_BITMAP = wx.Bitmap(GetBitmapFile("bulle.png"))
@@ -275,7 +275,8 @@ class PlanningLineGrid(BufferedWindow):
         line.draw(dc)
         dc.EndDrawing()
         
-    def __get_pos(self, x):
+    @staticmethod
+    def __get_pos(x):
         if x > 0:
             x -= 1
         return int(database.creche.affichage_min * (60 // BASE_GRANULARITY) + (x // config.column_width))
@@ -381,21 +382,74 @@ class PlanningLineGrid(BufferedWindow):
             self.state = None
 
 
+class SaisieHoraireDialog(wx.Dialog):
+    def __init__(self, parent, line):
+        wx.Dialog.__init__(self, parent, -1, "Saisie horaire", wx.DefaultPosition, wx.DefaultSize)
+        self.line = line
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.fields_sizer = wx.FlexGridSizer(0, 2, 5, 10)
+        self.fields_sizer.AddGrowableCol(1, 1)
+        self.debut_ctrl = wx.TextCtrl(self)
+        # self.debut_ctrl.SetValue(periode.debut)
+        self.fields_sizer.AddMany(
+            [(wx.StaticText(self, -1, "Début :"), 0, wx.ALIGN_CENTRE_VERTICAL | wx.ALL - wx.BOTTOM, 5),
+             (self.debut_ctrl, 0, wx.EXPAND | wx.ALIGN_CENTRE_VERTICAL | wx.ALL - wx.BOTTOM, 5)])
+        self.fin_ctrl = wx.TextCtrl(self)
+        # self.fin_ctrl.SetValue(periode.fin)
+        self.fields_sizer.AddMany([(wx.StaticText(self, -1, "Fin :"), 0, wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 5),
+                                   (self.fin_ctrl, 0, wx.EXPAND | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 5)])
+        self.sizer.Add(self.fields_sizer, 0, wx.EXPAND | wx.ALL, 5)
+        self.btnsizer = wx.StdDialogButtonSizer()
+        btn = wx.Button(self, wx.ID_OK)
+        btn.SetDefault()
+        self.btnsizer.AddButton(btn)
+        btn = wx.Button(self, wx.ID_CANCEL)
+        self.btnsizer.AddButton(btn)
+        self.btnsizer.Realize()
+        self.sizer.Add(self.btnsizer, 0, wx.ALL, 5)
+        self.SetSizer(self.sizer)
+        self.sizer.Fit(self)
+
+    @staticmethod
+    def get_index(text):
+        if ":" in text:
+            hours, minutes = map(lambda s: s.strip(), text.split(":", 1))
+        else:
+            hours, minutes = text.strip(), "0"
+        if not hours.isdigit() or not minutes.isdigit():
+            return None
+        return 12 * int(hours) + int(minutes) // 5
+
+    def get_interval(self):
+        return self.get_index(self.debut_ctrl.GetValue()), self.get_index(self.fin_ctrl.GetValue())
+
+
 class PlanningLineLabel(wx.Panel):
     def __init__(self, parent, line, pos):
         wx.Panel.__init__(self, parent, -1, pos=pos, size=(LABEL_WIDTH, LINE_HEIGHT-1), style=wx.NO_BORDER)
+        self.parent = parent
         self.line = line
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_PAINT, self.onPaint)
+        self.Bind(wx.EVT_LEFT_DOWN, self.onLeftButtonDown)
         
     def SetLine(self, line):
         self.line = line
     
-    def OnPaint(self, event):
+    def onPaint(self, _):
         dc = wx.PaintDC(self)
         dc.BeginDrawing()
         dc.SetTextForeground("BLACK")
         self.line.draw_label(dc)
         dc.EndDrawing()
+
+    def onLeftButtonDown(self, _):
+        dialog = SaisieHoraireDialog(self, self.line)
+        response = dialog.ShowModal()
+        dialog.Destroy()
+        if response == wx.ID_OK:
+            start, end = dialog.get_interval()
+            self.line.set_activity(start, end, database.creche.states[0])
+            self.parent.OnLineChanged()
 
 
 class PlanningLineIcon(wx.Window):
