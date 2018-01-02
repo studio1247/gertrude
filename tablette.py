@@ -115,7 +115,7 @@ def sync_tablette_lines(lines, tz=None, traces=False):
 
         if traces:
             print("Nouveau timeslot pour", date)
-        who.days.add(cls(date=date, debut=arrivee, fin=depart, value=value))
+        who.days.add(cls(date=date, debut=arrivee, fin=depart, activity=database.creche.states[value]))
         history.Append(None)
 
     array_enfants = {}

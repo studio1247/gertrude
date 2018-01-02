@@ -85,9 +85,6 @@ class Day(object):
                 return PRESENT
         return default
 
-    def get_activity_checkboxes(self):
-        return [timeslot for timeslot in self.timeslots if timeslot.debut is None]
-
     def get_activity_timeslots(self):
         return [timeslot for timeslot in self.timeslots if timeslot.debut is not None]
 
