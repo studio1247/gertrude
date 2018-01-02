@@ -70,7 +70,7 @@ class ReleveSIEJModifications(object):
                         facture_heures_facturees = facture.heures_facture
                     else:
                         facture_heures_facturees = facture.heures_facturees
-                    if trimestreEnd <= today:
+                    if trimestreEnd <= datetime.date.today():
                         self.table[regime].reel_facture += facture_heures_facturees
                         self.table[regime].reel_realise += facture.heures_realisees
                         self.reel += facture_heures_facturees
@@ -108,12 +108,12 @@ class ReleveSIEJModifications(object):
             
             fields = GetCrecheFields(database.creche) + [('annee', self.annee),
                                                 ('date-debut-reel', self.debut),
-                                                ('date-fin-reel', GetTrimestreStart(today) - datetime.timedelta(1)),
-                                                ('date-debut-previsionnel', GetTrimestreStart(today)),
+                                                ('date-fin-reel', GetTrimestreStart(datetime.date.today()) - datetime.timedelta(1)),
+                                                ('date-debut-previsionnel', GetTrimestreStart(datetime.date.today())),
                                                 ('date-fin-previsionnel', self.fin),
                                                 ]
             
-            trimestre = (today.month-1) / 3
+            trimestre = (datetime.date.today().month-1) / 3
             if trimestre > 0:
                 fields.append(('trimestre', "%s trimestre" % ordinaux[trimestre-1]))
             

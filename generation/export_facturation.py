@@ -46,7 +46,7 @@ class ExportFacturationModifications(object):
             for m in range(0, 12, 2):
                 debut = datetime.date(self.annee, m + 1, 1)
                 fin = GetNextMonthStart(debut)
-                if fin > today:
+                if fin > datetime.date.today():
                     break
                 fin = GetMonthEnd(fin)
 

@@ -61,7 +61,7 @@ class EtatsTrimestrielsModifications(object):
             spreadsheet.removeChild(template)
             for trimestre in range(4):
                 debut = datetime.date(self.annee, trimestre * 3 + 1, 1)
-                if debut > today:
+                if debut > datetime.date.today():
                     break
     
                 if trimestre == 3:
@@ -162,10 +162,10 @@ class EtatsTrimestrielsModifications(object):
                         
             # LA SYNTHESE ANNUELLE
             table = tables.item(0)
-            if datetime.date(self.annee, 9, 1) < today:       
+            if datetime.date(self.annee, 9, 1) < datetime.date.today():
                 debut = datetime.date(self.annee, 1, 1)
                 fin = datetime.date(self.annee, 12, 31)
-                if debut < today:
+                if debut < datetime.date.today():
                     lignes = table.getElementsByTagName("table:table-row")
                     # Les inscrits en creche
                     indexes = GetInscritsByMode(debut, fin, MODE_TEMPS_PLEIN | MODE_TEMPS_PARTIEL | MODE_FORFAIT_MENSUEL | MODE_FORFAIT_MENSUEL | MODE_FORFAIT_GLOBAL_CONTRAT, self.site)

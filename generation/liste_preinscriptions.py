@@ -30,7 +30,7 @@ class ListePreinscriptionsModifications(object):
 
         self.site = site
         if date is None:
-            self.date = today
+            self.date = datetime.date.today()
         else:
             self.date = date
         self.default_output = "Liste preinscriptions %s.ods" % GetDateString(self.date, weekday=False)

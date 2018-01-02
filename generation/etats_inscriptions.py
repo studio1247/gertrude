@@ -29,7 +29,7 @@ class EtatsInscriptionsModifications(object):
         self.template = 'Etats inscriptions.ods'
         self.site = site
         if date is None:
-            self.date = today
+            self.date = datetime.date.today()
         else:
             self.date = date
         self.default_output = "Etats inscriptions %s.ods" % GetDateString(self.date, weekday=False)

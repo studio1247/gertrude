@@ -99,7 +99,7 @@ class AttestationModifications(object):
         errors = {}
         tresorier = ""
         directeur = ""
-        bureau = Select(database.creche.bureaux, today)
+        bureau = Select(database.creche.bureaux, datetime.date.today())
         if bureau:
             tresorier = bureau.tresorier
             directeur = bureau.directeur
@@ -149,7 +149,7 @@ class AttestationModifications(object):
                 ('de-fin', '%s %d' % (GetDeMoisStr(facture_fin.month - 1), facture_fin.year)),
                 ('tresorier', tresorier),
                 ('directeur', directeur),
-                ('date', date2str(today)),
+                ('date', date2str(datetime.date.today())),
                 ('date-debut-mois-suivant', date2str(GetNextMonthStart(self.debut))),
                 ('heures-facture', GetHeureString(heures_facture)),
                 ('ceil-heures-facture', GetHeureString(math.ceil(heures_facture))),
