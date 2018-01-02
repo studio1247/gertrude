@@ -24,7 +24,7 @@ import wx
 import wx.lib.scrolledpanel
 from buffered_window import BufferedWindow
 from controls import TextDialog
-from database import Timeslot
+from database import Timeslot, Activite
 from functions import *
 from config import config
 from planning_line import BasePlanningLine, BasePlanningSeparator
@@ -40,17 +40,17 @@ COMMENT_BUTTON_WIDTH = 31  # px
 RECAP_WIDTH = 100  # px
 
 try:
-    BUTTON_BITMAPS = {ABSENT: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), 'Absent'),
-                      PRESENT: (wx.Bitmap(GetBitmapFile("icone_presence.png"), wx.BITMAP_TYPE_PNG), 'Présent'),
-                      VACANCES: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), 'Congés'),
-                      CONGES_PAYES: (wx.Bitmap(GetBitmapFile("icone_conges_payes.png"), wx.BITMAP_TYPE_PNG), 'Congés payés'),
-                      MALADE: (wx.Bitmap(GetBitmapFile("icone_maladie.png"), wx.BITMAP_TYPE_PNG), 'Malade'),
-                      HOPITAL: (wx.Bitmap(GetBitmapFile("icone_hopital.png"), wx.BITMAP_TYPE_PNG), 'Maladie avec hospitalisation'),
-                      MALADE_SANS_JUSTIFICATIF: (wx.Bitmap(GetBitmapFile("icone_maladie_sans_justificatif.png"), wx.BITMAP_TYPE_PNG), 'Maladie sans justificatif'),
-                      ABSENCE_NON_PREVENUE: (wx.Bitmap(GetBitmapFile("icone_absence_non_prevenue.png"), wx.BITMAP_TYPE_PNG), 'Absence non prévenue'),
-                      ABSENCE_CONGE_SANS_PREAVIS: (wx.Bitmap(GetBitmapFile("icone_absence_sans_preavis.png"), wx.BITMAP_TYPE_PNG), 'Congés sans préavis'),
-                      CONGES_DEPASSEMENT: (wx.Bitmap(GetBitmapFile("icone_conges_depassement.png"), wx.BITMAP_TYPE_PNG), 'Absence non déductible (dépassement)'),
-                      CONGES_SANS_SOLDE: (wx.Bitmap(GetBitmapFile("icone_conges_sans_solde.png"), wx.BITMAP_TYPE_PNG), 'Congés sans solde'),
+    BUTTON_BITMAPS = {ABSENT: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), "Absent"),
+                      PRESENT: (wx.Bitmap(GetBitmapFile("icone_presence.png"), wx.BITMAP_TYPE_PNG), "Présent"),
+                      VACANCES: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), "Congés"),
+                      CONGES_PAYES: (wx.Bitmap(GetBitmapFile("icone_conges_payes.png"), wx.BITMAP_TYPE_PNG), STATE_LABELS[CONGES_PAYES]),
+                      MALADE: (wx.Bitmap(GetBitmapFile("icone_maladie.png"), wx.BITMAP_TYPE_PNG), STATE_LABELS[MALADE]),
+                      HOPITAL: (wx.Bitmap(GetBitmapFile("icone_hopital.png"), wx.BITMAP_TYPE_PNG), STATE_LABELS[HOPITAL]),
+                      MALADE_SANS_JUSTIFICATIF: (wx.Bitmap(GetBitmapFile("icone_maladie_sans_justificatif.png"), wx.BITMAP_TYPE_PNG), STATE_LABELS[MALADE_SANS_JUSTIFICATIF]),
+                      ABSENCE_NON_PREVENUE: (wx.Bitmap(GetBitmapFile("icone_absence_non_prevenue.png"), wx.BITMAP_TYPE_PNG), STATE_LABELS[ABSENCE_NON_PREVENUE]),
+                      ABSENCE_CONGE_SANS_PREAVIS: (wx.Bitmap(GetBitmapFile("icone_absence_sans_preavis.png"), wx.BITMAP_TYPE_PNG), STATE_LABELS[ABSENCE_CONGE_SANS_PREAVIS]),
+                      CONGES_DEPASSEMENT: (wx.Bitmap(GetBitmapFile("icone_conges_depassement.png"), wx.BITMAP_TYPE_PNG), STATE_LABELS[CONGES_DEPASSEMENT]),
+                      CONGES_SANS_SOLDE: (wx.Bitmap(GetBitmapFile("icone_conges_sans_solde.png"), wx.BITMAP_TYPE_PNG), STATE_LABELS[CONGES_SANS_SOLDE]),
                       }
 
     BULLE_BITMAP = wx.Bitmap(GetBitmapFile("bulle.png"))
@@ -75,8 +75,8 @@ class BaseWxPythonLine:
         self.draw_grid(dc)
         if self.reference:
             for timeslot in self.reference.timeslots:
-                if timeslot.value == 0:
-                    r, g, b, t, s = GetActivityColor(timeslot.value)
+                if timeslot.activity.mode == 0:
+                    r, g, b, t, s = database.creche.states[0].couleur
                     try:
                         dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
                         dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
@@ -87,14 +87,15 @@ class BaseWxPythonLine:
                     dc.DrawRectangleRect(rect)
 
         timeslots = self.timeslots[:]
-        timeslots.sort(key=lambda slot: slot.value)
+        if not (self.options & DRAW_VALUES):
+            timeslots.sort(key=lambda slot: slot.activity.mode)
 
         for timeslot in timeslots:
             if not timeslot.is_checkbox():
                 if self.options & DRAW_VALUES:
-                    r, g, b, t, s = GetActivityColor(0)
+                    r, g, b, t, s = database.creche.states[0].couleur
                 else:
-                    r, g, b, t, s = GetActivityColor(timeslot.value)
+                    r, g, b, t, s = timeslot.activity.couleur
                 try:
                     dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
                     dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s if s != 50 else 100))
@@ -105,7 +106,7 @@ class BaseWxPythonLine:
                 timeslot.debut - int(database.creche.affichage_min * (60 // BASE_GRANULARITY))) * config.column_width, 0,
                                (timeslot.fin - timeslot.debut) * config.column_width - 1, LINE_HEIGHT - 1)
                 dc.DrawRoundedRectangleRect(rect, 3)
-                if self.options & DRAW_VALUES and timeslot.value != 0:
+                if self.options & DRAW_VALUES and timeslot.value is not None:
                     dc.DrawText(str(timeslot.value), rect.GetX() + rect.GetWidth() // 2 - 4 * len(str(timeslot.value)), 7)
 
         # Commentaire sur la ligne
@@ -274,7 +275,8 @@ class PlanningLineGrid(BufferedWindow):
         line.draw(dc)
         dc.EndDrawing()
         
-    def __get_pos(self, x):
+    @staticmethod
+    def __get_pos(x):
         if x > 0:
             x -= 1
         return int(database.creche.affichage_min * (60 // BASE_GRANULARITY) + (x // config.column_width))
@@ -286,11 +288,11 @@ class PlanningLineGrid(BufferedWindow):
         if not self.line.readonly and not config.readonly:
             # TODO plutôt notifier d'un changement dans la combo
             if self.activity_combobox:
-                self.value = self.activity_combobox.activity.value
+                self.activity = self.activity_combobox.activity
             else:
-                self.value = 0
+                self.activity = database.creche.states[0]
             for timeslot in self.line.timeslots:
-                if ((self.line.options & DRAW_VALUES) or timeslot.value == self.value) and timeslot.debut <= posX <= timeslot.fin:
+                if ((self.line.options & DRAW_VALUES) or timeslot.activity == self.activity) and timeslot.debut <= posX <= timeslot.fin:
                     self.state = -1
                     break
             else:
@@ -339,9 +341,9 @@ class PlanningLineGrid(BufferedWindow):
             clone.widget = self.parent
             for start, end in self.GetPlagesSelectionnees():                        
                 if self.state > 0:
-                    clone.set_activity(start, end, self.value)
+                    clone.set_activity(start, end, self.activity)
                 else:
-                    clone.clear_activity(start, end, self.value)
+                    clone.clear_activity(start, end, self.activity)
             
             self.temp_line = clone
             self.UpdateDrawing()
@@ -355,44 +357,99 @@ class PlanningLineGrid(BufferedWindow):
             # history.Append([Call(line.Restore, line.Backup())])
             
             if self.state > 0:
-                if not self.activity_combobox:
+                if self.activity_combobox:
+                    for start, end in self.GetPlagesSelectionnees():
+                        line.set_activity(start, end, self.activity)
+                else:
                     dlg = TextDialog(self, "Capacité", "10")
                     response = dlg.ShowModal()
                     dlg.Destroy()
-                    try:
-                        self.value = int(dlg.GetText())
-                    except:
-                        pass
-                    if response != wx.ID_OK or self.value == 0:
+                    if not dlg.GetText().isdigit():
+                        return
+                    value = int(dlg.GetText())
+                    if response != wx.ID_OK or value == 0:
                         self.parent.UpdateContents()
                         self.state = None
                         self.UpdateDrawing()
                         return
-                for start, end in self.GetPlagesSelectionnees():
-                    line.set_activity(start, end, self.value)
+                    for start, end in self.GetPlagesSelectionnees():
+                        line.set_activity(start, end, value)
             else:
                 for start, end in self.GetPlagesSelectionnees():                        
-                    line.clear_activity(start, end, self.value)
+                    line.clear_activity(start, end, self.activity)
             
             self.parent.OnLineChanged()
             self.state = None
 
 
+class SaisieHoraireDialog(wx.Dialog):
+    def __init__(self, parent, line):
+        wx.Dialog.__init__(self, parent, -1, "Saisie horaire", wx.DefaultPosition, wx.DefaultSize)
+        self.line = line
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.fields_sizer = wx.FlexGridSizer(0, 2, 5, 10)
+        self.fields_sizer.AddGrowableCol(1, 1)
+        self.debut_ctrl = wx.TextCtrl(self)
+        # self.debut_ctrl.SetValue(periode.debut)
+        self.fields_sizer.AddMany(
+            [(wx.StaticText(self, -1, "Début :"), 0, wx.ALIGN_CENTRE_VERTICAL | wx.ALL - wx.BOTTOM, 5),
+             (self.debut_ctrl, 0, wx.EXPAND | wx.ALIGN_CENTRE_VERTICAL | wx.ALL - wx.BOTTOM, 5)])
+        self.fin_ctrl = wx.TextCtrl(self)
+        # self.fin_ctrl.SetValue(periode.fin)
+        self.fields_sizer.AddMany([(wx.StaticText(self, -1, "Fin :"), 0, wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 5),
+                                   (self.fin_ctrl, 0, wx.EXPAND | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 5)])
+        self.sizer.Add(self.fields_sizer, 0, wx.EXPAND | wx.ALL, 5)
+        self.btnsizer = wx.StdDialogButtonSizer()
+        btn = wx.Button(self, wx.ID_OK)
+        btn.SetDefault()
+        self.btnsizer.AddButton(btn)
+        btn = wx.Button(self, wx.ID_CANCEL)
+        self.btnsizer.AddButton(btn)
+        self.btnsizer.Realize()
+        self.sizer.Add(self.btnsizer, 0, wx.ALL, 5)
+        self.SetSizer(self.sizer)
+        self.sizer.Fit(self)
+
+    @staticmethod
+    def get_index(text):
+        if ":" in text:
+            hours, minutes = map(lambda s: s.strip(), text.split(":", 1))
+        else:
+            hours, minutes = text.strip(), "0"
+        if not hours.isdigit() or not minutes.isdigit():
+            return None
+        return 12 * int(hours) + int(minutes) // 5
+
+    def get_interval(self):
+        return self.get_index(self.debut_ctrl.GetValue()), self.get_index(self.fin_ctrl.GetValue())
+
+
 class PlanningLineLabel(wx.Panel):
     def __init__(self, parent, line, pos):
         wx.Panel.__init__(self, parent, -1, pos=pos, size=(LABEL_WIDTH, LINE_HEIGHT-1), style=wx.NO_BORDER)
+        self.parent = parent
         self.line = line
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_PAINT, self.onPaint)
+        self.Bind(wx.EVT_LEFT_DOWN, self.onLeftButtonDown)
         
     def SetLine(self, line):
         self.line = line
     
-    def OnPaint(self, event):
+    def onPaint(self, _):
         dc = wx.PaintDC(self)
         dc.BeginDrawing()
         dc.SetTextForeground("BLACK")
         self.line.draw_label(dc)
         dc.EndDrawing()
+
+    def onLeftButtonDown(self, _):
+        dialog = SaisieHoraireDialog(self, self.line)
+        response = dialog.ShowModal()
+        dialog.Destroy()
+        if response == wx.ID_OK:
+            start, end = dialog.get_interval()
+            self.line.set_activity(start, end, database.creche.states[0])
+            self.parent.OnLineChanged()
 
 
 class PlanningLineIcon(wx.Window):
@@ -514,7 +571,7 @@ class PlanningLineWidget(wx.Window):
             else:
                 checkbox.Show()
                 checkbox.Enable(not config.readonly)
-                checkbox.SetValue(self.line.is_timeslot_checked(checkbox.activite.value))
+                checkbox.SetValue(self.line.is_timeslot_checked(checkbox.activite))
 
     def UpdateBulle(self):
         if self.line.commentaire is None:
@@ -542,10 +599,10 @@ class PlanningLineWidget(wx.Window):
         if not (self.line.readonly or config.readonly):
             if event.Checked():
                 history.Append(None)
-                self.line.set_checkbox(checkbox.activite.value)
+                self.line.set_checkbox(checkbox.activite)
             else:
                 history.Append(None)
-                self.line.clear_checkbox(checkbox.activite.value)
+                self.line.clear_checkbox(checkbox.activite)
             self.OnLineChanged()
 
     def OnCommentButtonPressed(self, _):
@@ -717,14 +774,11 @@ class PlanningSummaryPanel(BufferedWindow):
 
     def UpdateContents(self):
         self.activites, self.activites_sans_horaires = self.GetParent().get_summary()
-
-        # TODO virer GetActivitiesSummary du code et réutiliser le code au dessus
         new_activitites_count = len(self.activites)
         if self.activities_count != new_activitites_count:
             self.activities_count = new_activitites_count
             self.SetMinSize((-1, 2 + 20 * new_activitites_count))
             self.GetParent().sizer.Layout()
-
         self.ForceRefresh()
 
     def Draw(self, dc):
@@ -743,11 +797,7 @@ class PlanningSummaryPanel(BufferedWindow):
             index = 0
             for key in keys:
                 if self.activites[key]:
-                    if key == PRESENCE_SALARIE:
-                        label = "Présence salariés"
-                    else:
-                        label = database.creche.activites[key].label
-                    dc.DrawText(label, 5, 6 + index * 20)
+                    dc.DrawText(key.label, 5, 6 + index * 20)
                     self.DrawLine(dc, index, key)
                     index += 1
             
@@ -783,7 +833,7 @@ class PlanningSummaryPanel(BufferedWindow):
                 w, h = dc.GetTextExtent(text)
                 rect = wx.Rect(x, 4, w + 6, 15)
                 dc.DrawRectangleRect(rect)
-                dc.DrawText(text, rect.left + (rect.width - w) // 2, rect.top + (rect.height - h)  // 2)
+                dc.DrawText(text, rect.left + (rect.width - w) // 2, rect.top + (rect.height - h) // 2)
             
         dc.EndDrawing()
 
@@ -798,9 +848,9 @@ class PlanningSummaryPanel(BufferedWindow):
         for timeslot in timeslots:
             if timeslot.debut is not None:
                 if hasattr(timeslot, "overflow") and timeslot.overflow:
-                    r, g, b, t, s = GetActivityColor(SUPPLEMENT)
+                    r, g, b, t, s = database.creche.states[0].couleur_supplement
                 else:
-                    r, g, b, t, s = GetActivityColor(0 if key == PRESENCE_SALARIE else key)
+                    r, g, b, t, s = database.creche.states[0].couleur if key == PRESENCE_SALARIE else key.couleur
 
                 try:
                     dc.SetPen(wx.Pen(wx.Colour(r, g, b, wx.ALPHA_OPAQUE)))
@@ -861,48 +911,9 @@ class PlanningWidget(wx.Panel):
         if self.options & NO_SCROLL:
             self.SetMinSize((-1, 25+5+LINE_HEIGHT*len(self.lines)))
         self.Refresh()
-        
-    def collect_summary(self):
-        summary = collections.OrderedDict()
-        for line in self.lines:
-            line_summary = line.get_summary()
-            for key in line_summary:
-                if key not in summary:
-                    summary[key] = []
-                summary[key].extend(line_summary[key])
-        return summary
 
     def get_summary(self):
-        activites = {}
-        activites_sans_horaires = {}
-        summary = self.collect_summary()
-        for key in summary:
-            timeslots = summary[key]
-            if key == 0 or key in database.creche.activites:
-                if key > 0 and database.creche.activites[key].mode == MODE_SANS_HORAIRES:
-                    activites_sans_horaires[key] = len(timeslots)
-                else:
-                    activites[key] = []
-                    timeline = []
-                    for timeslot in timeslots:
-                        timeline.append([timeslot.debut, +1])
-                        timeline.append([timeslot.fin, -1])
-                    timeline.sort(key=lambda event: event[0])
-                    start, count = None, 0
-                    for i, event in enumerate(timeline):
-                        if event[1] == 0:
-                            pass
-                        elif i + 1 < len(timeline) and event[0] == timeline[i + 1][0]:
-                            timeline[i + 1][1] += event[1]
-                        else:
-                            if start is not None:
-                                activites[key].append(Timeslot(start, event[0], count))
-                            count += event[1]
-                            if count == 0:
-                                start = None
-                            else:
-                                start = event[0]
-        return activites, activites_sans_horaires
+        return get_lines_summary(self.lines)
 
     def OnPaint(self, event):
         dc = wx.PaintDC(self.scale_window)

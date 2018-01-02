@@ -64,7 +64,7 @@ class EtatPresenceModifications(object):
                         day = inscrit.GetJournee(date)
                         if day:
                             for timeslot in day.timeslots:
-                                if timeslot.debut is not None and timeslot.value >= 0:
+                                if timeslot.debut is not None and timeslot.activity.mode >= 0:
                                     if timeslot.debut < 13*12:
                                         matin = 1
                                     if timeslot.fin > 13.25*12:

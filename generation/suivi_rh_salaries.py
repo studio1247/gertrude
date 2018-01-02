@@ -71,21 +71,19 @@ class SuiviRHSalariesModifications(object):
                     ("date", line.date),
                     ("heures-supp", line.value)])
         for timeslot in salarie.days:
-            activity = database.creche.activites.get(timeslot.value, None)
-            if activity:
-                if activity.mode == MODE_SALARIE_HEURES_SUPP:
-                    value = timeslot.get_duration() / 60
-                elif activity.mode == MODE_SALARIE_RECUP_HEURES_SUPP:
-                    value = - timeslot.get_duration() / 60
-                else:
-                    continue
-                if timeslot.date < self.periode:
-                    solde_heures_supp += value
-                elif timeslot.date.month == self.periode.month:
-                    compteur_heures_supp += value
-                    lines_heures_supp.append([
-                        ("date", timeslot.date),
-                        ("heures-supp", value)])
+            if timeslot.activity.mode == MODE_SALARIE_HEURES_SUPP:
+                value = timeslot.get_duration() / 60
+            elif timeslot.activity.mode == MODE_SALARIE_RECUP_HEURES_SUPP:
+                value = - timeslot.get_duration() / 60
+            else:
+                continue
+            if timeslot.date < self.periode:
+                solde_heures_supp += value
+            elif timeslot.date.month == self.periode.month:
+                compteur_heures_supp += value
+                lines_heures_supp.append([
+                    ("date", timeslot.date),
+                    ("heures-supp", value)])
         lines_heures_supp.sort(key=lambda l: l[0][1])
         return lines_heures_supp, solde_heures_supp, compteur_heures_supp
 
@@ -182,7 +180,7 @@ class SuiviRHSalariesModifications(object):
             ("droit-conges-payes", solde_conges)
         ])
         for line in template2_headers:
-            ReplaceTextFields(line, global_fields)
+            ReplaceFields(line, global_fields)
         for i in range(max(len(lines_heures_supp), len(lines_conges))):
             line = template2.cloneNode(1)
             fields = []

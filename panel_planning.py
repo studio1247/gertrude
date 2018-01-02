@@ -41,7 +41,7 @@ def timeslots_intersection(timeslot1, timeslot2):
     if min_ts.fin <= max_ts.debut:
         return None
     else:
-        return Timeslot(max_ts.debut, min_ts.fin if min_ts.fin < max_ts.fin else max_ts.fin, 0)
+        return Timeslot(max_ts.debut, min_ts.fin if min_ts.fin < max_ts.fin else max_ts.fin, timeslot1.activity, value=timeslot1.value)
 
 
 def check_timeslot(timeslot, max_timeslots, check_function):
@@ -51,10 +51,10 @@ def check_timeslot(timeslot, max_timeslots, check_function):
         if intersection:
             result = []
             if intersection.debut != timeslot.debut:
-                result.extend(check_timeslot(Timeslot(timeslot.debut, intersection.debut, timeslot.value), max_timeslots, check_function))
-            result.append(Timeslot(intersection.debut, intersection.fin, timeslot.value, overflow=not check_function(timeslot.value, max_timeslot.value)))
+                result.extend(check_timeslot(Timeslot(timeslot.debut, intersection.debut, None, value=timeslot.value), max_timeslots, check_function))
+            result.append(Timeslot(intersection.debut, intersection.fin, timeslot.activity, value=timeslot.value, overflow=not check_function(timeslot.value, max_timeslot.value)))
             if intersection.fin != timeslot.fin:
-                result.extend(check_timeslot(Timeslot(intersection.fin, timeslot.fin, timeslot.value), max_timeslots, check_function))
+                result.extend(check_timeslot(Timeslot(intersection.fin, timeslot.fin, None, value=timeslot.value), max_timeslots, check_function))
             break
     else:
         timeslot.overflow = not check_function(timeslot.value, 0)
@@ -76,20 +76,20 @@ def fill_timeslots_with_zero(timeslots, debut, fin):
     if timeslots:
         timeslots.sort(key=lambda timeslot: timeslot.debut)
         if timeslots[0].debut > debut:
-            timeslots.insert(0, Timeslot(debut, timeslots[0].debut, 0))
+            timeslots.insert(0, Timeslot(debut, timeslots[0].debut, None, value=0))
         if timeslots[-1].fin < fin:
-            timeslots.append(Timeslot(timeslots[-1].fin, fin, 0))
+            timeslots.append(Timeslot(timeslots[-1].fin, fin, None, value=0))
         i = 0
         while i < len(timeslots) - 1:
             if timeslots[i].fin < timeslots[i + 1].debut:
-                timeslots.insert(i + 1, Timeslot(timeslots[i].fin, timeslots[i + 1].debut, 0))
+                timeslots.insert(i + 1, Timeslot(timeslots[i].fin, timeslots[i + 1].debut, None, value=0))
             i += 1
     else:
-        timeslots.append(Timeslot(debut, fin, 0))
+        timeslots.append(Timeslot(debut, fin, None, value=0))
 
 
 def filter_zero_and_not_overflow_timeslots(timeslots):
-    return [timeslot for timeslot in timeslots if timeslot.value != 0 or timeslot.overflow]
+    return [timeslot for timeslot in timeslots if timeslot.value or timeslot.overflow]
 
 
 class DayPlanningPanel(PlanningWidget):
@@ -98,24 +98,26 @@ class DayPlanningPanel(PlanningWidget):
 
     def get_summary(self):
         activites, activites_sans_horaires = PlanningWidget.get_summary(self)
-        if 0 in activites:
-            children_presence = activites[0]
+        activite_presence_enfants = database.creche.states[0]
+        if activite_presence_enfants in activites:
+            children_presence = activites[activite_presence_enfants]
             revised_children_presence = []
             for timeslot in children_presence:
                 revised_children_presence.extend(check_timeslot(timeslot, database.creche.tranches_capacite.get(self.date.weekday(), Day()).timeslots, lambda timeslot, capacite_timeslot: timeslot <= capacite_timeslot))
-            activites[0] = revised_children_presence
+            activites[activite_presence_enfants] = revised_children_presence
             if database.creche.salaries:
                 debut, fin = revised_children_presence[0].debut, revised_children_presence[-1].fin
-                if PRESENCE_SALARIE in activites:
-                    salaries_presence = activites[PRESENCE_SALARIE]
+                activite_presence_salaries = database.creche.states[PRESENCE_SALARIE]
+                if activite_presence_salaries in activites:
+                    salaries_presence = activites[activite_presence_salaries]
                     fill_timeslots_with_zero(salaries_presence, debut, fin)
                     revised_salaries_presence = []
                     for timeslot in salaries_presence:
                         revised_salaries_presence.extend(check_timeslot(timeslot, children_presence, lambda timeslot, children_timeslot: timeslot * 6.5 >= children_timeslot))
-                    activites[PRESENCE_SALARIE] = filter_zero_and_not_overflow_timeslots(revised_salaries_presence)
+                    activites[activite_presence_salaries] = filter_zero_and_not_overflow_timeslots(revised_salaries_presence)
         return activites, activites_sans_horaires
 
-    print("TODO CheckLine pas appelé")
+    print("TODO CheckLine / CheckDate pas appelé")
     def CheckLine(self, line, plages_selectionnees):
         lines = self.GetSummaryLines()
         activites, activites_sans_horaires = GetActivitiesSummary(lines)
@@ -206,8 +208,8 @@ class PlanningBasePanel(GPanel):
         self.Bind(wx.EVT_CHOICE, self.OnChangementSemaine, self.site_choice)
 
         # Les raccourcis pour semaine précédente / suivante
-        self.previous_button = wx.Button(self, -1, '<', size=(20,0), style=wx.NO_BORDER)
-        self.next_button = wx.Button(self, -1, '>', size=(20,0), style=wx.NO_BORDER)
+        self.previous_button = wx.Button(self, -1, '<', size=(20, 0), style=wx.NO_BORDER)
+        self.next_button = wx.Button(self, -1, '>', size=(20, 0), style=wx.NO_BORDER)
         self.Bind(wx.EVT_BUTTON, self.OnPreviousWeek, self.previous_button)
         self.Bind(wx.EVT_BUTTON, self.OnNextWeek, self.next_button)
         self.topsizer.Add(self.previous_button, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
@@ -242,15 +244,15 @@ class PlanningBasePanel(GPanel):
             self.groupe_choice.Show(False)
         self.groupes_observer = counters['groupes']
 
-    def OnPreviousWeek(self, evt):
+    def OnPreviousWeek(self, _):
         self.week_choice.SetSelection(self.week_choice.GetSelection() - 1)
         self.OnChangementSemaine()
 
-    def OnNextWeek(self, evt):
+    def OnNextWeek(self, _):
         self.week_choice.SetSelection(self.week_choice.GetSelection() + 1)
         self.OnChangementSemaine()
 
-    def OnChangeGroupeDisplayed(self, evt):
+    def OnChangeGroupeDisplayed(self, _):
         self.OnChangementSemaine()
 
     def GetSelectedSite(self):
@@ -274,7 +276,7 @@ class PlanningHorairePanel(PlanningBasePanel):
 
         # La combobox pour la selection de l'outil (si activités)
         self.activity_choice = ActivityComboBox(self)
-        self.topsizer.Add(self.activity_choice, 0, wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 5)
+        self.topsizer.Add(self.activity_choice, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 5)
 
         # Les boutons d'impression
         bmp = wx.Bitmap(GetBitmapFile("printer.png"), wx.BITMAP_TYPE_PNG)

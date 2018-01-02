@@ -43,7 +43,6 @@ class GertrudeTestCase(unittest.TestCase):
         database.init(":memory:")
         database.create(False)
         database.load()
-        database.creche.activites[0] = Activite(creche=database.creche, value=0, mode=MODE_NORMAL)
 
     def add_ferie(self, label):
         database.creche.add_ferie(CongeStructure(creche=database.creche, debut=label))
@@ -82,11 +81,23 @@ class GertrudeTestCase(unittest.TestCase):
         database.creche.salaries.append(salarie)
         return salarie    
     
-    def AddActivite(self, inscrit, date, debut, fin, activite):
-        inscrit.days.add(TimeslotInscrit(date=date, debut=debut, fin=fin, value=activite))
-        
+    def AddActivite(self, inscrit, date, debut, fin, activity):
+        inscrit.days.add(TimeslotInscrit(date=date, debut=debut, fin=fin, activity=activity))
+
+    @staticmethod
+    def add_inscription_timeslot(inscription, day, debut, fin, activity=None):
+        if activity is None:
+            activity = database.creche.states[0]
+        inscription.days.add(TimeslotInscription(day=day, debut=debut, fin=fin, activity=activity))
+
+    @staticmethod
+    def add_planning_salarie_timeslot(planning, day, debut, fin, activity=None):
+        if activity is None:
+            activity = database.creche.states[0]
+        planning.days.add(TimeslotPlanningSalarie(day=day, debut=debut, fin=fin, activity=activity))
+
     def AddJourneePresence(self, inscrit, date, debut, fin):
-        self.AddActivite(inscrit, date, debut, fin, 0)
+        self.AddActivite(inscrit, date, debut, fin, database.creche.states[0])
         
     def AddFrere(self, inscrit, naissance=datetime.date(2000, 1, 1)):
         result = Fratrie(famille=inscrit.famille, prenom="Frere ou Soeur", naissance=naissance)
@@ -101,21 +112,24 @@ class GertrudeTestCase(unittest.TestCase):
 class PlanningTests(GertrudeTestCase):
     def setUp(self):
         GertrudeTestCase.setUp(self)
-        database.creche.activites[1] = Activite(database.creche, value=1, mode=MODE_LIBERE_PLACE)
-        database.creche.activites[2] = Activite(database.creche, value=2, mode=MODE_NORMAL)
+        self.activity_presence = database.creche.states[MODE_PRESENCE]
+        self.activity_ski = Activite(database.creche, mode=MODE_LIBERE_PLACE)
+        database.creche.add_activite(self.activity_ski)
+        self.activity_repas = Activite(database.creche, mode=MODE_NORMAL)
+        database.creche.add_activite(self.activity_repas)
 
     def test_ski(self):
         from planning import BasePlanningLine
         day = BasePlanningLine()
-        day.set_activity(0, 10, 0)
-        day.set_activity(2, 8, 1)
+        day.set_activity(0, 10, self.activity_presence)
+        day.set_activity(2, 8, self.activity_ski)
         self.assertEquals(len(day.timeslots), 3)
     
     def test_repas(self):
         from planning import BasePlanningLine
         day = BasePlanningLine()
-        day.set_activity(0, 10, 0)
-        day.set_activity(2, 8, 2)
+        day.set_activity(0, 10, self.activity_presence)
+        day.set_activity(2, 8, self.activity_repas)
         self.assertEquals(len(day.timeslots), 2)
 
 
@@ -132,22 +146,22 @@ class DocumentsTests(GertrudeTestCase):
             inscription = Inscription(inscrit=inscrit)
             inscription.debut, inscription.fin = datetime.date(2010, 9, 6), datetime.date(2011, 7, 27)
             inscription.mode = MODE_TEMPS_PLEIN
-            inscription.days.add(TimeslotInscription(day=0, debut=96, fin=180, value=0))
-            inscription.days.add(TimeslotInscription(day=1, debut=96, fin=180, value=0))
-            inscription.days.add(TimeslotInscription(day=2, debut=96, fin=180, value=0))
-            inscription.days.add(TimeslotInscription(day=3, debut=96, fin=180, value=0))
-            inscription.days.add(TimeslotInscription(day=4, debut=96, fin=180, value=0))
+            self.add_inscription_timeslot(inscription, 0, 96, 180)
+            self.add_inscription_timeslot(inscription, 1, 96, 180)
+            self.add_inscription_timeslot(inscription, 2, 96, 180)
+            self.add_inscription_timeslot(inscription, 3, 96, 180)
+            self.add_inscription_timeslot(inscription, 4, 96, 180)
             inscrit.inscriptions.append(inscription)
             
             salarie = self.AddSalarie()
             contrat = ContratSalarie(salarie=salarie, debut=datetime.date(2010, 9, 6), fin=datetime.date(2011, 7, 27))
             planning = PlanningSalarie(contrat=contrat, debut=contrat.debut)
             contrat.plannings.append(planning)
-            planning.days.add(TimeslotPlanningSalarie(day=0, debut=96, fin=180, value=0))
-            planning.days.add(TimeslotPlanningSalarie(day=1, debut=96, fin=180, value=0))
-            planning.days.add(TimeslotPlanningSalarie(day=2, debut=96, fin=180, value=0))
-            planning.days.add(TimeslotPlanningSalarie(day=3, debut=96, fin=180, value=0))
-            planning.days.add(TimeslotPlanningSalarie(day=4, debut=96, fin=180, value=0))
+            self.add_planning_salarie_timeslot(planning, 0, 96, 180)
+            self.add_planning_salarie_timeslot(planning, 1, 96, 180)
+            self.add_planning_salarie_timeslot(planning, 2, 96, 180)
+            self.add_planning_salarie_timeslot(planning, 3, 96, 180)
+            self.add_planning_salarie_timeslot(planning, 4, 96, 180)
             salarie.contrats.append(contrat)
     
     def tearDown(self):
@@ -213,11 +227,11 @@ class NosPetitsPoucesTests(GertrudeTestCase):
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit=inscrit)
         inscription.debut = datetime.date(2010, 1, 1)
-        inscription.days.add(TimeslotInscription(day=0, debut=96, fin=180, value=0))
-        inscription.days.add(TimeslotInscription(day=1, debut=96, fin=180, value=0))
-        inscription.days.add(TimeslotInscription(day=2, debut=96, fin=180, value=0))
-        inscription.days.add(TimeslotInscription(day=3, debut=96, fin=180, value=0))
-        inscription.days.add(TimeslotInscription(day=4, debut=96, fin=180, value=0))
+        self.add_inscription_timeslot(inscription, 0, 96, 180)
+        self.add_inscription_timeslot(inscription, 1, 96, 180)
+        self.add_inscription_timeslot(inscription, 2, 96, 180)
+        self.add_inscription_timeslot(inscription, 3, 96, 180)
+        self.add_inscription_timeslot(inscription, 4, 96, 180)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2010, 1, 1), NO_ADDRESS)
         self.assertPrec2Equals(cotisation.cotisation_mensuelle, 1654.55)
@@ -247,11 +261,11 @@ class PAJETests(GertrudeTestCase):
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit=inscrit)
         inscription.debut, inscription.fin = datetime.date(2010, 9, 6), datetime.date(2011, 7, 27)
-        inscription.days.add(TimeslotInscription(day=0, debut=96, fin=180, value=0))
-        inscription.days.add(TimeslotInscription(day=1, debut=96, fin=180, value=0))
-        inscription.days.add(TimeslotInscription(day=2, debut=96, fin=180, value=0))
-        inscription.days.add(TimeslotInscription(day=3, debut=96, fin=180, value=0))
-        inscription.days.add(TimeslotInscription(day=4, debut=96, fin=180, value=0))
+        self.add_inscription_timeslot(inscription, 0, 96, 180)
+        self.add_inscription_timeslot(inscription, 1, 96, 180)
+        self.add_inscription_timeslot(inscription, 2, 96, 180)
+        self.add_inscription_timeslot(inscription, 3, 96, 180)
+        self.add_inscription_timeslot(inscription, 4, 96, 180)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2010, 9, 6), NO_ADDRESS)
         self.assertPrec2Equals(cotisation.cotisation_mensuelle, 1001.95)
@@ -266,11 +280,11 @@ class PAJETests(GertrudeTestCase):
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit=inscrit)
         inscription.debut, inscription.fin = datetime.date(2014, 10, 15), datetime.date(2015, 12, 31)
-        inscription.days.add(TimeslotInscription(day=0, debut=96, fin=180, value=0))
-        inscription.days.add(TimeslotInscription(day=1, debut=96, fin=180, value=0))
-        inscription.days.add(TimeslotInscription(day=2, debut=96, fin=180, value=0))
-        inscription.days.add(TimeslotInscription(day=3, debut=96, fin=180, value=0))
-        inscription.days.add(TimeslotInscription(day=4, debut=96, fin=180, value=0))
+        self.add_inscription_timeslot(inscription, 0, 96, 180)
+        self.add_inscription_timeslot(inscription, 1, 96, 180)
+        self.add_inscription_timeslot(inscription, 2, 96, 180)
+        self.add_inscription_timeslot(inscription, 3, 96, 180)
+        self.add_inscription_timeslot(inscription, 4, 96, 180)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2014, 10, 15), NO_ADDRESS)
         self.assertPrec2Equals(cotisation.cotisation_mensuelle, 1516.67)
@@ -288,11 +302,11 @@ class PAJETests(GertrudeTestCase):
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit=inscrit)
         inscription.debut = datetime.date(2014, 9, 22)
-        inscription.days.add(TimeslotInscription(day=0, debut=96, fin=204, value=0))
-        inscription.days.add(TimeslotInscription(day=1, debut=96, fin=204, value=0))
-        inscription.days.add(TimeslotInscription(day=2, debut=96, fin=204, value=0))
-        inscription.days.add(TimeslotInscription(day=3, debut=96, fin=204, value=0))
-        inscription.days.add(TimeslotInscription(day=4, debut=96, fin=204, value=0))
+        self.add_inscription_timeslot(inscription, 0, 96, 204)
+        self.add_inscription_timeslot(inscription, 1, 96, 204)
+        self.add_inscription_timeslot(inscription, 2, 96, 204)
+        self.add_inscription_timeslot(inscription, 3, 96, 204)
+        self.add_inscription_timeslot(inscription, 4, 96, 204)
         inscription.semaines_conges = 7
         inscription.fin_periode_adaptation = datetime.date(2014, 10, 6)
         inscrit.inscriptions.append(inscription)
@@ -327,10 +341,10 @@ class MarmousetsTests(GertrudeTestCase):
         database.creche.bureaux.append(Bureau(debut=datetime.date(2010, 1, 1)))
         inscrit = self.AddInscrit()
         inscription = Inscription(inscrit=inscrit, mode=MODE_TEMPS_PARTIEL, debut=datetime.date(2010, 1, 4), fin=datetime.date(2010, 7, 30))
-        inscription.days.add(TimeslotInscription(day=1, debut=102, fin=210, value=0))
-        inscription.days.add(TimeslotInscription(day=2, debut=102, fin=210, value=0))
-        inscription.days.add(TimeslotInscription(day=3, debut=102, fin=210, value=0))
-        inscription.days.add(TimeslotInscription(day=4, debut=102, fin=222, value=0))
+        self.add_inscription_timeslot(inscription, 1, 102, 210)
+        self.add_inscription_timeslot(inscription, 2, 102, 210)
+        self.add_inscription_timeslot(inscription, 3, 102, 210)
+        self.add_inscription_timeslot(inscription, 4, 102, 222)
         inscrit.inscriptions.append(inscription)
         conge = CongeInscrit(inscrit=inscrit, debut="01/02/2010", fin="20/02/2010")
         inscrit.add_conge(conge)
@@ -366,11 +380,11 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         inscription = Inscription(inscrit=inscrit)
         inscription.debut = datetime.date(2010, 8, 24)
         inscription.fin = datetime.date(2010, 12, 31)
-        inscription.days.add(TimeslotInscription(day=0, debut=102, fin=210, value=0))
-        inscription.days.add(TimeslotInscription(day=1, debut=102, fin=210, value=0))
-        inscription.days.add(TimeslotInscription(day=2, debut=102, fin=210, value=0))
-        inscription.days.add(TimeslotInscription(day=3, debut=102, fin=210, value=0))
-        inscription.days.add(TimeslotInscription(day=4, debut=102, fin=210, value=0))
+        self.add_inscription_timeslot(inscription, 0, 102, 210)
+        self.add_inscription_timeslot(inscription, 1, 102, 210)
+        self.add_inscription_timeslot(inscription, 2, 102, 210)
+        self.add_inscription_timeslot(inscription, 3, 102, 210)
+        self.add_inscription_timeslot(inscription, 4, 102, 210)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2010, 9, 1))
         self.assertPrec2Equals(cotisation.heures_semaine, 45.0)
@@ -382,11 +396,11 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         inscription = Inscription(inscrit=inscrit)
         inscription.debut = datetime.date(2010, 9, 1)
         inscription.fin = datetime.date(2010, 12, 31)
-        inscription.days.add(TimeslotInscription(day=0, debut=102, fin=210, value=0))
-        inscription.days.add(TimeslotInscription(day=1, debut=102, fin=210, value=0))
-        inscription.days.add(TimeslotInscription(day=2, debut=102, fin=210, value=0))
-        inscription.days.add(TimeslotInscription(day=3, debut=102, fin=210, value=0))
-        inscription.days.add(TimeslotInscription(day=4, debut=102, fin=210, value=0))
+        self.add_inscription_timeslot(inscription, 0, 102, 210)
+        self.add_inscription_timeslot(inscription, 1, 102, 210)
+        self.add_inscription_timeslot(inscription, 2, 102, 210)
+        self.add_inscription_timeslot(inscription, 3, 102, 210)
+        self.add_inscription_timeslot(inscription, 4, 102, 210)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2010, 9, 1))
         self.assertPrec2Equals(cotisation.heures_semaine, 45.0)
@@ -398,11 +412,11 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         inscription = Inscription(inscrit=inscrit)
         inscription.debut = datetime.date(2010, 1, 1)
         inscription.fin = datetime.date(2010, 12, 31)
-        inscription.days.add(TimeslotInscription(day=0, debut=102, fin=210, value=0))
-        inscription.days.add(TimeslotInscription(day=1, debut=102, fin=222, value=0))
-        inscription.days.add(TimeslotInscription(day=2, debut=102, fin=210, value=0))
-        inscription.days.add(TimeslotInscription(day=3, debut=102, fin=222, value=0))
-        inscription.days.add(TimeslotInscription(day=4, debut=102, fin=222, value=0))
+        self.add_inscription_timeslot(inscription, 0, 102, 210)
+        self.add_inscription_timeslot(inscription, 1, 102, 222)
+        self.add_inscription_timeslot(inscription, 2, 102, 210)
+        self.add_inscription_timeslot(inscription, 3, 102, 222)
+        self.add_inscription_timeslot(inscription, 4, 102, 222)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2010, 9, 1))
         self.assertPrec2Equals(cotisation.heures_semaine, 48.0)
@@ -417,7 +431,7 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         inscription = Inscription(inscrit=inscrit)
         inscription.debut = datetime.date(2010, 1, 1)
         inscription.fin = datetime.date(2010, 12, 31)
-        inscription.days.add(TimeslotInscription(day=2, debut=96, fin=150, value=0))
+        self.add_inscription_timeslot(inscription, 2, 96, 150)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2010, 9, 1))
         self.assertPrec2Equals(cotisation.heures_semaine, 5.0)
@@ -430,7 +444,7 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         inscription = Inscription(inscrit=inscrit)
         inscription.debut = datetime.date(2010, 1, 1)
         inscription.fin = datetime.date(2010, 12, 31)
-        inscription.days.add(TimeslotInscription(day=2, debut=102, fin=222, value=0))
+        self.add_inscription_timeslot(inscription, 2, 102, 222)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2010, 9, 1))
         self.assertPrec2Equals(cotisation.heures_semaine, 10.0)
@@ -446,11 +460,11 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         inscription = Inscription(inscrit=inscrit)
         inscription.debut = datetime.date(2016, 1, 1)
         inscription.fin = datetime.date(2016, 12, 31)
-        inscription.days.add(TimeslotInscription(day=0, debut=90, fin=198, value=0))
-        inscription.days.add(TimeslotInscription(day=1, debut=90, fin=198, value=0))
-        inscription.days.add(TimeslotInscription(day=2, debut=96, fin=198, value=0))
-        inscription.days.add(TimeslotInscription(day=3, debut=90, fin=198, value=0))
-        inscription.days.add(TimeslotInscription(day=4, debut=90, fin=198, value=0))
+        self.add_inscription_timeslot(inscription, 0, 90, 198)
+        self.add_inscription_timeslot(inscription, 1, 90, 198)
+        self.add_inscription_timeslot(inscription, 2, 96, 198)
+        self.add_inscription_timeslot(inscription, 3, 90, 198)
+        self.add_inscription_timeslot(inscription, 4, 90, 198)
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2016, 9)
         self.assertEquals(facture.total_contractualise, 277.5)
@@ -479,9 +493,9 @@ class PetitsMoussesTests(GertrudeTestCase):
         inscription = Inscription(inscrit=inscrit, mode=MODE_TEMPS_PARTIEL,
                                   debut=datetime.date(2013, 1, 1), fin=datetime.date(2013, 2, 15),
                                   semaines_conges=5)
-        inscription.days.add(TimeslotInscription(day=0, debut=102, fin=222, value=0))
-        inscription.days.add(TimeslotInscription(day=3, debut=102, fin=222, value=0))
-        inscription.days.add(TimeslotInscription(day=4, debut=102, fin=222, value=0))
+        self.add_inscription_timeslot(inscription, 0, 102, 222)
+        self.add_inscription_timeslot(inscription, 3, 102, 222)
+        self.add_inscription_timeslot(inscription, 4, 102, 222)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2013, 1, 1))
         self.assertPrec2Equals(cotisation.heures_semaine, 30.0)
@@ -508,8 +522,8 @@ class LoupandisesTests(GertrudeTestCase):
         inscription.debut = datetime.date(2010, 9, 6)
         inscription.fin = datetime.date(2010, 12, 31)
         inscription.fin_periode_adaptation = datetime.date(2010, 11, 30)
-        inscription.days.add(TimeslotInscription(day=1, debut=141, fin=201, value=0))
-        inscription.days.add(TimeslotInscription(day=3, debut=165, fin=201, value=0))
+        self.add_inscription_timeslot(inscription, 1, 141, 201)
+        self.add_inscription_timeslot(inscription, 3, 165, 201)
         inscrit.inscriptions.append(inscription)
         self.AddJourneePresence(inscrit, datetime.date(2010, 11, 4), 120, 120)
         self.AddJourneePresence(inscrit, datetime.date(2010, 11, 8), 120, 156)
@@ -538,10 +552,10 @@ class FacturationDebutMoisContratTests(GertrudeTestCase):
         inscription.mode = MODE_FORFAIT_MENSUEL
         inscription.forfait_mensuel_heures = 90.0
         inscription.debut = datetime.date(2010, 3, 1)
-        inscription.days.add(TimeslotInscription(day=0, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=1, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=2, debut=93, fin=141, value=0))  # 4h
-        inscription.days.add(TimeslotInscription(day=3, debut=93, fin=213, value=0))  # 10h
+        self.add_inscription_timeslot(inscription, 0, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 1, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 2, 93, 141)  # 4h
+        self.add_inscription_timeslot(inscription, 3, 93, 213)  # 10h
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2010, 3)
         self.assertEquals(facture.total, 90.0*7.0)
@@ -559,10 +573,10 @@ class FacturationDebutMoisContratTests(GertrudeTestCase):
         inscription = Inscription(inscrit=inscrit)
         inscription.mode = MODE_TEMPS_PARTIEL
         inscription.debut = datetime.date(2010, 3, 1)
-        inscription.days.add(TimeslotInscription(day=0, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=1, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=2, debut=93, fin=141, value=0))  # 4h
-        inscription.days.add(TimeslotInscription(day=3, debut=93, fin=213, value=0))  # 10h
+        self.add_inscription_timeslot(inscription, 0, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 1, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 2, 93, 141)  # 4h
+        self.add_inscription_timeslot(inscription, 3, 93, 213)  # 10h
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2010, 3)
         self.assertEquals(facture.total, (5*4+14*10)*7.0)
@@ -580,10 +594,10 @@ class FacturationDebutMoisContratTests(GertrudeTestCase):
         inscription = Inscription(inscrit=inscrit)
         inscription.mode = MODE_HALTE_GARDERIE
         inscription.debut = datetime.date(2010, 3, 1)
-        inscription.days.add(TimeslotInscription(day=0, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=1, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=2, debut=93, fin=141, value=0))  # 4h
-        inscription.days.add(TimeslotInscription(day=3, debut=93, fin=213, value=0))  # 10h
+        self.add_inscription_timeslot(inscription, 0, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 1, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 2, 93, 141)  # 4h
+        self.add_inscription_timeslot(inscription, 3, 93, 213)  # 10h
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2010, 3)
         self.assertEquals(facture.total, (5*4+14*10)*9.5)
@@ -612,10 +626,10 @@ class MonPetitBijouTests(GertrudeTestCase):
         inscription.mode = MODE_FORFAIT_MENSUEL
         inscription.forfait_mensuel_heures = 90.0
         inscription.debut = datetime.date(2010, 3, 1)
-        inscription.days.add(TimeslotInscription(day=0, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=1, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=2, debut=93, fin=141, value=0))  # 4h
-        inscription.days.add(TimeslotInscription(day=3, debut=93, fin=213, value=0))  # 10h
+        self.add_inscription_timeslot(inscription, 0, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 1, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 2, 93, 141)  # 4h
+        self.add_inscription_timeslot(inscription, 3, 93, 213)  # 10h
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2010, 3)
         self.assertEquals(facture.total, (5*4+14*10)*7.0)
@@ -642,10 +656,10 @@ class MonPetitBijouTests(GertrudeTestCase):
         inscription = Inscription(inscrit=inscrit)
         inscription.mode = MODE_TEMPS_PARTIEL
         inscription.debut = datetime.date(2010, 3, 1)
-        inscription.days.add(TimeslotInscription(day=0, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=1, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=2, debut=93, fin=141, value=0))  # 4h
-        inscription.days.add(TimeslotInscription(day=3, debut=93, fin=213, value=0))  # 10h
+        self.add_inscription_timeslot(inscription, 0, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 1, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 2, 93, 141)  # 4h
+        self.add_inscription_timeslot(inscription, 3, 93, 213)  # 10h
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2010, 3)
         self.assertEquals(facture.total, (5*4+14*10)*7.0)
@@ -667,10 +681,10 @@ class MonPetitBijouTests(GertrudeTestCase):
         inscription = Inscription(inscrit=inscrit)
         inscription.mode = MODE_HALTE_GARDERIE
         inscription.debut = datetime.date(2010, 3, 1)
-        inscription.days.add(TimeslotInscription(day=0, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=1, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=2, debut=93, fin=141, value=0))  # 4h
-        inscription.days.add(TimeslotInscription(day=3, debut=93, fin=213, value=0))  # 10h
+        self.add_inscription_timeslot(inscription, 0, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 1, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 2, 93, 141)  # 4h
+        self.add_inscription_timeslot(inscription, 3, 93, 213)  # 10h
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2010, 3)
         self.assertEquals(facture.total, (5*4+14*10)*9.5)
@@ -753,7 +767,7 @@ class BebebulTests(GertrudeTestCase):
         database.creche.mode_facturation = FACTURATION_PSU
         database.creche.temps_facturation = FACTURATION_FIN_MOIS
         database.creche.type = TYPE_PARENTAL
-        database.creche.activites[1] = Activite(database.creche, value=1, mode=MODE_PRESENCE_NON_FACTUREE)
+        database.creche.add_activite(Activite(database.creche, mode=MODE_PRESENCE_NON_FACTUREE))
 
     def test_halte_garderie(self):
         inscrit = self.AddInscrit()
@@ -763,8 +777,8 @@ class BebebulTests(GertrudeTestCase):
         inscription = Inscription(inscrit=inscrit)
         inscription.mode = MODE_HALTE_GARDERIE
         inscription.debut = datetime.date(2012, 10, 1)  # lundi
-        inscription.days.add(TimeslotInscription(day=1, debut=102, fin=144, value=0))  # mardi = 3h30
-        inscription.days.add(TimeslotInscription(day=3, debut=102, fin=144, value=0))  # jeudi = 3h30
+        self.add_inscription_timeslot(inscription, 1, 102, 144)  # mardi = 3h30
+        self.add_inscription_timeslot(inscription, 3, 102, 144)  # jeudi = 3h30
         inscrit.inscriptions.append(inscription)
         Cotisation(inscrit, datetime.date(2012, 10, 1), NO_ADDRESS)
         self.AddJourneePresence(inscrit, datetime.date(2012, 10, 2), 105, 138)  # mardi 2h45
@@ -772,9 +786,9 @@ class BebebulTests(GertrudeTestCase):
         self.AddJourneePresence(inscrit, datetime.date(2012, 10, 9), 105, 138)  # mardi 2h45 => 8h30
         self.AddJourneePresence(inscrit, datetime.date(2012, 10, 11), 105, 132)  # jeudi 2h15 => 10h45
         self.AddJourneePresence(inscrit, datetime.date(2012, 10, 16), 105, 144)  # mardi 3h15 => 14h
-        self.AddActivite(inscrit, datetime.date(2012, 10, 18), 102, 144, -1)  # jeudi conge
-        self.AddActivite(inscrit, datetime.date(2012, 10, 23), 105, 147, ABSENCE_NON_PREVENUE)  # mardi 3h30 absence non prevenue
-        self.AddActivite(inscrit, datetime.date(2012, 10, 25), 105, 147, 1)  # jeudi 3h30 permanence
+        self.AddActivite(inscrit, datetime.date(2012, 10, 18), 102, 144, database.creche.states[VACANCES])  # jeudi conge
+        self.AddActivite(inscrit, datetime.date(2012, 10, 23), 105, 147, database.creche.states[ABSENCE_NON_PREVENUE])  # mardi 3h30 absence non prevenue
+        self.AddActivite(inscrit, datetime.date(2012, 10, 25), 105, 147, database.creche.activites[0])  # jeudi 3h30 permanence
         # mardi 30 => 3h30 (periode de reference)
         facture = Facture(inscrit, 2012, 10)
         self.assertPrec2Equals(facture.heures_contractualisees, 31.5)
@@ -795,7 +809,7 @@ class BebebulTests(GertrudeTestCase):
         inscription.mode = MODE_HALTE_GARDERIE
         inscription.debut = datetime.date(2012, 10, 1)
         self.AddJourneePresence(inscrit, datetime.date(2012, 10, 25), 105, 147)  # 3h30
-        self.AddActivite(inscrit, datetime.date(2012, 10, 25), 105, 147, 1)      # 3h30 adaptation
+        self.AddActivite(inscrit, datetime.date(2012, 10, 25), 105, 147, database.creche.activites[0])      # 3h30 adaptation
         facture = Facture(inscrit, 2012, 10)
         self.assertPrec2Equals(facture.heures_contractualisees, 0.0)
         self.assertPrec2Equals(facture.heures_realisees, 3.5)
@@ -823,11 +837,11 @@ class RibambelleTests(GertrudeTestCase):
         inscription = Inscription(inscrit=inscrit)
         inscription.mode = MODE_TEMPS_PARTIEL
         inscription.debut = datetime.date(2015, 10, 1)
-        inscription.days.add(TimeslotInscription(day=0, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=1, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=2, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=3, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=4, debut=93, fin=213, value=0))  # 10h
+        self.add_inscription_timeslot(inscription, 0, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 1, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 2, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 3, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 4, 93, 213)  # 10h
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2015, 10, 1), NO_ADDRESS)
         self.assertEquals(cotisation.montant_heure_garde, 1.25)
@@ -842,11 +856,11 @@ class RibambelleTests(GertrudeTestCase):
         inscription.fin_periode_adaptation = datetime.date(2015, 10, 3)
         self.AddJourneePresence(inscrit, datetime.date(2015, 10, 1), 105, 117) # 1h00
         self.AddJourneePresence(inscrit, datetime.date(2015, 10, 2), 93, 201) # 9h00
-        inscription.days.add(TimeslotInscription(day=0, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=1, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=2, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=3, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=4, debut=93, fin=213, value=0))  # 10h
+        self.add_inscription_timeslot(inscription, 0, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 1, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 2, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 3, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 4, 93, 213)  # 10h
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2015, 10)
         self.assertPrec2Equals(facture.total, 275 - 10*1.25)
@@ -858,11 +872,11 @@ class RibambelleTests(GertrudeTestCase):
         inscription.debut = datetime.date(2016, 1, 1)
         conge = CongeInscrit(inscrit=inscrit, debut="01/02/2016", fin="05/02/2016")
         inscrit.add_conge(conge)
-        inscription.days.add(TimeslotInscription(day=0, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=1, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=2, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=3, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=4, debut=93, fin=213, value=0))  # 10h
+        self.add_inscription_timeslot(inscription, 0, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 1, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 2, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 3, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 4, 93, 213)  # 10h
         inscrit.inscriptions.append(inscription)
         statistiques = GetStatistiques(datetime.date(2016, 1, 1), datetime.date(2016, 12, 31))
         self.assertPrec2Equals(statistiques.heures_contrat, 2560.0)
@@ -890,11 +904,11 @@ class LaCabaneAuxFamillesTests(GertrudeTestCase):
         inscription.debut = datetime.date(2015, 1, 15)
         inscription.fin_periode_adaptation = datetime.date(2015, 1, 19)
         inscription.fin = datetime.date(2016, 1, 14)
-        inscription.days.add(TimeslotInscription(day=0, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=1, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=2, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=3, debut=93, fin=213, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=4, debut=93, fin=213, value=0))  # 10h
+        self.add_inscription_timeslot(inscription, 0, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 1, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 2, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 3, 93, 213)  # 10h
+        self.add_inscription_timeslot(inscription, 4, 93, 213)  # 10h
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2015, 1, 15), NO_ADDRESS)
         self.assertPrec2Equals(cotisation.cotisation_mensuelle, 0.0)
@@ -914,15 +928,15 @@ class LaCabaneAuxFamillesTests(GertrudeTestCase):
         inscription.debut = datetime.date(2016, 11, 1)
         inscription.fin = datetime.date(2017, 8, 25)
         inscription.depart = datetime.date(2017, 3, 31)
-        inscription.days.add(TimeslotInscription(day=0, debut=111, fin=216, value=0))  # 10h
+        self.add_inscription_timeslot(inscription, 0, 111, 216)  # 10h
         inscrit.inscriptions.append(inscription)
         inscription = Inscription(inscrit=inscrit)
         inscription.mode = MODE_TEMPS_PARTIEL
         inscription.semaines_conges = 5
         inscription.debut = datetime.date(2017, 4, 1)
         inscription.fin = datetime.date(2017, 8, 25)
-        inscription.days.add(TimeslotInscription(day=0, debut=111, fin=216, value=0))
-        inscription.days.add(TimeslotInscription(day=3, debut=111, fin=216, value=0))
+        self.add_inscription_timeslot(inscription, 0, 111, 216)
+        self.add_inscription_timeslot(inscription, 3, 111, 216)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2017, 1, 1), NO_ADDRESS)
         self.assertPrec2Equals(cotisation.cotisation_mensuelle, 342.71)
@@ -953,11 +967,11 @@ class PiousPiousTests(GertrudeTestCase):
         inscription.debut = datetime.date(2017, 7, 12)
         inscription.fin_periode_adaptation = datetime.date(2017, 8, 25)
         inscription.fin = datetime.date(2017, 8, 31)
-        inscription.days.add(TimeslotInscription(day=0, debut=102, fin=225, value=0))
-        inscription.days.add(TimeslotInscription(day=1, debut=102, fin=225, value=0))
-        inscription.days.add(TimeslotInscription(day=2, debut=102, fin=225, value=0))
-        inscription.days.add(TimeslotInscription(day=3, debut=102, fin=168, value=0))
-        inscription.days.add(TimeslotInscription(day=4, debut=102, fin=219, value=0))
+        self.add_inscription_timeslot(inscription, 0, 102, 225)
+        self.add_inscription_timeslot(inscription, 1, 102, 225)
+        self.add_inscription_timeslot(inscription, 2, 102, 225)
+        self.add_inscription_timeslot(inscription, 3, 102, 168)
+        self.add_inscription_timeslot(inscription, 4, 102, 219)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2017, 7, 12), NO_ADDRESS)
         self.assertEquals(cotisation.cotisation_mensuelle, 0.0)
@@ -993,7 +1007,7 @@ class OPagaioTests(GertrudeTestCase):
         inscription.fin = datetime.date(2017, 8, 31)
         inscription.duree_reference = 14
         for i in range(10):
-            inscription.days.add(TimeslotInscription(day=i, debut=96, fin=216, value=0))  # 10h
+            self.add_inscription_timeslot(inscription, i, 96, 216)  # 10h
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2016, 9, 26), NO_ADDRESS | NO_PARENTS)
         self.assertEquals(cotisation.heures_semaine, 50)
@@ -1006,8 +1020,8 @@ class OPagaioTests(GertrudeTestCase):
         inscription.debut = datetime.date(2016, 9, 26)
         inscription.fin_periode_adaptation = datetime.date(2016, 10, 2)
         inscription.fin = datetime.date(2017, 8, 31)
-        inscription.days.add(TimeslotInscription(day=0, debut=96, fin=216, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=4, debut=96, fin=150, value=0))  # 4h30
+        self.add_inscription_timeslot(inscription, 0, 96, 216)  # 10h
+        self.add_inscription_timeslot(inscription, 4, 96, 150)  # 4h30
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2016, 9, 26), NO_ADDRESS)
         self.assertEquals(cotisation.cotisation_mensuelle, 0.0)
@@ -1027,7 +1041,7 @@ class OPagaioTests(GertrudeTestCase):
         inscription.fin_periode_adaptation = datetime.date(2016, 10, 3)
         inscription.fin = datetime.date(2017, 8, 31)
         inscription.depart = datetime.date(2017, 2, 5)
-        inscription.days.add(TimeslotInscription(day=0, debut=102, fin=216, value=0))  # 9.5h
+        self.add_inscription_timeslot(inscription, 0, 102, 216)  # 9.5h
         inscrit.inscriptions.append(inscription)
         inscription = Inscription(inscrit=inscrit)
         inscription.mode = MODE_FORFAIT_HEBDOMADAIRE
@@ -1063,7 +1077,7 @@ class OPagaioTests(GertrudeTestCase):
         inscription.debut = datetime.date(2017, 3, 1)
         inscription.fin = datetime.date(2017, 8, 31)
         inscription.depart = datetime.date(2017, 5, 31)
-        inscription.days.add(TimeslotInscription(day=0, debut=114, fin=210, value=0))  # 9.5h
+        self.add_inscription_timeslot(inscription, 0, 114, 210)  # 9.5h
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2017, 5)
         self.assertPrec2Equals(facture.regularisation, 228.00)
@@ -1076,8 +1090,8 @@ class OPagaioTests(GertrudeTestCase):
         inscription.semaines_conges = 5
         inscription.debut = datetime.date(2016, 9, 12)
         inscription.fin = datetime.date(2017, 8, 31)
-        inscription.days.add(TimeslotInscription(day=0, debut=96, fin=216, value=0))  # 10h
-        inscription.days.add(TimeslotInscription(day=4, debut=96, fin=150, value=0))  # 4h30
+        self.add_inscription_timeslot(inscription, 0, 96, 216)  # 10h
+        self.add_inscription_timeslot(inscription, 4, 96, 150)  # 4h30
         inscrit.inscriptions.append(inscription)
         self.AddJourneePresence(inscrit, datetime.date(2017, 4, 17), 120, 168)  # 4h00
         self.AddJourneePresence(inscrit, datetime.date(2017, 4, 18), 120, 174)  # 4h30
@@ -1110,10 +1124,10 @@ class PitchounsTests(GertrudeTestCase):
         inscription.mode = MODE_TEMPS_PARTIEL
         inscription.debut = datetime.date(2017, 4, 1)
         inscription.fin = datetime.date(2017, 8, 5)
-        inscription.days.add(TimeslotInscription(day=0, debut=102, fin=156, value=0))
-        inscription.days.add(TimeslotInscription(day=2, debut=102, fin=132, value=0))
-        inscription.days.add(TimeslotInscription(day=3, debut=102, fin=132, value=0))
-        inscription.days.add(TimeslotInscription(day=4, debut=102, fin=156, value=0))
+        self.add_inscription_timeslot(inscription, 0, 102, 156)
+        self.add_inscription_timeslot(inscription, 2, 102, 132)
+        self.add_inscription_timeslot(inscription, 3, 102, 132)
+        self.add_inscription_timeslot(inscription, 4, 102, 156)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2017, 4, 1), NO_ADDRESS)
         self.assertEquals(cotisation.cotisation_mensuelle, 133.0)
@@ -1122,10 +1136,10 @@ class PitchounsTests(GertrudeTestCase):
         inscription.semaines_conges = 1
         inscription.debut = datetime.date(2017, 8, 29)
         inscription.fin = datetime.date(2017, 12, 23)
-        inscription.days.add(TimeslotInscription(day=0, debut=102, fin=195, value=0))
-        inscription.days.add(TimeslotInscription(day=1, debut=102, fin=195, value=0))
-        inscription.days.add(TimeslotInscription(day=3, debut=102, fin=195, value=0))
-        inscription.days.add(TimeslotInscription(day=4, debut=102, fin=195, value=0))
+        self.add_inscription_timeslot(inscription, 0, 102, 195)
+        self.add_inscription_timeslot(inscription, 1, 102, 195)
+        self.add_inscription_timeslot(inscription, 3, 102, 195)
+        self.add_inscription_timeslot(inscription, 4, 102, 195)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2017, 8, 29), NO_ADDRESS)
         self.assertEquals(cotisation.cotisation_mensuelle, 248.0)

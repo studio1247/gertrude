@@ -1068,7 +1068,7 @@ class PeriodePanel(wx.Panel, PeriodeMixin):
 
 class HashComboBox(wx.combo.OwnerDrawnComboBox):
     def __init__(self, parent, id=-1):
-        wx.combo.OwnerDrawnComboBox.__init__(self, parent, id, style=wx.CB_READONLY, size=(100, -1))
+        wx.combo.OwnerDrawnComboBox.__init__(self, parent, id, style=wx.CB_READONLY, size=(150, -1))
 
     def OnDrawItem(self, dc, rect, item, flags):
         if item == wx.NOT_FOUND:
@@ -1086,12 +1086,11 @@ class HashComboBox(wx.combo.OwnerDrawnComboBox):
         dc = wx.GCDC(dc)
         dc.SetPen(wx.Pen(wx.Colour(r, g, b)))
         dc.SetBrush(wx.Brush(wx.Colour(r, g, b, t), s))
+        dc.DrawRoundedRectangleRect(wx.Rect(rr.x, rr.y - 3, rr.width, rr.height + 6), 3)
 
         if flags & wx.combo.ODCB_PAINTING_CONTROL:
-            dc.DrawRoundedRectangleRect(wx.Rect(rr.x, rr.y - 3, rr.width, rr.height + 6), 3)
-        else:
-            dc.DrawRoundedRectangleRect(wx.Rect(rr.x, rr.y - 3, rr.width, rr.height + 6), 3)
-            dc.DrawText(self.GetString(item), rr.x + 10, rr.y)
+            rr.y -= 2
+        dc.DrawText(self.GetString(item), rr.x + 10, rr.y - 1)
 
     def OnMeasureItem(self, item):
         return 24
@@ -1108,6 +1107,7 @@ class ActivityComboBox(HashComboBox):
     def __init__(self, parent, id=-1):
         HashComboBox.__init__(self, parent, id)
         self.Bind(wx.EVT_COMBOBOX, self.OnChangeActivity, self)
+        self.activity = None
 
     def SetSelection(self, item):
         wx.combo.OwnerDrawnComboBox.SetSelection(self, item)
@@ -1117,22 +1117,22 @@ class ActivityComboBox(HashComboBox):
         self.activity = self.GetClientData(self.GetSelection())
         evt.Skip()
 
+    def add_activity(self, activity):
+        self.Append(activity.label, activity)
+
     def Update(self):
         self.Clear()
         selected = 0
+        self.add_activity(database.creche.states[0])
         if database.creche.has_activites_avec_horaires():
             self.Show(True)
-            for i, activity in database.creche.activites.items():
+            for i, activity in enumerate(database.creche.activites):
                 if activity.has_horaires():
-                    self.Append(activity.label, activity)
-                    try:
-                        if self.activity_choice.activity.value == activity.value:
-                            selected = i
-                    except:
-                        pass
+                    self.add_activity(activity)
+                    if self.activity == activity:
+                        selected = i + 1
         else:
             self.Show(False)
-            self.Append(database.creche.activites[0].label, database.creche.activites[0])
         self.SetSelection(selected)
 
 

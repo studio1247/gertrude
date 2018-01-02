@@ -31,7 +31,7 @@ from parameters import *
 import bcrypt
 from config import config
 
-DB_VERSION = 122
+DB_VERSION = 123
 
 Base = declarative_base()
 
@@ -45,25 +45,28 @@ class DBSettings(Base):
 
 
 class Timeslot(object):
-    def __init__(self, debut, fin, value, **kwargs):
+    def __init__(self, debut, fin, activity, **kwargs):
         self.debut = debut
         self.fin = fin
-        self.value = value
+        self.activity = activity
+        self.value = None  # needed for TrancheCapacite compatibility
+        if isinstance(activity, int):
+            raise Exception("Not allowed integer activity")
         for key, value in kwargs.items():
             setattr(self, key, value)
 
     def is_checkbox(self):
-        return self.debut is None
+        return self.activity.mode == MODE_SANS_HORAIRES
 
     def is_presence(self):
-        return self.value == 0
+        return self.activity.mode == MODE_NORMAL
 
     def get_duration(self, arrondi=SANS_ARRONDI):
         # TODO a utiliser partout
         return 0 if self.debut is None else 5 * GetDureeArrondie(arrondi, self.debut, self.fin)
 
     def __repr__(self):
-        return "Timeslot %r %r %r" % (self.debut, self.fin, self.value)
+        return "Timeslot %r %r-%r" % (self.activity.label if self.activity else None, self.debut, self.fin)
 
 
 class Day(object):
@@ -71,12 +74,16 @@ class Day(object):
         self.timeslots = []
 
     def get_state(self):
+        default = ABSENT
         for timeslot in self.timeslots:
-            if timeslot.value < 0:
-                return timeslot.value
-            elif timeslot.value >= 0:
+            mode = timeslot.activity.mode
+            if mode < 0:
+                default = mode
+            elif mode == MODE_SALARIE_RECUP_HEURES_SUPP:
+                default = CONGES_RECUP_HEURES_SUPP
+            else:  # TODO and not checkbox?
                 return PRESENT
-        return ABSENT
+        return default
 
     def get_activity_checkboxes(self):
         return [timeslot for timeslot in self.timeslots if timeslot.debut is None]
@@ -84,16 +91,14 @@ class Day(object):
     def get_activity_timeslots(self):
         return [timeslot for timeslot in self.timeslots if timeslot.debut is not None]
 
-    def get_activities_timeslots(self, activities):
-        for timeslot in self.timeslots:
-            if timeslot.value in activities:
-                yield timeslot
+    def get_timeslots_per_activity_mode(self, activity_mode):
+        return [timeslot for timeslot in self.timeslots if timeslot.activity.mode == activity_mode]
 
-    def get_activities_duration(self, activities, mode_arrondi=SANS_ARRONDI):
-        return sum([timeslot.get_duration(mode_arrondi) for timeslot in self.get_activities_timeslots(activities)]) / 60
+    def get_duration_per_activity_mode(self, activity_mode, mode_arrondi=SANS_ARRONDI):
+        return sum([timeslot.get_duration(mode_arrondi) for timeslot in self.get_timeslots_per_activity_mode(activity_mode)]) / 60
 
     def get_duration(self, mode_arrondi=SANS_ARRONDI):
-        return self.get_activities_duration([0], mode_arrondi)
+        return self.get_duration_per_activity_mode(0, mode_arrondi)
 
     def GetPlageHoraire(self):
         debut, fin = None, None
@@ -287,24 +292,21 @@ class Creche(Base):
         self.liste_conges = []
         self.conges = []
         self.feries = {}
-        self.couleurs = {ABSENCE_NON_PREVENUE: Activite(creche=self,
-                                                        value=ABSENCE_NON_PREVENUE,
-                                                        _couleur="[0, 0, 255, 150, 100]")}
-        self.activites = {}
+        self.states = {}
+        self.activites = []
         self.formule_taux_effort = None
 
     @reconstructor
     def init_on_load(self):
         self.update()
         # TODO split conges / feries
-        # TODO remove couleurs
         self.formule_taux_effort = eval(self._formule_taux_effort)
         self.UpdateFormuleTauxEffort(changed=False)
         for activity in self._activites:
-            if activity.value < 0:
-                self.couleurs[activity.value] = activity
+            if activity.mode <= 0:
+                self.states[activity.mode] = activity
             else:
-                self.activites[activity.value] = activity
+                self.activites.append(activity)
         for conge in self._conges:
             if conge.debut in [tmp[0] for tmp in jours_fermeture]:
                 self.feries[conge.debut] = conge
@@ -312,10 +314,12 @@ class Creche(Base):
                 self.conges.append(conge)
         self.calcule_jours_conges()
 
-    def get_activities_per_mode(self, mode):
-        for activity in self.activites.values():
-            if activity.mode == mode:
-                yield activity.value
+    def get_activite_by_id(self, id):
+        for activite in self._activites:
+            if activite.idx == id:
+                return activite
+        else:
+            return None
 
     def select_inscriptions(self, start, end):
         for inscrit in self.inscrits:
@@ -332,17 +336,15 @@ class Creche(Base):
         return max(values) + 1
 
     def add_activite(self, activity):
-        if activity.value is None:
-            activity.value = self.get_next_activity_value()
         self._activites.append(activity)
-        if activity.value < 0:
-            self.couleurs[activity.value] = activity
+        if activity.mode < 0:
+            self.states[activity.mode] = activity
         else:
-            self.activites[activity.value] = activity
+            self.activites.append(activity)
 
     def delete_activite(self, activity):
         self._activites.remove(activity)
-        del self.activites[activity.value]
+        self.activites.remove(activity)
 
     def add_ferie(self, conge):
         self._conges.append(conge)
@@ -458,9 +460,9 @@ class Creche(Base):
 
     def GetDateRevenus(self, date):
         if self.periode_revenus == REVENUS_CAFPRO:
-            return datetime.date(date.year, date.month, 1)
+            return date
         elif date >= datetime.date(2008, 9, 1):
-            return datetime.date(date.year - 2, date.month, 1)
+            return datetime.date(date.year - 2, date.month, date.day)
         elif date < datetime.date(date.year, 9, 1):
             return datetime.date(date.year - 2, 1, 1)
         else:
@@ -559,13 +561,16 @@ class Creche(Base):
         return result
 
     def get_activites_avec_horaires(self):
-        return [activite for activite in self.activites.values() if activite.has_horaires()]
+        return [activite for activite in self.activites if activite.has_horaires()]
 
     def get_activites_sans_horaires(self):
-        return [activite for activite in self.activites.values() if activite.mode == MODE_SANS_HORAIRES]
+        return [activite for activite in self.activites if activite.mode == MODE_SANS_HORAIRES]
 
     def has_activites_avec_horaires(self):
-        return len(self.get_activites_avec_horaires()) > 1
+        for activite in self.activites:
+            if activite.has_horaires():
+                return True
+        return False
 
     def eval_formule_tarif(self, formule, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs):
         # print 'eval_formule_tarif', 'mode=%d' % mode, handicap, 'revenus=%f' % revenus, 'enfants=%d' % enfants, 'jours=%d' % jours, 'heures=%f' % heures, reservataire, nom, 'parents=%d' % parents, chomage, conge_parental, 'heures_mois=%f' % heures_mois, heure_mois
@@ -874,12 +879,16 @@ class Activite(Base):
     creche_id = Column(Integer, ForeignKey("creche.idx"))
     creche = relationship(Creche)
     label = Column(String)
-    value = Column(Integer)
+    # value = Column(Integer)
     mode = Column(Integer)
     _couleur = Column(String, name="couleur")
     _couleur_supplement = Column(String, name="couleur_supplement", default="")
     formule_tarif = Column(String)
     owner = Column(Integer)
+    timeslots_plannings_enfants = relationship("TimeslotInscription", cascade="all, delete-orphan")
+    timeslots_enfants = relationship("TimeslotInscrit", cascade="all, delete-orphan")
+    timeslots_plannings_salaries = relationship("TimeslotPlanningSalarie", cascade="all, delete-orphan")
+    timeslots_salaries = relationship("TimeslotSalarie", cascade="all, delete-orphan")
 
     def __init__(self, creche, **kwargs):
         Base.__init__(self, creche=creche, **kwargs)
@@ -891,7 +900,8 @@ class Activite(Base):
         self.couleur = self.get_color(self._couleur)
         self.couleur_supplement = self.get_color(self._couleur_supplement)
 
-    def get_color(self, color, default=[0, 0, 0, 255, 100]):
+    @staticmethod
+    def get_color(color, default=[0, 0, 0, 255, 100]):
         if color:
             try:
                 return eval(color)
@@ -907,7 +917,7 @@ class Activite(Base):
             setattr(self, "_%s" % key, str(value))
 
     def has_horaires(self):
-        return self.mode in (MODE_NORMAL, MODE_LIBERE_PLACE, MODE_PRESENCE_NON_FACTUREE, MODE_PRESENCE_SUPPLEMENTAIRE, MODE_PERMANENCE)
+        return self.mode in (MODE_PRESENCE, MODE_NORMAL, MODE_LIBERE_PLACE, MODE_PRESENCE_NON_FACTUREE, MODE_PRESENCE_SUPPLEMENTAIRE, MODE_PERMANENCE)
 
     def EvalTarif(self, inscrit, date, montant_heure_garde=0.0, reservataire=False):
         if self.formule_tarif.strip():
@@ -1175,7 +1185,7 @@ class Salarie(Base):
         if date in self.days:
             day = self.days[date]
             state = day.get_state()  # TODO on peut s'en passer ?
-            if state in (MALADE, HOPITAL, ABSENCE_NON_PREVENUE):
+            if state in (MALADE, HOPITAL, ABSENCE_NON_PREVENUE, CONGES_RECUP_HEURES_SUPP):
                 return state
             elif state in (ABSENT, VACANCES):
                 if ref_state:
@@ -1349,7 +1359,7 @@ def GetUnionTimeslots(timeslots, value=0):
                 elif timeslot1.debut >= timeslot2.debut and timeslot1.fin <= timeslot2.fin:
                     found = True
                 elif timeslot1.debut <= timeslot2.debut or timeslot1.fin >= timeslot2.fin:
-                    timeslots[i] = Timeslot(min(timeslot2.debut, timeslot1.debut), max(timeslot2.debut, timeslot1.fin), value)
+                    timeslots[i] = Timeslot(min(timeslot2.debut, timeslot1.debut), max(timeslot2.debut, timeslot1.fin), timeslot1.activity, value=value)
                     found = True
             if not found:
                 timeslots.append(timeslot1)
@@ -1359,8 +1369,8 @@ def GetUnionTimeslots(timeslots, value=0):
 
 
 def GetUnionHeures(journee, reference):
-    timeslots = [timeslot for timeslot in journee.timeslots if timeslot.value == 0]
-    timeslots += [timeslot for timeslot in reference.timeslots if timeslot.value == 0]
+    timeslots = [timeslot for timeslot in journee.timeslots if timeslot.activity.mode == 0]
+    timeslots += [timeslot for timeslot in reference.timeslots if timeslot.activity.mode == 0]
     return GetUnionTimeslots(timeslots)
 
 
@@ -1407,6 +1417,12 @@ class Inscrit(Base):
 
     def slug(self):
         return "child-%d" % self.idx
+
+    def is_facture_cloturee(self, date):
+        if self.creche.temps_facturation == FACTURATION_FIN_MOIS:
+            return GetMonthEnd(date) in self.clotures or GetMonthStart(date) in self.clotures
+        else:
+            return date in self.clotures
 
     def get_week_slots(self, monday):
         return [weekslot for weekslot in self.weekslots if weekslot.date == monday]
@@ -1638,7 +1654,7 @@ class Inscrit(Base):
                 heures_facturees = 0.0
 
                 # TODO une petite fonction pour ce code duplique dans le test
-                timeslots = GetUnionTimeslots([timeslot for timeslot in journee.timeslots if timeslot.value == 0 or (timeslot.value in self.creche.activites and self.creche.activites[timeslot.value].mode == MODE_PRESENCE_NON_FACTUREE)])
+                timeslots = GetUnionTimeslots([timeslot for timeslot in journee.timeslots if timeslot.activity.mode in (0, MODE_PRESENCE_NON_FACTUREE)])
                 for timeslot in timeslots:
                     heures_realisees += tranche * GetDureeArrondie(self.creche.arrondi_heures, timeslot.debut, timeslot.fin)
 
@@ -1679,24 +1695,21 @@ class Inscrit(Base):
             return []
         result = set()
         for timeslot in day.timeslots:
-            if timeslot.value > 0:
-                result.add(timeslot.value)
+            if timeslot.activity.mode > 0:
+                result.add(timeslot)
         if result:
-            for key in self.creche.activites:
-                activite = self.creche.activites[key]
-                if activite.mode == MODE_SYSTEMATIQUE_SANS_HORAIRES:
-                    result.add(key)
+            for activity in self.creche.activites:
+                if activity.mode == MODE_SYSTEMATIQUE_SANS_HORAIRES:
+                    result.add(Timeslot(debut=None, fin=None, activity=activity))
         return result
 
     def GetTotalActivitesPresenceNonFacturee(self, date):
-        activities = list(self.creche.get_activities_per_mode(MODE_PRESENCE_NON_FACTUREE))
         day = self.GetJournee(date)
-        return 0 if day is None else day.get_activities_duration(activities)
+        return 0 if day is None else day.get_duration_per_activity_mode(MODE_PRESENCE_NON_FACTUREE)
 
     def GetTotalActivitesPresenceFactureesEnSupplement(self, date):
-        activities = list(self.creche.get_activities_per_mode(MODE_PRESENCE_SUPPLEMENTAIRE))
         day = self.GetJournee(date)
-        return 0 if day is None else day.get_activities_duration(activities)
+        return 0 if day is None else day.get_duration_per_activity_mode(MODE_PRESENCE_SUPPLEMENTAIRE)
 
     def GetDecomptePermanences(self):
         total, effectue = 0.0, 0.0
@@ -1956,10 +1969,18 @@ class TrancheCapacite(Base, Timeslot):
     idx = Column(Integer, primary_key=True)
     creche_id = Column(Integer, ForeignKey("creche.idx"))
     creche = relationship(Creche)
-    value = Column(Integer)
+    jour = Column(Integer)
     debut = Column(Integer)
     fin = Column(Integer)
-    jour = Column(Integer)
+    value = Column(Integer)
+
+    def __init__(self, **kwargs):
+        Base.__init__(self, **kwargs)
+        self.activity = self.creche.states[0]
+
+    @reconstructor
+    def init_on_load(self):
+        self.activity = self.creche.states[0]
 
 
 class TimeslotInscription(Base, Timeslot):
@@ -1968,7 +1989,8 @@ class TimeslotInscription(Base, Timeslot):
     inscription_id = Column(Integer, ForeignKey("inscriptions.idx"))
     inscription = relationship(Inscription)
     day = Column(Integer)
-    value = Column(Integer)
+    activity_id = Column(Integer, ForeignKey("activities.idx"), name="activity")
+    activity = relationship(Activite)
     debut = Column(Integer)
     fin = Column(Integer)
 
@@ -1979,7 +2001,8 @@ class TimeslotPlanningSalarie(Base, Timeslot):
     reference = Column(Integer, ForeignKey("contrats.idx"))
     planning = relationship("PlanningSalarie")
     day = Column(Integer)
-    value = Column(Integer)
+    activity_id = Column(Integer, ForeignKey("activities.idx"), name="activity")
+    activity = relationship(Activite)
     debut = Column(Integer)
     fin = Column(Integer)
 
@@ -2015,7 +2038,8 @@ class TimeslotInscrit(Base, Timeslot):
     inscrit_id = Column(Integer, ForeignKey("inscrits.idx"))
     inscrit = relationship(Inscrit)
     date = Column(Date)
-    value = Column(Integer)
+    activity_id = Column(Integer, ForeignKey("activities.idx"), name="activity")
+    activity = relationship(Activite)
     debut = Column(Integer)
     fin = Column(Integer)
 
@@ -2036,7 +2060,8 @@ class TimeslotSalarie(Base, Timeslot):
     salarie_id = Column(Integer, ForeignKey("employes.idx"))
     salarie = relationship(Salarie)
     date = Column(Date)
-    value = Column(Integer)
+    activity_id = Column(Integer, ForeignKey("activities.idx"), name="activity")
+    activity = relationship(Activite)
     debut = Column(Integer)
     fin = Column(Integer)
 
@@ -2883,6 +2908,30 @@ class Database(object):
                         value FLOAT
                     )""")
 
+            if version < 123:
+                creche_id = self.engine.execute('SELECT idx FROM CRECHE').first()[0]
+                self.engine.execute("INSERT INTO activities(idx, creche_id, label, value, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)", creche_id, "Maladie avec hospitalisation", -3, -3, "[190, 35, 29, 150, 100]", "[190, 35, 29, 150, 100]", "")
+                self.engine.execute("INSERT INTO activities(idx, creche_id, label, value, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)", creche_id, "Absence non prévenue", -4, -4, "[0, 0, 255, 150, 100]", "[0, 0, 255, 150, 100]", "")
+                self.engine.execute("INSERT INTO activities(idx, creche_id, label, value, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)", creche_id, "Maladie sans justificatif", -5, -5, "[190, 35, 29, 150, 100]", "[190, 35, 29, 150, 100]", "")
+                self.engine.execute("INSERT INTO activities(idx, creche_id, label, value, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)", creche_id, "Congés sans préavis", -6, -6, "[0, 0, 255, 150, 100]", "[0, 0, 255, 150, 100]", "")
+                self.engine.execute("INSERT INTO activities(idx, creche_id, label, value, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)", creche_id, "Absence non déductible (dépassement)", -7, -7, "[0, 0, 255, 150, 100]", "[0, 0, 255, 150, 100]", "")
+                self.engine.execute("INSERT INTO activities(idx, creche_id, label, value, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)", creche_id, "Congés payés", -8, -8, "[0, 0, 255, 150, 100]", "[0, 0, 255, 150, 100]", "")
+                self.engine.execute("INSERT INTO activities(idx, creche_id, label, value, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)", creche_id, "Congés sans solde", -9, -9, "[0, 0, 255, 150, 100]", "[0, 0, 255, 150, 100]", "")
+                self.engine.execute("INSERT INTO activities(idx, creche_id, label, value, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)", creche_id, "Congés maternité", -10, -10, "[0, 0, 255, 150, 100]", "[0, 0, 255, 150, 100]", "")
+                self.engine.execute("INSERT INTO activities(idx, creche_id, label, value, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)", creche_id, "Récupération heures supp.", -11, -11, "[0, 0, 255, 150, 100]", "[0, 0, 255, 150, 100]", "")
+                self.engine.execute("INSERT INTO activities(idx, creche_id, label, value, mode, couleur, couleur_supplement, formule_tarif) VALUES(NULL,?,?,?,?,?,?,?)", creche_id, "Présence salariés", -256, -256, "[5, 203, 28, 150, 100]", "[5, 203, 28, 250, 100]", "")
+                self.engine.execute("UPDATE activities SET mode=value WHERE value<0")
+                self.engine.execute("UPDATE activities SET mode=10 WHERE mode=2")
+                self.engine.execute("UPDATE activities SET mode=2 WHERE mode=1")
+                self.engine.execute("UPDATE activities SET mode=1 WHERE mode=0 AND value>0")
+                activities = [row for row in self.engine.execute("SELECT value, idx FROM activities")]
+                for table in ("ref_activities", "ref_journees_salaries", "activites", "activites_salaries"):
+                    self.engine.execute("ALTER TABLE %s ADD activity INGEGER REFERENCES activities(idx)" % table)
+                    for value, activity in activities:
+                        self.engine.execute("UPDATE %s SET activity=? WHERE value=?" % table, (activity, value))
+                    self.engine.execute("DELETE FROM %s WHERE activity IS NULL" % table)
+
+            # update database version
             version_entry.value = DB_VERSION
             self.commit()
 
@@ -2905,18 +2954,12 @@ class Database(object):
                 (datetime.date(2013, 1, 1), datetime.date(2013, 12, 31), 7306.56, 85740.00),
             ]:
                 creche.baremes_caf.append(BaremeCAF(creche=creche, debut=debut, fin=fin, plancher=plancher, plafond=plafond))
-        creche.add_activite(Activite(creche=creche, label="Présences", value=0, mode=0,
-                            _couleur="[5, 203, 28, 150, 100]",
-                            _couleur_supplement="[5, 203, 28, 250, 100]",
-                            formule_tarif=""))
-        creche.add_activite(Activite(creche=creche, label="Vacances", value=VACANCES, mode=0,
-                            _couleur="[0, 0, 255, 150, 100]",
-                            _couleur_supplement="[0, 0, 255, 150, 100]",
-                            formule_tarif=""))
-        creche.add_activite(Activite(creche=creche, label="Malade", value=MALADE, mode=0,
-                            _couleur="[190, 35, 29, 150, 100]",
-                            _couleur_supplement="[190, 35, 29, 150, 100]",
-                            formule_tarif=""))
+        for mode in 0, PRESENCE_SALARIE:
+            creche.add_activite(Activite(creche=creche, label=STATE_LABELS[mode], mode=mode, _couleur="[5, 203, 28, 150, 100]", _couleur_supplement="[5, 203, 28, 250, 100]", formule_tarif=""))
+        for mode in MALADE, HOPITAL, MALADE_SANS_JUSTIFICATIF:
+            creche.add_activite(Activite(creche=creche, label=STATE_LABELS[mode], mode=mode, _couleur="[190, 35, 29, 150, 100]", _couleur_supplement="[190, 35, 29, 150, 100]", formule_tarif=""))
+        for mode in VACANCES, ABSENCE_NON_PREVENUE, ABSENCE_CONGE_SANS_PREAVIS, CONGES_DEPASSEMENT, CONGES_PAYES, CONGES_SANS_SOLDE, CONGES_MATERNITE, CONGES_RECUP_HEURES_SUPP:
+            creche.add_activite(Activite(creche=creche, label=STATE_LABELS[mode], mode=mode, _couleur="[0, 0, 255, 150, 100]", _couleur_supplement="[0, 0, 255, 150, 100]", formule_tarif=""))
         self.commit()
 
     def delete_all_inscriptions(self):

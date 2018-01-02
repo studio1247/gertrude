@@ -82,7 +82,7 @@ class RapportFrequentationModifications(object):
                 for mois in range(1, 13):
                     debut = datetime.date(self.annee, mois, 1)
                     fin = GetMonthEnd(debut)
-                    if fin > today:
+                    if fin > datetime.date.today():
                         break
 
                     heures_accueil = GetHeuresAccueil(self.annee, mois, self.site)
@@ -151,7 +151,7 @@ class RapportFrequentationModifications(object):
                 for mois in range(1, 13):
                     debut = datetime.date(self.annee, mois, 1)
                     fin = GetMonthEnd(debut)
-                    if fin > today:
+                    if fin > datetime.date.today():
                         break
         
                     inscrits = list(database.creche.select_inscrits(debut, fin, self.site))

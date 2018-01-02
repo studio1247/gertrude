@@ -17,10 +17,11 @@
 
 from __future__ import unicode_literals
 from __future__ import print_function
+import collections
 from builtins import str
-
 import time
 import os.path
+from database import Timeslot, TimeslotInscrit
 from parameters import *
 from globals import *
 from config import config
@@ -37,7 +38,7 @@ def GetNextMonday(date):
 
 def IsPresentDuringTranche(journee, debut, fin):
     for timeslot in journee.timeslots:
-        if timeslot.value == 0 and timeslot.debut < fin and timeslot.fin > debut:
+        if timeslot.activity.mode == MODE_PRESENCE and timeslot.debut < fin and timeslot.fin > debut:
             return True
     return False
 
@@ -466,30 +467,6 @@ def GetEnfantsTriesParReservataire(inscrits):
     return lines
 
 
-def GetActivityColor(value):
-    r, g, b, t, s = get_activity_color(value)
-    if s == 50:
-        s = 100
-    return r, g, b, t, s
-
-
-def get_activity_color(value):
-    if value < 0:
-        if value == HOPITAL or value == MALADE_SANS_JUSTIFICATIF:
-            value = MALADE
-        if value in (ABSENCE_CONGE_SANS_PREAVIS, CONGES_PAYES, CONGES_SANS_SOLDE):
-            value = VACANCES
-        return database.creche.couleurs[value].couleur
-    activity = value & ~SUPPLEMENT
-    if activity in database.creche.activites:
-        if value & SUPPLEMENT:
-            return database.creche.activites[activity].couleur_supplement
-        else:
-            return database.creche.activites[activity].couleur
-    else:
-        return 0, 0, 0, 0, 100
-
-
 def GetNombreSemainesPeriode(debut, fin):
     jours = (fin - debut).days
     if not (config.options & COMPATIBILITY_MODE_DECOMPTE_SEMAINES_2017):
@@ -508,36 +485,6 @@ class Summary(object):
         self.array = list()
         for i in range(DAY_SIZE):
             self.array.append([0, 0])
-
-
-def GetActivitiesSummary(lines, options=0):
-    activites = {}
-    activites_sans_horaires = {}
-    for key, activite in database.creche.activites.items():
-        if activite.mode == MODE_SANS_HORAIRES:
-            activites_sans_horaires[activite.value] = 0
-        elif activite.value >= 0 and activite.mode not in (MODE_SYSTEMATIQUE_SANS_HORAIRES, MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE):
-            activites[activite.value] = Summary(activite.label)
-    if not (options & NO_SALARIES) and len(database.creche.salaries) > 0:
-        activite_salaries = activites[PRESENCE_SALARIE] = Summary("Présences salariés")
-    else:
-        activite_salaries = None
-
-    for line in lines:
-        for timeslot in line.timeslots:
-            if timeslot.value in activites_sans_horaires:
-                activites_sans_horaires[timeslot.value] += 1
-            else:
-                value = timeslot.value
-                if value in database.creche.activites:
-                    if value == 0:
-                        for i in range(timeslot.debut, timeslot.fin):
-                            if value in activites:
-                                if not (options & NO_SALARIES) and line.summary == SUMMARY_SALARIE and activite_salaries:
-                                    activite_salaries.array[i][0] += 1
-                                else:
-                                    activites[value].array[i][0] += 1
-    return activites, activites_sans_horaires
 
 
 def GetSiteFields(site):
@@ -958,16 +905,49 @@ def AddInscritsToChoice(choice):
     __add_in_inscrits_choice(choice, autres)
 
 
-def GetListePermanences(date):
-    result = []
-    for inscrit in database.creche.inscrits:
-        journee = inscrit.GetJournee(date)
-        if journee:
-            liste = journee.get_activities_timeslots(database.creche.get_activities_per_mode(MODE_PERMANENCE))
-            for start, end in liste:
-                result.append((start, end, inscrit))
-    return result
+def get_liste_permanences(date):
+    permanences = database.query(TimeslotInscrit).filter(TimeslotInscrit.date == date, TimeslotInscrit.activity.mode == MODE_PERMANENCE).all()
+    return [(permanence.debut, permanence.fin, permanence.inscrit) for permanence in permanences]
 
 
 def GetUrlTipi(famille):
     return config.tipi % {"famille": famille.idx}
+
+
+def get_lines_summary(lines):
+    activites = collections.OrderedDict()
+    activites_sans_horaires = collections.OrderedDict()
+
+    # collect the summary
+    summary = collections.OrderedDict()
+    for line in lines:
+        line_summary = line.get_summary()
+        for key in line_summary:
+            if key not in summary:
+                summary[key] = []
+            summary[key].extend(line_summary[key])
+
+    # sort everything
+    for activity in summary:
+        timeslots = summary[activity]
+        if activity.mode == MODE_SANS_HORAIRES:
+            activites_sans_horaires[activity] = len(timeslots)
+        else:
+            activites[activity] = []
+            timeline = []
+            for timeslot in timeslots:
+                timeline.append([timeslot.debut, +1])
+                timeline.append([timeslot.fin, -1])
+            timeline.sort(key=lambda event: event[0])
+            start, count = None, 0
+            for i, event in enumerate(timeline):
+                if event[1] == 0:
+                    pass
+                elif i + 1 < len(timeline) and event[0] == timeline[i + 1][0]:
+                    timeline[i + 1][1] += event[1]
+                else:
+                    if start is not None:
+                        activites[activity].append(Timeslot(start, event[0], activity, value=count))
+                    count += event[1]
+                    start = event[0] if count else None
+    return activites, activites_sans_horaires

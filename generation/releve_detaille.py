@@ -67,7 +67,7 @@ class ReleveDetailleModifications(object):
             for mois in range(12):
                 fields = [('heures-facturees', 0), ('heures-realisees', 0), ('total', 0)]
                 date = datetime.date(self.annee, mois + 1, 1)
-                if date <= today and (not agemin or date >= anniversaireMin) and (not agemax or date < anniversaireMax):
+                if date <= datetime.date.today() and (not agemin or date >= anniversaireMin) and (not agemax or date < anniversaireMax):
                     try:
                         facture = Facture(inscrit, self.annee, mois+1, NO_NUMERO)
                         fields = [('heures-facturees', facture.heures_facture), ('heures-realisees', facture.heures_realisees), ('total', facture.total)]
