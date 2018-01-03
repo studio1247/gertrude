@@ -22,10 +22,10 @@ import sys
 import codecs
 import os.path
 import datetime
-if sys.platform == "darwin":
-    from ConfigParser import ConfigParser
-else:
+if sys.platform == "win32" or sys.version_info > (3, 0):
     from configparser import ConfigParser
+else:
+    from ConfigParser import ConfigParser
 from constants import *
 from progress import *
 import numeros_facture
@@ -262,7 +262,10 @@ class Config(object):
 
         if path:
             try:
-                parser.read(path, encoding="utf-8")
+                if sys.platform == "win32" or sys.version_info > (3, 0):
+                    parser.read(path, encoding="utf-8")
+                else:
+                    parser.read(path)
                 self.path = path
             except:
                 progress_handler.display("Fichier %s erroné. Utilisation de la configuration par défaut." % path)
