@@ -1121,16 +1121,16 @@ class ActivityComboBox(HashComboBox):
         self.Append(activity.label, activity)
 
     def Update(self):
-        self.Clear()
         selected = 0
+        self.Clear()
         self.add_activity(database.creche.states[0])
         if database.creche.has_activites_avec_horaires():
             self.Show(True)
-            for i, activity in enumerate(database.creche.activites):
+            for activity in database.creche.activites:
                 if activity.has_horaires():
-                    self.add_activity(activity)
                     if self.activity == activity:
-                        selected = i + 1
+                        selected = self.GetCount()
+                    self.add_activity(activity)
         else:
             self.Show(False)
         self.SetSelection(selected)
