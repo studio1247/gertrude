@@ -913,8 +913,11 @@ class Activite(Base):
             setattr(self, key, value)
             setattr(self, "_%s" % key, str(value))
 
+    def has_summary(self):
+        return self.mode not in (MODE_CONGES, MODE_SYSTEMATIQUE_SANS_HORAIRES, MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE, MODE_SALARIE_HEURES_SUPP, MODE_SALARIE_RECUP_HEURES_SUPP)
+
     def has_horaires(self):
-        return self.mode in (MODE_PRESENCE, MODE_NORMAL, MODE_LIBERE_PLACE, MODE_PRESENCE_NON_FACTUREE, MODE_PRESENCE_SUPPLEMENTAIRE, MODE_PERMANENCE)
+        return self.mode in (MODE_PRESENCE, MODE_NORMAL, MODE_LIBERE_PLACE, MODE_PRESENCE_NON_FACTUREE, MODE_PRESENCE_SUPPLEMENTAIRE, MODE_PERMANENCE, MODE_CONGES)
 
     def EvalTarif(self, inscrit, date, montant_heure_garde=0.0, reservataire=False):
         if self.formule_tarif.strip():
@@ -1707,6 +1710,10 @@ class Inscrit(Base):
     def GetTotalActivitesPresenceFactureesEnSupplement(self, date):
         day = self.GetJournee(date)
         return 0 if day is None else day.get_duration_per_activity_mode(MODE_PRESENCE_SUPPLEMENTAIRE)
+
+    def GetTotalActivitesConges(self, date):
+        day = self.GetJournee(date)
+        return 0 if day is None else day.get_duration_per_activity_mode(MODE_CONGES)
 
     def GetDecomptePermanences(self):
         total, effectue = 0.0, 0.0

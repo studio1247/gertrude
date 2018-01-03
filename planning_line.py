@@ -248,11 +248,12 @@ class ChildPlanningLine(BasePlanningLine):
         summary = {}
         if self.state > 0:
             for timeslot in self.timeslots:
-                key = timeslot.activity
-                if key not in summary:
-                    summary[key] = [timeslot]
-                else:
-                    summary[key].append(timeslot)
+                activity = timeslot.activity
+                if activity.has_summary():
+                    if activity not in summary:
+                        summary[activity] = [timeslot]
+                    else:
+                        summary[activity].append(timeslot)
         return summary
 
     @classmethod

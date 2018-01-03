@@ -419,6 +419,12 @@ class FactureFinMois(FactureBase):
                                 self.supplement += cotisation.majoration_journaliere
                                 self.raison_supplement = self.raison_supplement.union(cotisation.raison_majoration_journaliere)
 
+                            heures_activite_conges_deduites = inscrit.GetTotalActivitesConges(date)
+                            if heures_activite_conges_deduites:
+                                print(" heures de congés déduites le", date)
+                            self.heures_realisees -= heures_activite_conges_deduites
+                            self.CalculeDeduction(cotisation, heures_activite_conges_deduites)
+
                         if database.creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE or (database.creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION and inscription.IsInPeriodeAdaptation(date)):
                             timeslots = inscrit.GetExtraActivites(date)
                             for timeslot in timeslots:

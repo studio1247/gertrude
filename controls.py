@@ -1106,14 +1106,14 @@ class HashComboBox(wx.combo.OwnerDrawnComboBox):
 class ActivityComboBox(HashComboBox):
     def __init__(self, parent, id=-1):
         HashComboBox.__init__(self, parent, id)
-        self.Bind(wx.EVT_COMBOBOX, self.OnChangeActivity, self)
+        self.Bind(wx.EVT_COMBOBOX, self.onChangeActivity, self)
         self.activity = None
 
     def SetSelection(self, item):
         wx.combo.OwnerDrawnComboBox.SetSelection(self, item)
         self.activity = self.GetClientData(item)
 
-    def OnChangeActivity(self, evt):
+    def onChangeActivity(self, evt):
         self.activity = self.GetClientData(self.GetSelection())
         evt.Skip()
 

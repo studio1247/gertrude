@@ -90,7 +90,7 @@ class SitesPlanningPanel(PlanningWidget):
                             else:
                                 continue
                         for timeslot in line.timeslots:
-                            if timeslot.value == 0:
+                            if timeslot.activity.mode == 0:
                                 for i in range(timeslot.debut, timeslot.fin):
                                     site_line.array[i][0] -= 1
 

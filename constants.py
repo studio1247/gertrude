@@ -354,6 +354,7 @@ MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE = 7
 MODE_SALARIE_HEURES_SUPP = 8
 MODE_SALARIE_RECUP_HEURES_SUPP = 9
 MODE_SANS_HORAIRES = 10
+MODE_CONGES = 11
 
 ActivityModes = [
     ("Normal", MODE_NORMAL),
@@ -361,6 +362,7 @@ ActivityModes = [
     ("Présence facturée en temps supplémentaire", MODE_PRESENCE_SUPPLEMENTAIRE),
     ("Libère une place", MODE_LIBERE_PLACE),
     ("Permanence", MODE_PERMANENCE),
+    ("Congés", MODE_CONGES),
     ("Heures supp. (salariés)", MODE_SALARIE_HEURES_SUPP),
     ("Récup heures supp. (salariés)", MODE_SALARIE_RECUP_HEURES_SUPP),
     ("Sans horaires", MODE_SANS_HORAIRES),

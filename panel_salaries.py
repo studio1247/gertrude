@@ -577,7 +577,7 @@ class PlanningsEquipePanel(wx.lib.scrolledpanel.ScrolledPanel, PeriodeMixin):
         if planning:
             clone = PlanningSalarie(contrat=contrat, duree_reference=planning.duree_reference)
             for timeslot in planning.days:
-                clone.days.add(TimeslotPlanningSalarie(day=timeslot.day, debut=timeslot.debut, fin=timeslot.fin, value=timeslot.value))
+                clone.days.add(TimeslotPlanningSalarie(day=timeslot.day, debut=timeslot.debut, fin=timeslot.fin, activity=timeslot.activity))
         else:
             clone = PlanningSalarie(contrat=contrat, duree_reference=7)
         return clone
