@@ -1174,7 +1174,7 @@ class Salarie(Base):
         contrat = self.get_contrat(date)
         if contrat is None:
             return ABSENT
-        if date in self.jours_conges:
+        if date in self.jours_conges and self.jours_conges[date].type is not None:
             return self.jours_conges[date].type
         if date in self.creche.jours_fermeture:
             return ABSENT
