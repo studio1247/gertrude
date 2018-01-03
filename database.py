@@ -920,7 +920,7 @@ class Activite(Base):
         return self.mode in (MODE_PRESENCE, MODE_NORMAL, MODE_LIBERE_PLACE, MODE_PRESENCE_NON_FACTUREE, MODE_PRESENCE_SUPPLEMENTAIRE, MODE_PERMANENCE, MODE_CONGES)
 
     def EvalTarif(self, inscrit, date, montant_heure_garde=0.0, reservataire=False):
-        if self.formule_tarif.strip():
+        if self.formule_tarif and self.formule_tarif.strip():
             enfants, enfants_inscrits = inscrit.famille.GetEnfantsCount(date)[0:2]
             for tarif in self.creche.tarifs_speciaux:
                 try:

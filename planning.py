@@ -248,9 +248,9 @@ class PlanningLineGrid(BufferedWindow):
         self.SetBackgroundColour(wx.WHITE)
         if not (self.options & READ_ONLY or config.readonly):
             self.SetCursor(wx.StockCursor(wx.CURSOR_PENCIL))        
-            self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftButtonDown)
+            self.Bind(wx.EVT_LEFT_DOWN, self.onLeftButtonDown)
             self.Bind(wx.EVT_LEFT_UP, self.OnLeftButtonUp)
-            self.Bind(wx.EVT_MOTION, self.OnLeftButtonDragging)
+            self.Bind(wx.EVT_MOTION, self.onLeftButtonDragging)
 
     def SetLine(self, line):
         self.line = line
@@ -281,7 +281,7 @@ class PlanningLineGrid(BufferedWindow):
             x -= 1
         return int(database.creche.affichage_min * (60 // BASE_GRANULARITY) + (x // config.column_width))
 
-    def OnLeftButtonDown(self, event):
+    def onLeftButtonDown(self, event):
         posX = self.__get_pos(event.GetX())
         self.curStartX = (posX // (database.creche.granularite // BASE_GRANULARITY)) * (database.creche.granularite // BASE_GRANULARITY)
         # TODO config.readonly pourrait empecher l'evenement
@@ -297,7 +297,7 @@ class PlanningLineGrid(BufferedWindow):
                     break
             else:
                 self.state = 1
-            self.OnLeftButtonDragging(event)
+            self.onLeftButtonDragging(event)
 
     def GetPlagesSelectionnees(self):
         start, end = min(self.curStartX, self.curEndX), max(self.curStartX, self.curEndX) + database.creche.granularite // BASE_GRANULARITY
@@ -332,7 +332,7 @@ class PlanningLineGrid(BufferedWindow):
         
         return result
 
-    def OnLeftButtonDragging(self, event):
+    def onLeftButtonDragging(self, event):
         if self.state is not None:
             posX = self.__get_pos(event.GetX())
             self.curEndX = (posX // (database.creche.granularite // BASE_GRANULARITY)) * (database.creche.granularite // BASE_GRANULARITY)
