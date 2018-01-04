@@ -167,7 +167,7 @@ def GetDepartement(cp):
 def GetFile(filename, site, path, path_dist):
     paths = []
     if site and site.nom:
-        paths.append("%s/%s_%s" % (path, site.nom, filename))
+        paths.append("%s/[%s] %s" % (path, site.nom.replace('"', ''), filename))
     try:
         paths.append("%s/[%s] %s" % (path, database.creche.nom.replace('"', ''), filename))
         paths.append("%s/[%s] %s" % (path, database.creche.nom.lower().replace('"', ''), filename))
@@ -179,6 +179,7 @@ def GetFile(filename, site, path, path_dist):
         paths.append("../Resources/%s" % filename)
     for directory in ["", "~/.gertrude/", "/usr/share/gertrude/", os.path.dirname(os.path.realpath(__file__)) + "/"]:
         for path in paths:
+            # print("Test path %s" % path)
             if os.path.isfile(directory + path):
                 return directory + path
     return None

@@ -32,7 +32,8 @@ class DocumentAccueilModifications(object):
         self.inscrit = who
         self.date = date
         self.email = None
-        self.site = None
+        self.inscription = who.get_inscription(date, preinscription=True)
+        self.site = self.inscription.site if self.inscription else None
         self.metas = {}
 
     def GetMetas(self, dom):
@@ -81,19 +82,18 @@ class DocumentAccueilModifications(object):
         except:
             plancher_caf = "non rempli"
             plafond_caf = "non rempli"
-            
-        inscription = self.inscrit.get_inscription(self.date, preinscription=True)
+
         self.cotisation = Cotisation(self.inscrit, self.date)
         
-        fields = GetCrecheFields(database.creche) + GetInscritFields(self.inscrit) + GetInscriptionFields(inscription) + GetCotisationFields(self.cotisation)
+        fields = GetCrecheFields(database.creche) + GetInscritFields(self.inscrit) + GetInscriptionFields(self.inscription) + GetCotisationFields(self.cotisation)
         fields += [('president', president),
                    ('tresorier', tresorier),
                    ('directeur', directeur),
                    ('plancher-caf', plancher_caf),
                    ('plafond-caf', plafond_caf),
-                   ('semaines-type', inscription.duree_reference // 7),
+                   ('semaines-type', self.inscription.duree_reference // 7),
                    ('date', '%.2d/%.2d/%d' % (self.date.day, self.date.month, self.date.year)),
-                   ('permanences', self.GetPermanences(inscription)),
+                   ('permanences', self.GetPermanences()),
                    ('carence-maladie', database.creche.minimum_maladie),
                    ('IsPresentDuringTranche', self.IsPresentDuringTranche),
                    ]
@@ -101,7 +101,7 @@ class DocumentAccueilModifications(object):
         if database.creche.mode_facturation != FACTURATION_FORFAIT_MENSUEL:
             fields.append(('montant-heure-garde', self.cotisation.montant_heure_garde))
             
-        if inscription.mode == MODE_FORFAIT_MENSUEL:
+        if self.inscription.mode == MODE_FORFAIT_MENSUEL:
             fields.append(('forfait-heures-presence', self.cotisation.forfait_mensuel_heures))
 
         if self.cotisation.assiette_annuelle is not None:
@@ -134,46 +134,45 @@ class DocumentAccueilModifications(object):
 
         dates_conges_creche = []
         for debut, fin in database.creche.liste_conges:
-            if inscription.debut < fin and (not inscription.fin or inscription.fin > debut):
+            if self.inscription.debut < fin and (not self.inscription.fin or self.inscription.fin > debut):
                 if debut == fin:
                     dates_conges_creche.append(GetDateString(debut))
                 else:
                     dates_conges_creche.append(GetDateString(debut) + ' - ' + GetDateString(fin))
         fields.append(('dates-conges-creche', ", ".join(dates_conges_creche)))
         
-        for jour in range(inscription.duree_reference):
-            jour_reference = inscription.get_day_from_index(jour)
+        for jour in range(self.inscription.duree_reference):
+            jour_reference = self.inscription.get_day_from_index(jour)
             debut, fin = jour_reference.GetPlageHoraire()
             fields.append(('heure-debut[%d]' % jour, GetHeureString(float(debut) / 12 if debut else None)))
             fields.append(('heure-fin[%d]' % jour, GetHeureString(float(fin) / 12 if fin else None)))
             fields.append(('heures-jour[%d]' % jour, GetHeureString(jour_reference.get_duration())))
 
-        for key in database.creche.activites:
-            print("TODO tri par activite")
-            fields.append(('liste-activites[%d]' % key, inscription.GetListeActivites()))
+        for activite in database.creche.activites:
+            fields.append(('liste-activites[%d]' % activite.idx, self.inscription.GetListeActivites()))
 
-        fields += self.GetCustomFields(self.inscrit, self.inscrit.famille, inscription, self.cotisation)
+        fields += self.GetCustomFields(self.inscrit, self.inscrit.famille, self.inscription, self.cotisation)
 
         # print(fields)
         return fields
 
     def IsPresentDuringTranche(self, weekday, debut, fin):
-        journee = self.inscrit.get_inscription(self.date).reference[weekday]
+        journee = self.inscription.reference[weekday]
         if IsPresentDuringTranche(journee, debut, fin):
             return "X"
         else:
             return ""
-    
-    def GetPermanences(self, inscription):
-        jours = inscription.get_days_per_week()
-        heures = inscription.get_duration_per_week()
+
+    def GetPermanences(self):
+        jours = self.inscription.get_days_per_week()
+        heures = self.inscription.get_duration_per_week()
         if heures >= 11:
             result = 8
         elif heures >= 8:
             result = 6
         else:
             result = 4
-        if inscription.inscrit.famille.GetEnfantsCount(inscription.debut)[1]:
+        if self.inscription.inscrit.famille.GetEnfantsCount(self.inscription.debut)[1]:
             return 2 + result
         else:
             return result        
@@ -182,7 +181,6 @@ class DocumentAccueilModifications(object):
 class OdtDocumentAccueilModifications(DocumentAccueilModifications):
     def __init__(self, who, date):
         DocumentAccueilModifications.__init__(self, who, date)
-        self.inscription = who.get_inscription(date, preinscription=True)
         self.multi = False
 
     def execute(self, filename, dom):
@@ -344,14 +342,13 @@ class PremiereFactureModifications(DocumentAccueilModifications):
         self.introduction_filename = "Premiere facture.txt"
         self.contrat_accueil = ContratAccueilModifications(who, date)
         GenerateDocument(self.contrat_accueil, filename=self.contrat_accueil.default_output)
-        inscription = who.get_inscription(date, preinscription=True)
-        if inscription.preinscription:
-            inscription.preinscription = False
+        if self.inscription.preinscription:
+            self.inscription.preinscription = False
             preinscription_changed = True
         self.facture = FactureModifications([who], date)
         GenerateDocument(self.facture, filename=self.facture.default_output)
         if preinscription_changed:
-            inscription.preinscription = True
+            self.inscription.preinscription = True
 
     def get_attachments(self):
         return [self.contrat_accueil.default_output, self.facture.default_output]
