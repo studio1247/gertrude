@@ -1404,8 +1404,8 @@ class Inscrit(Base):
     conges = relationship("CongeInscrit", cascade="all, delete-orphan")
     corrections = relationship("Correction", collection_class=attribute_mapped_collection("date"), cascade="all, delete-orphan")
 
-    def __init__(self, prenom="", nom="", sexe=MASCULIN, handicap=False, automatic=True, **kwargs):
-        Base.__init__(self, prenom=prenom, nom=nom, sexe=sexe, handicap=handicap, **kwargs)
+    def __init__(self, prenom="", nom="", sexe=MASCULIN, handicap=False, allergies="", automatic=True, **kwargs):
+        Base.__init__(self, prenom=prenom, nom=nom, sexe=sexe, handicap=handicap, allergies=allergies, **kwargs)
         self.famille = Famille(creche=self.creche, automatic=automatic)
         if automatic:
             self.inscriptions.append(Inscription(inscrit=self))
