@@ -1580,8 +1580,7 @@ class Inscrit(Base):
         return result
 
     def is_date_conge(self, date):
-        return date in self.creche.jours_fermeture or (
-            self.creche.conges_inscription != GESTION_CONGES_INSCRIPTION_MENSUALISES_AVEC_POSSIBILITE_DE_SUPPLEMENT and date in self.jours_conges)
+        return date in self.creche.jours_fermeture or (self.creche.conges_inscription != GESTION_CONGES_INSCRIPTION_MENSUALISES_AVEC_POSSIBILITE_DE_SUPPLEMENT and date in self.jours_conges)
 
     def GetRattachement(self):
         result = None
@@ -1690,6 +1689,7 @@ class Inscrit(Base):
             return inscription.get_day_from_date(date).get_state() if inscription else ABSENT
 
     def GetExtraActivites(self, date):
+        # TODO il y a un problème avec les CONGES_AVEC_POSSIBILITE_DE_SUPPLEMENT parce que la journée retournée est la journée de référence et donc les activités sont comptées à tort
         day = self.GetJournee(date)
         if day is None:
             return []
