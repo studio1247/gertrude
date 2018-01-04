@@ -317,9 +317,19 @@ class DossierInscriptionModifications(DocumentAccueilModifications):
         self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
         self.email_subject = "Dossier d'inscription pour %s" % GetPrenomNom(who)
         self.introduction_filename = "Dossier inscription.txt"
+        if not IsTemplateFile("Premiere facture.txt"):
+            # sinon la première facture est envoyée séparément
+            self.contrat_accueil = ContratAccueilModifications(who, date)
+            GenerateDocument(self.contrat_accueil, filename=self.contrat_accueil.default_output)
+        else:
+            self.contrat_accueil = None
 
     def get_attachments(self):
-        return glob.glob("templates/Dossier inscription/*.pdf")
+        result = []
+        if self.contrat_accueil:
+            result.append(self.contrat_accueil.default_output)
+        result.extend(glob.glob("templates/Dossier inscription/*.pdf"))
+        return result
 
     def GetIntroductionFields(self):
         fields = self.GetFields()
