@@ -37,7 +37,7 @@ elif sys.platform != "win32":
     try:
         print("Démarrage de Gertrude ...")
     except:
-        sys.stdout = codecs.open(GERTRUDE_DIRECTORY + "/gertrude.log", "w", "utf-8")
+        sys.stdout = codecs.open(GERTRUDE_DIRECTORY + "/gertrude.log", "a", "utf-8")
 
 
 from startdialog import StartDialog
