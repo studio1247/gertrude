@@ -292,7 +292,7 @@ class SalariePlanningLine(BasePlanningLine):
         self.idx = self.salarie.idx
         BasePlanningLine.__init__(self, GetPrenomNom(self.salarie), options)
         self.date = date
-        if date in self.salarie.jours_conges:
+        if date in self.salarie.jours_conges and self.salarie.jours_conges[date].type is not None:
             self.state = self.salarie.jours_conges[date].type
             self.reference = StateDay(self.state)
             self.commentaire = self.salarie.jours_conges[date].label
