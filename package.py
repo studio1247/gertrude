@@ -75,7 +75,7 @@ def main():
         from setuptools import setup
 
         app = ["gertrude.pyw"]
-        data_files = glob.glob("bitmaps_dist/*.png") + glob.glob("bitmaps_dist/*.ico") + glob.glob("templates_dist/*.html") + glob.glob("templates_dist/*.txt") + glob.glob("templates_dist/*.od?" + [certifi.where()])
+        data_files = glob.glob("bitmaps_dist/*.png") + glob.glob("bitmaps_dist/*.ico") + glob.glob("templates_dist/*.html") + glob.glob("templates_dist/*.txt") + glob.glob("templates_dist/*.od?") + [certifi.where()]
         options = {"site_packages": True,
                    "arch": "i386",
                    "iconfile": "bitmaps_dist/gertrude.icns",
