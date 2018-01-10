@@ -2350,7 +2350,7 @@ class Database(object):
         if version > DB_VERSION:
             raise Exception("Version de base de données plus récente que votre version du logiciel.")
         elif version < DB_VERSION:
-            print("Database translation from version %s to version %d..." % (version, DB_VERSION))
+            print("Database translation from version %d to version %d..." % (version, DB_VERSION))
 
             if version < 65:
                 raise NotImplementedError("Database conversions < 65 are not anymore supported")
