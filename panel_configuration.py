@@ -792,7 +792,7 @@ class JoursFermeturePanel(AutoTab):
             database.creche.add_ferie(conge)
         else:
             conge = database.creche.feries[label]
-            database.delete_ferie(conge)
+            database.creche.delete_ferie(conge)
         history.Append(None)
 
 
