@@ -23,8 +23,6 @@ import os
 import shutil
 import sys
 import fnmatch
-import certifi
-
 from version import VERSION
 
 
@@ -72,6 +70,7 @@ def main():
             print("File %s generated (%d bytes)" % (exe, os.stat(exe).st_size))
 
     elif sys.platform == "darwin":
+        import certifi
         from setuptools import setup
 
         app = ["gertrude.pyw"]
