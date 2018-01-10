@@ -202,6 +202,8 @@ class Section(object):
             options |= ALERTES_NON_PAIEMENT
         if "gestion-repas" in value:
             options |= GESTION_REPAS
+        if "preinscriptions-only" in value:
+            options |= PREINSCRIPTIONS_ONLY
         return options
 
     def getWindowSize(self):
