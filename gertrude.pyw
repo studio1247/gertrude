@@ -40,6 +40,12 @@ elif sys.platform != "win32":
         sys.stdout = codecs.open(GERTRUDE_DIRECTORY + "/gertrude.log", "a", "utf-8")
 
 
+bin_path = os.path.dirname(os.path.realpath(__file__))
+cacert_path = os.path.join(bin_path, "cacert.pem")
+if os.exists(cacert_path):
+    os.environ["SSL_CERT_FILE"] = cacert_path
+
+
 from startdialog import StartDialog
 
 
