@@ -238,7 +238,7 @@ class PlacesUtiliseesPlanningPanel(PlanningWidget):
                         else:
                             groupe_line = None
                         for timeslot in line.timeslots:
-                            if timeslot.value == 0:
+                            if timeslot.activity.mode == MODE_PRESENCE:
                                 for i in range(timeslot.debut, timeslot.fin):
                                     day_lines[None].array[i][0] += 1
                                     if groupe_line is not None:
