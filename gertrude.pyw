@@ -42,7 +42,7 @@ elif sys.platform != "win32":
 
 bin_path = os.path.dirname(os.path.realpath(__file__))
 cacert_path = os.path.join(bin_path, "cacert.pem")
-if os.exists(cacert_path):
+if os.path.exists(cacert_path):
     os.environ["SSL_CERT_FILE"] = cacert_path
 
 
