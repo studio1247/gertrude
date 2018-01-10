@@ -23,6 +23,7 @@ import os
 import shutil
 import sys
 import fnmatch
+import certifi
 
 from version import VERSION
 
@@ -74,7 +75,7 @@ def main():
         from setuptools import setup
 
         app = ["gertrude.pyw"]
-        data_files = glob.glob("bitmaps_dist/*.png") + glob.glob("bitmaps_dist/*.ico") + glob.glob("templates_dist/*.html") + glob.glob("templates_dist/*.txt") + glob.glob("templates_dist/*.od?")
+        data_files = glob.glob("bitmaps_dist/*.png") + glob.glob("bitmaps_dist/*.ico") + glob.glob("templates_dist/*.html") + glob.glob("templates_dist/*.txt") + glob.glob("templates_dist/*.od?" + [certifi.where()])
         options = {"site_packages": True,
                    "arch": "i386",
                    "iconfile": "bitmaps_dist/gertrude.icns",
