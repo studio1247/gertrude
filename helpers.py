@@ -157,7 +157,9 @@ def str2date(string, year=None, day=None):
 
 
 def GetDureeArrondie(mode, start, end):
-    if mode == ARRONDI_HEURE_ARRIVEE_DEPART:
+    if start is None or end is None:
+        return 0
+    elif mode == ARRONDI_HEURE_ARRIVEE_DEPART:
         return (((end + 11) // 12) - (start // 12)) * 12
     elif mode == ARRONDI_HEURE:
         return ((end - start + 11) // 12) * 12
