@@ -224,9 +224,9 @@ class GertrudeFrame(wx.Frame):
                 if inscrit.naissance:
                     for inscription in inscrit.inscriptions:
                         if inscription.debut and (not inscription.fin or inscription.fin >= today):
-                             groupe = inscrit.GetGroupe()
-                             if groupe and inscription.groupe != groupe:
-                                 changements.append((inscription, groupe))
+                            groupe = inscrit.get_groupe()
+                            if groupe and inscription.groupe != groupe:
+                                changements.append((inscription, groupe))
             if changements:
                 wx.PostEvent(self, self.ChangementsGroupeEvent(changements=changements))
 

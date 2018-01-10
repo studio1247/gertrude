@@ -1418,6 +1418,15 @@ class Inscrit(Base):
     def slug(self):
         return "child-%d" % self.idx
 
+    def get_groupe(self):
+        result = None
+        age = GetAge(self.naissance)
+        for groupe in self.creche.groupes:
+            if not groupe.age_maximum or age <= groupe.age_maximum:
+                if result is None or not result.age_maximum or (groupe.age_maximum and groupe.age_maximum < result.age_maximum):
+                    result = groupe
+        return result
+
     def is_facture_cloturee(self, date):
         if self.creche.temps_facturation == FACTURATION_FIN_MOIS:
             return GetMonthEnd(date) in self.clotures or GetMonthStart(date) in self.clotures
