@@ -2277,6 +2277,9 @@ class TarifSpecial(Base):
     valeur = Column(Float)
     portee = Column(Integer)
 
+    def __init__(self, creche, **kwargs):
+        Base.__init__(self, creche=creche, **kwargs)
+
 
 class PlageHoraire(Base):
     __tablename__ = "plageshoraires"
