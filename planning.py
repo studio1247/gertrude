@@ -448,8 +448,9 @@ class PlanningLineLabel(wx.Panel):
         dialog.Destroy()
         if response == wx.ID_OK:
             start, end = dialog.get_interval()
-            self.line.set_activity(start, end, database.creche.states[0])
-            self.parent.OnLineChanged()
+            if start is not None and end is not None:
+                self.line.set_activity(start, end, database.creche.states[0])
+                self.parent.OnLineChanged()
 
 
 class PlanningLineIcon(wx.Window):
