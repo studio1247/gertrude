@@ -390,11 +390,13 @@ class SaisieHoraireDialog(wx.Dialog):
         self.fields_sizer = wx.FlexGridSizer(0, 2, 5, 10)
         self.fields_sizer.AddGrowableCol(1, 1)
         self.debut_ctrl = wx.TextCtrl(self)
+        wx.EVT_TEXT(self.debut_ctrl, -1, self.check_syntax)
         # self.debut_ctrl.SetValue(periode.debut)
         self.fields_sizer.AddMany(
             [(wx.StaticText(self, -1, "Début :"), 0, wx.ALIGN_CENTRE_VERTICAL | wx.ALL - wx.BOTTOM, 5),
              (self.debut_ctrl, 0, wx.EXPAND | wx.ALIGN_CENTRE_VERTICAL | wx.ALL - wx.BOTTOM, 5)])
         self.fin_ctrl = wx.TextCtrl(self)
+        wx.EVT_TEXT(self.fin_ctrl, -1, self.check_syntax)
         # self.fin_ctrl.SetValue(periode.fin)
         self.fields_sizer.AddMany([(wx.StaticText(self, -1, "Fin :"), 0, wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 5),
                                    (self.fin_ctrl, 0, wx.EXPAND | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 5)])
@@ -409,6 +411,17 @@ class SaisieHoraireDialog(wx.Dialog):
         self.sizer.Add(self.btnsizer, 0, wx.ALL, 5)
         self.SetSizer(self.sizer)
         self.sizer.Fit(self)
+
+    def check_syntax(self, event):
+        obj = event.GetEventObject()
+        value = obj.GetValue()
+        if value and self.get_index(value) is None:
+            obj.SetBackgroundColour(wx.RED)
+            obj.Refresh()
+        else:
+            obj.SetBackgroundColour(wx.WHITE)
+            obj.Refresh()
+        event.Skip()
 
     @staticmethod
     def get_index(text):
