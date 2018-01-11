@@ -261,25 +261,17 @@ class FactureModifications(object):
             for index, reservataire in enumerate(self.inscrits):
                 for template in templates:
                     clone = template.cloneNode(1)
-                    debut_facture = self.periode
-                    date = debut_facture
-                    nombre_mois = self.reservataire.periode_facturation
-                    for i in range(self.reservataire.periode_facturation):
-                        fin_facture = GetMonthEnd(date)
-                        if self.reservataire.debut > fin_facture or (self.reservataire.fin and self.reservataire.fin < date):
-                            nombre_mois -= 1
-                        date = GetNextMonthStart(date)
-
-                    if self.reservataire.periode_facturation == 1:
-                        mois_string = "%s %d" % (months[debut_facture.month - 1], debut_facture.year)
-                    elif fin_facture.year == debut_facture.year:
-                        mois_string = "%s à %s %d" % (months[debut_facture.month - 1], months[fin_facture.month - 1], debut_facture.year)
+                    facture = FactureReservataire(reservataire, self.periode)
+                    if reservataire.periode_facturation == 1:
+                        mois_string = "%s %d" % (months[facture.debut.month - 1], facture.debut.year)
+                    elif facture.fin.year == facture.debut.year:
+                        mois_string = "%s à %s %d" % (months[facture.debut.month - 1], months[facture.fin.month - 1], facture.debut.year)
                     else:
-                        mois_string = "%s %d à %s %d" % (months[debut_facture.month - 1], debut_facture.year, months[fin_facture.month - 1], fin_facture.year)
+                        mois_string = "%s %d à %s %d" % (months[facture.debut.month - 1], facture.debut.year, months[facture.fin.month - 1], facture.fin.year)
 
                     try:
-                        numero = int(database.creche.numeros_facture[debut_facture].valeur)
-                        numero += len([inscrit for inscrit in database.creche.inscrits if inscrit.has_facture(debut_facture)])
+                        numero = int(database.creche.numeros_facture[facture.debut].valeur)
+                        numero += len([inscrit for inscrit in database.creche.inscrits if inscrit.has_facture(facture.debut)])
                         numero += self.reservataire.idx
                     except Exception as e:
                         print("Exception numéro de facture", e)
@@ -289,11 +281,11 @@ class FactureModifications(object):
                         fields = {
                             "inscritid": len(database.creche.inscrits) + self.reservataire.idx,
                             "numero": numero,
-                            "annee": debut_facture.year,
-                            "mois": debut_facture.month
+                            "annee": facture.debut.year,
+                            "mois": facture.debut.month
                         }
                         if "numero-global" in config.numfact:
-                            fields["numero-global"] = config.numerotation_factures.get("reservataire-%d" % self.reservataire.idx, debut_facture)
+                            fields["numero-global"] = config.numerotation_factures.get("reservataire-%d" % self.reservataire.idx, facture.debut)
                         numfact = config.numfact % fields
                     else:
                         numfact = "%03d%04d%02d" % (900+reservataire.idx, self.periode_facturation.year, self.periode_facturation.month)
@@ -302,10 +294,10 @@ class FactureModifications(object):
                         ("date", self.periode_facturation),
                         ("mois", mois_string),
                         ("numfact", numfact),
-                        ('tarif-periode-reservataire', reservataire.tarif * nombre_mois, FIELD_EUROS),
+                        ('tarif-periode-reservataire', reservataire.tarif * facture.nombre_mois, FIELD_EUROS),
                     ]
 
-                    inscrits = list(database.creche.select_inscrits(debut_facture, None, reservataire=self.reservataire))  # parce qu'on veut aussi voir les enfants qui arrivent plus tard
+                    inscrits = list(database.creche.select_inscrits(facture.debut, None, reservataire=reservataire))  # parce qu'on veut aussi voir les enfants qui arrivent plus tard
                     if inscrits:
                         inscrit = inscrits[0]
                         fields += GetInscritFields(inscrit)

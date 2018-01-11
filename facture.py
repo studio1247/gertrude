@@ -932,8 +932,15 @@ def Facture(inscrit, annee, mois, options=0):
 class FactureReservataire(object):
     def __init__(self, reservataire, date):
         self.reservataire = reservataire
+        self.debut = date
         self.date = date
-        self.total = reservataire.tarif * reservataire.periode_facturation
+        self.nombre_mois = reservataire.periode_facturation
+        for i in range(reservataire.periode_facturation):
+            self.fin = GetMonthEnd(date)
+            if reservataire.debut > self.fin or (reservataire.fin and self.reservataire.fin < date):
+                self.nombre_mois -= 1
+            date = GetNextMonthStart(date)
+        self.total = reservataire.tarif * self.nombre_mois
         self.total_facture = self.total
 
 
