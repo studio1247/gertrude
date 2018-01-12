@@ -458,7 +458,7 @@ class RelanceFactureModifications(FactureModifications):
         FactureModifications.__init__(self, [who], self.last_facture_date)
         self.introduction_filename = "Accompagnement relance.txt"
         self.email_subject = self.email_subject.replace("Facture", "Retard de paiement")
-        self.introduction_fields.append(("solde", "%.2f" % self.solde, FIELD_EUROS))
+        self.introduction_fields.append(("solde", "%.2f" % self.solde, FIELD_EUROS))  # TODO pourrait être fait automatiquement
 
 
 if __name__ == '__main__':
