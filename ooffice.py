@@ -566,13 +566,13 @@ def save_current_document(filename):
 
 def convert_to_pdf(filename, pdf_filename):
     # print filename, pdf_filename
-    if filename.endswith("ods"):
+    if filename.endswith(".ods"):
         filter_name = "calc_pdf_Export"
     else:
         filter_name = "writer_pdf_Export"
     if sys.platform == 'win32':
-        filename = ''.join(["file:", urllib.pathname2url(str(os.path.abspath(filename)).encode("utf8"))])
-        pdf_filename = ''.join(["file:", urllib.pathname2url(str(os.path.abspath(pdf_filename)).encode("utf8"))])
+        filename = ''.join(["file:", urllib.pathname2url(os.path.abspath(filename).encode("utf8"))])
+        pdf_filename = ''.join(["file:", urllib.pathname2url(os.path.abspath(pdf_filename).encode("utf8"))])
         StarDesktop, objServiceManager, core_reflection = getOOoContext()
         document = StarDesktop.LoadComponentFromURL(
             filename,

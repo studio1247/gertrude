@@ -723,6 +723,9 @@ class Site(Base):
     def get_name(self):
         return self.nom if self.nom else "<sans nom>"
 
+    def get_factures_list(self):
+        return self.creche.get_factures_list()
+
 
 class FoodNeed(Base):
     __tablename__ = "food_needs"
