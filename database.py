@@ -1669,7 +1669,7 @@ class Inscrit(Base):
                 if self.creche.nom == "Le Nid Des Trésors" and not inscription.IsInPeriodeAdaptation(date):
                     # TODO ajouter un paramètre quand la branche SQLAlchemy sera mergée
                     for timeslot in journee.timeslots:
-                        if timeslot.value == 0:
+                        if timeslot.activity.mode == MODE_PRESENCE:
                             heures_facturees += tranche * GetDureeArrondie(self.creche.arrondi_facturation, timeslot.debut, timeslot.fin)
                     heures_facturees = max(heures_facturees, heures_reference)
                 else:
