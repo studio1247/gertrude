@@ -324,7 +324,7 @@ class PlanningDetailleModifications:
 
                 lines = GetLines(day, people, presence=not self.metas["lignes-vides"], site=self.site, groupe=self.groupe, summary=SUMMARY_ENFANT)
                 lines = GetEnfantsTriesSelonParametreTriPlanning(lines)
-                for i, line in enumerate(lines):
+                for line in lines:
                     node = shapes["libelle"].cloneNode(1)
                     # node.setAttribute('svg:x', '%fcm' % self.metas["left"])
                     node.setAttribute('svg:y', '%fcm' % current_top)
@@ -335,26 +335,22 @@ class PlanningDetailleModifications:
                     ReplaceTextFields(node, fields)
                     page.appendChild(node)
                     timeslots = line.timeslots[:]
-                    timeslots.sort(key=lambda timeslot: timeslot.value)
+                    timeslots.sort(key=lambda timeslot: timeslot.activity.idx)
                     for timeslot in timeslots:
-                        a, b, v = timeslot.debut, timeslot.fin, timeslot.value
-                        if v >= 0:
-                            if v == 0 and salaries:
+                        if timeslot.activity.mode >= 0:
+                            if timeslot.activity.mode == 0 and salaries:
                                 label = "presence-salarie"
-                            elif v in database.creche.activites:
-                                label = database.creche.activites[v].label
                             else:
-                                label = ""
-                            shape = shapes.get("activite-%s" % label, shapes.get("activite-%d" % v, None))
+                                label = timeslot.activity.label
+                            shape = self.get_timeslot_shape(shapes, timeslot)
                             if shape:
-                                # print(a,b,v)
                                 node = shape.cloneNode(1)
-                                node.setAttribute('svg:x', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + float(a - affichage_min) * step))
+                                node.setAttribute('svg:x', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + float(timeslot.debut - affichage_min) * step))
                                 node.setAttribute('svg:y', '%fcm' % (0.20 + current_top))
-                                node.setAttribute('svg:width', '%fcm' % ((b - a) * step))
+                                node.setAttribute('svg:width', '%fcm' % ((timeslot.fin - timeslot.debut) * step))
                                 page.appendChild(node)
                             else:
-                                print("Pas de forme pour l'activité", v, label)
+                                print("Pas de forme pour l'activité %s" % label)
 
                     fields = GetCrecheFields(database.creche) + GetSiteFields(self.site)
                     ReplaceTextFields(page, fields)
