@@ -237,11 +237,9 @@ class DocumentDialog(wx.Dialog):
             try:
                 root, ext = os.path.splitext(self.modifications.introduction_filename)
                 introduction_filename = root + " CAF" + ext
-                SendDocument(self.filename, to=[database.creche.caf_email],
-                             introduction_filename=GetTemplateFile(introduction_filename))
+                SendDocument(self.filename, self.modifications, to=[database.creche.caf_email], introduction_filename=GetTemplateFile(introduction_filename))
             except Exception as e:
-                dlg = wx.MessageDialog(self, "Impossible d'envoyer le document %s\n%r" % (self.filename, e), 'Erreur',
-                                       wx.OK | wx.ICON_WARNING)
+                dlg = wx.MessageDialog(self, "Impossible d'envoyer le document %s\n%r" % (self.filename, e), "Erreur", wx.OK | wx.ICON_WARNING)
                 dlg.ShowModal()
                 dlg.Destroy()
 

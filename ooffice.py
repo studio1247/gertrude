@@ -18,7 +18,7 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 from builtins import str
-
+import unicodedata
 import locale
 import numbers
 import sys
@@ -630,7 +630,7 @@ def SendDocument(filename, generator, to=None, introduction_filename=None, saas=
 
     try:
         with open(introduction_filename) as f:
-            text = f.read()
+            text = f.read().decode("utf8")
             for field, _, value in evalFields(generator.GetIntroductionFields()):
                 if isinstance(value, str):
                     text = text.replace("<%s>" % field, value)
@@ -646,19 +646,19 @@ def SendDocument(filename, generator, to=None, introduction_filename=None, saas=
         traceback.print_exc()
 
     if filename:
-        with open(filename, 'rb') as f:
-            doc = MIMEBase('application', 'octet-stream')
+        with open(filename, "rb") as f:
+            doc = MIMEBase("application", "octet-stream")
             doc.set_payload(f.read())
             encoders.encode_base64(doc)
-            doc.add_header('Content-Disposition', 'attachment', filename=os.path.split(filename)[1])
+            doc.add_header("Content-Disposition", "attachment", filename=strip_accents(os.path.split(filename)[1]))
             msg.attach(doc)
 
     for attachment in generator.get_attachments():
-        with open(attachment, 'rb') as f:
-            doc = MIMEBase('application', 'octet-stream')
+        with open(attachment, "rb") as f:
+            doc = MIMEBase("application", "octet-stream")
             doc.set_payload(f.read())
             encoders.encode_base64(doc)
-            doc.add_header('Content-Disposition', 'attachment', filename=os.path.split(attachment)[1])
+            doc.add_header("Content-Disposition", "attachment", filename=strip_accents(os.path.split(attachment)[1]))
             msg.attach(doc)
 
     if saas:
