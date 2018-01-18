@@ -71,9 +71,9 @@ class StartDialog(wx.Dialog):
         self.ok_button = wx.Button(self, wx.ID_OK)
         self.Bind(wx.EVT_BUTTON, self.OnOk, self.ok_button)
         self.btnsizer.AddButton(self.ok_button)
-        btn = wx.Button(self, wx.ID_CANCEL, "Annuler")
-        self.btnsizer.AddButton(btn)
-        self.Bind(wx.EVT_BUTTON, self.OnExit, btn)
+        self.cancel_button = wx.Button(self, wx.ID_CANCEL, "Annuler")
+        self.btnsizer.AddButton(self.cancel_button)
+        self.Bind(wx.EVT_BUTTON, self.OnExit, self.cancel_button)
         self.btnsizer.Realize()       
         self.sizer.Add(self.btnsizer, 0, wx.ALL, 5)
         self.Bind(wx.EVT_CLOSE, self.OnExit)
@@ -182,7 +182,12 @@ class StartDialog(wx.Dialog):
             result = False
         wx.CallAfter(self.OnLoaded, result)
 
+    def disable_buttons(self):
+        for button in self.ok_button, self.cancel_button:
+            button.Disable()
+
     def StartFrame(self):
+        self.disable_buttons()
         frame = GertrudeFrame(ProgressHandler(self.info.AppendText, self.SetGauge, 50, 100))
         frame.Show()
         self.SetGauge(100)
@@ -222,6 +227,7 @@ class StartDialog(wx.Dialog):
             self.login_ctrl.SetFocus()
 
     def OnExit(self, _):
+        self.disable_buttons()
         self.info.AppendText("\nFermeture ...\n")
         if self.loaded:
             config.connection.Exit(ProgressHandler(self.info.AppendText, self.SetGauge, 5, 100))

@@ -53,7 +53,7 @@ class FactureBase(object):
         return date.replace(day=(day if type(day) == int else 1))
 
     def Cloture(self):
-        print("Cloture de facture", self.date)
+        print("Cloture de facture", GetPrenomNom(self.inscrit), self.date)
         cloture = ClotureFacture(inscrit=self.inscrit,
                                  date=self.date,
                                  cotisation_mensuelle=self.cotisation_mensuelle,
