@@ -52,9 +52,9 @@ def GetText(value):
 
 def GetColumnName(index):
     if index < 26:
-        return chr(65+index)
+        return chr(65 + index)
     else:
-        return chr(64+(index / 26)) + chr(65+(index % 26))
+        return chr(64 + (index // 26)) + chr(65 + (index % 26))
 
 
 def GetColumnIndex(name):
