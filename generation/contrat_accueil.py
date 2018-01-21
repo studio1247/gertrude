@@ -90,7 +90,7 @@ class DocumentAccueilModifications(object):
         
         bureau = Select(database.creche.bureaux, self.date)
         if bureau:
-            fields.append(GetBureauFields(bureau))
+            fields.extend(GetBureauFields(bureau))
 
         if database.creche.mode_facturation != FACTURATION_FORFAIT_MENSUEL:
             fields.append(('montant-heure-garde', self.cotisation.montant_heure_garde))

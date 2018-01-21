@@ -157,7 +157,7 @@ class AttestationModifications(object):
 
             bureau = Select(database.creche.bureaux, datetime.date.today())
             if bureau:
-                fields.append(GetBureauFields(bureau))
+                fields.extend(GetBureauFields(bureau))
 
             if self.attestation_mensuelle:
                 fields.extend([
