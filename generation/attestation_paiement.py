@@ -97,13 +97,7 @@ class AttestationModifications(object):
             return None
         
         errors = {}
-        tresorier = ""
-        directeur = ""
-        bureau = Select(database.creche.bureaux, datetime.date.today())
-        if bureau:
-            tresorier = bureau.tresorier
-            directeur = bureau.directeur
-        
+
         # print dom.toprettyxml()
         doc = dom.getElementsByTagName("office:text")[0]
         templates = doc.getElementsByTagName("text:section")
@@ -141,14 +135,12 @@ class AttestationModifications(object):
             last_inscription = None
             for tmp in inscrit.inscriptions:
                 if not last_inscription or not last_inscription.fin or (tmp.fin and tmp.fin > last_inscription.fin):
-                    last_inscription = tmp 
-            
+                    last_inscription = tmp
+
             # Les champs de l'attestation
             fields = GetCrecheFields(database.creche) + GetInscritFields(inscrit) + GetInscriptionFields(last_inscription) + [
                 ('de-debut', '%s %d' % (GetDeMoisStr(facture_debut.month - 1), facture_debut.year)),
                 ('de-fin', '%s %d' % (GetDeMoisStr(facture_fin.month - 1), facture_fin.year)),
-                ('tresorier', tresorier),
-                ('directeur', directeur),
                 ('date', date2str(datetime.date.today())),
                 ('date-debut-mois-suivant', date2str(GetNextMonthStart(self.debut))),
                 ('heures-facture', GetHeureString(heures_facture)),
@@ -162,7 +154,11 @@ class AttestationModifications(object):
                 ('site', GetNom(site)),
                 ('dernier-mois', GetBoolStr(last_inscription.fin and last_inscription.fin <= facture_fin)),
             ]
-            
+
+            bureau = Select(database.creche.bureaux, datetime.date.today())
+            if bureau:
+                fields.append(GetBureauFields(bureau))
+
             if self.attestation_mensuelle:
                 fields.extend([
                     ('mois', months[facture_debut.month - 1]),

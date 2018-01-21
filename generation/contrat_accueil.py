@@ -68,13 +68,6 @@ class DocumentAccueilModifications(object):
         return fields
 
     def GetFields(self):
-        president = tresorier = directeur = ""
-        bureau = Select(database.creche.bureaux, self.date)
-        if bureau:
-            president = bureau.president
-            tresorier = bureau.tresorier
-            directeur = bureau.directeur
-
         bareme_caf = Select(database.creche.baremes_caf, self.date)
         try:
             plancher_caf = "%.2f" % bareme_caf.plancher
@@ -86,10 +79,7 @@ class DocumentAccueilModifications(object):
         self.cotisation = Cotisation(self.inscrit, self.date)
         
         fields = GetCrecheFields(database.creche) + GetInscritFields(self.inscrit) + GetInscriptionFields(self.inscription) + GetCotisationFields(self.cotisation)
-        fields += [('president', president),
-                   ('tresorier', tresorier),
-                   ('directeur', directeur),
-                   ('plancher-caf', plancher_caf),
+        fields += [('plancher-caf', plancher_caf),
                    ('plafond-caf', plafond_caf),
                    ('semaines-type', self.inscription.duree_reference // 7),
                    ('date', '%.2d/%.2d/%d' % (self.date.day, self.date.month, self.date.year)),
@@ -98,6 +88,10 @@ class DocumentAccueilModifications(object):
                    ('IsPresentDuringTranche', self.IsPresentDuringTranche),
                    ]
         
+        bureau = Select(database.creche.bureaux, self.date)
+        if bureau:
+            fields.append(GetBureauFields(bureau))
+
         if database.creche.mode_facturation != FACTURATION_FORFAIT_MENSUEL:
             fields.append(('montant-heure-garde', self.cotisation.montant_heure_garde))
             

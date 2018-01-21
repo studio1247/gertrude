@@ -499,6 +499,18 @@ def GetSiteFields(site):
             ]
 
 
+def GetBureauFields(bureau):
+    return [("directeur", bureau.directeur),
+            ("president", bureau.president),
+            ("vice-president", bureau.vice_president),
+            ("tresorier", bureau.tresorier),
+            ("secretaire", bureau.secretaire),
+            ("gerant", bureau.gerant),
+            ("directeur-adjoint", bureau.directeur_adjoint),
+            ("comptable", bureau.comptable)
+            ]
+
+
 def GetCrecheFields(creche):
     return [('nom-creche', database.creche.nom),
             ('adresse-creche', database.creche.adresse),
