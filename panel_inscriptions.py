@@ -825,6 +825,10 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
     def OnDureeReferenceChoice(self, _):
         history.Append(None)
         duration = self.duree_reference_choice.GetClientData(self.duree_reference_choice.GetSelection())
+        contrat = self.inscrit.inscriptions[self.periode]
+        for timeslot in list(contrat.days):
+            if timeslot.day >= duration:
+                contrat.days.remove(timeslot)
         self.inscrit.inscriptions[self.periode].duree_reference = duration
         self.UpdateContents()
         
@@ -906,8 +910,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         if inscription and not inscription.preinscription:
             self.jours_poses.SetValue("%d jours posés / %d jours" % (inscription.GetNombreJoursCongesPoses(), inscription.GetNombreJoursCongesPeriode()))
             days, duration = inscription.get_days_per_week(), inscription.get_duration_per_week()
-            print("TODO arrondi")
-            self.heures_and_jours_reference.SetValue("%s heures / %s jours" % (Number2String(duration), Number2String(days)))
+            self.heures_and_jours_reference.SetValue("%s heures / %d jours" % (Number2String(duration), days))
         else:
             self.jours_poses.SetValue("")
             self.heures_and_jours_reference.SetValue("")

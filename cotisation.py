@@ -238,7 +238,6 @@ class Cotisation(object):
             self.jours_semaine = self.inscription.get_days_per_week()
             self.heures_reelles_semaine = self.inscription.get_duration_per_week(self.inscrit.creche.arrondi_heures)
             self.semaines_reference = self.inscription.duree_reference // 7
-            self.jours_semaine //= self.semaines_reference
         
         if self.mode_garde is None:
             errors.append(" - Le mode de garde n'est pas renseigné.")
