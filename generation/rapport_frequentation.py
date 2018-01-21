@@ -29,9 +29,11 @@ template_lines_count = 8
 
 
 class RapportFrequentationModifications(object):
+    title = "Rapport de fréquentation"
+    template = "Rapport frequentation.ods"
+
     def __init__(self, site, annee):
         self.multi = False
-        self.template = 'Rapport frequentation.ods'
         self.default_output = "Rapport frequentation %d.ods" % annee
         self.annee = annee
         self.factures = {}
@@ -155,7 +157,7 @@ class RapportFrequentationModifications(object):
                         break
         
                     inscrits = list(database.creche.select_inscrits(debut, fin, self.site))
-                    inscrits.sort(lambda x, y: cmp(x.nom.lower(), y.nom.lower()))
+                    inscrits.sort(key=lambda x: x.nom.lower())
                     if not inscrits:
                         continue
                     
@@ -247,7 +249,7 @@ class RapportFrequentationModifications(object):
                     line.removeChild(cell_template)
                         
                 template = lines[1]
-                keys = inscrits_annee.keys()
+                keys = list(inscrits_annee.keys())
                 keys.sort()
                 for i, key in enumerate(keys):
                     inscrit = inscrits_annee[key] 
