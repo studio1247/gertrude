@@ -211,10 +211,12 @@ class RapportFrequentationModifications(object):
                         total_cell.setAttribute("table:formula", "of:=SUM([.%s%d:.%s%d])" % (GetColumnName(colonne_jour), i + 2, GetColumnName(colonne_jour - 1 + len(jours)), i + 2))
                         if i == 0:
                             IncrementFormulas(cells[len(jours) + colonne_jour + 2:], column=len(jours) - 1)
-                            cells[len(jours) + self.metas['colonne-jours-ouverture'] - 1].setAttribute("table:formula", "of:=COUNT([.%s1:.%s1])" % (GetColumnName(colonne_jour), GetColumnName(colonne_jour - 1 + len(jours))))
-                            jours_mois.append("%s.%s2" % (months[mois - 1], GetColumnName(self.metas['colonne-jours-ouverture'] - 1 + len(jours))))
-                            for cell in line_template.getElementsByTagName("table:table-cell")[len(jours) + 3:]:
-                                line_template.removeChild(cell)
+                            index = len(jours) + self.metas['colonne-jours-ouverture'] - 1
+                            if index < len(cells):
+                                cells[index].setAttribute("table:formula", "of:=COUNT([.%s1:.%s1])" % (GetColumnName(colonne_jour), GetColumnName(colonne_jour - 1 + len(jours))))
+                                jours_mois.append("%s.%s2" % (months[mois - 1], GetColumnName(self.metas['colonne-jours-ouverture'] - 1 + len(jours))))
+                                for cell in line_template.getElementsByTagName("table:table-cell")[len(jours) + 3:]:
+                                    line_template.removeChild(cell)
                         key = GetPrenomNom(inscrit)
                         if key not in inscrits_annee:
                             inscrits_annee[key] = inscrit
@@ -255,9 +257,11 @@ class RapportFrequentationModifications(object):
                     cells = line.getElementsByTagName("table:table-cell")
                     cells[colonne_annee].setAttribute("table:formula", "of:=SUM(%s)" % ';'.join(["[%s]" % c for c in inscrits_annee_details[key].values()]))
                     if i == 0 and self.metas['colonne-total-jours-ouverture'] >= 0:
-                        cells[self.metas['colonne-total-jours-ouverture']].setAttribute("table:formula", "of:=SUM(%s)" % ';'.join(["[%s]" % m for m in jours_mois]))
-                        for cell in template.getElementsByTagName("table:table-cell")[colonne_annee + 1:]:
-                            template.removeChild(cell)
+                        index = self.metas['colonne-total-jours-ouverture']
+                        if index < len(cells):
+                            cells[index].setAttribute("table:formula", "of:=SUM(%s)" % ';'.join(["[%s]" % m for m in jours_mois]))
+                            for cell in template.getElementsByTagName("table:table-cell")[colonne_annee + 1:]:
+                                template.removeChild(cell)
                     if colonne_mois >= 0:
                         cell_template = cells[colonne_mois]
                         for m in range(1, 13):
