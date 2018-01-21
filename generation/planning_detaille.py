@@ -93,14 +93,18 @@ class PlanningDetailleModifications:
                 return self.executeTemplateDraw(filename, dom)
 
     @staticmethod
-    def get_timeslot_shape(shapes, timeslot):
-        key1 = "activite-%s" % timeslot.activity.label
-        key2 = "activite-%d" % (timeslot.activity.mode if timeslot.activity.mode <= 0 else database.creche.activites.index(timeslot.activity) + 1)
+    def get_timeslot_shape(shapes, timeslot, salarie=False):
+        key1 = "activite-%s-%s" % ("salarie" if salarie else "enfant", timeslot.activity.label)
+        key2 = "activite-%s" % timeslot.activity.label
+        key3 = "activite-%d" % (timeslot.activity.mode if timeslot.activity.mode <= 0 else database.creche.activites.index(timeslot.activity) + 1)
         if key1 in shapes:
             return shapes[key1]
         elif key2 in shapes:
             return shapes[key2]
+        elif key3 in shapes:
+            return shapes[key3]
         else:
+            print("Pas de forme pour l'activité %s: %s, %s, %s" % (timeslot.activity.label, key1, key2, key3))
             return None
 
     def executeTemplateDraw(self, filename, dom):
@@ -208,16 +212,14 @@ class PlanningDetailleModifications:
                         for timeslot in line.timeslots:
                             if timeslot.activity.has_horaires():
                                 shape = self.get_timeslot_shape(shapes, timeslot)
-                                if not shape:
-                                    print("Pas de forme pour %s" % timeslot.activity.label)
-                                    continue
-                                node = shape.cloneNode(1)
-                                node.setAttribute('svg:x', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + float(timeslot.debut - affichage_min) * step))
-                                node.setAttribute('svg:y', '%fcm' % (0.10 + self.metas["top"] + self.metas["line-height"] * i))
-                                node.setAttribute('svg:width', '%fcm' % ((timeslot.fin - timeslot.debut) * step))
-                                allergies = line.who.get_allergies() if isinstance(line.who, Inscrit) else []
-                                ReplaceTextFields(node, [("texte", ""), ("allergies", ", ".join(allergies))])
-                                page.appendChild(node)
+                                if shape:
+                                    node = shape.cloneNode(1)
+                                    node.setAttribute('svg:x', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + float(timeslot.debut - affichage_min) * step))
+                                    node.setAttribute('svg:y', '%fcm' % (0.10 + self.metas["top"] + self.metas["line-height"] * i))
+                                    node.setAttribute('svg:width', '%fcm' % ((timeslot.fin - timeslot.debut) * step))
+                                    allergies = line.who.get_allergies() if isinstance(line.who, Inscrit) else []
+                                    ReplaceTextFields(node, [("texte", ""), ("allergies", ", ".join(allergies))])
+                                    page.appendChild(node)
 
                 if self.metas["summary"] and page_index + 1 == pages_count:
                     AddCategoryShape(page, "Totaux", 0.20 + self.metas["top"] + self.metas["line-height"] * lines_count)
@@ -239,15 +241,13 @@ class PlanningDetailleModifications:
                         line = summary[activity]
                         for timeslot in line:
                             shape = self.get_timeslot_shape(shapes, timeslot)
-                            if not shape:
-                                print("Pas de forme pour l'activité %s" % timeslot.activity.label)
-                                continue
-                            node = shape.cloneNode(1)
-                            node.setAttribute('svg:x', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + (float(timeslot.debut - affichage_min) * step)))
-                            node.setAttribute('svg:y', '%fcm' % (0.10 + self.metas["top"] + self.metas["line-height"] * i))
-                            node.setAttribute('svg:width', '%fcm' % (float(timeslot.fin - timeslot.debut) * step))
-                            ReplaceTextFields(node, [('texte', str(timeslot.value))])
-                            page.appendChild(node)
+                            if shape:
+                                node = shape.cloneNode(1)
+                                node.setAttribute('svg:x', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + (float(timeslot.debut - affichage_min) * step)))
+                                node.setAttribute('svg:y', '%fcm' % (0.10 + self.metas["top"] + self.metas["line-height"] * i))
+                                node.setAttribute('svg:width', '%fcm' % (float(timeslot.fin - timeslot.debut) * step))
+                                ReplaceTextFields(node, [('texte', str(timeslot.value))])
+                                page.appendChild(node)
                 fields = GetCrecheFields(database.creche) + GetSiteFields(self.site)
                 if pages_count > 1:
                     fields.append(('date', GetDateString(date) + " (%d/%d)" % (page_index + 1, pages_count)))
@@ -338,19 +338,13 @@ class PlanningDetailleModifications:
                     timeslots.sort(key=lambda timeslot: timeslot.activity.idx)
                     for timeslot in timeslots:
                         if timeslot.activity.mode >= 0:
-                            if timeslot.activity.mode == 0 and salaries:
-                                label = "presence-salarie"
-                            else:
-                                label = timeslot.activity.label
-                            shape = self.get_timeslot_shape(shapes, timeslot)
+                            shape = self.get_timeslot_shape(shapes, timeslot, salaries)
                             if shape:
                                 node = shape.cloneNode(1)
                                 node.setAttribute('svg:x', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + float(timeslot.debut - affichage_min) * step))
                                 node.setAttribute('svg:y', '%fcm' % (0.20 + current_top))
                                 node.setAttribute('svg:width', '%fcm' % ((timeslot.fin - timeslot.debut) * step))
                                 page.appendChild(node)
-                            else:
-                                print("Pas de forme pour l'activité %s" % label)
 
                     fields = GetCrecheFields(database.creche) + GetSiteFields(self.site)
                     ReplaceTextFields(page, fields)
