@@ -867,6 +867,7 @@ class FactureDebutMoisContrat(FactureDebutMois):
         self.detail_supplement_activites = self.facture_precedente.detail_supplement_activites
         self.tarif_supplement_activites = self.facture_precedente.tarif_supplement_activites
         self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction + self.correction
+        self.total_facture = self.total
 
 
 class FactureDebutMoisPrevisionnel(FactureDebutMois):
@@ -886,6 +887,7 @@ class FactureDebutMoisPrevisionnel(FactureDebutMois):
         
         self.cotisation_mensuelle += self.report_cotisation_mensuelle
         self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction + self.correction
+        self.total_facture = self.total
 
     def Cloture(self):
         facture_previsionnelle = FactureFinMois(self.inscrit, self.annee, self.mois)
