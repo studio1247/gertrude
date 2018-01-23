@@ -1139,7 +1139,7 @@ class ActivityComboBox(HashComboBox):
 def GetPictoBitmap(index, size=64):
     if isinstance(index, int):
         index = chr(ord('a') + index)
-    bitmap = wx.Bitmap(GetBitmapFile("pictos/%c.png" % index), wx.BITMAP_TYPE_PNG)
+    bitmap = wx.Bitmap(GetBitmapFile("pictos/%s.png" % index), wx.BITMAP_TYPE_PNG)
     image = wx.ImageFromBitmap(bitmap)
     image = image.Scale(size, size, wx.IMAGE_QUALITY_HIGH)
     return wx.BitmapFromImage(image)
