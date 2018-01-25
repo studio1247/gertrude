@@ -31,7 +31,7 @@ from parameters import *
 import bcrypt
 from config import config
 
-DB_VERSION = 123
+DB_VERSION = 124
 
 Base = declarative_base()
 
@@ -1399,6 +1399,11 @@ class Inscrit(Base):
     garde_alternee = Column(Boolean, default=False)
     type_repas = Column(Integer, default=REPAS_PUREE)
     type_repas2 = Column(Integer, default=REPAS_ASSIETTE)
+    date_premier_contact = Column(Date)
+    date_entretien_directrice = Column(Date)
+    date_envoi_devis = Column(Date)
+    date_reponse_parents = Column(Date)
+    preinscription_state = Column(Integer)
     inscriptions = relationship("Inscription", cascade="all, delete-orphan")
     days = relationship("TimeslotInscrit", collection_class=lambda: DayCollection("date"), cascade="all, delete-orphan")
     weekslots = relationship("WeekSlotInscrit", cascade="all, delete-orphan")
@@ -1852,6 +1857,7 @@ class Inscription(Base, PeriodeReference):
     _sites_preinscription = Column(String, name="sites_preinscription")
     professeur_id = Column(Integer, ForeignKey("professeurs.idx"))
     professeur = relationship(Professeur)
+    debut_asap = Column(Boolean)
     debut = Column(Date)
     fin = Column(Date)
     depart = Column(Date)
@@ -2955,6 +2961,12 @@ class Database(object):
                     for value, activity in activities:
                         self.engine.execute("UPDATE %s SET activity=? WHERE value=?" % table, (activity, value))
                     self.engine.execute("DELETE FROM %s WHERE activity IS NULL" % table)
+
+            if version < 124:
+                for column in "date_premier_contact", "date_entretien_directrice", "date_envoi_devis", "date_reponse_parents":
+                    self.engine.execute("ALTER TABLE inscrits ADD %s DATE" % column)
+                self.engine.execute("ALTER TABLE inscrits ADD preinscription_state INTEGER")
+                self.engine.execute("ALTER TABLE inscriptions ADD debut_asap BOOLEAN")
 
             # update database version
             version_entry.value = DB_VERSION
