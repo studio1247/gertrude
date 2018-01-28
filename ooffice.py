@@ -46,6 +46,8 @@ def GetText(value):
         return value
     elif isinstance(value, datetime.date):
         return '%.2d/%.2d/%.4d' % (value.day, value.month, value.year)
+    elif isinstance(value, float):
+        return "%0.2f" % value
     else:
         return str(value)
 
