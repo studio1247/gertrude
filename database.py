@@ -1435,10 +1435,6 @@ class Inscrit(Base):
                     result = groupe
         return result
 
-    def get_inscriptions(self):
-        self.inscriptions.sort(key=lambda inscription: inscription.debut)
-        return self.inscriptions
-
     def is_facture_cloturee(self, date):
         if self.creche.temps_facturation == FACTURATION_FIN_MOIS:
             return GetMonthEnd(date) in self.clotures or GetMonthStart(date) in self.clotures
@@ -1597,7 +1593,7 @@ class Inscrit(Base):
                         result.append(inscription)
                 except Exception as e:
                     print("Exception inscriptions", e)
-        result.sort(key=lambda i: i.debut)
+        result.sort(key=lambda inscription: inscription.debut)
         return result
 
     def is_date_conge(self, date):
