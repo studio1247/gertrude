@@ -237,6 +237,28 @@ class DevisAccueilModifications(OdtDocumentAccueilModifications):
         self.default_output = "Devis accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
 
 
+class DevisAccueilCalcModifications(DocumentAccueilModifications):
+    title = "Devis"
+    template = "Devis accueil.ods"
+
+    def __init__(self, who, date):
+        DocumentAccueilModifications.__init__(self, who, date)
+        self.default_output = "Devis accueil %s - %s.ods" % (GetPrenomNom(who), GetDateString(date, weekday=False))
+
+    def execute(self, filename, dom):
+        if filename != 'content.xml':
+            return None
+
+        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
+        table = spreadsheet.getElementsByTagName("table:table").item(0)
+        lignes = table.getElementsByTagName("table:table-row")
+
+        fields = self.GetFields()
+        ReplaceFields(lignes, fields)
+
+        return {}
+
+
 class ContratAccueilModifications(OdtDocumentAccueilModifications):
     title = "Contrat d'accueil"
     template = 'Contrat accueil.odt'
@@ -370,11 +392,12 @@ class PremiereFactureModifications(DocumentAccueilModifications):
 if __name__ == '__main__':
     import random
     from document_dialog import StartLibreOffice
-    database.init("databases/opagaio.db")
+    database.init("../databases/lutinsducanal.db")
     database.load()
-    inscrit = database.creche.GetInscrit(44)
-    for modifications_class in (ContratAccueilModifications, DevisAccueilModifications, FraisGardeModifications):
-        modifications = modifications_class(inscrit, datetime.date(2017, 9, 1))
-        filename = "./test-%f.odt" % random.random()
+    # inscrit = [inscrit for inscrit in database.creche.inscrits if inscrit.nom == ""][0]
+    # inscrit = database.creche.GetInscrit(44)
+    for modifications_class in [DevisAccueilCalcModifications]:  # [ContratAccueilModifications, DevisAccueilModifications, FraisGardeModifications]:
+        modifications = modifications_class(inscrit, datetime.date(2018, 2, 5))
+        filename = "./test-%f.ods" % random.random()
         errors = GenerateOODocument(modifications, filename=filename, gauge=None)
     StartLibreOffice(filename)

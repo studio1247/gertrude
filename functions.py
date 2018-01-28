@@ -634,6 +634,7 @@ def GetInscritFields(inscrit):
         ('nom', inscrit.nom if inscrit else ""),
         ('sexe', GetInscritSexe(inscrit) if inscrit else ""),
         ('naissance', inscrit.naissance if inscrit else ""),
+        ('date-entretien-directrice', inscrit.date_entretien_directrice if inscrit else ""),
         ('age', GetAgeString(inscrit.naissance) if inscrit else ""),
         ('age-mois', GetAge(inscrit.naissance) if inscrit and inscrit.naissance else ""),
         ('entree', inscrit.inscriptions[0].debut if inscrit else ""),
@@ -689,7 +690,7 @@ def GetCotisationFields(cotisation):
               ('semaines-periode', cotisation.semaines_periode),
               ('factures-periode', cotisation.nombre_factures),
               ('frais-inscription', cotisation.frais_inscription, FIELD_EUROS),
-              ('cotisation-mensuelle', "%.02f" % cotisation.cotisation_mensuelle),
+              ('cotisation-mensuelle', cotisation.cotisation_mensuelle, FIELD_EUROS),
               ('montant-mensuel-activites', "%.02f" % cotisation.montant_mensuel_activites),
               ('cotisation-mensuelle-avec-activites', "%.02f" % cotisation.cotisation_mensuelle_avec_activites),
               ('enfants-a-charge', cotisation.enfants_a_charge),
@@ -699,9 +700,11 @@ def GetCotisationFields(cotisation):
               ('liste-conges', ", ".join(cotisation.liste_conges)),
               ('montant-allocation-caf', cotisation.montant_allocation_caf, FIELD_EUROS),
               ('montant-credit-impots', cotisation.montant_credit_impots, FIELD_EUROS),
+              ('tranche-paje', "PAJE%d" % cotisation.tranche_paje),
               ('cotisation-mensuelle-apres-allocation-caf', cotisation.cotisation_mensuelle-cotisation.montant_allocation_caf, FIELD_EUROS),
               ('cotisation-mensuelle-apres-allocation-caf-et-credit-impots', cotisation.cotisation_mensuelle-cotisation.montant_allocation_caf-cotisation.montant_credit_impots, FIELD_EUROS),
-              ('cotisation-mensuelle-avec-activites-apres-allocation-caf-et-credit-impots', cotisation.cotisation_mensuelle_avec_activites-cotisation.montant_allocation_caf-cotisation.montant_credit_impots, FIELD_EUROS)
+              ('cotisation-mensuelle-avec-activites-apres-allocation-caf-et-credit-impots', cotisation.cotisation_mensuelle_avec_activites-cotisation.montant_allocation_caf-cotisation.montant_credit_impots, FIELD_EUROS),
+              ('cout-horaire-apres-allocation-caf-et-credit-impots', (cotisation.cotisation_mensuelle-cotisation.montant_allocation_caf-cotisation.montant_credit_impots) / cotisation.heures_mois, FIELD_EUROS)
               ]
     if cotisation.montant_heure_garde is not None:
         result.append(('montant-semaine', cotisation.heures_semaine*cotisation.montant_heure_garde, FIELD_EUROS))
