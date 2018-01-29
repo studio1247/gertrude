@@ -30,16 +30,28 @@ class CommandeRepasModifications(object):
         self.template = 'Commande repas.odt'
         self.default_output = "Commande repas %s.odt" % str(debut)
         self.debut = debut
-        self.metas = {"Format": 1, "Periodicite": 11}
+        self.metas = {"Format": "KangourouKids"}
         self.email = None
         self.site = site
 
+    def activite(self, jour, label):
+        # print("activite", jour, label)
+        date = self.debut + datetime.timedelta(jour)
+        result = 0
+        for inscrit in database.creche.select_inscrits(date, date, site=self.site):
+            journee = inscrit.GetJournee(date)
+            for slot in journee.timeslots:
+                if slot.activity.label == label:
+                    result += 1
+        return str(result)
+
     def repas(self, jour, categories=None):
+        # print("repas")
         try:
             return self.presents(jour, categories, 12 * 12, 14 * 12, True)
         except Exception as e:
             print(e)
-    
+
     def gouters(self, jour, categories=None):
         return self.presents(jour, categories, 16 * 12, 17 * 12, False)
 
@@ -87,17 +99,28 @@ class CommandeRepasModifications(object):
             return None
         elif filename != 'content.xml':
             return None
-              
+
+        # print(dom.toprettyxml())
+
         fields = GetCrecheFields(database.creche) + GetSiteFields(self.site)
         fields.append(('numero-semaine', self.debut.isocalendar()[1]))
         fields.append(('debut-semaine', date2str(self.debut)))
         fields.append(('fin-semaine', date2str(self.debut+datetime.timedelta(4))))
-                
-        for categorie in database.creche.categories:
-            for day in range(7):
-                fields.append(("repas", self.repas))
-                fields.append(("gouters", self.gouters))
-            
+        fields.append(("repas", self.repas))
+        fields.append(("gouters", self.gouters))
+        fields.append(("activite", self.activite))
+
         ReplaceTextFields(dom, fields)
         
         return None
+
+
+if __name__ == '__main__':
+    import random
+    from document_dialog import StartLibreOffice
+    database.init("../databases/trois-petits-pandas.db")
+    database.load()
+    modifications = CommandeRepasModifications(None, datetime.date(2018, 1, 29))
+    filename = "./test-%f.odt" % random.random()
+    errors = GenerateOODocument(modifications, filename=filename, gauge=None)
+    StartLibreOffice(filename)
