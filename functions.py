@@ -216,14 +216,16 @@ def GetParentsString(famille, version_longue=False):
     parent2 = famille.parents[1] if len(famille.parents) > 1 else None
     if not parent1 and not parent2:
         return "Pas de parents"
-    elif not parent2:
+    elif not parent2 or not GetPrenomNom(parent2):
         return GetPrenomNom(parent1, monsieur_madame=version_longue)
-    elif not parent1:
+    elif not parent1 or not GetPrenomNom(parent1):
         return GetPrenomNom(parent2, monsieur_madame=version_longue)
     elif version_longue or parent1.nom != parent2.nom:
         return " et ".join([GetPrenomNom(parent1, monsieur_madame=version_longue), GetPrenomNom(parent2, monsieur_madame=version_longue)])
-    else:
+    elif parent2.prenom:
         return '%s et %s %s' % (parent2.prenom, parent1.prenom, parent1.nom)
+    else:
+        return '%s %s' % (parent1.prenom, parent1.nom)
 
 
 def GetParentsPrenomsString(famille):
