@@ -632,7 +632,11 @@ def SendDocument(filename, generator, to=None, introduction_filename=None, saas=
 
     try:
         with open(introduction_filename) as f:
-            text = f.read().decode("utf8")
+            text = f.read()
+            try:
+                text = text.decode("utf8")
+            except:
+                pass
             for field, _, value in evalFields(generator.GetIntroductionFields()):
                 if isinstance(value, str):
                     text = text.replace("<%s>" % field, value)
@@ -643,8 +647,8 @@ def SendDocument(filename, generator, to=None, introduction_filename=None, saas=
             introduction.attach(MIMEText(text, 'plain', _charset='UTF-8'))
             introduction.attach(MIMEText(html, 'html', _charset='UTF-8'))
             msg.attach(introduction)
-    except Exception:
-        print("Exception lors de la génération du texte d'accompagnement email")
+    except Exception as e:
+        print("Exception lors de la génération du texte d'accompagnement email", e)
         traceback.print_exc()
 
     if filename:
