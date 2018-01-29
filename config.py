@@ -29,6 +29,7 @@ else:
 from constants import *
 from progress import *
 import numeros_facture
+from helpers import str2date
 
 
 CONFIG_FILENAME = "gertrude.ini"
@@ -116,6 +117,7 @@ class Section(object):
         self.first_date = datetime.date(today.year - self.years_before, 1, 1)
         self.last_date = datetime.date(today.year + self.years_after, 12, 31)
 
+        self.date_debut_reglements = self.getDateParameter("date-debut-reglements", None)
         self.inscriptions_semaines_conges = self.getIntegerParameter("inscriptions.semaines_conges", None)
 
         self.pictos = self.getPictos()
@@ -147,6 +149,12 @@ class Section(object):
             except Exception as e:
                 print("Erreur de config pour le paramètre %s" % key, e)
         return default
+
+    def getDateParameter(self, key, default=None):
+        value = self.getStringParameter(key, default)
+        if value:
+            value = str2date(value)
+        return value
 
     def getTimeParameter(self, key, default=None):
         value = self.getStringParameter(key, default)
@@ -325,6 +333,14 @@ class Config(object):
 
     def get_first_monday(self):
         return self.first_date - datetime.timedelta(self.first_date.weekday())
+
+    def is_date_after_reglements_start(self, date):
+        if self.date_debut_reglements is None:
+            return True
+        elif date >= self.date_debut_reglements:
+            return True
+        else:
+            return False
 
     def __getattr__(self, key):
         if self.current_section and hasattr(self.current_section, key):

@@ -950,7 +950,7 @@ def GetHistoriqueSolde(who, jalon):
     lignes = [encaissement for encaissement in who.encaissements]
     if isinstance(who, Reservataire):
         for date in who.get_factures_list():
-            if date <= jalon:
+            if config.is_date_after_reglements_start(date) and date <= jalon:
                 lignes.append(FactureReservataire(who, date))
     else:
         inscrits = GetInscritsFamille(who)
@@ -973,7 +973,7 @@ def GetHistoriqueSolde(who, jalon):
             for inscrit in inscrits:
                 try:
                     facture = Facture(inscrit, date.year, date.month, NO_NUMERO | NO_RESTORE_CLOTURE)
-                    if facture.total_facture != 0:
+                    if config.is_date_after_reglements_start(facture.fin_recap) and facture.total_facture != 0:
                         if (database.creche.cloture_facturation and facture.cloture) or facture.fin_recap < GetMonthStart(jalon):
                             lignes.append(facture)
                 except Exception as e:
