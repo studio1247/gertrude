@@ -459,7 +459,7 @@ class Creche(Base):
         if self.periode_revenus == REVENUS_CAFPRO:
             return date
         elif date >= datetime.date(2008, 9, 1):
-            return datetime.date(date.year - 2, date.month, date.day)
+            return IncrDate(date, years=-2)
         elif date < datetime.date(date.year, 9, 1):
             return datetime.date(date.year - 2, 1, 1)
         else:
