@@ -86,7 +86,10 @@ def GetDateAnniversaire(date, count=1):
 
 
 def IncrDate(date, years=0, months=0, days=0):
-    day, month, year = date.day - days, date.month - months, date.year - years
+    day, month, year = date.day + days, date.month + months, date.year + years
+    while date.month > 12:
+        date.year += 1
+        date.month -= 12
     while date.month <= 0:
         date.year -= 1
         date.month += 12
