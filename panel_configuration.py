@@ -1060,7 +1060,7 @@ class ParametersPanel(AutoTab):
     def OnAjoutTarif(self, _):
         counters['tarifs'] += 1
         history.Append(Delete(database.creche.tarifs_speciaux, -1))
-        database.creche.tarifs_speciaux.append(TarifSpecial())
+        database.creche.tarifs_speciaux.append(TarifSpecial(database.creche))
         self.AjouteLigneTarif(len(database.creche.tarifs_speciaux) - 1)
         self.sizer.FitInside(self)
 
