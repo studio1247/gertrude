@@ -710,7 +710,7 @@ class Cotisation(object):
 def GetCotisations(inscrit, options=TRACES):
     result = []
     date = config.first_date
-    for inscription in inscrit.get_inscriptions():
+    for inscription in inscrit.get_inscriptions(preinscriptions=True):
         if inscription.debut:
             date = max(date, inscription.debut)
             while date.year < today.year + 2:
