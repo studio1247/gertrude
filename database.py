@@ -2953,7 +2953,10 @@ class Database(object):
                 self.engine.execute("UPDATE activities SET mode=1 WHERE mode=0 AND value>0")
                 activities = [row for row in self.engine.execute("SELECT value, idx FROM activities")]
                 for table in ("ref_activities", "ref_journees_salaries", "activites", "activites_salaries"):
-                    self.engine.execute("ALTER TABLE %s ADD activity INGEGER REFERENCES activities(idx)" % table)
+                    try:
+                        self.engine.execute("ALTER TABLE %s ADD activity INGEGER REFERENCES activities(idx)" % table)
+                    except:
+                        pass
                     for value, activity in activities:
                         self.engine.execute("UPDATE %s SET activity=? WHERE value=?" % table, (activity, value))
                     self.engine.execute("DELETE FROM %s WHERE activity IS NULL" % table)
