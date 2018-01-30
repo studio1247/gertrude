@@ -23,7 +23,7 @@ import datetime
 from functions import GetPrenomNom
 from facture import GetRetardDePaiement
 from config import config
-from helpers import GetDateIntersection, GetDateMinus
+from helpers import GetDateIntersection, IncrDate
 
 
 def GetAlertes(fresh_only=False):
@@ -38,7 +38,7 @@ def GetAlertes(fresh_only=False):
     for inscription in database.creche.select_inscriptions(today, today):
         inscrit = inscription.inscrit
         if (database.creche.masque_alertes & ALERTE_3MOIS_AVANT_AGE_MAXIMUM) and inscrit.naissance:
-            date = GetDateMinus(inscrit.naissance, years=-database.creche.age_maximum, months=3)
+            date = IncrDate(inscrit.naissance, years=database.creche.age_maximum, months=-3)
             if today > date:
                 message = "%s %s aura %d ans dans 3 mois" % (inscrit.prenom, inscrit.nom, database.creche.age_maximum)
                 add_alerte(date, message)
@@ -48,7 +48,7 @@ def GetAlertes(fresh_only=False):
                 message = "L'inscription de %s %s passe un an aujourd'hui" % (inscrit.prenom, inscrit.nom)
                 add_alerte(date, message)
         if (database.creche.masque_alertes & ALERTE_2MOIS_AVANT_FIN_INSCRIPTION) and inscription.fin:
-            date = GetDateMinus(inscription.fin, years=0, months=2)
+            date = IncrDate(inscription.fin, months=-2)
             if today > date:
                 message = "L'inscription de %s %s se terminera dans 2 mois" % (inscrit.prenom, inscrit.nom)
                 add_alerte(date, message)

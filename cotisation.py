@@ -637,9 +637,9 @@ class Cotisation(object):
         - de 3 ans	        846,22 €	729,47 €	612,77 €
         de 3 ans à 6 ans	423,12 €	364,74 €	306,39 €
         """
-        if not self.inscrit.naissance or not self.tranche_paje or self.inscription.debut > GetDateMinus(self.inscrit.naissance, years=-6):
+        if not self.inscrit.naissance or not self.tranche_paje or self.inscription.debut > IncrDate(self.inscrit.naissance, years=6):
             result = 0.0
-        elif self.inscription.debut > GetDateMinus(self.inscrit.naissance, years=-3):
+        elif self.inscription.debut > IncrDate(self.inscrit.naissance, years=3):
             result = [423.12, 364.74, 306.39][self.tranche_paje-1]
         else:
             result = [846.22, 729.47, 612.77][self.tranche_paje-1]

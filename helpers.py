@@ -85,18 +85,12 @@ def GetDateAnniversaire(date, count=1):
     return datetime.date(date.year + count, date.month, date.day)
 
 
-def GetDateMinus(date, years, months=0):
-    d = date.day
-    if date.month > months:
-        y = date.year-years
-        m = date.month-months
-    else:
-        y = date.year-1-years
-        m = date.month+12-months
-    end = GetMonthEnd(datetime.date(y, m, 1))
-    if d > end.day:
-        d = end.day
-    return datetime.date(y, m, d)
+def IncrDate(date, years=0, months=0, days=0):
+    day, month, year = date.day - days, date.month - months, date.year - years
+    while date.month <= 0:
+        date.year -= 1
+        date.month += 12
+    return datetime.date(year, month, 1) + datetime.timedelta(day)
 
 
 def GetMonthStart(date):
