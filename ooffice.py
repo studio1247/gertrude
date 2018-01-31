@@ -18,7 +18,8 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 from builtins import str
-import unicodedata
+import chardet
+import codecs
 import locale
 import numbers
 import sys
@@ -615,7 +616,7 @@ def SendDocument(filename, generator, to=None, introduction_filename=None, saas=
     creche_emails = get_emails(database.creche.email)
 
     if not creche_emails:
-        return False, "Vous devez renseigner l'adresse email de la structure"
+        return -1, "Vous devez renseigner l'adresse email de la structure"
 
     # Create the container (outer) email message.
     msg = MIMEMultipart()
@@ -631,12 +632,10 @@ def SendDocument(filename, generator, to=None, introduction_filename=None, saas=
     msg['CC'] = COMMASPACE.join(creche_emails)
 
     try:
-        with open(introduction_filename) as f:
+        with open(introduction_filename, "rb") as f:
             text = f.read()
-            try:
-                text = text.decode("utf8")
-            except:
-                pass
+            encoding = chardet.detect(text)["encoding"]
+            text = codecs.decode(text, encoding)
             for field, _, value in evalFields(generator.GetIntroductionFields()):
                 if isinstance(value, str):
                     text = text.replace("<%s>" % field, value)
@@ -693,3 +692,5 @@ def SendDocument(filename, generator, to=None, introduction_filename=None, saas=
             s.login(login, password)
         s.sendmail(msg_from, to + creche_emails, msg.as_string())
         s.quit()
+
+    return 0, "Email envoyé"

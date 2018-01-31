@@ -241,16 +241,23 @@ class DevisAccueilCalcModifications(DocumentAccueilModifications):
     title = "Devis"
     template = "Devis accueil.ods"
 
-    def __init__(self, who, date):
+    def __init__(self, who, date, site=None):
         DocumentAccueilModifications.__init__(self, who, date)
         self.default_output = "Devis accueil %s - %s.ods" % (GetPrenomNom(who), GetDateString(date, weekday=False))
         self.email = True
         self.multi = False
         self.reservataire = None
         self.inscrits = [who]
+        self.site = site
         self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
         self.email_subject = "Simulation pour l'accueil de %s" % GetPrenomNom(who)
-        self.introduction_filename = "Devis accueil.txt"
+        self.introduction_filename = "Accompagnement devis accueil.txt"
+
+    def get_attachments(self):
+        return []
+
+    def GetIntroductionFields(self):
+        return GetInscritFields(self.inscrits[0]) + GetSiteFields(self.site)
 
     def execute(self, filename, dom):
         if filename != 'content.xml':
