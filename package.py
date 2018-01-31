@@ -79,7 +79,7 @@ def main():
                    "arch": "i386",
                    "iconfile": "bitmaps_dist/gertrude.icns",
                    "argv_emulation": True,
-                   "includes": ["bcrypt", "_cffi_backend", "requests", "sqlalchemy", "sqlalchemy.sql.default_comparator", "sqlalchemy_utils", "configparser", "future"],
+                   "includes": ["bcrypt", "_cffi_backend", "requests", "sqlalchemy", "sqlalchemy.sql.default_comparator", "sqlalchemy_utils", "configparser", "future", "chardet"],
                    "packages": ["requests"]
                    }
         setup(
@@ -103,7 +103,7 @@ def main():
         p.description = "Logiciel de gestion de creches"
         p.url = "https://www.gertrude-logiciel.org"
         p.icon = "./bitmaps_dist/gertrude.png"
-        p.depends = "bash, python, python-gtk2, python-bcrypt, python-wxgtk2.8 | python-wxgtk3.0, python-requests, python-sqlalchemy, python-sqlalchemy-utils, python-future, python-configparser"
+        p.depends = "bash, python, python-gtk2, python-bcrypt, python-wxgtk2.8 | python-wxgtk3.0, python-requests, python-sqlalchemy, python-sqlalchemy-utils, python-future, python-configparser, python-chardet"
         p.license = "gpl"
         p.section = "utils"
         p.arch = "all"
