@@ -25,9 +25,11 @@ from ooffice import *
 
 
 class CommandeRepasModifications(object):
+    title = "Commande de repas"
+    template = "Commande repas.odt"
+
     def __init__(self, site, debut):
         self.multi = False
-        self.template = 'Commande repas.odt'
         self.default_output = "Commande repas %s.odt" % str(debut)
         self.debut = debut
         self.metas = {"Format": "KangourouKids"}
