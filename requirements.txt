@@ -4,3 +4,4 @@ bcrypt
 requests
 SQLAlchemy
 SQLAlchemy-Utils
+chardet
