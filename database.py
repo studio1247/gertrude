@@ -2208,6 +2208,12 @@ class ClotureFacture(Base):
     supplement = Column(Float)
     deduction = Column(Float)
 
+    def __getattribute__(self, item):
+        if item == "total":
+            return self.total_facture
+        else:
+            return Base.__getattribute__(self, item)
+
 
 class EncaissementFamille(Base):
     __tablename__ = "encaissements"

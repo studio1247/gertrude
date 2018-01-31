@@ -23,6 +23,7 @@ from facture import *
 from cotisation import CotisationException
 from ooffice import *
 
+
 class ReleveDetailleModifications(object):
     def __init__(self, site, annee):
         self.multi = False

@@ -919,7 +919,9 @@ class FactureCloturee(FactureBase):
         if hasattr(self.cloture, item):
             return getattr(self.cloture, item)
         else:
-            self.restore()
+            if not self.facture:
+                # print("Restauration facture (%s) ..." % item)
+                self.restore()
             return getattr(self.facture, item)
 
 
