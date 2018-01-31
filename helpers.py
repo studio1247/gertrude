@@ -93,7 +93,7 @@ def IncrDate(date, years=0, months=0, days=0):
     while month <= 0:
         year -= 1
         month += 12
-    return datetime.date(year, month, 1) + datetime.timedelta(day)
+    return datetime.date(year, month, 1) + datetime.timedelta(day - 1)
 
 
 def GetMonthStart(date):

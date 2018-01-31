@@ -38,6 +38,13 @@ from statistiques import GetStatistiques
 config.first_date = datetime.date(2010, 1, 1)
 
 
+class DatesTestCase(unittest.TestCase):
+    def test_incr_date(self):
+        self.assertEquals(IncrDate(datetime.date(2010, 12, 31), years=1, months=1), datetime.date(2012, 1, 31))
+        self.assertEquals(IncrDate(datetime.date(2010, 3, 31), years=0, months=1), datetime.date(2010, 5, 1))
+        self.assertEquals(IncrDate(datetime.date(2016, 2, 29), years=1, months=0), datetime.date(2017, 3, 1))
+
+
 class GertrudeTestCase(unittest.TestCase):
     def setUp(self):
         database.init(":memory:")
