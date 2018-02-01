@@ -40,9 +40,11 @@ class AttestationModifications(object):
             self.inscrits = [inscrit for inscrit in who if inscrit.get_inscriptions(debut, fin)]
             self.SetDefaultMultiParam()
         elif isinstance(who, Creche):
+            self.site = None
             self.inscrits = [inscrit for inscrit in who.inscrits if inscrit.get_inscriptions(debut, fin)]
             self.SetDefaultMultiParam()
         elif isinstance(who, Site):
+            self.site = who
             self.inscrits = []
             for inscrit in database.creche.inscrits:
                 for inscription in inscrit.get_inscriptions(debut, fin):
@@ -51,6 +53,7 @@ class AttestationModifications(object):
                         break
             self.SetDefaultMultiParam()
         else:
+            self.site = who.site
             self.inscrits = [who]
             if debut.year == fin.year and debut.month == fin.month:
                 self.email_subject = "Attestation de paiement %s %s %s %d" % (who.prenom, who.nom, months[debut.month - 1], debut.year)
@@ -61,7 +64,6 @@ class AttestationModifications(object):
         self.default_output = self.email_subject + ".odt"
         self.inscrits = GetEnfantsTriesSelonParametreTriFacture(self.inscrits)
         self.email = True
-        self.site = None
         self.introduction_filename = "Accompagnement attestation paiement.txt"
         self.reservataire = None
 
