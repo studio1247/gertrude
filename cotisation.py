@@ -646,7 +646,7 @@ class Cotisation(object):
         return min(result, self.cotisation_mensuelle * 85 / 100)
 
     def EvalCreditImpots(self):
-        assiette = max(self.cotisation_mensuelle * 12, 2300.0)
+        assiette = min(self.cotisation_mensuelle * 12, 2300.0)
         if self.inscrit.garde_alternee:
             assiette /= 2
         return math.ceil(assiette / 24)
