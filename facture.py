@@ -624,7 +624,10 @@ class FactureFinMois(FactureBase):
                     self.cotisation_mensuelle += cotisation.heures_contractualisees * cotisation.montant_heure_garde
                     self.report_cotisation_mensuelle += (cotisation.heures_realisees - cotisation.heures_realisees_non_facturees - cotisation.heures_contractualisees) * cotisation.montant_heure_garde
                 elif database.creche.mode_facturation == FACTURATION_PSU and cotisation.mode_garde == MODE_HALTE_GARDERIE:
-                    if 1:  # self.heures_contractualisees:
+                    if database.creche.nom == "Multi- accueils collectif LES PITCHOUN'S":
+                        # self.supplement += self.heures_facturees_par_mode[cotisation.mode_garde] * cotisation.montant_heure_garde
+                        self.supplement += cotisation.heures_mois * cotisation.montant_heure_garde
+                    else:
                         # On ne met dans la cotisation mensuelle que les heures realisees des heures du contrat
                         self.supplement += (cotisation.heures_realisees - cotisation.heures_realisees_non_facturees + cotisation.heures_facturees_non_realisees - cotisation.heures_supplementaires) * cotisation.montant_heure_garde
                         # print '(', cotisation.heures_realisees, '-', cotisation.heures_realisees_non_facturees, '+', cotisation.heures_facturees_non_realisees, '-', cotisation.heures_supplementaires, ') *', cotisation.montant_heure_garde, '=', self.cotisation_mensuelle  

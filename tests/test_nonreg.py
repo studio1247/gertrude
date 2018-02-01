@@ -1117,7 +1117,12 @@ class PitchounsTests(GertrudeTestCase):
         database.creche.temps_facturation = FACTURATION_DEBUT_MOIS_CONTRAT
         database.creche.repartition = REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS
         database.creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
+        database.creche.arrondi_heures = SANS_ARRONDI
+        database.creche.arrondi_facturation = ARRONDI_DEMI_HEURE
+        database.creche.arrondi_facturation_periode_adaptation = ARRONDI_DEMI_HEURE
         database.creche.arrondi_semaines = ARRONDI_SEMAINE_SUPERIEURE
+        database.creche.arrondi_mensualisation = ARRONDI_HEURE_PLUS_PROCHE
+        database.creche.conges_inscription = GESTION_CONGES_INSCRIPTION_MENSUALISES
         self.add_conge("Août", options=MOIS_SANS_FACTURE)
         self.add_conge("25/05/2017", "28/05/2017")
         self.add_conge("07/08/2017", "28/08/2017")
@@ -1154,6 +1159,38 @@ class PitchounsTests(GertrudeTestCase):
         self.assertPrec2Equals(facture.total, 0.0)
         facture = Facture(inscrit, 2017, 9)
         self.assertPrec2Equals(facture.total, 248.00)
+
+    def test_arrondi_halte_garderie(self):
+        inscrit = self.AddInscrit()
+        inscription = Inscription(inscrit=inscrit)
+        inscription.mode = MODE_HALTE_GARDERIE
+        inscription.debut = datetime.date(2017, 9, 4)
+        inscription.fin = datetime.date(2017, 12, 22)
+        inscrit.inscriptions.append(inscription)
+        for i in range(len(inscrit.famille.parents[0].revenus)):
+            inscrit.famille.parents[0].revenus[i].revenu = 53516.0
+            inscrit.famille.parents[1].revenus[i].revenu = 0.0
+        cotisation = Cotisation(inscrit, datetime.date(2017, 9, 4), NO_ADDRESS)
+        self.assertPrec2Equals(cotisation.cotisation_mensuelle, 0.0)
+        self.assertPrec2Equals(cotisation.montant_heure_garde, 2.68)
+        self.AddJourneePresence(inscrit, datetime.date(2017, 12, 4), 120, 228)  # 9h00
+        self.AddJourneePresence(inscrit, datetime.date(2017, 12, 5), 120, 228)  # 9h00
+        self.AddJourneePresence(inscrit, datetime.date(2017, 12, 6), 120, 225)  # 8h45
+        self.AddJourneePresence(inscrit, datetime.date(2017, 12, 7), 120, 225)  # 8h45
+        self.AddJourneePresence(inscrit, datetime.date(2017, 12, 11), 120, 228)  # 9h00
+        self.AddJourneePresence(inscrit, datetime.date(2017, 12, 12), 120, 228)  # 9h00
+        self.AddJourneePresence(inscrit, datetime.date(2017, 12, 13), 120, 225)  # 8h45
+        self.AddJourneePresence(inscrit, datetime.date(2017, 12, 14), 120, 228)  # 9h00
+        self.AddJourneePresence(inscrit, datetime.date(2017, 12, 18), 120, 219)  # 8h15
+        self.AddJourneePresence(inscrit, datetime.date(2017, 12, 19), 120, 207)  # 7h15
+        self.AddJourneePresence(inscrit, datetime.date(2017, 12, 21), 120, 222)  # 8h30
+        facture = Facture(inscrit, 2018, 1, options=TRACES)
+        self.assertPrec2Equals(facture.heures_supplementaires, 96.5)  # si pas d'arrondi, sans doute pas juste mais pas demandé
+        self.assertPrec2Equals(facture.total, 255.27)  # si pas d'arrondi
+        database.creche.nom = "Multi- accueils collectif LES PITCHOUN'S"
+        facture = Facture(inscrit, 2018, 1, options=TRACES)
+        self.assertPrec2Equals(facture.heures_supplementaires, 96.5)  # avec arrondi, juste
+        self.assertPrec2Equals(facture.total, 258.62)  # avec arrondi comme demandé (config en dur)
 
 
 class MairieDeMoulonTests(GertrudeTestCase):
