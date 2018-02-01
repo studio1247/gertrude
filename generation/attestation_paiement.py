@@ -53,8 +53,9 @@ class AttestationModifications(object):
                         break
             self.SetDefaultMultiParam()
         else:
-            self.site = who.site
             self.inscrits = [who]
+            inscriptions = who.get_inscriptions(debut, fin)
+            self.site = inscriptions[-1].site if inscriptions else None
             if debut.year == fin.year and debut.month == fin.month:
                 self.email_subject = "Attestation de paiement %s %s %s %d" % (who.prenom, who.nom, months[debut.month - 1], debut.year)
             else:
