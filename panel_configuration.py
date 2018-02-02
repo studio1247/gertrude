@@ -879,8 +879,8 @@ class ParametersPanel(AutoTab):
         self.fermeture_cb = AutoTimeCtrl(self, database.creche, "fermeture")
         self.ouverture_cb.check_function = self.ouverture_check
         self.fermeture_cb.check_function = self.fermeture_check
-        self.Bind(wx.EVT_CHOICE, self.onOuverture, self.ouverture_cb)
-        self.Bind(wx.EVT_CHOICE, self.onOuverture, self.fermeture_cb)
+        # self.Bind(wx.EVT_CHOICE, self.onOuverture, self.ouverture_cb)
+        # self.Bind(wx.EVT_CHOICE, self.onOuverture, self.fermeture_cb)
         sizer2.AddMany([(self.ouverture_cb, 1, wx.EXPAND), (self.ouverture_cb.spin, 0, wx.EXPAND), (wx.StaticText(self, -1, "-"), 0, wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER_VERTICAL, 10), (self.fermeture_cb, 1, wx.EXPAND), (self.fermeture_cb.spin, 0, wx.EXPAND)])
         sizer.AddMany([(wx.StaticText(self, -1, "Heures d'ouverture :"), 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 10), (sizer2, 0, wx.EXPAND)])
         sizer2 = wx.BoxSizer(wx.HORIZONTAL)
@@ -1085,7 +1085,8 @@ class ParametersPanel(AutoTab):
     
     def fermeture_check(self, fermeture, a, b):
         return b <= fermeture * 4
-    
+
+    print("TODO Fonction retirée il y a un moment")
     def onOuverture(self, event):
         errors = []
         obj = event.GetEventObject()

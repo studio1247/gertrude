@@ -250,10 +250,7 @@ class PlanningModifications(object):
                 tranches = [(database.creche.ouverture, 12), (14, database.creche.fermeture)]
                 date = self.debut
                 while date <= fin:
-                    if date in inscrit.journees:
-                        journee = inscrit.journees[date]
-                    else:
-                        journee = inscrit.GetJourneeReferenceCopy(date)
+                    journee = inscrit.GetJournee(date)
                     for t in range(2):
                         cell += 1
                         if journee and IsPresentDuringTranche(journee, tranches[t][0] * 12, tranches[t][1] * 12):
@@ -389,7 +386,7 @@ class PlanningHoraireModifications(PlanningModifications):
                     line = lines[10 + int(float(start) / 12 - 14.75)]
                 else:
                     continue
-                cell = GetCell(line, 7 + jour, multiple=True)
+                cell = GetCell(line, 7 + jour)
                 cell.setAttribute("table:number-rows-spanned", str((end - start) / 12))
                 ReplaceFields(cell, [("a", GetPrenom(inscrit)),
                                      ("b", GetPrenom(inscrit))])

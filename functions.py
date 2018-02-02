@@ -21,7 +21,7 @@ import collections
 from builtins import str
 import time
 import os.path
-from database import Timeslot, TimeslotInscrit
+from database import Timeslot, TimeslotInscrit, Activite
 from parameters import *
 from globals import *
 from config import config
@@ -927,7 +927,7 @@ def AddInscritsToChoice(choice):
 
 
 def get_liste_permanences(date):
-    permanences = database.query(TimeslotInscrit).filter(TimeslotInscrit.date == date, TimeslotInscrit.activity.mode == MODE_PERMANENCE).all()
+    permanences = database.query(TimeslotInscrit).filter(TimeslotInscrit.date == date).join(TimeslotInscrit.activity).filter(Activite.mode == MODE_PERMANENCE).all()
     return [(permanence.debut, permanence.fin, permanence.inscrit) for permanence in permanences]
 
 

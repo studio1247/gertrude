@@ -411,11 +411,7 @@ class PlanningDetailleModifications:
                     continue
                 if weekday == 0:
                     cell += 1
-                
-                if date in inscrit.journees:
-                    journee = inscrit.journees[date]
-                else:
-                    journee = inscrit.GetJourneeReferenceCopy(date)
+                journee = inscrit.GetJournee(date)
                 for t in range(2):
                     if journee and IsPresentDuringTranche(journee, tranches[t][0]*12, tranches[t][1]*12):
                         heures = HeuresTranche(journee, tranches[t][0] * 12, tranches[t][1]*12)
