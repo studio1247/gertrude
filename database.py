@@ -94,6 +94,9 @@ class Day(object):
     def get_duration_per_activity_mode(self, activity_mode, mode_arrondi=SANS_ARRONDI):
         return sum([timeslot.get_duration(mode_arrondi) for timeslot in self.get_timeslots_per_activity_mode(activity_mode)]) / 60
 
+    def get_duration_permanences(self):
+        return self.get_duration_per_activity_mode(MODE_PERMANENCE)
+
     def get_duration(self, mode_arrondi=SANS_ARRONDI):
         return self.get_duration_per_activity_mode(0, mode_arrondi)
 
@@ -1739,7 +1742,7 @@ class Inscrit(Base):
             while date < today:
                 journee = self.GetJournee(date)
                 if journee:
-                    effectue += journee.GetTotalPermanences()
+                    effectue += journee.get_duration_permanences()
                 date += datetime.timedelta(1)
             anniversaire = GetDateAnniversaire(self.creche.date_raz_permanences)
             for inscription in self.inscriptions:
