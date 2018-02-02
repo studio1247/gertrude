@@ -105,22 +105,22 @@ class Day(object):
         for timeslot in self.timeslots:
             if timeslot.debut and timeslot.fin:
                 if not debut or timeslot.debut < debut:
-                    debut = timeslot.debut
+                    debut = timeslot.debut / 12
                 if not fin or timeslot.fin > fin:
-                    fin = timeslot.fin
+                    fin = timeslot.fin / 12
         return debut, fin
 
     def GetHeureArrivee(self):
-        plage = self.GetPlageHoraire()
-        return "" if plage[0] is None else GetHeureString(plage[0])
+        arrivee, depart = self.GetPlageHoraire()
+        return "" if arrivee is None else GetHeureString(arrivee)
 
     def GetHeureDepart(self):
-        plage = self.GetPlageHoraire()
-        return "" if plage[1] is None else GetHeureString(plage[1])
+        arrivee, depart = self.GetPlageHoraire()
+        return "" if depart is None else GetHeureString(depart)
 
     def GetHeureArriveeDepart(self):
-        plage = self.GetPlageHoraire()
-        return "plage invalide" if plage == (None, None) else ("de %s à %s" % (GetHeureString(plage[0]), GetHeureString(plage[1])))
+        arrivee, depart = self.GetPlageHoraire()
+        return "" if (arrivee is None and depart is None) else ("de %s à %s" % (GetHeureString(arrivee), GetHeureString(depart)))
 
     def GetActivity(self, heure):
         if not isinstance(heure, int):

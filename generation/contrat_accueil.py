@@ -17,6 +17,7 @@
 
 from __future__ import unicode_literals
 from __future__ import print_function
+from __future__ import division
 
 import glob
 from constants import *
@@ -138,8 +139,8 @@ class DocumentAccueilModifications(object):
         for jour in range(self.inscription.duree_reference):
             jour_reference = self.inscription.get_day_from_index(jour)
             debut, fin = jour_reference.GetPlageHoraire()
-            fields.append(('heure-debut[%d]' % jour, GetHeureString(float(debut) / 12 if debut else None)))
-            fields.append(('heure-fin[%d]' % jour, GetHeureString(float(fin) / 12 if fin else None)))
+            fields.append(('heure-debut[%d]' % jour, GetHeureString(debut if debut else None)))
+            fields.append(('heure-fin[%d]' % jour, GetHeureString(fin if fin else None)))
             fields.append(('heures-jour[%d]' % jour, GetHeureString(jour_reference.get_duration())))
 
         for activite in database.creche.activites:

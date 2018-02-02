@@ -183,6 +183,7 @@ def GetDateIntersection(periodes):
 
 
 def GetHeureString(value):
+    # prend en paramètre une heure (float)
     if value is None:
         return ""
     minutes = round(value * 60)

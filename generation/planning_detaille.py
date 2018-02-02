@@ -516,61 +516,58 @@ class PlanningDetailleModifications:
 
         date = self.start
         while date <= self.end:
-            if date in database.creche.jours_fermeture:
-                date += datetime.timedelta(1)
-                continue
+            if date not in database.creche.jours_fermeture:
+                spreadsheet = spreadsheet_template.cloneNode(1)
+                spreadsheet_template.parentNode.insertBefore(spreadsheet, spreadsheet_template)
 
-            spreadsheet = spreadsheet_template.cloneNode(1)
-            spreadsheet_template.parentNode.insertBefore(spreadsheet, spreadsheet_template)
+                table = spreadsheet.getElementsByTagName("table:table")[0]
+                table_name = "%s %s" % (days[date.weekday()], date2str(date))
+                table_name = table_name.replace("/", "|")
+                table.setAttribute("table:name", table_name)
+                lignes = table.getElementsByTagName("table:table-row")
 
-            table = spreadsheet.getElementsByTagName("table:table")[0]
-            table_name = "%s %s" % (days[date.weekday()], date2str(date))
-            table_name = table_name.replace("/", "|")
-            table.setAttribute("table:name", table_name)
-            lignes = table.getElementsByTagName("table:table-row")
+                templateHeader = lignes[:HEADER_LINE_COUNT]
+                templateLines = lignes[HEADER_LINE_COUNT:HEADER_LINE_COUNT + BODY_LINE_COUNT]
+                templateFooter = lignes[HEADER_LINE_COUNT + BODY_LINE_COUNT:TEMPLATE_LINE_COUNT]
 
-            templateHeader = lignes[:HEADER_LINE_COUNT]
-            templateLines = lignes[HEADER_LINE_COUNT:HEADER_LINE_COUNT + BODY_LINE_COUNT]
-            templateFooter = lignes[HEADER_LINE_COUNT + BODY_LINE_COUNT:TEMPLATE_LINE_COUNT]
+                for groupe in database.creche.groupes:
+                    # Header
+                    for line in templateHeader:
+                        node = line.cloneNode(1)
+                        ReplaceFields(node, [('semaine', date.isocalendar()[1]),
+                                             ('jour', days[date.weekday()]),
+                                             ('date', date2str(date)),
+                                             ('groupe', groupe.nom)
+                                             ])
+                        table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
 
-            for groupe in database.creche.groupes:
-                # Header
-                for line in templateHeader:
-                    node = line.cloneNode(1)
-                    ReplaceFields(node, [('semaine', date.isocalendar()[1]),
-                                         ('jour', days[date.weekday()]),
-                                         ('date', date2str(date)),
-                                         ('groupe', groupe.nom)
-                                         ])
-                    table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
+                    # Body
+                    inscrits = GetLines(date, database.creche.inscrits, site=self.site, groupe=groupe)
+                    linesCount = 0
+                    for i, inscrit in enumerate(inscrits):
+                        if i % 2:
+                            node = templateLines[1].cloneNode(1)
+                        else:
+                            node = templateLines[0].cloneNode(1)
+                        fields = [('nom', inscrit.nom),
+                                  ('prenom', inscrit.prenom),
+                                  ('label', inscrit.label),
+                                  ('arrivee-depart', inscrit.GetHeureArriveeDepart()),
+                                  ('arrivee', inscrit.GetHeureArrivee()),
+                                  ('depart', inscrit.GetHeureDepart())]
+                        ReplaceFields(node, fields)
+                        table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
+                        linesCount += 1
 
-                # Body
-                inscrits = GetLines(date, database.creche.inscrits, site=self.site, groupe=groupe)
-                linesCount = 0
-                for i, inscrit in enumerate(inscrits):
-                    if i % 2:
-                        node = templateLines[1].cloneNode(1)
-                    else:
-                        node = templateLines[0].cloneNode(1)
-                    fields = [('nom', inscrit.nom),
-                              ('prenom', inscrit.prenom),
-                              ('label', inscrit.label),
-                              ('arrivee-depart', inscrit.GetHeureArriveeDepart()),
-                              ('arrivee', inscrit.GetHeureArrivee()),
-                              ('depart', inscrit.GetHeureDepart())]
-                    ReplaceFields(node, fields)
-                    table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
-                    linesCount += 1
+                    # Footer
+                    for line in templateFooter:
+                        node = line.cloneNode(1)
+                        ReplaceFields(node, [('count', linesCount)])
+                        table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
 
-                # Footer
-                for line in templateFooter:
-                    node = line.cloneNode(1)
-                    ReplaceFields(node, [('count', linesCount)])
-                    table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
-
-            # Remove the template lines
-            for line in templateHeader + templateLines + templateFooter:
-                table.removeChild(line)
+                # Remove the template lines
+                for line in templateHeader + templateLines + templateFooter:
+                    table.removeChild(line)
 
             date += datetime.timedelta(1)
 
