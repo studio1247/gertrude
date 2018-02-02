@@ -38,10 +38,6 @@ from email.mime.multipart import MIMEMultipart
 from functions import *
 
 
-def GetNodeFromAttribute(nodes, attribute, value):
-    pass
-
-
 def GetText(value):
     if isinstance(value, str):
         return value
@@ -64,7 +60,7 @@ def GetColumnIndex(name):
     if len(name) == 1:
         return ord(name) - 65
     elif len(name) == 2:
-        return (ord(name[0]) - 64) * 26 + (ord(name[1]) - 65)    
+        return (ord(name[0]) - 64) * 26 + (ord(name[1]) - 65)
 
 
 def evalFields(fields):
@@ -397,20 +393,6 @@ def getNamedShapes(dom):
             if name:
                 shapes[name] = node
     return shapes
-
-
-def GetDom(filename, part="content.xml"):
-    zip = zipfile.ZipFile(filename, 'r')
-    data = zip.read(part)
-    dom = xml.dom.minidom.parseString(data)
-    zip.close()
-    return dom
-
-
-def GetTables(filename):
-    dom = GetDom(filename)
-    spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
-    return spreadsheet.getElementsByTagName("table:table")
 
 
 def GetDimension(node, what):
