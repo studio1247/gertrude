@@ -199,7 +199,8 @@ def GetHeureString(value):
 
 
 def normalize_filename(filename):
-    return unicodedata.normalize("NFKD", filename)
+    filename = unicodedata.normalize("NFKD", filename)
+    return filename.replace("/", "-")
 
 
 def strip_accents(s):
