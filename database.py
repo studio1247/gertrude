@@ -1429,6 +1429,21 @@ class Inscrit(Base):
     def slug(self):
         return "child-%d" % self.idx
 
+    def get_preinscription_state(self):
+        if self.preinscription_state >= STATE_ACCORD_PARENTS:
+            pass
+        elif not self.date_premier_contact:
+            self.preinscription_state = STATE_PREINSCRIPTION_RECUE
+        elif not self.date_entretien_directrice:
+            self.preinscription_state = STATE_ATTENTE_ENTRETIEN
+        elif not self.date_envoi_devis:
+            self.preinscription_state = STATE_DEVIS_A_ENVOYER
+        elif not self.date_reponse_parents:
+            self.preinscription_state = STATE_ATTENTE_REPONSE_PARENTS
+        else:
+            self.preinscription_state = STATE_ATTENTE_REPONSE_PARENTS
+        return self.preinscription_state
+
     def get_groupe(self):
         result = None
         age = GetAge(self.naissance)
