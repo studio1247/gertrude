@@ -486,8 +486,8 @@ class Cotisation(object):
             else:
                 self.cotisation_periode, self.montants_heure_garde = self.CalculeFraisGardeComplete(self.heures_periode, self.heures_mois)
                 self.cotisation_mensuelle = self.cotisation_periode / self.GetNombreContratsFactures()
-            self.montant_allocation_caf = self.EvalAllocationCaf()
-            self.montant_credit_impots = self.EvalCreditImpots()
+            self.montant_allocation_caf = self.eval_allocation_caf()
+            self.montant_credit_impots = self.eval_credit_impots()
             if options & TRACES:
                 print(" cotisation periode :", self.cotisation_periode)
                 print(" cotisation mensuelle :", self.cotisation_mensuelle)
@@ -632,7 +632,7 @@ class Cotisation(object):
             print(" montant heure garde :", self.montant_heure_garde)
             print()
 
-    def EvalAllocationCaf(self):
+    def eval_allocation_caf(self):
         """
         - de 3 ans	        846,22 €	729,47 €	612,77 €
         de 3 ans à 6 ans	423,12 €	364,74 €	306,39 €
@@ -645,8 +645,9 @@ class Cotisation(object):
             result = [846.22, 729.47, 612.77][self.tranche_paje-1]
         return min(result, self.cotisation_mensuelle * 85 / 100)
 
-    def EvalCreditImpots(self):
-        assiette = min(self.cotisation_mensuelle * 12, 2300.0)
+    def eval_credit_impots(self):
+        # l'allocation CAF doit avoir été calculée avant
+        assiette = min((self.cotisation_mensuelle - self.montant_allocation_caf) * 12, 2300.0)
         if self.inscrit.garde_alternee:
             assiette /= 2
         return math.ceil(assiette / 24)
