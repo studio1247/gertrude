@@ -320,6 +320,7 @@ class UnDeuxTroisAPetitsPas(GertrudeTestCase):
         database.creche.repartition = REPARTITION_MENSUALISATION_12MOIS
         database.creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
         database.creche.conges_inscription = GESTION_CONGES_INSCRIPTION_MENSUALISES_AVEC_POSSIBILITE_DE_SUPPLEMENT
+        database.creche.arrondi_mensualisation_euros = ARRONDI_EURO_PLUS_PROCHE
         database.creche.tarification_activites = 1
         database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 6.25, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
         database.creche.bureaux.append(Bureau(debut=datetime.date(2010, 1, 1)))
@@ -346,13 +347,13 @@ class UnDeuxTroisAPetitsPas(GertrudeTestCase):
         cotisation = Cotisation(inscrit, datetime.date(2014, 10, 1), NO_ADDRESS)
         self.assert_prec2_equals(cotisation.cotisation_mensuelle, 0)
         cotisation = Cotisation(inscrit, datetime.date(2014, 10, 7), NO_ADDRESS)
-        self.assert_prec2_equals(cotisation.cotisation_mensuelle, 1054.69)
+        self.assert_prec2_equals(cotisation.cotisation_mensuelle, 1055.00)
         facture = Facture(inscrit, 2014, 9, NO_ADDRESS)
-        self.assert_prec2_equals(facture.total, 268.75)
+        self.assert_prec2_equals(facture.total, 269.00)
         facture = Facture(inscrit, 2014, 10, NO_ADDRESS)
-        self.assert_prec2_equals(facture.total, 1075.55)
+        self.assert_prec2_equals(facture.total, 1076.00)
         facture = Facture(inscrit, 2014, 11, NO_ADDRESS)
-        self.assert_prec2_equals(facture.total, 1054.69)
+        self.assert_prec2_equals(facture.total, 1055.00)
 
     def test_activites_pendant_conges(self):
         inscrit = self.add_inscrit()
@@ -376,10 +377,10 @@ class UnDeuxTroisAPetitsPas(GertrudeTestCase):
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2018, 1, 1), NO_ADDRESS)
         self.assert_prec2_equals(cotisation.montant_heure_garde, 6.25)
-        self.assert_prec2_equals(cotisation.cotisation_mensuelle, 937.50)
+        self.assert_prec2_equals(cotisation.cotisation_mensuelle, 938.00)
         facture = Facture(inscrit, 2018, 1, NO_ADDRESS)
         self.assert_prec2_equals(facture.supplement_activites, 81.00)
-        self.assert_prec2_equals(facture.total, 1121.63)
+        self.assert_prec2_equals(facture.total, 1122.13)
 
 
 class MarmousetsTests(GertrudeTestCase):
