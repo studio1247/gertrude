@@ -416,6 +416,7 @@ class FactureFinMois(FactureBase):
                                 self.jours_presence_selon_contrat[date] = (heures_realisees, heures_facturees)
 
                             if cotisation.majoration_journaliere:
+                                print(" majoration journalière :", cotisation.majoration_journaliere)
                                 self.supplement += cotisation.majoration_journaliere
                                 self.raison_supplement = self.raison_supplement.union(cotisation.raison_majoration_journaliere)
 
@@ -426,10 +427,11 @@ class FactureFinMois(FactureBase):
                             self.CalculeDeduction(cotisation, heures_activite_conges_deduites)
 
                         if database.creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE or (database.creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION and inscription.IsInPeriodeAdaptation(date)):
-                            timeslots = inscrit.GetExtraActivites(date)
-                            for timeslot in timeslots:
+                            for timeslot in inscrit.GetExtraActivites(date):
                                 if timeslot.activity.mode != MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE:
                                     tarif = timeslot.activity.EvalTarif(self.inscrit, date, reservataire=cotisation.inscription.reservataire)
+                                    if tarif and (self.options & TRACES):
+                                        print(" %s : activité %s = %f" % (date, timeslot.activity.label, tarif))
                                     self.supplement_activites += tarif
                                     self.heures_supplement_activites[timeslot.activity.label] += 1
                                     self.detail_supplement_activites[timeslot.activity.label] += tarif
@@ -802,7 +804,7 @@ class FactureFinMois(FactureBase):
 
         if options & TRACES:
             print("Récapitulatif :")
-            for var in ["heures_contractualisees", "heures_facturees", "heures_facture", "heures_realisees", "heures_supplementaires", "heures_contractualisees_realisees", "heures_realisees_non_facturees", "heures_facturees_non_realisees", "cotisation_mensuelle", "supplement", "deduction", "total"]:
+            for var in ["heures_contractualisees", "heures_facturees", "heures_facture", "heures_realisees", "heures_supplementaires", "heures_contractualisees_realisees", "heures_realisees_non_facturees", "heures_facturees_non_realisees", "cotisation_mensuelle", "supplement", "deduction", "supplement_activites", "total"]:
                 print("", var, ':', eval("self.%s" % var))
             print()
         

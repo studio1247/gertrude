@@ -1615,7 +1615,14 @@ class Inscrit(Base):
         return result
 
     def is_date_conge(self, date):
-        return date in self.creche.jours_fermeture or (self.creche.conges_inscription != GESTION_CONGES_INSCRIPTION_MENSUALISES_AVEC_POSSIBILITE_DE_SUPPLEMENT and date in self.jours_conges)
+        if date in self.creche.jours_fermeture:
+            return True
+        if date in self.jours_conges:
+            if self.creche.conges_inscription == GESTION_CONGES_INSCRIPTION_MENSUALISES_AVEC_POSSIBILITE_DE_SUPPLEMENT:
+                return True
+            if date in self.days:
+                return self.days[date].get_state() == ABSENT
+        return False
 
     def GetRattachement(self):
         result = None
