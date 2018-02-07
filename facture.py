@@ -373,7 +373,7 @@ class FactureFinMois(FactureBase):
                             if not inscription.IsNombreSemainesCongesDepasse(date):
                                 self.heures_facturees_par_mode[cotisation.mode_garde] -= heures_reference
                                 self.jours_conges_non_factures.append(date)
-                                if database.creche.repartition == REPARTITION_SANS_MENSUALISATION:
+                                if database.creche.repartition == REPARTITION_SANS_MENSUALISATION or database.creche.facturation_jours_feries == ABSENCES_DEDUITES_SANS_LIMITE:
                                     self.CalculeDeduction(cotisation, heures_reference)
                                     self.raison_deduction.add("absence prévenue")
                             else:

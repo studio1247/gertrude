@@ -41,7 +41,7 @@ modes_mensualisation = [("Avec mensualisation (sur 12 mois). Uniquement disponib
 
 modes_facturation_absences = [("En semaines (nombre de semaines entré à l'inscription)", ABSENCES_DEDUITES_EN_SEMAINES),
                               ("En jours (décompte précis des jours de présence sur l'ensemble du contrat)", ABSENCES_DEDUITES_EN_JOURS),
-                              ("Sans limite (pour les contrats sans mensualisation)", ABSENCES_DEDUITES_SANS_LIMITE),
+                              ("Sans limite", ABSENCES_DEDUITES_SANS_LIMITE),
                               ]
 
 modes_arrondi_mensualisation = [("Pas d'arrondi", SANS_ARRONDI),
