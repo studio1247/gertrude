@@ -164,6 +164,8 @@ class ChildPlanningLine(BasePlanningLine):
         BasePlanningLine.__init__(self, GetPrenomNom(self.inscrit))
         if database.creche.conges_inscription in (GESTION_CONGES_INSCRIPTION_MENSUALISES, GESTION_CONGES_INSCRIPTION_NON_MENSUALISES) and date in self.inscrit.jours_conges:
             self.state = VACANCES
+            self.day = Day()
+            self.timeslots = []
             self.reference = Day()  # semble nécessaire
             self.commentaire = self.inscrit.jours_conges[date].label
             self.readonly = True
@@ -176,7 +178,7 @@ class ChildPlanningLine(BasePlanningLine):
                     self.commentaire = self.inscrit.jours_conges[date].label
             else:
                 self.reference = inscription.get_day_from_date(date)
-        self.update()
+            self.update()
 
     def get_badge_text(self):
         heures_reference = self.reference.get_duration() if self.reference else 0
