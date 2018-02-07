@@ -31,7 +31,7 @@ from parameters import *
 import bcrypt
 from config import config
 
-DB_VERSION = 124
+DB_VERSION = 125
 
 Base = declarative_base()
 
@@ -720,6 +720,8 @@ class Site(Base):
     code_postal = Column(Integer)
     ville = Column(String)
     telephone = Column(String)
+    email = Column(String)
+    societe = Column(String)
     capacite = Column(Integer)
     groupe = Column(Integer)
 
@@ -888,6 +890,7 @@ class Activite(Base):
     _couleur_supplement = Column(String, name="couleur_supplement", default="")
     formule_tarif = Column(String)
     owner = Column(Integer)
+    flags = Column(Integer)
     timeslots_plannings_enfants = relationship("TimeslotInscription", cascade="all, delete-orphan")
     timeslots_enfants = relationship("TimeslotInscrit", cascade="all, delete-orphan")
     timeslots_plannings_salaries = relationship("TimeslotPlanningSalarie", cascade="all, delete-orphan")
@@ -2129,6 +2132,8 @@ class User(Base):
     creche = relationship(Creche)
     login = Column(String)
     password = Column(String)
+    email = Column(String)
+    flags = Column(Integer)
     profile = Column(Integer, default=PROFIL_ALL | PROFIL_ADMIN)
 
     def __init__(self, creche, profile=PROFIL_ALL, **kwargs):
@@ -2997,6 +3002,13 @@ class Database(object):
                     self.engine.execute("ALTER TABLE inscrits ADD %s DATE" % column)
                 self.engine.execute("ALTER TABLE inscrits ADD preinscription_state INTEGER")
                 self.engine.execute("ALTER TABLE inscriptions ADD debut_asap BOOLEAN")
+
+            if version < 125:
+                self.engine.execute("ALTER TABLE sites ADD societe STRING")
+                self.engine.execute("ALTER TABLE sites ADD email STRING")
+                self.engine.execute("ALTER TABLE activities ADD flags INTEGER")
+                self.engine.execute("ALTER TABLE users ADD email STRING")
+                self.engine.execute("ALTER TABLE users ADD flags INTEGER")
 
             # update database version
             version_entry.value = DB_VERSION
