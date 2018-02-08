@@ -81,7 +81,7 @@ class Day(object):
                 default = mode
             elif mode == MODE_SALARIE_RECUP_HEURES_SUPP:
                 default = CONGES_RECUP_HEURES_SUPP
-            else:  # TODO and not checkbox?
+            elif mode != MODE_PLACE_SOUHAITEE:  # TODO and not checkbox?
                 return PRESENT
         return default
 
@@ -923,10 +923,10 @@ class Activite(Base):
             setattr(self, "_%s" % key, str(value))
 
     def has_summary(self):
-        return self.mode not in (MODE_CONGES, MODE_SYSTEMATIQUE_SANS_HORAIRES, MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE, MODE_SALARIE_HEURES_SUPP, MODE_SALARIE_RECUP_HEURES_SUPP)
+        return self.mode not in (MODE_CONGES, MODE_PLACE_SOUHAITEE, MODE_SYSTEMATIQUE_SANS_HORAIRES, MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE, MODE_SALARIE_HEURES_SUPP, MODE_SALARIE_RECUP_HEURES_SUPP)
 
     def has_horaires(self):
-        return self.mode in (MODE_PRESENCE, MODE_NORMAL, MODE_LIBERE_PLACE, MODE_PRESENCE_NON_FACTUREE, MODE_PRESENCE_SUPPLEMENTAIRE, MODE_PERMANENCE, MODE_CONGES)
+        return self.mode in (MODE_PRESENCE, MODE_NORMAL, MODE_LIBERE_PLACE, MODE_PLACE_SOUHAITEE, MODE_PRESENCE_NON_FACTUREE, MODE_PRESENCE_SUPPLEMENTAIRE, MODE_PERMANENCE, MODE_CONGES)
 
     def EvalTarif(self, inscrit, date, montant_heure_garde=0.0, reservataire=False):
         if self.formule_tarif and self.formule_tarif.strip():

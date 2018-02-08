@@ -355,12 +355,14 @@ MODE_SALARIE_HEURES_SUPP = 8
 MODE_SALARIE_RECUP_HEURES_SUPP = 9
 MODE_SANS_HORAIRES = 10
 MODE_CONGES = 11
+MODE_PLACE_SOUHAITEE = 12
 
 ActivityModes = [
     ("Normal", MODE_NORMAL),
     ("Présence non facturée", MODE_PRESENCE_NON_FACTUREE),
     ("Présence facturée en temps supplémentaire", MODE_PRESENCE_SUPPLEMENTAIRE),
     ("Libère une place", MODE_LIBERE_PLACE),
+    ("Place souhaitée", MODE_PLACE_SOUHAITEE),
     ("Permanence", MODE_PERMANENCE),
     ("Congés", MODE_CONGES),
     ("Heures supp. (salariés)", MODE_SALARIE_HEURES_SUPP),
