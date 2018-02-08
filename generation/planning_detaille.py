@@ -143,11 +143,13 @@ class PlanningDetailleModifications:
 
             lines_enfants = ChildPlanningLine.select(date, self.site, self.groupe)
             lines_salaries = SalariePlanningLine.select(date, self.site)
+            if not self.metas["lignes-vides"]:
+                lines_enfants = [line for line in lines_enfants if line.state > 0]
+                lines_salaries = [line for line in lines_salaries if line.state > 0]
 
+            lines = lines_enfants
             if lines_salaries:
-                lines = lines_enfants + [BasePlanningSeparator("Salariés")] + lines_salaries
-            else:
-                lines = lines_enfants
+                lines += [BasePlanningSeparator("Salariés")] + lines_salaries
 
             pages_count = 1 + (len(lines)) // self.metas["lines-max"]
             for page_index in range(pages_count):
