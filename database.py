@@ -962,14 +962,18 @@ class ContratSalarie(Base):
         self.plannings.append(PlanningSalarie(self))
 
     def __getattribute__(self, item):
+        if not self.plannings:
+            self.plannings.append(PlanningSalarie(self))
         if item == "duree_reference":
-            return self.plannings[0].duree_reference if self.plannings else 0
+            return self.plannings[0].duree_reference
         elif item == "days":
-            return self.plannings[0].days if self.plannings else []
+            return self.plannings[0].days
         else:
             return Base.__getattribute__(self, item)
 
     def __setattr__(self, key, value):
+        if not self.plannings:
+            self.plannings.append(PlanningSalarie(self))
         if key == "duree_reference":
             self.plannings[0].duree_reference = value
         else:
