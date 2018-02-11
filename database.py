@@ -963,9 +963,9 @@ class ContratSalarie(Base):
 
     def __getattribute__(self, item):
         if item == "duree_reference":
-            return self.plannings[0].duree_reference
+            return self.plannings[0].duree_reference if self.plannings else 0
         elif item == "days":
-            return self.plannings[0].days
+            return self.plannings[0].days if self.plannings else []
         else:
             return Base.__getattribute__(self, item)
 
