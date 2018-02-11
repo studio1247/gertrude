@@ -926,8 +926,7 @@ class RibambelleTests(GertrudeTestCase):
         inscription = Inscription(inscrit=inscrit)
         inscription.mode = MODE_TEMPS_PARTIEL
         inscription.debut = datetime.date(2016, 1, 1)
-        conge = CongeInscrit(inscrit=inscrit, debut="01/02/2016", fin="05/02/2016")
-        inscrit.add_conge(conge)
+        inscrit.add_conge(CongeInscrit(inscrit=inscrit, debut="01/02/2016", fin="05/02/2016"))
         self.add_inscription_timeslot(inscription, 0, 93, 213)  # 10h
         self.add_inscription_timeslot(inscription, 1, 93, 213)  # 10h
         self.add_inscription_timeslot(inscription, 2, 93, 213)  # 10h
@@ -1000,6 +999,46 @@ class LaCabaneAuxFamillesTests(GertrudeTestCase):
         self.assert_prec2_equals(cotisation.cotisation_mensuelle, 685.42)
         facture = Facture(inscrit, 2017, 4)
         self.assert_prec2_equals(facture.total, 685.42 + 179.79)
+
+
+class EleaTests(GertrudeTestCase):
+    def setUp(self):
+        GertrudeTestCase.setUp(self)
+        database.creche.type = TYPE_FAMILIAL
+        database.creche.mode_facturation = FACTURATION_PSU
+        database.creche.gestion_depart_anticipe = False
+        database.creche.temps_facturation = FACTURATION_FIN_MOIS
+        database.creche.repartition = REPARTITION_SANS_MENSUALISATION
+        database.creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
+        database.creche.facturation_jours_feries = ABSENCES_DEDUITES_EN_JOURS
+        database.creche.conges_inscription = GESTION_CONGES_INSCRIPTION_NON_MENSUALISES
+        self.add_conge("07/05/2018", "11/05/2018")
+        self.add_conge("06/08/2018", "26/08/2018")
+        self.add_conge("17/10/2018", "17/10/2018")
+        self.add_conge("24/12/2018", "28/12/2018")
+        self.add_conge("31/12/2018", "31/12/2018")
+
+    def test_absences_prevenues(self):
+        inscrit = self.add_inscrit()
+        self.add_frere(inscrit, )
+        inscription = Inscription(inscrit=inscrit)
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.semaines_conges = 0
+        inscription.debut = datetime.date(2018, 1, 1)
+        inscription.fin = datetime.date(2018, 12, 31)
+        self.add_inscription_timeslot(inscription, 2, 110, 110+9*12)  # 9h
+        inscrit.inscriptions.append(inscription)
+        self.set_revenus(inscrit, 42783)
+        cotisation = Cotisation(inscrit, datetime.date(2018, 1, 1), NO_ADDRESS)
+        self.assert_prec2_equals(cotisation.cotisation_mensuelle, 50.05)
+        facture = Facture(inscrit, 2018, 1, NO_ADDRESS)
+        self.assert_prec2_equals(facture.total, 45*1.43)
+        inscrit.add_conge(CongeInscrit(inscrit=inscrit, debut="03/01/2018", fin="03/01/2018"))
+        inscrit.add_conge(CongeInscrit(inscrit=inscrit, debut="03/01/2018", fin="03/01/2018"))
+        inscrit.add_conge(CongeInscrit(inscrit=inscrit, debut="10/01/2018", fin="10/01/2018"))
+        inscrit.add_conge(CongeInscrit(inscrit=inscrit, debut="31/01/2018", fin="31/01/2018"))
+        facture = Facture(inscrit, 2018, 1, NO_ADDRESS | TRACES)
+        self.assert_prec2_equals(facture.total, 18*1.43)
 
 
 class PiousPiousTests(GertrudeTestCase):

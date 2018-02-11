@@ -299,7 +299,7 @@ class FactureFinMois(FactureBase):
                             elif inscription.mode not in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE):
                                 self.CalculeDeduction(cotisation, heures_reference)
                             self.raison_deduction.add('hospitalisation')
-                        elif database.creche.conges_inscription == GESTION_CONGES_INSCRIPTION_NON_MENSUALISES and date in inscrit.jours_conges:
+                        elif database.creche.repartition != REPARTITION_SANS_MENSUALISATION and database.creche.conges_inscription == GESTION_CONGES_INSCRIPTION_NON_MENSUALISES and date in inscrit.jours_conges:
                             duration = inscription.get_day_from_date(date).get_duration(mode_arrondi=database.creche.arrondi_facturation)
                             if duration:
                                 if options & TRACES:
