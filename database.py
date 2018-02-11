@@ -3048,11 +3048,9 @@ class Database(object):
         self.commit()
 
     def delete_all_inscriptions(self):
-        self.delete(self.query(Famille()))
-        self.delete(self.query(Salarie()))
-        self.delete(self.query(Professeur()))
-        self.delete(self.query(Alerte()))
-        self.delete(self.query(NumeroFacture()))
+        for item in self.creche.familles + self.creche.inscrits + self.creche.salaries + self.creche.professeurs + \
+                    self.creche.alertes.values() + self.creche.numeros_facture.values() + self.creche.charges.values():
+            self.delete(item)
         self.commit()
 
     def dump(self):
