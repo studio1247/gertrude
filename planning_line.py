@@ -83,13 +83,13 @@ class BasePlanningLine(object):
                     if start <= timeslot.fin + 1 and end >= timeslot.debut - 1:
                         start, end = min(timeslot.debut, start), max(timeslot.fin, end)
                         self.delete_timeslot(i, False)
-                elif value.mode in (MODE_LIBERE_PLACE, MODE_CONGES) and start < timeslot.fin and end > timeslot.debut:
+                elif value.mode in (MODE_LIBERE_PLACE, MODE_CONGES, MODE_ABSENCE_NON_PREVENUE) and start < timeslot.fin and end > timeslot.debut:
                     self.delete_timeslot(i, False)
                     if timeslot.debut < start:
                         self.add_timeslot(timeslot.debut, start, timeslot.activity)
                     if timeslot.fin > end:
                         self.add_timeslot(end, timeslot.fin, timeslot.activity)
-                elif timeslot.activity.mode in (MODE_LIBERE_PLACE, MODE_CONGES) and start < timeslot.fin and end > timeslot.debut:
+                elif timeslot.activity.mode in (MODE_LIBERE_PLACE, MODE_CONGES, MODE_ABSENCE_NON_PREVENUE) and start < timeslot.fin and end > timeslot.debut:
                     self.delete_timeslot(i, False)
                     if timeslot.debut < start:
                         self.add_timeslot(timeslot.debut, start, timeslot.activity)

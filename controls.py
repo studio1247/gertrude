@@ -1118,7 +1118,7 @@ class ActivityComboBox(HashComboBox):
         evt.Skip()
 
     def add_activity(self, activity):
-        self.Append(activity.label, activity)
+        self.Append(activity.label if activity.label else "", activity)
 
     def Update(self):
         selected = 0

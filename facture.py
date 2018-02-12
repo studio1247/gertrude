@@ -379,8 +379,10 @@ class FactureFinMois(FactureBase):
                             else:
                                 self.jours_presence_selon_contrat[date] = (0.0, heures_facturees)
                         elif state == ABSENCE_NON_PREVENUE or state == ABSENCE_CONGE_SANS_PREAVIS:
-                            heures_facturees_non_realisees = heures_reference
-                            self.jours_absence_non_prevenue[date] = heures_reference
+                            heures_facturees_non_realisees = heures_facturees
+                            self.jours_absence_non_prevenue[date] = heures_facturees
+                            if heures_reference == 0:
+                                self.CalculeSupplement(cotisation, heures_reference)
                         elif state > 0:
                             affectation_jours_supplementaires = False
                             if heures_supplementaires_facturees > 0:

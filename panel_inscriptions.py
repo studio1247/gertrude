@@ -505,7 +505,7 @@ class ParentsPanel(InscriptionsTab):
                     titre = "Revenus et régime d'appartenance"
                     defaultPeriode = today.year-2
                 revenus_sizer = wx.StaticBoxSizer(wx.StaticBox(panel, -1, titre), wx.VERTICAL)
-                revenus_sizer.Add(PeriodeChoice(panel, lambda: Revenu(self.inscrit.famille.parents[index]), default=defaultPeriode), 0, wx.EXPAND | wx.ALL, 5)
+                revenus_sizer.Add(PeriodeChoice(panel, lambda: Revenu(panel.instance), default=defaultPeriode), 0, wx.EXPAND | wx.ALL, 5)
                 revenus_gridsizer = wx.FlexGridSizer(0, 2, 5, 10)
                 revenus_gridsizer.AddGrowableCol(1, 1)
                 revenus_gridsizer.AddMany([(wx.StaticText(panel, -1, 'Revenus annuels bruts :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(panel, None, 'revenu', precision=2), 0, wx.EXPAND)])
