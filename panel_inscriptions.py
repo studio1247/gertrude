@@ -546,6 +546,7 @@ class ParentsPanel(InscriptionsTab):
         obj = event.GetEventObject()
         sexe = obj.GetClientData(obj.GetSelection())
         index = obj.index
+        history.Append(None)
         if sexe is None:
             del self.inscrit.famille.parents[index]
             self.UpdateContents()
