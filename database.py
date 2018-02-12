@@ -31,7 +31,7 @@ from parameters import *
 import bcrypt
 from config import config
 
-DB_VERSION = 125
+DB_VERSION = 126
 
 Base = declarative_base()
 
@@ -253,6 +253,7 @@ class Creche(Base):
     iban = Column(String)
     bic = Column(String)
     creditor_id = Column(String)
+    societe = Column(String)
     siret = Column(String)
     gestion_plannings_salaries = Column(Integer, default=0)
     delai_paiement_familles = Column(Integer)
@@ -722,6 +723,7 @@ class Site(Base):
     telephone = Column(String)
     email = Column(String)
     societe = Column(String)
+    siret = Column(String)
     capacite = Column(Integer)
     groupe = Column(Integer)
 
@@ -1627,7 +1629,7 @@ class Inscrit(Base):
         if date in self.creche.jours_fermeture:
             return True
         if date in self.jours_conges:
-            if self.creche.conges_inscription == GESTION_CONGES_INSCRIPTION_MENSUALISES_AVEC_POSSIBILITE_DE_SUPPLEMENT:
+            if self.creche.conges_inscription != GESTION_CONGES_INSCRIPTION_MENSUALISES_AVEC_POSSIBILITE_DE_SUPPLEMENT:
                 return True
             if date in self.days:
                 return self.days[date].get_state() == ABSENT
@@ -3015,6 +3017,10 @@ class Database(object):
                 self.engine.execute("ALTER TABLE activities ADD flags INTEGER")
                 self.engine.execute("ALTER TABLE users ADD email STRING")
                 self.engine.execute("ALTER TABLE users ADD flags INTEGER")
+
+            if version < 126:
+                self.engine.execute("ALTER TABLE creche ADD societe STRING")
+                self.engine.execute("ALTER TABLE sites ADD siret STRING")
 
             # update database version
             version_entry.value = DB_VERSION
