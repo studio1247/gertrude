@@ -498,6 +498,8 @@ def GetSiteFields(site):
             ('ville-site', site.ville if site else database.creche.ville),
             ('telephone-site', site.telephone if site else database.creche.telephone),
             ('capacite-site', site.capacite if site else database.creche.get_capacite()),
+            ('siret-site', site.siret if site else database.creche.siret),
+            ('societe-site', site.societe if site else database.creche.societe),
             ]
 
 
@@ -526,6 +528,7 @@ def GetCrecheFields(creche):
             ('amplitude-horaire', database.creche.get_amplitude_horaire()),
             ('sepa-creditor-id', database.creche.creditor_id),
             ('siret-creche', database.creche.siret),
+            ('societe-creche', database.creche.societe),
             ]
 
 
