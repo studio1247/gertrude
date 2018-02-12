@@ -382,7 +382,7 @@ class FactureFinMois(FactureBase):
                             heures_facturees_non_realisees = heures_facturees
                             self.jours_absence_non_prevenue[date] = heures_facturees
                             if heures_reference == 0:
-                                self.CalculeSupplement(cotisation, heures_reference)
+                                self.CalculeSupplement(cotisation, heures_facturees)
                         elif state > 0:
                             affectation_jours_supplementaires = False
                             if heures_supplementaires_facturees > 0:
