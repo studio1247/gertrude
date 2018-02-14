@@ -1228,7 +1228,7 @@ class TarifHorairePanel(AutoTab, PeriodeMixin):
     def OnAdd(self, event):
         print("OnAdd")
         object = event.GetEventObject()
-        database.creche.tarifs_horaires[self.periode].formule.insert(object.index, ["", 0.0])
+        database.creche.tarifs_horaires[self.periode].formule.insert(object.index, ["", 0.0, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE])
         database.creche.tarifs_horaires[self.periode].UpdateFormule(changed=False)
         self.AjouteLigneTarifHoraire(object.index)
         for i in range(object.index+1, len(self.controls)):
