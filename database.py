@@ -1461,7 +1461,11 @@ class Inscrit(Base):
             self.preinscription_state = STATE_ATTENTE_REPONSE_PARENTS
         return self.preinscription_state
 
-    def get_groupe(self):
+    def get_groupe_order(self, date):
+        inscription = self.get_inscription(date)
+        return inscription.groupe.ordre if inscription and inscription.groupe else 255
+
+    def get_groupe_auto(self):
         result = None
         age = GetAge(self.naissance)
         for groupe in self.creche.groupes:

@@ -51,8 +51,9 @@ class EtatsInscriptionsModifications(object):
         
         # Les lignes
         template = lignes.item(7)
-        
-        for inscrit in database.creche.inscrits:
+
+        inscrits = sorted(database.creche.inscrits, key=lambda inscrit: (inscrit.get_groupe_order(self.date), inscrit.nom, inscrit.prenom))
+        for inscrit in inscrits:
             inscription = inscrit.get_inscription(self.date)
             if inscription and (not self.site or inscription.site == self.site):
                 ligne = template.cloneNode(1)                        

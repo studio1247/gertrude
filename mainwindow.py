@@ -224,7 +224,7 @@ class GertrudeFrame(wx.Frame):
                 if inscrit.naissance:
                     for inscription in inscrit.inscriptions:
                         if inscription.debut and (not inscription.fin or inscription.fin >= today):
-                            groupe = inscrit.get_groupe()
+                            groupe = inscrit.get_groupe_auto()
                             if groupe and inscription.groupe != groupe:
                                 changements.append((inscription, groupe))
             if changements:
