@@ -977,6 +977,8 @@ def GetHistoriqueSolde(who, jalon):
         if fin is None or fin > jalon:
             fin = jalon
         date = GetMonthStart(debut)
+        if config.date_debut_reglements and config.date_debut_reglements > date:
+            date = config.date_debut_reglements
         fin = min(today, GetMonthEnd(fin))
         while date <= fin:
             for inscrit in inscrits:
