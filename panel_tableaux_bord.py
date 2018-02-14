@@ -63,7 +63,7 @@ class SitesPlanningPanel(PlanningWidget):
             
             day_lines = {}
             if len(database.creche.sites) > 1:
-                lines.append(days[week_day])
+                lines.append(WxPlanningSeparator(days[week_day]))
                 for site in database.creche.sites:
                     line = TableauDeBordSummary(site.nom)
                     for i in range(int(database.creche.ouverture * 60 // BASE_GRANULARITY), int(database.creche.fermeture * 60 // BASE_GRANULARITY)):
@@ -83,7 +83,7 @@ class SitesPlanningPanel(PlanningWidget):
                 if date not in inscrit.jours_conges:
                     inscription = inscrit.get_inscription(date)
                     if inscription is not None:
-                        line = inscrit.days.get(date, inscrit.GetJourneeReference(date))
+                        line = inscrit.GetJournee(date)
                         if len(database.creche.sites) > 1:
                             if inscription.site and inscription.site in day_lines:
                                 site_line = day_lines[inscription.site]
@@ -111,24 +111,24 @@ class ReservatairesPlanningPanel(PlanningWidget):
                 continue
             
             day_lines = {}
-            lines.append(days[week_day])
+            lines.append(WxPlanningSeparator(days[week_day]))
             places_reservees = 0
             for reservataire in database.creche.reservataires:
-                line = Summary(reservataire.nom)
+                line = TableauDeBordSummary(reservataire.nom)
                 for i in range(int(database.creche.ouverture * 60 // BASE_GRANULARITY), int(database.creche.fermeture * 60 // BASE_GRANULARITY)):
-                    line[i][0] = reservataire.places
+                    line.array[i][0] = reservataire.places
                 day_lines[reservataire] = line
                 if reservataire.places:
                     places_reservees += reservataire.places
                 lines.append(line)
-            line = Summary("[Structure]")
+
+            structure_line = TableauDeBordSummary("[Structure]")
             for i in range(int(database.creche.ouverture * 60 // BASE_GRANULARITY), int(database.creche.fermeture * 60 // BASE_GRANULARITY)):
-                line[i][0] = 0
-            for start, end, value in database.creche.tranches_capacite[week_day].activites:
-                for i in range(start, end):
-                    line[i][0] = max(0, value)
-            day_lines[None] = line
-            lines.append(line)
+                structure_line.array[i][0] = 0
+            for timeslot in database.creche.tranches_capacite[week_day].timeslots:
+                for i in range(timeslot.debut, timeslot.fin):
+                    structure_line.array[i][0] = timeslot.value
+            lines.append(structure_line)
             
             for inscrit in database.creche.inscrits:
                 if date not in inscrit.jours_conges:
@@ -139,12 +139,12 @@ class ReservatairesPlanningPanel(PlanningWidget):
                             reservataire_line = day_lines[inscription.reservataire]
                         else:
                             reservataire_line = None
-                        for start, end, value in line.activites:
-                            if value == 0:
-                                for i in range(start, end):
-                                    day_lines[None][i][0] -= 1
-                                    if reservataire_line is not None:
-                                        reservataire_line[i][0] -= 1
+                        for timeslot in line.timeslots:
+                            if timeslot.activity.mode == 0:
+                                for i in range(timeslot.debut, timeslot.fin):
+                                    structure_line.array[i][0] -= 1
+                                    if reservataire_line:
+                                        reservataire_line.array[i][0] -= 1
 
         self.SetLines(lines)
 
@@ -1139,7 +1139,7 @@ class TableauxDeBordNotebook(wx.Notebook):
                 planning_class = ReservatairesPlanningPanel
             else:
                 planning_class = SitesPlanningPanel
-            # self.AddPage(PlacesInformationTab(self, planning_class), "Places disponibles")
+            self.AddPage(PlacesInformationTab(self, planning_class), "Places disponibles")
         self.AddPage(EtatsPresenceTab(self), "Etats de présence")
         self.AddPage(StatistiquesFrequentationTab(self), "Statistiques de fréquentation")
         self.AddPage(RelevesTab(self), "Edition de relevés")
