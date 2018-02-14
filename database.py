@@ -1057,7 +1057,11 @@ class Salarie(Base):
         if contrat is None:
             return None
 
-        return self.days.get(date, self.GetJourneeReference(date))
+        day = self.days.get(date, None)
+        if day:
+            return day
+
+        return self.GetJourneeReference(date)
 
     def get_planning(self, date):
         result = None
@@ -1665,7 +1669,7 @@ class Inscrit(Base):
             return None
 
         result = self.days.get(date, None)
-        if result is not None:
+        if result:
             return result
 
         return self.GetJourneeReference(date)
