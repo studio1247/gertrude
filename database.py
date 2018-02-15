@@ -31,7 +31,7 @@ from parameters import *
 import bcrypt
 from config import config
 
-DB_VERSION = 126
+DB_VERSION = 127
 
 Base = declarative_base()
 
@@ -1453,6 +1453,8 @@ class Inscrit(Base):
             self.preinscription_state = STATE_PREINSCRIPTION_RECUE
         elif not self.date_entretien_directrice:
             self.preinscription_state = STATE_ATTENTE_ENTRETIEN
+        elif self.date_entretien_directrice > datetime.date.today():
+            self.preinscription_state = STATE_ENTRETIEN_PROGRAMME
         elif not self.date_envoi_devis:
             self.preinscription_state = STATE_DEVIS_A_ENVOYER
         elif not self.date_reponse_parents:
@@ -3043,6 +3045,9 @@ class Database(object):
             if version < 126:
                 self.engine.execute("ALTER TABLE creche ADD societe STRING")
                 self.engine.execute("ALTER TABLE sites ADD siret STRING")
+
+            if version < 127:
+                self.engine.execute("UPDATE inscrits SET preinscription_state=preinscription_state+1 WHERE preinscription_state>=2")
 
             # update database version
             version_entry.value = DB_VERSION
