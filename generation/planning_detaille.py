@@ -110,7 +110,6 @@ class PlanningDetailleModifications:
     def executeTemplateDraw(self, filename, dom):
         affichage_min = int(database.creche.affichage_min * (60 // BASE_GRANULARITY))
         affichage_max = int(database.creche.affichage_max * (60 // BASE_GRANULARITY))
-        print(affichage_min, affichage_max)
         step = (21.0-self.metas["left"]-self.metas["right"]-self.metas["labels-width"]) / (affichage_max - affichage_min)
 
         drawing = dom.getElementsByTagName('office:drawing').item(0)
