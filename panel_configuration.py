@@ -1157,7 +1157,7 @@ class TarifHorairePanel(AutoTab, PeriodeMixin):
         PeriodeMixin.__init__(self, "tarifs_horaires")
         self.delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.Add(PeriodeChoice(self, TarifHoraire), 0, wx.TOP | wx.BOTTOM, 5)
+        self.sizer.Add(PeriodeChoice(self, lambda: TarifHoraire(database.creche)), 0, wx.TOP | wx.BOTTOM, 5)
         self.addbutton = wx.Button(self, -1, "Ajouter un cas")
         if config.readonly:
             self.addbutton.Disable()
@@ -1226,7 +1226,6 @@ class TarifHorairePanel(AutoTab, PeriodeMixin):
         self.sizer.FitInside(self)
 
     def OnAdd(self, event):
-        print("OnAdd")
         object = event.GetEventObject()
         database.creche.tarifs_horaires[self.periode].formule.insert(object.index, ["", 0.0, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE])
         database.creche.tarifs_horaires[self.periode].UpdateFormule(changed=False)
