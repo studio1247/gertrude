@@ -306,8 +306,13 @@ class Cotisation(object):
                     raise CotisationException(errors)
 
                 if database.creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
-                    date = GetMonthStart(self.debut_inscription)
-                    fin_decompte_conges_et_factures = GetMonthEnd(self.fin_inscription)
+                    date = self.debut_inscription
+                    fin_decompte_conges_et_factures = self.fin_inscription
+                    if self.debut_inscription.year in database.creche.mois_sans_facture and self.debut_inscription.month not in database.creche.mois_sans_facture[self.debut_inscription.year]:
+                        date = GetMonthStart(self.debut_inscription)
+                    if self.fin_inscription.year in database.creche.mois_sans_facture and self.fin_inscription.month not in database.creche.mois_sans_facture[self.fin_inscription.year]:
+                        fin_decompte_conges_et_factures = GetMonthEnd(self.fin_inscription)
+                    # TODO ajouter un test de non reg (ptits loulous mail du 20/02/2018)
                     if options & TRACES:
                         print(" début théorique en date du", date)
                         print(" fin théorique en date du", fin_decompte_conges_et_factures)
