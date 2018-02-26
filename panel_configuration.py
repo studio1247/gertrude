@@ -68,6 +68,7 @@ modes_arrondi_horaires_salaries = [("Pas d'arrondi", SANS_ARRONDI),
 
 modes_arrondi_semaines_periodes = [("Arrondi à la semaine supérieure", ARRONDI_SEMAINE_SUPERIEURE),
                                    ("Arrondi à la semaine la plus proche", ARRONDI_SEMAINE_PLUS_PROCHE),
+                                   ("Arrondi à la semaine supérieure avec limite à 52 semaines", ARRONDI_SEMAINE_AVEC_LIMITE_52_SEMAINES)
                                    ]
 
 temps_facturation = [("Fin de mois", FACTURATION_FIN_MOIS),

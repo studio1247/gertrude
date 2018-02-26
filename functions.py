@@ -474,10 +474,16 @@ def GetNombreSemainesPeriode(debut, fin):
     jours = (fin - debut).days
     if not (config.options & COMPATIBILITY_MODE_DECOMPTE_SEMAINES_2017):
         jours += 1
-    if database.creche.arrondi_semaines == ARRONDI_SEMAINE_SUPERIEURE:
-        return (jours + 6) // 7
+    if database.creche.arrondi_semaines in (ARRONDI_SEMAINE_SUPERIEURE, ARRONDI_SEMAINE_AVEC_LIMITE_52_SEMAINES):
+        result = (jours + 6) // 7
+        if database.creche.arrondi_semaines == ARRONDI_SEMAINE_AVEC_LIMITE_52_SEMAINES and GetDateAnniversaire(debut) < fin:
+            return min(52, result)
+        else:
+            return result
     elif database.creche.arrondi_semaines == ARRONDI_SEMAINE_PLUS_PROCHE:
-        return round(jours / 7)
+        return round(float(jours) / 7)
+    elif database.creche.arrondi_semaines == ARRONDI_SEMAINE_AVEC_LIMITE_52_SEMAINES:
+        return min(52, (jours + 6) // 7)
     else:
         return jours / 7
 

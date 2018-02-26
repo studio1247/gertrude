@@ -81,10 +81,6 @@ def GetYearEnd(date):
     return datetime.date(date.year, 12, 31)
 
 
-def GetDateAnniversaire(date, count=1):
-    return datetime.date(date.year + count, date.month, date.day)
-
-
 def IncrDate(date, years=0, months=0, days=0):
     day, month, year = date.day + days, date.month + months, date.year + years
     while month > 12:
@@ -94,6 +90,10 @@ def IncrDate(date, years=0, months=0, days=0):
         year -= 1
         month += 12
     return datetime.date(year, month, 1) + datetime.timedelta(day - 1)
+
+
+def GetDateAnniversaire(date, count=1):
+    return IncrDate(date, years=count)
 
 
 def GetMonthStart(date):
