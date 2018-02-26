@@ -482,8 +482,6 @@ def GetNombreSemainesPeriode(debut, fin):
             return result
     elif database.creche.arrondi_semaines == ARRONDI_SEMAINE_PLUS_PROCHE:
         return round(float(jours) / 7)
-    elif database.creche.arrondi_semaines == ARRONDI_SEMAINE_AVEC_LIMITE_52_SEMAINES:
-        return min(52, (jours + 6) // 7)
     else:
         return jours / 7
 
