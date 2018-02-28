@@ -74,9 +74,10 @@ class SitesPlanningPanel(PlanningWidget):
                 site_line = TableauDeBordSummary(days[week_day])
                 for i in range(int(database.creche.ouverture * 60 // BASE_GRANULARITY), int(database.creche.fermeture * 60 // BASE_GRANULARITY)):
                     site_line.array[i][0] = 0
-                for timeslot in database.creche.tranches_capacite[week_day].timeslots:
-                    for i in range(timeslot.debut, timeslot.fin):
-                        site_line.array[i][0] = timeslot.value
+                if week_day in database.creche.tranches_capacite:
+                    for timeslot in database.creche.tranches_capacite[week_day].timeslots:
+                        for i in range(timeslot.debut, timeslot.fin):
+                            site_line.array[i][0] = timeslot.value
                 lines.append(site_line)
             
             for inscrit in database.creche.inscrits:
