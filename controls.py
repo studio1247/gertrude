@@ -704,9 +704,9 @@ class AutoChoiceCtrl(ChoiceWithoutScroll, AutoMixin):
         self.values.clear()
         for item in items:
             if isinstance(item, tuple):
-                self.Append(item[0], item[1])
+                self.Append(item[0] if item[0] else "", item[1])
             else:
-                self.Append(item, item)
+                self.Append(item if item else "", item)
         try:
             self.UpdateContents()
         except:
