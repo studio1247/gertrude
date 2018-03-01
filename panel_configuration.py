@@ -380,7 +380,7 @@ class ResponsabilitesTab(AutoTab, PeriodeMixin):
         AutoTab.__init__(self, parent)
         PeriodeMixin.__init__(self, "bureaux")
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(PeriodeChoice(self, Bureau), 0, wx.TOP, 5)
+        sizer.Add(PeriodeChoice(self, lambda obj: Bureau(creche=database.creche)), 0, wx.TOP, 5)
         sizer2 = wx.FlexGridSizer(0, 2, 5, 5)
         sizer2.AddGrowableCol(1, 1)
         self.responsables_ctrls = []
@@ -697,7 +697,7 @@ class CafTab(AutoTab, PeriodeMixin):
         AutoTab.__init__(self, parent)
         PeriodeMixin.__init__(self, "baremes_caf")
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(PeriodeChoice(self, self.new_bareme_caf), 0, wx.TOP, 5)
+        sizer.Add(PeriodeChoice(self, lambda obj: BaremeCAF(creche=database.creche)), 0, wx.TOP, 5)
         sizer2 = wx.FlexGridSizer(4, 2, 5, 5)
         sizer2.AddMany([wx.StaticText(self, -1, "Plancher annuel :"), AutoNumericCtrl(self, None, "plancher", precision=2)])
         sizer2.AddMany([wx.StaticText(self, -1, "Plafond annuel :"), AutoNumericCtrl(self, None, "plafond", precision=2)])
@@ -706,7 +706,7 @@ class CafTab(AutoTab, PeriodeMixin):
         self.SetSizer(sizer)
 
     def new_bareme_caf(self):
-        return BaremeCAF(creche=database.creche)
+        return
 
     def UpdateContents(self):
         self.SetInstance(database.creche)
@@ -1158,7 +1158,7 @@ class TarifHorairePanel(AutoTab, PeriodeMixin):
         PeriodeMixin.__init__(self, "tarifs_horaires")
         self.delbmp = wx.Bitmap(GetBitmapFile("remove.png"), wx.BITMAP_TYPE_PNG)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.Add(PeriodeChoice(self, lambda: TarifHoraire(database.creche)), 0, wx.TOP | wx.BOTTOM, 5)
+        self.sizer.Add(PeriodeChoice(self, lambda obj: TarifHoraire(database.creche)), 0, wx.TOP | wx.BOTTOM, 5)
         self.addbutton = wx.Button(self, -1, "Ajouter un cas")
         if config.readonly:
             self.addbutton.Disable()

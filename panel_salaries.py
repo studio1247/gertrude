@@ -267,7 +267,7 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
         PeriodeMixin.__init__(self, "contrats")
         sizer = wx.BoxSizer(wx.VERTICAL)
         ligne_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        ligne_sizer.Add(PeriodeChoice(self, self.nouveauContrat, onModify=self.onPeriodeModification))
+        ligne_sizer.Add(PeriodeChoice(self, lambda obj: self.nouveauContrat(), onModify=self.onPeriodeModification))
         sizer.Add(ligne_sizer, 0, wx.TOP, 5)
         sizer1 = wx.FlexGridSizer(0, 2, 5, 10)
         sizer1.AddGrowableCol(1, 1)
@@ -282,7 +282,7 @@ class ContratsSalariePanel(SalariesTab, PeriodeMixin):
         self.plannings_panel = PeriodePanel(self, "plannings")
         self.plannings_panel.SetPeriode = self.SetPlanningPeriode
         box_sizer = wx.StaticBoxSizer(wx.StaticBox(self.plannings_panel, -1, "Plannings"), wx.VERTICAL)
-        box_sizer.Add(PeriodeChoice(self.plannings_panel, self.nouveauPlanning))  # , onModify=self.onPlanningModification
+        box_sizer.Add(PeriodeChoice(self.plannings_panel, lambda obj: self.nouveauPlanning()))  # , onModify=self.onPlanningModification
         line_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.duree_reference_choice = ChoiceWithoutScroll(self.plannings_panel)
         for item, data in [("1 semaine", 7)] + [("%d semaines" % (i+2), 7*(i+2)) for i in range(MAX_SEMAINES_REFERENCE-1)]:

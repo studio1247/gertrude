@@ -16,6 +16,7 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
+from __future__ import print_function
 
 import wx.html
 from history import *
@@ -472,25 +473,25 @@ class ParentsPanel(InscriptionsTab):
                 relation_item.Disable()
             self.Bind(wx.EVT_CHOICE, self.OnParentRelationChoice, relation_item)
             sizer2.AddMany([(wx.StaticText(self, -1, 'Relation :'), 0, wx.ALIGN_CENTER_VERTICAL), (relation_item, 0, wx.EXPAND)])
-            self.parents_items[-1].extend([wx.StaticText(self, -1, 'Prénom :'), AutoTextCtrl(self, None, 'prenom')])           
-            sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
-            self.parents_items[-1].extend([wx.StaticText(self, -1, 'Nom :'), AutoTextCtrl(self, None, 'nom')])
-            sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
-            self.parents_items[-1].extend([wx.StaticText(self, -1, 'Adresse :'), AutoTextCtrl(self, None, 'adresse')])
-            sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
-            self.parents_items[-1].extend([wx.StaticText(self, -1, 'Code postal :'), AutoNumericCtrl(self, None, 'code_postal', min=0, precision=0)])
-            sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
-            self.parents_items[-1].extend([wx.StaticText(self, -1, 'Ville :'), AutoTextCtrl(self, None, 'ville')])
-            sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
+            self.parents_items[-1].append(AutoTextCtrl(self, None, 'prenom'))
+            sizer2.AddMany([(wx.StaticText(self, -1, 'Prénom :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
+            self.parents_items[-1].append(AutoTextCtrl(self, None, 'nom'))
+            sizer2.AddMany([(wx.StaticText(self, -1, 'Nom :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
+            self.parents_items[-1].append(AutoTextCtrl(self, None, 'adresse'))
+            sizer2.AddMany([(wx.StaticText(self, -1, 'Adresse :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
+            self.parents_items[-1].append(AutoNumericCtrl(self, None, 'code_postal', min=0, precision=0))
+            sizer2.AddMany([(wx.StaticText(self, -1, 'Code postal :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
+            self.parents_items[-1].append(AutoTextCtrl(self, None, 'ville'))
+            sizer2.AddMany([(wx.StaticText(self, -1, 'Ville :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
             for label, field in ("Téléphone domicile", "telephone_domicile"), ("Téléphone portable", "telephone_portable"), ("Téléphone travail", "telephone_travail"):
                 sizer3 = wx.BoxSizer(wx.HORIZONTAL)
-                self.parents_items[-1].extend([wx.StaticText(self, -1, label+' :'), AutoPhoneCtrl(self, None, field), AutoTextCtrl(self, None, field+'_notes')])
+                self.parents_items[-1].extend([AutoPhoneCtrl(self, None, field), AutoTextCtrl(self, None, field+'_notes')])
                 sizer3.AddMany([self.parents_items[-1][-2], (self.parents_items[-1][-1], 1, wx.LEFT | wx.EXPAND, 5)])
-                sizer2.AddMany([(self.parents_items[-1][-3], 0, wx.ALIGN_CENTER_VERTICAL), (sizer3, 0, wx.EXPAND)])
-            self.parents_items[-1].extend([wx.StaticText(self, -1, 'Profession :'), AutoTextCtrl(self, None, 'profession')])
-            sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
-            self.parents_items[-1].extend([wx.StaticText(self, -1, 'E-mail :'), AutoTextCtrl(self, None, 'email')])
-            sizer2.AddMany([(self.parents_items[-1][-2], 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
+                sizer2.AddMany([(wx.StaticText(self, -1, label+' :'), 0, wx.ALIGN_CENTER_VERTICAL), (sizer3, 0, wx.EXPAND)])
+            self.parents_items[-1].append(AutoTextCtrl(self, None, 'profession'))
+            sizer2.AddMany([(wx.StaticText(self, -1, 'Profession :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
+            self.parents_items[-1].append(AutoTextCtrl(self, None, 'email'))
+            sizer2.AddMany([(wx.StaticText(self, -1, 'E-mail :'), 0, wx.ALIGN_CENTER_VERTICAL), (self.parents_items[-1][-1], 0, wx.EXPAND)])
             sizer11.Add(sizer2, 0, wx.EXPAND | wx.ALL, 5)
             if config.profil & PROFIL_FACTURATION:
                 panel = PeriodePanel(self, "revenus")
@@ -505,7 +506,7 @@ class ParentsPanel(InscriptionsTab):
                     titre = "Revenus et régime d'appartenance"
                     defaultPeriode = today.year-2
                 revenus_sizer = wx.StaticBoxSizer(wx.StaticBox(panel, -1, titre), wx.VERTICAL)
-                revenus_sizer.Add(PeriodeChoice(panel, lambda: Revenu(panel.instance), default=defaultPeriode), 0, wx.EXPAND | wx.ALL, 5)
+                revenus_sizer.Add(PeriodeChoice(panel, lambda obj: Revenu(obj.instance), default=defaultPeriode), 0, wx.EXPAND | wx.ALL, 5)
                 revenus_gridsizer = wx.FlexGridSizer(0, 2, 5, 10)
                 revenus_gridsizer.AddGrowableCol(1, 1)
                 revenus_gridsizer.AddMany([(wx.StaticText(panel, -1, 'Revenus annuels bruts :'), 0, wx.ALIGN_CENTER_VERTICAL), (AutoNumericCtrl(panel, None, 'revenu', precision=2), 0, wx.EXPAND)])
@@ -568,7 +569,7 @@ class ParentsPanel(InscriptionsTab):
                     self.relations_items[index].SetSelection(0)
                 else:
                     self.relations_items[index].SetSelection(parent.sexe)
-                for i, item in enumerate(self.parents_items[index]):
+                for item in self.parents_items[index]:
                     item.Show(parent is not None)
                     try:
                         item.SetInstance(parent)
@@ -701,7 +702,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         self.groupes_observer = None
         sizer = wx.BoxSizer(wx.VERTICAL)
         ligne_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        ligne_sizer.Add(PeriodeChoice(self, self.nouvelleInscription))
+        ligne_sizer.Add(PeriodeChoice(self, lambda obj: self.nouvelleInscription()))
         self.validation_button = wx.ToggleButton(self, -1, "Invalider l'inscription")
         ligne_sizer.Add(self.validation_button, 0, wx.LEFT, 10)
         self.Bind(wx.EVT_TOGGLEBUTTON, self.OnValidationInscription, self.validation_button)    

@@ -926,7 +926,7 @@ class PeriodeChoice(wx.BoxSizer):
 
     def EvtPeriodeAddButton(self, _):
         self.periode = len(self.instance)
-        new_periode = self.constructor()
+        new_periode = self.constructor(self.parent)
         if len(self.instance) > 0:
             last_periode = self.instance[-1]
             new_periode.debut = last_periode.fin + datetime.timedelta(1)
