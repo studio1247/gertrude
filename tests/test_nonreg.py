@@ -1272,11 +1272,11 @@ class PitchounsTests(GertrudeTestCase):
         self.add_journee_presence(inscrit, datetime.date(2017, 12, 18), 120, 219)  # 8h15
         self.add_journee_presence(inscrit, datetime.date(2017, 12, 19), 120, 207)  # 7h15
         self.add_journee_presence(inscrit, datetime.date(2017, 12, 21), 120, 222)  # 8h30
-        facture = Facture(inscrit, 2018, 1, options=TRACES)
+        facture = Facture(inscrit, 2018, 1)
         self.assert_prec2_equals(facture.heures_supplementaires, 96.5)  # si pas d'arrondi, sans doute pas juste mais pas demandé
         self.assert_prec2_equals(facture.total, 255.27)  # si pas d'arrondi
         database.creche.nom = "Multi- accueils collectif LES PITCHOUN'S"
-        facture = Facture(inscrit, 2018, 1, options=TRACES)
+        facture = Facture(inscrit, 2018, 1)
         self.assert_prec2_equals(facture.heures_supplementaires, 96.5)  # avec arrondi, juste
         self.assert_prec2_equals(facture.total, 258.62)  # avec arrondi comme demandé (config en dur)
 
@@ -1303,6 +1303,54 @@ class MairieDeMoulonTests(GertrudeTestCase):
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2017, 1, 1))
         self.assert_prec2_equals(cotisation.cotisation_mensuelle, 0.00)
+
+
+class RenardeauxTests(GertrudeTestCase):
+    def setUp(self):
+        GertrudeTestCase.setUp(self)
+        database.creche.type = TYPE_PARENTAL
+        database.creche.mode_facturation = FACTURATION_PSU
+        database.creche.temps_facturation = FACTURATION_DEBUT_MOIS_CONTRAT
+        database.creche.repartition = REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS
+        database.creche.facturation_jours_feries = ABSENCES_DEDUITES_EN_JOURS
+        database.creche.conges_inscription = GESTION_CONGES_INSCRIPTION_NON_MENSUALISES
+        database.creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
+        database.creche.arrondi_heures = SANS_ARRONDI
+        database.creche.arrondi_facturation = SANS_ARRONDI
+        database.creche.arrondi_semaines = ARRONDI_SEMAINE_PLUS_PROCHE
+        for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", "15 août", "1er novembre", "11 novembre", "25 décembre", "Lundi de Pâques", "Jeudi de l'Ascension", "Lundi de Pentecôte"):
+            self.add_ferie(label)
+        self.add_conge("01/08/2018", "31/08/2018", options=MOIS_SANS_FACTURE)
+        self.add_conge("23/07/2018", "20/08/2018")
+        self.add_conge("11/05/2018", "11/05/2018")
+
+    def test_adaptation(self):
+        inscrit = self.add_inscrit()
+        self.set_revenus(inscrit, 23924.00)
+        inscription = inscrit.inscriptions[0]
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.debut = datetime.date(2018, 2, 21)
+        inscription.fin_periode_adaptation = datetime.date(2018, 3, 1)
+        inscription.fin = datetime.date(2018, 8, 31)
+        inscription.frais_inscription = 25.00
+        for day in (0, 1, 3, 4):
+            self.add_inscription_timeslot(inscription, day, 8.5*12, 18*12)
+        cotisation = Cotisation(inscrit, datetime.date(2018, 2, 21))
+        self.assert_prec2_equals(cotisation.cotisation_mensuelle, 0.00)
+        self.assert_prec2_equals(cotisation.montant_heure_garde, 1.00)
+        cotisation = Cotisation(inscrit, datetime.date(2018, 3, 2))
+        self.assert_prec2_equals(cotisation.cotisation_mensuelle, 156.00)
+        self.assert_prec2_equals(cotisation.montant_heure_garde, 1.00)
+        self.add_journee_presence(inscrit, datetime.date(2018, 2, 21), 0, 0)  # 0h00
+        self.add_journee_presence(inscrit, datetime.date(2018, 2, 22), 100, 112)  # 1h00
+        self.add_journee_presence(inscrit, datetime.date(2018, 2, 23), 100, 124)  # 2h00
+        self.add_journee_presence(inscrit, datetime.date(2018, 2, 26), 100, 136)  # 3h00
+        self.add_journee_presence(inscrit, datetime.date(2018, 2, 27), 100, 160)  # 5h00
+        self.add_journee_presence(inscrit, datetime.date(2018, 2, 28), 100, 184)  # 7h00
+        facture = Facture(inscrit, 2018, 2)
+        self.assert_prec2_equals(facture.total, 25.0)  # uniquement les frais d'inscription
+        facture = Facture(inscrit, 2018, 3)
+        self.assert_prec2_equals(facture.total, 156 + 18.0)  # la mensualisation + les heures d'adaptation de février
 
 
 if __name__ == '__main__':

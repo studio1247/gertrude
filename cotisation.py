@@ -158,6 +158,7 @@ class Cotisation(object):
                 self.fin = self.inscription.fin_periode_adaptation
             else:
                 self.debut = self.inscription.fin_periode_adaptation + datetime.timedelta(1)
+                self.debut_inscription = self.debut
 
         if options & TRACES:
             print("\nCotisation de %s au %s ..." % (GetPrenomNom(inscrit), date))
@@ -318,6 +319,8 @@ class Cotisation(object):
                         print(" fin théorique en date du", fin_decompte_conges_et_factures)
                 else:
                     self.prorata = (self.fin_inscription != self.fin or self.debut_inscription != self.debut)
+                    if options & TRACES:
+                        print(" prorata appliqué")
                     date = self.debut
 
                 # debut_conge = None

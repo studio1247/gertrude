@@ -585,7 +585,7 @@ class FactureFinMois(FactureBase):
                         self.heures_facturees_par_mode[cotisation.mode_garde] += cotisation.heures_realisees
                     report = cotisation.CalculeFraisGarde(cotisation.heures_realisees)
                     self.report_cotisation_mensuelle += report
-                    # cotisation.prorata = False // TODO ? si oui => unittest
+                    # cotisation.prorata = False  # TODO ? si oui => unittest
                     if options & TRACES:
                         print(" cotisation periode adaptation :", report)
                 elif inscription.mode == MODE_FORFAIT_HEBDOMADAIRE:
