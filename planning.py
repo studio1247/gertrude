@@ -38,6 +38,7 @@ LINE_HEIGHT = 32  # px
 CHECKBOX_WIDTH = 25  # px
 COMMENT_BUTTON_WIDTH = 31  # px
 RECAP_WIDTH = 100  # px
+SCALE_HEIGHT = 25  # px
 
 try:
     BUTTON_BITMAPS = {ABSENT: (wx.Bitmap(GetBitmapFile("icone_vacances.png"), wx.BITMAP_TYPE_PNG), "Absent"),
@@ -886,7 +887,7 @@ class PlanningWidget(wx.Panel):
         self.options = options
         self.lines = []
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.scale_window = wx.Window(self, -1, size=(-1, 25))
+        self.scale_window = wx.Window(self, -1, size=(-1, SCALE_HEIGHT))
         self.sizer.Add(self.scale_window, 0, wx.EXPAND)
         self.internal_panel = PlanningScrollPanel(self, activity_combobox, options)
         self.sizer.Add(self.internal_panel, 1, wx.EXPAND)
@@ -923,7 +924,7 @@ class PlanningWidget(wx.Panel):
         if self.summary_panel:
             self.summary_panel.UpdateContents()
         if self.options & NO_SCROLL:
-            self.SetMinSize((-1, 25+5+LINE_HEIGHT*len(self.lines)))
+            self.SetMinSize((self.internal_panel.internal_panel.width, SCALE_HEIGHT + 10 + LINE_HEIGHT * len(self.lines)))
         self.Refresh()
 
     def get_summary(self):
