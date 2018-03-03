@@ -191,9 +191,9 @@ class Cotisation(object):
                     elif self.date >= datetime.date(2008, 9, 1):
                         revenu_debut, revenu_fin = revenus_parent.debut, revenus_parent.fin
                         if isinstance(revenu_debut, datetime.date):
-                            revenu_debut = datetime.date(revenu_debut.year + 2, revenu_debut.month, revenu_debut.day)
+                            revenu_debut = IncrDate(revenu_debut, years=+2)
                         if isinstance(revenu_fin, datetime.date):
-                            revenu_fin = datetime.date(revenu_fin.year + 2, revenu_fin.month, revenu_fin.day)
+                            revenu_fin = IncrDate(revenu_fin, years=+2)
                     else:
                         revenu_debut, revenu_fin = (GetYearStart(self.date), GetYearEnd(self.date))
                     if are_revenus_needed:
