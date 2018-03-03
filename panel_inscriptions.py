@@ -652,7 +652,7 @@ class ReferencePlanningPanel(PlanningWidget):
         self.parent = parent
         self.inscription = None
         self.state = None
-        PlanningWidget.__init__(self, parent, activity_choice, options=NO_ICONS | PRESENCES_ONLY | ACTIVITES | DEPASSEMENT_CAPACITE | NO_SALARIES)
+        PlanningWidget.__init__(self, parent, activity_choice, options=NO_ICONS | PRESENCES_ONLY | ACTIVITES | DEPASSEMENT_CAPACITE | NO_SALARIES | NO_SCROLL)
         
     def CheckLine(self, line, plages):
         if database.creche.seuil_alerte_inscription > 0:
@@ -954,7 +954,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
             
         for item in self.forfait_mensuel_items:
             item.Show(database.creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL)
-                            
+
         self.Layout()
 
     def SetPeriode(self, periode):
