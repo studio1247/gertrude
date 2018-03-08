@@ -28,14 +28,39 @@ class ExportComptaCotisationsModifications:
     title = "Export compta"
     template = "Export compta cotisations.txt"
 
-    def __init__(self, inscrits, periode):
+    def __init__(self, inscrits, periode, site=None):
         self.inscrits = inscrits
         self.periode = periode
-        self.default_output = "Export compta cotisations %s %d.txt" % (months[periode.month - 1], periode.year)
+        self.site = site
+        if site:
+            self.default_output = "Export compta cotisations %s %s %d.txt" % (site.nom, months[periode.month - 1], periode.year)
+        else:
+            self.default_output = "Export compta cotisations %s %d.txt" % (months[periode.month - 1], periode.year)
         self.email_to = None
         self.multi = False
         self.email = False
         self.errors = {}
+
+    @staticmethod
+    def generate_inextenso_line_mvt(inscrit, date, total):
+        template = "%(date)s;VEN;%(compte)s;%(debit)s;%(credit)s;%(libelle)s"
+        result = [
+            template % {
+                "date": date2str(date),
+                "compte": "706100",
+                "debit": "",
+                "credit": ("%.02f" % total).replace(".", ","),
+                "libelle": "Facture %s %s %d" % (inscrit.nom.upper(), months[date.month - 1], date.year)
+               },
+            template % {
+                "date": date2str(date),
+                "compte": inscrit.famille.code_client,
+                "debit": ("%.02f" % total).replace(".", ","),
+                "credit": "",
+                "libelle": "Facture %s %s %d" % (inscrit.nom.upper(), months[date.month - 1], date.year)
+            }
+        ]
+        return "\n".join(result)
 
     @staticmethod
     def generate_ciel_line_mvt(inscrit, date, total):
@@ -60,6 +85,8 @@ class ExportComptaCotisationsModifications:
         text = text.decode("latin-1")
         if "<lines-ciel-mvt>" in text or "<lines-ciel-tiers>" in text:
             return self.execute_ciel(text)
+        elif "<lines-inextenso-mvt>" in text:
+            return self.execute_inextenso(text)
         else:
             return self.execute_ebp(text)
 
@@ -81,6 +108,18 @@ class ExportComptaCotisationsModifications:
         text = text.replace("<lines-ciel-mvt>", mvt_section)
         text = text.replace("<lines-ciel-tiers>", tiers_section)
         return text.encode("latin-1"), self.errors
+
+    def execute_inextenso(self, text):
+        result = []
+        for inscrit in self.inscrits:
+            try:
+                facture = Facture(inscrit, self.periode.year, self.periode.month, NO_NUMERO)
+            except CotisationException as e:
+                self.errors["%s %s" % (inscrit.prenom, inscrit.nom)] = e.errors
+                continue
+            date = GetMonthStart(self.periode)
+            result.append(self.generate_inextenso_line_mvt(inscrit, date, facture.total))
+        return ("\n".join(result)).encode("latin-1"), self.errors
 
     def execute_ebp(self, text):
         errors = {}
