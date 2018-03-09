@@ -798,8 +798,8 @@ class VivreADomicileTests(GertrudeTestCase):
         inscription.fin_periode_adaptation = datetime.date(2011, 1, 5)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2011, 1, 3), NO_ADDRESS)
-        self.assertEquals(cotisation.assiette_mensuelle, 580.00)
-        self.assertEquals(cotisation.taux_effort, 0.03)
+        self.assert_prec2_equals(cotisation.assiette_mensuelle, 580.00)
+        self.assert_prec2_equals(cotisation.taux_effort, 0.03)
         self.add_journee_presence(inscrit, datetime.date(2011, 1, 5), 102, 126)  # 8h30 periode d'adaptation
         self.add_journee_presence(inscrit, datetime.date(2011, 1, 10), 102, 204)  # 8h30
         self.add_journee_presence(inscrit, datetime.date(2011, 1, 12), 102, 204)  # 8h30
@@ -815,6 +815,47 @@ class VivreADomicileTests(GertrudeTestCase):
         # on dirait que les heures d'adaptation partent dans les heures supp, alors que le total part dans la cotisation
         self.assert_prec2_equals(facture.heures_supplementaires, 61.5)
         self.assert_prec2_equals(facture.total, 10.46)
+
+
+class BabillageTests(GertrudeTestCase):
+    def setUp(self):
+        GertrudeTestCase.setUp(self)
+        database.creche.mode_facturation = FACTURATION_PAJE
+        database.creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
+        database.creche.temps_facturation = FACTURATION_FIN_MOIS
+        database.creche.type = TYPE_MICRO_CRECHE
+        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 7.8, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
+        database.creche.conges_inscription = GESTION_CONGES_INSCRIPTION_AUCUNE
+        database.creche.arrondi_semaines = ARRONDI_SEMAINE_PLUS_PROCHE
+        database.creche.facturation_jours_feries = ABSENCES_DEDUITES_EN_SEMAINES
+        self.add_conge("30/04/2018", "06/05/2018")
+        self.add_conge("06/08/2018", "19/08/2018")
+
+    def test_heures_supplementaires(self):
+        inscrit = self.add_inscrit()
+        self.add_frere(inscrit, datetime.date(2013, 1, 1))
+        inscription = inscrit.inscriptions[0]
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.debut = datetime.date(2017, 9, 4)
+        inscription.fin = datetime.date(2018, 8, 31)
+        inscription.semaines_conges = 5
+        self.add_inscription_timeslot(inscription, 0, 8.25*12, 17.5*12)
+        self.add_inscription_timeslot(inscription, 1, 8.25*12, 17.5*12)
+        self.add_inscription_timeslot(inscription, 3, 8.25*12, 17.5*12)
+        self.add_inscription_timeslot(inscription, 4, 8.25*12, 13.25*12)
+        cotisation = Cotisation(inscrit, datetime.date(2017, 9, 4), NO_ADDRESS)
+        self.assert_prec2_equals(cotisation.cotisation_mensuelle, 1000.51)
+        facture = Facture(inscrit, 2018, 1, options=TRACES)
+        self.assert_prec2_equals(facture.cotisation_mensuelle, 1000.51)
+        self.assert_prec2_equals(facture.heures_facturees, 149.5)
+        self.add_journee_presence(inscrit, datetime.date(2018, 1, 9), 8.25*12, 17.75*12)
+        self.add_journee_presence(inscrit, datetime.date(2018, 1, 12), 8.5*12, 19*12)
+        facture = Facture(inscrit, 2018, 1, options=TRACES)
+        self.assert_prec2_equals(facture.cotisation_mensuelle, 1000.51)
+        self.assert_prec2_equals(facture.supplement, 46.8)
+        self.assert_prec2_equals(facture.heures_facturees, 155.5)
+        self.assert_prec2_equals(facture.heures_supplementaires, 6.0)
+        self.assert_prec2_equals(facture.total, 1047.31)
 
 
 class BebebulTests(GertrudeTestCase):

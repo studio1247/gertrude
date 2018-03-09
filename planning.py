@@ -52,6 +52,7 @@ try:
                       ABSENCE_CONGE_SANS_PREAVIS: (wx.Bitmap(GetBitmapFile("icone_absence_sans_preavis.png"), wx.BITMAP_TYPE_PNG), STATE_LABELS[ABSENCE_CONGE_SANS_PREAVIS]),
                       CONGES_DEPASSEMENT: (wx.Bitmap(GetBitmapFile("icone_conges_depassement.png"), wx.BITMAP_TYPE_PNG), STATE_LABELS[CONGES_DEPASSEMENT]),
                       CONGES_SANS_SOLDE: (wx.Bitmap(GetBitmapFile("icone_conges_sans_solde.png"), wx.BITMAP_TYPE_PNG), STATE_LABELS[CONGES_SANS_SOLDE]),
+                      CONGES_RECUP_HEURES_SUPP: (wx.Bitmap(GetBitmapFile("icone_presence.png"), wx.BITMAP_TYPE_PNG), "Présent"),
                       }
 
     BULLE_BITMAP = wx.Bitmap(GetBitmapFile("bulle.png"))

@@ -1383,8 +1383,6 @@ def GetUnionTimeslots(timeslots, value=0):
                     found = True
                 elif timeslot1.debut <= timeslot2.debut or timeslot1.fin >= timeslot2.fin:
                     timeslots[i] = Timeslot(min(timeslot2.debut, timeslot1.debut), max(timeslot2.fin, timeslot1.fin), timeslot1.activity, value=value)
-                    # TODO non reg test à ajouter pour lutins canal L.H. le 22 février (supplement le soir)
-                    # timeslots[i] = Timeslot(min(timeslot2.debut, timeslot1.debut), max(timeslot2.fin, timeslot1.fin), timeslot1.activity, value=value)
                     found = True
             if not found:
                 timeslots.append(timeslot1)
