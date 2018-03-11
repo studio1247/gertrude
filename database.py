@@ -105,7 +105,7 @@ class Day(object):
     def GetPlageHoraire(self):
         debut, fin = None, None
         for timeslot in self.timeslots:
-            if timeslot.debut and timeslot.fin:
+            if timeslot.debut and timeslot.fin and timeslot.activity.mode == MODE_PRESENCE:
                 if not debut or timeslot.debut < debut:
                     debut = timeslot.debut / 12
                 if not fin or timeslot.fin > fin:
