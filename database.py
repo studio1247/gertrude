@@ -83,7 +83,7 @@ class Day(object):
                 default = CONGES_RECUP_HEURES_SUPP
             elif mode == MODE_ABSENCE_NON_PREVENUE:
                 default = ABSENCE_NON_PREVENUE
-            elif mode != MODE_PLACE_SOUHAITEE:  # TODO and not checkbox?
+            elif mode not in (MODE_PLACE_SOUHAITEE, MODE_SANS_HORAIRES, MODE_SYSTEMATIQUE_SANS_HORAIRES):
                 return PRESENT
         return default
 

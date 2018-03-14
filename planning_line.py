@@ -207,7 +207,7 @@ class ChildPlanningLine(BasePlanningLine):
         # print("add_timeslot", debut, fin, value, self.day, self.state)
         if not self.day:
             self.add_timeslots(self.timeslots)
-        elif self.state < 0:
+        elif self.state < 0 and activity.mode != MODE_SANS_HORAIRES:
             self.clear_timeslots()
         self.inscrit.days.add(TimeslotInscrit(date=self.date, debut=debut, fin=fin, activity=activity))
         self.update()
