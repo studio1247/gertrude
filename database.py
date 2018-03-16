@@ -31,7 +31,7 @@ from parameters import *
 import bcrypt
 from config import config
 
-DB_VERSION = 127
+DB_VERSION = 128
 
 Base = declarative_base()
 
@@ -213,6 +213,7 @@ class Creche(Base):
     mode_facturation = Column(Integer, default=FACTURATION_PSU)
     temps_facturation = Column(Integer, default=FACTURATION_FIN_MOIS)
     repartition = Column(Integer, default=REPARTITION_MENSUALISATION_12MOIS)
+    prorata = Column(Integer, default=PRORATA_JOURS_OUVRES)
     conges_inscription = Column(Integer, default=0)
     tarification_activites = Column(Integer, default=0)
     traitement_maladie = Column(Integer, default=DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_OUVRES)
@@ -3048,6 +3049,12 @@ class Database(object):
 
             if version < 127:
                 self.engine.execute("UPDATE inscrits SET preinscription_state=preinscription_state+1 WHERE preinscription_state>=2")
+
+            if version < 128:
+                self.engine.execute("ALTER TABLE creche ADD prorata INTEGER")
+                self.engine.execute("UPDATE creche SET prorata=1")
+                self.engine.execute("UPDATE creche SET prorata=0 WHERE repartition==2")
+                self.engine.execute("UPDATE creche SET repartition=3 WHERE repartition==2")
 
             # update database version
             version_entry.value = DB_VERSION

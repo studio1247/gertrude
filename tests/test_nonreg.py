@@ -274,7 +274,8 @@ class PAJETests(GertrudeTestCase):
         
     def test_nospetitspouces(self):
         database.creche.mode_facturation = FACTURATION_PAJE
-        database.creche.repartition = REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS
+        database.creche.repartition = REPARTITION_MENSUALISATION_CONTRAT
+        database.creche.prorata = PRORATA_NONE
         database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 6.70, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
         database.creche.bureaux.append(Bureau(debut=datetime.date(2010, 1, 1)))
         inscrit = self.add_inscrit()
@@ -414,6 +415,8 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
     def setUp(self):
         GertrudeTestCase.setUp(self)
         database.creche.mode_facturation = FACTURATION_PSU
+        database.creche.repartition = REPARTITION_MENSUALISATION_12MOIS
+        database.creche.prorata = PRORATA_JOURS_OUVRES
         database.creche.temps_facturation = FACTURATION_FIN_MOIS
         database.creche.facturation_jours_feries = ABSENCES_DEDUITES_EN_JOURS
         database.creche.arrondi_heures = ARRONDI_HEURE
@@ -845,12 +848,12 @@ class BabillageTests(GertrudeTestCase):
         self.add_inscription_timeslot(inscription, 4, 8.25*12, 13.25*12)
         cotisation = Cotisation(inscrit, datetime.date(2017, 9, 4), NO_ADDRESS)
         self.assert_prec2_equals(cotisation.cotisation_mensuelle, 1000.51)
-        facture = Facture(inscrit, 2018, 1, options=TRACES)
+        facture = Facture(inscrit, 2018, 1)
         self.assert_prec2_equals(facture.cotisation_mensuelle, 1000.51)
         self.assert_prec2_equals(facture.heures_facturees, 149.5)
         self.add_journee_presence(inscrit, datetime.date(2018, 1, 9), 8.25*12, 17.75*12)
         self.add_journee_presence(inscrit, datetime.date(2018, 1, 12), 8.5*12, 19*12)
-        facture = Facture(inscrit, 2018, 1, options=TRACES)
+        facture = Facture(inscrit, 2018, 1)
         self.assert_prec2_equals(facture.cotisation_mensuelle, 1000.51)
         self.assert_prec2_equals(facture.supplement, 46.8)
         self.assert_prec2_equals(facture.heures_facturees, 155.5)
@@ -988,6 +991,7 @@ class LaCabaneAuxFamillesTests(GertrudeTestCase):
         database.creche.temps_facturation = FACTURATION_DEBUT_MOIS_CONTRAT
         database.creche.type = TYPE_MICRO_CRECHE
         database.creche.repartition = REPARTITION_MENSUALISATION_12MOIS
+        database.creche.prorata = PRORATA_JOURS_OUVRES
         database.creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
         database.creche.gestion_depart_anticipe = True
         database.creche.regularisation_fin_contrat = True
@@ -1129,7 +1133,8 @@ class OPagaioTests(GertrudeTestCase):
         database.creche.gestion_depart_anticipe = True
         database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 9.5, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
         database.creche.temps_facturation = FACTURATION_FIN_MOIS
-        database.creche.repartition = REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS
+        database.creche.repartition = REPARTITION_MENSUALISATION_CONTRAT
+        database.creche.prorata = PRORATA_NONE
         database.creche.facturation_periode_adaptation = PERIODE_ADAPTATION_GRATUITE
         self.add_conge("26/12/2016", "31/12/2016")
         self.add_conge("24/04/2017", "29/04/2017")
@@ -1244,7 +1249,8 @@ class PitchounsTests(GertrudeTestCase):
         database.creche.mode_facturation = FACTURATION_PSU
         database.creche.gestion_depart_anticipe = True
         database.creche.temps_facturation = FACTURATION_DEBUT_MOIS_CONTRAT
-        database.creche.repartition = REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS
+        database.creche.repartition = REPARTITION_MENSUALISATION_CONTRAT
+        database.creche.prorata = PRORATA_NONE
         database.creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
         database.creche.arrondi_heures = SANS_ARRONDI
         database.creche.arrondi_facturation = ARRONDI_DEMI_HEURE
@@ -1352,7 +1358,8 @@ class RenardeauxTests(GertrudeTestCase):
         database.creche.type = TYPE_PARENTAL
         database.creche.mode_facturation = FACTURATION_PSU
         database.creche.temps_facturation = FACTURATION_DEBUT_MOIS_CONTRAT
-        database.creche.repartition = REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS
+        database.creche.repartition = REPARTITION_MENSUALISATION_CONTRAT
+        database.creche.prorata = PRORATA_NONE
         database.creche.facturation_jours_feries = ABSENCES_DEDUITES_EN_JOURS
         database.creche.conges_inscription = GESTION_CONGES_INSCRIPTION_NON_MENSUALISES
         database.creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS

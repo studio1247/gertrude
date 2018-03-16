@@ -215,11 +215,53 @@ class FactureFinMois(FactureBase):
         if database.creche.mode_saisie_planning == SAISIE_HORAIRE:
             date = self.debut_recap
             while date.month == mois:
-                if date not in database.creche.jours_fermeture and (database.creche.conges_inscription != GESTION_CONGES_INSCRIPTION_MENSUALISES or date not in inscrit.jours_conges):
+                jour_ouvre = (date not in database.creche.jours_fermeture and (database.creche.conges_inscription != GESTION_CONGES_INSCRIPTION_MENSUALISES or date not in inscrit.jours_conges))
+                if jour_ouvre:
                     self.jours_ouvres += 1
-                    inscription = inscrit.get_inscription(date)
-                    if inscription:
-                        self.site = inscription.site
+
+                inscription = inscrit.get_inscription(date)
+                if inscription:
+                    self.site = inscription.site
+                    if self.last_cotisation and self.last_cotisation.Include(date):
+                        cotisation = self.last_cotisation
+                        cotisation.jours_inscription += 1
+                    else:
+                        cotisation = Cotisation(inscrit, date, options=NO_ADDRESS | self.options)
+                        self.last_cotisation = cotisation
+                        cotisation.jours_inscription = 1
+                        cotisation.jours_ouvres = 0
+                        cotisation.heures_mois_ajustees = cotisation.heures_mois
+                        cotisation.heures_reference = 0.0
+                        cotisation.heures_realisees = 0.0
+                        cotisation.heures_realisees_non_facturees = 0.0
+                        cotisation.heures_facturees_non_realisees = 0.0
+                        cotisation.nombre_jours_maladie_deduits = 0
+                        cotisation.heures_maladie = 0.0
+                        cotisation.heures_contractualisees = 0.0
+                        cotisation.heures_supplementaires = 0.0
+                        cotisation.total_realise_non_facture = 0.0
+                        cotisations_mensuelles.append(cotisation)
+                        self.taux_effort = cotisation.taux_effort
+                        self.montant_heure_garde = cotisation.montant_heure_garde
+                        if options & TRACES:
+                            print(" => cotisation mensuelle à partir de %s :" % date, cotisation.cotisation_mensuelle)
+
+                        if inscription.mode == MODE_FORFAIT_GLOBAL_CONTRAT:
+                            reste_heures = inscription.forfait_mensuel_heures
+                            index = cotisation.debut
+                            while index < date and reste_heures > 0:
+                                day = inscrit.days.get(index, inscription.get_day_from_date(index))
+                                reste_heures -= day.get_duration(mode_arrondi=database.creche.arrondi_facturation)
+                                index += datetime.timedelta(1)
+                            cotisation.reste_heures = max(0, reste_heures)
+                            # if cotisation.heures_realisees > reste_heures:
+                            #    cotisation.heures_supplementaires = cotisation.heures_realisees - reste_heures
+                            #    self.CalculeSupplement(cotisation, cotisation.heures_supplementaires)
+                            #    if self.options & TRACES:
+                            #        print(" heures supplémentaires :", cotisation.heures_realisees, "-", reste_heures, "=", cotisation.heures_supplementaires, "heures")
+
+                    if jour_ouvre:
+                        cotisation.jours_ouvres += 1
                         inscritState = inscrit.GetState(date, inscrit.creche.arrondi_facturation)
                         # print date, str(inscritState)
                         state, heures_reference, heures_realisees, heures_facturees = inscritState.state, inscritState.heures_contractualisees, inscritState.heures_realisees, inscritState.heures_facturees
@@ -239,45 +281,7 @@ class FactureFinMois(FactureBase):
                         #  if heures_realisees_non_facturees > heures_reference:
                         #    heures_supplementaires_facturees -= heures_realisees_non_facturees - heures_reference
                         #    print "RETRANCHE" , heures_supplementaires_facturees
-
-                        if self.last_cotisation and self.last_cotisation.Include(date):
-                            cotisation = self.last_cotisation
-                            cotisation.jours_ouvres += 1
-                            cotisation.heures_reference += heures_reference
-                        else:
-                            cotisation = Cotisation(inscrit, date, options=NO_ADDRESS | self.options)
-                            cotisation.jours_ouvres = 1
-                            cotisation.heures_mois_ajustees = cotisation.heures_mois
-                            cotisation.heures_reference = heures_reference
-                            cotisation.heures_realisees = 0.0
-                            cotisation.heures_realisees_non_facturees = 0.0
-                            cotisation.heures_facturees_non_realisees = 0.0
-                            cotisation.nombre_jours_maladie_deduits = 0
-                            cotisation.heures_maladie = 0.0
-                            cotisation.heures_contractualisees = 0.0
-                            cotisation.heures_supplementaires = 0.0
-                            cotisation.total_realise_non_facture = 0.0
-                            cotisations_mensuelles.append(cotisation)
-                            self.last_cotisation = cotisation
-                            self.taux_effort = cotisation.taux_effort
-                            self.montant_heure_garde = cotisation.montant_heure_garde
-                            if options & TRACES:
-                                print(" => cotisation mensuelle à partir de %s :" % date, cotisation.cotisation_mensuelle)
-
-                            if cotisation.inscription.mode == MODE_FORFAIT_GLOBAL_CONTRAT:
-                                reste_heures = cotisation.inscription.forfait_mensuel_heures
-                                index = cotisation.debut
-                                while index < date and reste_heures > 0:
-                                    day = inscrit.days.get(index, cotisation.inscription.get_day_from_date(index))
-                                    reste_heures -= day.get_duration(mode_arrondi=database.creche.arrondi_facturation)
-                                    index += datetime.timedelta(1)
-                                cotisation.reste_heures = max(0, reste_heures)
-                                #if cotisation.heures_realisees > reste_heures:
-                                #    cotisation.heures_supplementaires = cotisation.heures_realisees - reste_heures
-                                #    self.CalculeSupplement(cotisation, cotisation.heures_supplementaires)
-                                #    if self.options & TRACES:
-                                #        print(" heures supplémentaires :", cotisation.heures_realisees, "-", reste_heures, "=", cotisation.heures_supplementaires, "heures")
-
+                        cotisation.heures_reference += heures_reference
                         if (cotisation.mode_inscription, cotisation.heures_semaine) in heures_hebdomadaires:
                             heures_hebdomadaires[(cotisation.mode_inscription, cotisation.heures_semaine)] += 1
                         else:
@@ -671,10 +675,17 @@ class FactureFinMois(FactureBase):
                     # avant il y avait ce commentaire: ne marche pas pour saint julien, mais c'est redemande (2 octobre 2012), normal pour le premier mois pour un enfant qui arrive mi-septembre
                     # avec le test suivant on devrait etre bon, parce que sinon on effectue la regle de 3 dans la cotisation + ici
                     if cotisation.prorata and not prorata_effectue:
-                        new_prorata = (prorata * cotisation.jours_ouvres) / self.jours_ouvres
-                        new_prorata_heures = (prorata_heures * cotisation.jours_ouvres) / self.jours_ouvres
-                        if options & TRACES:
-                            print(" prorata : %f * %f / %f = %f" % (prorata, cotisation.jours_ouvres, self.jours_ouvres, new_prorata))
+                        if database.creche.prorata == PRORATA_MOIS_COMPLET:
+                            days_count = GetMonthDaysCount(self.debut_recap)
+                            new_prorata = (prorata * cotisation.jours_inscription) / days_count
+                            new_prorata_heures = (prorata_heures * cotisation.jours_inscription) / days_count
+                            if options & TRACES:
+                                print(" prorata (mois complet) : %f * %f / %f = %f" % (prorata, cotisation.jours_inscription, days_count, new_prorata))
+                        else:
+                            new_prorata = (prorata * cotisation.jours_ouvres) / self.jours_ouvres
+                            new_prorata_heures = (prorata_heures * cotisation.jours_ouvres) / self.jours_ouvres
+                            if options & TRACES:
+                                print(" prorata (jours ouvrés) : %f * %f / %f = %f" % (prorata, cotisation.jours_ouvres, self.jours_ouvres, new_prorata))
                         prorata = new_prorata
                         prorata_heures = new_prorata_heures
 
@@ -686,12 +697,18 @@ class FactureFinMois(FactureBase):
                     self.heures_facture_par_mode[cotisation.mode_garde] += prorata_heures
 
                 if cotisation.montant_mensuel_activites:
-                    montant_activites_mensualisees = cotisation.montant_mensuel_activites * cotisation.jours_ouvres / self.jours_ouvres
+                    if database.creche.prorata == PRORATA_MOIS_COMPLET:
+                        days_count = GetMonthDaysCount(self.debut_recap)
+                        montant_activites_mensualisees = cotisation.montant_mensuel_activites * cotisation.jours_inscription / days_count
+                        if options & TRACES:
+                            print(" activites mensualisees : %0.2f * %d / %d = %0.2f" % (cotisation.montant_mensuel_activites, cotisation.jours_inscription, days_count, montant_activites_mensualisees))
+                    else:
+                        montant_activites_mensualisees = cotisation.montant_mensuel_activites * cotisation.jours_ouvres / self.jours_ouvres
+                        if options & TRACES:
+                            print(" activites mensualisees : %0.2f * %d / %d = %0.2f" % (cotisation.montant_mensuel_activites, cotisation.jours_ouvres, self.jours_ouvres, montant_activites_mensualisees))
                     self.supplement_activites += montant_activites_mensualisees
                     self.detail_supplement_activites["Activites mensualisees"] += montant_activites_mensualisees
                     self.tarif_supplement_activites["Activites mensualisees"] = montant_activites_mensualisees
-                    if options & TRACES:
-                        print(" activites mensualisees : %0.2f * %d / %d = %0.2f" % (cotisation.montant_mensuel_activites, cotisation.jours_ouvres, self.jours_ouvres, montant_activites_mensualisees))
 
                 if database.creche.regularisation_fin_contrat or database.creche.regularisation_conges_non_pris:
                     depart_anticipe = database.creche.gestion_depart_anticipe and inscription.depart and self.debut_recap <= inscription.depart <= self.fin_recap

@@ -35,9 +35,14 @@ modes_facturation = [("Forfait 10h / jour", FACTURATION_FORFAIT_10H),
 
 modes_mensualisation = [("Avec mensualisation (sur 12 mois). Uniquement disponible si jours fériés non déduits", REPARTITION_MENSUALISATION_12MOIS),
                         ("Avec mensualisation (sur la période du contrat)", REPARTITION_MENSUALISATION_CONTRAT),
-                        ("Avec mensualisation (sur la période du contrat), mois incomplets au même tarif", REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS),
                         ("Sans mensualisation", REPARTITION_SANS_MENSUALISATION)
                         ]
+
+modes_prorata = [
+    ("Pas de prorata", PRORATA_NONE),
+    ("Prorata sur le nombre de jours d'ouverture", PRORATA_JOURS_OUVRES),
+    ("Prorata sur le nombre de jours du mois", PRORATA_MOIS_COMPLET)
+]
 
 modes_facturation_absences = [("En semaines (nombre de semaines entré à l'inscription)", ABSENCES_DEDUITES_EN_SEMAINES),
                               ("En jours (décompte précis des jours de présence sur l'ensemble du contrat)", ABSENCES_DEDUITES_EN_JOURS),
@@ -924,8 +929,12 @@ class ParametersPanel(AutoTab):
         mode_facturation_choice = AutoChoiceCtrl(self, database.creche, "mode_facturation", modes_facturation)
         self.Bind(wx.EVT_CHOICE, self.onModeFacturationChoice, mode_facturation_choice)
         sizer.AddMany([CreateLabelTuple("Mode de facturation :"), (mode_facturation_choice, 1, wx.EXPAND)])
-        sizer.AddMany([CreateLabelTuple(""),
-                       (AutoChoiceCtrl(self, database.creche, "repartition", modes_mensualisation), 1, wx.EXPAND)])
+        sizer2 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer2.AddMany([
+            (AutoChoiceCtrl(self, database.creche, "repartition", modes_mensualisation), 1, wx.EXPAND | wx.RIGHT, 5),
+            CreateLabelTuple("Prorata en cas d'arrivée ou de départ en cours de mois"),
+            (AutoChoiceCtrl(self, database.creche, "prorata", modes_prorata), 1, wx.EXPAND)])
+        sizer.AddMany([CreateLabelTuple(""), (sizer2, 1, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple(""),
                        (AutoChoiceCtrl(self, database.creche, "temps_facturation", temps_facturation), 1, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple("Revenus pris en compte :"),
@@ -953,9 +962,9 @@ class ParametersPanel(AutoTab):
         sizer.AddMany([CreateLabelTuple("Traitement des absences pour maladie sans justificatif :"), (AutoChoiceCtrl(self, database.creche, "gestion_maladie_sans_justificatif", items=modes_gestion_standard), 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple("Traitement des absences non prévenues :"), (AutoChoiceCtrl(self, database.creche, "gestion_absences_non_prevenues", items=modes_gestion_standard), 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple("Traitement des préavis de congés :"), (AutoChoiceCtrl(self, database.creche, "gestion_preavis_conges", items=modes_gestion_standard), 0, wx.EXPAND)])
-        sizer2 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer2.AddMany([(AutoChoiceCtrl(self, database.creche, "gestion_depart_anticipe", items=modes_gestion_standard), 1, wx.EXPAND), (wx.StaticText(self, -1, "Régularisation de la facturation en fin de contrat :"), 0, wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, database.creche, "regularisation_fin_contrat", [("Gérée", True), ("Non gérée", False)]), 1, wx.EXPAND), (wx.StaticText(self, -1, "Régularisation pour les congés non pris :"), 0, wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, database.creche, "regularisation_conges_non_pris", [("Gérée", True), ("Non gérée", False)]), 1, wx.EXPAND)])
-        sizer.AddMany([CreateLabelTuple("Traitement des départs anticipés :"), (sizer2, 0, wx.EXPAND)])
+        sizer3 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer3.AddMany([(AutoChoiceCtrl(self, database.creche, "gestion_depart_anticipe", items=modes_gestion_standard), 1, wx.EXPAND), (wx.StaticText(self, -1, "Régularisation de la facturation en fin de contrat :"), 0, wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, database.creche, "regularisation_fin_contrat", [("Gérée", True), ("Non gérée", False)]), 1, wx.EXPAND), (wx.StaticText(self, -1, "Régularisation pour les congés non pris :"), 0, wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER_VERTICAL, 10), (AutoChoiceCtrl(self, database.creche, "regularisation_conges_non_pris", [("Gérée", True), ("Non gérée", False)]), 1, wx.EXPAND)])
+        sizer.AddMany([CreateLabelTuple("Traitement des départs anticipés :"), (sizer3, 0, wx.EXPAND)])
         sizer.AddMany([CreateLabelTuple("Changement de groupe :"), (AutoChoiceCtrl(self, database.creche, "changement_groupe_auto", [("Manuel", False), ("Automatique", True)]), 0, wx.EXPAND)])
 
         alertes_sizer = wx.BoxSizer(wx.HORIZONTAL)

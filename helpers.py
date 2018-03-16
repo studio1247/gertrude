@@ -107,6 +107,10 @@ def GetMonthEnd(date):
         return datetime.date(date.year, date.month + 1, 1) - datetime.timedelta(1)
 
 
+def GetMonthDaysCount(date):
+    return (GetNextMonthStart(date) - GetMonthStart(date)).days
+
+
 def GetNextMonthStart(date):
     if date.month == 12:
         return datetime.date(date.year+1, 1, 1)

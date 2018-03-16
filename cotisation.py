@@ -307,23 +307,27 @@ class Cotisation(object):
                     raise CotisationException(errors)
 
                 if database.creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
-                    date = self.debut_inscription
+                    debut_decompte_conges_et_factures = self.debut_inscription
                     fin_decompte_conges_et_factures = self.fin_inscription
                     if self.debut_inscription.year in database.creche.mois_sans_facture and self.debut_inscription.month not in database.creche.mois_sans_facture[self.debut_inscription.year]:
-                        date = GetMonthStart(self.debut_inscription)
+                        debut_decompte_conges_et_factures = GetMonthStart(self.debut_inscription)
                     if self.fin_inscription.year in database.creche.mois_sans_facture and self.fin_inscription.month not in database.creche.mois_sans_facture[self.fin_inscription.year]:
                         fin_decompte_conges_et_factures = GetMonthEnd(self.fin_inscription)
-                    # TODO ajouter un test de non reg (ptits loulous mail du 20/02/2018)
                     if options & TRACES:
-                        print(" début théorique en date du", date)
+                        print(" début théorique en date du", debut_decompte_conges_et_factures)
                         print(" fin théorique en date du", fin_decompte_conges_et_factures)
                 else:
+                    debut_decompte_conges_et_factures = self.debut
+
+                if database.creche.prorata == PRORATA_NONE:
                     self.prorata = (self.fin_inscription != self.fin or self.debut_inscription != self.debut)
-                    if options & TRACES:
-                        print(" prorata appliqué")
-                    date = self.debut
+                    if self.prorata and (options & TRACES):
+                        print(" prorata appliqué quand même (changement de facturation en cours de contrat)")
+                    else:
+                        debut_decompte_conges_et_factures = self.debut
 
                 # debut_conge = None
+                date = debut_decompte_conges_et_factures
                 while date <= fin_decompte_conges_et_factures:
                     heures = self.inscription.get_day_from_date(date).get_duration(self.inscrit.creche.arrondi_heures)
                     if heures:
@@ -361,10 +365,7 @@ class Cotisation(object):
                 if options & TRACES:
                     print(" heures période :", self.heures_periode)
                 self.semaines_periode = 1 + (self.fin_inscription - self.debut_inscription).days // 7
-                if database.creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
-                    self.nombre_factures = GetNombreFacturesContrat(self.debut_inscription, fin_decompte_conges_et_factures)
-                else:
-                    self.nombre_factures = GetNombreFacturesContrat(self.debut, fin_decompte_conges_et_factures)
+                self.nombre_factures = GetNombreFacturesContrat(debut_decompte_conges_et_factures, fin_decompte_conges_et_factures)
 
                 if options & TRACES:
                     print(" nombres de factures :", self.nombre_factures)
@@ -378,16 +379,7 @@ class Cotisation(object):
                         if options & TRACES:
                             print(" arrondi heures mensuelles : %f" % self.heures_mois)
             else:
-                if database.creche.repartition == REPARTITION_MENSUALISATION_CONTRAT_DEBUT_FIN_INCLUS:
-                    if self.fin_inscription is None:
-                        errors.append(" - La période d'inscription n'a pas de fin.")
-                        raise CotisationException(errors)
-                    if database.creche.facturation_periode_adaptation in (PERIODE_ADAPTATION_GRATUITE, PERIODE_ADAPTATION_HORAIRES_REELS) and self.inscription.fin_periode_adaptation:
-                        self.debut_inscription = self.inscription.fin_periode_adaptation + datetime.timedelta(1)
-                    self.semaines_periode = GetNombreSemainesPeriode(self.debut_inscription, self.fin_inscription)
-                    self.nombre_factures = GetNombreFacturesContrat(self.debut_inscription, self.fin_inscription)
-                    self.prorata = False  # Fait pour O-pagaio (self.fin_inscription != self.fin or self.debut_inscription != self.debut)
-                elif database.creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
+                if database.creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
                     if self.fin_inscription is None:
                         errors.append(" - La période d'inscription n'a pas de fin.")
                         raise CotisationException(errors)
@@ -396,6 +388,8 @@ class Cotisation(object):
                             self.debut_inscription = self.inscription.fin_periode_adaptation + datetime.timedelta(1)
                     self.semaines_periode = GetNombreSemainesPeriode(self.debut_inscription, self.fin_inscription)
                     self.nombre_factures = GetNombreFacturesContrat(self.debut_inscription, self.fin_inscription)
+                    if database.creche.prorata == PRORATA_NONE:
+                        self.prorata = False  # Fait pour O-pagaio (self.fin_inscription != self.fin or self.debut_inscription != self.debut)
                 elif database.creche.repartition == REPARTITION_SANS_MENSUALISATION:
                     if self.fin_inscription is None:
                         self.semaines_periode = 52
