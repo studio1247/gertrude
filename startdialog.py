@@ -131,7 +131,14 @@ class StartDialog(wx.Dialog):
                 config.readonly = True
 
         self.loaded = True
-        database.load()
+        try:
+            database.load()
+        except Exception as e:
+            self.AppendMessage("=" * 50 + "\n")
+            self.AppendMessage("Erreur : %s\n" % e)
+            self.AppendMessage("=" * 50 + "\n")
+            return
+
         if (config.options & NO_PASSWORD) or len(database.creche.users) == 0:
             config.profil = PROFIL_ALL | PROFIL_ADMIN
             self.StartFrame()
