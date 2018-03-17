@@ -227,6 +227,11 @@ class Cotisation(object):
         else:
             if options & TRACES:
                 print(" pas de barème CAF")
+
+        if database.creche.mode_facturation in (FACTURATION_PAJE, FACTURATION_PAJE_10H):
+            periode_tarifs = Select(database.creche.tarifs_horaires, self.date)
+            if periode_tarifs:
+                self.AjustePeriode(periode_tarifs)
                     
         self.assiette_mensuelle = self.assiette_annuelle / 12
         
