@@ -1,4 +1,5 @@
 release.py
 check_previsionnel.py
 check_factures.py
+store_factures.py
 *.db
