@@ -584,6 +584,7 @@ class Creche(Base):
         creche = MODE_CRECHE
         forfait = MODE_FORFAIT_MENSUEL
         urgence = MODE_ACCUEIL_URGENCE
+        site = site.lower()
         for tarif in self.tarifs_speciaux:
             try:
                 exec("%s = %r" % (tarif.label.lower().replace(" ", "_"), tarifs & (1 << tarif.idx)))
