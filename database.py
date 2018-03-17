@@ -2423,7 +2423,12 @@ class Database(object):
 
     def reload(self):
         print("Chargement de la base de données %s..." % self.uri)
+        self.sanitize()
         self.creche = self.query(Creche).first()
+
+    def sanitize(self):
+        self.query(TimeslotInscrit).filter_by(activity=None).delete()
+        self.query(TimeslotInscription).filter_by(activity=None).delete()
 
     def exists(self):
         return database_exists(self.uri) and self.engine.dialect.has_table(self.engine.connect(), DBSettings.__tablename__)
