@@ -26,6 +26,7 @@ from sqlalchemy.orm import *
 from sqlalchemy.ext.declarative import *
 from sqlalchemy_utils import database_exists
 from sqlalchemy.orm.collections import collection, attribute_mapped_collection
+from version import VERSION
 from helpers import *
 from parameters import *
 import bcrypt
@@ -36,6 +37,7 @@ DB_VERSION = 128
 Base = declarative_base()
 
 KEY_VERSION = "VERSION"
+KEY_RELEASE = "RELEASE"
 
 
 class DBSettings(Base):
@@ -2377,7 +2379,6 @@ class Database(object):
         self.query = None
         self.add = None
         self.delete = None
-        self.commit = None
         self.rollback = None
         self.flush = None
         self.creche = None
@@ -2393,9 +2394,20 @@ class Database(object):
         self.query = self.session.query
         self.add = self.session.add
         self.delete = self.session.delete
-        self.commit = self.session.commit
         self.rollback = self.session.rollback
         self.flush = self.session.flush
+
+    def commit(self):
+        if self.session:
+            release_query = self.query(DBSettings).filter_by(key=KEY_RELEASE)
+            if release_query.count() == 0:
+                self.session.add(DBSettings(key=KEY_RELEASE, value=VERSION))
+            else:
+                release_entry = release_query.one()
+                release = release_entry.value
+                if release != VERSION:
+                    release_entry.value = VERSION
+            self.session.commit()
 
     def load(self):
         if self.exists():
