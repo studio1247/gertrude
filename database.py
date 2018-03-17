@@ -578,7 +578,7 @@ class Creche(Base):
                 return True
         return False
 
-    def eval_formule_tarif(self, formule, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs):
+    def eval_formule_tarif(self, formule, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs, site):
         # print 'eval_formule_tarif', 'mode=%d' % mode, handicap, 'revenus=%f' % revenus, 'enfants=%d' % enfants, 'jours=%d' % jours, 'heures=%f' % heures, reservataire, nom, 'parents=%d' % parents, chomage, conge_parental, 'heures_mois=%f' % heures_mois, heure_mois
         hg = MODE_HALTE_GARDERIE
         creche = MODE_CRECHE
@@ -641,6 +641,7 @@ class Creche(Base):
         enfants = 1
         reservataire = False
         nom = "gertrude"
+        site = ""
         paje = paje1
         for tarif in self.tarifs_speciaux:
             try:
@@ -686,9 +687,9 @@ class Creche(Base):
     def EvalTauxEffort(self, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs):
         return self.eval_formule_taux_effort(self.conversion_formule_taux_effort, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs)
 
-    def eval_tarif(self, date, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs):
+    def eval_tarif(self, date, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs, site):
         conversion_formule = Select(self.tarifs_horaires, date).conversion_formule
-        return self.eval_formule_tarif(conversion_formule, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs)
+        return self.eval_formule_tarif(conversion_formule, mode, handicap, revenus, enfants, jours, heures, reservataire, nom, parents, chomage, conge_parental, heures_mois, heure_mois, paje, tarifs, site)
 
     def GetAllergies(self):
         return [allergie.strip() for allergie in self.allergies.split(",") if allergie.strip()]
