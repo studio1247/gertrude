@@ -563,7 +563,9 @@ class FactureFinMois(FactureBase):
                             heures, None,
                             cotisation.tranche_paje,
                             inscrit.famille.tarifs | inscription.tarifs,
-                            inscription.site.nom if inscription.site else "")
+                            inscription.site.nom if inscription.site else "",
+                            inscrit.GetPeriodeInscriptions()[0]
+                        )
                         if unite == TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE:
                             montant = tarif * heures
                         elif tarif / heures > 10.0:
