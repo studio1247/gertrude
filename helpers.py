@@ -118,6 +118,13 @@ def GetNextMonthStart(date):
         return datetime.date(date.year, date.month+1, 1)
 
 
+def GetDurationMonths(start, end):
+    if start and end:
+        return end.year * 12 + end.month - start.year * 12 - start.month + 1
+    else:
+        return None
+
+
 def GetTrimestreStart(date):
     return datetime.date(date.year, 1 + 3 * ((date.month - 1) // 3), 1)
 

@@ -695,6 +695,7 @@ def GetCotisationFields(cotisation):
               ('heures-mois', GetHeureString(cotisation.heures_mois)),
               ('debut-periode', cotisation.debut),
               ('fin-periode', cotisation.fin),
+              ('mois-periode', GetDurationMonths(cotisation.debut, cotisation.fin)),
               ('heures-periode', GetHeureString(cotisation.heures_periode)),
               ('semaines-periode', cotisation.semaines_periode),
               ('factures-periode', cotisation.nombre_factures),
