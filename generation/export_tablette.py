@@ -15,6 +15,9 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+from __future__ import print_function
+
 from constants import *
 from functions import *
 from facture import *
@@ -32,11 +35,15 @@ class ExportTabletteModifications(object):
         self.gauge = None
         self.email = None
         self.site = None
+        self.array_enfants = {}
+        self.array_salaries = {}
 
     def FetchJournal(self):
         journal = config.connection.LoadJournal()
         self.array_enfants = {}
         self.array_salaries = {}
+        if not journal:
+            return
         lines = journal.split("\n")
         for line in lines:
             try:
@@ -124,7 +131,7 @@ class ExportTabletteModifications(object):
             if salarie:
                 self.AddSheet(salarie, self.array_salaries[key], GetSalarieFields(salarie))
             else:
-                print("Salarie inconnu")
+                print("Salarié inconnu")
                         
         self.spreadsheet.removeChild(self.template)
         
