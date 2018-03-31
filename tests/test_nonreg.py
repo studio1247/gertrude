@@ -829,8 +829,10 @@ class BabillageTests(GertrudeTestCase):
         database.creche.type = TYPE_MICRO_CRECHE
         database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 7.8, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
         database.creche.conges_inscription = GESTION_CONGES_INSCRIPTION_AUCUNE
-        database.creche.arrondi_semaines = ARRONDI_SEMAINE_PLUS_PROCHE
+        database.creche.arrondi_semaines = ARRONDI_SEMAINE_AVEC_LIMITE_52_SEMAINES
         database.creche.facturation_jours_feries = ABSENCES_DEDUITES_EN_SEMAINES
+        database.creche.repartition = REPARTITION_MENSUALISATION_CONTRAT
+        database.creche.prorata = PRORATA_NONE
         self.add_conge("30/04/2018", "06/05/2018")
         self.add_conge("06/08/2018", "19/08/2018")
 
@@ -859,6 +861,20 @@ class BabillageTests(GertrudeTestCase):
         self.assert_prec2_equals(facture.heures_facturees, 155.5)
         self.assert_prec2_equals(facture.heures_supplementaires, 6.0)
         self.assert_prec2_equals(facture.total, 1047.31)
+
+    def test_max_52_semaines(self):
+        inscrit = self.add_inscrit()
+        self.add_frere(inscrit, datetime.date(2013, 10, 3))
+        inscription = inscrit.inscriptions[0]
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.debut = datetime.date(2018, 9, 1)
+        inscription.fin = datetime.date(2019, 8, 31)
+        inscription.semaines_conges = 5
+        self.add_inscription_timeslot(inscription, 0, 13.25 * 12, 18.5 * 12)
+        self.add_inscription_timeslot(inscription, 1, 8.75 * 12, 18.5 * 12)
+        self.add_inscription_timeslot(inscription, 2, 8.75 * 12, 18.5 * 12)
+        cotisation = Cotisation(inscrit, datetime.date(2018, 9, 1), NO_ADDRESS)
+        self.assert_prec2_equals(cotisation.cotisation_mensuelle, 756.11)
 
 
 class BebebulTests(GertrudeTestCase):

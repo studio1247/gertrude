@@ -476,7 +476,7 @@ def GetNombreSemainesPeriode(debut, fin):
         jours += 1
     if database.creche.arrondi_semaines in (ARRONDI_SEMAINE_SUPERIEURE, ARRONDI_SEMAINE_AVEC_LIMITE_52_SEMAINES):
         result = (jours + 6) // 7
-        if database.creche.arrondi_semaines == ARRONDI_SEMAINE_AVEC_LIMITE_52_SEMAINES and GetDateAnniversaire(debut) < fin:
+        if database.creche.arrondi_semaines == ARRONDI_SEMAINE_AVEC_LIMITE_52_SEMAINES and GetDateAnniversaire(debut) > fin:
             return min(52, result)
         else:
             return result

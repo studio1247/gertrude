@@ -807,7 +807,7 @@ class TarifHoraire(Base):
 
     def UpdateFormule(self, changed=True):
         if changed:
-            print('update formule_taux_horaire', self.formule)
+            # print('update formule_taux_horaire', self.formule)
             self._formule = str(self.formule)
         self.conversion_formule = self.get_formule_conversion(self.formule)
 
