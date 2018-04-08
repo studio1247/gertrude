@@ -40,9 +40,9 @@ config.first_date = datetime.date(2010, 1, 1)
 
 class DatesTestCase(unittest.TestCase):
     def test_incr_date(self):
-        self.assertEquals(IncrDate(datetime.date(2010, 12, 31), years=1, months=1), datetime.date(2012, 1, 31))
-        self.assertEquals(IncrDate(datetime.date(2010, 3, 31), years=0, months=1), datetime.date(2010, 5, 1))
-        self.assertEquals(IncrDate(datetime.date(2016, 2, 29), years=1, months=0), datetime.date(2017, 3, 1))
+        self.assertEqual(IncrDate(datetime.date(2010, 12, 31), years=1, months=1), datetime.date(2012, 1, 31))
+        self.assertEqual(IncrDate(datetime.date(2010, 3, 31), years=0, months=1), datetime.date(2010, 5, 1))
+        self.assertEqual(IncrDate(datetime.date(2016, 2, 29), years=1, months=0), datetime.date(2017, 3, 1))
 
 
 class GertrudeTestCase(unittest.TestCase):
@@ -142,14 +142,14 @@ class PlanningTests(GertrudeTestCase):
         day = BasePlanningLine()
         day.set_activity(0, 10, self.activity_presence)
         day.set_activity(2, 8, self.activity_ski)
-        self.assertEquals(len(day.timeslots), 3)
+        self.assertEqual(len(day.timeslots), 3)
     
     def test_repas(self):
         from planning import BasePlanningLine
         day = BasePlanningLine()
         day.set_activity(0, 10, self.activity_presence)
         day.set_activity(2, 8, self.activity_repas)
-        self.assertEquals(len(day.timeslots), 2)
+        self.assertEqual(len(day.timeslots), 2)
 
 
 class DocumentsTests(GertrudeTestCase):
@@ -189,25 +189,25 @@ class DocumentsTests(GertrudeTestCase):
     def test_planning_detaille(self):
         modifications = PlanningDetailleModifications((datetime.date(2010, 9, 7), datetime.date(2010, 9, 30)))
         errors = GenerateOODocument(modifications, filename="./test.odg", gauge=None)
-        self.assertEquals(len(errors), 0)
+        self.assertEqual(len(errors), 0)
         os.unlink("./test.odg")
         
     def test_coordonnees_parents(self):
         modifications = CoordonneesModifications(None, datetime.date(2010, 9, 7))
         errors = GenerateOODocument(modifications, filename="./test.odt", gauge=None)
-        self.assertEquals(len(errors), 0)
+        self.assertEqual(len(errors), 0)
         os.unlink("./test.odt")
 
     def test_releves_trimestriels(self):
         modifications = EtatsTrimestrielsModifications(None, 2011)
         errors = GenerateOODocument(modifications, filename="./test.ods", gauge=None)
-        self.assertEquals(len(errors), 0)
+        self.assertEqual(len(errors), 0)
         os.unlink("./test.ods")    
 
     def test_releves_detailles(self):
         modifications = ReleveDetailleModifications(None, 2011)
         errors = GenerateOODocument(modifications, filename="./test.ods", gauge=None)
-        self.assertEquals(len(errors), 0)
+        self.assertEqual(len(errors), 0)
         os.unlink("./test.ods")    
 
 
@@ -222,7 +222,7 @@ class PSUTests(GertrudeTestCase):
         inscription.fin = datetime.date(2010, 8, 31)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2010, 1, 1), NO_ADDRESS)
-        self.assertEquals(cotisation.nombre_factures, 8)
+        self.assertEqual(cotisation.nombre_factures, 8)
 
 
 class NosPetitsPoucesTests(GertrudeTestCase):
@@ -407,8 +407,8 @@ class MarmousetsTests(GertrudeTestCase):
         inscrit.add_conge(conge)
         cotisation = Cotisation(inscrit, datetime.date(2010, 1, 4), NO_ADDRESS)
         self.assert_prec2_equals(cotisation.heures_semaine, 37.0)
-        self.assertEquals(cotisation.heures_periode, 971.0)
-        self.assertEquals(cotisation.nombre_factures, 7)
+        self.assertEqual(cotisation.heures_periode, 971.0)
+        self.assertEqual(cotisation.nombre_factures, 7)
 
 
 class DessineMoiUnMoutonTests(GertrudeTestCase):
@@ -447,8 +447,8 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2010, 9, 1))
         self.assert_prec2_equals(cotisation.heures_semaine, 45.0)
-        self.assertEquals(cotisation.heures_mois, 196.0)
-        self.assertEquals(cotisation.nombre_factures, 4)
+        self.assertEqual(cotisation.heures_mois, 196.0)
+        self.assertEqual(cotisation.nombre_factures, 4)
 
     def test_9sept_31dec(self):
         inscrit = self.add_inscrit()
@@ -463,8 +463,8 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2010, 9, 1))
         self.assert_prec2_equals(cotisation.heures_semaine, 45.0)
-        self.assertEquals(cotisation.heures_mois, 183.0)
-        self.assertEquals(cotisation.nombre_factures, 4)
+        self.assertEqual(cotisation.heures_mois, 183.0)
+        self.assertEqual(cotisation.nombre_factures, 4)
 
     def test_1janv_31dec(self):
         inscrit = self.add_inscrit()
@@ -479,8 +479,8 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2010, 9, 1))
         self.assert_prec2_equals(cotisation.heures_semaine, 48.0)
-        self.assertEquals(cotisation.heures_mois, 199.0)
-        self.assertEquals(cotisation.nombre_factures, 11)
+        self.assertEqual(cotisation.heures_mois, 199.0)
+        self.assertEqual(cotisation.nombre_factures, 11)
         facture = Facture(inscrit, 2010, 9)
         self.assert_prec2_equals(facture.total_contractualise, 248.75)
         self.assert_prec2_equals(facture.total_facture, 248.75)
@@ -496,7 +496,7 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         self.assert_prec2_equals(cotisation.heures_semaine, 5.0)
         self.add_journee_presence(inscrit, datetime.date(2010, 9, 8), 96, 204)
         facture = Facture(inscrit, 2010, 9)
-        self.assertEquals(facture.heures_supplementaires, 4.0)
+        self.assertEqual(facture.heures_supplementaires, 4.0)
 
     def test_heures_supp_2_plages_horaires_sur_1_jour(self):
         inscrit = self.add_inscrit()
@@ -509,7 +509,7 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         self.assert_prec2_equals(cotisation.heures_semaine, 10.0)
         self.add_journee_presence(inscrit, datetime.date(2010, 9, 8), 88, 94)
         facture = Facture(inscrit, 2010, 9)
-        self.assertEquals(facture.heures_supplementaires, 1.0)
+        self.assertEqual(facture.heures_supplementaires, 1.0)
 
     def test_prorata_suite_a_naissance_enfant(self):
         database.creche.type = TYPE_ASSOCIATIF
@@ -526,14 +526,14 @@ class DessineMoiUnMoutonTests(GertrudeTestCase):
         self.add_inscription_timeslot(inscription, 4, 90, 198)
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2016, 9)
-        self.assertEquals(facture.total_contractualise, 277.5)
-        self.assertEquals(facture.total_facture, 277.5)
+        self.assertEqual(facture.total_contractualise, 277.5)
+        self.assertEqual(facture.total_facture, 277.5)
         facture = Facture(inscrit, 2016, 11)
-        self.assertEquals(facture.total_contractualise, 165.0)
-        self.assertEquals(facture.total_facture, 165.0)
+        self.assertEqual(facture.total_contractualise, 165.0)
+        self.assertEqual(facture.total_facture, 165.0)
         facture = Facture(inscrit, 2016, 10)
-        self.assertEquals(facture.total_contractualise, 245.36)
-        self.assertEquals(facture.total_facture, 245.36)
+        self.assertEqual(facture.total_contractualise, 245.36)
+        self.assertEqual(facture.total_facture, 245.36)
 
 
 class PetitsMoussesTests(GertrudeTestCase):
@@ -559,7 +559,7 @@ class PetitsMoussesTests(GertrudeTestCase):
         cotisation = Cotisation(inscrit, datetime.date(2013, 1, 1))
         self.assert_prec2_equals(cotisation.heures_semaine, 30.0)
         self.assert_prec2_equals(cotisation.heures_mois, 128.18)
-        self.assertEquals(cotisation.nombre_factures, 11)
+        self.assertEqual(cotisation.nombre_factures, 11)
         self.assert_prec2_equals(cotisation.cotisation_mensuelle, 302.51)
         facture = Facture(inscrit, 2013, 1, NO_ADDRESS)
         self.assert_prec2_equals(facture.total, 302.51)
@@ -589,10 +589,10 @@ class LoupandisesTests(GertrudeTestCase):
         self.add_journee_presence(inscrit, datetime.date(2010, 11, 9), 105, 201)
         self.add_journee_presence(inscrit, datetime.date(2010, 11, 18), 120, 120)
         facture = Facture(inscrit, 2010, 11)
-        self.assertEquals(round(facture.heures_facturees, 2), 29.0)
-        self.assertEquals(round(facture.heures_contractualisees, 2), 29.0)
-        self.assertEquals(round(facture.heures_supplementaires, 2), 6.0)
-        self.assertEquals(round(facture.heures_realisees, 2), 29.0)
+        self.assertEqual(round(facture.heures_facturees, 2), 29.0)
+        self.assertEqual(round(facture.heures_contractualisees, 2), 29.0)
+        self.assertEqual(round(facture.heures_supplementaires, 2), 6.0)
+        self.assertEqual(round(facture.heures_realisees, 2), 29.0)
         self.assert_prec2_equals(facture.total, 36.25)
 
 
@@ -617,15 +617,15 @@ class FacturationDebutMoisContratTests(GertrudeTestCase):
         self.add_inscription_timeslot(inscription, 3, 93, 213)  # 10h
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2010, 3)
-        self.assertEquals(facture.total, 90.0*7.0)
+        self.assertEqual(facture.total, 90.0*7.0)
         facture = Facture(inscrit, 2011, 3)
-        self.assertEquals(facture.cotisation_mensuelle, 90.0*7.0)
-        self.assertEquals(facture.total, (4*4+12*10)*7.0)
+        self.assertEqual(facture.cotisation_mensuelle, 90.0*7.0)
+        self.assertEqual(facture.total, (4*4+12*10)*7.0)
         self.add_journee_presence(inscrit, datetime.date(2011, 2, 14), 90, 189)  # 8h15
         self.add_journee_presence(inscrit, datetime.date(2011, 2, 15), 90, 189)  # 8h15
         facture = Facture(inscrit, 2011, 3)
-        self.assertEquals(facture.cotisation_mensuelle, 90.0*7.0)
-        self.assertEquals(facture.total, (4*4.0+12*10.0-1.75-1.75) * 7.0)
+        self.assertEqual(facture.cotisation_mensuelle, 90.0*7.0)
+        self.assertEqual(facture.total, (4*4.0+12*10.0-1.75-1.75) * 7.0)
 
     def test_temps_partiel(self):
         inscrit = self.add_inscrit()
@@ -638,15 +638,15 @@ class FacturationDebutMoisContratTests(GertrudeTestCase):
         self.add_inscription_timeslot(inscription, 3, 93, 213)  # 10h
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2010, 3)
-        self.assertEquals(facture.total, (5*4+14*10)*7.0)
+        self.assertEqual(facture.total, (5*4+14*10)*7.0)
         facture = Facture(inscrit, 2011, 2)
-        self.assertEquals(facture.total, (4*4+12*10)*7.0)
+        self.assertEqual(facture.total, (4*4+12*10)*7.0)
         facture = Facture(inscrit, 2011, 3)
-        self.assertEquals(facture.total, 1120.0)
+        self.assertEqual(facture.total, 1120.0)
         self.add_journee_presence(inscrit, datetime.date(2011, 2, 14), 90, 189)  # 8h15
         self.add_journee_presence(inscrit, datetime.date(2011, 2, 15), 90, 189)  # 8h15
         facture = Facture(inscrit, 2011, 3)
-        self.assertEquals(facture.total, 1120.0 - (1.75 * 2) * 7.0)
+        self.assertEqual(facture.total, 1120.0 - (1.75 * 2) * 7.0)
 
     def test_halte_garderie(self):
         inscrit = self.add_inscrit()
@@ -659,15 +659,15 @@ class FacturationDebutMoisContratTests(GertrudeTestCase):
         self.add_inscription_timeslot(inscription, 3, 93, 213)  # 10h
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2010, 3)
-        self.assertEquals(facture.total, (5*4+14*10)*9.5)
+        self.assertEqual(facture.total, (5*4+14*10)*9.5)
         facture = Facture(inscrit, 2011, 2)
-        self.assertEquals(facture.total, 1292.0)
+        self.assertEqual(facture.total, 1292.0)
         facture = Facture(inscrit, 2011, 3)
-        self.assertEquals(facture.total, 1520.0)
+        self.assertEqual(facture.total, 1520.0)
         self.add_journee_presence(inscrit, datetime.date(2011, 2, 14), 90, 189)  # 8h15
         self.add_journee_presence(inscrit, datetime.date(2011, 2, 15), 90, 189)  # 8h15
         facture = Facture(inscrit, 2011, 3)
-        self.assertEquals(facture.total, 1520.0 - (1.75 * 2) * 9.5)
+        self.assertEqual(facture.total, 1520.0 - (1.75 * 2) * 9.5)
 
 
 class MonPetitBijouTests(GertrudeTestCase):
@@ -691,24 +691,24 @@ class MonPetitBijouTests(GertrudeTestCase):
         self.add_inscription_timeslot(inscription, 3, 93, 213)  # 10h
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2010, 3)
-        self.assertEquals(facture.total, (5*4+14*10)*7.0)
+        self.assertEqual(facture.total, (5*4+14*10)*7.0)
         for m in range(3, 13):
             Facture(inscrit, 2010, m).Cloture()
         Facture(inscrit, 2011, 1).Cloture()
         Facture(inscrit, 2011, 2).Cloture()
         facture = Facture(inscrit, 2011, 3)
-        self.assertEquals(facture.cotisation_mensuelle, 90.0*7.0)
-        self.assertEquals(facture.total, (5*4.0+14*10.0)*7.0)
+        self.assertEqual(facture.cotisation_mensuelle, 90.0*7.0)
+        self.assertEqual(facture.total, (5*4.0+14*10.0)*7.0)
         self.add_journee_presence(inscrit, datetime.date(2011, 2, 14), 90, 189)  # 8h15 => 1.75h en moins
         self.add_journee_presence(inscrit, datetime.date(2011, 2, 15), 90, 189)  # 8h15 => 1.75h en moins
         facture = Facture(inscrit, 2011, 3)
-        self.assertEquals(facture.cotisation_mensuelle, 90.0*7.0)
-        self.assertEquals(facture.total, (5*4.0+14*10.0-2*1.75) * 7.0)  # 1095.5
+        self.assertEqual(facture.cotisation_mensuelle, 90.0*7.0)
+        self.assertEqual(facture.total, (5*4.0+14*10.0-2*1.75) * 7.0)  # 1095.5
         self.add_journee_presence(inscrit, datetime.date(2011, 3, 7), 90, 189)  # 8h15
         self.add_journee_presence(inscrit, datetime.date(2011, 3, 8), 90, 189)  # 8h15
         facture = Facture(inscrit, 2011, 3)
-        self.assertEquals(facture.cotisation_mensuelle, 90.0*7.0)
-        self.assertEquals(facture.total, (5*4.0+14*10.0-4*1.75) * 7.0)
+        self.assertEqual(facture.cotisation_mensuelle, 90.0*7.0)
+        self.assertEqual(facture.total, (5*4.0+14*10.0-4*1.75) * 7.0)
 
     def test_temps_partiel(self):
         inscrit = self.add_inscrit()
@@ -721,19 +721,19 @@ class MonPetitBijouTests(GertrudeTestCase):
         self.add_inscription_timeslot(inscription, 3, 93, 213)  # 10h
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2010, 3)
-        self.assertEquals(facture.total, (5*4+14*10)*7.0)
+        self.assertEqual(facture.total, (5*4+14*10)*7.0)
         for m in range(3, 13):
             Facture(inscrit, 2010, m).Cloture()
         Facture(inscrit, 2011, 1).Cloture()
         facture = Facture(inscrit, 2011, 2)
-        self.assertEquals(facture.total, (4*4+12*10)*7.0)
+        self.assertEqual(facture.total, (4*4+12*10)*7.0)
         facture.Cloture()
         facture = Facture(inscrit, 2011, 3)
-        self.assertEquals(facture.total, (5*4.0+14*10.0) * 7.0) # 1120.0
+        self.assertEqual(facture.total, (5*4.0+14*10.0) * 7.0) # 1120.0
         self.add_journee_presence(inscrit, datetime.date(2011, 3, 7), 90, 189) # 8h15
         self.add_journee_presence(inscrit, datetime.date(2011, 3, 8), 90, 189) # 8h15
         facture = Facture(inscrit, 2011, 3)
-        self.assertEquals(facture.total, 1120.0 - 2*1.75*7.0)
+        self.assertEqual(facture.total, 1120.0 - 2*1.75*7.0)
 
     def test_halte_garderie(self):
         inscrit = self.add_inscrit()
@@ -746,19 +746,19 @@ class MonPetitBijouTests(GertrudeTestCase):
         self.add_inscription_timeslot(inscription, 3, 93, 213)  # 10h
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2010, 3)
-        self.assertEquals(facture.total, (5*4+14*10)*9.5)
+        self.assertEqual(facture.total, (5*4+14*10)*9.5)
         for m in range(3, 13):
             Facture(inscrit, 2010, m).Cloture()
         Facture(inscrit, 2011, 1).Cloture()
         facture = Facture(inscrit, 2011, 2)
-        self.assertEquals(facture.total, 1292.0)
+        self.assertEqual(facture.total, 1292.0)
         facture.Cloture()
         facture = Facture(inscrit, 2011, 3)
-        self.assertEquals(facture.total, 1520.0)
+        self.assertEqual(facture.total, 1520.0)
         self.add_journee_presence(inscrit, datetime.date(2011, 3, 7), 90, 189)  # 8h15
         self.add_journee_presence(inscrit, datetime.date(2011, 3, 8), 90, 189)  # 8h15
         facture = Facture(inscrit, 2011, 3)
-        self.assertEquals(facture.total, 1520.0 - 2*1.75*9.5)
+        self.assertEqual(facture.total, 1520.0 - 2*1.75*9.5)
 
     def test_periode_adaptation(self):
         database.creche.temps_facturation = FACTURATION_FIN_MOIS
@@ -770,12 +770,12 @@ class MonPetitBijouTests(GertrudeTestCase):
         inscription.fin_periode_adaptation = datetime.date(2011, 9, 1)
         inscrit.inscriptions.append(inscription)
         facture = Facture(inscrit, 2011, 4)
-        self.assertEquals(facture.total, 0)
+        self.assertEqual(facture.total, 0)
         self.add_journee_presence(inscrit, datetime.date(2011, 4, 14), 90, 102) # 1h
         facture = Facture(inscrit, 2011, 4)
-        self.assertEquals(facture.total, 7.00)
-        self.assertEquals(facture.heures_facturees, 1.0)
-        self.assertEquals(facture.heures_realisees, 1.0)
+        self.assertEqual(facture.total, 7.00)
+        self.assertEqual(facture.heures_facturees, 1.0)
+        self.assertEqual(facture.heures_realisees, 1.0)
 
 
 class VivreADomicileTests(GertrudeTestCase):
@@ -960,9 +960,9 @@ class RibambelleTests(GertrudeTestCase):
         self.add_inscription_timeslot(inscription, 4, 93, 213)  # 10h
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2015, 10, 1), NO_ADDRESS)
-        self.assertEquals(cotisation.montant_heure_garde, 1.25)
+        self.assertEqual(cotisation.montant_heure_garde, 1.25)
         facture = Facture(inscrit, 2015, 10)
-        self.assertEquals(facture.total, 275)
+        self.assertEqual(facture.total, 275)
 
     def test_adaptation(self):
         inscrit = self.add_inscrit()
@@ -1130,7 +1130,7 @@ class PiousPiousTests(GertrudeTestCase):
         self.add_inscription_timeslot(inscription, 4, 102, 219)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2017, 7, 12), NO_ADDRESS)
-        self.assertEquals(cotisation.cotisation_mensuelle, 0.0)
+        self.assertEqual(cotisation.cotisation_mensuelle, 0.0)
         cotisation = Cotisation(inscrit, datetime.date(2017, 8, 26), NO_ADDRESS)
         self.assert_prec2_equals(cotisation.cotisation_mensuelle, 92.00)
         self.add_journee_presence(inscrit, datetime.date(2017, 8, 22), 120, 168)  # 4h00
@@ -1167,7 +1167,7 @@ class OPagaioTests(GertrudeTestCase):
             self.add_inscription_timeslot(inscription, i, 96, 216)  # 10h
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2016, 9, 26), NO_ADDRESS | NO_PARENTS)
-        self.assertEquals(cotisation.heures_semaine, 50)
+        self.assertEqual(cotisation.heures_semaine, 50)
 
     def test_adaptation_a_cheval_sur_2_mois(self):
         inscrit = self.add_inscrit()
@@ -1181,11 +1181,11 @@ class OPagaioTests(GertrudeTestCase):
         self.add_inscription_timeslot(inscription, 4, 96, 150)  # 4h30
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2016, 9, 26), NO_ADDRESS)
-        self.assertEquals(cotisation.cotisation_mensuelle, 0.0)
+        self.assertEqual(cotisation.cotisation_mensuelle, 0.0)
         cotisation = Cotisation(inscrit, datetime.date(2016, 10, 3), NO_ADDRESS)
         self.assert_prec2_equals(cotisation.cotisation_mensuelle, 538.48)
         facture = Facture(inscrit, 2016, 9)
-        self.assertEquals(facture.total, 0.0)
+        self.assertEqual(facture.total, 0.0)
         facture = Facture(inscrit, 2016, 10)
         self.assert_prec2_equals(facture.total, 538.48)
 
@@ -1293,7 +1293,7 @@ class PitchounsTests(GertrudeTestCase):
         self.add_inscription_timeslot(inscription, 4, 102, 156)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2017, 4, 1), NO_ADDRESS)
-        self.assertEquals(cotisation.cotisation_mensuelle, 133.0)
+        self.assertEqual(cotisation.cotisation_mensuelle, 133.0)
         inscription = Inscription(inscrit=inscrit)
         inscription.mode = MODE_TEMPS_PARTIEL
         inscription.semaines_conges = 1
@@ -1305,7 +1305,7 @@ class PitchounsTests(GertrudeTestCase):
         self.add_inscription_timeslot(inscription, 4, 102, 195)
         inscrit.inscriptions.append(inscription)
         cotisation = Cotisation(inscrit, datetime.date(2017, 8, 29), NO_ADDRESS)
-        self.assertEquals(cotisation.cotisation_mensuelle, 248.0)
+        self.assertEqual(cotisation.cotisation_mensuelle, 248.0)
         facture = Facture(inscrit, 2017, 8)
         self.assert_prec2_equals(facture.total, 0.0)
         facture = Facture(inscrit, 2017, 9)
