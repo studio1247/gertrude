@@ -1751,6 +1751,8 @@ class Inscrit(Base):
                 else:
                     union = GetUnionHeures(journee, reference)
                     if inscription.IsInPeriodeAdaptation(date):
+                        if self.creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS:
+                            union = journee.timeslots
                         for timeslot in union:
                             heures_facturees += tranche * GetDureeArrondie(self.creche.arrondi_facturation_periode_adaptation, timeslot.debut, timeslot.fin)
                     else:

@@ -1515,6 +1515,41 @@ class EleaTests(GertrudeTestCase):
         self.assert_prec2_equals(facture.total, 84.24)
         self.assert_prec2_equals(facture.heures_facturees, 73.25)
 
+    def test_heures_facturees_sur_adaptation(self):
+        inscrit = self.add_inscrit()
+        self.set_revenus(inscrit, 8247.6)
+        inscription = inscrit.inscriptions[0]
+        self.add_frere(inscrit)
+        self.add_frere(inscrit)
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.debut = datetime.date(2018, 3, 19)
+        inscription.fin = datetime.date(2018, 8, 3)
+        inscription.fin_periode_adaptation = datetime.date(2018, 3, 30)
+        inscrit.add_conge(CongeInscrit(inscrit=inscrit, debut="30/03/2018", fin="30/03/2018"))
+        for day in (0, 2, 4):
+            self.add_inscription_timeslot(inscription, day, 9 * 12, 18.5 * 12)
+        cotisation = Cotisation(inscrit, datetime.date(2018, 3, 31))
+        self.assert_prec2_equals(cotisation.cotisation_mensuelle, 16.8)
+        self.add_activite(inscrit, datetime.date(2018, 3, 1), 100, 160, database.creche.states[HOPITAL])
+        self.add_activite(inscrit, datetime.date(2018, 3, 5), 100, 160, database.creche.states[HOPITAL])
+        self.add_activite(inscrit, datetime.date(2018, 3, 6), 100, 160, database.creche.states[HOPITAL])
+        self.add_activite(inscrit, datetime.date(2018, 3, 7), 100, 160, database.creche.states[HOPITAL])
+        self.add_activite(inscrit, datetime.date(2018, 3, 8), 100, 160, database.creche.states[HOPITAL])
+        self.add_journee_presence(inscrit, datetime.date(2018, 3, 19), 10*12, 11*12)
+        self.add_journee_presence(inscrit, datetime.date(2018, 3, 20), 16*12, 16.5*12)
+        self.add_activite(inscrit, datetime.date(2018, 3, 21), 100, 160, database.creche.states[VACANCES])
+        self.add_journee_presence(inscrit, datetime.date(2018, 3, 23), 10 * 12, 11 * 12)
+        self.add_journee_presence(inscrit, datetime.date(2018, 3, 26), 9.5 * 12, 12.5 * 12)
+        self.add_journee_presence(inscrit, datetime.date(2018, 3, 27), 14.5 * 12, 17.5 * 12)
+        self.add_journee_presence(inscrit, datetime.date(2018, 3, 28), 11 * 12, 18.5 * 12)
+        self.add_journee_presence(inscrit, datetime.date(2018, 3, 29), 15 * 12, 18 * 12)
+        state = inscrit.GetState(datetime.date(2018, 3, 19))
+        self.assert_prec2_equals(state.heures_facturees, 1.0)
+        self.assert_prec2_equals(state.heures_realisees, 1.0)
+        facture = Facture(inscrit, 2018, 3)
+        self.assert_prec2_equals(facture.total, 3.99)
+        self.assert_prec2_equals(facture.heures_facturees, 19.0)
+
 
 if __name__ == '__main__':
     unittest.main()
