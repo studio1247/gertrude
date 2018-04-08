@@ -295,7 +295,6 @@ class FactureFinMois(FactureBase):
                             self.jours_maladie_deduits.append(date)
                             cotisation.nombre_jours_maladie_deduits += 1
                             cotisation.heures_maladie += heures_reference
-                            self.heures_facturees_par_mode[cotisation.mode_garde] -= heures_reference
                             if database.creche.nom == "LA VOLIERE":
                                 pass
                             elif database.creche.mode_facturation == FACTURATION_FORFAIT_10H:

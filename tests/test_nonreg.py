@@ -1509,9 +1509,11 @@ class EleaTests(GertrudeTestCase):
         self.add_activite(inscrit, datetime.date(2018, 3, 27), 100, 160, database.creche.states[VACANCES])
         self.add_journee_presence(inscrit, datetime.date(2018, 3, 28), 9*12, 15*12)
         self.add_journee_presence(inscrit, datetime.date(2018, 3, 29), 8.75*12, 14.75*12)
+        state = inscrit.GetState(datetime.date(2018, 3, 1))
+        self.assert_prec2_equals(state.heures_facturees, 0)
         facture = Facture(inscrit, 2018, 3)
         self.assert_prec2_equals(facture.total, 84.24)
-        self.assert_prec2_equals(facture.heures_facturees, 48.25)
+        self.assert_prec2_equals(facture.heures_facturees, 73.25)
 
 
 if __name__ == '__main__':
