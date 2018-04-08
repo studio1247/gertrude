@@ -1723,7 +1723,9 @@ class Inscrit(Base):
                             heures_facturees += timeslot.get_duration()
                         heures_facturees = heures_facturees / 60
                 return State(state, heures_reference, 0, heures_facturees)
-            elif state in (MALADE, HOPITAL, ABSENCE_NON_PREVENUE, ABSENCE_CONGE_SANS_PREAVIS):
+            elif state == HOPITAL:
+                return State(state, heures_reference, 0, 0)
+            elif state in (MALADE, ABSENCE_NON_PREVENUE, ABSENCE_CONGE_SANS_PREAVIS):
                 return State(state, heures_reference, 0, heures_reference)
             elif state in (ABSENT, VACANCES):
                 if inscription.mode == MODE_TEMPS_PLEIN or ref_state:

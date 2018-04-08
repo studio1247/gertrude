@@ -1449,8 +1449,69 @@ class PtitsLoulousTests(GertrudeTestCase):
         inscrit.add_conge(CongeInscrit(inscrit=inscrit, debut="19/02/2018", fin="23/02/2018"))
         inscrit.add_conge(CongeInscrit(inscrit=inscrit, debut="09/04/2018", fin="13/04/2018"))
         inscrit.add_conge(CongeInscrit(inscrit=inscrit, debut="07/05/2018", fin="11/05/2018"))
-        cotisation = Cotisation(inscrit, datetime.date(2018, 2, 1), options=TRACES)
+        cotisation = Cotisation(inscrit, datetime.date(2018, 2, 1))
         self.assert_prec2_equals(cotisation.cotisation_mensuelle, 757.26)
+
+
+class EleaTests(GertrudeTestCase):
+    def setUp(self):
+        GertrudeTestCase.setUp(self)
+        database.creche.type = TYPE_FAMILIAL
+        database.creche.mode_facturation = FACTURATION_PSU
+        database.creche.temps_facturation = FACTURATION_FIN_MOIS
+        database.creche.repartition = REPARTITION_SANS_MENSUALISATION
+        database.creche.prorata = PRORATA_JOURS_OUVRES
+        database.creche.facturation_jours_feries = ABSENCES_DEDUITES_EN_JOURS
+        database.creche.conges_inscription = GESTION_CONGES_INSCRIPTION_NON_MENSUALISES
+        database.creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
+        database.creche.arrondi_heures = ARRONDI_HEURE_PLUS_PROCHE
+        database.creche.arrondi_facturation = SANS_ARRONDI
+        database.creche.arrondi_semaines = ARRONDI_SEMAINE_SUPERIEURE
+        database.creche.minimum_maladie = 3
+        database.creche.gestion_maladie_hospitalisation = True
+        for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", "15 août", "1er novembre", "11 novembre", "25 décembre", "Lundi de Pâques", "Jeudi de l'Ascension"):
+            self.add_ferie(label)
+        self.add_conge("07/05/2018", "11/05/2018")
+        self.add_conge("06/08/2018", "26/08/2018")
+        self.add_conge("17/10/2018", "17/10/2018")
+        self.add_conge("24/12/2018", "28/12/2018")
+        self.add_conge("31/12/2018", "31/12/2018")
+
+    def test_heures_facturees_sur_hospitalisation(self):
+        inscrit = self.add_inscrit()
+        self.set_revenus(inscrit, 27624)
+        inscription = inscrit.inscriptions[0]
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.debut = datetime.date(2018, 1, 1)
+        inscription.fin = datetime.date(2018, 12, 31)
+        inscrit.add_conge(CongeInscrit(inscrit=inscrit, debut="02/01/2018", fin="02/01/2018"))
+        inscrit.add_conge(CongeInscrit(inscrit=inscrit, debut="05/02/2018", fin="09/02/2018"))
+        inscrit.add_conge(CongeInscrit(inscrit=inscrit, debut="10/05/2018", fin="21/05/2018"))
+        for day in range(4):
+            self.add_inscription_timeslot(inscription, day, 10 * 12, 15 * 12)
+        cotisation = Cotisation(inscrit, datetime.date(2018, 1, 1))
+        self.assert_prec2_equals(cotisation.cotisation_mensuelle, 88.55)
+        self.add_activite(inscrit, datetime.date(2018, 3, 1), 100, 160, database.creche.states[HOPITAL])
+        self.add_activite(inscrit, datetime.date(2018, 3, 5), 100, 160, database.creche.states[HOPITAL])
+        self.add_activite(inscrit, datetime.date(2018, 3, 6), 100, 160, database.creche.states[HOPITAL])
+        self.add_activite(inscrit, datetime.date(2018, 3, 7), 100, 160, database.creche.states[HOPITAL])
+        self.add_activite(inscrit, datetime.date(2018, 3, 8), 100, 160, database.creche.states[HOPITAL])
+        self.add_journee_presence(inscrit, datetime.date(2018, 3, 12), 9*12, 15*12)
+        self.add_journee_presence(inscrit, datetime.date(2018, 3, 13), 8.75*12, 15*12)
+        self.add_journee_presence(inscrit, datetime.date(2018, 3, 14), 9*12, 17.5*12)
+        self.add_activite(inscrit, datetime.date(2018, 3, 15), 100, 160, database.creche.states[VACANCES])
+        self.add_journee_presence(inscrit, datetime.date(2018, 3, 16), 10.25*12, 12*12)
+        self.add_activite(inscrit, datetime.date(2018, 3, 19), 100, 160, database.creche.states[VACANCES])
+        self.add_journee_presence(inscrit, datetime.date(2018, 3, 20), 10*12, 16*12)
+        self.add_journee_presence(inscrit, datetime.date(2018, 3, 21), 8.75*12, 15*12)
+        self.add_activite(inscrit, datetime.date(2018, 3, 22), 100, 160, database.creche.states[VACANCES])
+        self.add_journee_presence(inscrit, datetime.date(2018, 3, 26), 8.75*12, 14.25*12)
+        self.add_activite(inscrit, datetime.date(2018, 3, 27), 100, 160, database.creche.states[VACANCES])
+        self.add_journee_presence(inscrit, datetime.date(2018, 3, 28), 9*12, 15*12)
+        self.add_journee_presence(inscrit, datetime.date(2018, 3, 29), 8.75*12, 14.75*12)
+        facture = Facture(inscrit, 2018, 3)
+        self.assert_prec2_equals(facture.total, 84.24)
+        self.assert_prec2_equals(facture.heures_facturees, 48.25)
 
 
 if __name__ == '__main__':
