@@ -174,7 +174,7 @@ class FacturationTab(AutoTab):
     def OnFacturesMonthChoice(self, _=None):
         inscrits, periode = self.__GetFactureSelection()
         for inscrit in inscrits:
-            if inscrit.has_facture(periode) and periode not in inscrit.clotures and (database.creche.temps_facturation != FACTURATION_FIN_MOIS or GetMonthEnd(periode) not in inscrit.clotures):
+            if inscrit.has_facture(periode) and not inscrit.get_facture_cloturee(periode) and (database.creche.temps_facturation != FACTURATION_FIN_MOIS or GetMonthEnd(periode) not in inscrit.clotures):
                 self.cloture_button.Enable()
                 break
         else:

@@ -53,7 +53,7 @@ class FactureBase(object):
         return date.replace(day=(day if type(day) == int else 1))
 
     def Cloture(self):
-        print("Cloture de facture", GetPrenomNom(self.inscrit), self.date)
+        print("Clôture de facture", GetPrenomNom(self.inscrit), self.date)
         cloture = ClotureFacture(inscrit=self.inscrit,
                                  date=self.date,
                                  cotisation_mensuelle=self.cotisation_mensuelle,
@@ -63,8 +63,11 @@ class FactureBase(object):
                                  supplement_activites=self.supplement_activites,
                                  supplement=self.supplement,
                                  deduction=self.deduction)
-        self.inscrit.clotures[cloture.date] = cloture
-        history.append(None)  # TODO
+        if cloture.date in self.inscrit.clotures:
+            print("Facture déjà clôturée !")
+        else:
+            self.inscrit.clotures[cloture.date] = cloture
+            history.append(None)  # TODO
 
     def Decloture(self):
         del self.inscrit.clotures[self.date]
@@ -207,8 +210,7 @@ class FactureFinMois(FactureBase):
         if inscrit.has_facture(self.debut_recap) and database.creche.cloture_facturation == CLOTURE_FACTURES_AVEC_CONTROLE and today > self.fin_recap:
             fin = self.debut_recap - datetime.timedelta(1)
             debut = GetMonthStart(fin)
-            if inscrit.get_inscriptions(debut, fin) and not inscrit.is_facture_cloturee(debut) and IsFacture(debut) and self.debut_recap >= config.first_date:
-                print(debut, inscrit.clotures, self.debut_recap, config.first_date)
+            if inscrit.get_inscriptions(debut, fin) and not inscrit.get_facture_cloturee(debut) and IsFacture(debut) and self.debut_recap >= config.first_date:
                 error = " - La facture du mois " + GetDeMoisStr(debut.month-1) + " " + str(debut.year) + " n'est pas clôturée"
                 raise CotisationException([error])
 
@@ -370,6 +372,8 @@ class FactureFinMois(FactureBase):
                                     self.raison_deduction.add("maladie > %dj consécutifs" % database.creche.minimum_maladie)
                                 else:
                                     self.jours_maladie_non_deduits[date] = heures_reference
+                            elif state == MALADE_SANS_JUSTIFICATIF:
+                                self.jours_maladie_non_deduits[date] = heures_reference
                         elif state == VACANCES:
                             if heures_reference > 0:
                                 self.jours_vacances.append(date)
@@ -953,11 +957,10 @@ class FactureCloturee(FactureBase):
 
 
 def Facture(inscrit, annee, mois, options=0):
-    date = datetime.date(annee, mois, 1)
-    if date in inscrit.clotures:
-        return FactureCloturee(inscrit.clotures[date], options)
-    else:
-        return CreateFacture(inscrit, annee, mois, options)
+    result = inscrit.get_facture_cloturee(datetime.date(annee, mois, 1))
+    if result:
+        return FactureCloturee(result, options)
+    return CreateFacture(inscrit, annee, mois, options)
 
 
 class FactureReservataire(object):

@@ -135,6 +135,9 @@ class Day(object):
         else:
             return None
 
+    def __str__(self):
+        return "Day timeslots=%r" % self.timeslots
+
 
 class DayCollection(dict):
     def __init__(self, key):
@@ -1482,11 +1485,12 @@ class Inscrit(Base):
                     result = groupe
         return result
 
-    def is_facture_cloturee(self, date):
+    def get_facture_cloturee(self, date):
         if self.creche.temps_facturation == FACTURATION_FIN_MOIS:
-            return GetMonthEnd(date) in self.clotures or GetMonthStart(date) in self.clotures
-        else:
-            return date in self.clotures
+            result = self.clotures.get(GetMonthEnd(date), None)
+            if result:
+                return result
+        return self.clotures.get(GetMonthStart(date), None)
 
     def get_week_slots(self, monday):
         return [weekslot for weekslot in self.weekslots if weekslot.date == monday]
@@ -1725,7 +1729,7 @@ class Inscrit(Base):
                 return State(state, heures_reference, 0, heures_facturees)
             elif state == HOPITAL:
                 return State(state, heures_reference, 0, 0)
-            elif state in (MALADE, ABSENCE_NON_PREVENUE, ABSENCE_CONGE_SANS_PREAVIS):
+            elif state in (MALADE, MALADE_SANS_JUSTIFICATIF, ABSENCE_NON_PREVENUE, ABSENCE_CONGE_SANS_PREAVIS):
                 return State(state, heures_reference, 0, heures_reference)
             elif state in (ABSENT, VACANCES):
                 if inscription.mode == MODE_TEMPS_PLEIN or ref_state:
@@ -1982,13 +1986,13 @@ class Inscription(Base, PeriodeReference):
                 state = self.inscrit.get_state(date)
                 if self.inscrit.creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS:
                     if state == VACANCES:
-                        # print "VACANCES", date
+                        # print("VACANCES", date)
                         jours += 1
                 else:
                     if state in (ABSENT, VACANCES):
                         reference = self.get_day_from_date(date)
                         if reference.get_duration() > 0:
-                            # print date
+                            # print(date)
                             jours += 1
             date += datetime.timedelta(1)
         return jours
