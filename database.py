@@ -1807,6 +1807,7 @@ class Inscrit(Base):
         return 0 if day is None else day.get_duration_per_activity_mode(MODE_CONGES)
 
     def GetDecomptePermanences(self):
+        today = datetime.date.today()
         total, effectue = 0.0, 0.0
         date = self.creche.date_raz_permanences
         if date:

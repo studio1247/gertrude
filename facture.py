@@ -207,7 +207,7 @@ class FactureFinMois(FactureBase):
         if options & TRACES:
             print('\nFacture de', inscrit.prenom, inscrit.nom, 'pour', months[mois - 1], annee)
                
-        if inscrit.has_facture(self.debut_recap) and database.creche.cloture_facturation == CLOTURE_FACTURES_AVEC_CONTROLE and today > self.fin_recap:
+        if inscrit.has_facture(self.debut_recap) and database.creche.cloture_facturation == CLOTURE_FACTURES_AVEC_CONTROLE and datetime.date.today() > self.fin_recap:
             fin = self.debut_recap - datetime.timedelta(1)
             debut = GetMonthStart(fin)
             if inscrit.get_inscriptions(debut, fin) and not inscrit.get_facture_cloturee(debut) and IsFacture(debut) and self.debut_recap >= config.first_date:
@@ -905,7 +905,7 @@ class FactureDebutMoisPrevisionnel(FactureDebutMois):
     def __init__(self, inscrit, annee, mois, options=0):
         FactureDebutMois.__init__(self, inscrit, annee, mois, options)
         
-        if today > self.fin_recap:
+        if datetime.date.today() > self.fin_recap:
             if inscrit.get_inscriptions(self.facture_precedente.debut_recap, self.facture_precedente.fin_recap):
                 if self.facture_precedente.date not in inscrit.clotures:
                     error = " - La facture du mois " + GetDeMoisStr(self.facture_precedente.date.month-1) + " " + str(self.facture_precedente.date.year) + " n'est pas clôturée"
@@ -1002,7 +1002,7 @@ def GetHistoriqueSolde(who, jalon):
         date = GetMonthStart(debut)
         if config.date_debut_reglements and config.date_debut_reglements > date:
             date = config.date_debut_reglements
-        fin = min(today, GetMonthEnd(fin))
+        fin = min(datetime.date.today(), GetMonthEnd(fin))
         while date <= fin:
             for inscrit in inscrits:
                 try:

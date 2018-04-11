@@ -257,7 +257,7 @@ class Cotisation(object):
         self.AjustePeriode((debut, fin))
         
         if self.fin is None:
-            self.fin = today + datetime.timedelta(2 * 365)
+            self.fin = datetime.date.today() + datetime.timedelta(2 * 365)
 
         if self.date < self.debut or self.date > self.fin:
             errors.append(" - Problème dans les périodes d'inscription.")
@@ -721,7 +721,7 @@ def GetCotisations(inscrit, options=TRACES):
     for inscription in inscrit.get_inscriptions(preinscriptions=True):
         if inscription.debut:
             date = max(date, inscription.debut)
-            while date.year < today.year + 2:
+            while date.year < datetime.date.today().year + 2:
                 try:
                     cotisation = Cotisation(inscrit, date, options)
                     result.append((cotisation.debut, cotisation.fin, cotisation))

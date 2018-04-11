@@ -832,7 +832,7 @@ def SelectValueInChoice(choice, value):
 def AddYearsToChoice(choice):
     for year in range(config.first_date.year, config.last_date.year + 1):
         choice.Append('Année %d' % year, year)
-    choice.SetSelection(today.year - config.first_date.year)
+    choice.SetSelection(datetime.date.today().year - config.first_date.year)
 
 
 def AddMonthsToChoice(choice):
@@ -840,6 +840,7 @@ def AddMonthsToChoice(choice):
     while date < config.last_date:
         choice.Append('%s %d' % (months[date.month - 1], date.year), date)
         date = GetNextMonthStart(date)
+    today = datetime.date.today()
     choice.SetStringSelection('%s %d' % (months[today.month - 1], today.year))
 
 
@@ -848,6 +849,7 @@ def Add2MonthsToChoice(choice):
     while date < config.last_date:
         choice.Append('%s %d' % (months[date.month - 1], date.year), date)
         date = GetNextMonthStart(GetNextMonthStart(date))
+    today = datetime.date.today()
     choice.SetStringSelection('%s %d' % (months[(today.month - 1) & 0xfe], today.year))
 
 
