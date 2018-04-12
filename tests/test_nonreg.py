@@ -1551,5 +1551,45 @@ class EleaTests(GertrudeTestCase):
         self.assert_prec2_equals(facture.heures_facturees, 19.0)
 
 
+class LePetitJardinTests(GertrudeTestCase):
+    def setUp(self):
+        GertrudeTestCase.setUp(self)
+        database.creche.type = TYPE_MULTI_ACCUEIL
+        database.creche.mode_facturation = FACTURATION_PSU
+        database.creche.temps_facturation = FACTURATION_FIN_MOIS
+        database.creche.repartition = REPARTITION_MENSUALISATION_CONTRAT
+        database.creche.prorata = PRORATA_NONE
+        database.creche.facturation_jours_feries = ABSENCES_DEDUITES_EN_JOURS
+        database.creche.conges_inscription = GESTION_CONGES_INSCRIPTION_MENSUALISES_AVEC_POSSIBILITE_DE_SUPPLEMENT
+        database.creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
+        database.creche.arrondi_heures = SANS_ARRONDI
+        database.creche.arrondi_facturation = SANS_ARRONDI
+        database.creche.arrondi_semaines = ARRONDI_SEMAINE_SUPERIEURE
+        database.creche.minimum_maladie = 3
+        database.creche.gestion_maladie_hospitalisation = True
+        for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", "15 août", "1er novembre", "11 novembre", "25 décembre", "Lundi de Pâques", "Jeudi de l'Ascension", "Lundi de Pentecôte"):
+            self.add_ferie(label)
+        self.add_conge("23/12/2017", "07/01/2018")
+        self.add_conge("02/04/2018", "02/04/2018")
+        self.add_conge("30/04/2018", "30/04/2018")
+        self.add_conge("27/07/2018", "27/07/2018")
+        self.add_conge("06/08/2018", "26/08/2018")
+        self.add_conge("02/11/2018", "02/11/2018")
+        self.add_conge("22/12/2018", "31/12/2018")
+
+    def test_fin_de_contrat_en_cours_de_mois(self):
+        inscrit = self.add_inscrit()
+        self.set_revenus(inscrit, 37945)
+        inscription = inscrit.inscriptions[0]
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.debut = datetime.date(2018, 1, 1)
+        inscription.fin = datetime.date(2018, 7, 8)
+        inscription.semaines_conges = 6
+        self.add_inscription_timeslot(inscription, 2, 8.5 * 12, 18.25 * 12)
+        self.add_inscription_timeslot(inscription, 3, 8.5 * 12, 16.25 * 12)
+        cotisation = Cotisation(inscrit, datetime.date(2018, 1, 1), options=TRACES)
+        self.assert_prec2_equals(cotisation.cotisation_mensuelle, 93.1)
+
+
 if __name__ == '__main__':
     unittest.main()
