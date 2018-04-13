@@ -70,7 +70,12 @@ class FactureBase(object):
             history.append(None)  # TODO
 
     def Decloture(self):
-        del self.inscrit.clotures[self.date]
+        print("Déclôture de facture", GetPrenomNom(self.inscrit), self.date)
+        if self.date in self.inscrit.clotures:
+            database.delete(self.inscrit.clotures[self.date])
+            del self.inscrit.clotures[self.date]
+        else:
+            print("Facture non clôturée !")
         history.append(None)
 
 
