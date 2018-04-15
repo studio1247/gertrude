@@ -314,9 +314,14 @@ class Cotisation(object):
                 if database.creche.repartition == REPARTITION_MENSUALISATION_CONTRAT:
                     debut_decompte_conges_et_factures = self.debut_inscription
                     fin_decompte_conges_et_factures = self.fin_inscription
-                    if options & TRACES:
-                        print(" début théorique en date du", debut_decompte_conges_et_factures)
-                        print(" fin théorique en date du", fin_decompte_conges_et_factures)
+                    if database.creche.prorata != PRORATA_NONE:
+                        if self.debut_inscription.year not in database.creche.mois_sans_facture or self.debut_inscription.month not in database.creche.mois_sans_facture[self.debut_inscription.year]:
+                            debut_decompte_conges_et_factures = GetMonthStart(self.debut_inscription)
+                        if self.fin_inscription.year not in database.creche.mois_sans_facture or self.fin_inscription.month not in database.creche.mois_sans_facture[self.fin_inscription.year]:
+                            fin_decompte_conges_et_factures = GetMonthEnd(self.fin_inscription)
+                        if options & TRACES:
+                            print(" début théorique en date du", debut_decompte_conges_et_factures)
+                            print(" fin théorique en date du", fin_decompte_conges_et_factures)
                 else:
                     debut_decompte_conges_et_factures = self.debut
 

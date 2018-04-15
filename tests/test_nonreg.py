@@ -1587,8 +1587,62 @@ class LePetitJardinTests(GertrudeTestCase):
         inscription.semaines_conges = 6
         self.add_inscription_timeslot(inscription, 2, 8.5 * 12, 18.25 * 12)
         self.add_inscription_timeslot(inscription, 3, 8.5 * 12, 16.25 * 12)
-        cotisation = Cotisation(inscrit, datetime.date(2018, 1, 1), options=TRACES)
+        cotisation = Cotisation(inscrit, datetime.date(2018, 1, 1))
         self.assert_prec2_equals(cotisation.cotisation_mensuelle, 93.1)
+
+
+class LeNidDesTresorsTests(GertrudeTestCase):
+    def setUp(self):
+        GertrudeTestCase.setUp(self)
+        database.creche.type = TYPE_MICRO_CRECHE
+        database.creche.mode_facturation = FACTURATION_PAJE
+        database.creche.temps_facturation = FACTURATION_FIN_MOIS
+        database.creche.repartition = REPARTITION_MENSUALISATION_CONTRAT
+        database.creche.prorata = PRORATA_JOURS_OUVRES
+        database.creche.facturation_jours_feries = ABSENCES_DEDUITES_EN_JOURS
+        database.creche.conges_inscription = GESTION_CONGES_INSCRIPTION_NON_MENSUALISES
+        database.creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
+        database.creche.arrondi_heures = SANS_ARRONDI
+        database.creche.arrondi_facturation = SANS_ARRONDI
+        database.creche.arrondi_semaines = ARRONDI_SEMAINE_SUPERIEURE
+        database.creche.minimum_maladie = 2
+        database.creche.gestion_maladie_hospitalisation = True
+        for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", "15 août", "1er novembre", "11 novembre", "25 décembre", "Lundi de Pâques", "Jeudi de l'Ascension"):
+            self.add_ferie(label)
+        database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 7.30, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
+
+    def test_debut_de_contrat_en_cours_de_mois(self):
+        inscrit = self.add_inscrit()
+        inscription = inscrit.inscriptions[0]
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.debut = datetime.date(2017, 10, 23)
+        inscription.fin = datetime.date(2018, 8, 31)
+        inscription.fin_periode_adaptation = datetime.date(2017, 10, 27)
+        inscription.semaines_conges = 5
+        inscription.frais_inscription = 50
+        inscription.duree_reference = 35
+        self.add_inscription_timeslot(inscription, 0, 9.5 * 12, 18.25 * 12)
+        self.add_inscription_timeslot(inscription, 1, 9.5 * 12, 18.25 * 12)
+        self.add_inscription_timeslot(inscription, 2, 9.5 * 12, 18.25 * 12)
+        self.add_inscription_timeslot(inscription, 4, 9.5 * 12, 18.25 * 12)
+        self.add_inscription_timeslot(inscription, 7, 8 * 12, 16.75 * 12)
+        self.add_inscription_timeslot(inscription, 8, 8 * 12, 16.75 * 12)
+        self.add_inscription_timeslot(inscription, 9, 8 * 12, 16.75 * 12)
+        self.add_inscription_timeslot(inscription, 10, 8 * 12, 16.75 * 12)
+        self.add_inscription_timeslot(inscription, 14, 8.5 * 12, 17.25 * 12)
+        self.add_inscription_timeslot(inscription, 15, 8.5 * 12, 17.25 * 12)
+        self.add_inscription_timeslot(inscription, 16, 8.5 * 12, 17.25 * 12)
+        self.add_inscription_timeslot(inscription, 18, 8.5 * 12, 17.25 * 12)
+        self.add_inscription_timeslot(inscription, 21, 9 * 12, 17.75 * 12)
+        self.add_inscription_timeslot(inscription, 22, 9 * 12, 17.75 * 12)
+        self.add_inscription_timeslot(inscription, 23, 9 * 12, 17.75 * 12)
+        self.add_inscription_timeslot(inscription, 25, 9 * 12, 17.75 * 12)
+        self.add_inscription_timeslot(inscription, 28, 9.5 * 12, 18.25 * 12)
+        self.add_inscription_timeslot(inscription, 29, 9.5 * 12, 18.25 * 12)
+        self.add_inscription_timeslot(inscription, 30, 9.5 * 12, 18.25 * 12)
+        self.add_inscription_timeslot(inscription, 32, 9.5 * 12, 18.25 * 12)
+        cotisation = Cotisation(inscrit, datetime.date(2017, 10, 28))
+        self.assert_prec2_equals(cotisation.cotisation_mensuelle, 958.29)
 
 
 if __name__ == '__main__':
