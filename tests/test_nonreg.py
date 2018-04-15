@@ -97,6 +97,10 @@ class GertrudeTestCase(unittest.TestCase):
         inscrit.days.add(TimeslotInscrit(date=date, debut=debut, fin=fin, activity=activity))
 
     @staticmethod
+    def set_state(inscrit, date, state):
+        inscrit.days.add(TimeslotInscrit(date=date, debut=database.creche.ouverture, fin=database.creche.fermeture, activity=database.creche.states[state]))
+
+    @staticmethod
     def add_inscription_timeslot(inscription, day, debut, fin, activity=None):
         if activity is None:
             activity = database.creche.states[0]
@@ -125,6 +129,13 @@ class GertrudeTestCase(unittest.TestCase):
 
     def assert_prec2_equals(self, montant1, montant2):
         self.assertEqual("%.2f" % montant1, "%.2f" % montant2)
+
+    def check_state(self, inscrit, date, state, contractualise, realise, facture):
+        inscrit_state = inscrit.GetState(date)
+        self.assertEqual(inscrit_state.state, state)
+        self.assert_prec2_equals(inscrit_state.heures_contractualisees, contractualise)
+        self.assert_prec2_equals(inscrit_state.heures_realisees, realise)
+        self.assert_prec2_equals(inscrit_state.heures_facturees, facture)
 
 
 @pytest.mark.skipif("sys.version_info >= (3, 0)")
@@ -1549,6 +1560,34 @@ class EleaTests(GertrudeTestCase):
         facture = Facture(inscrit, 2018, 3)
         self.assert_prec2_equals(facture.total, 3.99)
         self.assert_prec2_equals(facture.heures_facturees, 19.0)
+
+    def test_heures_rapport_frequentation(self):
+        inscrit = self.add_inscrit()
+        inscription = inscrit.inscriptions[0]
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.debut = datetime.date(2018, 1, 1)
+        inscription.fin = datetime.date(2018, 12, 31)
+        for day in range(5):
+            self.add_inscription_timeslot(inscription, day, 8 * 12, 18 * 12)
+        self.set_state(inscrit, datetime.date(2018, 1, 2), HOPITAL)
+        self.set_state(inscrit, datetime.date(2018, 1, 3), MALADE_SANS_JUSTIFICATIF)
+        self.set_state(inscrit, datetime.date(2018, 1, 4), ABSENCE_NON_PREVENUE)
+        self.set_state(inscrit, datetime.date(2018, 1, 8), MALADE)
+        self.set_state(inscrit, datetime.date(2018, 1, 9), MALADE)
+        self.set_state(inscrit, datetime.date(2018, 1, 10), MALADE)
+        self.set_state(inscrit, datetime.date(2018, 1, 11), MALADE)
+        self.check_state(inscrit, datetime.date(2018, 1, 2), HOPITAL, 10.0, 0.0, 0.0)
+        self.check_state(inscrit, datetime.date(2018, 1, 3), MALADE_SANS_JUSTIFICATIF, 10.0, 0.0, 10.0)
+        self.check_state(inscrit, datetime.date(2018, 1, 4), ABSENCE_NON_PREVENUE, 10.0, 0.0, 10.0)
+        self.check_state(inscrit, datetime.date(2018, 1, 8), MALADE, 10.0, 0.0, 10.0)
+        self.check_state(inscrit, datetime.date(2018, 1, 9), MALADE, 10.0, 0.0, 10.0)
+        self.check_state(inscrit, datetime.date(2018, 1, 10), MALADE, 10.0, 0.0, 10.0)
+        self.check_state(inscrit, datetime.date(2018, 1, 11), MALADE, 10.0, 0.0, 0.0)
+        facture = Facture(inscrit, 2018, 1)
+        self.assert_prec2_equals(facture.total, 500)
+        self.assert_prec2_equals(facture.heures_contractualisees, 22 * 10)
+        self.assert_prec2_equals(facture.heures_realisees, (22 - 7) * 10)  # 7 jours d'absence
+        self.assert_prec2_equals(facture.heures_facturees, (22 - 2) * 10)  # 2 jours de réduction (HOPITAL + 1 jour MALADE)
 
 
 class LePetitJardinTests(GertrudeTestCase):

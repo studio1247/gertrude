@@ -1700,6 +1700,41 @@ class Inscrit(Base):
             else:
                 return None
 
+    def get_nombre_jours_maladie(self, date):
+        # recherche du premier et du dernier jour
+        premier_jour_maladie = tmp = date
+        nombre_jours_ouvres_maladie = 0
+        pile = 0
+        while tmp > self.inscriptions[0].debut:
+            tmp -= datetime.timedelta(1)
+            state = self.get_state(tmp)
+            if tmp not in self.creche.jours_fermeture:
+                pile += 1
+            if state == MALADE:
+                premier_jour_maladie = tmp
+                if self.creche.traitement_maladie == DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CONSECUTIFS:
+                    nombre_jours_ouvres_maladie += 1
+                else:
+                    nombre_jours_ouvres_maladie += pile
+                pile = 0
+            elif state != ABSENT:
+                break
+        if self.creche.traitement_maladie in (DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_OUVRES, DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CONSECUTIFS):
+            nombre_jours_maladie = nombre_jours_ouvres_maladie + 1
+        elif self.creche.traitement_maladie == DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES:
+            nombre_jours_maladie = (date - premier_jour_maladie).days + 1
+        else:
+            dernier_jour_maladie = tmp = date
+            while not self.inscriptions[-1].fin or tmp < self.inscriptions[-1].fin:
+                tmp += datetime.timedelta(1)
+                state = self.get_state(tmp)
+                if state == MALADE:
+                    dernier_jour_maladie = tmp
+                else:
+                    break
+            nombre_jours_maladie = (dernier_jour_maladie - premier_jour_maladie).days + 1
+        return nombre_jours_maladie
+
     def GetState(self, date, mode_arrondi=SANS_ARRONDI):
         """Retourne les infos sur une journée
         :param date: la journée
@@ -1714,11 +1749,11 @@ class Inscrit(Base):
 
         reference = self.GetJourneeReference(date)  # Attention pas depuis inscription à cause des congés inscription avec supplément
         heures_reference = reference.get_duration(mode_arrondi)
-        ref_state = reference.get_state()  # TODO on peut s'en passer ?
+        ref_state = reference.get_state()
 
         if date in self.days:
             journee = self.days[date]
-            state = journee.get_state()  # TODO on peut s'en passer ?
+            state = journee.get_state()
             if state == ABSENCE_NON_PREVENUE:
                 heures_facturees = heures_reference
                 if heures_facturees == 0:
@@ -1728,6 +1763,8 @@ class Inscrit(Base):
                         heures_facturees = heures_facturees / 60
                 return State(state, heures_reference, 0, heures_facturees)
             elif state == HOPITAL:
+                return State(state, heures_reference, 0, 0)
+            elif state == MALADE and self.get_nombre_jours_maladie(date) > self.creche.minimum_maladie:
                 return State(state, heures_reference, 0, 0)
             elif state in (MALADE, MALADE_SANS_JUSTIFICATIF, ABSENCE_NON_PREVENUE, ABSENCE_CONGE_SANS_PREAVIS):
                 return State(state, heures_reference, 0, heures_reference)

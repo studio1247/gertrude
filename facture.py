@@ -325,39 +325,7 @@ class FactureFinMois(FactureBase):
                             if heures_reference > 0:
                                 self.jours_maladie.append(date)
                             if state == MALADE and (database.creche.mode_facturation != FACTURATION_HORAIRES_REELS or inscription.mode in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE)):
-                                # recherche du premier et du dernier jour
-                                premier_jour_maladie = tmp = date
-                                nombre_jours_ouvres_maladie = 0
-                                pile = 0
-                                while tmp > inscrit.inscriptions[0].debut:
-                                    tmp -= datetime.timedelta(1)
-                                    state = inscrit.get_state(tmp)
-                                    if not tmp in database.creche.jours_fermeture:
-                                        pile += 1
-                                    if state == MALADE:
-                                        premier_jour_maladie = tmp
-                                        if database.creche.traitement_maladie == DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CONSECUTIFS:
-                                            nombre_jours_ouvres_maladie += 1
-                                        else:
-                                            nombre_jours_ouvres_maladie += pile
-                                        pile = 0
-                                    elif state != ABSENT:
-                                        break
-                                if database.creche.traitement_maladie in (DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_OUVRES, DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CONSECUTIFS):
-                                    nombre_jours_maladie = nombre_jours_ouvres_maladie + 1
-                                elif database.creche.traitement_maladie == DEDUCTION_MALADIE_AVEC_CARENCE_JOURS_CALENDAIRES:
-                                    nombre_jours_maladie = (date - premier_jour_maladie).days + 1
-                                else:
-                                    dernier_jour_maladie = tmp = date
-                                    while not inscrit.inscriptions[-1].fin or tmp < inscrit.inscriptions[-1].fin:
-                                        tmp += datetime.timedelta(1)
-                                        state = inscrit.get_state(tmp)
-                                        if state == MALADE:
-                                            dernier_jour_maladie = tmp
-                                        else:
-                                            break
-                                    nombre_jours_maladie = (dernier_jour_maladie - premier_jour_maladie).days + 1
-
+                                nombre_jours_maladie = inscrit.get_nombre_jours_maladie(date)
                                 if options & TRACES:
                                     print("nombre de jours : %d (minimum=%d)" % (nombre_jours_maladie, database.creche.minimum_maladie))
                                 self.heures_absence_maladie += heures_reference
@@ -367,7 +335,6 @@ class FactureFinMois(FactureBase):
                                     cotisation.heures_maladie += heures_reference
                                     if options & TRACES:
                                         print("heures déduites : %02f (total %02f)" % (heures_reference, cotisation.heures_maladie))
-                                    self.heures_facturees_par_mode[cotisation.mode_garde] -= heures_reference
                                     if database.creche.nom == "LA VOLIERE":
                                         pass
                                     elif database.creche.mode_facturation == FACTURATION_FORFAIT_10H:
