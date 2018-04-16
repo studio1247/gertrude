@@ -1684,5 +1684,40 @@ class LeNidDesTresorsTests(GertrudeTestCase):
         self.assert_prec2_equals(cotisation.cotisation_mensuelle, 958.29)
 
 
+class MontiloupTests(GertrudeTestCase):
+    def setUp(self):
+        GertrudeTestCase.setUp(self)
+        database.creche.type = TYPE_MICRO_CRECHE
+        database.creche.mode_facturation = FACTURATION_FORFAIT_MENSUEL
+        database.creche.temps_facturation = FACTURATION_DEBUT_MOIS_PREVISIONNEL
+        database.creche.repartition = REPARTITION_MENSUALISATION_12MOIS
+        database.creche.prorata = PRORATA_JOURS_OUVRES
+        database.creche.facturation_jours_feries = ABSENCES_DEDUITES_EN_JOURS
+        database.creche.conges_inscription = GESTION_CONGES_INSCRIPTION_AUCUNE
+        database.creche.facturation_periode_adaptation = PERIODE_ADAPTATION_GRATUITE
+        database.creche.arrondi_heures = SANS_ARRONDI
+        database.creche.arrondi_facturation = SANS_ARRONDI
+        database.creche.arrondi_semaines = ARRONDI_SEMAINE_SUPERIEURE
+        database.creche.minimum_maladie = 3
+        database.creche.gestion_maladie_hospitalisation = False
+        for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", "15 août", "1er novembre", "11 novembre", "25 décembre", "Lundi de Pâques", "Jeudi de l'Ascension"):
+            self.add_ferie(label)
+
+    def test_pas_de_facture_vide(self):
+        inscrit = self.add_inscrit()
+        inscription = inscrit.inscriptions[0]
+        inscription.mode = MODE_FORFAIT_MENSUEL
+        inscription.forfait_mensuel_heures = 43.0
+        inscription.forfait_mensuel = 382.0
+        inscription.debut = datetime.date(2017, 12, 6)
+        inscription.fin = datetime.date(2018, 2, 28)
+        inscription.duree_reference = 7
+        self.add_inscription_timeslot(inscription, 2, 9.5 * 12, 18.75 * 12)
+        cotisation = Cotisation(inscrit, datetime.date(2017, 12, 6))
+        self.assert_prec2_equals(cotisation.cotisation_mensuelle, 382.0)
+        self.assertTrue(inscrit.has_facture(datetime.date(2018, 2, 1)))
+        self.assertFalse(inscrit.has_facture(datetime.date(2018, 3, 1)))
+
+
 if __name__ == '__main__':
     unittest.main()

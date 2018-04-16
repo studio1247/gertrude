@@ -1565,20 +1565,19 @@ class Inscrit(Base):
         if not date:  # or date.month in database.creche.mois_sans_facture:
             return False
         month_start = GetMonthStart(date)
-        if (config.options & FACTURES_FAMILLES) and self.creche.mode_saisie_planning == SAISIE_HORAIRE:
-            day = month_start
-            while day.month == date.month:
-                journee = self.GetJournee(day)
-                if journee and journee.get_state() != 0:  # TODO si < 0 on n'émet pas de facture pour les enfants malades
-                    return True
-                day += datetime.timedelta(1)
-        else:
-            if self.get_inscriptions(month_start, GetMonthEnd(date), site):
-                return True
+        month_end = GetMonthEnd(date)
+        if self.get_inscriptions(month_start, month_end, site):
+            return True
         if self.creche.temps_facturation != FACTURATION_FIN_MOIS:
             previous_month_end = month_start - datetime.timedelta(1)
-            if self.get_inscriptions(GetMonthStart(previous_month_end), previous_month_end, site):
-                return True
+            previous_month_start = GetMonthStart(previous_month_end)
+            if self.get_inscriptions(previous_month_start, previous_month_end, site):
+                day = previous_month_start
+                while day.month == previous_month_start.month:
+                    state = self.GetState(day)
+                    if state.heures_facturees != state.heures_contractualisees:
+                        return True
+                    day += datetime.timedelta(1)
         return False
 
     def get_factures_list(self):
