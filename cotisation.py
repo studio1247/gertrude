@@ -175,6 +175,7 @@ class Cotisation(object):
         self.frais_inscription = self.inscription.frais_inscription
         self.montant_allocation_caf = self.inscription.allocation_mensuelle_caf
         self.montant_credit_impots = 0.0
+        self.montant_heure_garde = 0.0
         if not (options & NO_PARENTS):
             for parent in inscrit.famille.parents:
                 revenus_parent = Select(parent.revenus, self.date_revenus)
@@ -442,7 +443,7 @@ class Cotisation(object):
             raise CotisationException(errors)
 
         if database.creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
-            self.montant_heure_garde = 0.0
+            self.montant_heure_garde = self.inscription.forfait_mensuel / self.inscription.forfait_mensuel_heures
             self.cotisation_periode = 0.0
             self.cotisation_mensuelle = self.inscription.forfait_mensuel
         elif database.creche.mode_facturation == FACTURATION_HORAIRES_REELS or self.inscription.mode == MODE_FORFAIT_MENSUEL:
