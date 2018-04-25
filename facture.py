@@ -599,7 +599,7 @@ class FactureFinMois(FactureBase):
                         heures_contractualisees = cotisation.heures_contractualisees * (cotisation.jours_ouvres - cotisation.nombre_jours_maladie_deduits) / cotisation.jours_ouvres
                     else:
                         heures_contractualisees = cotisation.heures_contractualisees
-                    if cotisation.heures_realisees - cotisation.heures_realisees_non_facturees > heures_contractualisees:
+                    if database.creche.presences_supplementaires and cotisation.heures_realisees - cotisation.heures_realisees_non_facturees > heures_contractualisees:
                         cotisation.heures_supplementaires = cotisation.heures_realisees - cotisation.heures_realisees_non_facturees - heures_contractualisees
                         self.heures_facturees_par_mode[cotisation.mode_garde] += cotisation.heures_realisees - cotisation.heures_realisees_non_facturees
                         self.heures_supplementaires += cotisation.heures_supplementaires

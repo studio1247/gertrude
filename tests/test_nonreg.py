@@ -1695,6 +1695,7 @@ class MontiloupTests(GertrudeTestCase):
         database.creche.facturation_jours_feries = ABSENCES_DEDUITES_EN_JOURS
         database.creche.conges_inscription = GESTION_CONGES_INSCRIPTION_AUCUNE
         database.creche.facturation_periode_adaptation = PERIODE_ADAPTATION_GRATUITE
+        database.creche.presences_supplementaires = False
         database.creche.arrondi_heures = SANS_ARRONDI
         database.creche.arrondi_facturation = SANS_ARRONDI
         database.creche.arrondi_semaines = ARRONDI_SEMAINE_SUPERIEURE
@@ -1702,6 +1703,36 @@ class MontiloupTests(GertrudeTestCase):
         database.creche.gestion_maladie_hospitalisation = False
         for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", "15 août", "1er novembre", "11 novembre", "25 décembre", "Lundi de Pâques", "Jeudi de l'Ascension"):
             self.add_ferie(label)
+
+    def test_supplement_sur_changement_contrat(self):
+        inscrit = self.add_inscrit()
+        inscription = inscrit.inscriptions[0]
+        inscription.mode = MODE_FORFAIT_MENSUEL
+        inscription.forfait_mensuel_heures = 87.0
+        inscription.forfait_mensuel = 719.0
+        inscription.debut = datetime.date(2017, 9, 1)
+        inscription.fin = datetime.date(2018, 2, 28)
+        inscription.duree_reference = 7
+        self.add_inscription_timeslot(inscription, 0, 8 * 12, 18.5 * 12)
+        self.add_inscription_timeslot(inscription, 4, 8 * 12, 18.5 * 12)
+        inscription = Inscription(inscrit)
+        inscription.mode = MODE_FORFAIT_MENSUEL
+        inscription.forfait_mensuel_heures = 43.0
+        inscription.forfait_mensuel = 382.0
+        inscription.debut = datetime.date(2018, 3, 1)
+        inscription.fin = datetime.date(2018, 8, 31)
+        inscription.duree_reference = 7
+        self.add_inscription_timeslot(inscription, 0, 8 * 12, 18.5 * 12)
+        self.add_inscription_timeslot(inscription, 4, 8 * 12, 18.5 * 12)
+        inscrit.inscriptions.append(inscription)
+        Facture(inscrit, 2017, 9).Cloture()
+        Facture(inscrit, 2017, 10).Cloture()
+        Facture(inscrit, 2017, 11).Cloture()
+        Facture(inscrit, 2017, 12).Cloture()
+        Facture(inscrit, 2018, 1).Cloture()
+        Facture(inscrit, 2018, 2).Cloture()
+        facture = Facture(inscrit, 2018, 3, options=TRACES)
+        self.assert_prec2_equals(facture.supplement, 0.0)
 
     def test_nombre_heures_forfait_mensuel(self):
         inscrit = self.add_inscrit()
