@@ -1084,7 +1084,7 @@ class Salarie(Base):
             else:
                 if contrat.plannings:
                     result = contrat.plannings[0]
-                    if result.debut is None:
+                    if result.debut != contrat.debut:
                         result.debut = contrat.debut
         return result
 
