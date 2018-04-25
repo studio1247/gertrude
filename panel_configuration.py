@@ -270,7 +270,7 @@ class CrecheTab(AutoTab):
             ordre = 0
         else:
             ordre = database.creche.groupes[-1].ordre + 1
-        database.creche.groupes.append(Groupe(ordre=ordre))
+        database.creche.groupes.append(Groupe(creche=database.creche, ordre=ordre))
         self.AjouteLigneGroupe(len(database.creche.groupes) - 1)
         self.sizer.FitInside(self)
         self.sizer.Layout()
@@ -709,9 +709,6 @@ class CafTab(AutoTab, PeriodeMixin):
         sizer.Add(sizer2, 0, wx.ALL, 5)
         sizer.Fit(self)
         self.SetSizer(sizer)
-
-    def new_bareme_caf(self):
-        return
 
     def UpdateContents(self):
         self.SetInstance(database.creche)

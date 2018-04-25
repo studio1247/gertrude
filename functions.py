@@ -17,10 +17,13 @@
 
 from __future__ import unicode_literals
 from __future__ import print_function
+
 import collections
 from builtins import str
 import time
 import os.path
+import math
+
 from database import Timeslot, TimeslotInscrit, Activite
 from parameters import *
 from globals import *
@@ -495,8 +498,8 @@ class Summary(object):
 
 
 def GetSiteFields(site):
-    return [('site', GetNom(site)),
-            ('nom-site', GetNom(site)),
+    return [('site', GetNom(site) if site else database.creche.nom),
+            ('nom-site', GetNom(site) if site else database.creche.nom),
             ('adresse-site', site.adresse if site else database.creche.adresse),
             ('code-postal-site', GetCodePostal(site) if site else GetCodePostal(database.creche)),
             ('ville-site', site.ville if site else database.creche.ville),
@@ -580,14 +583,6 @@ def GetTelephone(famille):
     return ", ".join(set(result))
 
 
-def GetEmail(famille):
-    result = []
-    for parent in famille.parents:
-        if parent and parent.email:
-            result.append(parent.email)
-    return ", ".join(result)
-
-
 def GetTarifsFamilleFields(famille):
     return [(tarif.label.lower().replace(" ", "_"), tarif.label if (famille and (famille.tarifs & (1 << tarif.idx))) else "") for tarif in database.creche.tarifs_speciaux]
 
@@ -625,7 +620,7 @@ def GetFamilleFields(famille):
               ('parents', GetParentsString(famille) if famille else ""),
               ('parents-version-longue', GetParentsString(famille, version_longue=True) if famille else ""),
               ('telephone', GetTelephone(famille) if famille else ""),
-              ('email', GetEmail(famille) if famille else ""),
+              ('email', famille.get_parents_emails() if famille else ""),
               ('sepa-mandate-id', famille.mandate_id),
               ]
     result += GetTarifsFamilleFields(famille)
@@ -643,11 +638,11 @@ def GetInscritFields(inscrit):
         ('nom', inscrit.nom if inscrit else ""),
         ('sexe', GetInscritSexe(inscrit) if inscrit else ""),
         ('naissance', inscrit.naissance if inscrit else ""),
-        ('date-entretien-directrice', inscrit.date_entretien_directrice if inscrit else ""),
+        ('date-entretien-directrice', inscrit.date_entretien_directrice if inscrit else "", FIELD_DATE),
         ('age', GetAgeString(inscrit.naissance) if inscrit else ""),
         ('age-mois', GetAge(inscrit.naissance) if inscrit and inscrit.naissance else ""),
-        ('entree', inscrit.inscriptions[0].debut if inscrit else ""),
-        ('sortie', inscrit.inscriptions[-1].fin if inscrit else ""),
+        ('entree', inscrit.inscriptions[0].debut if (inscrit and inscrit.inscriptions) else ""),
+        ('sortie', inscrit.inscriptions[-1].fin if (inscrit and inscrit.inscriptions) else ""),
         ('ne-e', "né" if inscrit.sexe == 1 else "née"),
         ('type-repas-1', types_repas_1[inscrit.type_repas][0] if inscrit and inscrit.type_repas is not None else ""),
         ('type-repas-2', types_repas_2[inscrit.type_repas2][0] if inscrit and inscrit.type_repas2 is not None else ""),
@@ -656,10 +651,13 @@ def GetInscritFields(inscrit):
 
 
 def GetSalarieFields(salarie):
-    return [('nom', salarie.nom),
-            ('prenom', salarie.prenom),
-            ('de-prenom', GetDeStr(salarie.prenom)),
-            ]            
+    return [
+        ('nom', salarie.nom),
+        ('prenom', salarie.prenom),
+        ('domicile', salarie.telephone_domicile),
+        ('portable', salarie.telephone_portable),
+        ('de-prenom', GetDeStr(salarie.prenom)),
+    ]
 
 
 def GetTypeContratString(type_contrat):
@@ -776,6 +774,7 @@ def GetFactureFields(facture):
                   ('heures-contractualisees-realisees', facture.heures_contractualisees_realisees, FIELD_HEURES),
                   ('heures-facture', sum(facture.heures_facture_par_mode), FIELD_HEURES),
                   ('heures-facturees', heures_facturees, FIELD_HEURES),
+                  ('ceil-heures-facturees', math.ceil(heures_facturees), FIELD_HEURES),
                   ('heures-supplementaires', facture.heures_supplementaires, FIELD_HEURES),
                   ('heures-maladie', facture.heures_maladie, FIELD_HEURES),
                   ('heures-maladie-non-deduites', sum(facture.jours_maladie_non_deduits.values()), FIELD_HEURES),
@@ -869,27 +868,6 @@ def GetDateFromWeek(year, week, weekday=0):
     return datetime.datetime.strptime("%d-W%d-%d" % (year, week, weekday), "%Y-W%W-%w")
 
 
-class PeriodePresence(object):
-    def __init__(self, date, arrivee=None, depart=None, absent=False, malade=False):
-        self.date = date
-        self.arrivee = arrivee
-        self.depart = depart
-        self.absent = absent
-        self.malade = malade
-
-
-def SplitLineTablette(line):
-    label, idx, date = line.split()
-    idx = int(idx)
-    tm = time.strptime(date, "%Y-%m-%d@%H:%M")
-    date = datetime.date(tm.tm_year, tm.tm_mon, tm.tm_mday)
-    heure = tm.tm_hour * 60 + tm.tm_min
-    if label.endswith("_salarie"):
-        return True, label[:-8], idx, date, heure
-    else:
-        return False, label, idx, date, heure
-
-
 def AddInscritsToChoice(choice):
     def __add_in_array(array, cell):
         if isinstance(cell, str):
@@ -940,6 +918,20 @@ def AddInscritsToChoice(choice):
 def get_liste_permanences(date):
     permanences = database.query(TimeslotInscrit).filter(TimeslotInscrit.date == date).join(TimeslotInscrit.activity).filter(Activite.mode == MODE_PERMANENCE).all()
     return [(permanence.debut, permanence.fin, permanence.inscrit) for permanence in permanences]
+
+
+def get_label(obj):
+    if isinstance(obj, str):
+        return obj
+    else:
+        return obj.label()
+
+
+def get_slug(obj):
+    if isinstance(obj, str):
+        return obj
+    else:
+        return obj.slug()
 
 
 def GetUrlTipi(famille):

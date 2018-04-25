@@ -212,6 +212,8 @@ class Section(object):
             options |= GESTION_REPAS
         if "preinscriptions-only" in value:
             options |= PREINSCRIPTIONS_ONLY
+        if "notification-places-disponibles" in value:
+            options |= NOTIFICATION_PLACES_DISPONIBLES
         return options
 
     def getWindowSize(self):
@@ -237,6 +239,7 @@ class DefaultConfig(object):
     def __init__(self):
         self.first_date = datetime.date.today() - datetime.timedelta(365)
         self.last_date = datetime.date.today() + datetime.timedelta(365)
+        self.date_debut_reglements = None
         self.templates_directory = "templates"
         self.options = 0
         self.saas_port = None

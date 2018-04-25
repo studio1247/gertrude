@@ -18,9 +18,11 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 from constants import *
+from database import Salarie
 from functions import *
 from facture import *
 from ooffice import *
+from tablette import JournalTablette, PeriodePresence
 
 
 class ExportTabletteModifications(object):
@@ -38,46 +40,38 @@ class ExportTabletteModifications(object):
         self.array_salaries = {}
 
     def FetchJournal(self):
-        journal = config.connection.LoadJournal()
+        journal = JournalTablette()
         self.array_enfants = {}
         self.array_salaries = {}
-        if not journal:
-            return
-        lines = journal.split("\n")
-        for line in lines:
-            try:
-                salarie, label, idx, date, heure = SplitLineTablette(line)
-                if date.year != self.date.year or date.month != self.date.month:
-                    continue
-                if salarie:
-                    array = self.array_salaries
-                else:
-                    array = self.array_enfants
-                if idx not in array:
-                    array[idx] = { }
-                if date not in array[idx]:
-                    array[idx][date] = []
-                if label == "arrivee":
-                    array[idx][date].append(PeriodePresence(date, heure))
-                elif label == "depart":
-                    if len(array[idx][date]):
-                        last = array[idx][date][-1]
-                        if last.date == date and last.arrivee:
-                            last.depart = heure
-                        else:
-                            array[idx][date].append(PeriodePresence(date, None, heure))
+        for who, label, date, heure in journal.get_month_lines(self.date.year, self.date.month):
+            if isinstance(who, Salarie):
+                array = self.array_salaries
+            else:
+                array = self.array_enfants
+            if who not in array:
+                array[who] = {}
+            if date not in array[who]:
+                array[who][date] = []
+            array_result = array[who][date]
+            if label == "arrivee":
+                if len(array_result) == 0 or array_result[-1].debut != heure:
+                    array_result.append(PeriodePresence(date=date, debut=heure))
+            elif label == "depart":
+                if len(array_result):
+                    last = array_result[-1]
+                    if last.date == date and last.debut:
+                        last.fin = heure
                     else:
-                        array[idx][date].append(PeriodePresence(date, None, heure))
-                elif label == "absent":
-                    array[idx][date].append(PeriodePresence(date, absent=True))
-                elif label == "malade":
-                    array[idx][date].append(PeriodePresence(date, malade=True))
+                        array_result.append(PeriodePresence(date=date, debut=None, fin=heure))
                 else:
-                    print("Ligne %s inconnue" % label)
-            except Exception as e:
-                print(e)
-                pass
-    
+                    array_result.append(PeriodePresence(date=date, debut=None, fin=heure))
+            elif label == "absent":
+                array_result.append(PeriodePresence(date=date, state=VACANCES))
+            elif label == "malade":
+                array_result.append(PeriodePresence(date=date, state=MALADE))
+            else:
+                print("Ligne %s inconnue" % label)
+
     def GetHeureString(self, value):
         if value is None:
             return ""
@@ -91,47 +85,34 @@ class ExportTabletteModifications(object):
         self.spreadsheet.insertBefore(table, self.template)
         lignes = table.getElementsByTagName("table:table-row")
         ReplaceFields(lignes, fields)
-        lineTemplate = lignes.item(3)
+        line_template = lignes.item(3)
         dates = list(array.keys())
         dates.sort()
         for date in dates:
             for jour in array[date]:
-                ligne = lineTemplate.cloneNode(1)
-                lineFields = fields + [('date', date),
-                                       ('heure-arrivee', self.GetHeureString(jour.arrivee)),
-                                       ('heure-depart', self.GetHeureString(jour.depart))]
-                ReplaceFields(ligne, lineFields)
-                table.insertBefore(ligne, lineTemplate)
-        table.removeChild(lineTemplate)
-
-    def SortedKeys(self, array, function):
-        keys = list(array.keys())
-        keys.sort(key=lambda key: GetPrenomNom(function(key)))
-        return keys
+                ligne = line_template.cloneNode(1)
+                line_fields = fields + [("date", date),
+                                        ("heure-arrivee", self.GetHeureString(jour.debut)),
+                                        ("heure-depart", self.GetHeureString(jour.fin))]
+                ReplaceFields(ligne, line_fields)
+                table.insertBefore(ligne, line_template)
+        table.removeChild(line_template)
             
     def execute(self, filename, dom):
-        if filename != 'content.xml':
+        if filename != "content.xml":
             return None
         
         self.FetchJournal()    
         errors = {}
-        self.spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
+        self.spreadsheet = dom.getElementsByTagName("office:spreadsheet").item(0)
         self.template = self.spreadsheet.getElementsByTagName("table:table").item(0)
 
-        for key in self.SortedKeys(self.array_enfants, database.creche.GetInscrit):
-            inscrit = database.creche.GetInscrit(key)
-            if inscrit:
-                self.AddSheet(inscrit, self.array_enfants[key], GetInscritFields(inscrit))
-            else:
-                print("Inscrit inconnu")
-                
-        for key in self.SortedKeys(self.array_salaries, database.creche.GetSalarie):
-            salarie = database.creche.GetSalarie(key)
-            if salarie:
-                self.AddSheet(salarie, self.array_salaries[key], GetSalarieFields(salarie))
-            else:
-                print("Salarié inconnu")
-                        
+        for inscrit in sorted(self.array_enfants, key=lambda enfant: GetPrenomNom(enfant)):
+            self.AddSheet(inscrit, self.array_enfants[inscrit], GetInscritFields(inscrit))
+
+        for salarie in sorted(self.array_salaries, key=lambda salarie: GetPrenomNom(salarie)):
+            self.AddSheet(salarie, self.array_salaries[salarie], GetSalarieFields(salarie))
+
         self.spreadsheet.removeChild(self.template)
         
         if self.gauge:

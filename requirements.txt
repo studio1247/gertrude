@@ -5,3 +5,5 @@ requests
 SQLAlchemy
 SQLAlchemy-Utils
 chardet
+imageio
+simpleeval

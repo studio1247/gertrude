@@ -192,8 +192,12 @@ class ChildPlanningLine(BasePlanningLine):
         self.day = self.inscrit.days.get(self.date, None)
         self.timeslots = self.day.timeslots if self.day else self.reference.timeslots[:]
         self.timeslots.sort(key=lambda timeslot: timeslot.activity.mode)
-        self.state = self.day.get_state() if self.day else self.reference.get_state()
-        # print("update =>", self.day, self.timeslots, self.state)
+        if self.day:
+            self.state = self.day.get_state()
+            if self.state < 0 and self.reference.get_state() == ABSENT:
+                self.state = ABSENT
+        else:
+            self.state = self.reference.get_state()
         if self.state == VACANCES:
             if self.inscription.IsNombreSemainesCongesDepasse(self.date):
                 self.state = CONGES_DEPASSEMENT

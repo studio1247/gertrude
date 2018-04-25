@@ -61,7 +61,7 @@ class Timeslot(object):
         return self.activity.mode == MODE_SANS_HORAIRES
 
     def is_presence(self):
-        return self.activity.mode == MODE_NORMAL
+        return self.activity.mode == MODE_PRESENCE
 
     def get_duration(self, arrondi=SANS_ARRONDI):
         # TODO a utiliser partout
@@ -774,6 +774,9 @@ class Bureau(Base):
     directeur_adjoint = Column(String)
     comptable = Column(String)
 
+    def __init__(self, creche, **kwargs):
+        Base.__init__(self, creche=creche, **kwargs)
+
 
 class BaremeCAF(Base):
     __tablename__ = "baremescaf"
@@ -1044,6 +1047,9 @@ class Salarie(Base):
 
     def slug(self):
         return "salarie-%d" % self.idx
+
+    def label(self):
+        return "%s %s" % (self.prenom, self.nom)
 
     def is_date_conge(self, date):
         return date in self.creche.jours_fermeture or date in self.jours_conges
@@ -1334,6 +1340,13 @@ class Famille(Base):
     def get_delai_paiement(self):
         return self.creche.delai_paiement_familles
 
+    def get_parents_emails(self):
+        result = []
+        for parent in self.parents:
+            if parent.email:
+                result.append(parent.email)
+        return ", ".join(result)
+
     def GetEnfantsCount(self, date):
         enfants_a_charge = 0
         enfants_en_creche = 0
@@ -1363,6 +1376,20 @@ class Famille(Base):
                     if not fin or inscrit.naissance < fin:
                         fin = inscrit.naissance
         return enfants_a_charge, enfants_en_creche, debut, fin
+
+    def get_code_client(self):
+        if self.code_client or config.codeclient == "custom":
+            return self.code_client
+        else:
+            for inscrit in self.inscrits:
+                return "411%s" % inscrit.nom.upper()[:5]
+        return ""
+
+    def get_prenoms(self):
+        if len(self.inscrits) == 1:
+            return self.inscrits[0].prenom
+        else:
+            return ", ".join([inscrit.prenom for inscrit in self.inscrits[:-1]]) + " et " + self.inscrits[-1].prenom
 
 
 class State(object):
@@ -1806,6 +1833,9 @@ class Inscrit(Base):
             else:
                 return State(ABSENT)
 
+    def label(self):
+        return "%s %s" % (self.prenom, self.nom)
+
     def get_state(self, date):
         if self.is_date_conge(date):
             return ABSENT
@@ -2034,6 +2064,19 @@ class Inscription(Base, PeriodeReference):
             date += datetime.timedelta(1)
         return jours
 
+    def GetNombreHeuresConsommeesForfait(self):
+        if self.mode == MODE_FORFAIT_GLOBAL_CONTRAT and self.debut and self.fin:
+            compteur = self.forfait_mensuel_heures
+            date = self.debut
+            while date <= self.fin:
+                day = self.inscrit.GetJournee(date)
+                if day:
+                    compteur -= day.get_duration()
+                date += datetime.timedelta(1)
+            return compteur
+        else:
+            return None
+
     def GetDebutDecompteJoursConges(self):
         if self.fin_periode_adaptation:
             return self.fin_periode_adaptation + datetime.timedelta(1)
@@ -2127,6 +2170,9 @@ class TimeslotInscription(Base, Timeslot):
     debut = Column(Integer)
     fin = Column(Integer)
 
+    def get_inscrit(self):
+        return self.inscription.inscrit
+
 
 class TimeslotPlanningSalarie(Base, Timeslot):
     __tablename__ = "ref_journees_salaries"
@@ -2175,6 +2221,9 @@ class TimeslotInscrit(Base, Timeslot):
     activity = relationship(Activite)
     debut = Column(Integer)
     fin = Column(Integer)
+
+    def get_inscrit(self):
+        return self.inscrit
 
 
 class WeekSlotInscrit(Base):
@@ -2385,6 +2434,9 @@ class Groupe(Base):
     ordre = Column(Integer)
     age_maximum = Column(Integer)
 
+    def __init__(self, creche, **kwargs):
+        Base.__init__(self, creche=creche, **kwargs)
+
 
 class Categorie(Base):
     __tablename__ = "categories"
@@ -2445,6 +2497,9 @@ class Database(object):
         self.rollback = self.session.rollback
         self.flush = self.session.flush
 
+    def close(self):
+        self.session.close()
+
     def commit(self):
         if self.session:
             release_query = self.query(DBSettings).filter_by(key=KEY_RELEASE)
@@ -2466,6 +2521,7 @@ class Database(object):
 
     def remove_incompatible_saas_options(self):
         self.creche.tri_planning &= ~TRI_GROUPE
+        self.creche.smtp_server = ""
 
     def reload(self):
         print("Chargement de la base de données %s..." % self.uri)

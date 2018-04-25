@@ -951,7 +951,7 @@ class FactureReservataire(object):
 
 
 def GetHistoriqueSolde(who, jalon):
-    lignes = [encaissement for encaissement in who.encaissements]
+    lignes = [encaissement for encaissement in who.encaissements if (not config.date_debut_reglements or encaissement.date >= config.date_debut_reglements)]
     if isinstance(who, Reservataire):
         for date in who.get_factures_list():
             if config.is_date_after_reglements_start(date) and date <= jalon:

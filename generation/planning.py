@@ -15,7 +15,16 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-from ooffice import *
+from __future__ import unicode_literals
+from __future__ import print_function
+
+import datetime
+
+from constants import *
+from globals import *
+from functions import GetPrenom, GetNom, GetPrenomNom, GetCrecheFields, GetSiteFields, GetLines, date2str, \
+    IsPresentDuringTranche, GetEnfantsTriesParGroupe, GetInscritFields, GetInscriptionFields, get_liste_permanences
+from generation.opendocument import OpenDocumentSpreadsheet, FLAG_SUM_MAX
 
 
 class Ligne(object):
@@ -25,50 +34,35 @@ class Ligne(object):
         self.label = GetPrenomNom(self.inscrit)
 
 
-class PlanningModifications(object):
+class PlanningSpreadsheet(OpenDocumentSpreadsheet):
     title = "Planning"
     template = "Planning.ods"
 
     def __init__(self, site, debut):
-        self.multi = False
-        self.default_output = "Planning %s.ods" % str(debut)
+        OpenDocumentSpreadsheet.__init__(self)
+        self.set_default_output("Planning %s.ods" % str(debut))
         self.site = site
         self.debut = debut
         self.metas = {"Format": 1, "Periodicite": 11}
-        self.email = None
-        self.site = None
+        self.creche = database.creche
 
-    def GetMetas(self, dom):
-        metas = dom.getElementsByTagName('meta:user-defined')
-        for meta in metas:
-            # print meta.toprettyxml()
-            name = meta.getAttribute('meta:name')
-            value = meta.childNodes[0].wholeText
-            if meta.getAttribute('meta:value-type') == 'float':
-                self.metas[name] = float(value)
-            else:
-                self.metas[name] = value
-
-    def execute(self, filename, dom):
-        if filename == 'meta.xml':
-            self.GetMetas(dom)
-            return None
-        elif filename != 'content.xml':
-            return None
-              
-        date_fin = self.debut + datetime.timedelta(self.metas["Periodicite"])
+    def modify_content(self, dom):
+        self.fin = self.debut + datetime.timedelta(self.metas["Periodicite"])
         spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
         table = spreadsheet.getElementsByTagName("table:table")[0]
         lignes = table.getElementsByTagName("table:table-row")
 
+        self.set_fields(GetCrecheFields(self.creche) + GetSiteFields(self.site) + [
+            ('date-debut', self.debut),
+            ('date-fin', self.fin)])
+
         # Les titres des pages
-        ReplaceFields(lignes, [('date-debut', self.debut),
-                               ('date-fin', date_fin)])
+        self.replace_cell_fields(lignes)
 
         if self.metas["Format"] == 1:
             # Le format utilisé par Les petits potes (séparation adaptation / halte-garderie / mi-temps / plein-temps
             # Changé en format utilisé par les petits lutins (sans la séparation)
-            table.setAttribute("table:name", '%d %s %d - %d %s %d' % (self.debut.day, months[self.debut.month - 1], date_fin.year, date_fin.day, months[date_fin.month - 1], date_fin.year))
+            table.setAttribute("table:name", '%d %s %d - %d %s %d' % (self.debut.day, months[self.debut.month - 1], self.fin.year, self.fin.day, months[self.fin.month - 1], self.fin.year))
 
             # Les jours
             ligne = lignes.item(1)
@@ -77,14 +71,14 @@ class PlanningModifications(object):
                 for jour in range(5):
                     date = self.debut + datetime.timedelta(semaine * 7 + jour)
                     cellule = cellules.item(1 + semaine * 6 + jour)
-                    ReplaceFields([cellule], [('date', date)])
+                    self.replace_cell_fields([cellule], [("date", date2str(date))])
     
             ligne_total = lignes.item(7)
 
             # Les lignes
-            inscrits = list(database.creche.select_inscrits(self.debut, date_fin))
+            inscrits = list(database.creche.select_inscrits(self.debut, self.fin))
             inscrits.sort(key=lambda x: GetPrenomNom(x))
-            self.printPresences(table, inscrits, 3)
+            self.print_presences(table, inscrits, 3)
             nb_55 = 1 + max(2, len(inscrits))
     
             cellules = ligne_total.getElementsByTagName("table:table-cell")
@@ -96,7 +90,7 @@ class PlanningModifications(object):
                     cellule.setAttribute('table:formula', formule)
         elif self.metas["Format"] == 2:
             # Le format utilisé par une garderie périscolaire (tri par professeur)
-            inscriptions = database.creche.select_inscriptions(self.debut, date_fin)
+            inscriptions = database.creche.select_inscriptions(self.debut, self.fin)
             tableau = {}  # par professeur
             for inscription in inscriptions:
                 if inscription.professeur in tableau:
@@ -116,7 +110,7 @@ class PlanningModifications(object):
                 table = template.cloneNode(1)
                 table.setAttribute("table:name", GetPrenomNom(professeur))
                 template.parentNode.insertBefore(table, template)
-                ligne_template = GetRow(table, 10)
+                ligne_template = self.get_row(table, 10)
                 for inscription in tableau[professeur]:
                     ligne = ligne_template.cloneNode(1)
                     fields = [('prenom', GetPrenom(inscription.inscrit)),
@@ -125,7 +119,7 @@ class PlanningModifications(object):
                               ('professeur-nom', GetNom(inscription.professeur))] 
                     for i, day in enumerate(days):
                         fields.append((day.lower(), GetState(inscription, i)))
-                    ReplaceFields(ligne, fields)
+                    self.replace_cell_fields(ligne, fields)
                     table.insertBefore(ligne, ligne_template)
                 table.removeChild(ligne_template)
             template.parentNode.removeChild(template)
@@ -135,7 +129,7 @@ class PlanningModifications(object):
             couleurs = {}
             for i, inscrit in enumerate(database.creche.inscrits):
                 line = lignes[5 + (i % 40)]
-                couleurs[GetPrenomNom(inscrit)] = [GetCell(line, j).getAttribute("table:style-name") for j in range(1, 5)]
+                couleurs[GetPrenomNom(inscrit)] = [self.get_cell(line, j).getAttribute("table:style-name") for j in range(1, 5)]
             for line in lignes[5:45]:
                 table.removeChild(line)
             del lignes[5:45]
@@ -149,19 +143,19 @@ class PlanningModifications(object):
                 for i, presence in enumerate(lignes_presence):
                     if i == 0:
                         line = lignes[3 + 3 * jour]
-                        GetCell(line, 0).setAttribute("table:number-rows-spanned", str(len(lignes_presence)))
+                        self.get_cell(line, 0).setAttribute("table:number-rows-spanned", str(len(lignes_presence)))
                     else:
                         line = template.cloneNode(1)
                         table.insertBefore(line, template)
                     nom_ecrit = False
                     for c in range(24):  # 12h
-                        cell = GetCell(line, c + 1)
+                        cell = self.get_cell(line, c + 1)
                         if IsPresentDuringTranche(presence, (7.0 + c * 0.5) * 12, (7.0 + c * 0.5 + 0.5) * 12):
                             if not nom_ecrit:
                                 cell.setAttribute("office:value-type", "string")
-                                text_node = GetCell(line, 3).childNodes[0]
-                                GetCell(line, 3).removeChild(text_node)
-                                ReplaceTextFields(text_node, [("nom", GetPrenomNom(presence))])
+                                text_node = self.get_cell(line, 3).childNodes[0]
+                                self.get_cell(line, 3).removeChild(text_node)
+                                self.replace_text_fields(text_node, [("nom", GetPrenomNom(presence))])
                                 cell.appendChild(text_node)
                                 nom_ecrit = True
                             cell.setAttribute("table:style-name", couleurs[presence.label][2 + (c & 1)])
@@ -196,12 +190,12 @@ class PlanningModifications(object):
                     for t in range(2):
                         cell += 1
                         if journee and IsPresentDuringTranche(journee, tranches[t][0] * 12, tranches[t][1] * 12):
-                            ReplaceFields(GetCell(line, cell), [('p', 1)])
+                            self.replace_cell_fields(self.get_cell(line, cell), [('p', 1)])
                         else:
-                            ReplaceFields(GetCell(line, cell), [('p', '')])
+                            self.replace_cell_fields(self.get_cell(line, cell), [('p', '')])
                     date += datetime.timedelta(1)    
                 table.insertBefore(line, template)
-                ReplaceTextFields(GetCell(line, 0), GetInscritFields(inscription.inscrit))
+                self.replace_text_fields(self.get_cell(line, 0), GetInscritFields(inscription.inscrit))
 
             table.removeChild(template)
             
@@ -225,7 +219,7 @@ class PlanningModifications(object):
             for jour in range(5):
                 date = self.debut + datetime.timedelta(jour)
                 cellule = cellules.item(2 + jour)
-                ReplaceFields([cellule], [('date', date)])
+                self.replace_cell_fields([cellule], [('date', date)])
 
             inscriptions = database.creche.select_inscriptions(self.debut, fin)
             lines = [Ligne(inscription) for inscription in inscriptions]
@@ -254,22 +248,22 @@ class PlanningModifications(object):
                     for t in range(2):
                         cell += 1
                         if journee and IsPresentDuringTranche(journee, tranches[t][0] * 12, tranches[t][1] * 12):
-                            ReplaceFields(GetCell(line, cell), [('p', 1)])
+                            self.replace_cell_fields(self.get_cell(line, cell), [('p', 1)])
                         else:
-                            ReplaceFields(GetCell(line, cell), [('p', '')])
+                            self.replace_cell_fields(self.get_cell(line, cell), [('p', '')])
                     date += datetime.timedelta(1)
                 table.insertBefore(line, templates[0])
-                ReplaceTextFields(line, GetInscritFields(inscription.inscrit) + GetInscriptionFields(inscription))
+                self.replace_text_fields(line, GetInscritFields(inscription.inscrit) + GetInscriptionFields(inscription))
 
             for template in templates:
                 table.removeChild(template)
 
-            IncrementFormulas(total_template, row=+len(lines), flags=FLAG_SUM_MAX)
+            self.increment_formulas(total_template, row=+len(lines), flags=FLAG_SUM_MAX)
 
         #print dom.toprettyxml()
-        return None
+        return True
 
-    def printPresences(self, dom, inscrits, ligne_depart):
+    def print_presences(self, dom, inscrits, ligne_depart):
         lignes = dom.getElementsByTagName("table:table-row")
         if len(inscrits) == 0:
             dom.removeChild(lignes.item(ligne_depart + 2))
@@ -296,45 +290,41 @@ class PlanningModifications(object):
             for semaine in range(2):
                 # Les infos
                 cellule = cellules.item(semaine * 12)
-                ReplaceFields([cellule], GetInscritFields(inscrit))
+                self.replace_cell_fields([cellule], GetInscritFields(inscrit))
                 # Les présences
                 for jour in range(5):
                     date = self.debut + datetime.timedelta(semaine * 7 + jour)
                     if inscrit:
                         journee = inscrit.GetJournee(date)
-                        print(inscrit.prenom, date, journee, journee.timeslots if journee else None)
+                        # print(inscrit.prenom, date, journee, journee.timeslots if journee else None)
                     for t in range(2):
                         cellule = cellules.item(1 + semaine * 12 + jour * 2 + t)
                         if inscrit and journee:
                             tranches = [(database.creche.ouverture, 12.30), (13.30, database.creche.fermeture)]
-                            ReplaceFields([cellule], [('p', int(IsPresentDuringTranche(journee, tranches[t][0] * 12, tranches[t][1] * 12)))])
+                            self.replace_cell_fields([cellule], [('p', int(IsPresentDuringTranche(journee, tranches[t][0] * 12, tranches[t][1] * 12)))])
                         else:
-                            ReplaceFields([cellule], [('p', '')])
+                            self.replace_cell_fields([cellule], [('p', '')])
 
 
-class PlanningHoraireModifications(PlanningModifications):
+class PlanningHoraireSpreadsheet(PlanningSpreadsheet):
+    template = "Planning horaire.ods"
+
     def __init__(self, site, debut):
-        PlanningModifications.__init__(self, site, debut)
-        self.template = 'Planning horaire.ods'
+        PlanningSpreadsheet.__init__(self, site, debut)
         self.default_output = "Planning horaire %s.ods" % str(debut)
 
-    def execute(self, filename, dom):
-        if filename == 'meta.xml':
-            self.GetMetas(dom)
-            return None
-        elif filename != 'content.xml':
-            return None
-
+    def modify_content(self, dom):
         date_fin = self.debut + datetime.timedelta(self.metas["Periodicite"])
-        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
+        spreadsheet = dom.getElementsByTagName("office:spreadsheet").item(0)
         table = spreadsheet.getElementsByTagName("table:table")[0]
         lines = table.getElementsByTagName("table:table-row")
         templates = lines[18:20]
 
         # Les titres des pages
-        ReplaceFields(lines, [('date-debut', self.debut),
-                              ('date-fin', date_fin),
-                              ('numero-semaine', self.debut.isocalendar()[1])])
+        self.replace_cell_fields(lines, [
+            ('date-debut', date2str(self.debut)),
+            ('date-fin', date2str(date_fin)),
+            ('numero-semaine', self.debut.isocalendar()[1])])
 
         inscriptions = database.creche.select_inscriptions(self.debut, date_fin)
         lignes = [Ligne(inscription) for inscription in inscriptions]
@@ -358,7 +348,7 @@ class PlanningHoraireModifications(PlanningModifications):
             line = template.cloneNode(1)
 
             # Les infos
-            ReplaceFields(line, GetInscritFields(inscrit) + GetInscriptionFields(inscription))
+            self.replace_cell_fields(line, GetInscritFields(inscrit) + GetInscriptionFields(inscription))
 
             # Les présences
             for jour in range(5):
@@ -366,17 +356,18 @@ class PlanningHoraireModifications(PlanningModifications):
                 journee = inscrit.GetJournee(date)
                 fields = [("arrivee", journee.GetHeureArrivee() if journee else ""),
                           ("depart", journee.GetHeureDepart() if journee else "")]
-                ReplaceFields(GetCell(line, 2 + 2 * jour), fields)
-                ReplaceFields(GetCell(line, 3 + 2 * jour), fields)
+                self.replace_cell_fields(self.get_cell(line, 2 + 2 * jour), fields)
+                self.replace_cell_fields(self.get_cell(line, 3 + 2 * jour), fields)
 
             table.insertBefore(line, templates[0])
 
         for template in templates:
             table.removeChild(template)
 
-        self.FillPermanences(lines)
+        self.fill_permanences(lines)
+        return True
 
-    def FillPermanences(self, lines):
+    def fill_permanences(self, lines):
         for jour in range(5):
             liste = get_liste_permanences(self.debut + datetime.timedelta(jour))
             for start, end, inscrit in liste:
@@ -386,10 +377,23 @@ class PlanningHoraireModifications(PlanningModifications):
                     line = lines[10 + int(float(start) / 12 - 14.75)]
                 else:
                     continue
-                cell = GetCell(line, 7 + jour)
+                cell = self.get_cell(line, 7 + jour)
                 cell.setAttribute("table:number-rows-spanned", str((end - start) / 12))
-                ReplaceFields(cell, [("a", GetPrenom(inscrit)),
-                                     ("b", GetPrenom(inscrit))])
+                self.replace_cell_fields(cell, [("a", GetPrenom(inscrit)), ("b", GetPrenom(inscrit))])
         for line in lines[3:14]:
-            ReplaceFields(line, [("a", ""),
-                                 ("b", "")])
+            self.replace_cell_fields(line, [("a", ""), ("b", "")])
+
+
+def test_planning_lutins():
+    import random
+    from document_dialog import StartLibreOffice
+    database.init("../databases/lutinsminiac.db")
+    database.load()
+    database.creche.nom = "Les Petits Lutins du Canal"
+    document = PlanningSpreadsheet(None, datetime.date(2018, 2, 19))
+    document.generate("./test-%f.ods" % random.random())
+    StartLibreOffice(document.output)
+
+
+if __name__ == '__main__':
+    test_planning_lutins()

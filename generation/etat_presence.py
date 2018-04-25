@@ -16,31 +16,25 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
+from __future__ import print_function
 
-from constants import *
-from functions import *
-from facture import *
-from ooffice import *
+import datetime
+
+from globals import database
+from generation.opendocument import OpenDocumentSpreadsheet
+from helpers import GetDateString
 
 
-class EtatPresenceModifications(object):
+class EtatPresenceSpreadsheet(OpenDocumentSpreadsheet):
     template = "Etat presence.ods"
     title = "Etat de présence hebdomadaire"
 
-    def __init__(self, site, date_debut, date_fin):
-        self.multi = False
-        self.site = site
-        self.date_debut, self.date_fin = date_debut, date_fin
-        self.default_output = "Etat presence semaines %s.ods" % GetDateString(date_debut)
-        self.gauge = None
-        self.email = None
-        self.site = None
-        
-    def execute(self, filename, dom):
-        if filename != 'content.xml':
-            return None
-        
-        errors = {}
+    def __init__(self, debut, fin):
+        OpenDocumentSpreadsheet.__init__(self)
+        self.date_debut, self.date_fin = debut, fin
+        self.set_default_output("Etat presence semaines %s.ods" % GetDateString(debut))
+
+    def modify_content(self, dom):
         spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
         table = spreadsheet.getElementsByTagName("table:table").item(0)
         lignes = table.getElementsByTagName("table:table-row")
@@ -64,7 +58,7 @@ class EtatPresenceModifications(object):
                         day = inscrit.GetJournee(date)
                         if day:
                             for timeslot in day.timeslots:
-                                if timeslot.debut is not None and timeslot.activity.mode >= 0:
+                                if timeslot.debut is not None and timeslot.is_presence():
                                     if timeslot.debut < 13*12:
                                         matin = 1
                                     if timeslot.fin > 13.25*12:
@@ -74,9 +68,7 @@ class EtatPresenceModifications(object):
                 fields.append(("%d-M" % j, total_matin))
                 fields.append(("%d-AM" % j, total_apres_midi))
                 date += datetime.timedelta(1)
-            ReplaceFields(ligne, fields)
+            self.replace_cell_fields(ligne, fields)
 
         table.removeChild(template)
-        if self.gauge:
-            self.gauge.SetValue(90)
-        return errors
+        return True

@@ -16,38 +16,34 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
+from __future__ import print_function
 
-from constants import *
-from functions import *
-from facture import *
-from ooffice import *
+import datetime
+
+from helpers import GetDateString, date2str
+from globals import database
+from functions import GetInscritFields, GetInscriptionFields
+from generation.opendocument import OpenDocumentSpreadsheet
 
 
-class EtatsInscriptionsModifications(object):
+class EtatsInscriptionsSpreadsheet(OpenDocumentSpreadsheet):
+    title = "Inscriptions en cours"
+    template = "Etats inscriptions.ods"
+
     def __init__(self, site, date):
-        self.multi = False
-        self.template = 'Etats inscriptions.ods'
+        OpenDocumentSpreadsheet.__init__(self)
         self.site = site
-        if date is None:
-            self.date = datetime.date.today()
-        else:
-            self.date = date
-        self.default_output = "Etats inscriptions %s.ods" % GetDateString(self.date, weekday=False)
-        self.gauge = None
-        self.email = None
-        self.site = None
-        
-    def execute(self, filename, dom):
-        if filename != 'content.xml':
-            return None
-        
-        errors = {}
+        self.date = date if date else datetime.date.today()
+        self.set_default_output("Etats inscriptions %s.ods" % GetDateString(self.date, weekday=False))
+
+    def modify_content(self, dom):
+        OpenDocumentSpreadsheet.modify_content(self, dom)
         spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
         table = spreadsheet.getElementsByTagName("table:table").item(0)
         lignes = table.getElementsByTagName("table:table-row")
               
         # Les champs de l'entête
-        ReplaceFields(lignes, [('date', self.date)])
+        self.replace_cell_fields(lignes, [('date', date2str(self.date))])
         
         # Les lignes
         template = lignes.item(7)
@@ -58,10 +54,8 @@ class EtatsInscriptionsModifications(object):
             if inscription and (not self.site or inscription.site == self.site):
                 ligne = template.cloneNode(1)                        
                 fields = GetInscritFields(inscrit) + GetInscriptionFields(inscription)
-                ReplaceFields(ligne, fields)
+                self.replace_cell_fields(ligne, fields)
                 table.insertBefore(ligne, template)
 
         table.removeChild(template)
-        if self.gauge:
-            self.gauge.SetValue(90)
-        return errors
+        return True

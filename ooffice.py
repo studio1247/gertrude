@@ -452,7 +452,7 @@ def GenerateTextDocument(modifications, filename=None, gauge=None):
         filename = normalize_filename(modifications.default_output)
     if modifications.template:
         template = GetTemplateFile(modifications.template)
-        text = open(template, "r").read()
+        text = open(template, "rb").read()
     else:
         text = ""
     if gauge:

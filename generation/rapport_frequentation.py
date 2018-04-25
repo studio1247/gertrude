@@ -32,7 +32,7 @@ class RapportFrequentationModifications(object):
     title = "Rapport de fréquentation"
     template = "Rapport frequentation.ods"
 
-    def __init__(self, site, annee):
+    def __init__(self, site, annee, type=None):
         self.multi = False
         self.default_output = "Rapport frequentation %d.ods" % annee
         self.annee = annee
@@ -40,6 +40,9 @@ class RapportFrequentationModifications(object):
         self.errors = {}
         self.email = None
         self.site = site
+        if type:
+            base, ext = os.path.splitext(self.template)
+            self.template = "%s %s%s" % (base, type, ext)
         self.metas = {"colonne-jour": 2,
                       "colonne-mois": -1,
                       "colonne-annee": 4,
@@ -303,7 +306,10 @@ class RapportFrequentationModifications(object):
                 if ligne_taux_occuptation >= 0:
                     taux_occupation_cell = lines[ligne_taux_occuptation].getElementsByTagName("table:table-cell")[2]
                     taux_occupation_cell.setAttribute("table:formula", "of:=E%d/G2" % (3+len(keys)))
-                    demi_journees_reelles_cell = lines[6].getElementsByTagName("table:table-cell")[2]
-                    demi_journees_reelles_cell.setAttribute("table:formula", "of:=J2*I2*C%d" % (6+len(keys)))
+                    if len(lines) > 6:
+                        demi_journees_reelles_cells = lines[6].getElementsByTagName("table:table-cell")
+                        if len(demi_journees_reelles_cells) > 2:
+                            demi_journees_reelles_cell = demi_journees_reelles_cells[2]
+                            demi_journees_reelles_cell.setAttribute("table:formula", "of:=J2*I2*C%d" % (6+len(keys)))
                
         return self.errors

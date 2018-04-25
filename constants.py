@@ -414,8 +414,9 @@ PRESENCE_CAROUSSEL = {
 
 # Types des champs OpenOffice
 FIELD_EUROS = 1
-FIELD_SIGN = 2
-FIELD_HEURES = 4
+FIELD_HEURES = 2
+FIELD_DATE = 4
+FIELD_SIGN = 256
 
 # IDs de boutons
 ID_SYNCHRO = 10001
@@ -444,6 +445,7 @@ ALERTES_NON_PAIEMENT = 1 << 18
 GESTION_REPAS = 1 << 19
 TARIFS_SPECIAUX_LABELS = 1 << 20
 PREINSCRIPTIONS_ONLY = 1 << 21
+NOTIFICATION_PLACES_DISPONIBLES = 1 << 22
 
 # Atributs de plages horaires spéciales
 PLAGE_FERMETURE = 0
@@ -540,6 +542,7 @@ type_export_coordonnees_parents = [
     ("Familles parties", EXPORT_FAMILLES_PARTIES)
 ]
 
+# Etats de préinscription
 STATE_PREINSCRIPTION_RECUE = 0
 STATE_ATTENTE_ENTRETIEN = 1
 STATE_ENTRETIEN_PROGRAMME = 2
@@ -550,3 +553,9 @@ STATE_REFUS_PARENTS = 6
 STATE_EN_LISTE_ATTENTE = 7
 STATE_DOSSIER_ACCEPTE = 8
 STATE_DOSSIER_REFUSE = 9
+
+# Types d'envoi email
+ENVOI_CAF = "Envoi CAF"
+ENVOI_PARENTS = "Envoi aux parents"
+ENVOI_SALARIES = "Envoi aux salariés"
+ENVOI_RESERVATAIRES = "Envoi aux réservataires"

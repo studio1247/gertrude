@@ -16,26 +16,32 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
-from ooffice import *
+from __future__ import print_function
+
+import datetime
+
+from constants import months, days
+from helpers import GetMonthStart, GetMonthEnd
+from functions import GetPrenomNom, GetDepartement
+from globals import database
+from generation.opendocument import OpenDocumentSpreadsheet
 
 
-class ReleveSalariesModifications(object):
+class ReleveSalariesSpreadsheet(OpenDocumentSpreadsheet):
     title = "Relevés salariés"
     template = "Releve salaries.ods"
 
     def __init__(self, salaries, periode):
+        OpenDocumentSpreadsheet.__init__(self)
         self.salaries = salaries
         self.periode = periode
-        self.email = None
-        self.site = None
-        self.multi = False
         if len(salaries) > 1:
-            self.default_output = "Releve salaries %s %d.ods" % (months[periode.month-1], periode.year)
+            self.set_default_output("Releve salaries %s %d.ods" % (months[periode.month-1], periode.year))
         else:
             who = salaries[0]
-            self.default_output = "Releve salaries %s - %s %d.ods" % (GetPrenomNom(who), months[periode.month - 1], periode.year)
+            self.set_default_output("Releve salaries %s - %s %d.ods" % (GetPrenomNom(who), months[periode.month - 1], periode.year))
     
-    def GetFields(self, salarie):
+    def get_fields(self, salarie):
         fields = [('nom-creche', database.creche.nom),
                   ('adresse-creche', database.creche.adresse),
                   ('code-postal-creche', str(database.creche.code_postal)),
@@ -72,11 +78,9 @@ class ReleveSalariesModifications(object):
         fields.append(('delta', realise - contrat))
         return semaines, fields
 
-    def execute(self, filename, dom):
-        if filename != 'content.xml':
-            return None
-        
-        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
+    def modify_content(self, dom):
+        OpenDocumentSpreadsheet.modify_content(self, dom)
+        spreadsheet = dom.getElementsByTagName("office:spreadsheet").item(0)
         table = spreadsheet.getElementsByTagName("table:table").item(0)       
         lignes = table.getElementsByTagName("table:table-row")
         
@@ -89,16 +93,18 @@ class ReleveSalariesModifications(object):
         inc = 0
         for salarie in self.salaries:
             if salarie.get_contrat(datetime.date.today()):
-                semaines, fields = self.GetFields(salarie)
+                semaines, fields = self.get_fields(salarie)
                 lignes = []
                 for l, line in enumerate(template):
                     if l == LINES-1 or l < LINES-1-(5-semaines)*2:
                         clone = line.cloneNode(1)
                         lignes.append(clone)
                         if l == LINES - 1:
-                            ReplaceFormulas(clone, "SUM([.G8:.G16])", "SUM([.G%d:.G%d])" % (8+inc, 8+inc+2*(semaines-1)))
+                            self.replace_formulas(clone, "SUM([.G8:.G16])", "SUM([.G%d:.G%d])" % (8+inc, 8+inc+2*(semaines-1)))
                         else:
-                            IncrementFormulas(clone, row=+inc)
+                            self.increment_formulas(clone, row=+inc)
                         table.insertBefore(clone, last_line)
-                ReplaceFields(lignes, fields)
+                self.replace_cell_fields(lignes, fields)
                 inc += LINES - (5-semaines) * 2
+
+        return True

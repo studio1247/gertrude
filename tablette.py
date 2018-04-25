@@ -18,8 +18,10 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
+import argparse
 import urllib
-from database import Day, TimeslotInscrit, Inscrit, TimeslotSalarie
+import pytz
+from database import Day, TimeslotInscrit, Inscrit, TimeslotSalarie, GetUnionTimeslots
 from connection import get_connection_from_config
 from functions import *
 from globals import *
@@ -81,139 +83,199 @@ def write_apache_logs_to_journal(filename):
     f.close()
 
 
-def sync_tablette_lines(lines, tz=None, traces=False):
-    last_imported_day = datetime.date.today()
-    date = datetime.datetime.now(tz=tz)
-    hour = float(date.hour) + float(date.minute) / 60
-    if hour < database.creche.fermeture:
-        last_imported_day -= datetime.timedelta(1)
+class PeriodePresence(object):
+    def __init__(self, date=None, debut=None, fin=None, state=0):
+        self.date = date
+        self.debut = debut
+        self.fin = fin
+        self.state = state
 
-    def AddPeriodes(who, date, periodes):
-        day = who.days.get(date, Day())
-        while day.timeslots:
-            who.days.remove(day.timeslots[0])
-        for periode in periodes:
-            AddPeriode(who, date, periode, TimeslotInscrit if isinstance(who, Inscrit) else TimeslotSalarie)
+    def __repr__(self):
+        return "%s-%s" % (self.debut, self.fin)
 
-    def AddPeriode(who, date, periode, cls):
-        arrivee = int(database.creche.ouverture * (60 // BASE_GRANULARITY))
-        depart = int(database.creche.fermeture * (60 // BASE_GRANULARITY))
-        if periode.absent:
-            value = VACANCES
-        elif periode.malade:
-            value = MALADE
+
+class JournalTablette:
+    def __init__(self, traces=False):
+        self.lines = []
+        self.traces = traces
+
+    def load(self):
+        if not self.lines:
+            journal = config.connection.LoadJournal()
+            if journal:
+                self.lines = journal.split("\n")
+
+    @staticmethod
+    def split_line(line):
+        label, idx, date = line.split()
+        tm = time.strptime(date, "%Y-%m-%d@%H:%M")
+        date = datetime.date(tm.tm_year, tm.tm_mon, tm.tm_mday)
+        heure = tm.tm_hour * 60 + tm.tm_min
+        if label.endswith("_salarie"):
+            salarie = database.creche.GetSalarie(idx)
+            return salarie, label[:-8], date, heure
         else:
-            value = 0
-            if periode.arrivee:
-                arrivee = periode.arrivee
-            else:
-                errors.append("%s : Pas d'arrivée enregistrée le %s" % (GetPrenomNom(who), periode.date))
-            if periode.depart:
-                depart = periode.depart
-            else:
-                errors.append("%s : Pas de départ enregistré le %s" % (GetPrenomNom(who), periode.date))
+            inscrit = database.creche.GetInscrit(idx)
+            return inscrit, label, date, heure
 
-        if traces:
-            print("Nouveau timeslot pour", date)
-        who.days.add(cls(date=date, debut=arrivee, fin=depart, activity=database.creche.states[value]))
-        history.Append(None)
+    def get_date_lines(self, date):
+        self.load()
+        s = "%04d-%02d-%02d" % (date.year, date.month, date.day)
+        lines = set([line for line in self.lines if s in line])
+        result = []
+        for line in lines:
+            splitted = self.split_line(line)
+            if splitted[0]:
+                result.append(splitted)
+        result.sort(key=lambda line: line[-1])
+        return result
 
-    array_enfants = {}
-    array_salaries = {}
+    def get_month_lines(self, year, month):
+        self.load()
+        s = "%04d-%02d-" % (year, month)
+        lines = set([line for line in self.lines if s in line])
+        result = []
+        for line in lines:
+            splitted = self.split_line(line)
+            if splitted[0]:
+                result.append(splitted)
+        result.sort(key=lambda line: 20000000 * line[-2].year + 200000 * line[-2].month + 2000 * line[-2].day + line[-1])
+        return result
 
-    for line in lines:
-        if len(line) < 20:
-            break
-
-        try:
-            salarie, label, idx, date, heure = SplitLineTablette(line)
-            if date > last_imported_day:
-                break
-            if salarie:
-                array = array_salaries
-            else:
-                array = array_enfants
-            if idx not in array:
-                array[idx] = {}
-            if date not in array[idx]:
-                array[idx][date] = []
+    def get_periods_by_person(self, date):
+        lines = self.get_date_lines(date)
+        periodes = {}
+        for who, label, date, heure in lines:
+            result = periodes.get(who, None)
+            if result is None:
+                result = []
+                periodes[who] = result
             if label == "arrivee":
-                arrivee = (heure + TABLETTE_MARGE_ARRIVEE) // database.creche.granularite * (database.creche.granularite // BASE_GRANULARITY)
-                if len(array[idx][date]) == 0 or (array[idx][date][-1].arrivee and array[idx][date][-1].depart):
-                    array[idx][date].append(PeriodePresence(date, arrivee))
-                elif array[idx][date][-1].depart:
-                    array[idx][date][-1].arrivee = array[idx][date][-1].depart
-                    array[idx][date][-1].depart = None
-            elif label == "depart":
-                depart = (heure + database.creche.granularite - TABLETTE_MARGE_ARRIVEE) // database.creche.granularite * (database.creche.granularite // BASE_GRANULARITY)
-                if len(array[idx][date]) > 0:
-                    last = array[idx][date][-1]
-                    last.depart = depart
+                if len(result) == 0 or (result[-1].debut and result[-1].fin):
+                    if not result or result[-1].fin != heure:
+                        result.append(PeriodePresence(debut=heure))
+                elif result[-1].fin:
+                    result[-1].debut = min(heure, result[-1].fin)
+                    result[-1].fin = None
                 else:
-                    array[idx][date].append(PeriodePresence(date, None, depart))
+                    result[-1].fin = heure
+            elif label == "depart":
+                if len(result) > 0:
+                    last = result[-1]
+                    last.fin = heure
+                else:
+                    result.append(PeriodePresence(debut=None, fin=heure))
             elif label == "absent":
-                array[idx][date].append(PeriodePresence(date, absent=True))
+                result.append(PeriodePresence(state=VACANCES))
             elif label == "malade":
-                array[idx][date].append(PeriodePresence(date, malade=True))
+                result.append(PeriodePresence(state=MALADE))
             else:
                 print("Ligne %s inconnue" % label)
-            database.creche.last_tablette_synchro = line
-        except Exception as e:
-            print(e)
+        return periodes
 
-    # print(array_salaries)
+    @staticmethod
+    def clear_day(who, date):
+        day = who.days.get(date, Day())
+        for timeslot in day.timeslots[:]:
+            if timeslot.activity.mode in (MODE_PRESENCE, MODE_PLACE_SOUHAITEE):
+                who.days.remove(timeslot)
 
-    errors = []
-    for key in array_enfants:
-        inscrit = database.creche.GetInscrit(key)
-        if inscrit:
-            for date in array_enfants[key]:
-                if not database.creche.cloture_facturation or date not in inscrit.clotures:
-                    AddPeriodes(inscrit, date, array_enfants[key][date])
+    def add_periods(self, who, date, periods):
+        state_before = str(who.days.get(date, None))
+
+        # we clear the day timeslots (only PRESENCE + PLACE SOUHAITEE)
+        self.clear_day(who, date)
+        # we fix timeslots start / end
+        for period in periods:
+            self.fix_period(period)
+        # if the last one is absent / malade it's the only one
+        period = periods[-1]
+        if period.state != 0:
+            self.add_period(who, date, period, period.state, TimeslotInscrit if isinstance(who, Inscrit) else TimeslotSalarie)
+            return
+        # does the job
+        periods = GetUnionTimeslots([period for period in periods if period.state == 0])
+        for period in periods:
+            self.add_period(who, date, period, 0, TimeslotInscrit if isinstance(who, Inscrit) else TimeslotSalarie)
+
+        state_after = str(who.days.get(date, None))
+        if state_after != state_before:
+            print("%s: before=%s periods=%s after=%s" % (GetPrenomNom(who), state_before, periods, state_after))
+
+    @staticmethod
+    def fix_period(period):
+        period.activity = None
+        if period.state == 0 and period.debut:
+            period.debut = (period.debut + TABLETTE_MARGE_ARRIVEE) // database.creche.granularite * (database.creche.granularite // BASE_GRANULARITY)
         else:
-            errors.append("Inscrit %d: Inconnu!" % key)
-    for key in array_salaries:
-        salarie = database.creche.GetSalarie(key)
-        if salarie:
-            for date in array_salaries[key]:
-                # print(key, GetPrenomNom(salarie), periode)
-                AddPeriodes(salarie, date, array_salaries[key][date])
+            period.debut = int(database.creche.ouverture * (60 // BASE_GRANULARITY))
+        if period.state == 0 and period.fin:
+            period.fin = (period.fin + database.creche.granularite - TABLETTE_MARGE_ARRIVEE) // database.creche.granularite * (database.creche.granularite // BASE_GRANULARITY)
         else:
-            errors.append("Salarié %d: Inconnu!" % key)
+            period.fin = int(database.creche.fermeture * (60 // BASE_GRANULARITY))
 
-    database.commit()
-    return errors
+    def add_period(self, who, date, period, value, cls):
+        if self.traces:
+            print("Nouveau timeslot pour", date)
+        who.days.add(cls(date=date, debut=period.debut, fin=period.fin, activity=database.creche.states[value]))
+        history.Append(None)
 
+    def sync(self, date, update_adults=True):
+        print("Synchro tablette %s" % date2str(date))
+        periods = self.get_periods_by_person(date)
+        for person in periods:
+            # if not database.creche.cloture_facturation or not inscrit.get_facture_cloturee(date):
+            if update_adults or isinstance(person, Inscrit):
+                self.add_periods(person, date, periods[person])
+        database.commit()
 
-def sync_tablette(traces=False):
-    print("Synchro tablette ...")
+    def sync_period(self, start, end, update_synchro_date=True, update_adults=True):
+        date = start
+        while date <= end:
+            self.sync(date, update_adults)
+            date += datetime.timedelta(1)
+        if update_synchro_date:
+            database.creche.last_tablette_synchro = end
+            database.commit()
 
-    journal = config.connection.LoadJournal()
-    if not journal:
-        return
-
-    lines = journal.split("\n")
-
-    index = -1
-    if len(database.creche.last_tablette_synchro) > 20:
-        try:
-            index = lines.index(database.creche.last_tablette_synchro)
-        except:
-            pass
-
-    if config.saas_port:
-        import pytz
+    def sync_until_now(self):
         tz = pytz.timezone('Europe/Paris')
+        end = datetime.date.today()
+        date = datetime.datetime.now(tz=tz)
+        hour = float(date.hour) + float(date.minute) / 60
+        if hour < database.creche.fermeture:
+            end -= datetime.timedelta(1)
+        start = str2date(database.creche.last_tablette_synchro) if database.creche.last_tablette_synchro else None
+        if not start:
+            start = end
+            print("Synchro tablette activée le %s" % end.isoformat())
+        self.sync_period(start + datetime.timedelta(1), end)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config", help="config filename")
+    parser.add_argument("start", help="start date")
+    parser.add_argument("end", help="end date", default=None)
+    parser.add_argument("--nosync", help="don't update the last synchronisation date", action="store_true")
+    parser.add_argument("--traces", help="enable traces", action="store_true")
+    parser.add_argument("--noadults", help="modify only children", action="store_true")
+    args = parser.parse_args()
+
+    config.load(args.config)
+    start = str2date(args.start)
+    if args.end:
+        end = str2date(args.end)
     else:
-        tz = None
-    sync_tablette_lines(lines[index + 1:], tz, traces=traces)
+        end = start
 
-
-if __name__ == "__main__":
-    config.load(sys.argv[1])
     config.connection = get_connection_from_config()
     database.init(config.database)
     database.load()
 
-    database.creche.last_tablette_synchro = sys.argv[2]
-    sync_tablette(traces=True)
+    journal = JournalTablette(traces=args.traces)
+    journal.sync_period(start, end, update_synchro_date=not args.nosync, update_adults=not args.noadults)
+
+
+if __name__ == "__main__":
+    main()
