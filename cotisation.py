@@ -281,8 +281,8 @@ class Cotisation(object):
             self.heures_periode = self.heures_mois * 12
             self.nombre_factures = 12 - GetNombreMoisSansFactureContrat(self.date.year)
         elif database.creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
-            self.heures_semaine = self.heures_reelles_semaine
-            self.heures_mois = self.heures_semaine * 4
+            self.heures_mois = self.inscription.forfait_mensuel_heures
+            self.heures_semaine = self.heures_mois / 4
             self.heures_periode = self.heures_mois * 12
             self.nombre_factures = 12 - GetNombreMoisSansFactureContrat(self.date.year)
         else:
@@ -291,6 +291,7 @@ class Cotisation(object):
                     errors.append(" - Le nombre d'heures du forfait mensuel n'est pas renseigné.")
                     raise CotisationException(errors)
                 self.heures_mois = self.inscription.forfait_mensuel_heures
+                print("heures mois", self.heures_mois)
                 self.heures_semaine = self.heures_mois / (52.0 / 12) if self.heures_mois else 0.0  # attention Le Nid Des Trésors
             elif self.inscription.mode == MODE_FORFAIT_HEBDOMADAIRE:
                 self.heures_semaine = self.inscription.forfait_mensuel_heures  # TODO rename to forfait

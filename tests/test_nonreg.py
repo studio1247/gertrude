@@ -1703,6 +1703,18 @@ class MontiloupTests(GertrudeTestCase):
         for label in ("Week-end", "1er janvier", "1er mai", "8 mai", "14 juillet", "15 août", "1er novembre", "11 novembre", "25 décembre", "Lundi de Pâques", "Jeudi de l'Ascension"):
             self.add_ferie(label)
 
+    def test_nombre_heures_forfait_mensuel(self):
+        inscrit = self.add_inscrit()
+        inscription = inscrit.inscriptions[0]
+        inscription.mode = MODE_FORFAIT_MENSUEL
+        inscription.forfait_mensuel_heures = 43.0
+        inscription.debut = datetime.date(2017, 12, 6)
+        inscription.fin = datetime.date(2018, 2, 28)
+        inscription.duree_reference = 7
+        self.add_inscription_timeslot(inscription, 2, 9.5 * 12, 18.75 * 12)
+        cotisation = Cotisation(inscrit, datetime.date(2017, 12, 6))
+        self.assert_prec2_equals(cotisation.heures_mois, 43.0)
+
     def test_pas_de_facture_vide(self):
         inscrit = self.add_inscrit()
         inscription = inscrit.inscriptions[0]
