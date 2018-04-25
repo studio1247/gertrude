@@ -36,7 +36,7 @@ class CoordonneesModifications(object):
             self.template = "Coordonnees parents.ods"
             self.default_output = "Coordonnees parents %s.ods" % GetDateString(self.date, weekday=False)
         else:
-            self.template = 'Coordonnees parents.odt'
+            self.template = "Coordonnees parents.odt"
             self.default_output = "Coordonnees parents %s.odt" % GetDateString(self.date, weekday=False)
 
     def get_inscrits(self):
@@ -44,7 +44,7 @@ class CoordonneesModifications(object):
         for inscrit in database.creche.inscrits:
             temporalite = 0
             for inscription in inscrit.inscriptions:
-                if self.site is None or inscription.site == self.site:
+                if not inscription.preinscription and (self.site is None or inscription.site == self.site):
                     if inscription.debut and inscription.debut > datetime.date.today():
                         temporalite = EXPORT_FAMILLES_FUTURES
                     elif inscription.fin and inscription.fin < datetime.date.today():
