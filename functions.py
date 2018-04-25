@@ -717,6 +717,7 @@ def GetCotisationFields(cotisation):
               ('cout-horaire-apres-allocation-caf-et-credit-impots', ((cotisation.cotisation_mensuelle-cotisation.montant_allocation_caf-cotisation.montant_credit_impots) / cotisation.heures_mois) if cotisation.heures_mois != 0 else 0.0, FIELD_EUROS)
               ]
     if cotisation.montant_heure_garde is not None:
+        result.append(('montant-heure-garde', cotisation.montant_heure_garde, FIELD_EUROS))
         result.append(('montant-semaine', cotisation.heures_semaine*cotisation.montant_heure_garde, FIELD_EUROS))
         result.append(('montant-periode', cotisation.heures_periode*cotisation.montant_heure_garde, FIELD_EUROS))
     if cotisation.montant_heure_garde and cotisation.cotisation_mensuelle:
