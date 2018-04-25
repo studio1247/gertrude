@@ -33,13 +33,6 @@ class CoordonneesParentsMixin:
         self.site = site
         self.date = datetime.date.today() if date is None else date
         self.selection = selection
-        self.email = None
-        if IsTemplateFile("Coordonnees parents.ods"):
-            self.template = "Coordonnees parents.ods"
-            self.default_output = "Coordonnees parents %s.ods" % GetDateString(self.date, weekday=False)
-        else:
-            self.template = "Coordonnees parents.odt"
-            self.default_output = "Coordonnees parents %s.odt" % GetDateString(self.date, weekday=False)
 
     def get_inscrits(self):
         result = []
