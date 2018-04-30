@@ -32,7 +32,7 @@ from parameters import *
 import bcrypt
 from config import config
 
-DB_VERSION = 128
+DB_VERSION = 129
 
 Base = declarative_base()
 
@@ -2336,6 +2336,7 @@ class EncaissementFamille(Base):
     date = Column(Date)
     valeur = Column(Float)
     moyen_paiement = Column(Integer)
+    label = Column(String)
 
     def __init__(self, famille, **kwargs):
         Base.__init__(self, famille=famille, **kwargs)
@@ -2349,6 +2350,7 @@ class EncaissementReservataire(Base):
     date = Column(Date)
     valeur = Column(Float)
     moyen_paiement = Column(Integer)
+    label = Column(String)
 
     def __init__(self, reservataire, **kwargs):
         Base.__init__(self, reservataire=reservataire, **kwargs)
@@ -3120,6 +3122,10 @@ class Database(object):
                 self.engine.execute("UPDATE creche SET prorata=1")
                 self.engine.execute("UPDATE creche SET prorata=0 WHERE repartition==2")
                 self.engine.execute("UPDATE creche SET repartition=3 WHERE repartition==2")
+
+            if version < 129:
+                self.engine.execute("ALTER TABLE encaissements ADD label STRING")
+                self.engine.execute("ALTER TABLE encaissements_reservataires ADD label STRING")
 
             # update database version
             version_entry.value = DB_VERSION
