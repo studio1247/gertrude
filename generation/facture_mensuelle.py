@@ -447,18 +447,46 @@ class FactureModifications(object):
         return fields
 
 
-class RelanceFactureModifications(FactureModifications):
-    def __init__(self, who, date):
+class RelanceFactureModifications(object):
+    title = "Relance facture"
+    template = ""
+
+    def __init__(self, who, date, libreoffice_context=None):
+        self.multi = False
+        self.default_output = ""
+        self.site = None
         self.historique = GetHistoriqueSolde(who if isinstance(who, Reservataire) else who.famille, date)
         self.solde = CalculeSoldeFromHistorique(self.historique)
-        self.last_facture_date = date
-        for line in self.historique:
-            if not isinstance(line, EncaissementFamille) and not isinstance(line, EncaissementReservataire):
-                self.last_facture_date = line.date
-        FactureModifications.__init__(self, [who], self.last_facture_date)
+        total = self.solde
+        self.attachments = []
+        for ligne in reversed(self.historique):
+            if isinstance(ligne, EncaissementFamille) or isinstance(ligne, EncaissementReservataire):
+                total -= ligne.valeur
+            else:
+                facture = FactureModifications([who], ligne.date)
+                GenerateDocument(facture, filename=facture.default_output)
+                if libreoffice_context:
+                    attachment = libreoffice_context.convert_to_pdf(facture.default_output)
+                else:
+                    attachment = facture.default_output
+                self.attachments.append(attachment)
+                total += ligne.total_facture
+            if total >= 0:
+                break
         self.introduction_filename = "Accompagnement relance.txt"
-        self.email_subject = self.email_subject.replace("Facture", "Retard de paiement")
-        self.introduction_fields.append(("solde", "%.2f" % self.solde, FIELD_EUROS))  # TODO pourrait être fait automatiquement
+        self.email_subject = "Retard de paiement"
+        if isinstance(who, Reservataire):
+            self.email_to = [who.email]
+        else:
+            self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
+
+    def get_attachments(self):
+        return self.attachments
+
+    def GetIntroductionFields(self):
+        return [
+            ("solde", "%.2f" % self.solde, FIELD_EUROS),  # TODO pourrait être fait automatiquement
+        ]
 
 
 if __name__ == '__main__':

@@ -985,16 +985,21 @@ def GetHistoriqueSolde(who, jalon):
                 except Exception as e:
                     print("Exception", repr(e))
             date = GetNextMonthStart(date)
+    lignes.sort(key=lambda ligne: ligne.date if ligne.date else today)
     return lignes
+
+
+def GetValeurLigneHistorique(ligne):
+    if isinstance(ligne, EncaissementFamille) or isinstance(ligne, EncaissementReservataire):
+        return ligne.valeur
+    else:
+        return -ligne.total_facture
 
 
 def CalculeSoldeFromHistorique(historique):
     solde = 0.0
     for ligne in historique:
-        if isinstance(ligne, EncaissementFamille) or isinstance(ligne, EncaissementReservataire):
-            solde -= ligne.valeur
-        else:
-            solde += ligne.total_facture
+        solde -= GetValeurLigneHistorique(ligne)
     return solde
 
 
