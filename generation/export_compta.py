@@ -38,7 +38,7 @@ class ExportComptaCotisationsModifications:
 
     @staticmethod
     def generate_inextenso_line_mvt(inscrit, date, facture):
-        template = "%(date)s;VEN;%(compte)s;%(debit)s;%(credit)s;%(libelle)s"
+        template = "%(date)s;VTC;%(compte)s;%(debit)s;%(credit)s;%(libelle)s"
         result = [
             template % {
                 "date": date2str(date),
