@@ -461,17 +461,17 @@ class RelanceFactureModifications(object):
         self.attachments = []
         for ligne in reversed(self.historique):
             if isinstance(ligne, EncaissementFamille) or isinstance(ligne, EncaissementReservataire):
-                total -= ligne.valeur
+                total += ligne.valeur
             else:
                 facture = FactureModifications([who], ligne.date)
-                GenerateDocument(facture, filename=facture.default_output)
+                GenerateDocument(facture, filename=os.path.join("doc", facture.default_output))
                 if libreoffice_context:
                     attachment = libreoffice_context.convert_to_pdf(facture.default_output)
                 else:
                     attachment = facture.default_output
-                self.attachments.append(attachment)
-                total += ligne.total_facture
-            if total >= 0:
+                self.attachments.append(os.path.join("doc", attachment))
+                total -= ligne.total_facture
+            if total <= 0:
                 break
         self.introduction_filename = "Accompagnement relance.txt"
         self.email_subject = "Retard de paiement"
