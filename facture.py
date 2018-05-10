@@ -1016,12 +1016,12 @@ def GetRetardDePaiement(who):
     solde = CalculeSoldeFromHistorique(historique)
     last_date = None
     for ligne in reversed(historique):
+        if solde <= 0:
+            break
         if isinstance(ligne, EncaissementFamille) or isinstance(ligne, EncaissementReservataire):
             solde += ligne.valeur
         else:
             solde -= ligne.total_facture
-        if solde <= 0:
-            break
         last_date = ligne.date
     if not last_date:
         return None
