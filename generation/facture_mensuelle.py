@@ -65,50 +65,55 @@ class FactureModifications(object):
             self.periode_facturation = GetMonthStart(periode - datetime.timedelta(1))
         self.email = True
         self.reservataire = False
-        if len(inscrits) > 0 and isinstance(inscrits[0], Reservataire):
-            self.inscrits = inscrits
-            self.reservataire = inscrits[0]
-            self.site = None
-            self.email_subject = "Facture %s %s %d" % (self.reservataire.nom, months[periode.month - 1], periode.year)
-            self.email_to = [self.reservataire.email]
-            self.default_output = self.email_subject + ".odt"
-        elif len(inscrits) > 1:
+        self.site = None
+        if len(inscrits) > 1:
             self.multi = True
-            self.inscrits = GetEnfantsTriesSelonParametreTriFacture(inscrits)
-            self.site = self.inscrits[0].get_inscriptions(self.periode_facturation, None)[0].site
-            self.email_subject = "Factures %s %d" % (months[periode.month - 1], periode.year)
-            self.default_output = "Factures %s %d.odt" % (months[periode.month - 1], periode.year)
             self.email_to = None
+            if isinstance(inscrits[0], Reservataire):
+                self.reservataire = True
+                self.inscrits = inscrits
+                self.email_subject = "Factures reservataires %s %d" % (months[periode.month - 1], periode.year)
+            else:
+                self.inscrits = GetEnfantsTriesSelonParametreTriFacture(inscrits)
+                self.site = self.inscrits[0].get_inscriptions(self.periode_facturation, None)[0].site
+                self.email_subject = "Factures %s %d" % (months[periode.month - 1], periode.year)
+            self.default_output = self.email_subject + ".odt"
         else:
             self.inscrits = inscrits
             who = self.inscrits[0]
-            self.site = who.get_inscriptions(self.periode_facturation, None)[0].site
-            self.email_subject = "Facture %s %s %d" % (self.GetPrenomNom(who), months[periode.month - 1], periode.year)
-            self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
+            if isinstance(who, Reservataire):
+                self.email_subject = "Facture %s %s %d" % (who.nom, months[periode.month - 1], periode.year)
+                self.email_to = [who.email]
+            else:
+                self.site = who.get_inscriptions(self.periode_facturation, None)[0].site
+                self.email_subject = "Facture %s %s %d" % (self.GetPrenomNom(who), months[periode.month - 1], periode.year)
+                self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
             self.default_output = self.email_subject + ".odt"
 
         if self.reservataire:
             self.template = "Facture reservataire.odt"
-        elif self.site and IsTemplateFile("Facture mensuelle %s.odt" % self.site.nom):
-            self.template = "Facture mensuelle %s.odt" % self.site.nom
-        elif IsTemplateFile("Facture mensuelle %s.odt" % database.creche.nom):
-            self.template = "Facture mensuelle %s.odt" % database.creche.nom
-        else:
-            self.template = 'Facture mensuelle.odt'
-
-        if self.reservataire:
             self.introduction_filename = "Accompagnement facture reservataire.txt"
         else:
             self.introduction_filename = "Accompagnement facture.txt"
+            if self.site and IsTemplateFile("Facture mensuelle %s.odt" % self.site.nom):
+                self.template = "Facture mensuelle %s.odt" % self.site.nom
+            elif IsTemplateFile("Facture mensuelle %s.odt" % database.creche.nom):
+                self.template = "Facture mensuelle %s.odt" % database.creche.nom
+            else:
+                self.template = 'Facture mensuelle.odt'
+
         self.introduction_fields = []
 
-    def get_simple_filename(self, filename, inscrit):
-        result = filename.replace("Factures", "Facture %s" % GetPrenomNom(inscrit)) \
-                         .replace("<enfant>", GetPrenomNom(inscrit)) \
-                         .replace("<prenom>", inscrit.prenom) \
-                         .replace("<nom>", inscrit.nom)
-        if result == filename:
-            result = "[%s] %s" % (GetPrenomNom(inscrit), filename)
+    def get_simple_filename(self, filename, who):
+        if isinstance(who, Reservataire):
+            result = filename.replace("Factures", "Facture %s" % who.nom)
+        else:
+            result = filename.replace("Factures", "Facture %s" % GetPrenomNom(who)) \
+                             .replace("<enfant>", GetPrenomNom(who)) \
+                             .replace("<prenom>", who.prenom) \
+                             .replace("<nom>", who.nom)
+            if result == filename:
+                result = "[%s] %s" % (GetPrenomNom(who), filename)
         return normalize_filename(result)
 
     def get_simple_modifications(self, filename):
@@ -272,20 +277,20 @@ class FactureModifications(object):
                     try:
                         numero = int(database.creche.numeros_facture[facture.debut].valeur)
                         numero += len([inscrit for inscrit in database.creche.inscrits if inscrit.has_facture(facture.debut)])
-                        numero += self.reservataire.idx
+                        numero += reservataire.idx
                     except Exception as e:
                         print("Exception numéro de facture", e)
                         numero = 0
 
                     if config.numfact:
                         fields = {
-                            "inscritid": len(database.creche.inscrits) + self.reservataire.idx,
+                            "inscritid": len(database.creche.inscrits) + reservataire.idx,
                             "numero": numero,
                             "annee": facture.debut.year,
                             "mois": facture.debut.month
                         }
                         if "numero-global" in config.numfact:
-                            fields["numero-global"] = config.numerotation_factures.get("reservataire-%d" % self.reservataire.idx, facture.debut)
+                            fields["numero-global"] = config.numerotation_factures.get("reservataire-%d" % reservataire.idx, facture.debut)
                         numfact = config.numfact % fields
                     else:
                         numfact = "%03d%04d%02d" % (900+reservataire.idx, self.periode_facturation.year, self.periode_facturation.month)

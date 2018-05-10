@@ -21,7 +21,7 @@ import collections
 from builtins import str
 import time
 import os.path
-from database import Timeslot, TimeslotInscrit, Activite
+from database import Timeslot, TimeslotInscrit, Activite, Reservataire
 from parameters import *
 from globals import *
 from config import config
@@ -121,6 +121,8 @@ def GetPrenomNom(person, maj_nom=False, tri=None, monsieur_madame=False):
     if not person:
         return ""
     nom = person.nom
+    if isinstance(person, Reservataire):
+        return nom
     if tri is None:
         tri = database.creche.tri_planning
     if maj_nom:

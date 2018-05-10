@@ -33,6 +33,7 @@ class AttestationModifications(object):
     def __init__(self, who, debut, fin, attestation_mensuelle=False):
         self.debut, self.fin = debut, fin
         self.attestation_mensuelle = False
+        self.site = None
         if attestation_mensuelle and IsTemplateFile("Attestation mensuelle.odt"):
             self.template = "Attestation mensuelle.odt"
             self.attestation_mensuelle = True
@@ -40,7 +41,6 @@ class AttestationModifications(object):
             self.inscrits = [inscrit for inscrit in who if inscrit.get_inscriptions(debut, fin)]
             self.SetDefaultMultiParam()
         elif isinstance(who, Creche):
-            self.site = None
             self.inscrits = [inscrit for inscrit in who.inscrits if inscrit.get_inscriptions(debut, fin)]
             self.SetDefaultMultiParam()
         elif isinstance(who, Site):
