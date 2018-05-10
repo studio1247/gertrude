@@ -230,7 +230,7 @@ class GertrudeFrame(wx.Frame):
             if changements:
                 wx.PostEvent(self, self.ChangementsGroupeEvent(changements=changements))
 
-        new_alertes = [(date, message) for date, message, ack in GetAlertes() if not ack]
+        new_alertes = [(date, message) for date, message, ack in get_alertes(force=True) if not ack]
         if new_alertes:
             wx.PostEvent(self, self.AlertEvent(new_alertes=new_alertes))
     

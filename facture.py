@@ -950,7 +950,7 @@ class FactureReservataire(object):
         self.total_facture = self.total
 
 
-def GetHistoriqueSolde(who, jalon):
+def GetHistoriqueSolde(who, jalon=datetime.date.today()):
     lignes = [encaissement for encaissement in who.encaissements if (not config.date_debut_reglements or encaissement.date >= config.date_debut_reglements)]
     if isinstance(who, Reservataire):
         for date in who.get_factures_list():
@@ -1006,9 +1006,22 @@ def CalculeSolde(who, date):
 def GetRetardDePaiement(who):
     delai = who.get_delai_paiement()
     if delai is None:
-        return False
-    else:
-        return CalculeSolde(who, datetime.date.today() - datetime.timedelta(delai)) > 0.01
+        return None
+    historique = GetHistoriqueSolde(who)
+    solde = CalculeSoldeFromHistorique(historique)
+    last_date = None
+    for ligne in reversed(historique):
+        if solde <= 0:
+            break
+        if isinstance(ligne, EncaissementFamille) or isinstance(ligne, EncaissementReservataire):
+            solde += ligne.valeur
+        else:
+            solde -= ligne.total_facture
+        last_date = ligne.date
+    if not last_date:
+        return None
+    if (today - last_date).days > delai:
+        return last_date
 
 
 def ClotureFactures(inscrits, date, cloture=True):
