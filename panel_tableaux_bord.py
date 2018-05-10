@@ -1039,7 +1039,7 @@ class AlertesTab(AutoTab):
     def UpdateContents(self):
         if self.grid.GetNumberRows() > 0:
             self.grid.DeleteRows(0, self.grid.GetNumberRows())
-        for row, (date, message, ack) in enumerate(GetAlertes()):
+        for row, (date, message, ack) in enumerate(get_alertes(force=True)):
             self.grid.AppendRows(1)
             self.grid.SetCellValue(row, 0, str(row+1))
             self.grid.SetCellValue(row, 1, date2str(date))

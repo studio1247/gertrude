@@ -26,12 +26,38 @@ from config import config
 from helpers import GetDateIntersection, IncrDate
 
 
-def GetAlertes(fresh_only=False):
-    alertes = []
+alertes = []
+alertes_date = datetime.date.today() - datetime.timedelta(1)
+
+
+def set_alertes_date(date):
+    global alertes_date
+    alertes_date = date
+
+
+def set_alertes_fresh():
+    set_alertes_date(datetime.date.today())
+
+
+def set_alertes_dirty():
+    set_alertes_date(datetime.date.today() - datetime.timedelta(1))
+
+
+def is_alertes_dirty():
+    return (datetime.date.today() - alertes_date).days > 0
+
+
+def get_alertes(force=False):
+    if not force and not is_alertes_dirty():
+        print("Réutilisation des alertes ...")
+        return alertes
+
+    alertes.clear()
+    set_alertes_fresh()
 
     def add_alerte(date, message):
         ack = message in database.creche.alertes
-        if not fresh_only or not ack:
+        if not ack:
             alertes.append((date, message, ack))
 
     today = datetime.date.today()
@@ -53,8 +79,9 @@ def GetAlertes(fresh_only=False):
                 message = "L'inscription de %s %s se terminera dans 2 mois" % (inscrit.prenom, inscrit.nom)
                 add_alerte(date, message)
         if config.options & ALERTES_NON_PAIEMENT:
-            if GetRetardDePaiement(inscrit.famille):
-                add_alerte(today, "Le solde de %s est négatif depuis plus de %d jours" % (GetPrenomNom(inscrit), inscrit.famille.get_delai_paiement()))
+            date = GetRetardDePaiement(inscrit.famille)
+            if date:
+                add_alerte(date, "Le solde de %s est négatif (%d jours de retard)" % (GetPrenomNom(inscrit), (datetime.date.today() - date).days))
 
     for inscrit in database.creche.inscrits:
         for inscription in inscrit.inscriptions:
@@ -74,8 +101,9 @@ def GetAlertes(fresh_only=False):
 
     if config.options & ALERTES_NON_PAIEMENT:
         for reservataire in database.creche.reservataires:
-            if GetRetardDePaiement(reservataire):
-                add_alerte(today, "Le solde de %s est négatif depuis plus de %d jours" % (reservataire.nom, reservataire.delai_paiement if reservataire.delai_paiement else 0))
+            date = GetRetardDePaiement(reservataire)
+            if date:
+                add_alerte(date, "Le solde de %s est négatif (%d jours de retard)" % (reservataire.nom, (datetime.date.today() - date).days))
 
     alertes.sort(key=lambda alerte: alerte[0], reverse=True)
     return alertes
