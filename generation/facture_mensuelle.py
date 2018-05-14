@@ -82,6 +82,7 @@ class FactureModifications(object):
             self.inscrits = inscrits
             who = self.inscrits[0]
             if isinstance(who, Reservataire):
+                self.reservataire = True
                 self.email_subject = "Facture %s %s %d" % (who.nom, months[periode.month - 1], periode.year)
                 self.email_to = [who.email]
             else:
