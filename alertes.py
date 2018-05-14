@@ -52,7 +52,7 @@ def get_alertes(force=False):
         print("Réutilisation des alertes ...")
         return alertes
 
-    alertes.clear()
+    del alertes[:]
     set_alertes_fresh()
 
     def add_alerte(date, message):
