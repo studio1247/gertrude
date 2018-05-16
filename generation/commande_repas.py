@@ -42,9 +42,10 @@ class CommandeRepasModifications(object):
         result = 0
         for inscrit in database.creche.select_inscrits(date, date, site=self.site):
             journee = inscrit.GetJournee(date)
-            for slot in journee.timeslots:
-                if slot.activity.label == label:
-                    result += 1
+            if journee:
+                for slot in journee.timeslots:
+                    if slot.activity.label == label:
+                        result += 1
         return str(result)
 
     def repas(self, jour, categories=None):
