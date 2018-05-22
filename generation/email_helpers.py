@@ -29,7 +29,7 @@ from email.mime.multipart import MIMEMultipart
 from helpers import strip_accents, get_emails, ENVOI_PARENTS, ENVOI_CAF, ENVOI_SALARIES
 
 
-def send_email(creche_from, emails_to, subject, introduction, attachments, debug=False):
+def send_email(creche_from, emails_to, subject, introduction, attachments=[], debug=False):
     COMMASPACE = ", "
 
     smtp_server = creche_from.smtp_server if creche_from.smtp_server else "localhost"
