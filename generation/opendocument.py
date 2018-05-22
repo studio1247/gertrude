@@ -62,7 +62,7 @@ class OpenDocument(object):
         return GetTemplateFile(cls.template)
 
     def set_default_output(self, value):
-        self.default_output = value.replace("/", "").replace("'", "")
+        self.default_output = value.replace("/", "").replace("'", "") if value else None
 
     @staticmethod
     def remove_nodes_containing(nodes, needle):

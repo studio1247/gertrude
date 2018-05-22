@@ -23,13 +23,12 @@ import glob
 
 from cotisation import Cotisation
 from functions import Select, GetCrecheFields, GetInscritFields, GetInscriptionFields, GetCotisationFields, \
-    GetBureauFields, IsPresentDuringTranche, GetPrenomNom, GetSiteFields, IsTemplateFile
+    GetBureauFields, IsPresentDuringTranche, GetPrenomNom, GetSiteFields, IsTemplateFile, GetTemplateFile
 from constants import *
 from globals import database
 from helpers import GetDateString, GetHeureString
 from generation.opendocument import OpenDocumentText, OpenDocumentSpreadsheet
 from generation.email_helpers import SendToParentsMixin
-from generation.facture_mensuelle import FactureMensuelle
 
 
 class DocumentAccueilMixin(object):
@@ -210,7 +209,7 @@ class DevisAccueilDocument(DocumentAccueilText, SendToParentsMixin):
     def __init__(self, who, date):
         DocumentAccueilText.__init__(self, who, date)
         self.set_default_output("Devis accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False)))
-        SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement devis.txt", "Devis envoyé")
+        SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement devis.txt", [], "Devis envoyé")
 
 
 class ContratAccueilDocument(DocumentAccueilText, SendToParentsMixin):
@@ -226,7 +225,7 @@ class ContratAccueilDocument(DocumentAccueilText, SendToParentsMixin):
         elif self.inscription.mode == MODE_HALTE_GARDERIE and IsTemplateFile("Contrat accueil halte garderie.odt"):
             self.template = "Contrat accueil halte garderie.odt"
         self.set_default_output("Contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False)))
-        SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement contrat.txt", "Contrat envoyé")
+        SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement contrat.txt", [], "Contrat envoyé")
 
 
 class AvenantContratAccueilDocument(DocumentAccueilText, SendToParentsMixin):
@@ -236,7 +235,7 @@ class AvenantContratAccueilDocument(DocumentAccueilText, SendToParentsMixin):
     def __init__(self, who, date):
         DocumentAccueilText.__init__(self, who, date)
         self.set_default_output("Avenant contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False)))
-        SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement avenant.txt", "Avenant envoyé")
+        SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement avenant.txt", [], "Avenant envoyé")
 
 
 class RecapitulatifFraisDeGardeDocument(OpenDocumentSpreadsheet, DocumentAccueilMixin):
@@ -275,7 +274,7 @@ class SimulationSpreadsheet(OpenDocumentSpreadsheet, DocumentAccueilMixin, SendT
         OpenDocumentSpreadsheet.__init__(self)
         DocumentAccueilMixin.__init__(self, who, date)
         self.set_default_output("Simulation accueil %s - %s.ods" % (GetPrenomNom(who), GetDateString(date, weekday=False)))
-        SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement simulation.txt", "Simulation envoyée")
+        SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement simulation.txt", [], "Simulation envoyée")
 
     def modify_content(self, dom):
         spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
@@ -285,29 +284,24 @@ class SimulationSpreadsheet(OpenDocumentSpreadsheet, DocumentAccueilMixin, SendT
         return True
 
 
-class DossierInscription(DocumentAccueilMixin):
+class DossierInscription(OpenDocumentText, DocumentAccueilMixin, SendToParentsMixin):
     title = "Dossier d'inscription"
     template = ""
 
     def __init__(self, who, date):
+        OpenDocumentText.__init__(self)
         DocumentAccueilMixin.__init__(self, who, date)
-        self.set_default_output("")
-        # TODO self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
-        # TODO self.email_subject = "Dossier d'inscription pour %s" % GetPrenomNom(who)
-        # TODO self.introduction_filename = "Dossier inscription.txt"
+        self.inscription = who.get_inscription(date, preinscription=True)
+        self.site = self.inscription.site if self.inscription else None
+        self.set_default_output(None)
+        attachments = []
         if not IsTemplateFile("Premiere facture.txt"):
             # sinon la première facture est envoyée séparément
-            self.contrat_accueil = ContratAccueilDocument(who, date)
-            # TODO GenerateDocument(self.contrat_accueil, filename=self.contrat_accueil.default_output)
-        else:
-            self.contrat_accueil = None
-
-    def get_attachments(self):
-        result = []
-        if self.contrat_accueil:
-            result.append(self.contrat_accueil.default_output)
-        result.extend(glob.glob("templates/Dossier inscription/*.pdf"))
-        return result
+            contrat_accueil = ContratAccueilDocument(who, date)
+            if contrat_accueil.generate() and contrat_accueil.convert_to_pdf():
+                attachments.append(contrat_accueil.pdf_output)
+        attachments.extend(glob.glob(glob.escape(GetTemplateFile("Dossier inscription", self.site)) + "/*.pdf"))
+        SendToParentsMixin.__init__(self, "Dossier d'inscription %s" % GetPrenomNom(who), "Dossier inscription.txt", attachments, "Dossier d'inscription envoyé")
 
 
 # class PremiereFactureModifications(DocumentAccueilModifications):

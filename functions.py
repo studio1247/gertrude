@@ -182,8 +182,8 @@ def GetFile(filename, site, path, path_dist):
         paths.append("../Resources/%s" % filename)
     for directory in ["", "~/.gertrude/", "/usr/share/gertrude/", os.path.dirname(os.path.realpath(__file__)) + "/"]:
         for path in paths:
-            # print("Test path %s" % path)
-            if os.path.isfile(directory + path):
+            # print('Test path "%s"' % path)
+            if os.path.exists(directory + path):
                 return directory + path
     return None
 

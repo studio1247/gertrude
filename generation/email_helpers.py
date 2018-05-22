@@ -99,16 +99,21 @@ def send_email_to_parents(famille, subject, introduction, attachments, debug=Fal
 
 
 class SendToParentsMixin:
-    def __init__(self, subject, introduction_filename, success_message):
+    def __init__(self, subject, introduction_filename, attachments=[], success_message="Message envoyé"):
         self.parents_subject = subject
         self.parents_introduction_filename = introduction_filename
+        self.parents_attachments = attachments
         self.parents_success_message = success_message
         self.destination_emails[ENVOI_PARENTS] = [(inscrit, bool(inscrit.famille.get_parents_emails())) for inscrit in self.inscrits]
 
     def send_to_parents(self, debug=False):
         if len(self.inscrits) == 1:
-            if self.generate() and self.convert_to_pdf():
-                return send_email_to_parents(self.inscrits[0].famille, self.parents_subject, self.generate_introduction(self.parents_introduction_filename), [self.pdf_output], debug=debug)
+            if not self.default_output:
+                return send_email_to_parents(self.inscrits[0].famille, self.parents_subject,
+                                             self.generate_introduction(self.parents_introduction_filename),
+                                             self.parents_attachments, debug=debug)
+            elif self.generate() and self.convert_to_pdf():
+                return send_email_to_parents(self.inscrits[0].famille, self.parents_subject, self.generate_introduction(self.parents_introduction_filename), [self.pdf_output] + self.parents_attachments, debug=debug)
             else:
                 return 0, str(self.errors)
         else:

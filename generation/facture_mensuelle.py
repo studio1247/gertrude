@@ -88,7 +88,7 @@ class FactureMensuelle(OpenDocumentText, SendToParentsMixin):
             self.set_default_output("Facture %s %s %d.odt" % (self.GetPrenomNom(who), months[periode.month - 1], periode.year))
 
         if not self.reservataire:
-            SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement facture.txt", "%(count)d factures envoyées")
+            SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement facture.txt", [], "%(count)d factures envoyées")
 
         if self.reservataire:
             self.template = "Facture reservataire.odt"

@@ -59,7 +59,7 @@ class AttestationPaiementDocument(OpenDocumentText, SendToParentsMixin):
         else:
             self.set_default_output(output_start + " %s-%s %d" % (months[debut.month - 1], months[fin.month - 1], debut.year))
 
-        SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement attestation paiement.txt", "%(count)d attestations envoyées")
+        SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement attestation paiement.txt", [], "%(count)d attestations envoyées")
 
     def split(self, who):
         return AttestationPaiementDocument(who, self.debut, self.fin)

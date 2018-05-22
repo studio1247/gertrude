@@ -56,7 +56,7 @@ class AttestationCAF(OpenDocumentText, SendToParentsMixin, SendToCAFMixin):
         else:
             self.set_default_output("Attestation de paiement %s %s %d.odt" % (GetPrenomNom(self.inscrits[0]), months[self.date.month - 1], self.date.year))
 
-        SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement attestation CAF.txt", "%(count)d attestations envoyées")
+        SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement attestation CAF.txt", [], "%(count)d attestations envoyées")
         SendToCAFMixin.__init__(self, "Attestations CAF (%(index)d/%(count)d)", "Accompagnement attestations CAF.txt", "%(count)d emails envoyés")
 
         self.global_fields = GetCrecheFields(database.creche) + [
