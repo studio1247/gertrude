@@ -2040,29 +2040,26 @@ class Inscription(Base, PeriodeReference):
         else:
             return 0
 
-    def GetNombreJoursCongesPris(self, debut, fin):
-        jours = 0
+    def GetJoursCongesPris(self, debut, fin):
+        result = []
         date = debut
-        # print "GetNombreJoursCongesPris(%s - %s)" % (debut, fin)
+        # print "GetJoursCongesPris(%s - %s)" % (debut, fin)
         while date <= fin:
             if self.mode in (MODE_FORFAIT_HEBDOMADAIRE, MODE_FORFAIT_MENSUEL):
                 if date in self.inscrit.creche.periodes_fermeture or date in self.inscrit.jours_conges:
-                    # print date
-                    jours += 1
+                    result.append(date)
             else:
                 state = self.inscrit.get_state(date)
                 if self.inscrit.creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS:
                     if state == VACANCES:
-                        # print("VACANCES", date)
-                        jours += 1
+                        result.append(date)
                 else:
                     if state in (ABSENT, VACANCES):
                         reference = self.get_day_from_date(date)
                         if reference.get_duration() > 0:
-                            # print(date)
-                            jours += 1
+                            result.append(date)
             date += datetime.timedelta(1)
-        return jours
+        return result
 
     def GetNombreHeuresConsommeesForfait(self):
         if self.mode == MODE_FORFAIT_GLOBAL_CONTRAT and self.debut and self.fin:
@@ -2092,11 +2089,14 @@ class Inscription(Base, PeriodeReference):
         else:
             return self.fin
 
-    def GetNombreJoursCongesPoses(self):
+    def GetJoursCongesPoses(self):
         if self.debut and self.fin and not self.preinscription:
-            return self.GetNombreJoursCongesPris(self.GetDebutDecompteJoursConges(), self.GetFinDecompteJoursConges())
+            return self.GetJoursCongesPris(self.GetDebutDecompteJoursConges(), self.GetFinDecompteJoursConges())
         else:
-            return 0
+            return []
+
+    def GetNombreJoursCongesPoses(self):
+        return len(self.GetJoursCongesPoses())
 
     def IsNombreSemainesCongesDepasse(self, jalon):
         if self.inscrit.creche.facturation_jours_feries == ABSENCES_DEDUITES_SANS_LIMITE:
@@ -2107,7 +2107,7 @@ class Inscription(Base, PeriodeReference):
             if not self.semaines_conges:
                 return True
             debut = self.GetDebutDecompteJoursConges()
-            pris = self.GetNombreJoursCongesPris(debut, jalon)
+            pris = len(self.GetJoursCongesPris(debut, jalon))
             total = self.GetNombreJoursCongesPeriode()
             return pris > total
         else:
