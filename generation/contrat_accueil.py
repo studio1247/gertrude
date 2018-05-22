@@ -292,7 +292,7 @@ class DossierInscription(OpenDocumentText, DocumentAccueilMixin, SendToParentsMi
         OpenDocumentText.__init__(self)
         DocumentAccueilMixin.__init__(self, who, date)
         self.inscription = who.get_inscription(date, preinscription=True)
-        self.site = self.inscription.sites[0] if (self.inscription and self.inscription.sites) else None
+        self.site = self.inscription.sites[0] if (self.inscription and self.inscription.sites_preinscription) else None
         self.set_default_output(None)
         attachments = []
         if not IsTemplateFile("Premiere facture.txt"):
