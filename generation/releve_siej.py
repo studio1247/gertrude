@@ -48,6 +48,8 @@ class ReleveSIEJDocument(OpenDocumentText):
         self.annee = year
         self.debut, self.fin = datetime.date(year, 1, 1), datetime.date(year, 12, 31)
         self.regimes = ["général et fonctionnaire", "agricole", "maritime", "autres"]
+        self.table = [Regime() for _ in range(4)]
+        self.reel, self.previsionnel, self.facture, self.realise = 0, 0, 0, 0
 
     def get_regime(self, inscrit, date):
         regime = inscrit.get_regime(date)
@@ -61,8 +63,6 @@ class ReleveSIEJDocument(OpenDocumentText):
             return 3
 
     def calcule_table(self):
-        self.table = [Regime(), Regime(), Regime(), Regime()]
-        self.reel, self.previsionnel, self.facture, self.realise = 0, 0, 0, 0
         for inscrit in database.creche.select_inscrits(self.debut, self.fin):
             date = self.debut
             for mois in range(12):

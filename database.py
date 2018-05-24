@@ -492,6 +492,14 @@ class Creche(Base):
             date = GetNextMonthStart(date)
         return result
 
+    def get_capacite_max(self):
+        capacite = 0
+        for jour in range(7):
+            if self.is_jour_semaine_travaille(jour):
+                for timeslot in self.tranches_capacite.get(jour, Day()).timeslots:
+                    capacite = max(timeslot.value, capacite)
+        return capacite
+
     def get_capacite(self, jour=None, tranche=None):
         if jour is None:
             jours, result = 0, 0.0

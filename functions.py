@@ -530,6 +530,7 @@ def GetCrecheFields(creche):
             ('ville-creche', database.creche.ville),
             ('telephone-creche', database.creche.telephone),
             ('email-creche', database.creche.email),
+            ('capacite-max-creche', database.creche.get_capacite_max()),
             ('capacite', database.creche.get_capacite()),
             ('capacite-creche', database.creche.get_capacite()),
             ('amplitude-horaire', database.creche.get_amplitude_horaire()),
