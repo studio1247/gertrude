@@ -1896,15 +1896,13 @@ class Inscrit(Base):
                         total += inscription.heures_permanences * (today - inscription.debut).days / (fin - inscription.debut).days
         return total, effectue
 
-    def GetRegime(self, date):
-        result = 0
+    def get_regime(self, date):
         for parent in self.famille.parents:
             if parent:
                 revenu = Select(parent.revenus, date)
                 if revenu and revenu.regime:
-                    result = revenu.regime
-                    break
-        return result
+                    return revenu.regime
+        return 0
 
 
 class Parent(Base):

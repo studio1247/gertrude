@@ -93,7 +93,7 @@ def send_email(creche_from, emails_to, subject, introduction, attachments=[], de
     return 1, "Email envoyé"
 
 
-def send_email_to_parents(famille, subject, introduction, attachments, debug=False):
+def send_email_to_parents(famille, subject, introduction, attachments=[], cc=[], debug=False):
     emails_to = list(set([parent.email for parent in famille.parents if parent and parent.email]))
     return send_email(famille.creche, emails_to, subject, introduction, attachments, debug)
 

@@ -124,6 +124,18 @@ PeriodiciteFacturationItems = [
     ("Annuelle", 12)
 ]
 
+# Régimes CAF
+REGIME_CAF_NONE = 0
+REGIME_CAF_GENERAL = 1
+REGIME_CAF_FONCTION_PUBLIQUE = 2
+REGIME_CAF_MSA = 3
+REGIME_CAF_EDF_GDF = 4
+REGIME_CAF_RATP = 5
+REGIME_CAF_PECHE_MARITIME = 6
+REGIME_CAF_MARINS_DU_COMMERCE = 7
+REGIME_CAF_RSI = 8
+REGIME_CAF_SNCF = 9
+
 RegimesCAF = [
     "Pas de sélection",
     "Régime général",
