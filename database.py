@@ -2049,15 +2049,22 @@ class Inscription(Base, PeriodeReference):
                 if date in self.inscrit.creche.periodes_fermeture or date in self.inscrit.jours_conges:
                     result.append(date)
             else:
-                state = self.inscrit.get_state(date)
-                if self.inscrit.creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS:
-                    if state == VACANCES:
-                        result.append(date)
-                else:
+                reference = self.get_day_from_date(date)
+                if reference.get_duration() > 0:
+                    state = self.inscrit.get_state(date)
                     if state in (ABSENT, VACANCES):
-                        reference = self.get_day_from_date(date)
-                        if reference.get_duration() > 0:
-                            result.append(date)
+                        result.append(date)
+                # TODO pour Nid des tresors le 24/05/2018 test non reg ?
+                # state = self.inscrit.get_state(date)
+                # if self.inscrit.creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS:
+                #     if state == VACANCES:
+                #
+                #         result.append(date)
+                # else:
+                #     if state in (ABSENT, VACANCES):
+                #         reference = self.get_day_from_date(date)
+                #         if reference.get_duration() > 0:
+                #             result.append(date)
             date += datetime.timedelta(1)
         return result
 
