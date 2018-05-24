@@ -874,6 +874,9 @@ class Reservataire(Base):
         if self.nom is None:
             self.nom = ""
 
+    def slug(self):
+        return "reservataire-%d" % self.idx
+
     def get_delai_paiement(self):
         return self.delai_paiement
 

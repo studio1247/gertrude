@@ -456,7 +456,6 @@ class ReglementsTab(AutoTab):
         self.EnableLigneAjout()
         self.EffaceLignes()
         self.lignes = GetHistoriqueSolde(self.inscrit.famille, today)
-        self.lignes.sort(key=lambda ligne: ligne.date if ligne.date else today)
         self.index = 0
         self.total = 0
         for ligne in self.lignes:
