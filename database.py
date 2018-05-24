@@ -32,7 +32,7 @@ from parameters import *
 import bcrypt
 from config import config
 
-DB_VERSION = 129
+DB_VERSION = 130
 
 Base = declarative_base()
 
@@ -212,6 +212,7 @@ class Creche(Base):
     modes_inscription = Column(Integer, default=TOUS_MODES_ACCUEIL)
     minimum_maladie = Column(Integer, default=3)
     email = Column(String)
+    email_changements_planning = Column(String)
     type = Column(Integer, default=TYPE_PARENTAL)
     mode_saisie_planning = Column(Integer, default=SAISIE_HORAIRE)
     periode_revenus = Column(Integer, default=REVENUS_YM2)
@@ -3192,6 +3193,9 @@ class Database(object):
             if version < 129:
                 self.engine.execute("ALTER TABLE encaissements ADD label STRING")
                 self.engine.execute("ALTER TABLE encaissements_reservataires ADD label STRING")
+
+            if version < 130:
+                self.engine.execute("ALTER TABLE creche ADD email_changements_planning STRING")
 
             # update database version
             version_entry.value = DB_VERSION
