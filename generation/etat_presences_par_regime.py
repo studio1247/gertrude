@@ -56,7 +56,7 @@ class EtatPresencesParRegime(OpenDocumentText):
 
     def get_regime(self, inscrit, date):
         regime = inscrit.get_regime(date)
-        if regime == REGIME_CAF_GENERAL or regime == REGIME_CAF_FONCTION_PUBLIQUE:
+        if regime in (REGIME_CAF_GENERAL, REGIME_CAF_FONCTION_PUBLIQUE):
             return 0
         elif regime == REGIME_CAF_MSA:
             return 1
