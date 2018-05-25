@@ -1905,9 +1905,10 @@ class Inscrit(Base):
         return total, effectue
 
     def get_regime(self, date):
+        date_revenus = self.creche.GetDateRevenus(date)
         for parent in self.famille.parents:
             if parent:
-                revenu = Select(parent.revenus, date)
+                revenu = Select(parent.revenus, date_revenus)
                 if revenu and revenu.regime:
                     return revenu.regime
         return 0
