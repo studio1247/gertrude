@@ -148,16 +148,17 @@ class SuiviRHSalariesSpreadsheet(OpenDocumentSpreadsheet, SendToSalariesMixin):
                         state = ABSENT
                 else:
                     state = salarie.get_state(date)
+                ferie = date in salarie.creche.jours_fete
                 fields = [
                     ("day", date.day),
                     ("weekday", days[date.weekday()]),
                     ("present", 1 if state == PRESENT else None),
-                    ("ferie", 1 if date in salarie.creche.jours_fete else None),
-                    ("cp", 1 if state == CONGES_PAYES else None),
-                    ("recup", 1 if state == CONGES_RECUP_HEURES_SUPP else None),
-                    ("sans-solde", 1 if state == CONGES_SANS_SOLDE else None),
-                    ("maternite", 1 if state == CONGES_MATERNITE else None),
-                    ("malade", 1 if state == MALADE else None),
+                    ("ferie", 1 if ferie else None),
+                    ("cp", 1 if state == CONGES_PAYES and not ferie else None),
+                    ("recup", 1 if state == CONGES_RECUP_HEURES_SUPP and not ferie else None),
+                    ("sans-solde", 1 if state == CONGES_SANS_SOLDE and not ferie else None),
+                    ("maternite", 1 if state == CONGES_MATERNITE and not ferie else None),
+                    ("malade", 1 if state == MALADE and not ferie else None),
                 ]
                 self.replace_cell_fields(line, fields)
                 tab.insertBefore(line, template1)
