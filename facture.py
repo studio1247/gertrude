@@ -660,11 +660,14 @@ class FactureFinMois(FactureBase):
                             new_prorata_heures = (prorata_heures * cotisation.jours_inscription) / days_count
                             if options & TRACES:
                                 print(" prorata (mois complet) : %f * %f / %f = %f" % (prorata, cotisation.jours_inscription, days_count, new_prorata))
-                        else:
+                        elif self.jours_ouvres:
                             new_prorata = (prorata * cotisation.jours_ouvres) / self.jours_ouvres
                             new_prorata_heures = (prorata_heures * cotisation.jours_ouvres) / self.jours_ouvres
                             if options & TRACES:
                                 print(" prorata (jours ouvrés) : %f * %f / %f = %f" % (prorata, cotisation.jours_ouvres, self.jours_ouvres, new_prorata))
+                        else:
+                            new_prorata = prorata
+                            new_prorata_heures = prorata_heures
                         prorata = new_prorata
                         prorata_heures = new_prorata_heures
 
