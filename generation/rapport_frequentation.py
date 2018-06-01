@@ -199,6 +199,12 @@ class RapportFrequentationModifications(object):
                         for j, jour in enumerate(jours):
                             date = datetime.date(debut.year, debut.month, jour)
                             state = inscrit.GetState(date)
+                            # TODO hack to move to GetState ...
+                            if database.creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and state.state != ABSENCE_NON_PREVENUE:
+                                inscription = inscrit.get_inscription(date)
+                                if inscription and inscription.IsInPeriodeAdaptation(date):
+                                    if state.heures_facturees != state.heures_realisees:
+                                        state.heures_facturees = state.heures_realisees
                             if inscrit in total_heures_facturees:
                                 total_heures_facturees[inscrit] += state.heures_facturees
                             else:
