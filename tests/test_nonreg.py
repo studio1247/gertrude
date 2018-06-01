@@ -887,6 +887,19 @@ class BabillageTests(GertrudeTestCase):
         cotisation = Cotisation(inscrit, datetime.date(2018, 9, 1), NO_ADDRESS)
         self.assert_prec2_equals(cotisation.cotisation_mensuelle, 756.11)
 
+    def test_pas_de_facture_apres_depart_anticipe(self):
+        inscrit = self.add_inscrit()
+        inscription = inscrit.inscriptions[0]
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.debut = datetime.date(2017, 9, 4)
+        inscription.fin = datetime.date(2018, 8, 31)
+        inscription.depart = datetime.date(2018, 4, 27)
+        inscription.semaines_conges = 5
+        self.add_inscription_timeslot(inscription, 0, 13.25 * 12, 18.5 * 12)
+        self.add_inscription_timeslot(inscription, 1, 8.75 * 12, 18.5 * 12)
+        self.add_inscription_timeslot(inscription, 2, 8.75 * 12, 18.5 * 12)
+        self.assertEquals(len(inscrit.get_factures_list()), 8)
+
 
 class BebebulTests(GertrudeTestCase):
     def setUp(self):
