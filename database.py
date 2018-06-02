@@ -1584,7 +1584,8 @@ class Inscrit(Base):
 
     def is_present(self, debut, fin, site=None, handicap=None, reservataire=None):
         for inscription in self.inscriptions:
-            if ((inscription.fin is None or inscription.fin >= debut) and
+            inscription_fin = inscription.depart if inscription.depart else inscription.fin
+            if ((inscription_fin is None or inscription_fin >= debut) and
                     (not self.creche.preinscriptions or not inscription.preinscription) and
                     (site is None or inscription.site == site) and
                     (reservataire is None or inscription.reservataire == reservataire) and
