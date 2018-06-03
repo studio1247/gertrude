@@ -456,6 +456,7 @@ class FactureModifications(object):
 class RelanceFactureModifications(object):
     title = "Relance facture"
     template = ""
+    introduction_filename = "Accompagnement relance.txt"
 
     def __init__(self, who, date, libreoffice_context=None):
         self.multi = False
@@ -479,7 +480,6 @@ class RelanceFactureModifications(object):
                 total -= ligne.total_facture
             if total <= 0:
                 break
-        self.introduction_filename = "Accompagnement relance.txt"
         if isinstance(who, Reservataire):
             self.email_to = [who.email]
             self.email_subject = "Retard de paiement %s" % who.nom
