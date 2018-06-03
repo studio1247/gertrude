@@ -86,7 +86,11 @@ class FactureModifications(object):
                 self.email_subject = "Facture %s %s %d" % (who.nom, months[periode.month - 1], periode.year)
                 self.email_to = [who.email]
             else:
-                self.site = who.get_inscriptions(self.periode_facturation, None)[0].site
+                inscriptions = who.get_inscriptions(self.periode_facturation, None)
+                if inscriptions:
+                    self.site = who.get_inscriptions(self.periode_facturation, None)[0].site
+                else:
+                    self.site = None
                 self.email_subject = "Facture %s %s %d" % (self.GetPrenomNom(who), months[periode.month - 1], periode.year)
                 self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
             self.default_output = self.email_subject + ".odt"
@@ -485,7 +489,7 @@ class RelanceFactureModifications(object):
             self.email_subject = "Retard de paiement %s" % who.nom
         else:
             self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
-            self.email_subject = "Retard de paiement %s" % self.GetPrenomNom(who)
+            self.email_subject = "Retard de paiement %s" % GetPrenomNom(who)
 
     def get_attachments(self):
         return self.attachments
