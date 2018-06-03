@@ -480,11 +480,12 @@ class RelanceFactureModifications(object):
             if total <= 0:
                 break
         self.introduction_filename = "Accompagnement relance.txt"
-        self.email_subject = "Retard de paiement"
         if isinstance(who, Reservataire):
             self.email_to = [who.email]
+            self.email_subject = "Retard de paiement %s" % who.nom
         else:
             self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
+            self.email_subject = "Retard de paiement %s" % self.GetPrenomNom(who)
 
     def get_attachments(self):
         return self.attachments
