@@ -1549,7 +1549,8 @@ class Inscrit(Base):
 
     def is_present(self, debut, fin, site=None, handicap=None, reservataire=None):
         for inscription in self.inscriptions:
-            if ((inscription.fin is None or inscription.fin >= debut) and
+            inscription_fin = inscription.depart if inscription.depart else inscription.fin
+            if ((inscription_fin is None or inscription_fin >= debut) and
                     (not self.creche.preinscriptions or not inscription.preinscription) and
                     (site is None or inscription.site == site) and
                     (reservataire is None or inscription.reservataire == reservataire) and
@@ -1626,17 +1627,21 @@ class Inscrit(Base):
         else:
             return None
 
-    def get_inscriptions(self, date_debut=None, date_fin=None, site=None, preinscriptions=False):
+    def get_inscriptions(self, date_debut=None, date_fin=None, site=None, preinscriptions=False, departanticipe=True):
         result = []
         if not date_debut:
             date_debut = datetime.date.min
         if not date_fin:
             date_fin = datetime.date.max
         for inscription in self.inscriptions:
-            if (site is None or site == inscription.site) and (preinscriptions or not self.creche.preinscriptions or not inscription.preinscription) and inscription.debut:
+            if (site is None or site == inscription.site) \
+                    and (preinscriptions or not self.creche.preinscriptions or not inscription.preinscription) \
+                    and inscription.debut:
+                date_debut_periode = inscription.debut
                 try:
-                    date_debut_periode = inscription.debut
-                    if inscription.fin:
+                    if departanticipe and inscription.depart:
+                        date_fin_periode = inscription.depart
+                    elif inscription.fin:
                         date_fin_periode = inscription.fin
                     else:
                         date_fin_periode = datetime.date.max
@@ -2472,6 +2477,18 @@ class Database(object):
 
     def remove_incompatible_saas_options(self):
         self.creche.tri_planning &= ~TRI_GROUPE
+        # retire toutes les clôtures d'enfants qui ne devraient pas avoir de facture
+        for inscrit in self.creche.inscrits:
+            uniquement_preinscriptions = True
+            for inscription in inscrit.inscriptions:
+                if not inscription.preinscription:
+                    uniquement_preinscriptions = False
+                    break
+            if uniquement_preinscriptions:
+                for date in inscrit.clotures:
+                    print("Suppression de la cloture de %s %s du %s" % (inscrit.prenom, inscrit.nom, date))
+                    self.delete(inscrit.clotures[date])
+        self.commit()
 
     def reload(self):
         print("Chargement de la base de données %s..." % self.uri)

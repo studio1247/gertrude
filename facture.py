@@ -788,7 +788,7 @@ class FactureFinMois(FactureBase):
         self.frais_inscription = 0.0
         self.frais_inscription_reservataire = 0.0    
         for inscription in self.inscrit.inscriptions:
-            if inscription.frais_inscription and inscription.debut and self.debut_recap <= inscription.debut <= self.fin_recap:
+            if not inscription.preinscription and inscription.frais_inscription and inscription.debut and self.debut_recap <= inscription.debut <= self.fin_recap:
                 if inscription.reservataire and (config.options & FRAIS_INSCRIPTION_RESERVATAIRES):
                     self.frais_inscription_reservataire += inscription.frais_inscription
                 else:
