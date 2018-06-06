@@ -3241,6 +3241,40 @@ class Database(object):
             self.delete(item)
         self.commit()
 
+    def delete_users(self):
+        for user in self.creche.users:
+            print("Suppression de %s" % user.login)
+            self.delete(user)
+        self.commit()
+
+    def delete_site(self, idx):
+        for inscrit in self.creche.inscrits:
+            delete = True
+            for inscription in inscrit.inscriptions:
+                if inscription.site and inscription.site.idx != idx:
+                    delete = False
+                    break
+            if delete:
+                print("Suppression de %s %s" % (inscrit.prenom, inscrit.nom))
+                if len(inscrit.famille.inscrits) == 1:
+                    self.delete(inscrit.famille)
+                self.delete(inscrit)
+        for salarie in self.creche.salaries:
+            delete = True
+            for contrat in salarie.contrats:
+                if contrat.site and contrat.site.idx != idx:
+                    delete = False
+                    break
+            if delete:
+                print("Suppression de %s %s" % (inscrit.prenom, inscrit.nom))
+                self.delete(salarie)
+        for site in self.creche.sites:
+            if site.idx == idx:
+                print("Suppression de %s" % site.nom)
+                self.delete(site)
+                break
+        self.commit()
+
     def dump(self):
         print("Inscrits :")
         for inscrit in self.creche.inscrits:
