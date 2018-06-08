@@ -40,9 +40,11 @@ class CoordonneesParentsMixin:
             temporalite = 0
             for inscription in inscrit.inscriptions:
                 if not inscription.preinscription and (self.site is None or inscription.site == self.site):
-                    if inscription.debut and inscription.debut > datetime.date.today():
+                    debut = inscription.debut
+                    fin = inscription.depart if inscription.depart else inscription.fin
+                    if debut and debut > datetime.date.today():
                         temporalite = EXPORT_FAMILLES_FUTURES
-                    elif inscription.fin and inscription.fin < datetime.date.today():
+                    elif fin and fin < datetime.date.today():
                         temporalite = EXPORT_FAMILLES_PARTIES
                     else:
                         temporalite = EXPORT_FAMILLES_PRESENTES
