@@ -29,7 +29,7 @@ from email.mime.multipart import MIMEMultipart
 from helpers import strip_accents, get_emails, ENVOI_PARENTS, ENVOI_CAF, ENVOI_SALARIES
 
 
-def send_email(creche_from, emails_to, subject, introduction, attachments=[], debug=False):
+def send_email(creche_from, emails_to, subject, introduction, attachments=[], emails_cc=[], debug=False):
     COMMASPACE = ", "
 
     smtp_server = creche_from.smtp_server if creche_from.smtp_server else "localhost"
@@ -51,7 +51,7 @@ def send_email(creche_from, emails_to, subject, introduction, attachments=[], de
         msg_from = emails_from[0]
     msg['From'] = msg_from
     msg['To'] = COMMASPACE.join(emails_to)
-    msg['CC'] = COMMASPACE.join(emails_from)
+    msg['CC'] = COMMASPACE.join(emails_from + emails_cc)
 
     if introduction:
         if debug:
@@ -87,15 +87,15 @@ def send_email(creche_from, emails_to, subject, introduction, attachments=[], de
             s.starttls()
         if login and password:
             s.login(login, password)
-        s.sendmail(msg_from, emails_to + emails_from, msg.as_string())
+        s.sendmail(msg_from, emails_to + emails_from + emails_cc, msg.as_string())
         s.quit()
 
     return 1, "Email envoyé"
 
 
-def send_email_to_parents(famille, subject, introduction, attachments=[], cc=[], debug=False):
+def send_email_to_parents(famille, subject, introduction, attachments=[], emails_cc=[], debug=False):
     emails_to = list(set([parent.email for parent in famille.parents if parent and parent.email]))
-    return send_email(famille.creche, emails_to, subject, introduction, attachments, debug)
+    return send_email(famille.creche, emails_to, subject, introduction, attachments, emails_cc=emails_cc, debug=debug)
 
 
 class SendToParentsMixin:
