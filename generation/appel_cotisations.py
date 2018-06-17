@@ -91,48 +91,77 @@ class AppelCotisationsModifications(object):
                 table = template.cloneNode(1)
                 spreadsheet.appendChild(table)
                 table.setAttribute("table:name", site.nom)
-                self.RemplitFeuilleMois(table, site, errors)
+                self.remplit_feuille_site(table, site, errors)
                 if self.gauge:
                     self.gauge.SetValue((90/len(database.creche.sites)) * (i+1))
         else:
-            self.RemplitFeuilleMois(template, None, errors)
+            self.remplit_feuille_site(template, None, errors)
             if self.gauge:
                 self.gauge.SetValue(90)
+
+        if len(database.creche.reservataires) > 0:
+            table = template.cloneNode(1)
+            spreadsheet.appendChild(table)
+            table.setAttribute("table:name", "Réservataires")
+            self.remplit_feuille_reservataires(table, errors)
                 
         if len(templates) > 1:
             self.RemplitFeuilleEnfants(templates[1], errors)
             
         return errors
 
-    def RemplitFeuilleMois(self, table, site=None, errors={}):
+    def remplit_feuille_site(self, table, site, errors={}):
+        inscrits = list(database.creche.select_inscrits(self.debut, self.fin, site=site))
+        return self.remplit_feuille_inscrits(table, site.nom, inscrits, errors=errors)
+
+    def remplit_feuille_reservataires(self, table, errors={}):
+        reservataires = list(database.creche.select_reservataires(self.debut, self.fin))
+        return self.remplit_feuille_inscrits(table, "Réservataires", reservataires, errors=errors)
+        
+    def remplit_feuille_inscrits(self, table, label, liste, errors={}):
         lignes = table.getElementsByTagName("table:table-row")
             
         # La date
-        fields = [('date', self.debut)]
-        if site:
-            fields.append(('site', site.nom))
-        else:
-            fields.append(('site', None))
+        fields = [
+            ('date', self.debut),
+            ('site', label),
+        ]
         ReplaceFields(lignes, fields)
-        
-        inscrits = list(database.creche.select_inscrits(self.debut, self.fin, site=site))
-        inscrits.sort(key=lambda x: GetPrenomNom(x))
+
+        liste.sort(key=lambda x: GetPrenomNom(x))
         
         # Les cotisations
         lines_template = [lignes.item(7), lignes.item(8)]
-        for i, inscrit in enumerate(inscrits):
+        for i, inscrit in enumerate(liste):
             if self.gauge:
-                self.gauge.SetValue(10+int(80.0*i/len(inscrits)))
+                self.gauge.SetValue(10+int(80.0*i/len(liste)))
             line = lines_template[i % 2].cloneNode(1)
             try:
-                facture = Facture(inscrit, self.debut.year, self.debut.month, self.options)
+                if isinstance(inscrit, Reservataire):
+                    facture = FactureReservataire(inscrit, self.debut)
+                else:
+                    facture = Facture(inscrit, self.debut.year, self.debut.month, self.options)
                 commentaire = None
             except CotisationException as e:
                 facture = None
                 commentaire = '\n'.join(e.errors)
                 errors[GetPrenomNom(inscrit)] = e.errors
 
-            fields = GetCrecheFields(database.creche) + GetInscritFields(inscrit) + GetFactureFields(facture) + self.GetCustomFields(facture) + GetReglementFields(inscrit.famille, self.debut.year, self.debut.month) + [('commentaire', commentaire)]
+            fields = GetCrecheFields(database.creche)
+
+            if isinstance(inscrit, Reservataire):
+                fields += GetReservataireFields(inscrit) + GetReglementFields(inscrit, self.debut.year, self.debut.month) + [('commentaire', commentaire)]
+                fields += [
+                    ("prenom", ""),
+                    ("nom", inscrit.nom),
+                    ("cotisation-mensuelle", facture.total_facture, FIELD_EUROS),
+                    ("supplement", 0),
+                    ("deduction", 0),
+                    ("supplement-activites", 0),
+                    ("correction", 0)
+                ]
+            else:
+                fields += GetInscritFields(inscrit) + GetFactureFields(facture) + self.GetCustomFields(facture) + GetReglementFields(inscrit.famille, self.debut.year, self.debut.month) + [('commentaire', commentaire)]
             ReplaceFields(line, fields)
 
             table.insertBefore(line, lines_template[0])
@@ -143,7 +172,7 @@ class AppelCotisationsModifications(object):
 
         if len(lignes) >= 11:
             line_total = lignes.item(10)
-            IncrementFormulas(line_total, row=+len(inscrits) - 2, flags=FLAG_SUM_MAX)
+            IncrementFormulas(line_total, row=+len(liste) - 2, flags=FLAG_SUM_MAX)
 
     def RemplitFeuilleEnfants(self, template, errors):
         inscrits = list(database.creche.select_inscrits(self.debut, self.fin))
