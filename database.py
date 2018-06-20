@@ -341,6 +341,12 @@ class Creche(Base):
             if inscrit.is_present(start, end, site, handicap, reservataire):
                 yield inscrit
 
+    def select_reservataires(self, start, end):
+        for reservataire in self.reservataires:
+            if ((reservataire.fin is None or reservataire.fin >= start) and
+                    reservataire.debut is not None and (not end or reservataire.debut <= end)):
+                yield reservataire
+
     def get_next_activity_value(self):
         values = self.activites.keys()
         return max(values) + 1
@@ -874,6 +880,7 @@ class Reservataire(Base):
     delai_paiement = Column(Integer)
     tarif = Column(Float)
     encaissements = relationship("EncaissementReservataire", cascade="all, delete-orphan")
+    corrections = []  # fake
 
     def __init__(self, creche, nom="", **kwargs):
         Base.__init__(self, creche=creche, nom=nom)
@@ -891,6 +898,9 @@ class Reservataire(Base):
 
     def has_facture(self, date, site=None):
         return date in self.get_factures_list()
+
+    def get_facture_cloturee(self, date):
+        return None
 
     def get_factures_list(self):
         result = []
@@ -1483,6 +1493,7 @@ class Inscrit(Base):
     def __init__(self, prenom="", nom="", sexe=MASCULIN, handicap=False, allergies="", automatic=True, **kwargs):
         Base.__init__(self, prenom=prenom, nom=nom, sexe=sexe, handicap=handicap, allergies=allergies, **kwargs)
         self.famille = Famille(creche=self.creche, automatic=automatic)
+        self.famille.inscrits.append(self)
         if automatic:
             self.inscriptions.append(Inscription(inscrit=self))
         self.jours_conges = {}

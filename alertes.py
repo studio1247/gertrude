@@ -78,12 +78,12 @@ def get_alertes(force=False):
             if today > date:
                 message = "L'inscription de %s %s se terminera dans 2 mois" % (inscrit.prenom, inscrit.nom)
                 add_alerte(date, message)
+
+    for inscrit in database.creche.inscrits:
         if config.options & ALERTES_NON_PAIEMENT:
             date = GetRetardDePaiement(inscrit.famille)
             if date:
-                add_alerte(date, "Le solde de %s est négatif (%d jours de retard)" % (GetPrenomNom(inscrit), (datetime.date.today() - date).days))
-
-    for inscrit in database.creche.inscrits:
+                add_alerte(date, "Le solde de %s est négatif (%d jours de retard)" % (GetPrenomNom(inscrit), (today - date).days))
         for inscription in inscrit.inscriptions:
             if inscription.debut and inscription.fin and inscription.fin < inscription.debut:
                 add_alerte(inscription.debut, "Période incorrecte pour %s %s" % (inscrit.prenom, inscrit.nom))
@@ -103,7 +103,7 @@ def get_alertes(force=False):
         for reservataire in database.creche.reservataires:
             date = GetRetardDePaiement(reservataire)
             if date:
-                add_alerte(date, "Le solde de %s est négatif (%d jours de retard)" % (reservataire.nom, (datetime.date.today() - date).days))
+                add_alerte(date, "Le solde de %s est négatif (%d jours de retard)" % (reservataire.nom, (today - date).days))
 
     alertes.sort(key=lambda alerte: alerte[0], reverse=True)
     return alertes

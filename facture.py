@@ -791,7 +791,7 @@ class FactureFinMois(FactureBase):
         self.frais_inscription = 0.0
         self.frais_inscription_reservataire = 0.0    
         for inscription in self.inscrit.inscriptions:
-            if inscription.frais_inscription and inscription.debut and self.debut_recap <= inscription.debut <= self.fin_recap:
+            if not inscription.preinscription and inscription.frais_inscription and inscription.debut and self.debut_recap <= inscription.debut <= self.fin_recap:
                 if inscription.reservataire and (config.options & FRAIS_INSCRIPTION_RESERVATAIRES):
                     self.frais_inscription_reservataire += inscription.frais_inscription
                 else:
@@ -949,7 +949,10 @@ class FactureReservataire(object):
             if reservataire.debut > self.fin or (reservataire.fin and self.reservataire.fin < date):
                 self.nombre_mois -= 1
             date = GetNextMonthStart(date)
-        self.total = reservataire.tarif * self.nombre_mois
+        if reservataire.has_facture(self.debut):
+            self.total = reservataire.tarif * self.nombre_mois
+        else:
+            self.total = .0
         self.total_facture = self.total
 
 
