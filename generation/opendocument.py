@@ -262,6 +262,7 @@ class OpenDocument(object):
 
     def modify_styles(self, dom):
         self.modify_content_bitmaps(dom)
+        self.replace_text_fields(dom)
         return True
 
     @staticmethod
