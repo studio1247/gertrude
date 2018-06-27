@@ -37,7 +37,13 @@ class DocumentAccueilMixin(object):
         self.inscrits = [inscrit]
         self.date = date
         self.inscription = inscrit.get_inscription(date, preinscription=True)
-        self.site = self.inscription.site if self.inscription else None
+        if self.inscription:
+            if self.inscription.preinscription:
+                self.site = self.inscription.sites_preinscription[0] if len(self.inscription.sites_preinscription) > 0 else None
+            else:
+                self.site = self.inscription.site
+        else:
+            self.site = None
         self.cotisation = None
         self.setup_fields()
 
