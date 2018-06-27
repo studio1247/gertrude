@@ -40,7 +40,7 @@ class RapportFrequentationModifications(object):
         self.errors = {}
         self.email = None
         self.site = site
-        self.arrondi = database.creche.arrondi_facturation if type == "facture" else None
+        self.arrondi = database.creche.arrondi_facturation
         if type:
             base, ext = os.path.splitext(self.template)
             self.template = "%s %s%s" % (base, type, ext)
