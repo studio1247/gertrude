@@ -179,6 +179,10 @@ def GetDureeArrondie(mode, start, end):
         return end - start
 
 
+def GetDureeArrondieHeures(mode, heures):
+    return GetDureeArrondie(mode, 0, int(12 * heures)) / 12
+
+
 def GetDateIntersection(periodes):
     for one in range(0, len(periodes)-1):
         i1 = periodes[one]

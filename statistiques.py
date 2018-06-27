@@ -83,7 +83,7 @@ def GetStatistiques(start, end, site=None, bargraph=False):
                         print(GetPrenomNom(inscrit), "au", facture.date)
                         print(' ', "heures contractualisées :", facture.heures_contractualisees, ", heures contrat :", facture.heures_contrat)
                         print(' ', "heures réalisées :", facture.heures_realisees)
-                        print(' ', "heures facturées :", facture.heures_facturees, ", heures facture :", facture.heures_facture)
+                        print(' ', "heures facturées :", facture.heures_facturees, ", heures facture :", facture.heures_facture, "=>", heures_facture)
                         print(' ', "jours contractualisés :", facture.jours_contractualises)
                         print(' ', "jours réalisés :", facture.jours_realises)
                         print(' ', "jours facturés :", facture.jours_factures)

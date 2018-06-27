@@ -455,7 +455,8 @@ class FactureFinMois(FactureBase):
                             self.heures_contractualisees += heures_reference
                             self.heures_contractualisees_realisees += min(heures_realisees, heures_reference)
                             if database.creche.mode_facturation == FACTURATION_HORAIRES_REELS or (database.creche.mode_facturation == FACTURATION_PSU and cotisation.mode_garde == MODE_HALTE_GARDERIE):
-                                self.heures_facturees_par_mode[cotisation.mode_garde] += heures_realisees - heures_realisees_non_facturees + heures_facturees_non_realisees
+                                heures_arrondies = GetDureeArrondieHeures(database.creche.arrondi_facturation, heures_realisees - heures_realisees_non_facturees + heures_facturees_non_realisees)
+                                self.heures_facturees_par_mode[cotisation.mode_garde] += heures_arrondies
                                 self.total_contractualise += cotisation.CalculeFraisGarde(heures_reference)
                             elif database.creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date):
                                 heures_adaptation = heures_realisees - heures_realisees_non_facturees + heures_facturees_non_realisees

@@ -40,6 +40,7 @@ class RapportFrequentationModifications(object):
         self.errors = {}
         self.email = None
         self.site = site
+        self.arrondi = database.creche.arrondi_facturation if type == "facture" else None
         if type:
             base, ext = os.path.splitext(self.template)
             self.template = "%s %s%s" % (base, type, ext)
@@ -201,13 +202,15 @@ class RapportFrequentationModifications(object):
                         cells = line.getElementsByTagName("table:table-cell")
                         for j, jour in enumerate(jours):
                             date = datetime.date(debut.year, debut.month, jour)
-                            state = inscrit.GetState(date)
+                            state = inscrit.GetState(date, self.arrondi)
                             # TODO hack to move to GetState ...
-                            if database.creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and state.state != ABSENCE_NON_PREVENUE:
+                            # print(GetPrenomNom(inscrit), date, state.heures_facturees)
+                            if state.heures_facturees != state.heures_realisees and (
+                                (database.creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and state.state != ABSENCE_NON_PREVENUE) or
+                                    (database.creche.mode_facturation == FACTURATION_PSU)):
                                 inscription = inscrit.get_inscription(date)
-                                if inscription and inscription.IsInPeriodeAdaptation(date):
-                                    if state.heures_facturees != state.heures_realisees:
-                                        state.heures_facturees = state.heures_realisees
+                                if inscription and (inscription.IsInPeriodeAdaptation(date) or inscription.mode == MODE_HALTE_GARDERIE):
+                                    state.heures_facturees = GetDureeArrondieHeures(self.arrondi, state.heures_realisees)
                             if inscrit in total_heures_facturees:
                                 total_heures_facturees[inscrit] += state.heures_facturees
                             else:
