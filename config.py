@@ -194,6 +194,8 @@ class Section(object):
             options |= COMPATIBILITY_MODE_ADAPTATIONS_2016
         if "compatibility-decompte-semaines-2017" in value:
             options |= COMPATIBILITY_MODE_DECOMPTE_SEMAINES_2017
+        if "compatibility-heures-facturees-2017" in value:
+            options |= COMPATIBILITY_MODE_HEURES_FACTUREES_2017
         if "prelevements-automatiques" in value:
             options |= PRELEVEMENTS_AUTOMATIQUES
         if "newsletters" in value:
