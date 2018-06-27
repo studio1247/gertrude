@@ -25,8 +25,8 @@ import unittest
 import pytest
 from cotisation import *
 from facture import Facture
-from generation.planning_detaille import PlanningDetailleModifications
-from generation.coordonnees_parents import CoordonneesModifications
+from generation.planning_detaille import PlanningDetailleDocument
+from generation.coordonnees_parents import CoordonneesParentsDocument
 from generation.releve_detaille import ReleveDetailleModifications
 from generation.etats_trimestriels import EtatsTrimestrielsModifications
 from ooffice import GenerateOODocument
@@ -170,7 +170,7 @@ class DocumentsTests(GertrudeTestCase):
         os.chdir("..")
         database.creche.mode_facturation = FACTURATION_PAJE
         database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 6.70, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
-        database.creche.bureaux.append(Bureau(debut=datetime.date(2010, 1, 1)))
+        database.creche.bureaux.append(Bureau(creche=database.creche, debut=datetime.date(2010, 1, 1)))
         for i in range(10):
             inscrit = self.add_inscrit()
             inscription = Inscription(inscrit=inscrit)
@@ -198,16 +198,16 @@ class DocumentsTests(GertrudeTestCase):
         os.chdir(self.pwd)
                     
     def test_planning_detaille(self):
-        modifications = PlanningDetailleModifications((datetime.date(2010, 9, 7), datetime.date(2010, 9, 30)))
-        errors = GenerateOODocument(modifications, filename="./test.odg", gauge=None)
-        self.assertEqual(len(errors), 0)
-        os.unlink("./test.odg")
+        document = PlanningDetailleDocument(datetime.date(2010, 9, 7), datetime.date(2010, 9, 30))
+        document.generate("./test.odg")
+        self.assertEqual(len(document.errors), 0)
+        os.unlink(document.output)
         
     def test_coordonnees_parents(self):
-        modifications = CoordonneesModifications(None, datetime.date(2010, 9, 7))
-        errors = GenerateOODocument(modifications, filename="./test.odt", gauge=None)
-        self.assertEqual(len(errors), 0)
-        os.unlink("./test.odt")
+        document = CoordonneesParentsDocument(None, datetime.date(2010, 9, 7))
+        document.generate("./test.odt")
+        self.assertEqual(len(document.errors), 0)
+        os.unlink(document.output)
 
     def test_releves_trimestriels(self):
         modifications = EtatsTrimestrielsModifications(None, 2011)
@@ -226,7 +226,7 @@ class PSUTests(GertrudeTestCase):
     def test_nombre_mois_facturation(self):
         database.creche.mode_facturation = FACTURATION_PSU
         database.creche.facturation_jours_feries = ABSENCES_DEDUITES_EN_JOURS
-        database.creche.bureaux.append(Bureau(debut=datetime.date(2010, 1, 1)))
+        database.creche.bureaux.append(Bureau(creche=database.creche, debut=datetime.date(2010, 1, 1)))
         inscrit = self.add_inscrit()
         inscription = Inscription(inscrit=inscrit)
         inscription.debut = datetime.date(2009, 9, 1)
@@ -241,7 +241,7 @@ class NosPetitsPoucesTests(GertrudeTestCase):
         GertrudeTestCase.setUp(self)
         database.creche.mode_facturation = FACTURATION_PAJE
         self.add_conge("Août", options=MOIS_SANS_FACTURE)
-        database.creche.bureaux.append(Bureau(debut=datetime.date(2010, 1, 1)))
+        database.creche.bureaux.append(Bureau(creche=database.creche, debut=datetime.date(2010, 1, 1)))
 
     def test_exception_missing_formula(self):
         inscrit = self.add_inscrit()
@@ -274,7 +274,7 @@ class NosPetitsPoucesTests(GertrudeTestCase):
 class PAJETests(GertrudeTestCase):
     def test_pas_de_taux_horaire(self):
         database.creche.mode_facturation = FACTURATION_PAJE
-        database.creche.bureaux.append(Bureau(debut=datetime.date(2010, 1, 1)))
+        database.creche.bureaux.append(Bureau(creche=database.creche, debut=datetime.date(2010, 1, 1)))
         inscrit = self.add_inscrit()
         inscription = Inscription(inscrit=inscrit)
         inscription.debut = datetime.date(2010, 1, 1)
@@ -288,7 +288,7 @@ class PAJETests(GertrudeTestCase):
         database.creche.repartition = REPARTITION_MENSUALISATION_CONTRAT
         database.creche.prorata = PRORATA_NONE
         database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 6.70, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
-        database.creche.bureaux.append(Bureau(debut=datetime.date(2010, 1, 1)))
+        database.creche.bureaux.append(Bureau(creche=database.creche, debut=datetime.date(2010, 1, 1)))
         inscrit = self.add_inscrit()
         inscription = Inscription(inscrit=inscrit)
         inscription.debut, inscription.fin = datetime.date(2010, 9, 6), datetime.date(2011, 7, 27)
@@ -307,7 +307,7 @@ class PAJETests(GertrudeTestCase):
         database.creche.mode_facturation = FACTURATION_PAJE
         database.creche.repartition = REPARTITION_MENSUALISATION_12MOIS
         database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 10, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
-        database.creche.bureaux.append(Bureau(debut=datetime.date(2010, 1, 1)))
+        database.creche.bureaux.append(Bureau(creche=database.creche, debut=datetime.date(2010, 1, 1)))
         inscrit = self.add_inscrit()
         inscription = Inscription(inscrit=inscrit)
         inscription.debut, inscription.fin = datetime.date(2014, 10, 15), datetime.date(2015, 12, 31)
@@ -335,7 +335,7 @@ class UnDeuxTroisAPetitsPas(GertrudeTestCase):
         database.creche.arrondi_mensualisation_euros = ARRONDI_EURO_PLUS_PROCHE
         database.creche.tarification_activites = 1
         database.creche.tarifs_horaires.append(TarifHoraire(database.creche, [["", 6.25, TARIF_HORAIRE_UNITE_EUROS_PAR_HEURE]]))
-        database.creche.bureaux.append(Bureau(debut=datetime.date(2010, 1, 1)))
+        database.creche.bureaux.append(Bureau(creche=database.creche, debut=datetime.date(2010, 1, 1)))
         self.activity_repas = Activite(database.creche, mode=MODE_SANS_HORAIRES, formule_tarif="4.50")
         database.creche.add_activite(self.activity_repas)
 
@@ -406,7 +406,7 @@ class MarmousetsTests(GertrudeTestCase):
         conge = CongeStructure(creche=database.creche, debut="14/05/2010", fin="14/05/2010")
         database.creche.add_conge(conge)
         database.creche.baremes_caf.append(BaremeCAF(database.creche, debut=datetime.date(2010, 1, 1), plancher=6876.00, plafond=53400.00))
-        database.creche.bureaux.append(Bureau(debut=datetime.date(2010, 1, 1)))
+        database.creche.bureaux.append(Bureau(creche=database.creche, debut=datetime.date(2010, 1, 1)))
         inscrit = self.add_inscrit()
         inscription = Inscription(inscrit=inscrit, mode=MODE_TEMPS_PARTIEL, debut=datetime.date(2010, 1, 4), fin=datetime.date(2010, 7, 30))
         self.add_inscription_timeslot(inscription, 1, 102, 210)
@@ -887,6 +887,19 @@ class BabillageTests(GertrudeTestCase):
         cotisation = Cotisation(inscrit, datetime.date(2018, 9, 1), NO_ADDRESS)
         self.assert_prec2_equals(cotisation.cotisation_mensuelle, 756.11)
 
+    def test_pas_de_facture_apres_depart_anticipe(self):
+        inscrit = self.add_inscrit()
+        inscription = inscrit.inscriptions[0]
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.debut = datetime.date(2017, 9, 4)
+        inscription.fin = datetime.date(2018, 8, 31)
+        inscription.depart = datetime.date(2018, 4, 27)
+        inscription.semaines_conges = 5
+        self.add_inscription_timeslot(inscription, 0, 13.25 * 12, 18.5 * 12)
+        self.add_inscription_timeslot(inscription, 1, 8.75 * 12, 18.5 * 12)
+        self.add_inscription_timeslot(inscription, 2, 8.75 * 12, 18.5 * 12)
+        self.assertEquals(len(inscrit.get_factures_list()), 8)
+
 
 class BebebulTests(GertrudeTestCase):
     def setUp(self):
@@ -1014,7 +1027,7 @@ class LaCabaneAuxFamillesTests(GertrudeTestCase):
     def setUp(self):
         GertrudeTestCase.setUp(self)
         database.creche.mode_facturation = FACTURATION_PAJE
-        database.creche.bureaux.append(Bureau(debut=datetime.date(2010, 1, 1)))
+        database.creche.bureaux.append(Bureau(creche=database.creche, debut=datetime.date(2010, 1, 1)))
         database.creche.temps_facturation = FACTURATION_DEBUT_MOIS_CONTRAT
         database.creche.type = TYPE_MICRO_CRECHE
         database.creche.repartition = REPARTITION_MENSUALISATION_12MOIS

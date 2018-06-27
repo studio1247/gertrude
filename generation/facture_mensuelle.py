@@ -18,35 +18,35 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-from constants import *
-from functions import *
 from facture import *
 from cotisation import CotisationException
 from ooffice import *
 from database import Reservataire
+from generation.opendocument import OpenDocumentText
+from generation.email_helpers import SendToParentsMixin
 
 
 PRESENCE_NON_FACTUREE = 256
 CONGES = 257
 
-couleurs = {SUPPLEMENT: 'A2',
-            MALADE: 'B2',
-            HOPITAL: 'B2',
-            MALADE_SANS_JUSTIFICATIF: 'B2',
-            PRESENT: 'C2',
-            VACANCES: 'D2',
-            ABSENT: 'E2',
-            PRESENCE_NON_FACTUREE: 'A3',
-            ABSENCE_NON_PREVENUE: 'B3',
-            CONGES_DEPASSEMENT: 'D3',
-            ABSENCE_CONGE_SANS_PREAVIS: 'B3',
-            CONGES: 'C3'
-            }
 
-
-class FactureModifications(object):
+class FactureMensuelle(OpenDocumentText, SendToParentsMixin):
     title = "Facture mensuelle"
     template = "Facture mensuelle.odt"
+
+    couleurs = {SUPPLEMENT: 'A2',
+                MALADE: 'B2',
+                HOPITAL: 'B2',
+                MALADE_SANS_JUSTIFICATIF: 'B2',
+                PRESENT: 'C2',
+                VACANCES: 'D2',
+                ABSENT: 'E2',
+                PRESENCE_NON_FACTUREE: 'A3',
+                ABSENCE_NON_PREVENUE: 'B3',
+                CONGES_DEPASSEMENT: 'D3',
+                ABSENCE_CONGE_SANS_PREAVIS: 'B3',
+                CONGES: 'C3'
+                }
 
     @staticmethod
     def GetPrenomNom(who):
@@ -55,76 +55,54 @@ class FactureModifications(object):
         else:
             return GetPrenomNom(who)
 
+        # TODO
+        # if self.reservataire:
+        #     self.introduction_filename = "Accompagnement facture reservataire.txt"
+        # else:
+        #     self.introduction_filename = "Accompagnement facture.txt"
+
     def __init__(self, inscrits, periode):
+        OpenDocumentText.__init__(self)
+        self.creche = database.creche
         self.last_facture = None
-        self.metas = {}
-        self.multi = False
         self.periode = periode
         self.periode_facturation = periode
         if database.creche.temps_facturation != FACTURATION_FIN_MOIS:
             self.periode_facturation = GetMonthStart(periode - datetime.timedelta(1))
-        self.email = True
         self.reservataire = False
-        self.site = None
-        if len(inscrits) > 1:
-            self.multi = True
-            self.email_to = None
-            if isinstance(inscrits[0], Reservataire):
-                self.reservataire = True
-                self.inscrits = inscrits
-                self.email_subject = "Factures reservataires %s %d" % (months[periode.month - 1], periode.year)
-            else:
-                self.inscrits = GetEnfantsTriesSelonParametreTriFacture(inscrits)
-                self.site = self.inscrits[0].get_inscriptions(self.periode_facturation, None)[0].site
-                self.email_subject = "Factures %s %d" % (months[periode.month - 1], periode.year)
-            self.default_output = self.email_subject + ".odt"
+        if len(inscrits) > 0 and isinstance(inscrits[0], Reservataire):
+            self.inscrits = inscrits
+            self.reservataire = inscrits[0]
+            self.site = None
+            self.set_default_output("Facture %s %s %d.odt" % (self.reservataire.nom, months[periode.month - 1], periode.year))
+            self.destination_emails[ENVOI_RESERVATAIRES] = [self.reservataire]
+        elif len(inscrits) > 1:
+            self.inscrits = GetEnfantsTriesSelonParametreTriFacture(inscrits)
+            # TODO sauf si le site n'est pas le même pour tout le monde
+            self.site = self.inscrits[0].get_inscriptions(self.periode_facturation, None)[0].site
+            self.set_default_output("Factures %s %d.odt" % (months[periode.month - 1], periode.year))
         else:
             self.inscrits = inscrits
             who = self.inscrits[0]
-            if isinstance(who, Reservataire):
-                self.reservataire = True
-                self.email_subject = "Facture %s %s %d" % (who.nom, months[periode.month - 1], periode.year)
-                self.email_to = [who.email]
-            else:
-                inscriptions = who.get_inscriptions(self.periode_facturation, None)
-                if inscriptions:
-                    self.site = who.get_inscriptions(self.periode_facturation, None)[0].site
-                else:
-                    self.site = None
-                self.email_subject = "Facture %s %s %d" % (self.GetPrenomNom(who), months[periode.month - 1], periode.year)
-                self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
-            self.default_output = self.email_subject + ".odt"
+            self.site = who.get_inscriptions(self.periode_facturation, None)[0].site
+            self.set_default_output("Facture %s %s %d.odt" % (self.GetPrenomNom(who), months[periode.month - 1], periode.year))
+
+        if not self.reservataire:
+            SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement facture.txt", [], "%(count)d factures envoyées")
 
         if self.reservataire:
             self.template = "Facture reservataire.odt"
-            self.introduction_filename = "Accompagnement facture reservataire.txt"
+        elif self.site and IsTemplateFile("Facture mensuelle %s.odt" % self.site.nom):
+            self.template = "Facture mensuelle %s.odt" % self.site.nom
+        elif IsTemplateFile("Facture mensuelle %s.odt" % database.creche.nom):
+            self.template = "Facture mensuelle %s.odt" % database.creche.nom
         else:
-            self.introduction_filename = "Accompagnement facture.txt"
-            if self.site and IsTemplateFile("Facture mensuelle %s.odt" % self.site.nom):
-                self.template = "Facture mensuelle %s.odt" % self.site.nom
-            elif IsTemplateFile("Facture mensuelle %s.odt" % database.creche.nom):
-                self.template = "Facture mensuelle %s.odt" % database.creche.nom
-            else:
-                self.template = 'Facture mensuelle.odt'
+            self.template = 'Facture mensuelle.odt'
 
-        self.introduction_fields = []
+    def split(self, who):
+        return FactureMensuelle([who], self.periode)
 
-    def get_simple_filename(self, filename, who):
-        if isinstance(who, Reservataire):
-            result = filename.replace("Factures", "Facture %s" % who.nom)
-        else:
-            result = filename.replace("Factures", "Facture %s" % GetPrenomNom(who)) \
-                             .replace("<enfant>", GetPrenomNom(who)) \
-                             .replace("<prenom>", who.prenom) \
-                             .replace("<nom>", who.nom)
-            if result == filename:
-                result = "[%s] %s" % (GetPrenomNom(who), filename)
-        return normalize_filename(result)
-
-    def get_simple_modifications(self, filename):
-        return [(self.get_simple_filename(filename, inscrit), FactureModifications([inscrit], self.periode)) for inscrit in self.inscrits]
-
-    def FillRecapSection(self, section, facture):
+    def fill_recap_section(self, section, facture):
         column_heures = 1 if "heures-facturees" in self.metas else 0
         empty_cells = facture.debut_recap.weekday()
         if "Week-end" in database.creche.feries and empty_cells > 4:
@@ -158,6 +136,9 @@ class FactureModifications(object):
                         elif date in facture.jours_absence_non_prevenue:
                             state = ABSENCE_NON_PREVENUE
                             details = " (%s)" % GetHeureString(facture.jours_absence_non_prevenue[date])
+                        elif date in facture.jours_maladie_non_deduits:
+                            state = MALADE
+                            details = " (%s)" % GetHeureString(facture.jours_maladie_non_deduits[date])
                         elif date in facture.jours_maladie:
                             state = HOPITAL
                         elif facture.inscrit.is_date_conge(date):
@@ -174,40 +155,17 @@ class FactureModifications(object):
                         elif date in facture.jours_supplementaires:
                             state = SUPPLEMENT
                             details = " (%s)" % GetHeureString(facture.jours_supplementaires[date][column_heures])
-                        elif date in facture.jours_maladie_non_deduits:
-                            state = MALADE
-                            details = " (%s)" % GetHeureString(facture.jours_maladie_non_deduits[date])
                         else:
                             state = ABSENT
                         if text_node and text_node.firstChild:
                             text_node.firstChild.replaceWholeText('%d%s' % (date.day, details))
-                        cell.setAttribute('table:style-name', 'Presences.%s' % couleurs[state])
+                        cell.setAttribute('table:style-name', 'Presences.%s' % self.couleurs[state])
                     date += datetime.timedelta(1)
                 for i in range(row + 1, len(rows)):
                     table.removeChild(rows[i])
-        ReplaceTextFields(section, facture.fields)
+        self.replace_text_fields(section, facture.fields)
 
-    def GetIntroductionFields(self):
-        return self.introduction_fields
-
-    def get_attachments(self):
-        return []
-
-    def GetMetas(self, dom):
-        metas = dom.getElementsByTagName('meta:user-defined')
-        for meta in metas:
-            # print(meta.toprettyxml())
-            name = meta.getAttribute('meta:name')
-            try:
-                value = meta.childNodes[0].wholeText
-                if meta.getAttribute('meta:value-type') == 'float':
-                    self.metas[name] = float(value)
-                else:
-                    self.metas[name] = value
-            except:
-                pass
-
-    def IsRowRemovable(self, row, facture):
+    def is_row_removable(self, row, facture):
         prettyxml = row.toprettyxml()
         if (("&lt;frais-inscription&gt;" in prettyxml and not facture.frais_inscription) or
             ("&lt;correction&gt;" in prettyxml and not facture.correction) or
@@ -226,28 +184,17 @@ class FactureModifications(object):
                 return True
         return False
 
-    def execute(self, filename, dom):
-        global couleurs
-
-        if filename == 'meta.xml':
-            self.GetMetas(dom)
-            return None
-
+    def modify_content(self, dom):
         fields = GetCrecheFields(database.creche)
-        if filename != 'content.xml':
-            ReplaceTextFields(dom, fields)
-            return None
-
-        errors = {}
 
         # print(dom.toprettyxml())
 
         doc = dom.getElementsByTagName("office:text")[0]
         templates = doc.childNodes[:]
 
-        if "Couleurs" in self.metas:
-            couleurs = eval(self.metas["Couleurs"])
-            print("METAS COULEURS", couleurs)
+        if "couleurs" in self.metas:
+            self.couleurs = eval(self.metas["couleurs"])
+            # print("couleurs", self.couleurs)
         else:
             styleB3, styleC3, styleD3 = False, False, False
             for style in doc.getElementsByTagName('style:style'):
@@ -258,12 +205,12 @@ class FactureModifications(object):
                 if style.name == 'Presences.D3':
                     styleD3 = True
             if not styleB3:
-                couleurs[ABSENCE_NON_PREVENUE] = couleurs[ABSENT]
-                couleurs[ABSENCE_CONGE_SANS_PREAVIS] = couleurs[ABSENT]
+                self.couleurs[ABSENCE_NON_PREVENUE] = self.couleurs[ABSENT]
+                self.couleurs[ABSENCE_CONGE_SANS_PREAVIS] = self.couleurs[ABSENT]
             if not styleC3:
-                couleurs[CONGES] = couleurs[ABSENT]
+                self.couleurs[CONGES] = self.couleurs[ABSENT]
             if not styleD3:
-                couleurs[CONGES_DEPASSEMENT] = couleurs[CONGES]
+                self.couleurs[CONGES_DEPASSEMENT] = self.couleurs[CONGES]
 
         done = []
 
@@ -282,20 +229,20 @@ class FactureModifications(object):
                     try:
                         numero = int(database.creche.numeros_facture[facture.debut].valeur)
                         numero += len([inscrit for inscrit in database.creche.inscrits if inscrit.has_facture(facture.debut)])
-                        numero += reservataire.idx
+                        numero += self.reservataire.idx
                     except Exception as e:
                         print("Exception numéro de facture", e)
                         numero = 0
 
                     if config.numfact:
                         fields = {
-                            "inscritid": len(database.creche.inscrits) + reservataire.idx,
+                            "inscritid": len(database.creche.inscrits) + self.reservataire.idx,
                             "numero": numero,
                             "annee": facture.debut.year,
                             "mois": facture.debut.month
                         }
                         if "numero-global" in config.numfact:
-                            fields["numero-global"] = config.numerotation_factures.get("reservataire-%d" % reservataire.idx, facture.debut)
+                            fields["numero-global"] = config.numerotation_factures.get("reservataire-%d" % self.reservataire.idx, facture.debut)
                         numfact = config.numfact % fields
                     else:
                         numfact = "%03d%04d%02d" % (900+reservataire.idx, self.periode_facturation.year, self.periode_facturation.month)
@@ -320,8 +267,8 @@ class FactureModifications(object):
                             except Exception as e:
                                 print(e)
 
-                    self.introduction_fields.extend(fields)
-                    ReplaceTextFields(clone, fields)
+                    # TODO self.introduction_fields.extend(fields)
+                    self.replace_text_fields(clone, fields)
 
                     if clone.nodeName in ("draw:frame", "draw:custom-shape"):
                         doc.insertBefore(clone, template)
@@ -349,6 +296,7 @@ class FactureModifications(object):
                 factures = []
                 total_facture = 0.0
                 has_errors = False
+                site = None
                 for enfant in enfants:
                     try:
                         prenoms.append(enfant.prenom)
@@ -356,7 +304,7 @@ class FactureModifications(object):
                         self.last_facture = facture
                         total_facture += facture.total_facture
                     except CotisationException as e:
-                        errors[GetPrenomNom(enfant)] = e.errors
+                        self.errors[GetPrenomNom(enfant)] = e.errors
                         has_errors = True
                         continue
 
@@ -364,8 +312,9 @@ class FactureModifications(object):
                     for tmp in enfant.inscriptions:
                         if not last_inscription or not last_inscription.fin or (tmp.fin and tmp.fin > last_inscription.fin):
                             last_inscription = tmp
+                            site = last_inscription.site
                     facture.fields = fields + GetInscritFields(enfant) + GetInscriptionFields(last_inscription) + GetFactureFields(facture) + GetCotisationFields(facture.last_cotisation)
-                    self.introduction_fields.extend(facture.fields)
+                    # TODO self.introduction_fields.extend(facture.fields)
                     factures.append(facture)
 
                 if has_errors:
@@ -399,9 +348,9 @@ class FactureModifications(object):
                                 montants_table.setAttribute("table:name", "Montants%d" % (i + 1))
                                 rows = montants_table.getElementsByTagName("table:table-row")
                                 for row in rows:
-                                    if self.IsRowRemovable(row, facture):
+                                    if self.is_row_removable(row, facture):
                                         montants_table.removeChild(row)
-                                ReplaceTextFields(montants_table, facture.fields)
+                                self.replace_text_fields(montants_table, facture.fields)
 
                     sections = clone.getElementsByTagName('text:section')
                     recap_section_found = False
@@ -416,7 +365,7 @@ class FactureModifications(object):
                                     clone.insertBefore(section_clone, section)
                                 else:
                                     section_clone = section
-                                self.FillRecapSection(section_clone, facture)
+                                self.fill_recap_section(section_clone, facture)
 
                     # Les autres champs de la facture
                     facture_fields = [
@@ -426,16 +375,18 @@ class FactureModifications(object):
                         ('montant-a-regler', total_facture + solde, FIELD_EUROS),
                         ('url-tipi', GetUrlTipi(inscrit.famille))]
                     facture_fields += factures[0].fields + self.GetFactureCustomFields(factures[0])
-                    ReplaceTextFields(clone, facture_fields)
+                    self.replace_text_fields(clone, facture_fields)
 
                     if not recap_section_found:
-                        self.FillRecapSection(clone, facture)
+                        self.fill_recap_section(clone, facture)
+
+                    self.modify_content_bitmaps(clone, site)
 
         for template in templates:
             doc.removeChild(template)
 
         # print(doc.toprettyxml())
-        return errors
+        return True
 
     def GetFactureCustomFields(self, facture):
         inscrit = facture.inscrit
@@ -457,55 +408,28 @@ class FactureModifications(object):
         return fields
 
 
-class RelanceFactureModifications(object):
-    title = "Relance facture"
-    template = ""
-    introduction_filename = "Accompagnement relance.txt"
-
-    def __init__(self, who, date, libreoffice_context=None):
-        self.multi = False
-        self.default_output = ""
-        self.site = None
+class RelanceFacture(FactureMensuelle):
+    def __init__(self, who, date):
         self.historique = GetHistoriqueSolde(who if isinstance(who, Reservataire) else who.famille, date)
         self.solde = CalculeSoldeFromHistorique(self.historique)
-        total = self.solde
-        self.attachments = []
-        for ligne in reversed(self.historique):
-            if isinstance(ligne, EncaissementFamille) or isinstance(ligne, EncaissementReservataire):
-                total += ligne.valeur
-            else:
-                facture = FactureModifications([who], ligne.date)
-                GenerateDocument(facture, filename=os.path.join("doc", facture.default_output))
-                if libreoffice_context:
-                    attachment = libreoffice_context.convert_to_pdf(facture.default_output)
-                else:
-                    attachment = facture.default_output
-                self.attachments.append(os.path.join("doc", attachment))
-                total -= ligne.total_facture
-            if total <= 0:
-                break
-        if isinstance(who, Reservataire):
-            self.email_to = [who.email]
-            self.email_subject = "Retard de paiement %s" % who.nom
-        else:
-            self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
-            self.email_subject = "Retard de paiement %s" % GetPrenomNom(who)
-
-    def get_attachments(self):
-        return self.attachments
-
-    def GetIntroductionFields(self):
-        return [
-            ("solde", "%.2f" % self.solde, FIELD_EUROS),  # TODO pourrait être fait automatiquement
-        ]
+        self.last_facture_date = date
+        for line in self.historique:
+            if not isinstance(line, EncaissementFamille) and not isinstance(line, EncaissementReservataire):
+                self.last_facture_date = line.date
+        FactureMensuelle.__init__(self, [who], self.last_facture_date)
+        self.parents_subject = self.parents_subject.replace("Facture", "Retard de paiement")
+        self.parents_success_message = self.parents_success_message.replace("Facture", "Relance")
+        self.parents_introduction_filename = "Accompagnement relance.txt"
+        self.set_fields([("solde", self.solde)])
 
 
 if __name__ == '__main__':
     import random
     from document_dialog import StartLibreOffice
-    database.init("databases/opagaio.db")
+    database.init("../databases/elea.db")
     database.load()
-    modifications = FactureModifications(database.creche.inscrits, datetime.date(2017, 9, 1))
-    filename = "./test-%f.odt" % random.random()
-    errors = GenerateOODocument(modifications, filename=filename, gauge=None)
-    StartLibreOffice(filename)
+    inscrits = [inscrit for inscrit in database.creche.inscrits if inscrit.prenom == "Ambre"]
+    facture = FactureMensuelle(inscrits, datetime.date(2018, 2, 1))
+    facture.generate("./test-%f.odt" % random.random())
+    print(facture.output)
+    StartLibreOffice(facture.output)

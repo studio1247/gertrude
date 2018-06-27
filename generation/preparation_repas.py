@@ -15,71 +15,82 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
-from ooffice import *
+import datetime
+
+from globals import database
+from constants import months, REPAS_PUREE, REPAS_MORCEAUX
+from functions import date2str, GetCrecheFields, GetPrenomNom, GetInscritFields, IsPresentDuringTranche, GetAge
+from generation.opendocument import OpenDocumentSpreadsheet
 
 
-class PreparationRepasModifications(object):
+class PreparationRepasSpreadsheet(OpenDocumentSpreadsheet):
     title = "Préparation des repas"
     template = "Preparation repas.ods"
 
     def __init__(self, debut):
-        self.multi = False
-        self.default_output = "Preparation repas %s.ods" % str(debut)
-        self.debut = debut
-        self.email = None
-        self.site = None
+        OpenDocumentSpreadsheet.__init__(self)
+        self.set_default_output("Preparation repas %s.ods" % str(debut))
+        self.debut, self.fin = debut, debut + datetime.timedelta(4)
 
-    def execute(self, filename, dom):
-        if filename != 'content.xml':
-            return None
-              
-        date_fin = self.debut + datetime.timedelta(4)
-        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
+    def modify_content(self, dom):
+        spreadsheet = dom.getElementsByTagName("office:spreadsheet").item(0)
         table = spreadsheet.getElementsByTagName("table:table")[0]
         lignes = table.getElementsByTagName("table:table-row")
 
         # Les titres des pages
-        ReplaceFields(lignes, GetCrecheFields(database.creche) + [
+        self.replace_cell_fields(lignes, GetCrecheFields(database.creche) + [
             ('date-debut', self.debut),
-            ('date-fin', date_fin)])
+            ('date-fin', self.fin)])
 
-        if 1:
-            # Le format utilisé par Les petits potes (séparation adaptation / halte-garderie / mi-temps / plein-temps
-            # Changé en format utilisé par les petits lutins (sans la séparation)
-            table.setAttribute("table:name", '%d %s %d - %d %s %d' % (self.debut.day, months[self.debut.month - 1], date_fin.year, date_fin.day, months[date_fin.month - 1], date_fin.year))
+        table.setAttribute("table:name", '%d %s %d - %d %s %d' % (self.debut.day, months[self.debut.month - 1], self.fin.year, self.fin.day, months[self.fin.month - 1], self.fin.year))
 
-            # Les jours
-            ligne = lignes.item(1)
-            cellules = ligne.getElementsByTagName("table:table-cell")
-            for jour in range(5):
-                date = self.debut + datetime.timedelta(jour)
-                cellule = cellules.item(2 + jour)
-                ReplaceFields([cellule], [('date', date)])
+        # Les jours
+        ligne = lignes.item(1)
+        cellules = ligne.getElementsByTagName("table:table-cell")
+        for jour in range(5):
+            date = self.debut + datetime.timedelta(jour)
+            cellule = cellules.item(2 + jour)
+            self.replace_cell_fields([cellule], [("date", date2str(date))])
 
-            # Les lignes
-            inscrits = list(database.creche.select_inscrits(self.debut, date_fin))
-            inscrits.sort(key=lambda x: GetPrenomNom(x))
-            self.printPresences(table, inscrits, 3)
+        # Les lignes
+        inscrits = list(database.creche.select_inscrits(self.debut, self.fin))
+        inscrits.sort(key=lambda x: GetPrenomNom(x))
+        self.print_presences(table, inscrits, 3)
 
-            # La ligne des totaux
-            ligne_total = lignes.item(5)
-            cellules = ligne_total.getElementsByTagName("table:table-cell")
-            for i in range(cellules.length):
-                cellule = cellules.item(i)
-                if cellule.hasAttribute('table:formula'):
-                    formule = cellule.getAttribute('table:formula')
-                    formule = formule.replace('5', str(3 + len(inscrits)))
-                    cellule.setAttribute('table:formula', formule)
+        # La ligne des totaux
+        ligne_total = lignes.item(5)
+        cellules = ligne_total.getElementsByTagName("table:table-cell")
+        for i in range(cellules.length):
+            cellule = cellules.item(i)
+            if cellule.hasAttribute("table:formula"):
+                formule = cellule.getAttribute("table:formula")
+                formule = formule.replace("5", str(4 + len(inscrits)))
+                cellule.setAttribute("table:formula", formule)
 
-        #print dom.toprettyxml()
-        return None
+        # print dom.toprettyxml()
+        return True
 
-    def printPresences(self, dom, inscrits, ligne_depart):
+    def print_presences(self, dom, inscrits, ligne_depart):
         template = dom.getElementsByTagName("table:table-row")[ligne_depart]
+        if 1:
+            line = template.cloneNode(1)
+            cells = line.getElementsByTagName("table:table-cell")
+            self.replace_cell_fields(cells, [
+                ("prenom", "Echantillon"),
+                ("nom", None),
+                ("age-mois", None),
+                ("type-repas-2", None),
+                ("lép", 70),
+                ("lém", None),
+                ("pr", 70),
+                ("li", 70),
+                ("fé", 70)
+            ])
+            dom.insertBefore(line, template)
         for inscrit in inscrits:
             line = template.cloneNode(1)
             cells = line.getElementsByTagName("table:table-cell")
-            ReplaceFields(cells, GetInscritFields(inscrit))
+            self.replace_cell_fields(cells, GetInscritFields(inscrit))
             for i, cell in enumerate(cells):
                 day = (i - 3) // 5
                 date = self.debut + datetime.timedelta(day)
@@ -99,7 +110,7 @@ class PreparationRepasModifications(object):
                     food_needs[food_need.label[0:2].lower()] = quantity
                     food_needs[food_need.label[0:2].lower() + "p"] = quantity if inscrit.type_repas == REPAS_PUREE else ""
                     food_needs[food_need.label[0:2].lower() + "m"] = quantity if inscrit.type_repas == REPAS_MORCEAUX else ""
-                ReplaceFields(cell, list(food_needs.items()))
+                self.replace_cell_fields(cell, list(food_needs.items()))
             dom.insertBefore(line, template)
         dom.removeChild(template)
 
@@ -109,7 +120,9 @@ if __name__ == '__main__':
     from document_dialog import StartLibreOffice
     database.init("../databases/lutins-miniac.db")
     database.load()
-    modifications = PreparationRepasModifications(datetime.date(2017, 11, 6))
-    filename = "./test-%f.odt" % random.random()
-    errors = GenerateOODocument(modifications, filename=filename, gauge=None)
-    StartLibreOffice(filename)
+    document = PreparationRepasSpreadsheet(datetime.date(2017, 11, 6))
+    if document.available():
+        document.generate(filename="./test-%f.ods" % random.random())
+        if document.errors:
+            print(document.errors)
+        StartLibreOffice(document.output)

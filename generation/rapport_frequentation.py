@@ -32,7 +32,7 @@ class RapportFrequentationModifications(object):
     title = "Rapport de fréquentation"
     template = "Rapport frequentation.ods"
 
-    def __init__(self, site, annee):
+    def __init__(self, site, annee, type=None):
         self.multi = False
         self.default_output = "Rapport frequentation %d.ods" % annee
         self.annee = annee
@@ -40,6 +40,10 @@ class RapportFrequentationModifications(object):
         self.errors = {}
         self.email = None
         self.site = site
+        self.arrondi = database.creche.arrondi_facturation
+        if type:
+            base, ext = os.path.splitext(self.template)
+            self.template = "%s %s%s" % (base, type, ext)
         self.metas = {"colonne-jour": 2,
                       "colonne-mois": -1,
                       "colonne-annee": 4,
@@ -198,13 +202,15 @@ class RapportFrequentationModifications(object):
                         cells = line.getElementsByTagName("table:table-cell")
                         for j, jour in enumerate(jours):
                             date = datetime.date(debut.year, debut.month, jour)
-                            state = inscrit.GetState(date)
+                            state = inscrit.GetState(date, self.arrondi)
                             # TODO hack to move to GetState ...
-                            if database.creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and state.state != ABSENCE_NON_PREVENUE:
+                            # print(GetPrenomNom(inscrit), date, state.heures_facturees)
+                            if state.heures_facturees != state.heures_realisees and (
+                                (database.creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and state.state != ABSENCE_NON_PREVENUE) or
+                                    (database.creche.mode_facturation == FACTURATION_PSU)):
                                 inscription = inscrit.get_inscription(date)
-                                if inscription and inscription.IsInPeriodeAdaptation(date):
-                                    if state.heures_facturees != state.heures_realisees:
-                                        state.heures_facturees = state.heures_realisees
+                                if inscription and (inscription.IsInPeriodeAdaptation(date) or inscription.mode == MODE_HALTE_GARDERIE):
+                                    state.heures_facturees = GetDureeArrondieHeures(self.arrondi, state.heures_realisees)
                             if inscrit in total_heures_facturees:
                                 total_heures_facturees[inscrit] += state.heures_facturees
                             else:
@@ -309,7 +315,10 @@ class RapportFrequentationModifications(object):
                 if ligne_taux_occuptation >= 0:
                     taux_occupation_cell = lines[ligne_taux_occuptation].getElementsByTagName("table:table-cell")[2]
                     taux_occupation_cell.setAttribute("table:formula", "of:=E%d/G2" % (3+len(keys)))
-                    demi_journees_reelles_cell = lines[6].getElementsByTagName("table:table-cell")[2]
-                    demi_journees_reelles_cell.setAttribute("table:formula", "of:=J2*I2*C%d" % (6+len(keys)))
+                    if len(lines) > 6:
+                        demi_journees_reelles_cells = lines[6].getElementsByTagName("table:table-cell")
+                        if len(demi_journees_reelles_cells) > 2:
+                            demi_journees_reelles_cell = demi_journees_reelles_cells[2]
+                            demi_journees_reelles_cell.setAttribute("table:formula", "of:=J2*I2*C%d" % (6+len(keys)))
                
         return self.errors

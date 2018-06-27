@@ -18,34 +18,264 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-from constants import *
-from database import Inscription
-from functions import *
-from facture import *
-from cotisation import CotisationException
-from planning_line import BasePlanningSeparator, ChildPlanningLine, SalariePlanningLine
-from ooffice import *
+import datetime
+
+from constants import months, days, BASE_GRANULARITY, PRESENCE_SALARIE, TRI_LIGNES_CAHIER, SUMMARY_ENFANT
+from database import Inscrit
+from functions import IsPresentDuringTranche, HeuresTranche, GetInscritFields, get_lines_summary, GetSiteFields, \
+    GetCrecheFields, GetEnfantsTriesSelonParametreTriPlanning, truncate
+from helpers import GetDateString, GetMonthStart, GetMonthEnd, date2str
+from globals import database
+from planning_line import BasePlanningSeparator, ChildPlanningLine, SalariePlanningLine, GetLines
+from generation.opendocument import OpenDocumentDraw, OpenDocumentSpreadsheet, choose_document
 
 
-class PlanningDetailleModifications:
+class PlanningDetailleMixin:
     title = "Planning détaillé"
-    template = "Planning detaille.odg"
-
-    def __init__(self, periode, site=None, groupe=None):
-        self.multi = False
+    
+    def __init__(self, start, end, site=None, groupe=None):
+        self.start = start
+        self.end = end
         self.site = site
         self.groupe = groupe
-        self.start, self.end = periode
-        if IsTemplateFile("Planning detaille.ods"):
-            self.template = 'Planning detaille.ods'
-            self.default_output = "Planning detaille %s %d.ods" % (months[self.start.month - 1], self.start.year)
+
+
+class PlanningDetailleSpreadsheet(OpenDocumentSpreadsheet, PlanningDetailleMixin):
+    template = "Planning detaille.ods"
+
+    def __init__(self, start, end, site=None, groupe=None):
+        OpenDocumentSpreadsheet.__init__(self)
+        PlanningDetailleMixin.__init__(self, start, end, site, groupe)
+        self.set_default_output("Planning detaille %s %d.ods" % (months[self.start.month - 1], self.start.year))
+        
+    def modify_content(self, dom):
+        OpenDocumentSpreadsheet.modify_content(self, dom)
+        if self.metas["format"] == 1:
+            return self.modify_content_julien(dom)
+        elif self.metas["format"] == 2:
+            return self.modify_content_123apetitpas(dom)
         else:
-            self.template = 'Planning detaille.odg'
-            if self.start == self.end:
-                self.default_output = "Planning presences %s.odg" % GetDateString(self.start, weekday=False)
-            else:
-                self.default_output = "Planning presences %s-%s.odg" % (GetDateString(self.start, weekday=False), GetDateString(self.end, weekday=False))
-        self.errors = {}
+            return self.modify_content_default(dom)
+
+    def modify_content_julien(self, dom):
+        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
+        table = spreadsheet.getElementsByTagName("table:table")[0]
+        lignes = table.getElementsByTagName("table:table-row")
+
+        HEADER_LINE_COUNT = 5
+        BODY_LINE_COUNT = 2
+        FOOTER_LINE_COUNT = 1
+        TEMPLATE_LINE_COUNT = HEADER_LINE_COUNT + BODY_LINE_COUNT + FOOTER_LINE_COUNT
+
+        template_header = lignes[:HEADER_LINE_COUNT]
+        template_lines = lignes[HEADER_LINE_COUNT:HEADER_LINE_COUNT + BODY_LINE_COUNT]
+        template_footer = lignes[HEADER_LINE_COUNT + BODY_LINE_COUNT:TEMPLATE_LINE_COUNT]
+
+        date = self.start
+        while date <= self.end:
+            if date in database.creche.jours_fermeture:
+                date += datetime.timedelta(1)
+                continue
+
+            # Header
+            for line in template_header:
+                node = line.cloneNode(1)
+                self.replace_cell_fields(node, [('semaine', date.isocalendar()[1]),
+                                     ('jour', days[date.weekday()]),
+                                     ('date', date2str(date))])
+                table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
+
+            # Body
+            inscrits = GetLines(date, database.creche.inscrits, site=self.site, groupe=self.groupe)
+            lines_count = 0
+            for i, inscrit in enumerate(inscrits):
+                if not isinstance(inscrit, BasePlanningSeparator):
+                    if i % 2:
+                        node = template_lines[1].cloneNode(1)
+                    else:
+                        node = template_lines[0].cloneNode(1)
+                    fields = [('nom', inscrit.nom),
+                              ('prenom', inscrit.prenom),
+                              ('label', inscrit.label),
+                              ('arrivee-depart', inscrit.GetHeureArriveeDepart()),
+                              ('arrivee', inscrit.GetHeureArrivee()),
+                              ('depart', inscrit.GetHeureDepart())]
+                    self.replace_cell_fields(node, fields)
+                    table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
+                    lines_count += 1
+
+            # Footer
+            for line in template_footer:
+                node = line.cloneNode(1)
+                self.replace_cell_fields(node, [('count', lines_count)])
+                table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
+
+            date += datetime.timedelta(1)
+
+        for line in template_header + template_lines + template_footer:
+            table.removeChild(line)
+
+    def modify_content_123apetitpas(self, dom):
+        # Basé sur le template de Julien, mais avec un onglet par jour
+        spreadsheet_template = dom.getElementsByTagName('office:spreadsheet').item(0)
+
+        HEADER_LINE_COUNT = 5
+        BODY_LINE_COUNT = 2
+        FOOTER_LINE_COUNT = 0
+        TEMPLATE_LINE_COUNT = HEADER_LINE_COUNT + BODY_LINE_COUNT + FOOTER_LINE_COUNT
+
+        date = self.start
+        while date <= self.end:
+            if date not in database.creche.jours_fermeture:
+                spreadsheet = spreadsheet_template.cloneNode(1)
+                spreadsheet_template.parentNode.insertBefore(spreadsheet, spreadsheet_template)
+
+                table = spreadsheet.getElementsByTagName("table:table")[0]
+                table_name = "%s %s" % (days[date.weekday()], date2str(date))
+                table_name = table_name.replace("/", "|")
+                table.setAttribute("table:name", table_name)
+                lignes = table.getElementsByTagName("table:table-row")
+
+                template_header = lignes[:HEADER_LINE_COUNT]
+                template_lines = lignes[HEADER_LINE_COUNT:HEADER_LINE_COUNT + BODY_LINE_COUNT]
+                template_footer = lignes[HEADER_LINE_COUNT + BODY_LINE_COUNT:TEMPLATE_LINE_COUNT]
+
+                for groupe in database.creche.groupes:
+                    # Header
+                    for line in template_header:
+                        node = line.cloneNode(1)
+                        self.replace_cell_fields(node, [
+                            ('semaine', date.isocalendar()[1]),
+                            ('jour', days[date.weekday()]),
+                            ('date', date2str(date)),
+                            ('groupe', groupe.nom)
+                        ])
+                        table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
+
+                    # Body
+                    inscrits = GetLines(date, database.creche.inscrits, site=self.site, groupe=groupe)
+                    lines_count = 0
+                    for i, inscrit in enumerate(inscrits):
+                        if i % 2:
+                            node = template_lines[1].cloneNode(1)
+                        else:
+                            node = template_lines[0].cloneNode(1)
+                        fields = [('nom', inscrit.nom),
+                                  ('prenom', inscrit.prenom),
+                                  ('label', inscrit.label),
+                                  ('arrivee-depart', inscrit.GetHeureArriveeDepart()),
+                                  ('arrivee', inscrit.GetHeureArrivee()),
+                                  ('depart', inscrit.GetHeureDepart())]
+                        self.replace_cell_fields(node, fields)
+                        table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
+                        lines_count += 1
+
+                    # Footer
+                    for line in template_footer:
+                        node = line.cloneNode(1)
+                        self.replace_cell_fields(node, [('count', lines_count)])
+                        table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
+
+                # Remove the template lines
+                for line in template_header + template_lines + template_footer:
+                    table.removeChild(line)
+
+            date += datetime.timedelta(1)
+
+        spreadsheet_template.parentNode.removeChild(spreadsheet_template)
+
+    def modify_content_default(self, dom):
+        # Garderie Ribambelle, planning detaillé
+
+        debut, fin = GetMonthStart(self.start), GetMonthEnd(self.start)
+        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
+        table = spreadsheet.getElementsByTagName("table:table")[0]
+        lignes = table.getElementsByTagName("table:table-row")
+
+        # Les titres des pages
+        self.replace_cell_fields(lignes, [('mois', months[self.start.month - 1]),
+                                          ('annee', self.start.year)])
+
+        template = lignes[6]
+        semaines_template = lignes[3]
+        total_template = lignes[7]
+        montant_template = lignes[9]
+
+        c = 0
+        numero = debut.isocalendar()[1]
+        while 1:
+            cell = self.get_cell(semaines_template, c)
+            if cell is None:
+                break
+            c += 1
+            if self.replace_cell_fields(cell, [('numero-semaine', numero)]):
+                numero += 1
+
+        inscriptions = database.creche.select_inscriptions(debut, fin)
+        for index, inscription in enumerate(inscriptions):
+            inscrit = inscription.inscrit
+            row = template.cloneNode(1)
+            # print(row.toprettyxml())
+            date = debut
+            cell = 0
+            weekday = date.weekday()
+            if weekday == 6:
+                date += datetime.timedelta(1)
+            elif weekday == 5:
+                date += datetime.timedelta(2)
+            elif weekday > 0:
+                cell = weekday * 2 + 1
+            tranches = [(database.creche.ouverture, 12), (14, database.creche.fermeture)]
+            while date <= fin:
+                weekday = date.weekday()
+                if weekday == 2 or weekday >= 5:
+                    date += datetime.timedelta(1)
+                    continue
+                if weekday == 0:
+                    cell += 1
+                journee = inscrit.GetJournee(date)
+                for t in range(2):
+                    if journee and IsPresentDuringTranche(journee, tranches[t][0] * 12, tranches[t][1] * 12):
+                        heures = HeuresTranche(journee, tranches[t][0] * 12, tranches[t][1] * 12)
+                        self.replace_cell_fields(self.get_cell(row, cell), [('p', heures)])
+                    cell += 1
+                date += datetime.timedelta(1)
+            table.insertBefore(row, template)
+            self.replace_text_fields(self.get_cell(row, 0), GetInscritFields(inscription.inscrit))
+            self.replace_cell_fields(row, [('p', '')])
+            cellules = row.getElementsByTagName("table:table-cell")
+            for i in range(cellules.length):
+                cellule = cellules.item(i)
+                if cellule.hasAttribute('table:formula'):
+                    formule = cellule.getAttribute('table:formula')
+                    formule = formule.replace('7', '%d' % (7 + index))
+                    cellule.setAttribute('table:formula', formule)
+
+        table.removeChild(template)
+
+        for template in (total_template, montant_template):
+            cellules = template.getElementsByTagName("table:table-cell")
+            for i in range(cellules.length):
+                cellule = cellules.item(i)
+                if cellule.hasAttribute('table:formula'):
+                    formule = cellule.getAttribute('table:formula')
+                    formule = formule.replace('9', '%d' % (7 + len(inscriptions)))
+                    formule = formule.replace('8', '%d' % (6 + len(inscriptions)))
+                    cellule.setAttribute('table:formula', formule)
+
+        return True
+
+
+class PlanningDetailleDraw(OpenDocumentDraw, PlanningDetailleMixin):
+    template = "Planning detaille.odg"
+
+    def __init__(self, start, end, site=None, groupe=None):
+        OpenDocumentDraw.__init__(self)
+        PlanningDetailleMixin.__init__(self, start, end, site, groupe)
+        if self.start == self.end:
+            self.set_default_output("Planning presences %s.odg" % GetDateString(self.start, weekday=False))
+        else:
+            self.set_default_output("Planning presences %s-%s.odg" % (GetDateString(self.start, weekday=False), GetDateString(self.end, weekday=False)))
         self.metas = {"format": 0,
                       "left": 1.5,
                       "right": 2.0,
@@ -57,40 +287,13 @@ class PlanningDetailleModifications:
                       "lignes-vides": False,
                       "summary": True
                       }
-        self.email = None
 
-    def execute(self, filename, dom):
-        if filename == 'meta.xml':
-            metas = dom.getElementsByTagName('meta:user-defined')
-            for meta in metas:
-                # print(meta.toprettyxml())
-                name = meta.getAttribute('meta:name').lower()
-                if len(meta.childNodes) > 0:
-                    value = meta.childNodes[0].wholeText
-                    value_type = meta.getAttribute('meta:value-type')
-                    if value_type == "float":
-                        self.metas[name] = float(value)
-                    elif value_type == "boolean":
-                        self.metas[name] = True if value == "true" else False
-                    else:
-                        self.metas[name] = value
-            # for name in self.metas:
-            #     print("Meta", name, type(self.metas[name]), self.metas[name])
-            return None
-        elif filename != 'content.xml':
-            return None
-        elif IsTemplateFile("Planning detaille.ods"):
-            if self.metas["format"] == 1:
-                return self.executeTemplateCalcJulien(filename, dom)
-            elif self.metas["format"] == 2:
-                return self.executeTemplateCalc123APetitsPas(filename, dom)
-            else:
-                return self.executeTemplateCalc(filename, dom)
+    def modify_content(self, dom):
+        OpenDocumentDraw.modify_content(self, dom)
+        if self.metas["format"] == "one-page":
+            return self.modify_content_one_page( dom)
         else:
-            if self.metas["format"] == "one-page":
-                return self.executeTemplateOnePage(filename, dom)
-            else:
-                return self.executeTemplateDraw(filename, dom)
+            return self.modify_content_default(dom)
 
     @staticmethod
     def get_timeslot_shape(shapes, timeslot, salarie=False):
@@ -107,7 +310,7 @@ class PlanningDetailleModifications:
             print("Pas de forme pour l'activité %s: %s, %s, %s" % (timeslot.activity.label, key1, key2, key3))
             return None
 
-    def executeTemplateDraw(self, filename, dom):
+    def modify_content_default(self, dom):
         affichage_min = int(database.creche.affichage_min * (60 // BASE_GRANULARITY))
         affichage_max = int(database.creche.affichage_max * (60 // BASE_GRANULARITY))
         step = (21.0-self.metas["left"]-self.metas["right"]-self.metas["labels-width"]) / (affichage_max - affichage_min)
@@ -118,7 +321,7 @@ class PlanningDetailleModifications:
 
         template = drawing.getElementsByTagName("draw:page").item(0)
         # print(template.toprettyxml())
-        shapes = getNamedShapes(template)
+        shapes = self.get_named_shapes(template)
         # print(shapes)
         for shape in shapes:
             if shape in ["legende-heure", "ligne-heure", "ligne-quart-heure", "libelle", "separateur", "ligne-cahier", "category"] or shape.startswith("activite-"):
@@ -131,7 +334,7 @@ class PlanningDetailleModifications:
             if "category" in shapes:
                 node = shapes["category"].cloneNode(1)
                 node.setAttribute('svg:y', '%fcm' % y)
-                ReplaceTextFields(node, [('category', text)])
+                self.replace_text_fields(node, [('category', text)])
                 page.appendChild(node)
 
         date = self.start
@@ -208,7 +411,7 @@ class PlanningDetailleModifications:
                         fields = [('nom', line.who.nom),
                                   ('prenom', line.who.prenom),
                                   ('label', line.label)]
-                        ReplaceTextFields(node, fields)
+                        self.replace_text_fields(node, fields)
                         page.appendChild(node)
                         for timeslot in line.timeslots:
                             if timeslot.activity.has_horaires():
@@ -219,7 +422,7 @@ class PlanningDetailleModifications:
                                     node.setAttribute('svg:y', '%fcm' % (0.10 + self.metas["top"] + self.metas["line-height"] * i))
                                     node.setAttribute('svg:width', '%fcm' % ((timeslot.fin - timeslot.debut) * step))
                                     allergies = line.who.get_allergies() if isinstance(line.who, Inscrit) else []
-                                    ReplaceTextFields(node, [("texte", ""), ("allergies", ", ".join(allergies))])
+                                    self.replace_text_fields(node, [("texte", ""), ("allergies", ", ".join(allergies))])
                                     page.appendChild(node)
 
                 if self.metas["summary"] and page_index + 1 == pages_count:
@@ -237,7 +440,7 @@ class PlanningDetailleModifications:
                         fields = [('nom', ''),
                                   ('prenom', activity.label),
                                   ('label', activity.label)]
-                        ReplaceTextFields(node, fields)
+                        self.replace_text_fields(node, fields)
                         page.appendChild(node)
                         line = summary[activity]
                         for timeslot in line:
@@ -247,19 +450,18 @@ class PlanningDetailleModifications:
                                 node.setAttribute('svg:x', '%fcm' % (self.metas["left"] + self.metas["labels-width"] + (float(timeslot.debut - affichage_min) * step)))
                                 node.setAttribute('svg:y', '%fcm' % (0.10 + self.metas["top"] + self.metas["line-height"] * i))
                                 node.setAttribute('svg:width', '%fcm' % (float(timeslot.fin - timeslot.debut) * step))
-                                ReplaceTextFields(node, [('texte', str(timeslot.value))])
+                                self.replace_text_fields(node, [('texte', str(timeslot.value))])
                                 page.appendChild(node)
                 fields = GetCrecheFields(database.creche) + GetSiteFields(self.site)
                 if pages_count > 1:
                     fields.append(('date', GetDateString(date) + " (%d/%d)" % (page_index + 1, pages_count)))
                 else:
                     fields.append(('date', GetDateString(date)))
-
-                ReplaceTextFields(page, fields)
+                self.replace_text_fields(page, fields)
             date += datetime.timedelta(1)
-        return None
+        return True
 
-    def executeTemplateOnePage(self, filename, dom):
+    def modify_content_one_page(self, dom):
         affichage_min = int(database.creche.affichage_min * (60 // BASE_GRANULARITY))
         affichage_max = int(database.creche.affichage_max * (60 // BASE_GRANULARITY))
         step = (21.0 - self.metas["left"] - self.metas["right"] - self.metas["labels-width"]) / (affichage_max - affichage_min)
@@ -270,7 +472,7 @@ class PlanningDetailleModifications:
 
         template = drawing.getElementsByTagName("draw:page").item(0)
         # print(template.toprettyxml())
-        shapes = getNamedShapes(template)
+        shapes = self.get_named_shapes(template)
         # print(shapes)
         for shape in shapes:
             if shape in ["legende-heure", "ligne-heure", "ligne-quart-heure", "libelle", "jour", "separateur", "ligne-cahier", "category"] or shape.startswith("activite-"):
@@ -279,7 +481,7 @@ class PlanningDetailleModifications:
         if not "activite-%d" % PRESENCE_SALARIE in shapes:
             shapes["activite-%d" % PRESENCE_SALARIE] = shapes["activite-%d" % 0]
 
-        def drawPage(people, days, salaries=False):
+        def draw_page(people, days, salaries=False):
             page = template.cloneNode(1)
             page.setAttribute("draw:name", GetDateString(self.start))
             drawing.appendChild(page)
@@ -319,7 +521,7 @@ class PlanningDetailleModifications:
                 node.setAttribute('svg:y', '%fcm' % current_top)
                 fields = [('jour', GetDateString(day)),
                           ('jour-sans-annee', GetDateString(day, annee=False))]
-                ReplaceTextFields(node, fields)
+                self.replace_text_fields(node, fields)
                 page.appendChild(node)
                 current_top += self.metas["line-height"]
 
@@ -333,7 +535,7 @@ class PlanningDetailleModifications:
                     fields = [('nom', line.nom),
                               ('prenom', line.prenom),
                               ('label', truncate(line.label, self.metas["label-length"]))]
-                    ReplaceTextFields(node, fields)
+                    self.replace_text_fields(node, fields)
                     page.appendChild(node)
                     timeslots = line.timeslots[:]
                     timeslots.sort(key=lambda timeslot: timeslot.activity.idx)
@@ -348,227 +550,25 @@ class PlanningDetailleModifications:
                                 page.appendChild(node)
 
                     fields = GetCrecheFields(database.creche) + GetSiteFields(self.site)
-                    ReplaceTextFields(page, fields)
+                    self.replace_text_fields(page, fields)
                     current_top += self.metas["line-height"]
 
                 if "line-per-day" in self.metas:
                     current_top += self.metas["line-height"] * (self.metas["line-per-day"] - len(lines))
 
         working_days = [(self.start + datetime.timedelta(i)) for i in range(5)]
-        drawPage(database.creche.inscrits, working_days)
-        drawPage(database.creche.salaries, working_days, salaries=True)
+        draw_page(database.creche.inscrits, working_days)
+        draw_page(database.creche.salaries, working_days, salaries=True)
         if "split-saturdays" in self.metas:
             saturdays = [(self.start + datetime.timedelta(5 + 7 * i)) for i in range(5)]
-            drawPage(database.creche.inscrits, saturdays)
+            draw_page(database.creche.inscrits, saturdays)
 
-        return None
+        return True
 
-    def executeTemplateCalc(self, filename, dom):
-        # Garderie Ribambelle, planning detaillé
 
-        debut, fin = GetMonthStart(self.start), GetMonthEnd(self.start)
-        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
-        table = spreadsheet.getElementsByTagName("table:table")[0]
-        lignes = table.getElementsByTagName("table:table-row")
-
-        # Les titres des pages
-        ReplaceFields(lignes, [('mois', months[self.start.month-1]),
-                               ('annee', self.start.year)])
-
-        template = lignes[6]
-        semaines_template = lignes[3]
-        total_template = lignes[7]
-        montant_template = lignes[9]
-        
-        c = 0
-        numero = debut.isocalendar()[1]
-        while 1:
-            cell = GetCell(semaines_template, c)
-            if cell is None:
-                break
-            c += 1
-            if ReplaceFields(cell, [('numero-semaine', numero)]):
-                numero += 1
-            
-        inscriptions = database.creche.select_inscriptions(debut, fin)
-        for index, inscription in enumerate(inscriptions):
-            inscrit = inscription.inscrit
-            row = template.cloneNode(1)
-            # print(row.toprettyxml())
-            date = debut
-            cell = 0
-            weekday = date.weekday()
-            if weekday == 6:
-                date += datetime.timedelta(1)
-            elif weekday == 5:
-                date += datetime.timedelta(2)
-            elif weekday > 0:
-                cell = weekday * 2 + 1
-            tranches = [(database.creche.ouverture, 12), (14, database.creche.fermeture)]
-            while date <= fin:
-                weekday = date.weekday()
-                if weekday == 2 or weekday >= 5:
-                    date += datetime.timedelta(1)
-                    continue
-                if weekday == 0:
-                    cell += 1
-                journee = inscrit.GetJournee(date)
-                for t in range(2):
-                    if journee and IsPresentDuringTranche(journee, tranches[t][0]*12, tranches[t][1]*12):
-                        heures = HeuresTranche(journee, tranches[t][0] * 12, tranches[t][1]*12)
-                        ReplaceFields(GetCell(row, cell), [('p', heures)])
-                    cell += 1
-                date += datetime.timedelta(1)    
-            table.insertBefore(row, template)
-            ReplaceTextFields(GetCell(row, 0), GetInscritFields(inscription.inscrit))
-            ReplaceFields(row, [('p', '')])
-            cellules = row.getElementsByTagName("table:table-cell")
-            for i in range(cellules.length):
-                cellule = cellules.item(i)
-                if cellule.hasAttribute('table:formula'):
-                    formule = cellule.getAttribute('table:formula')
-                    formule = formule.replace('7', '%d' % (7+index))
-                    cellule.setAttribute('table:formula', formule)
-
-        table.removeChild(template)
-
-        for template in (total_template, montant_template):        
-            cellules = template.getElementsByTagName("table:table-cell")
-            for i in range(cellules.length):
-                cellule = cellules.item(i)
-                if cellule.hasAttribute('table:formula'):
-                    formule = cellule.getAttribute('table:formula')
-                    formule = formule.replace('9', '%d' % (7 + len(inscriptions)))
-                    formule = formule.replace('8', '%d' % (6 + len(inscriptions)))
-                    cellule.setAttribute('table:formula', formule)
-                    
-        return None
-
-    def executeTemplateCalcJulien(self, filename, dom):
-        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
-        table = spreadsheet.getElementsByTagName("table:table")[0]
-        lignes = table.getElementsByTagName("table:table-row")
-        
-        HEADER_LINE_COUNT = 5
-        BODY_LINE_COUNT = 2
-        FOOTER_LINE_COUNT = 1
-        TEMPLATE_LINE_COUNT = HEADER_LINE_COUNT+BODY_LINE_COUNT+FOOTER_LINE_COUNT
-        
-        templateHeader = lignes[:HEADER_LINE_COUNT]
-        templateLines = lignes[HEADER_LINE_COUNT:HEADER_LINE_COUNT + BODY_LINE_COUNT]
-        templateFooter = lignes[HEADER_LINE_COUNT + BODY_LINE_COUNT:TEMPLATE_LINE_COUNT]
-
-        date = self.start
-        while date <= self.end:
-            if date in database.creche.jours_fermeture:
-                date += datetime.timedelta(1)
-                continue
-
-            # Header            
-            for line in templateHeader:
-                node = line.cloneNode(1)
-                ReplaceFields(node, [('semaine', date.isocalendar()[1]),
-                                     ('jour', days[date.weekday()]),
-                                     ('date', date2str(date))])
-                table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
-            
-            # Body
-            inscrits = GetLines(date, database.creche.inscrits, site=self.site, groupe=self.groupe)
-            linesCount = 0
-            for i, inscrit in enumerate(inscrits):
-                if not isinstance(inscrit, BasePlanningSeparator):
-                    if i % 2:
-                        node = templateLines[1].cloneNode(1)
-                    else:
-                        node = templateLines[0].cloneNode(1)
-                    fields = [('nom', inscrit.nom),
-                              ('prenom', inscrit.prenom),
-                              ('label', inscrit.label),
-                              ('arrivee-depart', inscrit.GetHeureArriveeDepart()),
-                              ('arrivee', inscrit.GetHeureArrivee()),
-                              ('depart', inscrit.GetHeureDepart())]
-                    ReplaceFields(node, fields)
-                    table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
-                    linesCount += 1
-
-            # Footer
-            for line in templateFooter:
-                node = line.cloneNode(1)
-                ReplaceFields(node, [('count', linesCount)])
-                table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
-            
-            date += datetime.timedelta(1)
-        
-        for line in templateHeader + templateLines + templateFooter:
-            table.removeChild(line)
-
-    def executeTemplateCalc123APetitsPas(self, filename, dom):
-        # Basé sur le template de Julien, mais avec un onglet par jour
-        spreadsheet_template = dom.getElementsByTagName('office:spreadsheet').item(0)
-
-        HEADER_LINE_COUNT = 5
-        BODY_LINE_COUNT = 2
-        FOOTER_LINE_COUNT = 0
-        TEMPLATE_LINE_COUNT = HEADER_LINE_COUNT + BODY_LINE_COUNT + FOOTER_LINE_COUNT
-
-        date = self.start
-        while date <= self.end:
-            if date not in database.creche.jours_fermeture:
-                spreadsheet = spreadsheet_template.cloneNode(1)
-                spreadsheet_template.parentNode.insertBefore(spreadsheet, spreadsheet_template)
-
-                table = spreadsheet.getElementsByTagName("table:table")[0]
-                table_name = "%s %s" % (days[date.weekday()], date2str(date))
-                table_name = table_name.replace("/", "|")
-                table.setAttribute("table:name", table_name)
-                lignes = table.getElementsByTagName("table:table-row")
-
-                templateHeader = lignes[:HEADER_LINE_COUNT]
-                templateLines = lignes[HEADER_LINE_COUNT:HEADER_LINE_COUNT + BODY_LINE_COUNT]
-                templateFooter = lignes[HEADER_LINE_COUNT + BODY_LINE_COUNT:TEMPLATE_LINE_COUNT]
-
-                for groupe in database.creche.groupes:
-                    # Header
-                    for line in templateHeader:
-                        node = line.cloneNode(1)
-                        ReplaceFields(node, [('semaine', date.isocalendar()[1]),
-                                             ('jour', days[date.weekday()]),
-                                             ('date', date2str(date)),
-                                             ('groupe', groupe.nom)
-                                             ])
-                        table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
-
-                    # Body
-                    inscrits = GetLines(date, database.creche.inscrits, site=self.site, groupe=groupe)
-                    linesCount = 0
-                    for i, inscrit in enumerate(inscrits):
-                        if i % 2:
-                            node = templateLines[1].cloneNode(1)
-                        else:
-                            node = templateLines[0].cloneNode(1)
-                        fields = [('nom', inscrit.nom),
-                                  ('prenom', inscrit.prenom),
-                                  ('label', inscrit.label),
-                                  ('arrivee-depart', inscrit.GetHeureArriveeDepart()),
-                                  ('arrivee', inscrit.GetHeureArrivee()),
-                                  ('depart', inscrit.GetHeureDepart())]
-                        ReplaceFields(node, fields)
-                        table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
-                        linesCount += 1
-
-                    # Footer
-                    for line in templateFooter:
-                        node = line.cloneNode(1)
-                        ReplaceFields(node, [('count', linesCount)])
-                        table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
-
-                # Remove the template lines
-                for line in templateHeader + templateLines + templateFooter:
-                    table.removeChild(line)
-
-            date += datetime.timedelta(1)
-
-        spreadsheet_template.parentNode.removeChild(spreadsheet_template)
+PlanningDetailleDocument = choose_document(
+    PlanningDetailleSpreadsheet,
+    PlanningDetailleDraw)
 
 
 def test_planning_detaille():
@@ -577,10 +577,9 @@ def test_planning_detaille():
     database.init("databases/opagaio.db")
     database.load()
     database.creche.nom = "Micro-crèche Opagaïo-Bissy"
-    modifications = PlanningDetailleModifications((datetime.date(2017, 11, 27), datetime.date(2017, 12, 3)))
-    filename = "./test-%f.odt" % random.random()
-    errors = GenerateOODocument(modifications, filename=filename, gauge=None)
-    StartLibreOffice(filename)
+    document = PlanningDetailleDocument(datetime.date(2017, 11, 27), datetime.date(2017, 12, 3))
+    document.generate("./test-%f.odt" % random.random())
+    StartLibreOffice(document)
 
 
 if __name__ == '__main__':

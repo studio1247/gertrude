@@ -349,7 +349,7 @@ class FactureFinMois(FactureBase):
                         elif state == VACANCES:
                             if heures_reference > 0:
                                 self.jours_vacances.append(date)
-                            if not inscription.IsNombreSemainesCongesDepasse(date):
+                            if not (config.options & COMPATIBILITY_MODE_HEURES_FACTUREES_2017) and not inscription.IsNombreSemainesCongesDepasse(date):
                                 self.heures_facturees_par_mode[cotisation.mode_garde] -= heures_reference
                                 self.jours_conges_non_factures.append(date)
                                 if database.creche.repartition == REPARTITION_SANS_MENSUALISATION or database.creche.facturation_jours_feries == ABSENCES_DEDUITES_SANS_LIMITE:
@@ -455,7 +455,8 @@ class FactureFinMois(FactureBase):
                             self.heures_contractualisees += heures_reference
                             self.heures_contractualisees_realisees += min(heures_realisees, heures_reference)
                             if database.creche.mode_facturation == FACTURATION_HORAIRES_REELS or (database.creche.mode_facturation == FACTURATION_PSU and cotisation.mode_garde == MODE_HALTE_GARDERIE):
-                                self.heures_facturees_par_mode[cotisation.mode_garde] += heures_realisees - heures_realisees_non_facturees + heures_facturees_non_realisees
+                                heures_arrondies = GetDureeArrondieHeures(database.creche.arrondi_facturation, heures_realisees - heures_realisees_non_facturees + heures_facturees_non_realisees)
+                                self.heures_facturees_par_mode[cotisation.mode_garde] += heures_arrondies
                                 self.total_contractualise += cotisation.CalculeFraisGarde(heures_reference)
                             elif database.creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date):
                                 heures_adaptation = heures_realisees - heures_realisees_non_facturees + heures_facturees_non_realisees
@@ -660,11 +661,14 @@ class FactureFinMois(FactureBase):
                             new_prorata_heures = (prorata_heures * cotisation.jours_inscription) / days_count
                             if options & TRACES:
                                 print(" prorata (mois complet) : %f * %f / %f = %f" % (prorata, cotisation.jours_inscription, days_count, new_prorata))
-                        else:
+                        elif self.jours_ouvres:
                             new_prorata = (prorata * cotisation.jours_ouvres) / self.jours_ouvres
                             new_prorata_heures = (prorata_heures * cotisation.jours_ouvres) / self.jours_ouvres
                             if options & TRACES:
                                 print(" prorata (jours ouvrés) : %f * %f / %f = %f" % (prorata, cotisation.jours_ouvres, self.jours_ouvres, new_prorata))
+                        else:
+                            new_prorata = prorata
+                            new_prorata_heures = prorata_heures
                         prorata = new_prorata
                         prorata_heures = new_prorata_heures
 
@@ -954,7 +958,7 @@ class FactureReservataire(object):
 
 
 def GetHistoriqueSolde(who, jalon=datetime.date.today()):
-    lignes = [encaissement for encaissement in who.encaissements]
+    lignes = [encaissement for encaissement in who.encaissements if (not config.date_debut_reglements or encaissement.date >= config.date_debut_reglements)]
     if isinstance(who, Reservataire):
         for date in who.get_factures_list():
             if config.is_date_after_reglements_start(date) and date <= jalon:
@@ -988,21 +992,16 @@ def GetHistoriqueSolde(who, jalon=datetime.date.today()):
                 except Exception as e:
                     print("Exception", repr(e))
             date = GetNextMonthStart(date)
-    lignes.sort(key=lambda ligne: ligne.date if ligne.date else today)
     return lignes
-
-
-def GetValeurLigneHistorique(ligne):
-    if isinstance(ligne, EncaissementFamille) or isinstance(ligne, EncaissementReservataire):
-        return ligne.valeur
-    else:
-        return -ligne.total_facture
 
 
 def CalculeSoldeFromHistorique(historique):
     solde = 0.0
     for ligne in historique:
-        solde -= GetValeurLigneHistorique(ligne)
+        if isinstance(ligne, EncaissementFamille) or isinstance(ligne, EncaissementReservataire):
+            solde -= ligne.valeur
+        else:
+            solde += ligne.total_facture
     return solde
 
 

@@ -20,55 +20,34 @@ from __future__ import print_function
 from __future__ import division
 
 import glob
-from constants import *
-from functions import *
+
 from cotisation import Cotisation
-from ooffice import *
-from generation.facture_mensuelle import FactureModifications
-from math import *
+from functions import Select, GetCrecheFields, GetInscritFields, GetInscriptionFields, GetCotisationFields, \
+    GetBureauFields, IsPresentDuringTranche, GetPrenomNom, GetSiteFields, IsTemplateFile, GetTemplateFile
+from constants import *
+from globals import database
+from helpers import GetDateString, GetHeureString
+from generation.opendocument import OpenDocumentText, OpenDocumentSpreadsheet
+from generation.email_helpers import SendToParentsMixin
 
 
-class DocumentAccueilModifications(object):
-    def __init__(self, who, date):
-        self.inscrit = who
+class DocumentAccueilMixin(object):
+    def __init__(self, inscrit, date):
+        self.inscrit = inscrit
+        self.inscrits = [inscrit]
         self.date = date
-        self.email = None
-        self.inscription = who.get_inscription(date, preinscription=True)
-        self.site = self.inscription.site if self.inscription else None
-        self.metas = {}
+        self.inscription = inscrit.get_inscription(date, preinscription=True)
+        if self.inscription:
+            if self.inscription.preinscription:
+                self.site = self.inscription.sites_preinscription[0] if len(self.inscription.sites_preinscription) > 0 else None
+            else:
+                self.site = self.inscription.site
+        else:
+            self.site = None
+        self.cotisation = None
+        self.setup_fields()
 
-    def GetMetas(self, dom):
-        metas = dom.getElementsByTagName('meta:user-defined')
-        for meta in metas:
-            # print(meta.toprettyxml())
-            name = meta.getAttribute('meta:name')
-            try:
-                value = meta.childNodes[0].wholeText
-                if meta.getAttribute('meta:value-type') == 'float':
-                    self.metas[name] = float(value)
-                else:
-                    self.metas[name] = value
-            except:
-                pass
-
-    def GetCustomFields(self, inscrit, famille, inscription, cotisation):
-        fields = []
-        for key in self.metas:
-            if key.lower().startswith("formule "):
-                label = key[8:]
-                try:
-                    value = eval(self.metas[key])
-                except Exception as e:
-                    print("Exception formule:", label, self.metas[key], e)
-                    continue
-                if isinstance(value, tuple):
-                    field = label, value[0], value[1]
-                else:
-                    field = label, value
-                fields.append(field)
-        return fields
-
-    def GetFields(self):
+    def setup_fields(self):
         bareme_caf = Select(database.creche.baremes_caf, self.date)
         try:
             plancher_caf = "%.2f" % bareme_caf.plancher
@@ -79,14 +58,14 @@ class DocumentAccueilModifications(object):
 
         self.cotisation = Cotisation(self.inscrit, self.date)
         
-        fields = GetCrecheFields(database.creche) + GetInscritFields(self.inscrit) + GetInscriptionFields(self.inscription) + GetCotisationFields(self.cotisation)
+        fields = GetCrecheFields(database.creche) + GetSiteFields(self.site) + GetInscritFields(self.inscrit) + GetInscriptionFields(self.inscription) + GetCotisationFields(self.cotisation)
         fields += [('plancher-caf', plancher_caf),
                    ('plafond-caf', plafond_caf),
                    ('semaines-type', self.inscription.duree_reference // 7),
                    ('date', '%.2d/%.2d/%d' % (self.date.day, self.date.month, self.date.year)),
-                   ('permanences', self.GetPermanences()),
+                   ('permanences', self.get_permanences()),
                    ('carence-maladie', database.creche.minimum_maladie),
-                   ('IsPresentDuringTranche', self.IsPresentDuringTranche),
+                   ('IsPresentDuringTranche', self.is_present_during_tranche),
                    ]
         
         bureau = Select(database.creche.bureaux, self.date)
@@ -146,20 +125,25 @@ class DocumentAccueilModifications(object):
         for activite in database.creche.activites:
             fields.append(('liste-activites[%d]' % activite.idx, self.inscription.GetListeActivites()))
 
-        fields += self.GetCustomFields(self.inscrit, self.inscrit.famille, self.inscription, self.cotisation)
+        names = {
+            "inscrit": self.inscrit,
+            "famille": self.inscrit.famille,
+            "inscription": self.inscription,
+            "cotisation": self.cotisation
+        }
+        fields += self.get_fields_from_meta(names=names)
 
         # print(fields)
-        return fields
+        self.set_fields(fields)
 
-    def IsPresentDuringTranche(self, weekday, debut, fin):
+    def is_present_during_tranche(self, weekday, debut, fin):
         journee = self.inscription.reference[weekday]
         if IsPresentDuringTranche(journee, debut, fin):
             return "X"
         else:
             return ""
 
-    def GetPermanences(self):
-        jours = self.inscription.get_days_per_week()
+    def get_permanences(self):
         heures = self.inscription.get_duration_per_week()
         if heures >= 11:
             result = 8
@@ -173,26 +157,21 @@ class DocumentAccueilModifications(object):
             return result        
 
 
-class OdtDocumentAccueilModifications(DocumentAccueilModifications):
+class DocumentAccueilText(OpenDocumentText, DocumentAccueilMixin):
     def __init__(self, who, date):
-        DocumentAccueilModifications.__init__(self, who, date)
-        self.multi = False
+        OpenDocumentText.__init__(self)
+        DocumentAccueilMixin.__init__(self, who, date)
 
-    def execute(self, filename, dom):
-        fields = self.GetFields()
-        if filename == 'meta.xml':
-            self.GetMetas(dom)
-        if filename != 'content.xml':
-            ReplaceTextFields(dom, fields)
-            return None
-        
+    def modify_content(self, dom):
+        self.modify_content_bitmaps(dom, self.site)
+
         doc = dom.getElementsByTagName("office:text")[0]
         # print(doc.toprettyxml())
 
         for section in doc.getElementsByTagName("text:section"):
             section_name = section.getAttribute("text:name")
-            index = ["parent1", "parent2"].index(section_name)
-            if index >= 0 and (index >= len(self.inscrit.famille.parents) or self.inscrit.famille.parents[index] is None):
+            sections_names = [("parent%d" % (i + 1)) for i in range(len(self.inscrit.famille.parents))]
+            if section_name.startswith("parent") and section_name not in sections_names:
                 doc.removeChild(section)
 
         for table in doc.getElementsByTagName("table:table"):
@@ -221,198 +200,161 @@ class OdtDocumentAccueilModifications(DocumentAccueilModifications):
                         ("date-echeance", date),
                         ("valeur-echeance", valeur, FIELD_EUROS)
                     ]
-                    ReplaceTextFields(clone, fields_echeance)
+                    self.replace_text_fields(clone, fields_echeance)
                 table.removeChild(template)
         
         # print(doc.toprettyxml())
-        ReplaceTextFields(doc, fields)
-        return {}
+        self.replace_text_fields(doc)
+        return True
 
 
-class DevisAccueilModifications(OdtDocumentAccueilModifications):
+class DevisAccueilDocument(DocumentAccueilText, SendToParentsMixin):
     title = "Devis"
     template = "Devis accueil.odt"
 
     def __init__(self, who, date):
-        OdtDocumentAccueilModifications.__init__(self, who, date)
-        self.default_output = "Devis accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
+        DocumentAccueilText.__init__(self, who, date)
+        self.set_default_output("Devis accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False)))
+        SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement devis.txt", [], "Devis envoyé")
 
 
-class DevisAccueilCalcModifications(DocumentAccueilModifications):
-    title = "Devis"
-    template = "Devis accueil.ods"
-
-    def __init__(self, who, date, site=None):
-        DocumentAccueilModifications.__init__(self, who, date)
-        self.default_output = "Devis accueil %s - %s.ods" % (GetPrenomNom(who), GetDateString(date, weekday=False))
-        self.email = True
-        self.multi = False
-        self.reservataire = None
-        self.inscrits = [who]
-        self.site = site
-        self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
-        self.email_subject = "Simulation pour l'accueil de %s" % GetPrenomNom(who)
-        self.introduction_filename = "Accompagnement devis accueil.txt"
-
-    def get_attachments(self):
-        return []
-
-    def GetIntroductionFields(self):
-        return GetInscritFields(self.inscrits[0]) + GetSiteFields(self.site)
-
-    def execute(self, filename, dom):
-        if filename != 'content.xml':
-            return None
-
-        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
-        table = spreadsheet.getElementsByTagName("table:table").item(0)
-        lignes = table.getElementsByTagName("table:table-row")
-
-        fields = self.GetFields()
-        ReplaceFields(lignes, fields)
-
-        return {}
-
-
-class ContratAccueilModifications(OdtDocumentAccueilModifications):
+class ContratAccueilDocument(DocumentAccueilText, SendToParentsMixin):
     title = "Contrat d'accueil"
-    template = 'Contrat accueil.odt'
+    template = "Contrat accueil.odt"
 
     def __init__(self, who, date):
-        OdtDocumentAccueilModifications.__init__(self, who, date)
+        DocumentAccueilText.__init__(self, who, date)
         if self.inscription.mode == MODE_TEMPS_PARTIEL and IsTemplateFile("Contrat accueil temps partiel.odt"):
             self.template = "Contrat accueil temps partiel.odt"
         elif self.inscription.mode == MODE_FORFAIT_MENSUEL and IsTemplateFile("Contrat accueil forfait mensuel.odt"):
             self.template = "Contrat accueil forfait mensuel.odt"
         elif self.inscription.mode == MODE_HALTE_GARDERIE and IsTemplateFile("Contrat accueil halte garderie.odt"):
             self.template = "Contrat accueil halte garderie.odt"
-        self.default_output = "Contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
+        self.set_default_output("Contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False)))
+        SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement contrat.txt", [], "Contrat envoyé")
 
 
-class AvenantContratAccueilModifications(OdtDocumentAccueilModifications):
+class AvenantContratAccueilDocument(DocumentAccueilText, SendToParentsMixin):
     title = "Avenant au contrat d'accueil"
     template = "Avenant contrat accueil.odt"
 
     def __init__(self, who, date):
-        OdtDocumentAccueilModifications.__init__(self, who, date)
-        self.default_output = "Avenant contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
+        DocumentAccueilText.__init__(self, who, date)
+        self.set_default_output("Avenant contrat accueil %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False)))
+        SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement avenant.txt", [], "Avenant envoyé")
 
 
-class FraisGardeModifications(DocumentAccueilModifications):
+class RecapitulatifFraisDeGardeDocument(OpenDocumentSpreadsheet, DocumentAccueilMixin):
     title = "Frais de garde"
     template = "Frais de garde.ods"
 
     def __init__(self, who, date):
-        DocumentAccueilModifications.__init__(self, who, date)
-        self.multi = False
-        self.default_output = "Frais de garde %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False))
+        OpenDocumentSpreadsheet.__init__(self)
+        DocumentAccueilMixin.__init__(self, who, date)
+        self.set_default_output("Frais de garde %s - %s.odt" % (GetPrenomNom(who), GetDateString(date, weekday=False)))
         
-    def execute(self, filename, dom):
-        if filename != 'content.xml':
-            return None
-        
+    def modify_content(self, dom):
         spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
         table = spreadsheet.getElementsByTagName("table:table").item(0)       
         lignes = table.getElementsByTagName("table:table-row")
-
-        fields = self.GetFields()
-        ReplaceFields(lignes, fields)
-
         if len(self.cotisation.revenus_parents) < 2:
-            RemoveNodesContaining(lignes, "parent2")
+            self.remove_nodes_containing(lignes, "parent2")
         elif not self.cotisation.revenus_parents[1][2]:
-            RemoveNodesContaining(lignes, "abattement-parent2")
+            self.remove_nodes_containing(lignes, "abattement-parent2")
         if len(self.cotisation.revenus_parents) < 1:
-            RemoveNodesContaining(lignes, "parent1")
+            self.remove_nodes_containing(lignes, "parent1")
         elif not self.cotisation.revenus_parents[0][2]:
-            RemoveNodesContaining(lignes, "abattement-parent1")
-            
+            self.remove_nodes_containing(lignes, "abattement-parent1")
         if database.creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
-            RemoveNodesContaining(lignes, "assiette-annuelle")
-            RemoveNodesContaining(lignes, "assiette-mensuelle")
-            RemoveNodesContaining(lignes, "taux-effort")
-            RemoveNodesContaining(lignes, "heures-mois")
-            RemoveNodesContaining(lignes, "montant-heure-garde")
-
-        return {}
+            for label in "assiette-annuelle", "assiette-mensuelle", "taux-effort", "heures-mois", "montant-heure-garde":
+                self.remove_nodes_containing(lignes, label)
+        self.replace_cell_fields(lignes)
+        return True
 
 
-class DossierInscriptionModifications(DocumentAccueilModifications):
+class SimulationSpreadsheet(OpenDocumentSpreadsheet, DocumentAccueilMixin, SendToParentsMixin):
+    title = "Simulation"
+    template = "Simulation accueil.ods"
+
+    def __init__(self, who, date, site=None):
+        OpenDocumentSpreadsheet.__init__(self)
+        DocumentAccueilMixin.__init__(self, who, date)
+        self.set_default_output("Simulation accueil %s - %s.ods" % (GetPrenomNom(who), GetDateString(date, weekday=False)))
+        SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement simulation.txt", [], "Simulation envoyée")
+
+    def modify_content(self, dom):
+        spreadsheet = dom.getElementsByTagName('office:spreadsheet').item(0)
+        table = spreadsheet.getElementsByTagName("table:table").item(0)
+        lignes = table.getElementsByTagName("table:table-row")
+        self.replace_cell_fields(lignes)
+        return True
+
+
+class DossierInscription(OpenDocumentText, DocumentAccueilMixin, SendToParentsMixin):
     title = "Dossier d'inscription"
     template = ""
 
     def __init__(self, who, date):
-        DocumentAccueilModifications.__init__(self, who, date)
-        self.multi = False
-        self.default_output = ""
-        self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
-        self.email_subject = "Dossier d'inscription pour %s" % GetPrenomNom(who)
-        self.introduction_filename = "Dossier inscription.txt"
+        OpenDocumentText.__init__(self)
+        DocumentAccueilMixin.__init__(self, who, date)
+        self.inscription = who.get_inscription(date, preinscription=True)
+        self.site = self.inscription.sites_preinscription[0] if (self.inscription and self.inscription.sites_preinscription) else None
+        self.set_default_output(None)
+        attachments = []
         if not IsTemplateFile("Premiere facture.txt"):
             # sinon la première facture est envoyée séparément
-            self.contrat_accueil = ContratAccueilModifications(who, date)
-            GenerateDocument(self.contrat_accueil, filename=self.contrat_accueil.default_output)
-        else:
-            self.contrat_accueil = None
-
-    def get_attachments(self):
-        result = []
-        if self.contrat_accueil:
-            result.append(self.contrat_accueil.default_output)
-        result.extend(glob.glob("templates/Dossier inscription/*.pdf"))
-        return result
-
-    def GetIntroductionFields(self):
-        fields = self.GetFields()
-        for i, field in enumerate(fields):
-            if len(field) > 2 and field[2] == FIELD_EUROS:
-                fields[i] = (field[0], "%.2f" % field[1])
-        return fields
+            contrat_accueil = ContratAccueilDocument(who, date)
+            if contrat_accueil.generate() and contrat_accueil.convert_to_pdf():
+                attachments.append(contrat_accueil.pdf_output)
+        attachments.extend(glob.glob(glob.escape(GetTemplateFile("Dossier inscription", self.site)) + "/*.pdf"))
+        SendToParentsMixin.__init__(self, "Dossier d'inscription %s" % GetPrenomNom(who), "Dossier inscription.txt", attachments, "Dossier d'inscription envoyé")
 
 
-class PremiereFactureModifications(DocumentAccueilModifications):
-    title = "Première facture"
-    template = ""
-
-    def __init__(self, who, date):
-        DocumentAccueilModifications.__init__(self, who, date)
-        self.multi = False
-        self.default_output = ""
-        self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
-        self.email_subject = "Contrat d'accueil et première facture pour %s" % GetPrenomNom(who)
-        self.introduction_filename = "Premiere facture.txt"
-        self.contrat_accueil = ContratAccueilModifications(who, date)
-        GenerateDocument(self.contrat_accueil, filename=self.contrat_accueil.default_output)
-        if self.inscription.preinscription:
-            self.inscription.preinscription = False
-            preinscription_changed = True
-        self.facture = FactureModifications([who], date)
-        GenerateDocument(self.facture, filename=self.facture.default_output)
-        if preinscription_changed:
-            self.inscription.preinscription = True
-
-    def get_attachments(self):
-        return [self.contrat_accueil.default_output, self.facture.default_output]
-
-    def GetIntroductionFields(self):
-        fields = self.GetFields()
-        if self.facture.last_facture:
-            fields.append(("total-premiere-facture", "%.2f" % self.facture.last_facture.total))
-        for i, field in enumerate(fields):
-            if len(field) > 2 and field[2] == FIELD_EUROS:
-                fields[i] = (field[0], "%.2f" % field[1])
-        return fields
+# class PremiereFactureModifications(DocumentAccueilModifications):
+#     title = "Première facture"
+#     template = ""
+#
+#     def __init__(self, who, date):
+#         DocumentAccueilModifications.__init__(self, who, date)
+#         self.set_default_output("")
+#         self.email_to = list(set([parent.email for parent in who.famille.parents if parent and parent.email]))
+#         self.email_subject = "Contrat d'accueil et première facture pour %s" % GetPrenomNom(who)
+#         self.introduction_filename = "Premiere facture.txt"
+#         self.contrat_accueil = ContratAccueilModifications(who, date)
+#         GenerateDocument(self.contrat_accueil, filename=self.contrat_accueil.default_output)
+#         if self.inscription.preinscription:
+#             self.inscription.preinscription = False
+#             preinscription_changed = True
+#         self.facture = FactureModifications([who], date)
+#         GenerateDocument(self.facture, filename=self.facture.default_output)
+#         if preinscription_changed:
+#             self.inscription.preinscription = True
+#
+#     def get_attachments(self):
+#         return [self.contrat_accueil.default_output, self.facture.default_output]
+#
+#     def GetIntroductionFields(self):
+#         fields = self.GetFields()
+#         if self.facture.last_facture:
+#             fields.append(("total-premiere-facture", "%.2f" % self.facture.last_facture.total))
+#         for i, field in enumerate(fields):
+#             if len(field) > 2 and field[2] == FIELD_EUROS:
+#                 fields[i] = (field[0], "%.2f" % field[1])
+#         return fields
 
 
 if __name__ == '__main__':
     import random
     from document_dialog import StartLibreOffice
-    database.init("../databases/lutinsducanal.db")
+    database.init("../databases/ptits-mathlos.db")
     database.load()
     # inscrit = [inscrit for inscrit in database.creche.inscrits if inscrit.nom == ""][0]
-    # inscrit = database.creche.GetInscrit(44)
-    for modifications_class in [DevisAccueilCalcModifications]:  # [ContratAccueilModifications, DevisAccueilModifications, FraisGardeModifications]:
-        modifications = modifications_class(inscrit, datetime.date(2018, 2, 5))
-        filename = "./test-%f.ods" % random.random()
-        errors = GenerateOODocument(modifications, filename=filename, gauge=None)
-    StartLibreOffice(filename)
+    inscrit = database.creche.inscrits[0]
+    for document_class in [ContratAccueilDocument, DevisAccueilDocument, RecapitulatifFraisDeGardeDocument, SimulationSpreadsheet]:
+        document = document_class(inscrit, inscrit.inscriptions[0].debut)
+        if document.available():
+            filename = "./test-%f.ods" % random.random()
+            document.generate(filename="./test-%f.ods" % random.random())
+            if document.errors:
+                print(document.errors)
+            StartLibreOffice(document.output)

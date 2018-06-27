@@ -194,6 +194,8 @@ class Section(object):
             options |= COMPATIBILITY_MODE_ADAPTATIONS_2016
         if "compatibility-decompte-semaines-2017" in value:
             options |= COMPATIBILITY_MODE_DECOMPTE_SEMAINES_2017
+        if "compatibility-heures-facturees-2017" in value:
+            options |= COMPATIBILITY_MODE_HEURES_FACTUREES_2017
         if "prelevements-automatiques" in value:
             options |= PRELEVEMENTS_AUTOMATIQUES
         if "newsletters" in value:
@@ -212,6 +214,8 @@ class Section(object):
             options |= GESTION_REPAS
         if "preinscriptions-only" in value:
             options |= PREINSCRIPTIONS_ONLY
+        if "notification-places-disponibles" in value:
+            options |= NOTIFICATION_PLACES_DISPONIBLES
         return options
 
     def getWindowSize(self):
@@ -237,6 +241,7 @@ class DefaultConfig(object):
     def __init__(self):
         self.first_date = datetime.date.today() - datetime.timedelta(365)
         self.last_date = datetime.date.today() + datetime.timedelta(365)
+        self.date_debut_reglements = None
         self.templates_directory = "templates"
         self.options = 0
         self.saas_port = None

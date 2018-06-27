@@ -16,12 +16,17 @@
 #    along with Gertrude; if not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
+from __future__ import print_function
+import datetime
 
-from constants import *
-from functions import *
-from facture import *
+from constants import NO_NUMERO, HEURES_CONTRAT, ordinaux, REGIME_CAF_GENERAL, REGIME_CAF_FONCTION_PUBLIQUE, REGIME_CAF_MSA, REGIME_CAF_PECHE_MARITIME, REGIME_CAF_MARINS_DU_COMMERCE
+from config import config
+from facture import Facture
+from functions import GetPrenomNom, GetCrecheFields
+from globals import database
+from helpers import GetTrimestreEnd, GetNextMonthStart, GetTrimestreStart
 from cotisation import CotisationException
-from ooffice import *
+from generation.opendocument import OpenDocumentText
 
 
 class Regime(object):
@@ -32,40 +37,39 @@ class Regime(object):
         self.previsionnel_realise = 0
 
 
-class ReleveSIEJModifications(object):
-    def __init__(self, site, annee):
-        self.multi = False
-        self.template = 'Releve SIEJ.odt'
-        self.default_output = "Releve SIEJ %d.odt" % annee
-        self.site = site
-        self.annee = annee
-        self.debut, self.fin = datetime.date(annee, 1, 1), datetime.date(annee, 12, 31)
-        self.errors = {}
-        self.email = None
-        self.metas = {}
-        self.regimes = ["général et fonctionnaire", "agricole", "maritime", "autres"]
+class ReleveSIEJDocument(OpenDocumentText):
+    title = "Relevés SIEJ"
+    template = "Releve SIEJ.odt"
 
-    def GetRegime(self, inscrit, date):
-        regime = inscrit.GetRegime(date)
-        if regime == 1 or regime == 2:
+    def __init__(self, site, year):
+        OpenDocumentText.__init__(self)
+        self.set_default_output("Releve SIEJ %d.odt" % year)
+        self.site = site
+        self.annee = year
+        self.debut, self.fin = datetime.date(year, 1, 1), datetime.date(year, 12, 31)
+        self.regimes = ["général et fonctionnaire", "agricole", "maritime", "autres"]
+        self.table = [Regime() for _ in range(4)]
+        self.reel, self.previsionnel, self.facture, self.realise = 0, 0, 0, 0
+
+    def get_regime(self, inscrit, date):
+        regime = inscrit.get_regime(date)
+        if regime in (REGIME_CAF_GENERAL, REGIME_CAF_FONCTION_PUBLIQUE):
             return 0
-        elif regime == 3:
+        elif regime == REGIME_CAF_MSA:
             return 1
-        elif regime == 6 or regime == 7:
+        elif regime == REGIME_CAF_PECHE_MARITIME or regime == REGIME_CAF_MARINS_DU_COMMERCE:
             return 2
         else:
             return 3
-        
-    def calculeTable(self):
-        self.table = [Regime(), Regime(), Regime(), Regime()]
-        self.reel, self.previsionnel, self.facture, self.realise = 0, 0, 0, 0
+
+    def calcule_table(self):
         for inscrit in database.creche.select_inscrits(self.debut, self.fin):
             date = self.debut
             for mois in range(12):
                 trimestreEnd = GetTrimestreEnd(date)
                 try:
-                    facture = Facture(inscrit, self.annee, mois+1, NO_NUMERO)
-                    regime = self.GetRegime(inscrit, date)
+                    facture = Facture(inscrit, self.annee, mois + 1, NO_NUMERO)
+                    regime = self.get_regime(inscrit, date)
                     if config.options & HEURES_CONTRAT:
                         facture_heures_facturees = facture.heures_facture
                     else:
@@ -76,96 +80,97 @@ class ReleveSIEJModifications(object):
                         self.reel += facture_heures_facturees
                         self.facture += facture_heures_facturees
                         self.realise += facture.heures_realisees
-                        
+
                     else:
                         self.table[regime].previsionnel_facture += facture_heures_facturees
                         self.table[regime].previsionnel_realise += facture.heures_realisees
                         self.previsionnel += facture_heures_facturees
                 except CotisationException as e:
-                    self.errors[GetPrenomNom(inscrit)] = e.errors                            
+                    self.errors[GetPrenomNom(inscrit)] = e.errors
                 date = GetNextMonthStart(date)
 
-    def execute(self, filename, dom):
-        if filename == 'meta.xml':
-            metas = dom.getElementsByTagName('meta:user-defined')
-            for meta in metas:
-                # print meta.toprettyxml()
-                name = meta.getAttribute('meta:name')
-                value = meta.childNodes[0].wholeText
-                if meta.getAttribute('meta:value-type') == 'float':
-                    self.metas[name] = float(value)
-                else:
-                    self.metas[name] = value
-            return None
-                
-        elif filename == 'styles.xml':
-            ReplaceTextFields(dom, GetCrecheFields(database.creche))
-            return []
+    # def execute(self, filename, dom):
+    # if filename == 'meta.xml':
+    #     metas = dom.getElementsByTagName('meta:user-defined')
+    #     for meta in metas:
+    #         # print meta.toprettyxml()
+    #         name = meta.getAttribute('meta:name')
+    #         value = meta.childNodes[0].wholeText
+    #         if meta.getAttribute('meta:value-type') == 'float':
+    #             self.metas[name] = float(value)
+    #         else:
+    #             self.metas[name] = value
+    #     return None
 
-        elif filename == 'content.xml':
-            self.calculeTable()
-            doc = dom.getElementsByTagName("office:text")[0]
-            
-            fields = GetCrecheFields(database.creche) + [('annee', self.annee),
-                                                ('date-debut-reel', self.debut),
-                                                ('date-fin-reel', GetTrimestreStart(datetime.date.today()) - datetime.timedelta(1)),
-                                                ('date-debut-previsionnel', GetTrimestreStart(datetime.date.today())),
-                                                ('date-fin-previsionnel', self.fin),
-                                                ]
-            
-            trimestre = (datetime.date.today().month-1) / 3
-            if trimestre > 0:
-                fields.append(('trimestre', "%s trimestre" % ordinaux[trimestre-1]))
-            
-            ReplaceTextFields(doc, fields)
-            
-            # print doc.toprettyxml()
-            
-            for section in doc.getElementsByTagName('text:section'):
-                    section_name = section.getAttribute('text:name')
-                    if section_name == 'Regime':
-                        section_regime = section
-                        
-            for i, regime in enumerate(self.table):
-                section = section_regime.cloneNode(1)
-                doc.insertBefore(section, section_regime)
-                fields = [('regime', 'Régime %s' % self.regimes[i]),
-                          ('reel-facture', regime.reel_facture),
-                          ('reel-realise', regime.reel_realise),
-                          ('previsionnel-facture', regime.previsionnel_facture),
-                          ('previsionnel-realise', regime.previsionnel_realise),
-                          ('total-facture', regime.reel_facture + regime.previsionnel_facture),
-                          ('total-realise', regime.reel_realise + regime.previsionnel_realise),
-                          ('reel', self.reel),
-                          ('previsionnel', self.previsionnel),
-                          ('total', self.reel + self.previsionnel),
-                          ]
-                    
-                for table in section.getElementsByTagName("table:table"):
-                    table_name = table.getAttribute("table:name")
-                    if (i > 0 and table_name == 'Recap') or table_name == 'Facture' or table_name == 'Realise':
-                        section.removeChild(table)                                   
-                                         
-                ReplaceTextFields(section, fields)
-            
-            # le tableau recap
+    # elif filename == 'styles.xml':
+    #     ReplaceTextFields(dom, GetCrecheFields(database.creche))
+    #     return []
+
+    def modify_content(self, dom):
+        OpenDocumentText.modify_content(self, dom)
+        self.calcule_table()
+        doc = dom.getElementsByTagName("office:text")[0]
+
+        fields = GetCrecheFields(database.creche) + [('annee', self.annee),
+                                                     ('date-debut-reel', self.debut),
+                                                     ('date-fin-reel', GetTrimestreStart(datetime.date.today()) - datetime.timedelta(1)),
+                                                     ('date-debut-previsionnel', GetTrimestreStart(datetime.date.today())),
+                                                     ('date-fin-previsionnel', self.fin),
+                                                     ]
+
+        trimestre = (datetime.date.today().month - 1) // 3
+        if trimestre > 0:
+            fields.append(('trimestre', "%s trimestre" % ordinaux[trimestre - 1]))
+
+        self.replace_text_fields(doc, fields)
+
+        # print doc.toprettyxml()
+
+        for section in doc.getElementsByTagName('text:section'):
+            section_name = section.getAttribute('text:name')
+            if section_name == 'Regime':
+                section_regime = section
+
+        for i, regime in enumerate(self.table):
             section = section_regime.cloneNode(1)
             doc.insertBefore(section, section_regime)
-            for table in section.getElementsByTagName("table:table"):
-                table_name = table.getAttribute("table:name")
-                if table_name == 'Regime':
-                    section.removeChild(table)
-            fields = [('facture', self.facture),
-                      ('realise', self.realise),
+            fields = [('regime', 'Régime %s' % self.regimes[i]),
+                      ('reel-facture', regime.reel_facture),
+                      ('reel-realise', regime.reel_realise),
+                      ('previsionnel-facture', regime.previsionnel_facture),
+                      ('previsionnel-realise', regime.previsionnel_realise),
+                      ('total-facture', regime.reel_facture + regime.previsionnel_facture),
+                      ('total-realise', regime.reel_realise + regime.previsionnel_realise),
                       ('reel', self.reel),
                       ('previsionnel', self.previsionnel),
                       ('total', self.reel + self.previsionnel),
                       ]
-            for i, regime in enumerate(self.table):
-                taux = 100.0 * regime.reel_facture / self.facture
-                fields.append(('taux-%d' % i, "%.2f %%" % taux))
-            ReplaceTextFields(section, fields)
-            
-            doc.removeChild(section_regime)
-            
-            return self.errors
+
+            for table in section.getElementsByTagName("table:table"):
+                table_name = table.getAttribute("table:name")
+                if (i > 0 and table_name == 'Recap') or table_name == 'Facture' or table_name == 'Realise':
+                    section.removeChild(table)
+
+            self.replace_text_fields(section, fields)
+
+        # le tableau recap
+        section = section_regime.cloneNode(1)
+        doc.insertBefore(section, section_regime)
+        for table in section.getElementsByTagName("table:table"):
+            table_name = table.getAttribute("table:name")
+            if table_name == 'Regime':
+                section.removeChild(table)
+        fields = [('facture', self.facture),
+                  ('realise', self.realise),
+                  ('reel', self.reel),
+                  ('previsionnel', self.previsionnel),
+                  ('total', self.reel + self.previsionnel),
+                  ]
+        for i, regime in enumerate(self.table):
+            taux = 100.0 * regime.reel_facture / self.facture
+            fields.append(('taux-%d' % i, "%.2f %%" % taux))
+        self.replace_text_fields(section, fields)
+
+        doc.removeChild(section_regime)
+
+        return True

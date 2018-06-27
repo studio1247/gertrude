@@ -61,7 +61,7 @@ class Timeslot(object):
         return self.activity.mode == MODE_SANS_HORAIRES
 
     def is_presence(self):
-        return self.activity.mode == MODE_NORMAL
+        return self.activity.mode == MODE_PRESENCE
 
     def get_duration(self, arrondi=SANS_ARRONDI):
         # TODO a utiliser partout
@@ -498,6 +498,14 @@ class Creche(Base):
             date = GetNextMonthStart(date)
         return result
 
+    def get_capacite_max(self):
+        capacite = 0
+        for jour in range(7):
+            if self.is_jour_semaine_travaille(jour):
+                for timeslot in self.tranches_capacite.get(jour, Day()).timeslots:
+                    capacite = max(timeslot.value, capacite)
+        return capacite
+
     def get_capacite(self, jour=None, tranche=None):
         if jour is None:
             jours, result = 0, 0.0
@@ -781,6 +789,9 @@ class Bureau(Base):
     directeur_adjoint = Column(String)
     comptable = Column(String)
 
+    def __init__(self, creche, **kwargs):
+        Base.__init__(self, creche=creche, **kwargs)
+
 
 class BaremeCAF(Base):
     __tablename__ = "baremescaf"
@@ -1058,6 +1069,9 @@ class Salarie(Base):
 
     def slug(self):
         return "salarie-%d" % self.idx
+
+    def label(self):
+        return "%s %s" % (self.prenom, self.nom)
 
     def is_date_conge(self, date):
         return date in self.creche.jours_fermeture or date in self.jours_conges
@@ -1348,6 +1362,13 @@ class Famille(Base):
     def get_delai_paiement(self):
         return self.creche.delai_paiement_familles
 
+    def get_parents_emails(self):
+        result = []
+        for parent in self.parents:
+            if parent.email:
+                result.append(parent.email)
+        return ", ".join(result)
+
     def GetEnfantsCount(self, date):
         enfants_a_charge = 0
         enfants_en_creche = 0
@@ -1377,6 +1398,20 @@ class Famille(Base):
                     if not fin or inscrit.naissance < fin:
                         fin = inscrit.naissance
         return enfants_a_charge, enfants_en_creche, debut, fin
+
+    def get_code_client(self):
+        if self.code_client or config.codeclient == "custom":
+            return self.code_client
+        else:
+            for inscrit in self.inscrits:
+                return "411%s" % inscrit.nom.upper()[:5]
+        return ""
+
+    def get_prenoms(self):
+        if len(self.inscrits) == 1:
+            return self.inscrits[0].prenom
+        else:
+            return ", ".join([inscrit.prenom for inscrit in self.inscrits[:-1]]) + " et " + self.inscrits[-1].prenom
 
 
 class State(object):
@@ -1826,6 +1861,9 @@ class Inscrit(Base):
             else:
                 return State(ABSENT)
 
+    def label(self):
+        return "%s %s" % (self.prenom, self.nom)
+
     def get_state(self, date):
         if self.is_date_conge(date):
             return ABSENT
@@ -1882,15 +1920,14 @@ class Inscrit(Base):
                         total += inscription.heures_permanences * (today - inscription.debut).days / (fin - inscription.debut).days
         return total, effectue
 
-    def GetRegime(self, date):
-        result = 0
+    def get_regime(self, date):
+        date_revenus = self.creche.GetDateRevenus(date)
         for parent in self.famille.parents:
             if parent:
-                revenu = Select(parent.revenus, date)
+                revenu = Select(parent.revenus, date_revenus)
                 if revenu and revenu.regime:
-                    result = revenu.regime
-                    break
-        return result
+                    return revenu.regime
+        return 0
 
 
 class Parent(Base):
@@ -2030,29 +2067,41 @@ class Inscription(Base, PeriodeReference):
         else:
             return 0
 
-    def GetNombreJoursCongesPris(self, debut, fin):
-        jours = 0
+    def GetJoursCongesPris(self, debut, fin):
+        result = []
         date = debut
-        # print "GetNombreJoursCongesPris(%s - %s)" % (debut, fin)
+        # print "GetJoursCongesPris(%s - %s)" % (debut, fin)
         while date <= fin:
             if self.mode in (MODE_FORFAIT_HEBDOMADAIRE, MODE_FORFAIT_MENSUEL):
                 if date in self.inscrit.creche.periodes_fermeture or date in self.inscrit.jours_conges:
-                    # print date
-                    jours += 1
+                    result.append(date)
             else:
-                state = self.inscrit.get_state(date)
-                if self.inscrit.creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS:
-                    if state == VACANCES:
-                        # print("VACANCES", date)
-                        jours += 1
-                else:
-                    if state in (ABSENT, VACANCES):
-                        reference = self.get_day_from_date(date)
-                        if reference.get_duration() > 0:
-                            # print(date)
-                            jours += 1
+                reference = self.get_day_from_date(date)
+                if reference.get_duration() > 0:
+                    state = self.inscrit.get_state(date)
+                    if self.inscrit.creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS:
+                        # dans ce cas on ne compte que les jours vraiment posés, pas les jours de fermeture
+                        if state == VACANCES:
+                            result.append(date)
+                    else:
+                        # dans ce cas on compte tous les jours déduits, y compris les jours de fermeture / jours fériés
+                        if state in (ABSENT, VACANCES):
+                            result.append(date)
             date += datetime.timedelta(1)
-        return jours
+        return result
+
+    def GetNombreHeuresConsommeesForfait(self):
+        if self.mode == MODE_FORFAIT_GLOBAL_CONTRAT and self.debut and self.fin:
+            compteur = self.forfait_mensuel_heures
+            date = self.debut
+            while date <= self.fin:
+                day = self.inscrit.GetJournee(date)
+                if day:
+                    compteur -= day.get_duration()
+                date += datetime.timedelta(1)
+            return compteur
+        else:
+            return None
 
     def GetDebutDecompteJoursConges(self):
         if self.fin_periode_adaptation:
@@ -2069,11 +2118,14 @@ class Inscription(Base, PeriodeReference):
         else:
             return self.fin
 
-    def GetNombreJoursCongesPoses(self):
+    def GetJoursCongesPoses(self):
         if self.debut and self.fin and not self.preinscription:
-            return self.GetNombreJoursCongesPris(self.GetDebutDecompteJoursConges(), self.GetFinDecompteJoursConges())
+            return self.GetJoursCongesPris(self.GetDebutDecompteJoursConges(), self.GetFinDecompteJoursConges())
         else:
-            return 0
+            return []
+
+    def GetNombreJoursCongesPoses(self):
+        return len(self.GetJoursCongesPoses())
 
     def IsNombreSemainesCongesDepasse(self, jalon):
         if self.inscrit.creche.facturation_jours_feries == ABSENCES_DEDUITES_SANS_LIMITE:
@@ -2084,7 +2136,7 @@ class Inscription(Base, PeriodeReference):
             if not self.semaines_conges:
                 return True
             debut = self.GetDebutDecompteJoursConges()
-            pris = self.GetNombreJoursCongesPris(debut, jalon)
+            pris = len(self.GetJoursCongesPris(debut, jalon))
             total = self.GetNombreJoursCongesPeriode()
             return pris > total
         else:
@@ -2147,6 +2199,9 @@ class TimeslotInscription(Base, Timeslot):
     debut = Column(Integer)
     fin = Column(Integer)
 
+    def get_inscrit(self):
+        return self.inscription.inscrit
+
 
 class TimeslotPlanningSalarie(Base, Timeslot):
     __tablename__ = "ref_journees_salaries"
@@ -2195,6 +2250,9 @@ class TimeslotInscrit(Base, Timeslot):
     activity = relationship(Activite)
     debut = Column(Integer)
     fin = Column(Integer)
+
+    def get_inscrit(self):
+        return self.inscrit
 
 
 class WeekSlotInscrit(Base):
@@ -2407,6 +2465,9 @@ class Groupe(Base):
     ordre = Column(Integer)
     age_maximum = Column(Integer)
 
+    def __init__(self, creche, **kwargs):
+        Base.__init__(self, creche=creche, **kwargs)
+
 
 class Categorie(Base):
     __tablename__ = "categories"
@@ -2467,6 +2528,9 @@ class Database(object):
         self.rollback = self.session.rollback
         self.flush = self.session.flush
 
+    def close(self):
+        self.session.close()
+
     def commit(self):
         if self.session:
             release_query = self.query(DBSettings).filter_by(key=KEY_RELEASE)
@@ -2488,18 +2552,7 @@ class Database(object):
 
     def remove_incompatible_saas_options(self):
         self.creche.tri_planning &= ~TRI_GROUPE
-        # retire toutes les clôtures d'enfants qui ne devraient pas avoir de facture
-        for inscrit in self.creche.inscrits:
-            uniquement_preinscriptions = True
-            for inscription in inscrit.inscriptions:
-                if not inscription.preinscription:
-                    uniquement_preinscriptions = False
-                    break
-            if uniquement_preinscriptions:
-                for date in inscrit.clotures:
-                    print("Suppression de la cloture de %s %s du %s" % (inscrit.prenom, inscrit.nom, date))
-                    self.delete(inscrit.clotures[date])
-        self.commit()
+        self.creche.smtp_server = ""
 
     def reload(self):
         print("Chargement de la base de données %s..." % self.uri)
@@ -3197,6 +3250,40 @@ class Database(object):
         for item in self.creche.familles + self.creche.inscrits + self.creche.salaries + self.creche.professeurs + \
                     self.creche.alertes.values() + self.creche.numeros_facture.values() + self.creche.charges.values():
             self.delete(item)
+        self.commit()
+
+    def delete_users(self):
+        for user in self.creche.users:
+            print("Suppression de %s" % user.login)
+            self.delete(user)
+        self.commit()
+
+    def delete_site(self, idx):
+        for inscrit in self.creche.inscrits:
+            delete = True
+            for inscription in inscrit.inscriptions:
+                if inscription.site and inscription.site.idx != idx:
+                    delete = False
+                    break
+            if delete:
+                print("Suppression de %s %s" % (inscrit.prenom, inscrit.nom))
+                if len(inscrit.famille.inscrits) == 1:
+                    self.delete(inscrit.famille)
+                self.delete(inscrit)
+        for salarie in self.creche.salaries:
+            delete = True
+            for contrat in salarie.contrats:
+                if contrat.site and contrat.site.idx != idx:
+                    delete = False
+                    break
+            if delete:
+                print("Suppression de %s %s" % (inscrit.prenom, inscrit.nom))
+                self.delete(salarie)
+        for site in self.creche.sites:
+            if site.idx == idx:
+                print("Suppression de %s" % site.nom)
+                self.delete(site)
+                break
         self.commit()
 
     def dump(self):

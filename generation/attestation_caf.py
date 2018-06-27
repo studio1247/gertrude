@@ -23,50 +23,55 @@ from __future__ import division
 from facture import *
 from cotisation import CotisationException
 from database import Creche, Site
-from generation.email_helpers import SendToParentsMixin
+from generation.email_helpers import SendToParentsMixin, SendToCAFMixin
 from generation.opendocument import OpenDocumentText
 
 
-class AttestationPaiementDocument(OpenDocumentText, SendToParentsMixin):
-    title = "Attestation mensuelle"
-    template = "Attestation paiement.odt"
+class AttestationCAF(OpenDocumentText, SendToParentsMixin, SendToCAFMixin):
+    title = "Attestation CAF"
+    template = "Attestation CAF.odt"
 
-    def __init__(self, who, debut, fin):
+    def __init__(self, who, date):
         OpenDocumentText.__init__(self)
-        self.debut, self.fin = debut, fin
+        self.date, self.debut, self.fin = date, GetMonthStart(date), GetMonthEnd(date)
         if isinstance(who, list):
-            self.inscrits = [inscrit for inscrit in who if inscrit.get_inscriptions(debut, fin)]
+            self.inscrits = [inscrit for inscrit in who if inscrit.get_inscriptions(self.debut, self.fin)]
         elif isinstance(who, Creche):
-            self.inscrits = [inscrit for inscrit in who.inscrits if inscrit.get_inscriptions(debut, fin)]
+            self.inscrits = [inscrit for inscrit in who.inscrits if inscrit.get_inscriptions(self.debut, self.fin)]
         elif isinstance(who, Site):
             self.inscrits = []
             for inscrit in database.creche.inscrits:
-                for inscription in inscrit.get_inscriptions(debut, fin):
+                for inscription in inscrit.get_inscriptions(self.debut, self.fin):
                     if inscription.site == who:
                         self.inscrits.append(inscrit)
                         break
         else:
             self.inscrits = [who]
 
+        self.creche = database.creche
         self.inscrits = GetEnfantsTriesSelonParametreTriFacture(self.inscrits)
 
         if len(self.inscrits) > 1:
-            output_start = "Attestations de paiement"
+            self.set_default_output("Attestations de paiement %s %d.odt" % (months[self.date.month - 1], self.date.year))
         else:
-            output_start = "Attestation de paiement %s" % GetPrenomNom(self.inscrits[0])
-        if debut.year == fin.year and debut.month == fin.month:
-            self.set_default_output(output_start + " %s %d" % (months[debut.month - 1], debut.year))
-        else:
-            self.set_default_output(output_start + " %s-%s %d" % (months[debut.month - 1], months[fin.month - 1], debut.year))
+            self.set_default_output("Attestation de paiement %s %s %d.odt" % (GetPrenomNom(self.inscrits[0]), months[self.date.month - 1], self.date.year))
 
-        SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement attestation paiement.txt", [], "%(count)d attestations envoyées")
+        SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement attestation CAF.txt", [], "%(count)d attestations envoyées")
+        SendToCAFMixin.__init__(self, "Attestations CAF (%(index)d/%(count)d)", "Accompagnement attestations CAF.txt", "%(count)d emails envoyés")
+
+        self.global_fields = GetCrecheFields(database.creche) + [
+            ('date', date2str(datetime.date.today())),
+            ('date-debut-mois-suivant', date2str(GetNextMonthStart(self.debut))),
+            ('mois', months[date.month - 1]),
+            ('annee', date.year)
+            ]
+        self.set_fields(self.global_fields)
 
     def split(self, who):
-        return AttestationPaiementDocument(who, self.debut, self.fin)
+        return AttestationCAF(who, self.date)
 
     def modify_content(self, dom):
-        OpenDocumentText.modify_content(self, dom)
-        # print dom.toprettyxml()
+        # print(dom.toprettyxml())
         doc = dom.getElementsByTagName("office:text")[0]
         templates = doc.getElementsByTagName("text:section")
         for template in templates:
@@ -82,7 +87,7 @@ class AttestationPaiementDocument(OpenDocumentText, SendToParentsMixin):
                 while date <= self.fin:
                     facture = Facture(inscrit, date.year, date.month, NO_NUMERO)
                     site = facture.site
-                    if facture.total != 0:
+                    if facture.total != 0 or len(self.inscrits) == 1:
                         if facture_debut is None:
                             facture_debut = date
                         facture_fin = GetMonthEnd(date)
@@ -106,11 +111,9 @@ class AttestationPaiementDocument(OpenDocumentText, SendToParentsMixin):
                     last_inscription = tmp
 
             # Les champs de l'attestation
-            fields = GetCrecheFields(database.creche) + GetInscritFields(inscrit) + GetInscriptionFields(last_inscription) + [
+            fields = self.global_fields + GetInscritFields(inscrit) + GetInscriptionFields(last_inscription) + [
                 ('de-debut', '%s %d' % (GetDeMoisStr(facture_debut.month - 1), facture_debut.year)),
                 ('de-fin', '%s %d' % (GetDeMoisStr(facture_fin.month - 1), facture_fin.year)),
-                ('date', date2str(datetime.date.today())),
-                ('date-debut-mois-suivant', date2str(GetNextMonthStart(self.debut))),
                 ('heures-facture', GetHeureString(heures_facture)),
                 ('ceil-heures-facture', GetHeureString(math.ceil(heures_facture))),
                 ('heures-facturees', GetHeureString(heures_facturees)),
@@ -126,11 +129,14 @@ class AttestationPaiementDocument(OpenDocumentText, SendToParentsMixin):
             bureau = Select(database.creche.bureaux, datetime.date.today())
             if bureau:
                 fields.extend(GetBureauFields(bureau))
-            
+
+            self.set_fields(fields)
+
             empty_fields = [(field[0], " ") for field in fields]
 
             for template in templates:
                 section = template.cloneNode(1)
+                self.modify_content_bitmaps(section, site)
                 section_name = section.getAttribute("text:name")
                 autorisation = inscrit.famille.autorisation_attestation_paje
                 if (section_name == "Famille uniquement" and autorisation) or (section_name == "Structure uniquement" and not autorisation):
@@ -138,7 +144,24 @@ class AttestationPaiementDocument(OpenDocumentText, SendToParentsMixin):
                 elif (section_name == "Famille" and autorisation) or (section_name == "Structure" and not autorisation):
                     self.replace_text_fields(section, empty_fields)
                 else:
-                    self.replace_text_fields(section, fields)
+                    self.replace_text_fields(section)
                 doc.appendChild(section)
                 
         return True
+
+
+if __name__ == '__main__':
+    import random
+    from document_dialog import StartLibreOffice
+    database.init("../databases/ptits-mathlos.db")
+    database.load()
+    document = AttestationCAF(database.creche, datetime.date(2018, 1, 1))
+    if 0:
+        document.generate(filename="./test-%f.ods" % random.random())
+        if document.errors:
+            print(document.errors)
+        StartLibreOffice(document.output)
+    else:
+        database.creche.smtp_server = "test"
+        document.send_to_parents(debug=True)
+        document.send_to_caf(debug=True)

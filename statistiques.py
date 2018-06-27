@@ -60,6 +60,7 @@ def GetStatistiques(start, end, site=None, bargraph=False):
             result.heures_accueil += GetHeuresAccueil(date.year, date.month, site)
         for inscrit in database.creche.inscrits:
             try:
+                # TODO il y a un problème pour les crèches en facturation debut de mois, le total_facture ! total
                 inscriptions = inscrit.get_inscriptions(date, fin_mois)
                 if inscriptions and (site is None or inscriptions[0].site == site):
                     facture = Facture(inscrit, date.year, date.month, NO_NUMERO)
@@ -82,7 +83,7 @@ def GetStatistiques(start, end, site=None, bargraph=False):
                         print(GetPrenomNom(inscrit), "au", facture.date)
                         print(' ', "heures contractualisées :", facture.heures_contractualisees, ", heures contrat :", facture.heures_contrat)
                         print(' ', "heures réalisées :", facture.heures_realisees)
-                        print(' ', "heures facturées :", facture.heures_facturees, ", heures facture :", facture.heures_facture)
+                        print(' ', "heures facturées :", facture.heures_facturees, ", heures facture :", facture.heures_facture, "=>", heures_facture)
                         print(' ', "jours contractualisés :", facture.jours_contractualises)
                         print(' ', "jours réalisés :", facture.jours_realises)
                         print(' ', "jours facturés :", facture.jours_factures)
