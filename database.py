@@ -1627,8 +1627,8 @@ class Inscrit(Base):
         result = []
         for inscription in self.inscriptions:
             if (preinscription or not self.creche.preinscriptions or not inscription.preinscription) and \
-                    inscription.debut and date >= inscription.debut and (not inscription.fin or date <= inscription.fin) \
-                    and (not departanticipe or not inscription.depart or date <= inscription.depart):
+                    (inscription.debut and date >= inscription.debut and (not inscription.fin or date <= inscription.fin)) and \
+                    (not departanticipe or not inscription.depart or date <= inscription.depart):
                 if array:
                     result.append(inscription)
                 else:

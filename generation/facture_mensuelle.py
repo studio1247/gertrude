@@ -75,7 +75,7 @@ class FactureModifications(object):
                 self.email_subject = "Factures reservataires %s %d" % (months[periode.month - 1], periode.year)
             else:
                 self.inscrits = GetEnfantsTriesSelonParametreTriFacture(inscrits)
-                self.site = self.inscrits[0].get_inscriptions(self.periode_facturation, None)[0].site
+                self.site = self.inscrits[0].get_inscriptions(self.periode_facturation, GetMonthEnd(self.periode_facturation))[0].site
                 self.email_subject = "Factures %s %d" % (months[periode.month - 1], periode.year)
             self.default_output = self.email_subject + ".odt"
         else:
@@ -88,7 +88,7 @@ class FactureModifications(object):
             else:
                 inscriptions = who.get_inscriptions(self.periode_facturation, None)
                 if inscriptions:
-                    self.site = who.get_inscriptions(self.periode_facturation, None)[0].site
+                    self.site = who.get_inscriptions(self.periode_facturation, GetMonthEnd(self.periode_facturation))[0].site
                 else:
                     self.site = None
                 self.email_subject = "Facture %s %s %d" % (self.GetPrenomNom(who), months[periode.month - 1], periode.year)
