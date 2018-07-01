@@ -86,9 +86,9 @@ class FactureModifications(object):
                 self.email_subject = "Facture %s %s %d" % (who.nom, months[periode.month - 1], periode.year)
                 self.email_to = [who.email]
             else:
-                inscriptions = who.get_inscriptions(self.periode_facturation, None)
+                inscriptions = who.get_inscriptions(self.periode_facturation, GetMonthEnd(self.periode_facturation))
                 if inscriptions:
-                    self.site = who.get_inscriptions(self.periode_facturation, GetMonthEnd(self.periode_facturation))[0].site
+                    self.site = inscriptions[0].site
                 else:
                     self.site = None
                 self.email_subject = "Facture %s %s %d" % (self.GetPrenomNom(who), months[periode.month - 1], periode.year)
@@ -360,11 +360,12 @@ class FactureModifications(object):
                         has_errors = True
                         continue
 
-                    last_inscription = None
-                    for tmp in enfant.inscriptions:
-                        if not last_inscription or not last_inscription.fin or (tmp.fin and tmp.fin > last_inscription.fin):
-                            last_inscription = tmp
-                    facture.fields = fields + GetInscritFields(enfant) + GetInscriptionFields(last_inscription) + GetFactureFields(facture) + GetCotisationFields(facture.last_cotisation)
+                    # last_inscription = None
+                    # for tmp in enfant.get_inscriptions(self.periode_facturation, GetMonthEnd(self.periode_facturation)):
+                    #     if not last_inscription or not last_inscription.fin or (tmp.fin and tmp.fin > last_inscription.fin):
+                    #         last_inscription = tmp
+                    # retiré à cause d'une facture sur laquelle était choisi un site d'une inscription ultérieure
+                    facture.fields = fields + GetInscritFields(enfant) + GetInscriptionFields(facture.last_cotisation.inscription) + GetFactureFields(facture) + GetCotisationFields(facture.last_cotisation)
                     self.introduction_fields.extend(facture.fields)
                     factures.append(facture)
 
