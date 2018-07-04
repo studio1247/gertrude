@@ -1,0 +1,3 @@
+Madame, Monsieur,
+Vous trouverez ci-joint les factures de la crèche <nom-creche> pour le mois de <mois> <annee>,
+Bonne réception,
