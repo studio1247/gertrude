@@ -89,6 +89,13 @@ class FactureMensuelle(OpenDocumentText, SendToParentsMixin, SendToCAFMixin):
         if not self.reservataire:
             SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement facture.txt", [], "%(count)d factures envoyées")
             SendToCAFMixin.__init__(self, "Factures (%(index)d/%(count)d)",  "Accompagnement factures.txt", "%(count)d factures envoyées")
+            self.global_fields = GetCrecheFields(database.creche) + [
+                ('date', date2str(datetime.date.today())),
+                ('date-debut-mois-suivant', date2str(GetNextMonthStart(self.debut))),
+                ('mois', months[periode.month - 1]),
+                ('annee', periode.year)
+            ]
+            self.set_fields(self.global_fields)
 
         if self.reservataire:
             self.template = "Facture reservataire.odt"
