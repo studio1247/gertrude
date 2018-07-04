@@ -23,14 +23,13 @@ from cotisation import CotisationException
 from ooffice import *
 from database import Reservataire
 from generation.opendocument import OpenDocumentText
-from generation.email_helpers import SendToParentsMixin
-
+from generation.email_helpers import SendToParentsMixin, SendToCAFMixin
 
 PRESENCE_NON_FACTUREE = 256
 CONGES = 257
 
 
-class FactureMensuelle(OpenDocumentText, SendToParentsMixin):
+class FactureMensuelle(OpenDocumentText, SendToParentsMixin, SendToCAFMixin):
     title = "Facture mensuelle"
     template = "Facture mensuelle.odt"
 
@@ -89,6 +88,7 @@ class FactureMensuelle(OpenDocumentText, SendToParentsMixin):
 
         if not self.reservataire:
             SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement facture.txt", [], "%(count)d factures envoyées")
+            SendToCAFMixin.__init__(self, "Factures (%(index)d/%(count)d)",  "Accompagnement factures.txt", "%(count)d factures envoyées")
 
         if self.reservataire:
             self.template = "Facture reservataire.odt"
