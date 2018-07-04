@@ -91,7 +91,6 @@ class FactureMensuelle(OpenDocumentText, SendToParentsMixin, SendToCAFMixin):
             SendToCAFMixin.__init__(self, "Factures (%(index)d/%(count)d)",  "Accompagnement factures.txt", "%(count)d factures envoyées")
             self.global_fields = GetCrecheFields(database.creche) + [
                 ('date', date2str(datetime.date.today())),
-                ('date-debut-mois-suivant', date2str(GetNextMonthStart(self.debut))),
                 ('mois', months[periode.month - 1]),
                 ('annee', periode.year)
             ]
