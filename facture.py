@@ -313,12 +313,12 @@ class FactureFinMois(FactureBase):
                             duration = inscription.get_day_from_date(date).get_duration(mode_arrondi=database.creche.arrondi_facturation)
                             if duration:
                                 if options & TRACES:
-                                    print("jour de congé déduit", date)
+                                    print("jour de congé déduit", date, inscrit.jours_conges[date].label)
                                 self.jours_vacances.append(date)
                                 self.heures_facturees_par_mode[cotisation.mode_garde] -= duration
                                 self.jours_conges_non_factures.append(date)
                                 self.CalculeDeduction(cotisation, duration)
-                                self.raison_deduction.add("absence prévenue")
+                                self.raison_deduction.add(inscrit.jours_conges[date].label)
                         elif state == MALADE or state == MALADE_SANS_JUSTIFICATIF:
                             if options & TRACES:
                                 print("jour maladie", date)

@@ -1555,8 +1555,7 @@ class Inscrit(Base):
                                 fin = str2date(conge.fin, year)
                             AddPeriode(debut, fin, conge)
                 except Exception as e:
-                    # print("Exception congé", e)
-                    pass
+                    print("Exception congé %s %s" % (self.prenom, self.nom), e)
 
     def is_present(self, debut, fin, site=None, handicap=None, reservataire=None):
         for inscription in self.inscriptions:
