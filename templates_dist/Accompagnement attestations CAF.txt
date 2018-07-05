@@ -5,4 +5,4 @@ Bonne réception,
 <nom-creche>
 <adresse-creche>
 <code-postal-creche> <ville-creche>
-tel : <telephone-creche>
+Tel : <telephone-creche>
