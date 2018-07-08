@@ -360,12 +360,17 @@ class FactureModifications(object):
                         has_errors = True
                         continue
 
-                    # last_inscription = None
-                    # for tmp in enfant.get_inscriptions(self.periode_facturation, GetMonthEnd(self.periode_facturation)):
-                    #     if not last_inscription or not last_inscription.fin or (tmp.fin and tmp.fin > last_inscription.fin):
-                    #         last_inscription = tmp
-                    # retiré à cause d'une facture sur laquelle était choisi un site d'une inscription ultérieure
-                    facture.fields = fields + GetInscritFields(enfant) + GetInscriptionFields(facture.last_cotisation.inscription) + GetFactureFields(facture) + GetCotisationFields(facture.last_cotisation)
+                    if facture.last_cotisation:
+                        last_inscription = facture.last_cotisation.inscription
+                        # ajouté à cause d'une facture m&t sur laquelle était choisi un site d'une inscription ultérieure
+                        # mais ne marche pas pour une inscription qui se termine (facturation début de mois)
+                    else:
+                        last_inscription = None
+                        for tmp in enfant.get_inscriptions(self.periode_facturation, GetMonthEnd(self.periode_facturation)):
+                            if not last_inscription or not last_inscription.fin or (tmp.fin and tmp.fin > last_inscription.fin):
+                                last_inscription = tmp
+
+                    facture.fields = fields + GetInscritFields(enfant) + GetInscriptionFields(last_inscription) + GetFactureFields(facture) + GetCotisationFields(facture.last_cotisation)
                     self.introduction_fields.extend(facture.fields)
                     factures.append(facture)
 
