@@ -218,6 +218,13 @@ class DevisAccueilDocument(DocumentAccueilText, SendToParentsMixin):
         SendToParentsMixin.__init__(self, self.default_output[:-4], "Accompagnement devis.txt", [], "Devis envoyé")
 
 
+class DossierAccueilTextDocument(DocumentAccueilText):
+    def __init__(self, template, who, date):
+        self.template = "Dossier inscription/%s" % template
+        DocumentAccueilText.__init__(self, who, date)
+        self.set_default_output(template)
+
+
 class ContratAccueilDocument(DocumentAccueilText, SendToParentsMixin):
     title = "Contrat d'accueil"
     template = "Contrat accueil.odt"
@@ -306,7 +313,12 @@ class DossierInscription(OpenDocumentText, DocumentAccueilMixin, SendToParentsMi
             contrat_accueil = ContratAccueilDocument(who, date)
             if contrat_accueil.generate() and contrat_accueil.convert_to_pdf():
                 attachments.append(contrat_accueil.pdf_output)
-        attachments.extend(glob.glob(glob.escape(GetTemplateFile("Dossier inscription", self.site)) + "/*.pdf"))
+        for document in glob.glob(glob.escape(GetTemplateFile("Dossier inscription", self.site)) + "/*.pdf"):
+            attachments.append(document)
+        for template in glob.glob(glob.escape(GetTemplateFile("Dossier inscription", self.site)) + "/*.odt"):
+            document = DossierAccueilTextDocument(os.path.basename(template), who, date)
+            if document.generate() and document.convert_to_pdf():
+                attachments.append(document.pdf_output)
         SendToParentsMixin.__init__(self, "Dossier d'inscription %s" % GetPrenomNom(who), "Dossier inscription.txt", attachments, "Dossier d'inscription envoyé")
 
 

@@ -296,7 +296,7 @@ class OpenDocument(object):
     def generate(self, filename=None, progress=None):
         if progress:
             progress.SetValue(0)
-        self.output = normalize_filename(filename if filename else self.default_output)
+        self.output = normalize_filename(filename if filename else os.path.join("doc", os.path.basename(self.default_output)))
         template = self.get_template()
         print("Template : %s" % template)
         template_zip = zipfile.ZipFile(template, "r")
