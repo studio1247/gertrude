@@ -83,7 +83,11 @@ class FactureMensuelle(OpenDocumentText, SendToParentsMixin, SendToCAFMixin):
         else:
             self.inscrits = inscrits
             who = self.inscrits[0]
-            self.site = who.get_inscriptions(self.periode_facturation, None)[0].site
+            inscriptions = who.get_inscriptions(self.periode_facturation, None)
+            if inscriptions:
+                self.site = inscriptions[0].site
+            else:
+                self.site = None
             self.set_default_output("Facture %s %s %d.odt" % (self.GetPrenomNom(who), months[periode.month - 1], periode.year))
 
         if not self.reservataire:
@@ -414,18 +418,30 @@ class FactureMensuelle(OpenDocumentText, SendToParentsMixin, SendToCAFMixin):
         return fields
 
 
-class RelanceFacture(FactureMensuelle):
+class RelanceFacture(OpenDocumentText, SendToParentsMixin):
+    title = "Relance facture"
+    template = ""
+
     def __init__(self, who, date):
+        OpenDocumentText.__init__(self)
+        self.inscrits = [who]
         self.historique = GetHistoriqueSolde(who if isinstance(who, Reservataire) else who.famille, date)
         self.solde = CalculeSoldeFromHistorique(self.historique)
-        self.last_facture_date = date
-        for line in self.historique:
-            if not isinstance(line, EncaissementFamille) and not isinstance(line, EncaissementReservataire):
-                self.last_facture_date = line.date
-        FactureMensuelle.__init__(self, [who], self.last_facture_date)
-        self.parents_subject = self.parents_subject.replace("Facture", "Retard de paiement")
-        self.parents_success_message = self.parents_success_message.replace("Facture", "Relance")
-        self.parents_introduction_filename = "Accompagnement relance.txt"
+        total = self.solde
+        self.attachments = []
+        for ligne in reversed(self.historique):
+            if isinstance(ligne, EncaissementFamille) or isinstance(ligne, EncaissementReservataire):
+                total += ligne.valeur
+            elif ligne.total:
+                facture = FactureMensuelle([ligne.inscrit], ligne.date)
+                if facture.generate() and facture.convert_to_pdf():
+                    self.attachments.append(facture.pdf_output)
+                total -= ligne.total_facture
+            if abs(total) <= 0.01:
+                break
+            else:
+                print(total)
+        SendToParentsMixin.__init__(self, "Retard de paiement", "Accompagnement relance.txt", self.attachments, "%(count)d relances envoyées")
         self.set_fields([("solde", self.solde)])
 
 
