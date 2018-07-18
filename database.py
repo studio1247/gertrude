@@ -1146,14 +1146,20 @@ class Salarie(Base):
                 affiche = True
                 heures_reference = journee_reference.get_duration()
                 if heures_reference > 0 and (date in self.jours_conges or date in self.creche.jours_conges):
-                    cp += 1
+                    if date.weekday() == 4 and self.get_contrat(date + datetime.timedelta(1)):
+                        cp += 2
+                    else:
+                        cp += 1
                 else:
                     if date in self.days:
                         journee = self.days[date]
                         state = journee.get_state()
                         if state < 0:
                             if state == CONGES_PAYES:
-                                cp += 1
+                                if date.weekday() == 4 and self.get_contrat(date + datetime.timedelta(1)):
+                                    cp += 2
+                                else:
+                                    cp += 1
                             elif state == VACANCES:
                                 cs += 1
                             heures_reference = 0

@@ -99,10 +99,10 @@ class SuiviRHSalariesSpreadsheet(OpenDocumentSpreadsheet, SendToSalariesMixin):
                     while date <= fin and value < 100:
                         if date not in salarie.creche.jours_fete:
                             weekday = date.weekday()
-                            if weekday < 4:
-                                value -= 1
-                            elif weekday == 4:
+                            if weekday == 4 and salarie.get_contrat(date + datetime.timedelta(1)):
                                 value -= 2
+                            elif weekday <= 4:
+                                value -= 1
                         date += datetime.timedelta(1)
                     lines_conges.append([
                         ("debut", debut),
@@ -142,7 +142,7 @@ class SuiviRHSalariesSpreadsheet(OpenDocumentSpreadsheet, SendToSalariesMixin):
                 line = template1.cloneNode(1)
                 if date.weekday() == 6:
                     state = ABSENT
-                elif date.weekday() == 5:
+                elif date.weekday() == 5 and salarie.get_contrat(date):
                     state = salarie.get_state(date - datetime.timedelta(1))
                     if state != CONGES_PAYES:
                         state = ABSENT
