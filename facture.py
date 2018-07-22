@@ -315,7 +315,9 @@ class FactureFinMois(FactureBase):
                                 if options & TRACES:
                                     print("jour de congé déduit", date)
                                 self.jours_vacances.append(date)
-                                self.heures_facturees_par_mode[cotisation.mode_garde] -= duration
+                                if database.creche.nom not in ("Les Renardeaux", "Les ptits loups"):
+                                    # TODO ajout test non reg (on passe en negatif !)
+                                    self.heures_facturees_par_mode[cotisation.mode_garde] -= duration
                                 self.jours_conges_non_factures.append(date)
                                 self.CalculeDeduction(cotisation, duration)
                                 self.raison_deduction.add("absence prévenue")

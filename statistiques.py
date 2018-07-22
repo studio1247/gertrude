@@ -63,35 +63,44 @@ def GetStatistiques(start, end, site=None, bargraph=False):
                 # TODO il y a un problème pour les crèches en facturation debut de mois, le total_facture ! total
                 inscriptions = inscrit.get_inscriptions(date, fin_mois)
                 if inscriptions and (site is None or inscriptions[0].site == site):
-                    facture = Facture(inscrit, date.year, date.month, NO_NUMERO)
-                    if config.options & HEURES_CONTRAT:
-                        heures_contrat = facture.heures_contrat
-                        heures_facture = facture.heures_facture
+                    if database.creche.nom in ("Les Renardeaux", "Les ptits loups"):
+                        facture_heures = FactureFinMois(inscrit, date.year, date.month, NO_NUMERO)
+                        next_month = GetNextMonthStart(date)
+                        if next_month in inscrit.clotures:
+                            facture = Facture(inscrit, next_month.year, next_month.month, NO_NUMERO)
+                        else:
+                            facture = facture_heures
                     else:
-                        heures_contrat = facture.heures_contractualisees
-                        heures_facture = facture.heures_facturees
+                        facture = Facture(inscrit, date.year, date.month, NO_NUMERO)
+                        facture_heures = facture
+                    if config.options & HEURES_CONTRAT:
+                        heures_contrat = facture_heures.heures_contrat
+                        heures_facture = facture_heures.heures_facture
+                    else:
+                        heures_contrat = facture_heures.heures_contractualisees
+                        heures_facture = facture_heures.heures_facturees
                     if start <= date <= end:
                         result.heures_contrat += heures_contrat
-                        result.heures_reel += facture.heures_realisees
+                        result.heures_reel += facture_heures.heures_realisees
                         result.heures_facture += heures_facture
-                        result.jours_contrat += facture.jours_contractualises
-                        result.jours_reel += facture.jours_realises
-                        result.jours_facture += facture.jours_factures
+                        result.jours_contrat += facture_heures.jours_contractualises
+                        result.jours_reel += facture_heures.jours_realises
+                        result.jours_facture += facture_heures.jours_factures
                         result.cotisations_contrat += facture.total_contractualise
                         result.cotisations_reel += facture.total_realise
                         result.cotisations_facture += facture.total_facture
                         print(GetPrenomNom(inscrit), "au", facture.date)
-                        print(' ', "heures contractualisées :", facture.heures_contractualisees, ", heures contrat :", facture.heures_contrat)
-                        print(' ', "heures réalisées :", facture.heures_realisees)
-                        print(' ', "heures facturées :", facture.heures_facturees, ", heures facture :", facture.heures_facture, "=>", heures_facture)
-                        print(' ', "jours contractualisés :", facture.jours_contractualises)
-                        print(' ', "jours réalisés :", facture.jours_realises)
-                        print(' ', "jours facturés :", facture.jours_factures)
+                        print(' ', "heures contractualisées :", facture_heures.heures_contractualisees, ", heures contrat :", facture_heures.heures_contrat)
+                        print(' ', "heures réalisées :", facture_heures.heures_realisees)
+                        print(' ', "heures facturées :", facture_heures.heures_facturees, ", heures facture :", facture_heures.heures_facture, "=>", heures_facture)
+                        print(' ', "jours contractualisés :", facture_heures.jours_contractualises)
+                        print(' ', "jours réalisés :", facture_heures.jours_realises)
+                        print(' ', "jours facturés :", facture_heures.jours_factures)
                         print(' ', "total contractualisé", facture.total_contractualise)
                         print(' ', "total réalisé :", facture.total_realise)
                         print(' ', "total facturé :", facture.total_facture)
                     result.bargraph[0][date.month-1] += heures_contrat
-                    result.bargraph[1][date.month-1] += facture.heures_realisees
+                    result.bargraph[1][date.month-1] += facture_heures.heures_realisees
                     result.bargraph[2][date.month-1] += heures_facture
             except CotisationException as e:
                 if date <= datetime.date.today():
