@@ -21,7 +21,7 @@ import datetime
 
 from constants import NO_NUMERO, HEURES_CONTRAT, ordinaux, REGIME_CAF_GENERAL, REGIME_CAF_FONCTION_PUBLIQUE, REGIME_CAF_MSA, REGIME_CAF_PECHE_MARITIME, REGIME_CAF_MARINS_DU_COMMERCE
 from config import config
-from facture import Facture
+from facture import Facture, FactureFinMois
 from functions import GetPrenomNom, GetCrecheFields
 from globals import database
 from helpers import GetTrimestreEnd, GetNextMonthStart, GetTrimestreStart
@@ -68,7 +68,7 @@ class ReleveSIEJDocument(OpenDocumentText):
             for mois in range(12):
                 trimestreEnd = GetTrimestreEnd(date)
                 try:
-                    facture = Facture(inscrit, self.annee, mois + 1, NO_NUMERO)
+                    facture = FactureFinMois(inscrit, self.annee, mois + 1, NO_NUMERO)
                     regime = self.get_regime(inscrit, date)
                     if config.options & HEURES_CONTRAT:
                         facture_heures_facturees = facture.heures_facture

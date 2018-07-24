@@ -130,8 +130,7 @@ def GetTrimestreStart(date):
 
 
 def GetTrimestreEnd(date):
-    nextTrimestre = GetTrimestreStart(date) + datetime.timedelta(80)
-    return GetTrimestreStart(nextTrimestre) - datetime.timedelta(1)
+    return IncrDate(GetTrimestreStart(date), months=3, days=-1)
 
 
 def str2date(string, year=None, day=None):
