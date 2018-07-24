@@ -701,10 +701,11 @@ class FactureFinMois(FactureBase):
                                 cotisation_regularisee = Cotisation(inscrit, date, options=NO_ADDRESS | DEPART_ANTICIPE | self.options)
                                 regularisation_cotisation = cotisation_regularisee.cotisation_mensuelle - cotisation.cotisation_mensuelle
                                 regularisation_periode = regularisation_cotisation * cotisation_regularisee.nombre_factures
-                                if options & TRACES:
-                                    print(" régularisation cotisation : %f - %f = %f par mois => %f" % (cotisation_regularisee.cotisation_mensuelle, cotisation.cotisation_mensuelle, regularisation_cotisation, regularisation_periode))
-                                self.regularisation += regularisation_periode
-                                self.raison_regularisation.add("régularisation cotisation")
+                                if abs(regularisation_periode) > 0.01:
+                                    if options & TRACES:
+                                        print(" régularisation cotisation : %f - %f = %f par mois => %f" % (cotisation_regularisee.cotisation_mensuelle, cotisation.cotisation_mensuelle, regularisation_cotisation, regularisation_periode))
+                                    self.regularisation += regularisation_periode
+                                    self.raison_regularisation.add("régularisation cotisation")
                                 date = cotisation.fin + datetime.timedelta(1)
                     else:
                         date_fin_cotisation = inscription.fin
@@ -716,16 +717,21 @@ class FactureFinMois(FactureBase):
                             jours_presence = inscription.get_days_per_week()
                         if jours_presence and inscription.semaines_conges:
                             if dernier_mois:
-                                if database.creche.repartition == REPARTITION_MENSUALISATION_12MOIS:
+                                if config.options & REGULARISATION_UNIQUEMENT_SEMAINES_FERMETURE:
+                                    # pour Nos petits pouces
+                                    semaines_conges_a_prendre = inscription.semaines_conges
+                                elif database.creche.repartition == REPARTITION_MENSUALISATION_12MOIS:
                                     semaines_conges_a_prendre = float(inscription.semaines_conges) * (date_fin_cotisation - inscription.debut).days / 365
                                 else:
                                     semaines_conges_a_prendre = inscription.semaines_conges
-                                semaines_conges_non_pris = semaines_conges_a_prendre - float(inscription.GetNombreJoursCongesPoses()) / jours_presence
+                                jours_conges_pris = inscription.GetNombreJoursCongesPoses()
+                                semaines_conges_pris = float(jours_conges_pris) / jours_presence
+                                semaines_conges_non_pris = semaines_conges_a_prendre - semaines_conges_pris
                                 if semaines_conges_non_pris > 0:
                                     heures = cotisation.heures_semaine * semaines_conges_non_pris
                                     regularisation_conges_non_pris = heures * cotisation.montant_heure_garde
                                     if options & TRACES:
-                                        print(" régularisation congés non pris (%0.1f semaines, %d jours pris) : %0.1fh * %0.2f = %0.2f" % (semaines_conges_a_prendre, inscription.GetNombreJoursCongesPoses(), heures, cotisation.montant_heure_garde, regularisation_conges_non_pris))
+                                        print(" régularisation congés non pris (%0.1f semaines à prendre, %d jours pris = %0.1f semaines) : %0.1fh * %0.2f = %0.2f" % (semaines_conges_a_prendre, jours_conges_pris, semaines_conges_pris, heures, cotisation.montant_heure_garde, regularisation_conges_non_pris))
                                     self.regularisation += regularisation_conges_non_pris
                                     self.raison_regularisation.add("congés non pris")
 

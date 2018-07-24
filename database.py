@@ -2033,10 +2033,19 @@ class Inscription(Base, PeriodeReference):
         jours = 0
         date = debut
         # print "GetNombreJoursCongesPris(%s - %s)" % (debut, fin)
+
+        if config.options & REGULARISATION_UNIQUEMENT_SEMAINES_FERMETURE:
+            while date <= fin:
+                if date in self.inscrit.creche.periodes_fermeture:
+                    # print(date)
+                    jours += 1
+                date += datetime.timedelta(1)
+            return jours
+
         while date <= fin:
             if self.mode in (MODE_FORFAIT_HEBDOMADAIRE, MODE_FORFAIT_MENSUEL):
                 if date in self.inscrit.creche.periodes_fermeture or date in self.inscrit.jours_conges:
-                    # print date
+                    # print(date)
                     jours += 1
             else:
                 state = self.inscrit.get_state(date)

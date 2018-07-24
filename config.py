@@ -194,6 +194,8 @@ class Section(object):
             options |= COMPATIBILITY_MODE_ADAPTATIONS_2016
         if "compatibility-decompte-semaines-2017" in value:
             options |= COMPATIBILITY_MODE_DECOMPTE_SEMAINES_2017
+        if "regularisation-uniquement-semaines-fermeture" in value:
+            options |= REGULARISATION_UNIQUEMENT_SEMAINES_FERMETURE
         if "prelevements-automatiques" in value:
             options |= PRELEVEMENTS_AUTOMATIQUES
         if "newsletters" in value:
