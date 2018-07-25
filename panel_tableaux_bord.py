@@ -39,6 +39,7 @@ from doc_releve_salaries import ReleveSalariesModifications
 from doc_releve_siej import ReleveSIEJModifications
 from doc_synthese_financiere import SyntheseFinanciereModifications
 from doc_export_facturation import ExportFacturationModifications
+from doc_export_inscrits import ExportInscritsModifications
 from facture import Facture
 from ooffice import *
 from planning import *
@@ -807,9 +808,19 @@ class RelevesTab(AutoTab):
             box_sizer.AddMany([(self.etat_presence_mensuesl_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
 
-        # Les exports facturation (Moulon ALSH)
+        # Les exports inscrits (ALSH)
+        if IsTemplateFile("Export inscrits ALSH.ods"):
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Export inscrits ALSH'), wx.HORIZONTAL)
+            self.export_inscrits_choice = wx.Choice(self)
+            AddYearsToChoice(self.export_inscrits_choice)
+            button = wx.Button(self, -1, u'Génération')
+            self.Bind(wx.EVT_BUTTON, self.OnGenerationExportInscrits, button)
+            box_sizer.AddMany([(self.export_inscrits_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
+
+        # Les exports facturation (ALSH)
         if IsTemplateFile("Export facturation.ods"):
-            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Export facturation'), wx.HORIZONTAL)
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, u'Export facturation ALSH'), wx.HORIZONTAL)
             self.export_facturation_choice = wx.Choice(self)
             AddYearsToChoice(self.export_facturation_choice)
             button = wx.Button(self, -1, u'Génération')
@@ -1034,6 +1045,10 @@ class RelevesTab(AutoTab):
     def OnGenerationExportFacturation(self, _):
         annee = self.export_facturation_choice.GetClientData(self.export_facturation_choice.GetSelection())
         DocumentDialog(self, ExportFacturationModifications(annee)).ShowModal()
+
+    def OnGenerationExportInscrits(self, _):
+        annee = self.export_facturation_choice.GetClientData(self.export_inscrits_choice.GetSelection())
+        DocumentDialog(self, ExportInscritsModifications(annee)).ShowModal()
 
     def OnGenerationSyntheseFinanciere(self, _):
         annee = self.syntheses_choice.GetClientData(self.syntheses_choice.GetSelection())
