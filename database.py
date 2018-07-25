@@ -2036,7 +2036,7 @@ class Inscription(Base, PeriodeReference):
 
         if config.options & REGULARISATION_UNIQUEMENT_SEMAINES_FERMETURE:
             while date <= fin:
-                if date in self.inscrit.creche.periodes_fermeture:
+                if date in self.inscrit.creche.jours_conges:
                     # print(date)
                     jours += 1
                 date += datetime.timedelta(1)
