@@ -61,6 +61,7 @@ class ExportInscritsModifications(object):
                         facture = Facture(inscrit, self.annee, month + 1, NO_NUMERO)
                         if facture_annee:
                             facture_annee.jours_realises += facture.jours_realises
+                            facture_annee.taux_effort = max(facture_annee.taux_effort, facture.taux_effort)
                             for value in creche.activites:
                                 label = creche.activites[value].label
                                 facture_annee.heures_supplement_activites[label] += facture.heures_supplement_activites[label]
