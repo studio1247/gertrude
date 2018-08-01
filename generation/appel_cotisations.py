@@ -112,7 +112,7 @@ class AppelCotisationsModifications(object):
 
     def remplit_feuille_site(self, table, site, errors={}):
         inscrits = list(database.creche.select_inscrits(self.debut, self.fin, site=site))
-        return self.remplit_feuille_inscrits(table, site.nom, inscrits, errors=errors)
+        return self.remplit_feuille_inscrits(table, site.nom if site else database.creche.nom, inscrits, errors=errors)
 
     def remplit_feuille_reservataires(self, table, errors={}):
         reservataires = list(database.creche.select_reservataires(self.debut, self.fin))
