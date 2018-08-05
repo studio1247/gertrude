@@ -156,8 +156,9 @@ ENCAISSEMENT_CHEQUE = 2
 ENCAISSEMENT_CESU = 3
 ENCAISSEMENT_TIPI = 4
 ENCAISSEMENT_TITRE_RECETTE = 5
+ENCAISSEMENT_PRELEVEMENT = 6
 
-ModesEncaissement = ("Espèces", "Virement", "Chèque", "Chèque CESU", "TIPI", "Titre de recette")
+ModesEncaissement = ("Espèces", "Virement", "Chèque", "Chèque CESU", "TIPI", "Titre de recette", "Prélèvement")
 
 ModeEncaissementItems = [
     ("Espèces", ENCAISSEMENT_ESPECES),
@@ -165,6 +166,7 @@ ModeEncaissementItems = [
     ("Chèque", ENCAISSEMENT_CHEQUE),
     ("Chèque CESU", ENCAISSEMENT_CESU),
     ("Titre de recette", ENCAISSEMENT_TITRE_RECETTE),
+    ("Prélèvement", ENCAISSEMENT_PRELEVEMENT),
 ]
 
 # Nombre de semaines de reference
