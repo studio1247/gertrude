@@ -56,6 +56,7 @@ class OpenDocument(object):
         self.pdf_output = None
         self.last_field_value = None
         self.last_field_type = None
+        self.site = None
 
     @classmethod
     def available(cls):
@@ -198,7 +199,7 @@ class OpenDocument(object):
             self.expanded_fields = backup_expanded_fields
 
     def get_template(self):
-        return GetTemplateFile(self.template)
+        return GetTemplateFile(self.template, self.site)
 
     @staticmethod
     def get_ordered_namelist(template_zip):

@@ -26,7 +26,7 @@ import time
 from config import *
 from globals import database
 from helpers import *
-from progress import *
+from progresshandler import *
 
 
 TOKEN_FILENAME = '.token'

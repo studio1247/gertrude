@@ -26,7 +26,7 @@ from config import CONFIG_FILENAME, DEFAULT_DATABASE, DEMO_DATABASE
 from functions import *
 from mainwindow import GertrudeFrame
 from connection import get_connection_from_config
-from progress import *
+from progresshandler import *
 
 
 class StartDialog(wx.Dialog):
