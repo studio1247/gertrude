@@ -295,6 +295,9 @@ class OpenDocument(object):
             return True
 
     def generate(self, filename=None, progress=None):
+        if self.errors:
+            return False
+
         if progress:
             progress.SetValue(0)
         self.output = normalize_filename(filename if filename else os.path.join("doc", os.path.basename(self.default_output)))

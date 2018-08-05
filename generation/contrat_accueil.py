@@ -21,7 +21,7 @@ from __future__ import division
 
 import glob
 
-from cotisation import Cotisation
+from cotisation import Cotisation, CotisationException
 from functions import Select, GetCrecheFields, GetInscritFields, GetInscriptionFields, GetCotisationFields, \
     GetBureauFields, IsPresentDuringTranche, GetPrenomNom, GetSiteFields, IsTemplateFile, GetTemplateFile
 from constants import *
@@ -56,8 +56,13 @@ class DocumentAccueilMixin(object):
             plancher_caf = "non rempli"
             plafond_caf = "non rempli"
 
-        self.cotisation = Cotisation(self.inscrit, self.date)
-        
+        try:
+            self.cotisation = Cotisation(self.inscrit, self.date)
+        except CotisationException as e:
+            self.errors[GetPrenomNom(self.inscrit)] = e.errors
+            self.cotisation = None
+            return
+
         fields = GetCrecheFields(database.creche) + GetSiteFields(self.site) + GetInscritFields(self.inscrit) + GetInscriptionFields(self.inscription) + GetCotisationFields(self.cotisation)
         fields += [('plancher-caf', plancher_caf),
                    ('plafond-caf', plafond_caf),
