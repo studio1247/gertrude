@@ -581,6 +581,7 @@ class FactureFinMois(FactureBase):
                         prorata = cotisation.cotisation_mensuelle
                     self.cotisation_mensuelle += prorata
                     cotisation.heures_contractualisees = cotisation.heures_mois * cotisation.jours_ouvres / self.jours_ouvres
+                    self.heures_contrat += cotisation.heures_contractualisees
                     self.total_contractualise += cotisation.heures_contractualisees * cotisation.montant_heure_garde
                     self.heures_supplementaires += cotisation.heures_supplementaires
                     self.heures_facturees_par_mode[cotisation.mode_garde] += cotisation.heures_realisees - cotisation.heures_realisees_non_facturees
