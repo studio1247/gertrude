@@ -1628,7 +1628,12 @@ class Inscrit(Base):
         if self.creche.temps_facturation != FACTURATION_FIN_MOIS:
             previous_month_end = month_start - datetime.timedelta(1)
             previous_month_start = GetMonthStart(previous_month_end)
-            if self.get_inscriptions(previous_month_start, previous_month_end, site):
+            previous_inscriptions = self.get_inscriptions(previous_month_start, previous_month_end, site)
+            if self.creche.gestion_depart_anticipe:
+                for inscription in previous_inscriptions:
+                    if inscription.depart and previous_month_start <= inscription.depart <= previous_month_end:
+                        return True
+            if previous_inscriptions:
                 day = previous_month_start
                 while day.month == previous_month_start.month:
                     state = self.GetState(day)
