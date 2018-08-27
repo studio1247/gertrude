@@ -65,25 +65,24 @@ class AppelCotisationsSpreadsheet(OpenDocumentSpreadsheet):
         # La date
         fields = GetSiteFields(site) + [("date", self.debut)]
         self.replace_cell_fields(lignes, fields)
-        
-        inscrits = list(database.creche.select_inscrits(self.debut, self.fin, site=site))
+
+        inscrits = [inscrit for inscrit in database.creche.inscrits if inscrit.has_facture(self.debut, site)]
         inscrits.sort(key=lambda x: GetPrenomNom(x))
         
         # Les cotisations
         lines_template = [lignes.item(7), lignes.item(8)]
         for i, inscrit in enumerate(inscrits):
+            fields = GetCrecheFields(database.creche) + GetInscritFields(inscrit) + GetReglementFields(inscrit.famille, self.debut.year, self.debut.month)
             line = lines_template[i % 2].cloneNode(1)
             try:
                 facture = Facture(inscrit, self.debut.year, self.debut.month, self.options)
-                commentaire = ""
+                fields.extend(GetFactureFields(facture) + self.get_custom_fields(facture))
+                fields.append(('commentaire', ""))
             except CotisationException as e:
-                facture = None
-                commentaire = '\n'.join(e.errors)
+                fields.append(('commentaire', '\n'.join(e.errors)))
                 self.errors[GetPrenomNom(inscrit)] = e.errors
 
-            fields = GetCrecheFields(database.creche) + GetInscritFields(inscrit) + GetFactureFields(facture) + self.get_custom_fields(facture) + GetReglementFields(inscrit.famille, self.debut.year, self.debut.month) + [('commentaire', commentaire)]
             self.replace_cell_fields(line, fields)
-
             table.insertBefore(line, lines_template[0])
             self.increment_formulas(lines_template[i % 2], row=+2)
 
