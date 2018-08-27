@@ -893,7 +893,7 @@ class Reservataire(Base):
 
     def get_factures_list(self):
         result = []
-        if self.debut:
+        if self.debut and self.periode_facturation:
             date = datetime.date(self.debut.year, 9, 1) if self.debut.month >= 9 else datetime.date(self.debut.year - 1, 9, 1)
             while date <= datetime.date.today() and (not self.fin or date < self.fin):
                 next_date = date

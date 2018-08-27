@@ -947,11 +947,12 @@ class FactureReservataire(object):
         self.debut = date
         self.date = date
         self.nombre_mois = reservataire.periode_facturation
-        for i in range(reservataire.periode_facturation):
-            self.fin = GetMonthEnd(date)
-            if reservataire.debut > self.fin or (reservataire.fin and self.reservataire.fin < date):
-                self.nombre_mois -= 1
-            date = GetNextMonthStart(date)
+        if self.nombre_mois:
+            for i in range(reservataire.periode_facturation):
+                self.fin = GetMonthEnd(date)
+                if reservataire.debut > self.fin or (reservataire.fin and self.reservataire.fin < date):
+                    self.nombre_mois -= 1
+                date = GetNextMonthStart(date)
         if reservataire.has_facture(self.debut):
             self.total = reservataire.tarif * self.nombre_mois
         else:
