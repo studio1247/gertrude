@@ -167,7 +167,7 @@ class DayCollection(dict):
 
 class PeriodeReference(object):
     def get_days_per_week(self):
-        days = len(self.days)
+        days = len([day for day in self.days.values() if day.get_state() == PRESENT])
         if self.duree_reference > 7:
             days //= (self.duree_reference // 7)
         return days
