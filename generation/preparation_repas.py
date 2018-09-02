@@ -80,11 +80,11 @@ class PreparationRepasSpreadsheet(OpenDocumentSpreadsheet):
                 ("nom", None),
                 ("age-mois", None),
                 ("type-repas-2", None),
-                ("lép", 70),
+                ("lép", 40),
                 ("lém", None),
-                ("pr", 70),
-                ("li", 70),
-                ("fé", 70)
+                ("pr", 40),
+                ("li", 40),
+                ("fé", 40)
             ])
             dom.insertBefore(line, template)
         for inscrit in inscrits:

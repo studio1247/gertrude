@@ -469,6 +469,8 @@ class Cotisation(object):
             self.cotisation_mensuelle, self.montants_heure_garde = self.CalculeFraisGardeComplete(self.forfait_mensuel_heures, self.heures_mois)
         elif database.creche.mode_facturation in (FACTURATION_PAJE, FACTURATION_PAJE_10H):
             self.tranche_paje = 1 + GetTranche(self.assiette_annuelle, GetTranchesPaje(date, inscrit.naissance, self.enfants_a_charge))
+            if options & TRACES:
+                print(" tranche PAJE: PAJE%d (%d enfants à charge)" % (self.tranche_paje, self.enfants_a_charge))
             if date < datetime.date(2016, 1, 1):
                 self.AjustePeriode((debut, datetime.date(2015, 12, 31)))
             else:
