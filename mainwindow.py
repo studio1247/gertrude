@@ -27,7 +27,7 @@ import wx.lib.wordwrap
 import requests
 from connection import get_connection_from_config
 from database import Alerte
-from progress import ProgressHandler
+from startprogress import ProgressHandler
 from version import VERSION
 from functions import *
 from alertes import *

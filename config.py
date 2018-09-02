@@ -27,7 +27,7 @@ if sys.platform == "win32" or sys.version_info > (3, 0):
 else:
     from ConfigParser import ConfigParser
 from constants import *
-from progress import *
+from startprogress import *
 import numeros_facture
 from helpers import str2date
 
