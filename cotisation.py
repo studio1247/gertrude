@@ -97,7 +97,7 @@ class Cotisation(object):
         if self.nombre_factures == 0:
             return True
         else:
-            return IsFacture(date)
+            return IsContratFacture(date)
     
     def CalculeFraisGardeComplete(self, heures, heures_mois):
         if self.montant_heure_garde is not None:
