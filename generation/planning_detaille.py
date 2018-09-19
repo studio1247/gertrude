@@ -422,7 +422,7 @@ class PlanningDetailleDraw(OpenDocumentDraw, PlanningDetailleMixin):
                                     node.setAttribute('svg:y', '%fcm' % (0.10 + self.metas["top"] + self.metas["line-height"] * i))
                                     node.setAttribute('svg:width', '%fcm' % ((timeslot.fin - timeslot.debut) * step))
                                     allergies = line.who.get_allergies() if isinstance(line.who, Inscrit) else []
-                                    self.replace_text_fields(node, [("texte", ""), ("allergies", ", ".join(allergies))])
+                                    self.replace_text_fields(node, [("texte", ""), ("commentaire", line.commentaire), ("allergies", ", ".join(allergies))])
                                     page.appendChild(node)
 
                 if self.metas["summary"] and page_index + 1 == pages_count:
