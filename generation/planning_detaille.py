@@ -481,7 +481,7 @@ class PlanningDetailleDraw(OpenDocumentDraw, PlanningDetailleMixin):
         shapes = self.get_named_shapes(template)
         # print(shapes)
         for shape in shapes:
-            if shape in ["legende-heure", "ligne-heure", "ligne-quart-heure", "libelle", "jour", "separateur", "ligne-cahier", "category"] or shape.startswith("activite-"):
+            if shape in ["legende-heure", "ligne-heure", "ligne-quart-heure", "libelle", "commentaire", "jour", "separateur", "ligne-cahier", "category"] or shape.startswith("activite-"):
                 template.removeChild(shapes[shape])
         drawing.removeChild(template)
         if not "activite-%d" % PRESENCE_SALARIE in shapes:
