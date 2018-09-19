@@ -27,7 +27,7 @@ class CoordonneesModifications(object):
         self.multi = False
         self.site = site
         if date is None:
-            self.date = today
+            self.date = datetime.date.today()
         else:
             self.date = date
         self.selection = selection
@@ -45,9 +45,9 @@ class CoordonneesModifications(object):
             temporalite = 0
             for inscription in inscrit.inscriptions:
                 if not inscription.preinscription and (self.site is None or inscription.site == self.site):
-                    if inscription.debut and inscription.debut > datetime.date.today():
+                    if inscription.debut and inscription.debut > self.date:
                         temporalite = EXPORT_FAMILLES_FUTURES
-                    elif inscription.fin and inscription.fin < datetime.date.today():
+                    elif inscription.fin and inscription.fin < self.date:
                         temporalite = EXPORT_FAMILLES_PARTIES
                     else:
                         temporalite = EXPORT_FAMILLES_PRESENTES
@@ -63,9 +63,9 @@ class CoordonneesModifications(object):
             temporalite = 0
             for contrat in salarie.contrats:
                 if self.site is None or contrat.site == self.site:
-                    if contrat.debut and contrat.debut > datetime.date.today():
+                    if contrat.debut and contrat.debut > self.date:
                         temporalite = EXPORT_FAMILLES_FUTURES
-                    elif contrat.fin and contrat.fin < datetime.date.today():
+                    elif contrat.fin and contrat.fin < self.date:
                         temporalite = EXPORT_FAMILLES_PARTIES
                     else:
                         temporalite = EXPORT_FAMILLES_PRESENTES
