@@ -404,15 +404,20 @@ class PlanningDetailleDraw(OpenDocumentDraw, PlanningDetailleMixin):
                             page.appendChild(node)
                         else:
                             ajoute_ligne_cahier = True
-                        node = shapes["libelle"].cloneNode(1)
-                        node.setAttribute('svg:x', '%fcm' % self.metas["left"])
-                        node.setAttribute('svg:y', '%fcm' % (self.metas["top"] + self.metas["line-height"] * i))
-                        node.setAttribute('svg:width', '%fcm' % self.metas["labels-width"])
+
                         fields = [('nom', line.who.nom),
                                   ('prenom', line.who.prenom),
                                   ('label', line.label),
                                   ('commentaire', line.commentaire)]
+                        node = shapes["libelle"].cloneNode(1)
+                        node.setAttribute('svg:x', '%fcm' % self.metas["left"])
+                        node.setAttribute('svg:y', '%fcm' % (self.metas["top"] + self.metas["line-height"] * i))
+                        node.setAttribute('svg:width', '%fcm' % self.metas["labels-width"])
                         self.replace_text_fields(node, fields)
+                        if "commentaire" in shapes:
+                            node = shapes["commentaire"].cloneNode(1)
+                            node.setAttribute('svg:y', '%fcm' % (self.metas["top"] + self.metas["line-height"] * i))
+                            self.replace_text_fields(node, fields)
                         page.appendChild(node)
                         for timeslot in line.timeslots:
                             if timeslot.activity.has_horaires():
