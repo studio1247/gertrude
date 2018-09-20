@@ -730,6 +730,9 @@ class Creche(Base):
     def GetInscrit(self, idx):
         return self.GetObject(self.inscrits, idx)
 
+    def GetFamille(self, idx):
+        return self.GetObject(self.familles, idx)
+
     def GetReservataire(self, idx):
         return self.GetObject(self.reservataires, idx)
 
@@ -1418,6 +1421,12 @@ class Famille(Base):
             return self.inscrits[0].prenom
         else:
             return ", ".join([inscrit.prenom for inscrit in self.inscrits[:-1]]) + " et " + self.inscrits[-1].prenom
+
+    def get_factures_list(self):
+        result = set()
+        for inscrit in self.inscrits:
+            result = result.union(inscrit.get_factures_list())
+        return sorted(list(result))
 
 
 class State(object):
