@@ -126,6 +126,7 @@ class DocumentAccueilMixin(object):
             fields.append(('heure-debut[%d]' % jour, GetHeureString(debut if debut else None)))
             fields.append(('heure-fin[%d]' % jour, GetHeureString(fin if fin else None)))
             fields.append(('heures-jour[%d]' % jour, GetHeureString(jour_reference.get_duration())))
+            fields.append(("S[%d]" % jour, ("[S%d] " % (1 + (jour // 7))) if self.inscription.duree_reference > 7 else ""))
 
         for activite in database.creche.activites:
             fields.append(('liste-activites[%d]' % activite.idx, self.inscription.GetListeActivites()))
@@ -186,12 +187,13 @@ class DocumentAccueilText(OpenDocumentText, DocumentAccueilMixin):
                 for semaine in range(1, self.inscription.duree_reference // 7):
                     for row in rows[1:-1]:
                         clone = row.cloneNode(1)
-                        for textNode in clone.getElementsByTagName("text:p"):
+                        for textNode in clone.getElementsByTagName("text:p") + clone.getElementsByTagName("text:span"):
                             for child in textNode.childNodes:
-                                text = child.wholeText
-                                for i in range(7):
-                                    text = text.replace("[%d]" % i, "[%d]" % (i + semaine * 7))
-                                child.replaceWholeText(text)
+                                if child.nodeType == child.TEXT_NODE:
+                                    text = child.wholeText
+                                    for i in range(7):
+                                        text = text.replace("[%d]" % i, "[%d]" % (i + semaine * 7))
+                                    child.replaceWholeText(text)
                         table.insertBefore(clone, rows[-1])
                 # print(table.toprettyxml())
             elif table_name == "Echeancier":
