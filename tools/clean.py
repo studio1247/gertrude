@@ -36,23 +36,35 @@ def clean(filename):
     #     print(site.idx, site.nom)
     #
 
-    print("Suppression des enfants les plus anciens ...")
+    # print("Suppression des enfants les plus anciens ...")
+    # for inscrit in database.creche.inscrits:
+    #     delete = True
+    #     for inscription in inscrit.inscriptions:
+    #         if not inscription.preinscription and (not inscription.fin or inscription.fin.year > 2016):
+    #             delete = False
+    #             break
+    #         if inscription.preinscription and inscription.debut.year > 2017:
+    #             delete = False
+    #             break
+    #     if delete:
+    #         print("Suppression de %s %s" % (inscrit.prenom, inscrit.nom))
+    #         for inscription in inscrit.inscriptions:
+    #             if inscription.preinscription:
+    #                 print("  - Préinscription", inscription.debut, inscription.fin)
+    #             else:
+    #                 print("  - Inscription", inscription.debut, inscription.fin)
+    #         database.creche.inscrits.remove(inscrit)
+    #     database.commit()
+
+    print("Suppression des enfants en fonction du site ...")
     for inscrit in database.creche.inscrits:
         delete = True
         for inscription in inscrit.inscriptions:
-            if not inscription.preinscription and (not inscription.fin or inscription.fin.year > 2016):
-                delete = False
-                break
-            if inscription.preinscription and inscription.debut.year > 2017:
+            if inscription.site.nom.startswith("Les ptits"):
                 delete = False
                 break
         if delete:
             print("Suppression de %s %s" % (inscrit.prenom, inscrit.nom))
-            for inscription in inscrit.inscriptions:
-                if inscription.preinscription:
-                    print("  - Préinscription", inscription.debut, inscription.fin)
-                else:
-                    print("  - Inscription", inscription.debut, inscription.fin)
             database.creche.inscrits.remove(inscrit)
         database.commit()
 
