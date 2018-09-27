@@ -409,16 +409,16 @@ class PlanningDetailleDraw(OpenDocumentDraw, PlanningDetailleMixin):
                                   ('prenom', line.who.prenom),
                                   ('label', line.label),
                                   ('commentaire', line.commentaire)]
+
+                        # le label
                         node = shapes["libelle"].cloneNode(1)
                         node.setAttribute('svg:x', '%fcm' % self.metas["left"])
                         node.setAttribute('svg:y', '%fcm' % (self.metas["top"] + self.metas["line-height"] * i))
                         node.setAttribute('svg:width', '%fcm' % self.metas["labels-width"])
                         self.replace_text_fields(node, fields)
-                        if "commentaire" in shapes:
-                            node = shapes["commentaire"].cloneNode(1)
-                            node.setAttribute('svg:y', '%fcm' % (self.metas["top"] + self.metas["line-height"] * i))
-                            self.replace_text_fields(node, fields)
                         page.appendChild(node)
+
+                        # les timeslots
                         for timeslot in line.timeslots:
                             if timeslot.activity.has_horaires():
                                 shape = self.get_timeslot_shape(shapes, timeslot)
@@ -430,6 +430,13 @@ class PlanningDetailleDraw(OpenDocumentDraw, PlanningDetailleMixin):
                                     allergies = line.who.get_allergies() if isinstance(line.who, Inscrit) else []
                                     self.replace_text_fields(node, [("texte", ""), ("allergies", ", ".join(allergies))])
                                     page.appendChild(node)
+
+                        # le commentaire
+                        if "commentaire" in shapes:
+                            node = shapes["commentaire"].cloneNode(1)
+                            node.setAttribute('svg:y', '%fcm' % (self.metas["top"] + self.metas["line-height"] * i))
+                            self.replace_text_fields(node, fields)
+                            page.appendChild(node)
 
                 if self.metas["summary"] and page_index + 1 == pages_count:
                     AddCategoryShape(page, "Totaux", 0.20 + self.metas["top"] + self.metas["line-height"] * lines_count)
