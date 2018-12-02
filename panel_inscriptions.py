@@ -838,7 +838,7 @@ class ModeAccueilPanel(InscriptionsTab, PeriodeMixin):
         history.Append(None)
         for line in self.planning_panel.lines:
             for debut, fin in database.creche.GetPlagesOuvertureArray():
-                line.set_activity(debut, fin, 0)
+                line.set_activity(debut, fin, database.creche.states[MODE_PRESENCE])
         self.UpdateContents()
     
     def OnMondayCopy(self, _):
