@@ -411,7 +411,7 @@ class FactureFinMois(FactureBase):
                             for timeslot in inscrit.GetExtraActivites(date):
                                 if timeslot.activity.mode != MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE:
                                     tarif = timeslot.activity.EvalTarif(self.inscrit, date, reservataire=cotisation.inscription.reservataire)
-                                    if not isinstance(tarif, (int, long, float)):
+                                    if not isinstance(tarif, (int, float)):
                                         continue
                                     if tarif and (self.options & TRACES):
                                         print(" %s : activité %s = %f" % (date, timeslot.activity.label, tarif))
