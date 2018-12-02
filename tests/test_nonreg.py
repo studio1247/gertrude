@@ -1073,7 +1073,7 @@ class LaCabaneAuxFamillesTests(GertrudeTestCase):
         self.assert_prec2_equals(facture.total, 685.42 + 179.79)
 
 
-class EleaTests(GertrudeTestCase):
+class Elea1Tests(GertrudeTestCase):
     def setUp(self):
         GertrudeTestCase.setUp(self)
         database.creche.type = TYPE_FAMILIAL
@@ -1101,7 +1101,7 @@ class EleaTests(GertrudeTestCase):
         self.add_inscription_timeslot(inscription, 2, 110, 110+9*12)  # 9h
         inscrit.inscriptions.append(inscription)
         self.set_revenus(inscrit, 42783)
-        cotisation = Cotisation(inscrit, datetime.date(2018, 1, 1), NO_ADDRESS)
+        cotisation = Cotisation(inscrit, datetime.date(2018, 1, 1), NO_ADDRESS|TRACES)
         self.assert_prec2_equals(cotisation.cotisation_mensuelle, 50.05)
         facture = Facture(inscrit, 2018, 1, NO_ADDRESS)
         self.assert_prec2_equals(facture.total, 45*1.43)
@@ -1464,7 +1464,7 @@ class PtitsLoulousTests(GertrudeTestCase):
         self.assert_prec2_equals(cotisation.cotisation_mensuelle, 757.26)
 
 
-class EleaTests(GertrudeTestCase):
+class Elea2Tests(GertrudeTestCase):
     def setUp(self):
         GertrudeTestCase.setUp(self)
         database.creche.type = TYPE_FAMILIAL
@@ -1500,7 +1500,7 @@ class EleaTests(GertrudeTestCase):
         inscrit.add_conge(CongeInscrit(inscrit=inscrit, debut="10/05/2018", fin="21/05/2018"))
         for day in range(4):
             self.add_inscription_timeslot(inscription, day, 10 * 12, 15 * 12)
-        cotisation = Cotisation(inscrit, datetime.date(2018, 1, 1))
+        cotisation = Cotisation(inscrit, datetime.date(2018, 1, 1), options=TRACES)
         self.assert_prec2_equals(cotisation.cotisation_mensuelle, 88.55)
         self.add_activite(inscrit, datetime.date(2018, 3, 1), 100, 160, database.creche.states[HOPITAL])
         self.add_activite(inscrit, datetime.date(2018, 3, 5), 100, 160, database.creche.states[HOPITAL])
@@ -1522,7 +1522,7 @@ class EleaTests(GertrudeTestCase):
         self.add_journee_presence(inscrit, datetime.date(2018, 3, 29), 8.75*12, 14.75*12)
         state = inscrit.GetState(datetime.date(2018, 3, 1))
         self.assert_prec2_equals(state.heures_facturees, 0)
-        facture = Facture(inscrit, 2018, 3)
+        facture = Facture(inscrit, 2018, 3, options=TRACES)
         self.assert_prec2_equals(facture.total, 84.24)
         self.assert_prec2_equals(facture.heures_facturees, 73.25)
 
@@ -1539,7 +1539,7 @@ class EleaTests(GertrudeTestCase):
         inscrit.add_conge(CongeInscrit(inscrit=inscrit, debut="30/03/2018", fin="30/03/2018"))
         for day in (0, 2, 4):
             self.add_inscription_timeslot(inscription, day, 9 * 12, 18.5 * 12)
-        cotisation = Cotisation(inscrit, datetime.date(2018, 3, 31))
+        cotisation = Cotisation(inscrit, datetime.date(2018, 3, 31), options=TRACES)
         self.assert_prec2_equals(cotisation.cotisation_mensuelle, 16.8)
         self.add_activite(inscrit, datetime.date(2018, 3, 1), 100, 160, database.creche.states[HOPITAL])
         self.add_activite(inscrit, datetime.date(2018, 3, 5), 100, 160, database.creche.states[HOPITAL])
@@ -1557,7 +1557,7 @@ class EleaTests(GertrudeTestCase):
         state = inscrit.GetState(datetime.date(2018, 3, 19))
         self.assert_prec2_equals(state.heures_facturees, 1.0)
         self.assert_prec2_equals(state.heures_realisees, 1.0)
-        facture = Facture(inscrit, 2018, 3)
+        facture = Facture(inscrit, 2018, 3, options=TRACES)
         self.assert_prec2_equals(facture.total, 3.99)
         self.assert_prec2_equals(facture.heures_facturees, 19.0)
 
@@ -1583,7 +1583,7 @@ class EleaTests(GertrudeTestCase):
         self.check_state(inscrit, datetime.date(2018, 1, 9), MALADE, 10.0, 0.0, 10.0)
         self.check_state(inscrit, datetime.date(2018, 1, 10), MALADE, 10.0, 0.0, 10.0)
         self.check_state(inscrit, datetime.date(2018, 1, 11), MALADE, 10.0, 0.0, 0.0)
-        facture = Facture(inscrit, 2018, 1)
+        facture = Facture(inscrit, 2018, 1, options=TRACES)
         self.assert_prec2_equals(facture.total, 500)
         self.assert_prec2_equals(facture.heures_contractualisees, 22 * 10)
         self.assert_prec2_equals(facture.heures_realisees, (22 - 7) * 10)  # 7 jours d'absence
