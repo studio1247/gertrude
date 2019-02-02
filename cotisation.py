@@ -294,9 +294,9 @@ class Cotisation(object):
                 self.heures_mois = self.inscription.forfait_mensuel_heures
                 self.heures_semaine = self.heures_mois / (52.0 / 12) if self.heures_mois else 0.0  # attention Le Nid Des Trésors
             elif self.inscription.mode == MODE_FORFAIT_HEBDOMADAIRE:
-                self.heures_semaine = self.inscription.forfait_mensuel_heures  # TODO rename to forfait
+                self.heures_semaine = self.inscription.forfait_mensuel_heures if self.inscription.forfait_mensuel_heures else 0  # TODO rename to forfait
             elif self.inscription.mode == MODE_FORFAIT_GLOBAL_CONTRAT:
-                self.heures_periode = self.inscription.forfait_mensuel_heures  # TODO rename to forfait
+                self.heures_periode = self.inscription.forfait_mensuel_heures if self.inscription.forfait_mensuel_heures else 0  # TODO rename to forfait
             elif database.creche.mode_facturation == FACTURATION_PAJE_10H:
                 self.heures_semaine = 10.0 * self.jours_semaine
             else:

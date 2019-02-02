@@ -439,8 +439,9 @@ class FactureFinMois(FactureBase):
                                         if it in self.jours_presence_selon_contrat:
                                             del self.jours_presence_selon_contrat[it]
                                 it += datetime.timedelta(1)
-                            if heures_semaine > inscription.forfait_mensuel_heures:
-                                cotisation.heures_supplementaires += heures_semaine - inscription.forfait_mensuel_heures
+                            forfait_mensuel_heures = inscription.forfait_mensuel_heures if inscription.forfait_mensuel_heures else 0
+                            if heures_semaine > forfait_mensuel_heures:
+                                cotisation.heures_supplementaires += heures_semaine - forfait_mensuel_heures
 
                         realise_non_facture = cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees) - cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees - heures_realisees_non_facturees)
                         cotisation.total_realise_non_facture += realise_non_facture
@@ -662,11 +663,14 @@ class FactureFinMois(FactureBase):
                             new_prorata_heures = (prorata_heures * cotisation.jours_inscription) / days_count
                             if options & TRACES:
                                 print(" prorata (mois complet) : %f * %f / %f = %f" % (prorata, cotisation.jours_inscription, days_count, new_prorata))
-                        else:
+                        elif self.jours_ouvres:
                             new_prorata = (prorata * cotisation.jours_ouvres) / self.jours_ouvres
                             new_prorata_heures = (prorata_heures * cotisation.jours_ouvres) / self.jours_ouvres
                             if options & TRACES:
                                 print(" prorata (jours ouvrés) : %f * %f / %f = %f" % (prorata, cotisation.jours_ouvres, self.jours_ouvres, new_prorata))
+                        else:
+                            new_prorata = prorata
+                            new_prorata_heures = prorata_heures
                         prorata = new_prorata
                         prorata_heures = new_prorata_heures
 
