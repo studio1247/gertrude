@@ -488,9 +488,9 @@ class FactureFinMois(FactureBase):
                         self.montant_heure_garde = cotisation.montant_heure_garde
                     for slot in week_slots:
                         if slot.activity in database.creche.activites:
-                            activite = database.creche.activites[slot.activity]
-                            compteur = slot.value
-                            if activite.value == 0:
+                            activite = slot.activity
+                            compteur = slot.value if slot.value else 0
+                            if activite.mode == MODE_PRESENCE:
                                 if database.creche.mode_saisie_planning == SAISIE_JOURS_SEMAINE:
                                     self.jours_realises += compteur
                                 else:

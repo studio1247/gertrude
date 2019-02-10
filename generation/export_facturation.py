@@ -68,8 +68,8 @@ class ExportFacturationModifications(object):
                         if facture.total > 0:
                             facture2 = Facture(inscrit, self.annee, m+2, NO_NUMERO)
                             facture.jours_realises += facture2.jours_realises
-                            for value in database.creche.activites:
-                                label = database.creche.activites[value].label
+                            for activity in database.creche.activites:
+                                label = activity.label
                                 facture.heures_supplement_activites[label] += facture2.heures_supplement_activites[label]
                         else:
                             facture = Facture(inscrit, self.annee, m+2, NO_NUMERO)

@@ -1510,9 +1510,10 @@ class Inscrit(Base):
     def get_week_slots(self, monday):
         return [weekslot for weekslot in self.weekslots if weekslot.date == monday]
 
-    def get_week_activity_slot(self, monday, value):
+    def get_week_activity_slot(self, monday, activity):
         for weekslot in self.weekslots:
-            if weekslot.date == monday and weekslot.activity == value:
+            # print(weekslot.date, weekslot.activity, activity, weekslot)
+            if weekslot.date == monday and weekslot.activity == activity:
                 return weekslot
         else:
             return None
@@ -2211,7 +2212,8 @@ class WeekSlotInscrit(Base):
     inscrit_id = Column(Integer, ForeignKey("inscrits.idx"))
     inscrit = relationship(Inscrit)
     date = Column(Date)
-    activity = Column(Integer)
+    activity_id = Column(Integer, ForeignKey("activities.idx"), name="activity")
+    activity = relationship(Activite)
     value = Column(Float)
 
 

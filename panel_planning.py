@@ -405,7 +405,7 @@ class PlanningHebdomadairePanel(PlanningBasePanel):
         sunday = monday + datetime.timedelta(6)
 
         old_count = self.grid.GetNumberCols()
-        self.activites = database.creche.activites.values()
+        self.activites = database.creche.activites
         new_count = len(self.activites)
         if new_count > old_count:
             self.grid.AppendCols(new_count - old_count)
@@ -427,17 +427,23 @@ class PlanningHebdomadairePanel(PlanningBasePanel):
         for row, inscrit in enumerate(self.inscrits):
             self.grid.SetRowLabelValue(row, GetPrenomNom(inscrit))
             for i, activity in enumerate(self.activites):
-                activity_slot = inscrit.get_week_activity_slot(monday, activity.value)
+                # print(activity)
+                activity_slot = inscrit.get_week_activity_slot(monday, activity)
                 if activity_slot:
-                    self.grid.SetCellValue(row, i, locale.format("%f", activity_slot.value))
+                    self.grid.SetCellValue(row, i, locale.format("%f", activity_slot.value if activity_slot.value else 0))
         self.sizer.Layout()
 
     def OnCellChange(self, evt):
         date = self.GetSelectionStart()
         value = self.grid.GetCellValue(evt.GetRow(), evt.GetCol())
-        value = float(value.replace(',', '.'))
+        # print("HEHEHE", value.replace(',', '.'))
+        value_str = value.replace(',', '.').strip()
+        if value_str:
+            value = float(value_str)
+        else:
+            value = None
         inscrit = self.inscrits[evt.GetRow()]
-        activity_value = self.activites[evt.GetCol()].value
+        activity_value = self.activites[evt.GetCol()]
         history.Append(None)
         week_slot = inscrit.get_week_activity_slot(date, activity_value)
         if week_slot:
