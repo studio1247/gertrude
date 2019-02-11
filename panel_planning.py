@@ -405,7 +405,7 @@ class PlanningHebdomadairePanel(PlanningBasePanel):
         sunday = monday + datetime.timedelta(6)
 
         old_count = self.grid.GetNumberCols()
-        self.activites = database.creche.activites
+        self.activites = database.creche.activites + [database.creche.states[MODE_PRESENCE]]
         new_count = len(self.activites)
         if new_count > old_count:
             self.grid.AppendCols(new_count - old_count)
