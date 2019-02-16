@@ -158,7 +158,8 @@ class Cotisation(object):
                 self.fin = self.inscription.fin_periode_adaptation
             else:
                 self.debut = self.inscription.fin_periode_adaptation + datetime.timedelta(1)
-                self.debut_inscription = self.debut
+                if not (config.options & COMPATIBILITY_MODE_ADAPTATIONS_2018):
+                    self.debut_inscription = self.debut
 
         if options & TRACES:
             print("\nCotisation de %s au %s ..." % (GetPrenomNom(inscrit), date))
