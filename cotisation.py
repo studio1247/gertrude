@@ -158,7 +158,7 @@ class Cotisation(object):
                 self.fin = self.inscription.fin_periode_adaptation
             else:
                 self.debut = self.inscription.fin_periode_adaptation + datetime.timedelta(1)
-                if not (config.options & COMPATIBILITY_MODE_ADAPTATIONS_2018):
+                if self.debut >= datetime.date(2019, 1, 1) or not (config.options & COMPATIBILITY_MODE_ADAPTATIONS_2018):
                     self.debut_inscription = self.debut
 
         if options & TRACES:
