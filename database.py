@@ -2465,12 +2465,12 @@ class Database(object):
         if filename:
             self.init(filename)
 
-    def init(self, filename=None):
+    def init(self, filename=None, autoflush=True):
         self.creche = None
         if filename:
             self.uri = "sqlite:///%s" % filename
         self.engine = create_engine(self.uri, echo=False)
-        self.session = sessionmaker(bind=self.engine)()
+        self.session = sessionmaker(autoflush=autoflush, bind=self.engine)()
         self.query = self.session.query
         self.add = self.session.add
         self.delete = self.session.delete

@@ -1158,13 +1158,15 @@ class InscriptionsNotebook(wx.Notebook):
         self.GetCurrentPage().UpdateContents()
 
 
-print("TODO import inscrit")
-
 class InscritImportDialog(wx.Dialog):
     def __init__(self, parent):
         wx.Dialog.__init__(self, parent, -1, "Import d'une fiche d'inscription", wx.DefaultPosition, wx.DefaultSize)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.creche_import = None  # sqlinterface.SQLConnection(config.import_database).Load(None)
+        self.database = Database()
+        self.database.init(config.import_database, autoflush=False)
+        if self.database.exists():
+            self.database.load()
+            self.creche_import = self.database.creche
         self.combo = wx.ListBox(self, style=wx.LB_SORT)
         for child in self.creche_import.inscrits:
             label = GetPrenomNom(child)
@@ -1269,7 +1271,8 @@ class InscriptionsPanel(GPanel):
         if res == wx.ID_OK:
             history.Append(Delete(database.creche.inscrits, -1))
             inscrit = dlg.GetInscritSelected()
-            inscrit.idx = None
+            dlg.database.session.expunge(inscrit)
+            inscrit = database.session.merge(inscrit)
             if 0:
                 inscrit.famille.create()
                 inscrit.create()
@@ -1292,8 +1295,6 @@ class InscriptionsPanel(GPanel):
                 inscrit.semaines = {}
                 inscrit.clotures = {}
                 inscrit.corrections = {}
-                inscrit.famille.create()
-                inscrit.create()
             self.AjouteInscrit(inscrit)
         dlg.Destroy()
 
