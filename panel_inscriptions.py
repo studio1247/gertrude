@@ -1270,31 +1270,29 @@ class InscriptionsPanel(GPanel):
         res = dlg.ShowModal()
         if res == wx.ID_OK:
             history.Append(Delete(database.creche.inscrits, -1))
-            inscrit = dlg.GetInscritSelected()
-            dlg.database.session.expunge(inscrit)
-            inscrit = database.session.merge(inscrit)
-            if 0:
-                inscrit.famille.create()
-                inscrit.create()
-                for inscription in inscrit.inscriptions:
-                    if inscription.site:
-                        inscription.site = database.creche.GetSite(inscription.site.idx)
-                    for reference in inscription.reference:
-                        reference.Save(force=True)
-                for date in inscrit.journees:
-                    inscrit.journees[date].Save(force=True)
-                if inscrit.jours_conges:
-                    print("Not imported: jours_conges" % inscrit.jours_conges)
-                if inscrit.clotures:
-                    print("Not imported: clotures" % inscrit.clotures)
-                if inscrit.corrections:
-                    print("Not imported: clotures" % inscrit.corrections)
-            else:
-                inscrit.inscriptions[:] = [Inscription(inscrit)]
-                inscrit.journees = {}
-                inscrit.semaines = {}
-                inscrit.clotures = {}
-                inscrit.corrections = {}
+            original = dlg.GetInscritSelected()
+            inscrit = Inscrit(creche=database.creche, prenom=original.prenom, nom=original.nom, sexe=original.sexe, naissance=original.naissance, handicap=original.handicap)
+            inscrit.famille.adresse = original.famille.adresse
+            inscrit.famille.code_postal = original.famille.code_postal
+            inscrit.famille.ville = original.famille.ville
+            inscrit.famille.numero_securite_sociale = original.famille.numero_securite_sociale
+            inscrit.famille.numero_allocataire_caf = original.famille.numero_allocataire_caf
+            inscrit.famille.freres_soeurs = [Fratrie(famille=inscrit.famille, prenom=f.prenom, naissance=f.naissance, entree=f.entree, sortie=f.sortie) for f in original.famille.freres_soeurs]
+            inscrit.famille.referents = [Referent(famille=inscrit.famille, prenom=r.prenom, telephone=r.telephone) for r in original.famille.referents]
+            inscrit.famille.parents = []
+            for p in original.famille.parents:
+                parent = Parent(famille=inscrit.famille, sexe=p.sexe, prenom=p.prenom, nom=p.nom, adresse=p.adresse,
+                                code_postal=p.code_postal, ville=p.ville, telephone_domicile=p.telephone_domicile,
+                                telephone_domicile_notes=p.telephone_domicile_notes,
+                                telephone_portable=p.telephone_portable,
+                                telephone_portable_notes=p.telephone_portable_notes,
+                                telephone_travail=p.telephone_travail,
+                                telephone_travail_notes=p.telephone_travail_notes, profession=p.profession,
+                                email=p.email)
+                parent.revenus = [Revenu(parent=parent, debut=r.debut, fin=r.fin, revenu=r.revenu, chomage=r.chomage,
+                                         conge_parental=r.conge_parental, regime=r.regime) for r in p.revenus]
+                inscrit.famille.parents.append(parent)
+            inscrit.inscriptions = [Inscription(inscrit)]
             self.AjouteInscrit(inscrit)
         dlg.Destroy()
 
