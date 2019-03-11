@@ -1294,6 +1294,7 @@ class InscriptionsPanel(GPanel):
                 inscrit.famille.parents.append(parent)
             inscrit.inscriptions = [Inscription(inscrit)]
             self.AjouteInscrit(inscrit)
+        dlg.database.rollback()
         dlg.Destroy()
 
     def OnAjoutInscrit(self, _):
