@@ -120,6 +120,7 @@ class DocumentAccueilModifications(object):
                 if database.creche.conges_inscription or database.creche.facturation_jours_feries == ABSENCES_DEDUITES_EN_JOURS:
                     fields.append(('heures-fermeture-creche', GetHeureString(self.cotisation.heures_fermeture_creche)))
                     fields.append(('heures-accueil-non-facture', GetHeureString(self.cotisation.heures_accueil_non_facture)))
+                    fields.append(('heures-net-periode', GetHeureString(self.cotisation.heures_periode)))
                     heures_brut_periode = self.cotisation.heures_periode + self.cotisation.heures_fermeture_creche + self.cotisation.heures_accueil_non_facture
                     fields.append(('heures-brut-periode', GetHeureString(heures_brut_periode)))
                     if self.cotisation.heures_semaine > 0:
