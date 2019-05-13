@@ -644,6 +644,8 @@ class Cotisation(object):
             print()
 
     def eval_allocation_caf(self):
+        # https://www.service-public.fr/particuliers/vosdroits/F33648
+
         """
                 Tarifs avant avril 2018 :
                 - de 3 ans	        846,22 €	729,47 €	612,77 €
@@ -654,6 +656,11 @@ class Cotisation(object):
                 - de 3 ans	        854,70 €	736,78 €	618,90 €
                 de 3 ans à 6 ans	427,35 €	368,39 €	309,45 €
                 """
+        """ 
+                Tarifs à partir d'avril 2019 :
+                - de 3 ans	        857,27 €	739,00 €	620,76 €
+                de 3 ans à 6 ans	428,63 €	369,50 €	310,38 €
+                """
 
         if not self.inscrit.naissance or not self.tranche_paje or self.inscription.debut > IncrDate(self.inscrit.naissance, years=6):
             return 0.0
@@ -661,14 +668,17 @@ class Cotisation(object):
         if self.debut < datetime.date(2018, 4, 1):
             tarifs_moins_de_trois_ans = [846.22, 729.47, 612.77]
             tarifs_plus_de_trois_ans = [423.12, 364.74, 306.39]
-        else:
+        elif self.debut < datetime.date(2019, 4, 1):
             tarifs_moins_de_trois_ans = [854.70, 736.78, 618.90]
             tarifs_plus_de_trois_ans = [427.35, 368.39, 309.45]
+        else:
+            tarifs_moins_de_trois_ans = [857.27, 739.00, 620.76]
+            tarifs_plus_de_trois_ans = [428.63, 369.50, 310.38]
 
         if self.debut > IncrDate(self.inscrit.naissance, years=3):
-            result = tarifs_plus_de_trois_ans[self.tranche_paje-1]
+            result = tarifs_plus_de_trois_ans[self.tranche_paje - 1]
         else:
-            result = tarifs_moins_de_trois_ans[self.tranche_paje-1]
+            result = tarifs_moins_de_trois_ans[self.tranche_paje - 1]
         return min(result, self.cotisation_mensuelle * 85 / 100)
 
     def eval_credit_impots(self):
