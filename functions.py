@@ -591,7 +591,7 @@ def GetEmail(famille):
 
 
 def GetTarifsFamilleFields(famille):
-    return [(tarif.label.lower().replace(" ", "_"), tarif.label if (famille and (famille.tarifs & (1 << tarif.idx))) else "") for tarif in database.creche.tarifs_speciaux]
+    return [(tarif.label.lower().replace(" ", "_"), tarif.label if (famille and (famille.tarifs & (1 << tarif.idx))) else "") for tarif in database.creche.tarifs_speciaux if tarif.label]
 
 
 def GetParentFields(parent, index=None):
