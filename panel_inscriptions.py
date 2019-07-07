@@ -232,6 +232,8 @@ class IdentitePanel(InscriptionsTab):
             self.permanences_dues_widget = wx.TextCtrl(self, -1)
             self.permanences_dues_widget.Disable()
             grid_sizer.AddMany([(wx.StaticText(self, -1, "Permanences :"), 0, wx.ALIGN_CENTER_VERTICAL), (self.permanences_dues_widget, 0, wx.EXPAND)])
+        else:
+            self.permanences_dues_widget = None
         self.allergies_checkboxes = []
         allergies = database.creche.get_allergies()
         if allergies:
@@ -394,6 +396,8 @@ class IdentitePanel(InscriptionsTab):
         self.sizer.FitInside(self)
 
     def UpdatePermanencesDues(self):
+        if not self.permanences_dues_widget:
+            return
         if self.inscrit:
             if database.creche.date_raz_permanences:
                 total, effectue = self.inscrit.GetDecomptePermanences()
