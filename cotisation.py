@@ -534,44 +534,9 @@ class Cotisation(object):
                     errors.append(" - La formule de calcul du taux d'effort n'est pas correcte.")
                     raise CotisationException(errors)
             else:
-                if database.creche.type == TYPE_PARENTAL and date.year < 2013:
-                    tranche = self.enfants_a_charge
-                    if inscrit.handicap:
-                        tranche += 1
-                    if tranche >= 4:
-                        self.taux_effort = 0.02
-                    elif tranche == 3:
-                        self.taux_effort = 0.03
-                    elif tranche == 2:
-                        self.taux_effort = 0.04
-                    else:
-                        self.taux_effort = 0.05
-                elif database.creche.type in (TYPE_FAMILIAL, TYPE_PARENTAL, TYPE_MICRO_CRECHE):
-                    tranche = self.enfants_a_charge
-                    if inscrit.handicap:
-                        tranche += 1
-                    if tranche > 5:
-                        self.taux_effort = 0.02
-                    elif tranche > 2:
-                        self.taux_effort = 0.03
-                    elif tranche == 2:
-                        self.taux_effort = 0.04
-                    else:
-                        self.taux_effort = 0.05
-                else:
-                    tranche = self.enfants_a_charge
-                    if inscrit.handicap:
-                        tranche += 1
-                    if tranche > 7:
-                        self.taux_effort = 0.02
-                    elif tranche > 3:
-                        self.taux_effort = 0.03
-                    elif tranche == 3:
-                        self.taux_effort = 0.04
-                    elif tranche == 2:
-                        self.taux_effort = 0.05
-                    else:
-                        self.taux_effort = 0.06
+                self.AjustePeriode(datetime.date(2019, 9, 1), datetime.date(2019, 12, 31))
+                self.taux_effort = self.calcule_taux_effort()
+
             if options & TRACES:
                 print(" taux d'effort=%.02f, mode=%s, type creche=%d" % (self.taux_effort, self.mode_taux_effort, database.creche.type))
                 
@@ -642,6 +607,63 @@ class Cotisation(object):
             print(" cotisation mensuelle :", self.cotisation_mensuelle)
             print(" montant heure garde :", self.montant_heure_garde)
             print()
+
+    def eval_taux_effort(self, date):
+        tranche = self.enfants_a_charge
+        if self.inscrit.handicap:
+            tranche += 1
+
+        if date >= datetime.datetime(2019, 9, 1):
+            index = min(date.year, 2022) - 2019
+            if database.creche.type in (TYPE_FAMILIAL, TYPE_PARENTAL):
+                if tranche == 1:
+                    return (0.0504, 0.0508, 0.0512, 0.0516)[index]
+                elif tranche == 2:
+                    return (0.0403, 0.0406, 0.0410, 0.0413)[index]
+                elif tranche <= 5:
+                    return (0.0302, 0.0305, 0.0307, 0.0310)[index]
+                else:
+                    return (0.0202, 0.0203, 0.0205, 0.0206)[index]
+            else:
+                if tranche == 1:
+                    return (0.0605, 0.0610, 0.0615, 0.0619)[index]
+                elif tranche == 2:
+                    return (0.0504, 0.0508, 0.0512, 0.0516)[index]
+                elif tranche == 3:
+                    return (0.0403, 0.0406, 0.0410, 0.0413)[index]
+                elif tranche <= 7:
+                    return (0.0302, 0.0305, 0.0307, 0.0310)[index]
+                else:
+                    return (0.0202, 0.0203, 0.0205, 0.0206)[index]
+        elif database.creche.type == TYPE_PARENTAL and date.year < 2013:
+            if tranche >= 4:
+                return 0.02
+            elif tranche == 3:
+                return 0.03
+            elif tranche == 2:
+                return 0.04
+            else:
+                return 0.05
+        elif database.creche.type in (TYPE_FAMILIAL, TYPE_PARENTAL, TYPE_MICRO_CRECHE):
+            if tranche > 5:
+                return 0.02
+            elif tranche > 2:
+                return 0.03
+            elif tranche == 2:
+                return 0.04
+            else:
+                return 0.05
+        else:
+            if tranche > 7:
+                return 0.02
+            elif tranche > 3:
+                return 0.03
+            elif tranche == 3:
+                return 0.04
+            elif tranche == 2:
+                return 0.05
+            else:
+                return 0.06
 
     def eval_allocation_caf(self):
         # https://www.service-public.fr/particuliers/vosdroits/F33648
