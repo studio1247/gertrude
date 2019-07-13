@@ -534,11 +534,11 @@ class Cotisation(object):
                     errors.append(" - La formule de calcul du taux d'effort n'est pas correcte.")
                     raise CotisationException(errors)
             else:
-                if date < datetime.date(2019, 9, 1):
+                if self.date < datetime.date(2019, 9, 1):
                     self.AjustePeriode((debut, datetime.date(2019, 8, 31)))
                 else:
                     self.AjustePeriode((datetime.date(2019, 9, 1), fin))
-                self.taux_effort = self.eval_taux_effort(date)
+                self.taux_effort = self.eval_taux_effort()
 
             if options & TRACES:
                 print(" taux d'effort=%.02f, mode=%s, type creche=%d" % (self.taux_effort, self.mode_taux_effort, database.creche.type))
@@ -611,13 +611,13 @@ class Cotisation(object):
             print(" montant heure garde :", self.montant_heure_garde)
             print()
 
-    def eval_taux_effort(self, date):
+    def eval_taux_effort(self):
         tranche = self.enfants_a_charge
         if self.inscrit.handicap:
             tranche += 1
 
-        if date >= datetime.date(2019, 9, 1):
-            index = min(date.year, 2022) - 2019
+        if self.date >= datetime.date(2019, 9, 1):
+            index = min(self.date.year, 2022) - 2019
             if database.creche.type in (TYPE_FAMILIAL, TYPE_PARENTAL):
                 if tranche == 1:
                     return (0.0504, 0.0508, 0.0512, 0.0516)[index]
