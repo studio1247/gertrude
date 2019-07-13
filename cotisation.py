@@ -638,7 +638,7 @@ class Cotisation(object):
                     return (0.0302, 0.0305, 0.0307, 0.0310)[index]
                 else:
                     return (0.0202, 0.0203, 0.0205, 0.0206)[index]
-        elif database.creche.type == TYPE_PARENTAL and date.year < 2013:
+        elif database.creche.type == TYPE_PARENTAL and self.date.year < 2013:
             if tranche >= 4:
                 return 0.02
             elif tranche == 3:
