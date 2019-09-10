@@ -161,6 +161,9 @@ class Cotisation(object):
                 if self.debut >= datetime.date(2019, 1, 1) or not (config.options & COMPATIBILITY_MODE_ADAPTATIONS_2018):
                     self.debut_inscription = self.debut
 
+        self.debut_prevu = self.debut
+        self.fin_prevue = self.fin
+
         if options & TRACES:
             print("\nCotisation de %s au %s ..." % (GetPrenomNom(inscrit), date))
 
@@ -328,7 +331,7 @@ class Cotisation(object):
                     debut_decompte_conges_et_factures = self.debut
 
                 if database.creche.prorata == PRORATA_NONE:
-                    self.prorata = (self.fin_inscription != self.fin or self.debut_inscription != self.debut)
+                    self.prorata = (self.fin != self.fin_prevue or self.debut != self.debut_prevu)
                     if self.prorata and (options & TRACES):
                         print(" prorata appliqué quand même (changement de facturation en cours de contrat)")
                     else:
@@ -397,7 +400,9 @@ class Cotisation(object):
                     self.semaines_periode = GetNombreSemainesPeriode(self.debut_inscription, self.fin_inscription)
                     self.nombre_factures = GetNombreFacturesContrat(self.debut_inscription, self.fin_inscription)
                     if database.creche.prorata == PRORATA_NONE:
-                        self.prorata = False  # Fait pour O-pagaio (self.fin_inscription != self.fin or self.debut_inscription != self.debut)
+                        self.prorata = (self.fin != self.fin_prevue or self.debut != self.debut_prevu)
+                        if self.prorata and (options & TRACES):
+                            print(" prorata appliqué quand même (changement de facturation en cours de contrat)")
                 elif database.creche.repartition == REPARTITION_SANS_MENSUALISATION:
                     if self.fin_inscription is None:
                         self.semaines_periode = 52
