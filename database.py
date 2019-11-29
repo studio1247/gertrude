@@ -1802,22 +1802,15 @@ class Inscrit(Base):
                 for timeslot in timeslots:
                     heures_realisees += tranche * GetDureeArrondie(self.creche.arrondi_heures, timeslot.debut, timeslot.fin)
 
-                if self.creche.nom == "Le Nid Des Trésors" and not inscription.IsInPeriodeAdaptation(date):
-                    # TODO ajouter un paramètre quand la branche SQLAlchemy sera mergée
-                    for timeslot in journee.timeslots:
-                        if timeslot.activity.mode == MODE_PRESENCE:
-                            heures_facturees += tranche * GetDureeArrondie(self.creche.arrondi_facturation, timeslot.debut, timeslot.fin)
-                    heures_facturees = max(heures_facturees, heures_reference)
+                union = GetUnionHeures(journee, reference)
+                if inscription.IsInPeriodeAdaptation(date):
+                    if self.creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS:
+                        union = journee.timeslots
+                    for timeslot in union:
+                        heures_facturees += tranche * GetDureeArrondie(self.creche.arrondi_facturation_periode_adaptation, timeslot.debut, timeslot.fin)
                 else:
-                    union = GetUnionHeures(journee, reference)
-                    if inscription.IsInPeriodeAdaptation(date):
-                        if self.creche.facturation_periode_adaptation == FACTURATION_HORAIRES_REELS:
-                            union = journee.timeslots
-                        for timeslot in union:
-                            heures_facturees += tranche * GetDureeArrondie(self.creche.arrondi_facturation_periode_adaptation, timeslot.debut, timeslot.fin)
-                    else:
-                        for timeslot in union:
-                            heures_facturees += tranche * GetDureeArrondie(self.creche.arrondi_facturation, timeslot.debut, timeslot.fin)
+                    for timeslot in union:
+                        heures_facturees += tranche * GetDureeArrondie(self.creche.arrondi_facturation, timeslot.debut, timeslot.fin)
 
                 return State(PRESENT, heures_reference, heures_realisees, heures_facturees)
         else:

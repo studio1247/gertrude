@@ -315,10 +315,10 @@ class FactureFinMois(FactureBase):
                                 if options & TRACES:
                                     print("jour de congé déduit", date, inscrit.jours_conges[date].label)
                                 self.jours_vacances.append(date)
-                                self.heures_facturees_par_mode[cotisation.mode_garde] -= duration
+                                # self.heures_facturees_par_mode[cotisation.mode_garde] -= duration
                                 self.jours_conges_non_factures.append(date)
                                 self.CalculeDeduction(cotisation, duration)
-                                self.raison_deduction.add(inscrit.jours_conges[date].label)
+                                self.raison_deduction.add(inscrit.jours_conges[date].label if inscrit.jours_conges[date].label else "Congés")
                         elif state == MALADE or state == MALADE_SANS_JUSTIFICATIF:
                             if options & TRACES:
                                 print("jour maladie", date)

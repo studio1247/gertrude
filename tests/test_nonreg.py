@@ -1776,5 +1776,37 @@ class ClairDeLuneTests(GertrudeTestCase):
         self.assert_prec2_equals(161.52, facture.total)
 
 
+class CoccinellesTests(GertrudeTestCase):
+    def setUp(self):
+        GertrudeTestCase.setUp(self)
+        database.creche.type = TYPE_PARENTAL
+        database.creche.mode_facturation = FACTURATION_PSU
+        database.creche.repartition = REPARTITION_MENSUALISATION_12MOIS
+        database.creche.facturation_periode_adaptation = PERIODE_ADAPTATION_HORAIRES_REELS
+        database.creche.conges_inscription = GESTION_CONGES_INSCRIPTION_NON_MENSUALISES
+        database.creche.arrondi_mensualisation_euros = SANS_ARRONDI
+
+    def test_heures_facturees_sur_conges(self):
+        inscrit = self.add_inscrit()
+        inscrit.add_conge(CongeInscrit(inscrit=inscrit, debut="29/04/2019", fin="03/05/2019"))
+        inscrit.add_conge(CongeInscrit(inscrit=inscrit, debut="21/10/2019", fin="25/10/2019"))
+        inscrit.naissance = datetime.date(2018, 7, 18)
+        self.add_frere(inscrit, datetime.date(2019, 5, 11))
+        self.set_revenus(inscrit, 58495.44)
+        inscription = inscrit.inscriptions[0]
+        inscription.mode = MODE_TEMPS_PARTIEL
+        inscription.debut = datetime.date(2019, 1, 1)
+        inscription.fin = datetime.date(2019, 12, 31)
+        inscription.semaines_conges = 0
+        for i in range(5):
+            self.add_inscription_timeslot(inscription, i, 8 * 12, 18.5 * 12)
+        cotisation = Cotisation(inscrit, datetime.date(2019, 9, 1))
+        self.assert_prec2_equals(cotisation.cotisation_mensuelle, 445.90)
+        facture = Facture(inscrit, 2019, 10, options=TRACES)
+        self.assert_prec2_equals(343.00, facture.total)
+        self.assert_prec2_equals(189.00, facture.heures_facturees)
+        self.assert_prec2_equals(189.00, facture.heures_realisees)
+
+
 if __name__ == '__main__':
     unittest.main()
