@@ -1,3 +1,4 @@
+dist: trusty
 language: python
 
 python:
@@ -8,7 +9,7 @@ addons:
   apt:
     packages:
     - python-wxversion
-    - python-wxgtk
+    - python-wxgtk2.8
 
 virtualenv:
   system_site_packages: true
