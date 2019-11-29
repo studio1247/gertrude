@@ -8,7 +8,7 @@ addons:
   apt:
     packages:
     - python-wxversion
-    - python-wxgtk2.8
+    - python-wxgtk3.0
 
 virtualenv:
   system_site_packages: true
