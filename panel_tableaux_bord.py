@@ -31,6 +31,7 @@ from generation.etat_presence_mensuel import EtatPresenceMensuelModifications
 from generation.etat_presences import EtatsPresenceModifications
 from generation.etats_inscriptions import EtatsInscriptionsModifications
 from generation.etats_trimestriels import EtatsTrimestrielsModifications
+from generation.export_filoue import ExportFiloueModifications
 from generation.export_tablette import ExportTabletteModifications
 from generation.planning import PlanningModifications, PlanningHoraireModifications
 from generation.planning_detaille import PlanningDetailleModifications
@@ -782,6 +783,16 @@ class RelevesTab(AutoTab):
             box_sizer.AddMany([(self.comptes_exploitation_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
             self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
 
+        # Les exports Filoue
+        if IsTemplateFile("Export Filoue.csv"):
+            box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, "Export Filoue"), wx.HORIZONTAL)
+            self.export_filoue_choice = wx.Choice(self)
+            AddYearsToChoice(self.export_filoue_choice)
+            button = wx.Button(self, -1, "Génération")
+            self.Bind(wx.EVT_BUTTON, self.OnGenerationExportFiloue, button)
+            box_sizer.AddMany([(self.export_filoue_choice, 1, wx.ALL | wx.EXPAND, 5), (button, 0, wx.ALL, 5)])
+            self.sizer.Add(box_sizer, 0, wx.EXPAND | wx.BOTTOM, 10)
+
         # Les commandes de repas
         if IsTemplateFile("Commande repas.odt"):
             box_sizer = wx.StaticBoxSizer(wx.StaticBox(self, -1, "Commande de repas"), wx.HORIZONTAL)
@@ -979,6 +990,11 @@ class RelevesTab(AutoTab):
     def OnGenerationExportFacturation(self, _):
         annee = self.export_facturation_choice.GetClientData(self.export_facturation_choice.GetSelection())
         DocumentDialog(self, ExportFacturationModifications(annee)).ShowModal()
+
+    def OnGenerationExportFiloue(self, _):
+        site = self.GetSelectedSite()
+        annee = self.export_filoue_choice.GetClientData(self.export_filoue_choice.GetSelection())
+        DocumentDialog(self, ExportFiloueModifications(site, annee)).ShowModal()
 
     def OnGenerationSyntheseFinanciere(self, _):
         annee = self.syntheses_choice.GetClientData(self.syntheses_choice.GetSelection())

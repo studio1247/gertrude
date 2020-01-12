@@ -527,7 +527,9 @@ def convert_to_pdf(filename, pdf_filename):
 
 
 def IsOODocument(filename):
-    return filename and not (filename.endswith(".html") or filename.endswith(".txt") or filename.endswith(".xml"))
+    if not filename:
+        return False
+    return os.path.splitext(filename)[-1] not in (".html", ".txt", ".csv", ".xml")
 
 
 def GenerateDocument(modifications, filename, gauge=None):

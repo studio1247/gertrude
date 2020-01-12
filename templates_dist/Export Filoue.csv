@@ -1,0 +1,2 @@
+TOP_ALLOC;MATRICULE;REGIME;DATE_NAISSANCE_INDIVIDU;CODE_POSTAL_FAMILLE;VILLE_FAMILLE;NOMBRE_HEURES_FACTUREES;NOMBRE_HEURES_REALISEES;MONTANT_FACTURE;MONTANT_HORAIRE;TAUX_EFFORT;PREMIERJOUR;DERNIERJOUR
+<top-allocataire>;<matricule-allocataire>;<regime-caf>;<date-naissance>;<code-postal-famille>;<ville-famille>;<heures-facturees>;<heures-realisees>;<total-facture>;<tarif-horaire>;<taux-effort>;<premier-jour>;<dernier-jour>
