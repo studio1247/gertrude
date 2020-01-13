@@ -104,7 +104,7 @@ class DocumentAccueilModifications(object):
             fields.append(('assiette-annuelle', self.cotisation.assiette_annuelle))
             fields.append(('assiette-mensuelle', self.cotisation.assiette_mensuelle))
             if self.cotisation.taux_effort is not None:
-                fields.append(('taux-effort', self.cotisation.taux_effort))
+                fields.append(('taux-effort', "%.04f" % self.cotisation.taux_effort))
                 fields.append(('mode-taux-effort', self.cotisation.mode_taux_effort))
             
             for i, (parent, revenu, abattement) in enumerate(self.cotisation.revenus_parents):

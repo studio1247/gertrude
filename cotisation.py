@@ -579,6 +579,8 @@ class Cotisation(object):
                         cotisation_diff = 0
                         jour_garde_diff = tarif.valeur
                         self.raison_majoration_journaliere.add(tarif.label)
+                    elif tarif.unite == TARIF_SPECIAL_UNITE_HEURE:
+                        cotisation_diff = self.montant_heure_garde * tarif.valeur
                     else:
                         errors.append(" - Le tarif spécial à appliquer n'est pas implémenté.")
                         raise CotisationException(errors)

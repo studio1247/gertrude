@@ -139,7 +139,10 @@ class CoordonneesModifications(object):
                                     if phone in phones.keys():
                                         phones[phone][1] = ""
                                     else:
-                                        phones[phone] = [phone, GetInitialesPrenom(parent), phoneType=="travail"]
+                                        phones[phone] = [phone, GetInitialesPrenom(parent), phoneType == "travail"]
+                    for referent in inscrit.famille.referents:
+                        phone = referent.telephone
+                        phones[phone] = [phone, GetInitialesPrenom(referent), False]
                     for phone, initiales, phoneType in phones.values():
                         if initiales and phoneType:
                             remark = "(%s travail)" % initiales
