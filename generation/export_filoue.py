@@ -65,7 +65,7 @@ class ExportFiloueModifications:
                         facture_heures = facture_montants
                     else:
                         date_heures = GetNextMonthStart(date)
-                        facture_heures = Facture(inscrit, date_heures.annee, date_heures.month, NO_NUMERO)
+                        facture_heures = Facture(inscrit, date_heures.year, date_heures.month, NO_NUMERO)
                     regime_caf = self.get_regime_caf(inscrit, date)
                     heures_realisees += facture_heures.heures_realisees
                     heures_facturees += facture_heures.heures_facturees
