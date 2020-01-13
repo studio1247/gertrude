@@ -768,7 +768,7 @@ def GetFactureFields(facture):
                   ('montant-heure-garde', facture.montant_heure_garde, FIELD_EUROS),
                   ('montant-jour-garde', facture.montant_jour_garde, FIELD_EUROS),
                   ('cotisation-mensuelle', facture.cotisation_mensuelle, FIELD_EUROS),
-                  ('cotisation-mensuelle-sans-majoration-mensuelle', facture.cotisation_mensuelle - facture.last_cotisation.majoration_mensuelle, FIELD_EUROS),
+                  ('cotisation-mensuelle-sans-majoration-mensuelle', facture.cotisation_mensuelle - (facture.last_cotisation.majoration_mensuelle if facture.last_cotisation else 0), FIELD_EUROS),
                   ('heures-cotisation-mensuelle', facture.heures_cotisation_mensuelle, FIELD_HEURES),
                   ('heures-contractualisees', heures_contractualisees, FIELD_HEURES),
                   ('heures-contrat', facture.heures_contrat, FIELD_HEURES),
