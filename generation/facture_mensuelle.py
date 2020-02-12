@@ -180,7 +180,11 @@ class FactureModifications(object):
                         else:
                             state = ABSENT
                         if text_node and text_node.firstChild:
-                            text_node.firstChild.replaceWholeText('%d%s' % (date.day, details))
+                            mode_details = self.metas.get("details-recap", "heures-facturees")
+                            if mode_details == "heures-facturees":
+                                text_node.firstChild.replaceWholeText("%d%s" % (date.day, details))
+                            else:
+                                text_node.firstChild.replaceWholeText("%d" % date.day)
                         cell.setAttribute('table:style-name', 'Presences.%s' % couleurs[state])
                     date += datetime.timedelta(1)
                 for i in range(row + 1, len(rows)):
