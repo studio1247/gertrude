@@ -1811,6 +1811,9 @@ class Inscrit(Base):
                 else:
                     for timeslot in union:
                         heures_facturees += tranche * GetDureeArrondie(self.creche.arrondi_facturation, timeslot.debut, timeslot.fin)
+                    timeslots_presence_non_facturee = GetUnionTimeslots([timeslot for timeslot in journee.timeslots if timeslot.activity.mode == MODE_PRESENCE_NON_FACTUREE])
+                    for timeslot in timeslots_presence_non_facturee:
+                        heures_facturees -= tranche * GetDureeArrondie(self.creche.arrondi_facturation, timeslot.debut, timeslot.fin)
 
                 return State(PRESENT, heures_reference, heures_realisees, heures_facturees)
         else:

@@ -128,7 +128,7 @@ class RapportFrequentationModifications(object):
                               ]
                     
                     fields += [('heures-realisees-%s' % tmp, heures_realisees[tmp]) for tmp in heures_realisees]
-                    fields += [('heures-facturees-%s' % tmp, heures_realisees[tmp]) for tmp in heures_facturees]
+                    fields += [('heures-facturees-%s' % tmp, heures_facturees[tmp]) for tmp in heures_facturees]
                     
                     # print fields
                     
