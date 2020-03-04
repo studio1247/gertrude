@@ -940,7 +940,7 @@ class BebebulTests(GertrudeTestCase):
         facture = Facture(inscrit, 2012, 10)
         self.assert_prec2_equals(facture.heures_contractualisees, 0.0)
         self.assert_prec2_equals(facture.heures_realisees, 3.5)
-        self.assert_prec2_equals(facture.heures_supplementaires, 3.5)
+        self.assert_prec2_equals(facture.heures_supplementaires, 0)
         self.assert_prec2_equals(facture.heures_realisees_non_facturees, 3.5)
         self.assert_prec2_equals(facture.heures_facturees, 0.0)
         self.assert_prec2_equals(facture.cotisation_mensuelle, 0.00)
