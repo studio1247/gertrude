@@ -387,6 +387,7 @@ class Creche(Base):
         self.jours_fermeture = {}
         self.jours_fete = set()
         self.jours_weekend = []
+        self.jours_fermeture_non_prevus = {}
         self.mois_sans_facture = {}
         self.mois_facture_uniquement_heures_supp = {}
         for year in range(config.first_date.year, config.last_date.year + 1):
@@ -411,10 +412,14 @@ class Creche(Base):
         def AddPeriode(debut, fin, conge):
             date = debut
             while date <= fin:
-                self.periodes_fermeture[date] = conge
-                self.jours_fermeture[date] = conge
-                if date not in self.jours_feries:
-                    self.jours_conges.add(date)
+                if conge.options == FERMETURE_NON_PRISE_EN_COMPTE_MENSUALISATION:
+                    if date not in self.jours_feries:
+                        self.jours_fermeture_non_prevus[date] = conge
+                else:
+                    self.periodes_fermeture[date] = conge
+                    self.jours_fermeture[date] = conge
+                    if date not in self.jours_feries:
+                        self.jours_conges.add(date)
                 date += datetime.timedelta(1)
             self.liste_conges.append((debut, fin))
 

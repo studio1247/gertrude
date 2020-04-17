@@ -281,12 +281,14 @@ ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION = 3
 ACCUEIL_NON_FACTURE = 1  # jours de nettoyage par exemple
 MOIS_SANS_FACTURE = 2  # si présence dans cette periode (mois d'août par exemple), elle est répartie sur les autres mois de l'année
 MOIS_FACTURE_UNIQUEMENT_HEURES_SUPP = 4  # si présence dans cette periode (mois d'août par exemple), le contrat réparti sur les autres mois de l'année, seules les suppléments / déductions sont facturés
+FERMETURE_NON_PRISE_EN_COMPTE_MENSUALISATION = 5  # congers sur la route, confinement au moyen âge lorsque les tests massifs n'étaient pas possibles ...
 
 ModeCongeItems = [
     ("Fermeture de l'établissement", 0),
     ("Accueil non facturé", ACCUEIL_NON_FACTURE),
     ("Pas de facture pendant ce mois", MOIS_SANS_FACTURE),
-    ("Uniquement supplément/déduction", MOIS_FACTURE_UNIQUEMENT_HEURES_SUPP)
+    ("Uniquement supplément/déduction", MOIS_FACTURE_UNIQUEMENT_HEURES_SUPP),
+    ("Fermeture non prise en compte dans la mensualisation", FERMETURE_NON_PRISE_EN_COMPTE_MENSUALISATION)
 ]
 
 # Modes d'arrondi des heures de presence
@@ -344,6 +346,7 @@ ABSENCE_CONGE_SANS_PREAVIS = -6
 MALADE_SANS_JUSTIFICATIF = -5 
 ABSENCE_NON_PREVENUE = -4
 HOPITAL = -3
+FERMETURE_EXCEPTIONNELLE = -12
 MALADE = -2
 VACANCES = -1
 ABSENT = 0

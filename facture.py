@@ -267,7 +267,12 @@ class FactureFinMois(FactureBase):
                             #    if self.options & TRACES:
                             #        print(" heures supplémentaires :", cotisation.heures_realisees, "-", reste_heures, "=", cotisation.heures_supplementaires, "heures")
 
-                    if jour_ouvre:
+                    if date in database.creche.jours_fermeture_non_prevus:
+                        self.jours_contractualises += 1
+                        inscritState = inscrit.GetState(date, inscrit.creche.arrondi_facturation)
+                        heures_reference = inscritState.heures_contractualisees
+                        self.CalculeDeduction(cotisation, heures_reference)
+                    elif jour_ouvre:
                         cotisation.jours_ouvres += 1
                         inscritState = inscrit.GetState(date, inscrit.creche.arrondi_facturation)
                         # print date, str(inscritState)
