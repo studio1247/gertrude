@@ -267,215 +267,215 @@ class FactureFinMois(FactureBase):
                             #    if self.options & TRACES:
                             #        print(" heures supplémentaires :", cotisation.heures_realisees, "-", reste_heures, "=", cotisation.heures_supplementaires, "heures")
 
-                    if date in database.creche.jours_fermeture_non_prevus:
-                        self.jours_contractualises += 1
-                        inscritState = inscrit.GetState(date, inscrit.creche.arrondi_facturation)
-                        heures_reference = inscritState.heures_contractualisees
-                        self.CalculeDeduction(cotisation, heures_reference)
-                    elif jour_ouvre:
+                    if jour_ouvre:
                         cotisation.jours_ouvres += 1
                         inscritState = inscrit.GetState(date, inscrit.creche.arrondi_facturation)
                         # print date, str(inscritState)
                         state, heures_reference, heures_realisees, heures_facturees = inscritState.state, inscritState.heures_contractualisees, inscritState.heures_realisees, inscritState.heures_facturees
-                        if heures_reference > 0:
-                            self.jours_contractualises += 1
-                        if heures_realisees > 0:
-                            self.jours_realises += 1
-                        if heures_facturees > 0:
-                            self.jours_factures += 1
-                        heures_facturees_non_realisees = 0.0
-                        heures_realisees_non_facturees = inscrit.GetTotalActivitesPresenceNonFacturee(date)
-                        heures_facturees += inscrit.GetTotalActivitesPresenceFactureesEnSupplement(date)
-                        heures_supplementaires_facturees = (heures_facturees - heures_reference)
-                        if (options & TRACES) and heures_supplementaires_facturees:
-                            print("%f heures supplémentaires le" % heures_supplementaires_facturees, date)
-                        #  retiré le 19 juillet 2017 pb d'heures supp marquées non facturées (retirées en double)
-                        #  if heures_realisees_non_facturees > heures_reference:
-                        #    heures_supplementaires_facturees -= heures_realisees_non_facturees - heures_reference
-                        #    print "RETRANCHE" , heures_supplementaires_facturees
-                        cotisation.heures_reference += heures_reference
-                        if (cotisation.mode_inscription, cotisation.heures_semaine) in heures_hebdomadaires:
-                            heures_hebdomadaires[(cotisation.mode_inscription, cotisation.heures_semaine)] += 1
-                        else:
-                            heures_hebdomadaires[(cotisation.mode_inscription, cotisation.heures_semaine)] = 1
-
-                        if state == HOPITAL:
-                            if options & TRACES:
-                                print("jour maladie hospitalisation", date)
+                        if date in database.creche.jours_fermeture_non_prevus:
                             if heures_reference > 0:
-                                self.jours_maladie.append(date)
-                            self.jours_maladie_deduits.append(date)
-                            cotisation.nombre_jours_maladie_deduits += 1
-                            cotisation.heures_maladie += heures_reference
-                            if database.creche.nom == "LA VOLIERE":
-                                pass
-                            elif database.creche.mode_facturation == FACTURATION_FORFAIT_10H:
-                                self.CalculeDeduction(cotisation, 10)
-                            elif inscription.mode not in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE):
+                                self.jours_contractualises += 1
                                 self.CalculeDeduction(cotisation, heures_reference)
-                            self.raison_deduction.add('hospitalisation')
-                        elif database.creche.repartition != REPARTITION_SANS_MENSUALISATION and database.creche.conges_inscription == GESTION_CONGES_INSCRIPTION_NON_MENSUALISES and date in inscrit.jours_conges:
-                            duration = inscription.get_day_from_date(date).get_duration(mode_arrondi=database.creche.arrondi_facturation)
-                            if duration:
-                                if options & TRACES:
-                                    print("jour de congé déduit", date, inscrit.jours_conges[date].label)
-                                self.jours_vacances.append(date)
-                                # self.heures_facturees_par_mode[cotisation.mode_garde] -= duration
-                                self.jours_conges_non_factures.append(date)
-                                self.CalculeDeduction(cotisation, duration)
-                                self.raison_deduction.add(inscrit.jours_conges[date].label if inscrit.jours_conges[date].label else "Congés")
-                        elif state == MALADE or state == MALADE_SANS_JUSTIFICATIF:
-                            if options & TRACES:
-                                print("jour maladie", date)
+                        else:
                             if heures_reference > 0:
-                                self.jours_maladie.append(date)
-                            if state == MALADE and (database.creche.mode_facturation != FACTURATION_HORAIRES_REELS or inscription.mode in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE)):
-                                nombre_jours_maladie = inscrit.get_nombre_jours_maladie(date)
-                                if options & TRACES:
-                                    print("nombre de jours : %d (minimum=%d)" % (nombre_jours_maladie, database.creche.minimum_maladie))
-                                self.heures_absence_maladie += heures_reference
-                                if nombre_jours_maladie > database.creche.minimum_maladie:
-                                    self.jours_maladie_deduits.append(date)
-                                    cotisation.nombre_jours_maladie_deduits += 1
-                                    cotisation.heures_maladie += heures_reference
-                                    if options & TRACES:
-                                        print("heures déduites : %02f (total %02f)" % (heures_reference, cotisation.heures_maladie))
-                                    if database.creche.nom == "LA VOLIERE":
-                                        pass
-                                    elif database.creche.mode_facturation == FACTURATION_FORFAIT_10H:
-                                        self.CalculeDeduction(cotisation, 10)
-                                    elif inscription.mode not in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE):
-                                        self.CalculeDeduction(cotisation, heures_reference)
-                                    self.raison_deduction.add("maladie > %dj consécutifs" % database.creche.minimum_maladie)
-                                else:
-                                    self.jours_maladie_non_deduits[date] = heures_reference
-                            elif state == MALADE_SANS_JUSTIFICATIF:
-                                self.jours_maladie_non_deduits[date] = heures_reference
-                        elif state == VACANCES:
-                            if heures_reference > 0:
-                                self.jours_vacances.append(date)
-                            if not inscription.IsNombreSemainesCongesDepasse(date):
-                                self.heures_facturees_par_mode[cotisation.mode_garde] -= heures_reference
-                                self.jours_conges_non_factures.append(date)
-                                if database.creche.repartition == REPARTITION_SANS_MENSUALISATION or database.creche.facturation_jours_feries == ABSENCES_DEDUITES_SANS_LIMITE:
-                                    self.CalculeDeduction(cotisation, heures_reference)
-                                    self.raison_deduction.add("absence prévenue")
+                                self.jours_contractualises += 1
+                            if heures_realisees > 0:
+                                self.jours_realises += 1
+                            if heures_facturees > 0:
+                                self.jours_factures += 1
+                            heures_facturees_non_realisees = 0.0
+                            heures_realisees_non_facturees = inscrit.GetTotalActivitesPresenceNonFacturee(date)
+                            heures_facturees += inscrit.GetTotalActivitesPresenceFactureesEnSupplement(date)
+                            heures_supplementaires_facturees = (heures_facturees - heures_reference)
+                            if (options & TRACES) and heures_supplementaires_facturees:
+                                print("%f heures supplémentaires le" % heures_supplementaires_facturees, date)
+                            #  retiré le 19 juillet 2017 pb d'heures supp marquées non facturées (retirées en double)
+                            #  if heures_realisees_non_facturees > heures_reference:
+                            #    heures_supplementaires_facturees -= heures_realisees_non_facturees - heures_reference
+                            #    print "RETRANCHE" , heures_supplementaires_facturees
+                            cotisation.heures_reference += heures_reference
+                            if (cotisation.mode_inscription, cotisation.heures_semaine) in heures_hebdomadaires:
+                                heures_hebdomadaires[(cotisation.mode_inscription, cotisation.heures_semaine)] += 1
                             else:
-                                self.jours_presence_selon_contrat[date] = (0.0, heures_facturees)
-                        elif state == ABSENCE_NON_PREVENUE or state == ABSENCE_CONGE_SANS_PREAVIS:
-                            heures_facturees_non_realisees = heures_facturees
-                            self.jours_absence_non_prevenue[date] = heures_facturees
-                            if heures_reference == 0:
-                                self.CalculeSupplement(cotisation, heures_facturees)
-                        elif state > 0:
-                            affectation_jours_supplementaires = False
-                            if heures_supplementaires_facturees > 0:
+                                heures_hebdomadaires[(cotisation.mode_inscription, cotisation.heures_semaine)] = 1
+
+                            if state == HOPITAL:
+                                if options & TRACES:
+                                    print("jour maladie hospitalisation", date)
+                                if heures_reference > 0:
+                                    self.jours_maladie.append(date)
+                                self.jours_maladie_deduits.append(date)
+                                cotisation.nombre_jours_maladie_deduits += 1
+                                cotisation.heures_maladie += heures_reference
                                 if database.creche.nom == "LA VOLIERE":
-                                    affectation_jours_supplementaires = True
-                                    self.heures_supplementaires += heures_supplementaires_facturees
-                                    cotisation.heures_supplementaires += heures_supplementaires_facturees
+                                    pass
                                 elif database.creche.mode_facturation == FACTURATION_FORFAIT_10H:
-                                    affectation_jours_supplementaires = True
-                                    self.CalculeSupplement(cotisation, 10)
-                                elif (database.creche.presences_supplementaires or heures_reference == 0) and (cotisation.inscription.mode not in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE, MODE_FORFAIT_GLOBAL_CONTRAT)):
-                                    cotisation.heures_supplementaires += heures_supplementaires_facturees
-                                    self.heures_supplementaires += heures_supplementaires_facturees
-                                    self.heures_facture_par_mode[cotisation.mode_garde] += heures_supplementaires_facturees
-                                    if database.creche.mode_facturation != FACTURATION_HORAIRES_REELS and (database.creche.facturation_periode_adaptation == PERIODE_ADAPTATION_FACTUREE_NORMALEMENT or not cotisation.inscription.IsInPeriodeAdaptation(date)):
-                                        affectation_jours_supplementaires = True
-                                        self.CalculeSupplement(cotisation, heures_supplementaires_facturees)
-
-                            if cotisation.inscription.mode == MODE_FORFAIT_GLOBAL_CONTRAT:
-                                if heures_realisees > cotisation.reste_heures:
-                                    affectation_jours_supplementaires = True
-                                    heures_supplementaires_facturees = heures_realisees - cotisation.reste_heures
-                                    cotisation.heures_supplementaires += heures_supplementaires_facturees
-                                    self.heures_supplementaires += heures_supplementaires_facturees
-                                    self.CalculeSupplement(cotisation, heures_supplementaires_facturees)
-                                    if self.options & TRACES:
-                                        print(" heures supplémentaires :", heures_supplementaires_facturees)
-                                cotisation.reste_heures = max(0, cotisation.reste_heures - heures_realisees)
-
-                            if affectation_jours_supplementaires:
-                                self.jours_supplementaires[date] = (heures_realisees, heures_facturees)
-                            else:
-                                self.jours_presence_selon_contrat[date] = (heures_realisees, heures_facturees)
-
-                            if cotisation.majoration_journaliere:
-                                print(" majoration journalière :", cotisation.majoration_journaliere)
-                                self.supplement += cotisation.majoration_journaliere
-                                self.raison_supplement = self.raison_supplement.union(cotisation.raison_majoration_journaliere)
-
-                            heures_activite_conges_deduites = inscrit.GetTotalActivitesConges(date)
-                            if heures_activite_conges_deduites:
-                                print(" heures de congés déduites le", date)
-                            self.heures_realisees -= heures_activite_conges_deduites
-                            self.CalculeDeduction(cotisation, heures_activite_conges_deduites)
-
-                        if database.creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE or (database.creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION and inscription.IsInPeriodeAdaptation(date)):
-                            for timeslot in inscrit.GetExtraActivites(date):
-                                if timeslot.activity.mode != MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE:
-                                    tarif = timeslot.activity.EvalTarif(self.inscrit, date, reservataire=cotisation.inscription.reservataire)
-                                    if not isinstance(tarif, (int, float)):
-                                        continue
-                                    if tarif and (self.options & TRACES):
-                                        print(" %s : activité %s = %f" % (date, timeslot.activity.label, tarif))
-                                    self.supplement_activites += tarif
-                                    self.heures_supplement_activites[timeslot.activity.label] += 1
-                                    self.detail_supplement_activites[timeslot.activity.label] += tarif
-                                    self.tarif_supplement_activites[timeslot.activity.label] = tarif
-                        if 0 < heures_realisees_non_facturees == heures_realisees:
-                            self.jours_presence_non_facturee[date] = heures_realisees_non_facturees
-
-                        if inscription.mode == MODE_FORFAIT_HEBDOMADAIRE and date.weekday() == 4:
-                            debut_semaine = date - datetime.timedelta(date.weekday())
-                            fin_semaine = debut_semaine + datetime.timedelta(6)
-                            heures_semaine = 0
-                            it = debut_semaine
-                            while it <= fin_semaine:
-                                if it in inscrit.days:
-                                    heures = inscrit.days[it].get_duration()
+                                    self.CalculeDeduction(cotisation, 10)
+                                elif inscription.mode not in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE):
+                                    self.CalculeDeduction(cotisation, heures_reference)
+                                self.raison_deduction.add('hospitalisation')
+                            elif database.creche.repartition != REPARTITION_SANS_MENSUALISATION and database.creche.conges_inscription == GESTION_CONGES_INSCRIPTION_NON_MENSUALISES and date in inscrit.jours_conges:
+                                duration = inscription.get_day_from_date(date).get_duration(mode_arrondi=database.creche.arrondi_facturation)
+                                if duration:
+                                    if options & TRACES:
+                                        print("jour de congé déduit", date, inscrit.jours_conges[date].label)
+                                    self.jours_vacances.append(date)
+                                    # self.heures_facturees_par_mode[cotisation.mode_garde] -= duration
+                                    self.jours_conges_non_factures.append(date)
+                                    self.CalculeDeduction(cotisation, duration)
+                                    self.raison_deduction.add(inscrit.jours_conges[date].label if inscrit.jours_conges[date].label else "Congés")
+                            elif state == MALADE or state == MALADE_SANS_JUSTIFICATIF:
+                                if options & TRACES:
+                                    print("jour maladie", date)
+                                if heures_reference > 0:
+                                    self.jours_maladie.append(date)
+                                if state == MALADE and (database.creche.mode_facturation != FACTURATION_HORAIRES_REELS or inscription.mode in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE)):
+                                    nombre_jours_maladie = inscrit.get_nombre_jours_maladie(date)
+                                    if options & TRACES:
+                                        print("nombre de jours : %d (minimum=%d)" % (nombre_jours_maladie, database.creche.minimum_maladie))
+                                    self.heures_absence_maladie += heures_reference
+                                    if nombre_jours_maladie > database.creche.minimum_maladie:
+                                        self.jours_maladie_deduits.append(date)
+                                        cotisation.nombre_jours_maladie_deduits += 1
+                                        cotisation.heures_maladie += heures_reference
+                                        if options & TRACES:
+                                            print("heures déduites : %02f (total %02f)" % (heures_reference, cotisation.heures_maladie))
+                                        if database.creche.nom == "LA VOLIERE":
+                                            pass
+                                        elif database.creche.mode_facturation == FACTURATION_FORFAIT_10H:
+                                            self.CalculeDeduction(cotisation, 10)
+                                        elif inscription.mode not in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE):
+                                            self.CalculeDeduction(cotisation, heures_reference)
+                                        self.raison_deduction.add("maladie > %dj consécutifs" % database.creche.minimum_maladie)
+                                    else:
+                                        self.jours_maladie_non_deduits[date] = heures_reference
+                                elif state == MALADE_SANS_JUSTIFICATIF:
+                                    self.jours_maladie_non_deduits[date] = heures_reference
+                            elif state == VACANCES:
+                                if heures_reference > 0:
+                                    self.jours_vacances.append(date)
+                                if not inscription.IsNombreSemainesCongesDepasse(date):
+                                    self.heures_facturees_par_mode[cotisation.mode_garde] -= heures_reference
+                                    self.jours_conges_non_factures.append(date)
+                                    if database.creche.repartition == REPARTITION_SANS_MENSUALISATION or database.creche.facturation_jours_feries == ABSENCES_DEDUITES_SANS_LIMITE:
+                                        self.CalculeDeduction(cotisation, heures_reference)
+                                        self.raison_deduction.add("absence prévenue")
                                 else:
-                                    heures = inscription.get_day_from_index(it).get_duration()
-                                if heures > 0:
-                                    heures_semaine += heures
-                                    if heures_semaine > inscription.forfait_mensuel_heures:
-                                        self.jours_supplementaires[it] = (heures_realisees, heures_facturees)
-                                        if it in self.jours_presence_selon_contrat:
-                                            del self.jours_presence_selon_contrat[it]
-                                it += datetime.timedelta(1)
-                            forfait_mensuel_heures = inscription.forfait_mensuel_heures if inscription.forfait_mensuel_heures else 0
-                            if heures_semaine > forfait_mensuel_heures:
-                                cotisation.heures_supplementaires += heures_semaine - forfait_mensuel_heures
+                                    self.jours_presence_selon_contrat[date] = (0.0, heures_facturees)
+                            elif state == ABSENCE_NON_PREVENUE or state == ABSENCE_CONGE_SANS_PREAVIS:
+                                heures_facturees_non_realisees = heures_facturees
+                                self.jours_absence_non_prevenue[date] = heures_facturees
+                                if heures_reference == 0:
+                                    self.CalculeSupplement(cotisation, heures_facturees)
+                            elif state > 0:
+                                affectation_jours_supplementaires = False
+                                if heures_supplementaires_facturees > 0:
+                                    if database.creche.nom == "LA VOLIERE":
+                                        affectation_jours_supplementaires = True
+                                        self.heures_supplementaires += heures_supplementaires_facturees
+                                        cotisation.heures_supplementaires += heures_supplementaires_facturees
+                                    elif database.creche.mode_facturation == FACTURATION_FORFAIT_10H:
+                                        affectation_jours_supplementaires = True
+                                        self.CalculeSupplement(cotisation, 10)
+                                    elif (database.creche.presences_supplementaires or heures_reference == 0) and (cotisation.inscription.mode not in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE, MODE_FORFAIT_GLOBAL_CONTRAT)):
+                                        cotisation.heures_supplementaires += heures_supplementaires_facturees
+                                        self.heures_supplementaires += heures_supplementaires_facturees
+                                        self.heures_facture_par_mode[cotisation.mode_garde] += heures_supplementaires_facturees
+                                        if database.creche.mode_facturation != FACTURATION_HORAIRES_REELS and (database.creche.facturation_periode_adaptation == PERIODE_ADAPTATION_FACTUREE_NORMALEMENT or not cotisation.inscription.IsInPeriodeAdaptation(date)):
+                                            affectation_jours_supplementaires = True
+                                            self.CalculeSupplement(cotisation, heures_supplementaires_facturees)
 
-                        realise_non_facture = cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees) - cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees - heures_realisees_non_facturees)
-                        cotisation.total_realise_non_facture += realise_non_facture
-                        self.total_realise_non_facture += realise_non_facture
-                        self.heures_realisees += heures_realisees
-                        self.heures_realisees_non_facturees += heures_realisees_non_facturees
-                        self.heures_facturees_non_realisees += heures_facturees_non_realisees
-                        cotisation.heures_realisees += heures_realisees
-                        cotisation.heures_realisees_non_facturees += heures_realisees_non_facturees
-                        cotisation.heures_facturees_non_realisees += heures_facturees_non_realisees
+                                if cotisation.inscription.mode == MODE_FORFAIT_GLOBAL_CONTRAT:
+                                    if heures_realisees > cotisation.reste_heures:
+                                        affectation_jours_supplementaires = True
+                                        heures_supplementaires_facturees = heures_realisees - cotisation.reste_heures
+                                        cotisation.heures_supplementaires += heures_supplementaires_facturees
+                                        self.heures_supplementaires += heures_supplementaires_facturees
+                                        self.CalculeSupplement(cotisation, heures_supplementaires_facturees)
+                                        if self.options & TRACES:
+                                            print(" heures supplémentaires :", heures_supplementaires_facturees)
+                                    cotisation.reste_heures = max(0, cotisation.reste_heures - heures_realisees)
 
-                        if cotisation.inscription.mode not in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE):
-                            cotisation.heures_contractualisees += heures_reference
-                            self.heures_contractualisees += heures_reference
-                            self.heures_contractualisees_realisees += min(heures_realisees, heures_reference)
-                            if database.creche.mode_facturation == FACTURATION_HORAIRES_REELS or (database.creche.mode_facturation == FACTURATION_PSU and cotisation.mode_garde == MODE_HALTE_GARDERIE):
-                                self.heures_facturees_par_mode[cotisation.mode_garde] += heures_realisees - heures_realisees_non_facturees + heures_facturees_non_realisees
-                                self.total_contractualise += cotisation.CalculeFraisGarde(heures_reference)
-                            elif database.creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date):
-                                heures_adaptation = heures_realisees - heures_realisees_non_facturees + heures_facturees_non_realisees
-                                self.jours_presence_selon_contrat[date] = (heures_adaptation, heures_adaptation)
-                                self.heures_periode_adaptation += heures_adaptation
-                                self.heures_facturees_par_mode[cotisation.mode_garde] += heures_adaptation
-                                montant_adaptation = cotisation.CalculeFraisGarde(heures_adaptation)
-                                self.cotisation_periode_adaptation += montant_adaptation
-                                self.total_contractualise += montant_adaptation
-                            else:
-                                self.heures_facturees_par_mode[cotisation.mode_garde] += heures_facturees
-                        self.total_realise += cotisation.CalculeFraisGarde(heures_realisees - heures_realisees_non_facturees)
+                                if affectation_jours_supplementaires:
+                                    self.jours_supplementaires[date] = (heures_realisees, heures_facturees)
+                                else:
+                                    self.jours_presence_selon_contrat[date] = (heures_realisees, heures_facturees)
+
+                                if cotisation.majoration_journaliere:
+                                    print(" majoration journalière :", cotisation.majoration_journaliere)
+                                    self.supplement += cotisation.majoration_journaliere
+                                    self.raison_supplement = self.raison_supplement.union(cotisation.raison_majoration_journaliere)
+
+                                heures_activite_conges_deduites = inscrit.GetTotalActivitesConges(date)
+                                if heures_activite_conges_deduites:
+                                    print(" heures de congés déduites le", date)
+                                self.heures_realisees -= heures_activite_conges_deduites
+                                self.CalculeDeduction(cotisation, heures_activite_conges_deduites)
+
+                            if database.creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE or (database.creche.tarification_activites == ACTIVITES_FACTUREES_JOURNEE_PERIODE_ADAPTATION and inscription.IsInPeriodeAdaptation(date)):
+                                for timeslot in inscrit.GetExtraActivites(date):
+                                    if timeslot.activity.mode != MODE_SYSTEMATIQUE_SANS_HORAIRES_MENSUALISE:
+                                        tarif = timeslot.activity.EvalTarif(self.inscrit, date, reservataire=cotisation.inscription.reservataire)
+                                        if not isinstance(tarif, (int, float)):
+                                            continue
+                                        if tarif and (self.options & TRACES):
+                                            print(" %s : activité %s = %f" % (date, timeslot.activity.label, tarif))
+                                        self.supplement_activites += tarif
+                                        self.heures_supplement_activites[timeslot.activity.label] += 1
+                                        self.detail_supplement_activites[timeslot.activity.label] += tarif
+                                        self.tarif_supplement_activites[timeslot.activity.label] = tarif
+                            if 0 < heures_realisees_non_facturees == heures_realisees:
+                                self.jours_presence_non_facturee[date] = heures_realisees_non_facturees
+
+                            if inscription.mode == MODE_FORFAIT_HEBDOMADAIRE and date.weekday() == 4:
+                                debut_semaine = date - datetime.timedelta(date.weekday())
+                                fin_semaine = debut_semaine + datetime.timedelta(6)
+                                heures_semaine = 0
+                                it = debut_semaine
+                                while it <= fin_semaine:
+                                    if it in inscrit.days:
+                                        heures = inscrit.days[it].get_duration()
+                                    else:
+                                        heures = inscription.get_day_from_index(it).get_duration()
+                                    if heures > 0:
+                                        heures_semaine += heures
+                                        if heures_semaine > inscription.forfait_mensuel_heures:
+                                            self.jours_supplementaires[it] = (heures_realisees, heures_facturees)
+                                            if it in self.jours_presence_selon_contrat:
+                                                del self.jours_presence_selon_contrat[it]
+                                    it += datetime.timedelta(1)
+                                forfait_mensuel_heures = inscription.forfait_mensuel_heures if inscription.forfait_mensuel_heures else 0
+                                if heures_semaine > forfait_mensuel_heures:
+                                    cotisation.heures_supplementaires += heures_semaine - forfait_mensuel_heures
+
+                            realise_non_facture = cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees) - cotisation.CalculeFraisGarde(cotisation.heures_mois_ajustees - heures_realisees_non_facturees)
+                            cotisation.total_realise_non_facture += realise_non_facture
+                            self.total_realise_non_facture += realise_non_facture
+                            self.heures_realisees += heures_realisees
+                            self.heures_realisees_non_facturees += heures_realisees_non_facturees
+                            self.heures_facturees_non_realisees += heures_facturees_non_realisees
+                            cotisation.heures_realisees += heures_realisees
+                            cotisation.heures_realisees_non_facturees += heures_realisees_non_facturees
+                            cotisation.heures_facturees_non_realisees += heures_facturees_non_realisees
+
+                            if cotisation.inscription.mode not in (MODE_FORFAIT_MENSUEL, MODE_FORFAIT_HEBDOMADAIRE):
+                                cotisation.heures_contractualisees += heures_reference
+                                self.heures_contractualisees += heures_reference
+                                self.heures_contractualisees_realisees += min(heures_realisees, heures_reference)
+                                if database.creche.mode_facturation == FACTURATION_HORAIRES_REELS or (database.creche.mode_facturation == FACTURATION_PSU and cotisation.mode_garde == MODE_HALTE_GARDERIE):
+                                    self.heures_facturees_par_mode[cotisation.mode_garde] += heures_realisees - heures_realisees_non_facturees + heures_facturees_non_realisees
+                                    self.total_contractualise += cotisation.CalculeFraisGarde(heures_reference)
+                                elif database.creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date):
+                                    heures_adaptation = heures_realisees - heures_realisees_non_facturees + heures_facturees_non_realisees
+                                    self.jours_presence_selon_contrat[date] = (heures_adaptation, heures_adaptation)
+                                    self.heures_periode_adaptation += heures_adaptation
+                                    self.heures_facturees_par_mode[cotisation.mode_garde] += heures_adaptation
+                                    montant_adaptation = cotisation.CalculeFraisGarde(heures_adaptation)
+                                    self.cotisation_periode_adaptation += montant_adaptation
+                                    self.total_contractualise += montant_adaptation
+                                else:
+                                    self.heures_facturees_par_mode[cotisation.mode_garde] += heures_facturees
+                            self.total_realise += cotisation.CalculeFraisGarde(heures_realisees - heures_realisees_non_facturees)
 
                 date += datetime.timedelta(1)
         else:
