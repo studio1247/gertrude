@@ -1775,6 +1775,9 @@ class Inscrit(Base):
         heures_reference = reference.get_duration(mode_arrondi)
         ref_state = reference.get_state()
 
+        if self.creche.jours_fermeture_non_prevus.get(date):
+            return State(ABSENT, heures_reference, 0, 0)
+
         if date in self.days:
             journee = self.days[date]
             state = journee.get_state()
