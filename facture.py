@@ -562,7 +562,8 @@ class FactureFinMois(FactureBase):
                     else:
                         prorata = cotisation.cotisation_mensuelle
                     self.cotisation_mensuelle += prorata
-                    cotisation.heures_contractualisees = inscription.forfait_mensuel_heures * cotisation.jours_ouvres / self.jours_ouvres
+                    forfait = inscription.forfait_mensuel_heures or 0
+                    cotisation.heures_contractualisees = forfait * cotisation.jours_ouvres / self.jours_ouvres
                     self.heures_contractualisees += cotisation.heures_contractualisees
                     self.total_contractualise += cotisation.heures_contractualisees * cotisation.montant_heure_garde
                     if cotisation.nombre_jours_maladie_deduits > 0:

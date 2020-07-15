@@ -286,7 +286,7 @@ class Cotisation(object):
             self.heures_periode = self.heures_mois * 12
             self.nombre_factures = 12 - GetNombreMoisSansFactureContrat(self.date.year)
         elif database.creche.mode_facturation == FACTURATION_FORFAIT_MENSUEL:
-            self.heures_mois = self.inscription.forfait_mensuel_heures
+            self.heures_mois = self.inscription.forfait_mensuel_heures or 0
             self.heures_semaine = self.heures_mois / 4
             self.heures_periode = self.heures_mois * 12
             self.nombre_factures = 12 - GetNombreMoisSansFactureContrat(self.date.year)
