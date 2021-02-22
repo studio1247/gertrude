@@ -57,19 +57,14 @@ class ExportFiloueModifications:
             total_facture = 0
             date = self.start
             error = False
-            facture_heures = None
+            facture = None
             while date < self.end:
                 try:
-                    facture_montants = Facture(inscrit, self.annee, date.month, NO_NUMERO)
-                    if database.creche.temps_facturation == FACTURATION_FIN_MOIS:
-                        facture_heures = facture_montants
-                    else:
-                        date_heures = GetNextMonthStart(date)
-                        facture_heures = Facture(inscrit, date_heures.year, date_heures.month, NO_NUMERO)
+                    facture = Facture(inscrit, self.annee, date.month, NO_NUMERO)
                     regime_caf = self.get_regime_caf(inscrit, date)
-                    heures_realisees += facture_heures.heures_realisees
-                    heures_facturees += facture_heures.heures_facturees
-                    total_facture += facture_montants.total
+                    heures_realisees += facture.heures_realisees
+                    heures_facturees += facture.heures_facturees
+                    total_facture += facture.total
                 except CotisationException as e:
                     errors[GetPrenomNom(inscrit)] = e.errors
                     error = True
@@ -77,7 +72,7 @@ class ExportFiloueModifications:
                     break
                 date = GetNextMonthStart(date)
             line = template
-            if facture_heures:
+            if facture:
                 fields = {
                     "top-allocataire": 1,
                     "prenom": inscrit.prenom,
