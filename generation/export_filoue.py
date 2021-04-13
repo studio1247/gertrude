@@ -86,7 +86,7 @@ class ExportFiloueModifications:
                     "heures-realisees": "%04.02f" % heures_realisees,
                     "total-facture": "%06.02f" % total_facture,
                     "tarif-horaire": "%02.02f" % ((total_facture / heures_facturees) if heures_facturees else 0),
-                    "taux-effort": ("%01.02f" % facture_heures.taux_effort) if facture_heures.taux_effort else None,
+                    "taux-effort": ("%01.02f" % facture.taux_effort) if facture.taux_effort else None,
                     "premier-jour": max(self.start, min([contrat.debut for contrat in inscrit.get_inscriptions() if contrat.debut and not contrat.preinscription])).strftime("%d/%m/%Y"),
                     "dernier-jour": min(self.end, max([(contrat.GetFin() if contrat.GetFin() else self.end) for contrat in inscrit.get_inscriptions() if contrat.debut and not contrat.preinscription])).strftime("%d/%m/%Y"),
                 }
