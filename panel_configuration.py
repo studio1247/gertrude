@@ -133,6 +133,8 @@ class CrecheTab(AutoTab):
         grid_sizer.AddMany([wx.StaticText(self, -1, "E-mail :"), (AutoTextCtrl(self, database.creche, "email"), 0, wx.EXPAND)])
         grid_sizer.AddMany([wx.StaticText(self, -1, "Serveur pour l'envoi d'emails :"), (AutoTextCtrl(self, database.creche, "smtp_server"), 0, wx.EXPAND)])
         grid_sizer.AddMany([wx.StaticText(self, -1, "Email de la CAF :"), (AutoTextCtrl(self, database.creche, "caf_email"), 0, wx.EXPAND)])
+        grid_sizer.AddMany([wx.StaticText(self, -1, "Numéro CAF :"), (AutoTextCtrl(self, database.creche, "numero_caf"), 0, wx.EXPAND)])
+        grid_sizer.AddMany([wx.StaticText(self, -1, "Numéro dossier Sias AFC :"), (AutoTextCtrl(self, database.creche, "numero_dossier_afc"), 0, wx.EXPAND)])
         type_structure_choice = AutoChoiceCtrl(self, database.creche, "type", items=TypesCreche)
         self.Bind(wx.EVT_CHOICE, self.OnChangementTypeStructure, type_structure_choice)
         grid_sizer.AddMany([wx.StaticText(self, -1, "Type :"), (type_structure_choice, 0, wx.EXPAND)])

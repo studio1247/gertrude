@@ -51,6 +51,10 @@ class ExportFiloueModifications:
         result = [lines[0]]
         template = lines[1]
         for inscrit in database.creche.select_inscrits(self.start, self.end):
+            if not inscrit.famille.numero_allocataire_caf:
+                errors[GetPrenomNom(inscrit)] = [u"Le numéro d'allocataire CAF n'est pas renseigné"]
+            elif not inscrit.famille.numero_allocataire_caf.isdigit():
+                errors[GetPrenomNom(inscrit)] = [u"Le numéro d'allocataire CAF ne doit comporter que des chiffres"]
             regime_caf = 3
             heures_realisees = 0
             heures_facturees = 0
@@ -74,6 +78,8 @@ class ExportFiloueModifications:
             line = template
             if facture:
                 fields = {
+                    "numero-caf": database.creche.numero_caf,
+                    "numero-dossier-afc": database.creche.numero_dossier_afc,
                     "top-allocataire": 1,
                     "prenom": inscrit.prenom,
                     "nom": inscrit.nom,
@@ -86,7 +92,7 @@ class ExportFiloueModifications:
                     "heures-realisees": "%04.02f" % heures_realisees,
                     "total-facture": "%06.02f" % total_facture,
                     "tarif-horaire": "%02.02f" % ((total_facture / heures_facturees) if heures_facturees else 0),
-                    "taux-effort": ("%01.02f" % facture.taux_effort) if facture.taux_effort else None,
+                    "taux-effort": ("%01.03f" % facture.taux_effort) if facture.taux_effort else None,
                     "premier-jour": max(self.start, min([contrat.debut for contrat in inscrit.get_inscriptions() if contrat.debut and not contrat.preinscription])).strftime("%d/%m/%Y"),
                     "dernier-jour": min(self.end, max([(contrat.GetFin() if contrat.GetFin() else self.end) for contrat in inscrit.get_inscriptions() if contrat.debut and not contrat.preinscription])).strftime("%d/%m/%Y"),
                 }
