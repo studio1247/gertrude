@@ -22,7 +22,6 @@ from constants import *
 from database import Inscription
 from functions import *
 from facture import *
-from cotisation import CotisationException
 from planning_line import BasePlanningSeparator, ChildPlanningLine, SalariePlanningLine
 from ooffice import *
 
@@ -84,6 +83,8 @@ class PlanningDetailleModifications:
                 return self.executeTemplateCalcJulien(filename, dom)
             elif self.metas["format"] == 2:
                 return self.executeTemplateCalc123APetitsPas(filename, dom)
+            elif self.metas["format"] == 3:
+                return self.executeTemplateCalcLaVoliere(filename, dom)
             else:
                 return self.executeTemplateCalc(filename, dom)
         else:
@@ -501,6 +502,63 @@ class PlanningDetailleModifications:
         
         for line in templateHeader + templateLines + templateFooter:
             table.removeChild(line)
+
+    def executeTemplateCalcLaVoliere(self, filename, dom):
+        spreadsheet_template = dom.getElementsByTagName('office:spreadsheet').item(0)
+
+        HEADER_LINE_COUNT = 4
+        BODY_LINE_COUNT = 5
+        FOOTER_LINE_COUNT = 0
+        TEMPLATE_LINE_COUNT = HEADER_LINE_COUNT + BODY_LINE_COUNT + FOOTER_LINE_COUNT
+
+        date = self.start
+        while date <= self.end:
+            if date not in database.creche.jours_fermeture:
+                spreadsheet = spreadsheet_template.cloneNode(1)
+                spreadsheet_template.parentNode.insertBefore(spreadsheet, spreadsheet_template)
+
+                table = spreadsheet.getElementsByTagName("table:table")[0]
+                table_name = "%s %s" % (days[date.weekday()], date2str(date))
+                table_name = table_name.replace("/", "|")
+                table.setAttribute("table:name", table_name)
+                lignes = table.getElementsByTagName("table:table-row")
+
+                templateHeader = lignes[:HEADER_LINE_COUNT]
+                templateAbsent = lignes[HEADER_LINE_COUNT:HEADER_LINE_COUNT + BODY_LINE_COUNT]
+                templatePresent = lignes[HEADER_LINE_COUNT + BODY_LINE_COUNT:HEADER_LINE_COUNT + 2 * BODY_LINE_COUNT]
+
+                inscrits = database.creche.select_inscrits(date, date, site=self.site)
+                inscrits = GetEnfantsTriesSelonParametreTriPlanning(list(inscrits))
+
+                presents = 0
+                for inscrit in inscrits:
+                    # print(inscrit.prenom)
+                    state = inscrit.get_state(date)
+                    if state == ABSENT:
+                        templateLines = templateAbsent
+                    else:
+                        templateLines = templatePresent
+                        presents += 1
+                    for templateLine in templateLines:
+                        node = templateLine.cloneNode(1)
+                        fields = [('nom', inscrit.nom),
+                                  ('prenom', inscrit.prenom)]
+                        ReplaceFields(node, fields)
+                        table.insertBefore(node, lignes[TEMPLATE_LINE_COUNT])
+
+                fields = [('site', self.site.nom),
+                          ('jour-semaine', days[date.weekday()]),
+                          ('jour-sans-annee', GetDateString(date, weekday=False, annee=False)),
+                          ('presents', presents)]
+                for node in templateHeader:
+                    ReplaceFields(node, fields)
+
+                for line in templateAbsent + templatePresent:
+                    table.removeChild(line)
+
+            date += datetime.timedelta(1)
+
+        spreadsheet_template.parentNode.removeChild(spreadsheet_template)
 
     def executeTemplateCalc123APetitsPas(self, filename, dom):
         # Basé sur le template de Julien, mais avec un onglet par jour
