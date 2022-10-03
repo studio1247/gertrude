@@ -472,16 +472,28 @@ class FactureFinMois(FactureBase):
                                     self.heures_facturees_par_mode[cotisation.mode_garde] += heures_realisees - heures_realisees_non_facturees + heures_facturees_non_realisees
                                     self.total_contractualise += cotisation.CalculeFraisGarde(heures_reference)
                                 elif database.creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(date):
-                                    heures_adaptation = heures_realisees #  - heures_realisees_non_facturees + heures_facturees_non_realisees
-                                    self.heures_supplementaires += heures_adaptation
-                                    self.jours_presence_selon_contrat[date] = (heures_adaptation, heures_adaptation)
-                                    self.heures_periode_adaptation += heures_adaptation
-                                    self.heures_facturees_par_mode[cotisation.mode_garde] += heures_adaptation
-                                    montant_adaptation = cotisation.CalculeFraisGarde(heures_adaptation)
-                                    self.cotisation_periode_adaptation += montant_adaptation
-                                    self.supplement += montant_adaptation
-                                    # self.raison_supplement.add("%s heures adaptation" % GetHeureString(heures_adaptation))
-                                    self.total_realise += montant_adaptation
+                                    if database.creche.nom == "LA VOLIERE":
+                                        heures_adaptation = heures_realisees  # - heures_realisees_non_facturees + heures_facturees_non_realisees
+                                        self.heures_supplementaires += heures_adaptation
+                                        self.jours_presence_selon_contrat[date] = (heures_adaptation, heures_adaptation)
+                                        self.heures_periode_adaptation += heures_adaptation
+                                        self.heures_facturees_par_mode[cotisation.mode_garde] += heures_adaptation
+                                        # montant_adaptation = cotisation.CalculeFraisGarde(heures_adaptation)
+                                        # self.cotisation_periode_adaptation += montant_adaptation
+                                        # self.supplement += montant_adaptation
+                                        # self.raison_supplement.add("%s heures adaptation" % GetHeureString(heures_adaptation))
+                                        # self.total_realise += montant_adaptation
+                                    else:
+                                        heures_adaptation = heures_realisees #  - heures_realisees_non_facturees + heures_facturees_non_realisees
+                                        self.heures_supplementaires += heures_adaptation
+                                        self.jours_presence_selon_contrat[date] = (heures_adaptation, heures_adaptation)
+                                        self.heures_periode_adaptation += heures_adaptation
+                                        self.heures_facturees_par_mode[cotisation.mode_garde] += heures_adaptation
+                                        montant_adaptation = cotisation.CalculeFraisGarde(heures_adaptation)
+                                        self.cotisation_periode_adaptation += montant_adaptation
+                                        self.supplement += montant_adaptation
+                                        # self.raison_supplement.add("%s heures adaptation" % GetHeureString(heures_adaptation))
+                                        self.total_realise += montant_adaptation
                                 else:
                                     self.heures_facturees_par_mode[cotisation.mode_garde] += heures_facturees
                             self.total_realise += cotisation.CalculeFraisGarde(heures_realisees - heures_realisees_non_facturees)
@@ -533,7 +545,13 @@ class FactureFinMois(FactureBase):
                 self.heures_facture_par_mode[cotisation.mode_garde] -= cotisation.heures_maladie
                 if database.creche.nom == "LA VOLIERE":
                     heures = cotisation.heures_contractualisees + cotisation.heures_supplementaires - cotisation.heures_maladie
-                    self.cotisation_mensuelle += heures * (cotisation.a * heures + cotisation.b)
+                    tarif_horaire = (cotisation.a * heures + cotisation.b)
+                    self.cotisation_mensuelle += heures * tarif_horaire
+                    if self.heures_periode_adaptation:
+                        tarif_horaire = (cotisation.a * (heures + self.heures_periode_adaptation) + cotisation.b)
+                        self.cotisation_periode_adaptation = self.heures_periode_adaptation * tarif_horaire
+                        # print(self.cotisation_periode_adaptation, tarif_horaire, self.heures_periode_adaptation)
+                        self.supplement += self.cotisation_periode_adaptation
                 elif database.creche.repartition == REPARTITION_SANS_MENSUALISATION:
                     if database.creche.mode_facturation == FACTURATION_HORAIRES_REELS or (database.creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(cotisation.debut)):
                         montant = (cotisation.heures_realisees - cotisation.heures_realisees_non_facturees) * cotisation.montant_heure_garde
