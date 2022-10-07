@@ -539,19 +539,21 @@ class FactureFinMois(FactureBase):
             self.numero = self.GetNumeroFacture()
 
         if inscrit.has_facture(self.debut_recap):
+
+            if database.creche.nom == "LA VOLIERE":
+                heures_pour_tarif_horaire = sum(self.heures_facturees_par_mode)
+                tarif_horaire = (cotisation.a * heures_pour_tarif_horaire + cotisation.b)
+                if self.heures_periode_adaptation:
+                    self.cotisation_periode_adaptation = self.heures_periode_adaptation * tarif_horaire
+                    self.supplement += self.cotisation_periode_adaptation
+
             for cotisation in cotisations_mensuelles:
                 inscription = cotisation.inscription
                 self.heures_maladie += cotisation.heures_maladie
                 self.heures_facture_par_mode[cotisation.mode_garde] -= cotisation.heures_maladie
                 if database.creche.nom == "LA VOLIERE":
                     heures = cotisation.heures_contractualisees + cotisation.heures_supplementaires - cotisation.heures_maladie
-                    tarif_horaire = (cotisation.a * heures + cotisation.b)
                     self.cotisation_mensuelle += heures * tarif_horaire
-                    if self.heures_periode_adaptation:
-                        tarif_horaire = (cotisation.a * (heures + self.heures_periode_adaptation) + cotisation.b)
-                        self.cotisation_periode_adaptation = self.heures_periode_adaptation * tarif_horaire
-                        # print(self.cotisation_periode_adaptation, tarif_horaire, self.heures_periode_adaptation)
-                        self.supplement += self.cotisation_periode_adaptation
                 elif database.creche.repartition == REPARTITION_SANS_MENSUALISATION:
                     if database.creche.mode_facturation == FACTURATION_HORAIRES_REELS or (database.creche.facturation_periode_adaptation == PERIODE_ADAPTATION_HORAIRES_REELS and inscription.IsInPeriodeAdaptation(cotisation.debut)):
                         montant = (cotisation.heures_realisees - cotisation.heures_realisees_non_facturees) * cotisation.montant_heure_garde
@@ -800,6 +802,7 @@ class FactureFinMois(FactureBase):
 
         if database.creche.arrondi_mensualisation_euros == ARRONDI_EURO_PLUS_PROCHE:
             self.cotisation_mensuelle = round(self.cotisation_mensuelle)
+            self.supplement = round(self.supplement)
 
         self.total = self.cotisation_mensuelle + self.frais_inscription + self.supplement + self.supplement_activites - self.deduction + self.correction
         self.total_facture = self.total + self.report_cotisation_mensuelle
